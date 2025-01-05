@@ -8,8 +8,20 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
-type CloudProviderAccountsRepository interface {
+type cloudProviderAccountsRepository interface {
 	listConnectedAccounts(context.Context) ([]Account, *model.ApiError)
+}
+
+func newCloudProviderAccountsRepository(db *sqlx.DB) (
+	*cloudProviderAccountsSQLRepository, error,
+) {
+	if err := InitSqliteDBIfNeeded(db); err != nil {
+		return nil, fmt.Errorf("could not init sqlite DB for cloudintegrations: %w", err)
+	}
+
+	return &cloudProviderAccountsSQLRepository{
+		db: db,
+	}, nil
 }
 
 func InitSqliteDBIfNeeded(db *sqlx.DB) error {
@@ -24,7 +36,7 @@ func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 			cloud_account_id TEXT,
 			last_agent_report_json TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			removed_at TIMESTAMP,
+			removed_at TIMESTAMP
 		)
 	`
 	_, err := db.Exec(createTablesStatements)
@@ -35,4 +47,14 @@ func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 	}
 
 	return nil
+}
+
+type cloudProviderAccountsSQLRepository struct {
+	db *sqlx.DB
+}
+
+func (repo *cloudProviderAccountsSQLRepository) listConnectedAccounts(context.Context) (
+	[]Account, *model.ApiError,
+) {
+	return []Account{}, nil
 }

@@ -21,14 +21,19 @@ func validateCloudProviderName(name string) *model.ApiError {
 }
 
 type Controller struct {
-	db *sqlx.DB
+	repo cloudProviderAccountsRepository
 }
 
 func NewController(db *sqlx.DB) (
 	*Controller, error,
 ) {
+	repo, err := newCloudProviderAccountsRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create cloud provider accounts repo", err)
+	}
+
 	return &Controller{
-		db: db,
+		repo: repo,
 	}, nil
 }
 
@@ -45,7 +50,12 @@ func (c *Controller) ListConnectedAccounts(
 		return nil, apiErr
 	}
 
+	accounts, apiErr := c.repo.listConnectedAccounts(ctx)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
+	}
+
 	return &AccountsListResponse{
-		Accounts: []Account{},
+		Accounts: accounts,
 	}, nil
 }
