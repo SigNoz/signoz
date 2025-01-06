@@ -12,12 +12,14 @@ type Account struct {
 	Id              string        `json:"id" db:"id"`
 	Config          AccountConfig `json:"config_json" db:"config_json"`
 	CloudAccountId  string        `json:"cloud_account_id" db:"cloud_account_id"`
-	LastAgentReport AgentReport   `json:"last_agent_report_json" db:"last_agent_report_json"`
+	LastAgentReport *AgentReport  `json:"last_agent_report_json" db:"last_agent_report_json"`
 	CreatedAt       time.Time     `json:"created_at" db:"created_at"`
-	RemovedAt       time.Time     `json:"removed_at" db:"removed_at"`
+	RemovedAt       *time.Time    `json:"removed_at" db:"removed_at"`
 }
 
-type AccountConfig map[string]any
+type AccountConfig struct {
+	EnabledRegions []string `json:"regions"`
+}
 
 // For serializing from db
 func (c *AccountConfig) Scan(src interface{}) error {
@@ -38,7 +40,10 @@ func (c *AccountConfig) Value() (driver.Value, error) {
 	return serialized, nil
 }
 
-type AgentReport map[string]any
+type AgentReport struct {
+	TimestampSeconds int64          `json:"timestamp"`
+	Data             map[string]any `json:"data"`
+}
 
 // For serializing from db
 func (c *AgentReport) Scan(src interface{}) error {

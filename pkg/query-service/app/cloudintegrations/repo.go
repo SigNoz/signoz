@@ -3,13 +3,28 @@ package cloudintegrations
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type cloudProviderAccountsRepository interface {
-	listConnectedAccounts(context.Context) ([]Account, *model.ApiError)
+	listConnected(context.Context) ([]Account, *model.ApiError)
+
+	get(ctx context.Context, ids []string) (map[string]*Account, *model.ApiError)
+
+	// Insert an account or update it by ID for specified non-empty fields
+	upsert(
+		ctx context.Context,
+		id string,
+		config *AccountConfig,
+		cloudAccountId string,
+		agentReport *AgentReport,
+		removedAt *time.Time,
+	) (*Account, *model.ApiError)
 }
 
 func newCloudProviderAccountsRepository(db *sqlx.DB) (
@@ -53,7 +68,7 @@ type cloudProviderAccountsSQLRepository struct {
 	db *sqlx.DB
 }
 
-func (r *cloudProviderAccountsSQLRepository) listConnectedAccounts(ctx context.Context) (
+func (r *cloudProviderAccountsSQLRepository) listConnected(ctx context.Context) (
 	[]Account, *model.ApiError,
 ) {
 	accounts := []Account{}
@@ -67,7 +82,10 @@ func (r *cloudProviderAccountsSQLRepository) listConnectedAccounts(ctx context.C
 				last_agent_report_json,
 				created_at,
 				removed_at
-			from  cloud_integrations_accounts
+			from cloud_integrations_accounts
+      where
+        removed_at is NULL
+        and cloud_account_id is not NULL
 			order by created_at
 		`,
 	)
@@ -78,4 +96,130 @@ func (r *cloudProviderAccountsSQLRepository) listConnectedAccounts(ctx context.C
 	}
 
 	return accounts, nil
+}
+
+func (r *cloudProviderAccountsSQLRepository) get(
+	ctx context.Context, ids []string,
+) (map[string]*Account, *model.ApiError) {
+	accounts := []Account{}
+
+	idPlaceholders := []string{}
+	idValues := []interface{}{}
+	for _, id := range ids {
+		idPlaceholders = append(idPlaceholders, "?")
+		idValues = append(idValues, id)
+	}
+
+	err := r.db.SelectContext(
+		ctx, &accounts, fmt.Sprintf(`
+			select
+				id,
+				config_json,
+				cloud_account_id,
+				last_agent_report_json,
+				created_at,
+				removed_at
+			from cloud_integrations_accounts
+			where id in (%s)`,
+			strings.Join(idPlaceholders, ", "),
+		),
+		idValues...,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query cloud provider account: %w", err,
+		))
+	}
+
+	result := map[string]*Account{}
+	for _, a := range accounts {
+		result[a.Id] = &a
+	}
+
+	return result, nil
+}
+
+func (r *cloudProviderAccountsSQLRepository) upsert(
+	ctx context.Context,
+	id string,
+	config *AccountConfig,
+	cloudAccountId string,
+	agentReport *AgentReport,
+	removedAt *time.Time,
+) (*Account, *model.ApiError) {
+	// Insert
+	if len(id) < 1 {
+		// config must be specified when inserting
+		if config == nil {
+			return nil, model.BadRequest(fmt.Errorf("account config is required"))
+		}
+
+		id = uuid.NewString()
+	}
+
+	// Prepare clause for setting values in `on conflict do update`
+	onConflictUpdates := []string{}
+	updateColStmt := func(col string) string {
+		return fmt.Sprintf("set %s=excluded.%s", col, col)
+	}
+
+	if config != nil {
+		onConflictUpdates = append(
+			onConflictUpdates, updateColStmt("config_json"),
+		)
+	}
+
+	if len(cloudAccountId) > 0 {
+		onConflictUpdates = append(
+			onConflictUpdates, updateColStmt("cloud_account_id"),
+		)
+	}
+
+	if agentReport != nil {
+		onConflictUpdates = append(
+			onConflictUpdates, updateColStmt("last_agent_report_json"),
+		)
+	}
+
+	if removedAt != nil {
+		onConflictUpdates = append(
+			onConflictUpdates, updateColStmt("removed_at"),
+		)
+	}
+
+	_, dbErr := r.db.ExecContext(
+		ctx, fmt.Sprintf(`
+			INSERT INTO cloud_integrations_accounts (
+				id,
+				config_json,
+				cloud_account_id,
+				last_agent_report_json,
+				removed_at
+			) values ($1, $2, $3, $4, $5)
+			on conflict(id) do update
+      %s
+		`, strings.Join(onConflictUpdates, "\n")),
+		id, config, cloudAccountId, agentReport, removedAt,
+	)
+	if dbErr != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not upsert cloud account record: %w", dbErr,
+		))
+	}
+
+	res, apiErr := r.get(ctx, []string{id})
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, "couldn't fetch upserted account by id",
+		)
+	}
+
+	upsertedAccount := res[id]
+	if upsertedAccount == nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't fetch upserted account by id",
+		))
+	}
+
+	return upsertedAccount, nil
 }
