@@ -1,18 +1,18 @@
-import './TimelineV2.styles.scss';
-
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { getIntervals, Interval } from './utils';
+import {
+	getIntervals,
+	getMinimumIntervalsBasedOnWidth,
+	Interval,
+} from './utils';
 
 interface ITimelineV2Props {
 	startTimestamp: number;
 	endTimestamp: number;
 	timelineHeight: number;
 }
-
-const MIN_INTERVALS = 5;
 
 function TimelineV2(props: ITimelineV2Props): JSX.Element {
 	const { startTimestamp, endTimestamp, timelineHeight } = props;
@@ -22,18 +22,18 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 
 	useEffect(() => {
 		const spread = endTimestamp - startTimestamp;
-		const intervals = getIntervals((spread / MIN_INTERVALS) * 1.0, spread);
+		const minIntervals = getMinimumIntervalsBasedOnWidth(width);
+		const intervals = getIntervals((spread / minIntervals) * 1.0, spread);
 		setIntervals(intervals);
 	}, [startTimestamp, endTimestamp, width]);
 
-	console.log(intervals);
-
 	return (
-		<div ref={ref as never}>
+		<div ref={ref as never} style={{ flex: 1, overflow: 'visible' }}>
 			<svg
 				width={width}
 				height={timelineHeight}
 				xmlns="http://www.w3.org/2000/svg"
+				overflow="visible"
 			>
 				<line
 					x1="0"
@@ -49,6 +49,8 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 						<g
 							transform={`translate(${(interval.percentage * width) / 100},0)`}
 							key={`${interval.percentage + interval.label + index}`}
+							textAnchor="middle"
+							fontSize="0.6rem"
 						>
 							<text
 								x={index === intervals.length - 1 ? -10 : 0}

@@ -39,6 +39,17 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 	},
 ];
 
+export const getMinimumIntervalsBasedOnWidth = (width: number): number => {
+	if (width < 600) {
+		return 5;
+	}
+	if (width < 900) {
+		return 10;
+	}
+
+	return 15;
+};
+
 export const resolveTimeFromInterval = (
 	intervalTime: number,
 	intervalUnit: IIntervalUnit,
