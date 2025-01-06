@@ -3,7 +3,7 @@
 import './Integrations.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, List, Typography } from 'antd';
+import { Button, List, Tag, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -16,6 +16,7 @@ const AWS_INTEGRATION = {
 	title: 'AWS Web Services',
 	description: 'One-click setup for AWS monitoring with SigNoz',
 	icon: `Logos/aws-dark.svg`,
+	is_new: true,
 };
 
 interface IntegrationsListProps {
@@ -112,7 +113,14 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 									<img src={item.icon} alt={item.title} className="list-item-image" />
 								</div>
 								<div className="list-item-details">
-									<Typography.Text className="heading">{item.title}</Typography.Text>
+									<Typography.Text className="heading">
+										{item.title}
+										{item.is_new && (
+											<Tag color="blue" className="heading__new-tag">
+												NEW
+											</Tag>
+										)}
+									</Typography.Text>
 									<Typography.Text className="description">
 										{item.description}
 									</Typography.Text>
