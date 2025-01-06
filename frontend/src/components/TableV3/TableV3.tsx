@@ -41,8 +41,8 @@ const MemoizedTableBody = React.memo(
 ) as typeof TableBody;
 
 interface ITableConfig {
-	defaultColumnMinSize: number;
-	defaultColumnMaxSize: number;
+	defaultColumnMinSize?: number;
+	defaultColumnMaxSize?: number;
 }
 interface ITableV3Props<T> {
 	columns: ColumnDef<T, any>[];

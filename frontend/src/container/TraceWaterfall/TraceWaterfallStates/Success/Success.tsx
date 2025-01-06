@@ -10,8 +10,7 @@ import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
 // css config
-const COLUMN_MIN_SIZE = 200;
-const COLUMN_MAX_SIZE = 8000;
+const COLUMN_MIN_SIZE = 50;
 const CONNECTOR_WIDTH = 28;
 const VERTICAL_CONNECTOR_WIDTH = 1;
 interface ISuccessProps {
@@ -56,6 +55,8 @@ function SpanOverview({
 						width: `${CONNECTOR_WIDTH}px`,
 						height: '1px',
 						border: '1px solid lightgray',
+						display: 'flex',
+						flexShrink: 0,
 						position: 'relative',
 						top: '-10px',
 					}}
@@ -137,10 +138,11 @@ function getWaterfallColumns({
 					interestedSpanId={interestedSpanId}
 				/>
 			),
+			size: 400,
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
-			header: 'timeline',
+			header: () => <span>heiji</span>,
 			cell: (props): JSX.Element => (
 				<SpanDuration
 					span={props.row.original}
@@ -196,7 +198,6 @@ function Success(props: ISuccessProps): JSX.Element {
 				data={spans}
 				config={{
 					defaultColumnMinSize: COLUMN_MIN_SIZE,
-					defaultColumnMaxSize: COLUMN_MAX_SIZE,
 				}}
 				customClassName="waterfall-table"
 			/>
