@@ -2,8 +2,6 @@ package kafka
 
 import (
 	"fmt"
-	"go.uber.org/zap"
-
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -139,19 +137,7 @@ func CeleryClickHouseQuery(
 	unixMilliStart := messagingQueue.Start / 1000000
 	unixMilliEnd := messagingQueue.End / 1000000
 
-	var kind string
-	//var status string
-	//var taskName string
-
-	if value, ok := messagingQueue.Variables["kind"]; !ok {
-		zap.L().Error("kind not found in celery /api/v1/messaging-queues/celery/tasks api call")
-		kind = value
-	}
-	if _, ok := messagingQueue.Variables["status"]; !ok {
-		zap.L().Error("status not found in celery /api/v1/messaging-queues/celery/tasks api call")
-		//status = value
-	}
-	//taskName, _ = messagingQueue.Variables["status"]
+	kind := messagingQueue.Variables["kind"]
 
 	var cq *v3.CompositeQuery
 
