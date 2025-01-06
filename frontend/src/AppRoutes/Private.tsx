@@ -113,7 +113,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const navigateToWorkSpaceBlocked = (route: any): void => {
 		const { path } = route;
 
-		if (path && path !== ROUTES.WORKSPACE_LOCKED) {
+		if (
+			path &&
+			path !== ROUTES.WORKSPACE_LOCKED &&
+			path !== ROUTES.ORG_SETTINGS &&
+			path !== ROUTES.BILLING
+		) {
 			history.push(ROUTES.WORKSPACE_LOCKED);
 		}
 	};
