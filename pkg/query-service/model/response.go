@@ -291,6 +291,7 @@ type Span struct {
 
 	// the below two fields are for frontend to render the spans
 	HasChildren bool  `json:"hasChildren"`
+	HasSiblings bool  `json:"hasSiblings"`
 	Level       int64 `json:"level"`
 }
 

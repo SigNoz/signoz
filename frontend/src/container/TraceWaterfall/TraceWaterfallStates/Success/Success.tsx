@@ -1,16 +1,19 @@
 import './Success.styles.scss';
 
+import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Button, Typography } from 'antd';
 import cx from 'classnames';
-import {
-	FIXED_LEFT_PADDING_BASE,
-	TraceWaterfallStates,
-} from 'container/TraceWaterfall/constants';
+import { TableV3 } from 'components/TableV3/TableV3';
+import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
-import { ListRange, Virtuoso } from 'react-virtuoso';
 import { Span } from 'types/api/trace/getTraceV2';
 
+// css config
+const COLUMN_MIN_SIZE = 200;
+const COLUMN_MAX_SIZE = 8000;
+const CONNECTOR_WIDTH = 28;
+const VERTICAL_CONNECTOR_WIDTH = 1;
 interface ISuccessProps {
 	spans: Span[];
 	traceWaterfallState: TraceWaterfallStates;
@@ -18,6 +21,136 @@ interface ISuccessProps {
 	uncollapsedNodes: string[];
 	setInterestedSpanId: Dispatch<SetStateAction<string | null>>;
 	setUncollapsedNodes: Dispatch<SetStateAction<string[]>>;
+}
+
+function SpanOverview({
+	span,
+	isSpanCollapsed,
+	interestedSpanId,
+	handleCollapseUncollapse,
+}: {
+	span: Span;
+	isSpanCollapsed: boolean;
+	interestedSpanId: string;
+	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
+}): JSX.Element {
+	const isRootSpan = span.parentSpanId === '';
+	return (
+		<div
+			className={cx(
+				'span-overview',
+				interestedSpanId === span.spanId ? 'interested-span' : '',
+			)}
+			style={{
+				marginLeft: `${
+					isRootSpan
+						? span.level * CONNECTOR_WIDTH
+						: (span.level - 1) * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
+				}px`,
+				borderLeft: isRootSpan ? 'none' : `1px solid lightgray`,
+			}}
+		>
+			{!isRootSpan && (
+				<div
+					style={{
+						width: `${CONNECTOR_WIDTH}px`,
+						height: '1px',
+						border: '1px solid lightgray',
+						position: 'relative',
+						top: '-10px',
+					}}
+				/>
+			)}
+			<div className="span-overview-content">
+				<section className="first-row">
+					{span.hasChildren ? (
+						<Button
+							onClick={(): void =>
+								handleCollapseUncollapse(span.spanId, !isSpanCollapsed)
+							}
+							className="collapse-uncollapse-button"
+						>
+							{isSpanCollapsed ? (
+								<ChevronRight size={14} />
+							) : (
+								<ChevronDown size={14} />
+							)}
+							<Typography.Text className="children-count">XX</Typography.Text>
+						</Button>
+					) : (
+						<Button className="collapse-uncollapse-button">
+							<Leaf size={14} />
+						</Button>
+					)}
+					<Typography.Text className="span-name">{span.name}</Typography.Text>
+				</section>
+				<section className="second-row">
+					<div style={{ width: '1px', background: 'lightgray', height: '100%' }} />
+					<Typography.Text className="service-name">
+						{span.serviceName}
+					</Typography.Text>
+					<Typography.Text>.</Typography.Text>
+					<Typography.Text>XX data</Typography.Text>
+				</section>
+			</div>
+		</div>
+	);
+}
+
+function SpanDuration({
+	span,
+	interestedSpanId,
+}: {
+	span: Span;
+	interestedSpanId: string;
+}): JSX.Element {
+	return (
+		<Typography.Text
+			className={cx(interestedSpanId === span.spanId ? 'interested-span' : '')}
+		>
+			{span.durationNano}
+		</Typography.Text>
+	);
+}
+
+// table config
+const columnDefHelper = createColumnHelper<Span>();
+
+function getWaterfallColumns({
+	handleCollapseUncollapse,
+	uncollapsedNodes,
+	interestedSpanId,
+}: {
+	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
+	uncollapsedNodes: string[];
+	interestedSpanId: string;
+}): ColumnDef<Span, any>[] {
+	const waterfallColumns: ColumnDef<Span, any>[] = [
+		columnDefHelper.display({
+			id: 'span-name',
+			header: '',
+			cell: (props): JSX.Element => (
+				<SpanOverview
+					span={props.row.original}
+					handleCollapseUncollapse={handleCollapseUncollapse}
+					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
+					interestedSpanId={interestedSpanId}
+				/>
+			),
+		}),
+		columnDefHelper.display({
+			id: 'span-duration',
+			header: 'timeline',
+			cell: (props): JSX.Element => (
+				<SpanDuration
+					span={props.row.original}
+					interestedSpanId={interestedSpanId}
+				/>
+			),
+		}),
+	];
+
+	return waterfallColumns;
 }
 
 function Success(props: ISuccessProps): JSX.Element {
@@ -30,117 +163,43 @@ function Success(props: ISuccessProps): JSX.Element {
 		setUncollapsedNodes,
 	} = props;
 
-	const initialTopMostItemIndex = useMemo(() => {
-		const index = spans.findIndex((node) => node.spanId === interestedSpanId);
+	console.log(traceWaterfallState);
 
-		if (index !== -1) {
-			return index;
-		}
-
-		return 0;
-	}, [interestedSpanId, spans]);
-
-	const handleRangeChanged = (range: ListRange): void => {
-		const { startIndex, endIndex } = range;
-		// if the start is reached and it's not the root span then fetch!
-		if (startIndex === 0 && spans[0].parentSpanId !== '') {
-			setInterestedSpanId(spans[0].spanId);
-			return;
-		}
-
-		// if the end is reached
-		if (endIndex === spans.length - 1) {
-			// and the startIndex is also present in the same range then it esentially means the trace ends in a single screen
-			if (startIndex === 0) {
-				return;
+	const handleCollapseUncollapse = useCallback(
+		(spanId: string, collapse: boolean) => {
+			console.log('here');
+			if (collapse) {
+				setUncollapsedNodes((prev) => prev.filter((id) => id === spanId));
+				setInterestedSpanId(spanId);
+			} else {
+				setUncollapsedNodes((prev) => [...prev, spanId]);
+				setInterestedSpanId(spanId);
 			}
-			// else fetch more spans
-			setInterestedSpanId(spans[spans.length - 1].spanId);
-		}
-	};
-
-	const getItemContent = useCallback(
-		(_: number, span: Span): JSX.Element => {
-			const isRootSpan = span.parentSpanId === '';
-			const leftMarginBeforeTheHorizontalConnector =
-				span.level > 0
-					? `${(span.level - 1) * (FIXED_LEFT_PADDING_BASE + 1)}px`
-					: '0px';
-
-			const isUnCollapsed = uncollapsedNodes.includes(span.spanId);
-			return (
-				// do not crop the service names and let the window overflow.
-				// the pane height changes needs to be addressed by resizable columns
-				<div
-					className={cx('span-item', !isRootSpan ? 'vertical-connector' : '')}
-					style={{ marginLeft: leftMarginBeforeTheHorizontalConnector }}
-				>
-					<div className="first-row">
-						{!isRootSpan && (
-							<div
-								className="horizontal-connector"
-								style={{ width: `${FIXED_LEFT_PADDING_BASE}px` }}
-							/>
-						)}
-						{span.hasChildren ? (
-							<Button
-								icon={
-									isUnCollapsed ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-								}
-								onClick={(): void => {
-									setInterestedSpanId(span.spanId);
-
-									if (isUnCollapsed) {
-										setUncollapsedNodes((prev) =>
-											prev.filter((id) => id !== span.spanId),
-										);
-									} else {
-										setUncollapsedNodes((prev) => [...prev, span.spanId]);
-									}
-								}}
-								className="collapse-uncollapse-button"
-							/>
-						) : (
-							<Button
-								icon={<Leaf size={14} />}
-								className="collapse-uncollapse-button"
-							/>
-						)}
-						<Typography.Text>{span.name}</Typography.Text>
-					</div>
-					<div
-						className="second-row"
-						style={{
-							marginLeft: !isRootSpan ? `${FIXED_LEFT_PADDING_BASE}px` : '0px',
-						}}
-					>
-						<Typography.Text>{span.serviceName}</Typography.Text>
-					</div>
-				</div>
-			);
 		},
-		[setInterestedSpanId, setUncollapsedNodes, uncollapsedNodes],
+		[setInterestedSpanId, setUncollapsedNodes],
+	);
+
+	const columns = useMemo(
+		() =>
+			getWaterfallColumns({
+				handleCollapseUncollapse,
+				uncollapsedNodes,
+				interestedSpanId,
+			}),
+		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId],
 	);
 
 	return (
-		<div className="success-cotent">
-			{traceWaterfallState ===
-				TraceWaterfallStates.FETCHING_WITH_OLD_DATA_PRESENT &&
-				interestedSpanId === spans[0].spanId && (
-					<Typography.Text>Fetching Spans....</Typography.Text>
-				)}
-			<Virtuoso
-				style={{ height: '100%' }}
+		<div className="success-content">
+			<TableV3
+				columns={columns}
 				data={spans}
-				rangeChanged={handleRangeChanged}
-				itemContent={getItemContent}
-				initialTopMostItemIndex={initialTopMostItemIndex}
+				config={{
+					defaultColumnMinSize: COLUMN_MIN_SIZE,
+					defaultColumnMaxSize: COLUMN_MAX_SIZE,
+				}}
+				customClassName="waterfall-table"
 			/>
-			{traceWaterfallState ===
-				TraceWaterfallStates.FETCHING_WITH_OLD_DATA_PRESENT &&
-				interestedSpanId === spans[spans.length - 1].spanId && (
-					<Typography.Text>Fetching Spans....</Typography.Text>
-				)}
 		</div>
 	);
 }

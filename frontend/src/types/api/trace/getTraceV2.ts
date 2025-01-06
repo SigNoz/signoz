@@ -27,6 +27,7 @@ export interface Span {
 	statusCodeString: string;
 	spanKind: string;
 	hasChildren: boolean;
+	hasSibling: boolean;
 	level: number;
 }
 

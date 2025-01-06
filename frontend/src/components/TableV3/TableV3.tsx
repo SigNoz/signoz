@@ -7,6 +7,7 @@ import {
 	Table,
 	useReactTable,
 } from '@tanstack/react-table';
+import cx from 'classnames';
 import React, { useMemo } from 'react';
 
 // here we are manually rendering the table body so that we can memoize the same for performant re-renders
@@ -24,7 +25,7 @@ function TableBody<T>({ table }: { table: Table<T> }): JSX.Element {
 								width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
 							}}
 						>
-							{cell.renderValue<any>()}
+							{flexRender(cell.column.columnDef.cell, cell.getContext())}
 						</div>
 					))}
 				</div>
@@ -47,10 +48,11 @@ interface ITableV3Props<T> {
 	columns: ColumnDef<T, any>[];
 	data: T[];
 	config: ITableConfig;
+	customClassName?: string;
 }
 
 export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
-	const { data, columns, config } = props;
+	const { data, columns, config, customClassName = '' } = props;
 
 	const table = useReactTable({
 		data,
@@ -61,9 +63,10 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		},
 		columnResizeMode: 'onChange',
 		getCoreRowModel: getCoreRowModel(),
-		debugTable: true,
-		debugHeaders: true,
-		debugColumns: true,
+		// turn on these flags to get debug logs from these instances
+		debugTable: false,
+		debugHeaders: false,
+		debugColumns: false,
 	});
 
 	/**
@@ -85,7 +88,7 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 	}, [table.getState().columnSizingInfo, table.getState().columnSizing]);
 
 	return (
-		<div className="p-2">
+		<div className={cx('p-2', customClassName)}>
 			{/* Here in the <table> equivalent element (surrounds all table head and data cells), we will define our CSS variables for column sizes */}
 			<div
 				className="div-table"
@@ -133,3 +136,7 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		</div>
 	);
 }
+
+TableV3.defaultProps = {
+	customClassName: '',
+};
