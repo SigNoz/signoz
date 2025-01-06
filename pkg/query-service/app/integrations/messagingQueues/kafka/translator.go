@@ -6,6 +6,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"strings"
 )
 
 var defaultStepInterval int64 = 60
@@ -320,6 +321,34 @@ func BuildQRParamsWithCache(
 	return queryRangeParams, err
 }
 
+func getFilters(variables map[string]string) *QueueFilters {
+	return &QueueFilters{
+		ServiceName: parseFilter(variables["service_name"]),
+		SpanName:    parseFilter(variables["span_name"]),
+		Queue:       parseFilter(variables["queue"]),
+		Destination: parseFilter(variables["destination"]),
+		Kind:        parseFilter(variables["kind"]),
+	}
+}
+
+// parseFilter splits a comma-separated string into a []string.
+// Returns an empty slice if the input is blank.
+func parseFilter(val string) []string {
+	if val == "" {
+		return []string{}
+	}
+	// Split on commas, trim whitespace around each part
+	parts := strings.Split(val, ",")
+	var out []string
+	for _, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		if trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
 func BuildClickHouseQuery(
 	messagingQueue *MessagingQueue,
 	queueType string,
@@ -357,7 +386,7 @@ func BuildClickHouseQuery(
 
 	switch queryContext {
 	case "overview":
-		query = generateOverviewSQL(start, end)
+		query = generateOverviewSQL(start, end, getFilters(messagingQueue.Variables))
 	case "producer":
 		query = generateProducerSQL(start, end, topic, partition, queueType)
 	case "consumer":

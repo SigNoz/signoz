@@ -26,11 +26,11 @@ type OnboardingResponse struct {
 // QueueFilters
 // ToDo: add capability of dynamic filtering based on any of the filters
 type QueueFilters struct {
-	serviceName string
-	spanName    string
-	queue       string
-	destination string
-	kind        string
+	ServiceName []string
+	SpanName    []string
+	Queue       []string
+	Destination []string
+	Kind        []string
 }
 
 type CeleryTask struct {
