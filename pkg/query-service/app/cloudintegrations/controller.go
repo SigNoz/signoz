@@ -50,7 +50,7 @@ func (c *Controller) ListConnectedAccounts(
 		return nil, apiErr
 	}
 
-	accounts, apiErr := c.repo.listConnectedAccounts(ctx)
+	accounts, apiErr := c.repo.listConnected(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
@@ -60,27 +60,11 @@ func (c *Controller) ListConnectedAccounts(
 	}, nil
 }
 
-type UpsertAccountRequest struct {
-	AccountConfig CloudAccountConfig `json:"account_config"`
+type GenerateConnectionUrlRequest struct {
 	// Optional. To be specified for updates.
 	AccountId string `json:"account_id,omitempty"`
-}
 
-type CloudAccountConfig struct {
-	EnabledRegions []string `json:"regions"`
-}
-
-func (c *Controller) UpsertAccount(
-	ctx context.Context, cloudProvider string, req UpsertAccountRequest,
-) (
-	Account, *model.ApiError,
-) {
-	var account Account
-	return account, nil
-}
-
-type GenerateConnectionUrlRequest struct {
-	UpsertAccountRequest
+	AccountConfig AccountConfig `json:"account_config"`
 
 	AgentConfig SigNozAgentConfig `json:"agent_config"`
 }
@@ -102,13 +86,22 @@ func (c *Controller) GenerateConnectionUrl(
 		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
 	}
 
-	account, apiErr := c.UpsertAccount(ctx, cloudProvider, req.UpsertAccountRequest)
+	account, apiErr := c.repo.upsert(
+		ctx, req.AccountId, &req.AccountConfig, "", nil, nil,
+	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
+	// TODO(Raj): Add actual connection url after shipping
+	// cloudformation template for AWS integration
+	connectionUrl := fmt.Sprintf(
+		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration/",
+		req.AgentConfig.Region, req.AgentConfig.Region,
+	)
+
 	return &GenerateConnectionUrlResponse{
 		AccountId:     account.Id,
-		ConnectionUrl: "",
+		ConnectionUrl: connectionUrl,
 	}, nil
 }

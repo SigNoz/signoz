@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -35,17 +34,14 @@ func TestCloudIntegrationLifecycle(t *testing.T) {
 		AgentConfig: cloudintegrations.SigNozAgentConfig{
 			Region: "us-east-1",
 		},
-		UpsertAccountRequest: cloudintegrations.UpsertAccountRequest{
-			AccountConfig: cloudintegrations.CloudAccountConfig{
-				EnabledRegions: []string{"us-east-1", "us-east-2"},
-			},
+		AccountConfig: cloudintegrations.AccountConfig{
+			EnabledRegions: []string{"us-east-1", "us-east-2"},
 		},
 	})
-	spew.Dump(connectionUrlResp)
-	connectionUrl := connectionUrlResp.ConnectionUrl
-	require.NotEmpty(connectionUrl)
 	accountId := connectionUrlResp.AccountId
 	require.NotEmpty(accountId)
+	connectionUrl := connectionUrlResp.ConnectionUrl
+	require.NotEmpty(connectionUrl)
 
 	// Should be able to poll for account connection status
 
@@ -152,7 +148,7 @@ func (tb *CloudIntegrationsTestBed) GenerateConnectionUrlFromQS(
 	}
 
 	var resp cloudintegrations.GenerateConnectionUrlResponse
-	err = json.Unmarshal(dataJson, &result)
+	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into map[string]any")
 	}
