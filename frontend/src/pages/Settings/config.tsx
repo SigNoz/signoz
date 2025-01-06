@@ -2,13 +2,21 @@ import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
 import APIKeys from 'container/APIKeys/APIKeys';
+import CustomDomainSettings from 'container/CustomDomainSettings';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import { TFunction } from 'i18next';
-import { Backpack, BellDot, Building, Cpu, KeySquare } from 'lucide-react';
+import {
+	Backpack,
+	BellDot,
+	Building,
+	Cpu,
+	Globe,
+	KeySquare,
+} from 'lucide-react';
 
 export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
@@ -100,5 +108,18 @@ export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.API_KEYS,
 		key: ROUTES.API_KEYS,
+	},
+];
+
+export const customDomainSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: CustomDomainSettings,
+		name: (
+			<div className="periscope-tab">
+				<Globe size={16} /> {t('routes:custom_domain_settings').toString()}
+			</div>
+		),
+		route: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
 	},
 ];
