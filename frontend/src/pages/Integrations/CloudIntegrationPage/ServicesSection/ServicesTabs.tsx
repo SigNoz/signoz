@@ -39,7 +39,7 @@ function ServicesSection(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
 	const [activeService, setActiveService] = useState<string | null>(
-		urlQuery.get('service') || null,
+		urlQuery.get('service') || serviceDetails[0].id,
 	);
 
 	const handleServiceClick = (serviceId: string): void => {
