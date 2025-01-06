@@ -36,12 +36,13 @@ type QueueFilters struct {
 type CeleryTask struct {
 	kind   string
 	status string
+	name   string
 }
 
 type CeleryTasks interface {
 	GetKind() string
 	GetStatus() string
-	Set(string, string)
+	GetName() string
 }
 
 func (r *CeleryTask) GetKind() string {
@@ -52,7 +53,6 @@ func (r *CeleryTask) GetStatus() string {
 	return r.status
 }
 
-func (r *CeleryTask) Set(kind, status string) {
-	r.kind = kind
-	r.status = status
+func (r *CeleryTask) GetName() string {
+	return r.name
 }
