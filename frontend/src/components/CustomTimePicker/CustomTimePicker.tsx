@@ -3,6 +3,7 @@
 import './CustomTimePicker.styles.scss';
 
 import { Input, Popover, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
@@ -297,6 +298,18 @@ function CustomTimePicker({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname]);
 
+	const handleTimezoneHintClick = (e: React.MouseEvent): void => {
+		e.stopPropagation();
+		handleViewChange('timezone');
+		setIsOpenedFromFooter(false);
+		logEvent(
+			'DateTimePicker: Timezone picker opened from time range input badge',
+			{
+				page: location.pathname,
+			},
+		);
+	};
+
 	return (
 		<div className="custom-time-picker">
 			<Popover
@@ -360,14 +373,7 @@ function CustomTimePicker({
 					suffix={
 						<>
 							{!!isTimezoneOverridden && activeTimezoneOffset && (
-								<div
-									className="timezone-badge"
-									onClick={(e): void => {
-										e.stopPropagation();
-										handleViewChange('timezone');
-										setIsOpenedFromFooter(false);
-									}}
-								>
+								<div className="timezone-badge" onClick={handleTimezoneHintClick}>
 									<span>{activeTimezoneOffset}</span>
 								</div>
 							)}

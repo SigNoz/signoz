@@ -1,15 +1,17 @@
 import * as Sentry from '@sentry/react';
 import { FeatureKeys } from 'constants/features';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { useAppContext } from 'providers/App/App';
 
 import ServiceMetrics from './ServiceMetrics';
 import ServiceTraces from './ServiceTraces';
 import { Container } from './styles';
 
 function Services(): JSX.Element {
-	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>

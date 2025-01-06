@@ -126,7 +126,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 						return (
 							<TableHeaderCellStyled
-								$isTimestamp={column.key === 'timestamp'}
+								$isLogIndicator={column.key === 'state-indicator'}
 								$isDarkMode={isDarkMode}
 								$isDragColumn={isDragColumn}
 								key={column.key}

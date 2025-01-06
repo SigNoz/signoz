@@ -2,14 +2,12 @@ import { Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
 import Spinner from 'components/Spinner';
+import { useAppContext } from 'providers/App/App';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { TTTLType } from 'types/api/settings/common';
 import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
-import AppReducer from 'types/reducer/app';
 
 import GeneralSettingsContainer from './GeneralSettings';
 
@@ -19,7 +17,7 @@ type TRetentionAPIReturn<T extends TTTLType> = Promise<
 
 function GeneralSettings(): JSX.Element {
 	const { t } = useTranslation('common');
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [
 		getRetentionPeriodMetricsApiResponse,
