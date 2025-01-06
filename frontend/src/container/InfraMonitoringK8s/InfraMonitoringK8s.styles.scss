@@ -272,7 +272,7 @@
 				.group-by-label {
 					min-width: max-content;
 
-					color: var(--Vanilla-400, #c0c1c3);
+					color: var(--bg-vanilla-100, #c0c1c3);
 					font-size: 13px;
 					font-style: normal;
 					font-weight: 400;
@@ -280,9 +280,9 @@
 					letter-spacing: -0.07px;
 
 					border-radius: 2px 0px 0px 2px;
-					border: 1px solid var(--Slate-400, #1d212d);
+					border: 1px solid var(--bg-slate-400, #1d212d);
 					border-right: none;
-					background: var(--Ink-300, #16181d);
+					background: var(--bg-ink-100, #16181d);
 					border-top-right-radius: 0px;
 					border-bottom-right-radius: 0px;
 
@@ -387,7 +387,7 @@
 			}
 
 			.hostname-column-value {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100);
 				font-family: 'Geist Mono';
 				font-style: normal;
 				font-weight: 600;

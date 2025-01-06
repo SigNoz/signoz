@@ -19,7 +19,6 @@ import {
 } from './constants';
 import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
-import Volumes from './Volumes/Volumes';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -312,8 +311,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
 						)}
-
-						{selectedCategory === K8sCategories.VOLUMES && <Volumes />}
 					</div>
 				</div>
 			</div>

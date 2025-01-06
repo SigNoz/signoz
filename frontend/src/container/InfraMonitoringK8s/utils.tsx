@@ -2,6 +2,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './InfraMonitoringK8s.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
@@ -313,7 +314,7 @@ const getGroupByEle = (
 	return (
 		<div className="pod-group">
 			{groupByValues.map((value) => (
-				<Tag key={value} color="#1D212D" className="pod-group-tag-item">
+				<Tag key={value} color={Color.BG_SLATE_400} className="pod-group-tag-item">
 					{value === '' ? '<no-value>' : value}
 				</Tag>
 			))}

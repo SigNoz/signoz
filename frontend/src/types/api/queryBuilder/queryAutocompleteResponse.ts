@@ -19,7 +19,7 @@ export interface BaseAutocompleteData {
 	dataType?: DataTypes;
 	isColumn?: boolean;
 	key: string;
-	type?: AutocompleteType | string | null;
+	type: AutocompleteType | string | null;
 	isJSON?: boolean;
 	isIndexed?: boolean;
 }

@@ -93,9 +93,11 @@ function K8sNodesList({
 			baseFilters.items.push({
 				key: {
 					key: key.key,
+					type: null,
 				},
 				op: '=',
 				value: groupedByMeta[key.key],
+				id: key.key,
 			});
 		}
 

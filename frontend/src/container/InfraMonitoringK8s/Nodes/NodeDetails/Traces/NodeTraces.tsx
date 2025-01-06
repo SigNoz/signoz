@@ -1,5 +1,6 @@
 import './NodeTraces.styles.scss';
 
+import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -25,7 +26,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { getNodeTracesQueryPayload, selectedColumns } from './constants';
-import { getListColumns } from './utils';
 
 interface Props {
 	timeRange: {

@@ -11,6 +11,8 @@ import {
 	Typography,
 } from 'antd';
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
+import get from 'api/browser/localstorage/get';
+import set from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
@@ -23,10 +25,6 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import {
-	getFromLocalStorage,
-	updateLocalStorage,
-} from 'utils/localStorageReadWrite';
 
 import {
 	K8sCategory,
@@ -107,7 +105,7 @@ function K8sPodsList({
 	);
 
 	useEffect(() => {
-		const addedColumns = getFromLocalStorage('k8sPodsAddedColumns');
+		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '');
 
 		if (addedColumns && addedColumns.length > 0) {
 			const availableColumns = defaultAvailableColumns.filter(
@@ -176,9 +174,11 @@ function K8sPodsList({
 			baseFilters.items.push({
 				key: {
 					key,
+					type: null,
 				},
 				op: '=',
 				value: groupedByMeta[key],
+				id: key,
 			});
 		}
 
@@ -363,7 +363,7 @@ function K8sPodsList({
 	useEffect(() => {
 		const addedColumnIDs = addedColumns.map((column) => column.id);
 
-		updateLocalStorage('k8sPodsAddedColumns', addedColumnIDs);
+		set('k8sPodsAddedColumns', JSON.stringify(addedColumnIDs));
 	}, [addedColumns]);
 
 	useEffect(() => {

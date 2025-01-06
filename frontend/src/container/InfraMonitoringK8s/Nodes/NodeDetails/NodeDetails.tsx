@@ -5,6 +5,7 @@ import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -41,7 +42,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS, VIEW_TYPES, VIEWS } from './constants';
+import { QUERY_KEYS } from './constants';
 import NodeEvents from './Events';
 import NodeLogs from './Logs';
 import NodeMetrics from './Metrics';
