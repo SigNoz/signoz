@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -124,6 +125,101 @@ func buildBuilderQueriesProducerBytes(
 		},
 	}
 	bq[queryName] = chq
+	return bq, nil
+}
+
+func CeleryClickHouseQuery(
+	messagingQueue *MessagingQueue,
+	queryContext string,
+) (*v3.QueryRangeParamsV3, error) {
+
+	//start := messagingQueue.Start
+	//end := messagingQueue.End
+
+	unixMilliStart := messagingQueue.Start / 1000000
+	unixMilliEnd := messagingQueue.End / 1000000
+
+	var kind string
+	//var status string
+	//var taskName string
+
+	if value, ok := messagingQueue.Variables["kind"]; !ok {
+		zap.L().Error("kind not found in celery /api/v1/messaging-queues/celery/tasks api call")
+		kind = value
+	}
+	if _, ok := messagingQueue.Variables["status"]; !ok {
+		zap.L().Error("status not found in celery /api/v1/messaging-queues/celery/tasks api call")
+		//status = value
+	}
+	//taskName, _ = messagingQueue.Variables["status"]
+
+	var cq *v3.CompositeQuery
+
+	switch queryContext {
+	case "celery-overview":
+
+		metrics := ""
+
+		if kind == "worker" {
+			metrics = "flower_worker_online"
+		} else if kind == "tasks" {
+			metrics = "flower_worker_number_of_currently_executing_tasks"
+		}
+
+		query, err := buildCeleryOverviewQuery(metrics, queryContext)
+		if err != nil {
+			return nil, err
+		}
+		cq = &v3.CompositeQuery{
+			QueryType:      v3.QueryTypeBuilder,
+			BuilderQueries: query,
+			PanelType:      v3.PanelTypeGraph,
+			FillGaps:       false,
+		}
+	}
+	queryRangeParams := &v3.QueryRangeParamsV3{
+		Start:          unixMilliStart,
+		End:            unixMilliEnd,
+		Step:           defaultStepInterval,
+		CompositeQuery: cq,
+		Version:        "v4",
+		FormatForWeb:   true,
+	}
+
+	return queryRangeParams, nil
+
+}
+
+func buildCeleryOverviewQuery(metrics string, queryContext string) (map[string]*v3.BuilderQuery, error) {
+	bq := make(map[string]*v3.BuilderQuery)
+
+	chq := &v3.BuilderQuery{
+		QueryName:  queryContext,
+		DataSource: v3.DataSourceMetrics,
+
+		AggregateAttribute: v3.AttributeKey{
+			Key:      metrics, // flower_worker_online
+			DataType: v3.AttributeKeyDataTypeFloat64,
+			Type:     v3.AttributeKeyType("Gauge"),
+			IsColumn: true,
+			IsJSON:   false,
+		},
+
+		Temporality:      v3.Unspecified,
+		TimeAggregation:  v3.TimeAggregationAnyLast,
+		SpaceAggregation: v3.SpaceAggregationAvg,
+
+		Expression: queryContext,
+		ReduceTo:   v3.ReduceToOperatorAvg,
+		GroupBy: []v3.AttributeKey{
+			{
+				Key:      "worker",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+			},
+		},
+	}
+	bq[queryContext] = chq
 	return bq, nil
 }
 
