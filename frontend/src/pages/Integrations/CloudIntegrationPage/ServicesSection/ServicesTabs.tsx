@@ -1,16 +1,24 @@
+import './ServicesTabs.style.scss';
+
 import { Color } from '@signozhq/design-tokens';
 import type { SelectProps, TabsProps } from 'antd';
-import { Select, Tabs } from 'antd';
+import { Button, Select, Table, Tabs } from 'antd';
 import cx from 'classnames';
-import { ChevronDown } from 'lucide-react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { ChevronDown, Wrench } from 'lucide-react';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
+
+import { serviceDetails, services } from './data';
+import { Service, ServiceData } from './types';
 
 const selectOptions: SelectProps['options'] = [
 	{ value: 'all_services', label: 'All Services (24)' },
 	{ value: 'enabled', label: 'Enabled (12)' },
 	{ value: 'available', label: 'Available (12)' },
 ];
+
 function ServicesFilter(): JSX.Element {
 	return (
 		<div className="services-filter">
@@ -33,21 +41,25 @@ function ServiceItem({
 	onClick,
 	isActive,
 }: {
-	service: { name: string; icon: string };
+	service: Service;
 	onClick: (serviceName: string) => void;
 	isActive?: boolean;
 }): JSX.Element {
 	return (
 		<button
 			className={cx('service-item', { active: isActive })}
-			onClick={(): void => onClick(service.name)}
+			onClick={(): void => onClick(service.id)}
 			type="button"
 		>
 			<div className="service-item__icon-wrapper">
-				<img src={service.icon} alt="aws-logo" className="service-item__icon" />
+				<img
+					src={service.icon}
+					alt={service.title}
+					className="service-item__icon"
+				/>
 			</div>
-			<div className="service-item__name">
-				<LineClampedText text={service.name} />
+			<div className="service-item__title">
+				<LineClampedText text={service.title} />
 			</div>
 		</button>
 	);
@@ -59,58 +71,208 @@ ServiceItem.defaultProps = {
 
 function ServicesList({
 	services,
+	onClick,
+	activeService,
 }: {
-	services: { name: string; icon: string }[];
+	services: Service[];
+	onClick: (serviceName: string) => void;
+	activeService: string | null;
 }): JSX.Element {
-	const [activeService, setActiveService] = useState<string | null>(null);
-	const handleServiceClick = (serviceName: string): void => {
-		setActiveService(serviceName);
-	};
 	return (
 		<div className="services-list">
 			{services.map((service) => (
 				<ServiceItem
-					key={service.name}
+					key={service.id}
 					service={service}
-					isActive={activeService === service.name}
-					onClick={handleServiceClick}
+					isActive={activeService === service.id}
+					onClick={onClick}
 				/>
 			))}
 		</div>
 	);
 }
 
-function ServicesSection(): JSX.Element {
-	const services = [
+function DashboardItem({
+	dashboard,
+}: {
+	dashboard: ServiceData['assets']['dashboards'][number];
+}): JSX.Element {
+	return (
+		<div className="cloud-service-dashboard-item">
+			<div className="cloud-service-dashboard-item__title">{dashboard.title}</div>
+			<div className="cloud-service-dashboard-item__preview">
+				<img
+					src={dashboard.image}
+					alt={dashboard.title}
+					className="cloud-service-dashboard-item__preview-image"
+				/>
+			</div>
+		</div>
+	);
+}
+
+function DashboardsTab({ service }: { service: ServiceData }): JSX.Element {
+	return (
+		<>
+			{service.assets.dashboards.map((dashboard) => (
+				<DashboardItem key={dashboard.id} dashboard={dashboard} />
+			))}
+		</>
+	);
+}
+
+function CloudServiceDataCollected({
+	logsData,
+	metricsData,
+}: {
+	logsData: ServiceData['data_collected']['logs'];
+	metricsData: ServiceData['data_collected']['metrics'];
+}): JSX.Element {
+	const logsColumns = [
 		{
-			name: 'Amazon EKS',
-			icon: '/Logos/aws-dark.svg?a=1',
-			description:
-				'Amazon Elastic Kubernetes Service (EKS) is a managed Kubernetes service that automates certain aspects of deployment and maintenance for any standard Kubernetes environment. Whether you are migrating an existing Kubernetes application to Amazon EKS, or are deploying a new cluster on Amazon EKS on AWS Outposts',
+			title: 'NAME',
+			dataIndex: 'name',
+			key: 'name',
+			width: '30%',
 		},
 		{
-			name: 'Amazon S3',
-			icon: '/Logos/aws-dark.svg?a=2',
-			description:
-				'Amazon S3 is a managed Kubernetes service that automates certain aspects of deployment and maintenance for any standard Kubernetes environment. Whether you are migrating an existing Kubernetes application to Amazon EKS, or are deploying a new cluster on Amazon EKS on AWS Outposts',
+			title: 'PATH',
+			dataIndex: 'path',
+			key: 'path',
+			width: '40%',
 		},
 		{
-			name: 'Amazon DynamoDB',
-			icon: '/Logos/aws-dark.svg?a=3',
-			description:
-				'Amazon DynamoDB is a managed Kubernetes service that automates certain aspects of deployment and maintenance for any standard Kubernetes environment. Whether you are migrating an existing Kubernetes application to Amazon EKS, or are deploying a new cluster on Amazon EKS on AWS Outposts',
+			title: 'FACET TYPE',
+			dataIndex: 'type',
+			key: 'type',
+			width: '30%',
 		},
 	];
+
+	const metricsColumns = [
+		{
+			title: 'NAME',
+			dataIndex: 'name',
+			key: 'name',
+			width: '40%',
+		},
+		{
+			title: 'UNIT',
+			dataIndex: 'unit',
+			key: 'unit',
+			width: '30%',
+		},
+		{
+			title: 'TYPE',
+			dataIndex: 'type',
+			key: 'type',
+			width: '30%',
+		},
+	];
+
+	const tableProps = {
+		pagination: { pageSize: 20, hideOnSinglePage: true },
+		showHeader: true,
+		size: 'middle' as const,
+		bordered: false,
+	};
+
+	return (
+		<div className="cloud-service-data-collected">
+			<div className="cloud-service-data-collected__table">
+				<div className="cloud-service-data-collected__table-heading">Logs</div>
+				<Table
+					columns={logsColumns}
+					dataSource={logsData}
+					// eslint-disable-next-line react/jsx-props-no-spreading
+					{...tableProps}
+					className="cloud-service-data-collected__table-logs"
+				/>
+			</div>
+			<div className="cloud-service-data-collected__table">
+				<div className="cloud-service-data-collected__table-heading">Metrics</div>
+				<Table
+					columns={metricsColumns}
+					dataSource={metricsData}
+					// eslint-disable-next-line react/jsx-props-no-spreading
+					{...tableProps}
+					className="cloud-service-data-collected__table-metrics"
+				/>
+			</div>
+		</div>
+	);
+}
+
+function DataCollectedTab({ service }: { service: ServiceData }): JSX.Element {
+	return (
+		<CloudServiceDataCollected
+			logsData={service.data_collected.logs || []}
+			metricsData={service.data_collected.metrics || []}
+		/>
+	);
+}
+
+function ServiceDetails({ service }: { service: ServiceData }): JSX.Element {
+	const tabItems: TabsProps['items'] = [
+		{
+			key: 'dashboards',
+			label: `Dashboards (${service.assets.dashboards.length})`,
+			children: <DashboardsTab service={service} />,
+		},
+		{
+			key: 'data-collected',
+			label: 'Data Collected',
+			children: <DataCollectedTab service={service} />,
+		},
+	];
+	return (
+		<div className="service-details">
+			<div className="service-details__title-bar">
+				<div className="service-details__details-title">Details</div>
+				<div className="service-details__right-actions">
+					<Button className="configure-button">
+						<Wrench size={12} color={Color.BG_VANILLA_400} />
+						Configure
+					</Button>
+				</div>
+			</div>
+			<div className="service-details__overview">{service.overview}</div>
+			<div className="service-details__tabs">
+				<Tabs items={tabItems} />
+			</div>
+		</div>
+	);
+}
+
+function ServicesSection(): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const navigate = useNavigate();
+	const [activeService, setActiveService] = useState<string | null>(
+		urlQuery.get('service') || null,
+	);
+
+	const handleServiceClick = (serviceId: string): void => {
+		setActiveService(serviceId);
+		urlQuery.set('service', serviceId);
+		navigate({ search: urlQuery.toString() });
+	};
+
+	const activeServiceDetails = serviceDetails.find(
+		(service) => service.id === activeService,
+	);
+
 	return (
 		<div className="services-section">
 			<div className="services-section__sidebar">
 				<ServicesFilter />
-				<ServicesList services={services} />
+				<ServicesList
+					services={services}
+					onClick={handleServiceClick}
+					activeService={activeService}
+				/>
 			</div>
 			<div className="services-section__content">
-				Lorem ipsum, dolor sit amet consectetur adipisicing elit. Rem iure
-				voluptatibus iusto consectetur eius excepturi ut ex, sint possimus eos
-				fugiat tempore repellat ratione facere nemo nostrum optio ipsa nam?
+				{activeServiceDetails && <ServiceDetails service={activeServiceDetails} />}
 			</div>
 		</div>
 	);

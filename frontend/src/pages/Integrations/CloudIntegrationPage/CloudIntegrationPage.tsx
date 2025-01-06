@@ -1,4 +1,4 @@
-import './CloudIntegrationPage.scss';
+import './CloudIntegrationPage.style.scss';
 
 import Header from './Header/Header';
 import HeroSection from './HeroSection/HeroSection';
