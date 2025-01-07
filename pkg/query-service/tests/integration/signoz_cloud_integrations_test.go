@@ -95,11 +95,11 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	testAccountConfig2 := cloudintegrations.AccountConfig{
 		EnabledRegions: []string{"us-east-2", "us-west-1"},
 	}
-	latestAccount := testbed.UpdateAccountSettingsWithQS(
+	latestAccount := testbed.UpdateAccountConfigWithQS(
 		"aws", testAccountId, testAccountConfig2,
 	)
 	require.Equal(testAccountId, latestAccount.Id)
-	require.Equal(testAccountConfig2, latestAccount.Config)
+	require.Equal(testAccountConfig2, *latestAccount.Config)
 
 	// The agent should now receive latest settings.
 
@@ -244,14 +244,14 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 	return &resp
 }
 
-func (tb *CloudIntegrationsTestBed) UpdateAccountSettingsWithQS(
+func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 	cloudProvider string, accountId string, newConfig cloudintegrations.AccountConfig,
 ) *cloudintegrations.Account {
 	result := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/config",
 			cloudProvider, accountId,
-		), cloudintegrations.UpdateAccountSettingsRequest{
+		), cloudintegrations.UpdateAccountConfigRequest{
 			Config: newConfig,
 		},
 	)

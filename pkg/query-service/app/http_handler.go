@@ -3881,6 +3881,10 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 	).Methods(http.MethodGet)
 
 	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/{accountId}/config", am.EditAccess(aH.CloudIntegrationsUpdateAccountConfig),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
 		"/{cloudProvider}/agent-check-in", am.EditAccess(aH.CloudIntegrationsAgentCheckIn),
 	).Methods(http.MethodPost)
 
@@ -3955,6 +3959,30 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 
 	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
 		r.Context(), cloudProvider, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	accountId := mux.Vars(r)["accountId"]
+
+	req := cloudintegrations.UpdateAccountConfigRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
+		r.Context(), cloudProvider, accountId, req,
 	)
 
 	if apiErr != nil {

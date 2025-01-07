@@ -39,6 +39,7 @@ func NewController(db *sqlx.DB) (
 }
 
 type AccountsListResponse struct {
+	// TODO(Raj): Update shape of account in API response
 	Accounts []Account `json:"accounts"`
 }
 
@@ -191,4 +192,28 @@ func (c *Controller) CheckInAsAgent(
 	return &AgentCheckInResponse{
 		Account: *account,
 	}, nil
+}
+
+type UpdateAccountConfigRequest struct {
+	Config AccountConfig `json:"config"`
+}
+
+func (c *Controller) UpdateAccountConfig(
+	ctx context.Context,
+	cloudProvider string,
+	accountId string,
+	req UpdateAccountConfigRequest,
+) (*Account, *model.ApiError) {
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	account, apiErr := c.repo.upsert(
+		ctx, &accountId, &req.Config, nil, nil, nil,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
+	}
+
+	return account, nil
 }
