@@ -6,9 +6,16 @@ import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
+// import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
-import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+} from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
@@ -23,7 +30,7 @@ interface ITraceMetadata {
 interface ISuccessProps {
 	spans: Span[];
 	traceMetadata: ITraceMetadata;
-	traceWaterfallState: TraceWaterfallStates;
+	// traceWaterfallState: TraceWaterfallStates;
 	interestedSpanId: string;
 	uncollapsedNodes: string[];
 	setInterestedSpanId: Dispatch<SetStateAction<string | null>>;
@@ -123,8 +130,6 @@ function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
 
-	console.log(leftOffset);
-
 	return (
 		<div
 			className={cx(
@@ -199,20 +204,59 @@ function Success(props: ISuccessProps): JSX.Element {
 	const {
 		spans,
 		traceMetadata,
-		traceWaterfallState,
 		interestedSpanId,
 		uncollapsedNodes,
 		setInterestedSpanId,
 		setUncollapsedNodes,
 	} = props;
+	const topElementRef = useRef(null);
+	const bottomElementRef = useRef(null);
 
-	console.log(traceWaterfallState);
+	const handleEndReached = useCallback(() => {
+		setInterestedSpanId(spans[spans.length - 1].spanId);
+	}, [setInterestedSpanId, spans]);
+
+	const handleTopReached = useCallback(() => {
+		if (spans[0].parentSpanId !== '') {
+			setInterestedSpanId(spans[0].spanId);
+		}
+	}, [setInterestedSpanId, spans]);
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	useEffect(() => {
+		const topEl = topElementRef.current;
+		const bottomEl = bottomElementRef.current;
+		const observer = new IntersectionObserver(
+			async (entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						if (entry.target.id === 'bottomNode') {
+							handleEndReached();
+						}
+						if (entry.target.id === 'topNode') {
+							handleTopReached();
+						}
+					}
+				});
+			},
+			{
+				threshold: 1.0,
+			},
+		);
+
+		if (topElementRef.current) observer.observe(topElementRef.current);
+		if (bottomElementRef.current) observer.observe(bottomElementRef.current);
+
+		return (): void => {
+			if (topEl) observer.unobserve(topEl);
+			if (bottomEl) observer.unobserve(bottomEl);
+		};
+	}, [handleEndReached, handleTopReached]);
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
-			console.log('here');
 			if (collapse) {
-				setUncollapsedNodes((prev) => prev.filter((id) => id === spanId));
+				setUncollapsedNodes((prev) => prev.filter((id) => id !== spanId));
 				setInterestedSpanId(spanId);
 			} else {
 				setUncollapsedNodes((prev) => [...prev, spanId]);
@@ -235,12 +279,14 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<div className="success-content">
+			<div ref={topElementRef} id="topNode" />
 			<TableV3
 				columns={columns}
 				data={spans}
 				config={{}}
 				customClassName="waterfall-table"
 			/>
+			<div ref={bottomElementRef} id="bottomNode" />
 		</div>
 	);
 }
