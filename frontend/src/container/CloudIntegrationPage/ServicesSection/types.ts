@@ -59,4 +59,27 @@ interface ServiceData {
 	status?: ServiceStatus; // Optional - included only with account_id
 }
 
-export type { Service, ServiceData };
+interface CloudAccountConfig {
+	regions: string[];
+}
+
+interface IntegrationStatus {
+	last_heartbeat_ts_ms: number;
+}
+
+interface AccountStatus {
+	integration: IntegrationStatus;
+}
+
+interface CloudAccount {
+	id: string;
+	cloud_account_id: string;
+	config: CloudAccountConfig;
+	status: AccountStatus;
+}
+
+interface CloudAccountsData {
+	accounts: CloudAccount[];
+}
+
+export type { CloudAccount, CloudAccountsData, Service, ServiceData };

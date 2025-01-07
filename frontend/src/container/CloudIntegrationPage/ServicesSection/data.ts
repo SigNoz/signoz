@@ -1,4 +1,4 @@
-import { Service, ServiceData } from './types';
+import { CloudAccountsData, Service, ServiceData } from './types';
 
 const services: Service[] = [
 	{
@@ -135,4 +135,45 @@ const serviceDetails: ServiceData[] = [
 	},
 ];
 
-export { serviceDetails, services };
+const cloudAccountsData: CloudAccountsData = {
+	accounts: [
+		{
+			id: '3e585f2d-fd1e-43bf-8a3b-ee9d449cc626',
+			cloud_account_id: '443370682259',
+			config: {
+				regions: ['us-east-1', 'us-east-2', 'us-west-1', 'us-west-2'],
+			},
+			status: {
+				integration: {
+					last_heartbeat_ts_ms: 1709825467000,
+				},
+			},
+		},
+		{
+			id: '7a9b2c3d-4e5f-6g7h-8i9j-0k1l2m3n4o5p',
+			cloud_account_id: '123456789012',
+			config: {
+				regions: ['all'],
+			},
+			status: {
+				integration: {
+					last_heartbeat_ts_ms: 1709825467000,
+				},
+			},
+		},
+		{
+			id: '9p8o7n6m-5l4k-3j2i-1h0g-f4e3d2c1b0a',
+			cloud_account_id: '098765432109',
+			config: {
+				regions: ['eu-west-1', 'eu-central-1', 'ap-southeast-1'],
+			},
+			status: {
+				integration: {
+					last_heartbeat_ts_ms: 1709825467000,
+				},
+			},
+		},
+	],
+};
+
+export { cloudAccountsData, serviceDetails, services };

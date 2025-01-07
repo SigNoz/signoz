@@ -1,5 +1,8 @@
 import './HeroSection.style.scss';
 
+import { cloudAccountsData } from '../ServicesSection/data';
+import AccountActions from './AccountActions';
+
 function HeroSection(): JSX.Element {
 	return (
 		<div
@@ -15,11 +18,7 @@ function HeroSection(): JSX.Element {
 					Monitor your AWS infrastructure with SigNoz. Get metrics and logs from your
 					AWS services.
 				</div>
-				<div className="hero-section__buttons">
-					<button className="hero-section__button" type="button">
-						Integrate Now
-					</button>
-				</div>
+				<AccountActions accounts={cloudAccountsData.accounts} />
 			</div>
 		</div>
 	);
