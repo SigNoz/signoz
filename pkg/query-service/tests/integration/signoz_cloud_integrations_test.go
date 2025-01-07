@@ -92,6 +92,14 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAWSAccountId, *accountsListResp2.Accounts[0].CloudAccountId)
 
 	// Should be able to update account settings
+	testAccountConfig2 := cloudintegrations.AccountConfig{
+		EnabledRegions: []string{"us-east-2", "us-west-1"},
+	}
+	latestAccount := testbed.UpdateAccountSettingsWithQS(
+		"aws", testAccountId, testAccountConfig2,
+	)
+	require.Equal(testAccountId, latestAccount.Id)
+	require.Equal(testAccountConfig2, latestAccount.Config)
 
 	// The agent should now receive latest settings.
 
@@ -228,6 +236,32 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 	}
 
 	var resp cloudintegrations.AgentCheckInResponse
+	err = json.Unmarshal(dataJson, &resp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AgentCheckInResponse")
+	}
+
+	return &resp
+}
+
+func (tb *CloudIntegrationsTestBed) UpdateAccountSettingsWithQS(
+	cloudProvider string, accountId string, newConfig cloudintegrations.AccountConfig,
+) *cloudintegrations.Account {
+	result := tb.RequestQS(
+		fmt.Sprintf(
+			"/api/v1/cloud-integrations/%s/accounts/%s/config",
+			cloudProvider, accountId,
+		), cloudintegrations.UpdateAccountSettingsRequest{
+			Config: newConfig,
+		},
+	)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	var resp cloudintegrations.Account
 	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AgentCheckInResponse")
