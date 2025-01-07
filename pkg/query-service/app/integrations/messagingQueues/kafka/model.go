@@ -41,6 +41,8 @@ type QueueFilters struct {
 	Status   []string
 
 	TaskName []string
+
+	LatencyType []string
 }
 
 type CeleryTask struct {

@@ -5052,9 +5052,49 @@ func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) 
 }
 
 func (aH *APIHandler) getCeleryTasks(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery tasks logic for both state and list types
+
 }
 
 func (aH *APIHandler) getCeleryPerformance(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery performance logic for error, rate, and latency types
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	filters, err := mq.GetCeleryFilters(messagingQueue.Variables)
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.CeleryClickHouseQuery(messagingQueue, "celeryperformance", filters)
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
+		return
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: resultFetchLatency,
+	}
+	aH.Respond(w, resp)
 }
