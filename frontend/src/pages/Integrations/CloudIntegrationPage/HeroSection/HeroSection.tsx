@@ -1,3 +1,5 @@
+import './HeroSection.style.scss';
+
 function HeroSection(): JSX.Element {
 	return (
 		<div

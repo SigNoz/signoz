@@ -8,7 +8,7 @@ import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
@@ -36,12 +36,12 @@ function AlertDetailsStatusRenderer({
 	return <AlertHeader alertDetails={alertRuleDetails} />;
 }
 
-export function BreadCrumbItem({
+function BreadCrumbItem({
 	title,
 	isLast,
 	route,
 }: {
-	title: string | React.ReactNode | null;
+	title: string | null;
 	isLast?: boolean;
 	route?: string;
 }): JSX.Element {

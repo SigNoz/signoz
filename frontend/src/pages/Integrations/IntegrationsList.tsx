@@ -3,7 +3,7 @@
 import './Integrations.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, List, Tag, Typography } from 'antd';
+import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -115,11 +115,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 								<div className="list-item-details">
 									<Typography.Text className="heading">
 										{item.title}
-										{item.is_new && (
-											<Tag color="blue" className="heading__new-tag">
-												NEW
-											</Tag>
-										)}
+										{item.is_new && <div className="heading__new-tag">NEW</div>}
 									</Typography.Text>
 									<Typography.Text className="description">
 										{item.description}
