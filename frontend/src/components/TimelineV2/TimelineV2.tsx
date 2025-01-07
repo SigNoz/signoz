@@ -1,3 +1,5 @@
+import './TimelineV2.styles.scss';
+
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
@@ -16,19 +18,32 @@ interface ITimelineV2Props {
 
 function TimelineV2(props: ITimelineV2Props): JSX.Element {
 	const { startTimestamp, endTimestamp, timelineHeight } = props;
-	const isDarkMode = useIsDarkMode();
-	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const [intervals, setIntervals] = useState<Interval[]>([]);
+	const [ref, { width }] = useMeasure<HTMLDivElement>();
+	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
 		const spread = endTimestamp - startTimestamp;
+		if (spread < 0) {
+			return;
+		}
+
 		const minIntervals = getMinimumIntervalsBasedOnWidth(width);
-		const intervals = getIntervals((spread / minIntervals) * 1.0, spread);
-		setIntervals(intervals);
+		const intervalisedSpread = (spread / minIntervals) * 1.0;
+		setIntervals(getIntervals(intervalisedSpread, spread));
 	}, [startTimestamp, endTimestamp, width]);
 
+	if (endTimestamp < startTimestamp) {
+		console.error(
+			'endTimestamp cannot be less than startTimestamp',
+			startTimestamp,
+			endTimestamp,
+		);
+		return <div />;
+	}
+
 	return (
-		<div ref={ref as never} style={{ flex: 1, overflow: 'visible' }}>
+		<div ref={ref as never} className="timeline-v2-container">
 			<svg
 				width={width}
 				height={timelineHeight}
