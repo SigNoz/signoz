@@ -49,6 +49,10 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Nil(accountStatusResp.Status.Integration.LastHeartbeatTsMillis)
 
 	// The unconnected account should not show up in accounts list yet
+	accountsListResp1 := testbed.GetAccountsListFromQS("aws")
+	require.Equal(0, len(accountsListResp1.Accounts),
+		"No accounts should be connected at the beginning",
+	)
 
 	// An agent should be able to check in to the new account
 	// Should have the settings that were specified while generating connection url

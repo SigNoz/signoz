@@ -22,9 +22,9 @@ type cloudProviderAccountsRepository interface {
 	// Insert an account or update it by ID for specified non-empty fields
 	upsert(
 		ctx context.Context,
-		id string,
+		id *string,
 		config *AccountConfig,
-		cloudAccountId string,
+		cloudAccountId *string,
 		agentReport *AgentReport,
 		removedAt *time.Time,
 	) (*Account, *model.ApiError)
@@ -162,20 +162,22 @@ func (r *cloudProviderAccountsSQLRepository) get(
 
 func (r *cloudProviderAccountsSQLRepository) upsert(
 	ctx context.Context,
-	id string,
+	id *string,
 	config *AccountConfig,
-	cloudAccountId string,
+	cloudAccountId *string,
 	agentReport *AgentReport,
 	removedAt *time.Time,
 ) (*Account, *model.ApiError) {
 	// Insert
-	if len(id) < 1 {
+	if id == nil {
 		// config must be specified when inserting
 		if config == nil {
 			return nil, model.BadRequest(fmt.Errorf("account config is required"))
 		}
 
-		id = uuid.NewString()
+		newId := uuid.NewString()
+
+		id = &newId
 	}
 
 	// Prepare clause for setting values in `on conflict do update`
@@ -190,7 +192,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		)
 	}
 
-	if len(cloudAccountId) > 0 {
+	if cloudAccountId != nil {
 		onConflictUpdates = append(
 			onConflictUpdates, updateColStmt("cloud_account_id"),
 		)
@@ -228,7 +230,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		))
 	}
 
-	upsertedAccount, apiErr := r.get(ctx, id)
+	upsertedAccount, apiErr := r.get(ctx, *id)
 	if apiErr != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't fetch upserted account by id: %w", apiErr.ToError(),

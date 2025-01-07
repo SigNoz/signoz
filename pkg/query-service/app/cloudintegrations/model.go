@@ -11,7 +11,7 @@ import (
 type Account struct {
 	Id              string        `json:"id" db:"id"`
 	Config          AccountConfig `json:"config_json" db:"config_json"`
-	CloudAccountId  string        `json:"cloud_account_id" db:"cloud_account_id"`
+	CloudAccountId  *string       `json:"cloud_account_id" db:"cloud_account_id"`
 	LastAgentReport *AgentReport  `json:"last_agent_report_json" db:"last_agent_report_json"`
 	CreatedAt       time.Time     `json:"created_at" db:"created_at"`
 	RemovedAt       *time.Time    `json:"removed_at" db:"removed_at"`

@@ -62,7 +62,7 @@ func (c *Controller) ListConnectedAccounts(
 
 type GenerateConnectionUrlRequest struct {
 	// Optional. To be specified for updates.
-	AccountId string `json:"account_id,omitempty"`
+	AccountId *string `json:"account_id,omitempty"`
 
 	AccountConfig AccountConfig `json:"account_config"`
 
@@ -87,7 +87,7 @@ func (c *Controller) GenerateConnectionUrl(
 	}
 
 	account, apiErr := c.repo.upsert(
-		ctx, req.AccountId, &req.AccountConfig, "", nil, nil,
+		ctx, req.AccountId, &req.AccountConfig, nil, nil, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
