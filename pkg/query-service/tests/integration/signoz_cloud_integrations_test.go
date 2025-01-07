@@ -102,6 +102,15 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAccountConfig2, *latestAccount.Config)
 
 	// The agent should now receive latest settings.
+	agentCheckInResp1 := testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+	require.Equal(testAccountId, agentCheckInResp1.Account.Id)
+	require.Equal(testAccountConfig2, *agentCheckInResp1.Account.Config)
+	require.Equal(testAWSAccountId, *agentCheckInResp1.Account.CloudAccountId)
 
 	// Should be able to disconnect account.
 
