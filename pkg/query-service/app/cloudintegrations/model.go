@@ -47,8 +47,8 @@ func (c *AccountConfig) Value() (driver.Value, error) {
 }
 
 type AgentReport struct {
-	TimestampSeconds int64          `json:"timestamp"`
-	Data             map[string]any `json:"data"`
+	TimestampMillis int64          `json:"timestamp_millis"`
+	Data            map[string]any `json:"data"`
 }
 
 // For serializing from db

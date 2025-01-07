@@ -133,14 +133,26 @@ func (c *Controller) GetAccountStatus(
 		return nil, apiErr
 	}
 
-	return &AccountStatusResponse{
+	var lastAgentReportTsMillis *int64
+	if account.LastAgentReport != nil {
+		// TODO(Raj): Investigate why agent reports are scanned to empty values
+		// from NULL columns even when report is a pointer
+		lastReportTsMillis := account.LastAgentReport.TimestampMillis
+		if lastReportTsMillis > 0 {
+			lastAgentReportTsMillis = &lastReportTsMillis
+		}
+	}
+
+	resp := AccountStatusResponse{
 		Id: account.Id,
 		Status: AccountStatus{
 			Integration: AccountIntegrationStatus{
-				LastHeartbeatTsMillis: nil,
+				LastHeartbeatTsMillis: lastAgentReportTsMillis,
 			},
 		},
-	}, nil
+	}
+
+	return &resp, nil
 }
 
 type AgentCheckInRequest struct {
@@ -163,10 +175,12 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	agentReport := AgentReport{
-		TimestampSeconds: time.Now().Unix(),
-		Data:             req.Data,
+		TimestampMillis: time.Now().UnixMilli(),
+		Data:            req.Data,
 	}
 
+	// TODO(Raj): Consider ensuring cloudAccountId is not updated post insertion
+	// Consider getting the account by Id first to validate
 	account, apiErr := c.repo.upsert(
 		ctx, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
 	)

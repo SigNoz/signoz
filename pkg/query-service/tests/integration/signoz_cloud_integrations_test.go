@@ -60,6 +60,7 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 
 	// An agent should be able to check in to the new account
 	// Should get the settings that were specified while generating connection url
+	tsMillisBeforeAgentCheckIn := time.Now().UnixMilli()
 	testAWSAccountId := "4563215233"
 	agentCheckInResp := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
@@ -73,7 +74,14 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.LessOrEqual(t0.Unix(), agentCheckInResp.Account.CreatedAt.Unix())
 	require.Nil(agentCheckInResp.Account.RemovedAt)
 
-	// Polling for connection status should return latest status now.
+	// Polling for connection status should now return latest status
+	accountStatusResp1 := testbed.GetAccountStatusFromQS("aws", testAccountId)
+	require.Equal(testAccountId, accountStatusResp1.Id)
+	require.NotNil(accountStatusResp1.Status.Integration.LastHeartbeatTsMillis)
+	require.LessOrEqual(
+		tsMillisBeforeAgentCheckIn,
+		*accountStatusResp1.Status.Integration.LastHeartbeatTsMillis,
+	)
 
 	// The account should now show up in list of connected accounts.
 
