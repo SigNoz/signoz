@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
@@ -21,6 +22,7 @@ import (
 func TestAWSIntegrationLifecycle(t *testing.T) {
 	// Test for the happy path of connecting and managing AWS integration accounts
 
+	t0 := time.Now()
 	require := require.New(t)
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
@@ -30,22 +32,24 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	)
 
 	// Should be able to generate connection url - initializing an account
-	connectionUrlResp := testbed.GenerateConnectionUrlFromQS("aws", cloudintegrations.GenerateConnectionUrlRequest{
-		AgentConfig: cloudintegrations.SigNozAgentConfig{
-			Region: "us-east-1",
-		},
-		AccountConfig: cloudintegrations.AccountConfig{
-			EnabledRegions: []string{"us-east-1", "us-east-2"},
-		},
-	})
-	accountId := connectionUrlResp.AccountId
-	require.NotEmpty(accountId)
+	testAccountConfig := cloudintegrations.AccountConfig{
+		EnabledRegions: []string{"us-east-1", "us-east-2"},
+	}
+	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
+		"aws", cloudintegrations.GenerateConnectionUrlRequest{
+			AgentConfig: cloudintegrations.SigNozAgentConfig{
+				Region: "us-east-1",
+			},
+			AccountConfig: testAccountConfig,
+		})
+	testAccountId := connectionUrlResp.AccountId
+	require.NotEmpty(testAccountId)
 	connectionUrl := connectionUrlResp.ConnectionUrl
 	require.NotEmpty(connectionUrl)
 
 	// Should be able to poll for account connection status
-	accountStatusResp := testbed.GetAccountStatusFromQS("aws", accountId)
-	require.Equal(accountId, accountStatusResp.Id)
+	accountStatusResp := testbed.GetAccountStatusFromQS("aws", testAccountId)
+	require.Equal(testAccountId, accountStatusResp.Id)
 	require.Nil(accountStatusResp.Status.Integration.LastHeartbeatTsMillis)
 
 	// The unconnected account should not show up in accounts list yet
@@ -55,7 +59,19 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	)
 
 	// An agent should be able to check in to the new account
-	// Should have the settings that were specified while generating connection url
+	// Should get the settings that were specified while generating connection url
+	testAWSAccountId := "4563215233"
+	agentCheckInResp := testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+	require.Equal(testAccountId, agentCheckInResp.Account.Id)
+	require.Equal(testAccountConfig, agentCheckInResp.Account.Config)
+	require.Equal(testAWSAccountId, agentCheckInResp.Account.CloudAccountId)
+	require.LessOrEqual(t0, agentCheckInResp.Account.CreatedAt)
+	require.Nil(agentCheckInResp.Account.RemovedAt)
 
 	// Polling for connection status should return latest status now.
 
@@ -180,6 +196,27 @@ func (tb *CloudIntegrationsTestBed) GetAccountStatusFromQS(
 	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AccountStatusResponse")
+	}
+
+	return &resp
+}
+
+func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
+	cloudProvider string, req cloudintegrations.AgentCheckInRequest,
+) *cloudintegrations.AgentCheckInResponse {
+	result := tb.RequestQS(
+		fmt.Sprintf("/api/v1/cloud-integrations/%s/agent-check-in", cloudProvider), req,
+	)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	var resp cloudintegrations.AgentCheckInResponse
+	err = json.Unmarshal(dataJson, &resp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AgentCheckInResponse")
 	}
 
 	return &resp
