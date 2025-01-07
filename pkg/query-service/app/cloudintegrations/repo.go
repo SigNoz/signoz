@@ -14,7 +14,9 @@ import (
 type cloudProviderAccountsRepository interface {
 	listConnected(context.Context) ([]Account, *model.ApiError)
 
-	get(ctx context.Context, ids []string) (map[string]*Account, *model.ApiError)
+	getByIds(ctx context.Context, ids []string) (map[string]*Account, *model.ApiError)
+
+	get(ctx context.Context, id string) (*Account, *model.ApiError)
 
 	// Insert an account or update it by ID for specified non-empty fields
 	upsert(
@@ -98,7 +100,7 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(ctx context.Context) 
 	return accounts, nil
 }
 
-func (r *cloudProviderAccountsSQLRepository) get(
+func (r *cloudProviderAccountsSQLRepository) getByIds(
 	ctx context.Context, ids []string,
 ) (map[string]*Account, *model.ApiError) {
 	accounts := []Account{}
@@ -137,6 +139,24 @@ func (r *cloudProviderAccountsSQLRepository) get(
 	}
 
 	return result, nil
+}
+
+func (r *cloudProviderAccountsSQLRepository) get(
+	ctx context.Context, id string,
+) (*Account, *model.ApiError) {
+	res, apiErr := r.getByIds(ctx, []string{id})
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	account := res[id]
+	if account == nil {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"couldn't find account with Id %s", id,
+		))
+	}
+
+	return account, nil
 }
 
 func (r *cloudProviderAccountsSQLRepository) upsert(
@@ -207,17 +227,10 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		))
 	}
 
-	res, apiErr := r.get(ctx, []string{id})
+	upsertedAccount, apiErr := r.get(ctx, id)
 	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "couldn't fetch upserted account by id",
-		)
-	}
-
-	upsertedAccount := res[id]
-	if upsertedAccount == nil {
 		return nil, model.InternalError(fmt.Errorf(
-			"couldn't fetch upserted account by id",
+			"couldn't fetch upserted account by id: %w", apiErr.ToError(),
 		))
 	}
 
