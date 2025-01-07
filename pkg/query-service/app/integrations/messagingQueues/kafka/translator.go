@@ -80,10 +80,9 @@ func buildBuilderQueriesProducerBytes(
 			Type:     v3.AttributeKeyType("Gauge"),
 			IsColumn: true,
 		},
-		AggregateOperator: v3.AggregateOperatorAvg,
-		Temporality:       v3.Unspecified,
-		TimeAggregation:   v3.TimeAggregationAvg,
-		SpaceAggregation:  v3.SpaceAggregationAvg,
+		Temporality:      v3.Unspecified,
+		TimeAggregation:  v3.TimeAggregationAvg,
+		SpaceAggregation: v3.SpaceAggregationAvg,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{
@@ -142,7 +141,7 @@ func CeleryClickHouseQuery(
 	var cq *v3.CompositeQuery
 
 	switch queryContext {
-	case "celery-overview":
+	case "celeryoverview":
 
 		metrics := ""
 
@@ -152,7 +151,7 @@ func CeleryClickHouseQuery(
 			metrics = "flower_worker_number_of_currently_executing_tasks"
 		}
 
-		query, err := buildCeleryOverviewQuery(metrics, queryContext)
+		query, err := buildCeleryOverviewQuery(metrics, queryContext, unixMilliStart, unixMilliEnd)
 		if err != nil {
 			return nil, err
 		}
@@ -176,12 +175,15 @@ func CeleryClickHouseQuery(
 
 }
 
-func buildCeleryOverviewQuery(metrics string, queryContext string) (map[string]*v3.BuilderQuery, error) {
+func buildCeleryOverviewQuery(metrics string, queryContext string, unixMilliStart, unixMilliEnd int64) (map[string]*v3.BuilderQuery, error) {
 	bq := make(map[string]*v3.BuilderQuery)
 
 	chq := &v3.BuilderQuery{
 		QueryName:  queryContext,
 		DataSource: v3.DataSourceMetrics,
+
+		StepInterval:      common.MinAllowedStepInterval(unixMilliStart, unixMilliEnd),
+		AggregateOperator: v3.AggregateOperator("latest"),
 
 		AggregateAttribute: v3.AttributeKey{
 			Key:      metrics, // flower_worker_online
@@ -197,6 +199,7 @@ func buildCeleryOverviewQuery(metrics string, queryContext string) (map[string]*
 
 		Expression: queryContext,
 		ReduceTo:   v3.ReduceToOperatorAvg,
+
 		GroupBy: []v3.AttributeKey{
 			{
 				Key:      "worker",

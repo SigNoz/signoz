@@ -4995,7 +4995,7 @@ func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queryRangeParams, err := mq.CeleryClickHouseQuery(messagingQueue, "celery-overview")
+	queryRangeParams, err := mq.CeleryClickHouseQuery(messagingQueue, "celeryoverview")
 
 	if err != nil {
 		zap.L().Error(err.Error())
