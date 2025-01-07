@@ -217,3 +217,21 @@ func (c *Controller) UpdateAccountConfig(
 
 	return account, nil
 }
+
+func (c *Controller) DisconnectAccount(
+	ctx context.Context, cloudProvider string, accountId string,
+) (*Account, *model.ApiError) {
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	tsNow := time.Now()
+	account, apiErr := c.repo.upsert(
+		ctx, &accountId, nil, nil, nil, &tsNow,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
+	}
+
+	return account, nil
+}

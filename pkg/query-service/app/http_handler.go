@@ -3885,6 +3885,10 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/{accountId}/disconnect", am.EditAccess(aH.CloudIntegrationsDisconnectAccount),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
 		"/{cloudProvider}/agent-check-in", am.EditAccess(aH.CloudIntegrationsAgentCheckIn),
 	).Methods(http.MethodPost)
 
@@ -3983,6 +3987,24 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
 
 	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
 		r.Context(), cloudProvider, accountId, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	accountId := mux.Vars(r)["accountId"]
+
+	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
+		r.Context(), cloudProvider, accountId,
 	)
 
 	if apiErr != nil {

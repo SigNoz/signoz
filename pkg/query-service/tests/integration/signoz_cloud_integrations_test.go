@@ -114,7 +114,7 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Nil(agentCheckInResp1.Account.RemovedAt)
 
 	// Should be able to disconnect account.
-	tsBeforeDisconnect := time.Now().Unix()
+	tsBeforeDisconnect := time.Now()
 	latestAccount = testbed.DisconnectAccountWithQS(
 		"aws", testAccountId,
 	)
@@ -130,7 +130,7 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	)
 	require.Equal(testAccountId, agentCheckInResp2.Account.Id)
 	require.Equal(testAWSAccountId, *agentCheckInResp2.Account.CloudAccountId)
-	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp1.Account.RemovedAt)
+	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.Account.RemovedAt)
 }
 
 type CloudIntegrationsTestBed struct {
