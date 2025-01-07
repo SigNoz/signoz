@@ -60,11 +60,14 @@ interface ServiceData {
 	status?: IServiceStatus; // Optional - included only with account_id
 }
 
+<<<<<<< HEAD
 interface ServiceDetailsResponse {
 	status: 'success';
 	data: ServiceData;
 }
 
+=======
+>>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)
 interface CloudAccountConfig {
 	regions: string[];
 }
@@ -88,6 +91,7 @@ interface CloudAccountsData {
 	accounts: CloudAccount[];
 }
 
+<<<<<<< HEAD
 export type {
 	CloudAccount,
 	CloudAccountsData,
@@ -95,3 +99,6 @@ export type {
 	ServiceData,
 	ServiceDetailsResponse,
 };
+=======
+export type { CloudAccount, CloudAccountsData, Service, ServiceData };
+>>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)

@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import { Region } from 'types/regions';
 
+=======
+>>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)
 import { CloudAccountsData, Service, ServiceData } from './types';
 
 const services: Service[] = [
@@ -191,7 +194,10 @@ const cloudAccountsData: CloudAccountsData = {
 			id: '9p8o7n6m-5l4k-3j2i-1h0g-f4e3d2c1b0a',
 			cloud_account_id: '098765432109',
 			config: {
+<<<<<<< HEAD
 				// eslint-disable-next-line sonarjs/no-duplicate-string
+=======
+>>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)
 				regions: ['eu-west-1', 'eu-central-1', 'ap-southeast-1'],
 			},
 			status: {
@@ -203,6 +209,7 @@ const cloudAccountsData: CloudAccountsData = {
 	],
 };
 
+<<<<<<< HEAD
 const regions: Region[] = [
 	{
 		id: 'north-america',
@@ -345,3 +352,6 @@ const regions: Region[] = [
 ];
 
 export { cloudAccountsData, regions, serviceDetails, services };
+=======
+export { cloudAccountsData, serviceDetails, services };
+>>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)
