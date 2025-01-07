@@ -634,10 +634,10 @@ func TestPrepareMetricQueryValueTypePanelWithGroupBY(t *testing.T) {
 					Type:     v3.AttributeKeyType("Gauge"),
 					IsColumn: true,
 				},
-				Temporality:       v3.Delta,
-				TimeAggregation:   v3.TimeAggregationAnyLast,
-				SpaceAggregation:  v3.SpaceAggregationAvg,
-				SeriesAggregation: v3.SeriesAggregationMax,
+				Temporality:          v3.Delta,
+				TimeAggregation:      v3.TimeAggregationAnyLast,
+				SpaceAggregation:     v3.SpaceAggregationAvg,
+				SecondaryAggregation: v3.SecondaryAggregationMax,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
 					Items: []v3.FilterItem{
@@ -694,10 +694,10 @@ func TestPrepareMetricQueryValueTypePanelWithGroupBY(t *testing.T) {
 					Type:     v3.AttributeKeyType("Gauge"),
 					IsColumn: true,
 				},
-				Temporality:       v3.Cumulative,
-				TimeAggregation:   v3.TimeAggregationAnyLast,
-				SpaceAggregation:  v3.SpaceAggregationAvg,
-				SeriesAggregation: v3.SeriesAggregationMax,
+				Temporality:          v3.Cumulative,
+				TimeAggregation:      v3.TimeAggregationAnyLast,
+				SpaceAggregation:     v3.SpaceAggregationAvg,
+				SecondaryAggregation: v3.SecondaryAggregationMax,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
 					Items: []v3.FilterItem{
