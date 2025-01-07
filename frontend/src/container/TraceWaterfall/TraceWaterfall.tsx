@@ -13,13 +13,6 @@ import Error from './TraceWaterfallStates/Error/Error';
 import NoData from './TraceWaterfallStates/NoData/NoData';
 import Success from './TraceWaterfallStates/Success/Success';
 
-/**
- * render a virtuoso list with the spans recieved from the trace details API call
- * trigger API call on bottom reached and on top reached, set the interestedSpanId and make that as the query key along with uncollapsed nodes
- * render the tree structure based on hasChildren and the level. the left spacing depends on the level. a window pane with horizontal scroll for the same as well.
- * min width to be set [] and then scroll post that based on content
- */
-
 function TraceWaterfall(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
 	const urlQuery = useUrlQuery();
@@ -90,6 +83,10 @@ function TraceWaterfall(): JSX.Element {
 				return (
 					<Success
 						spans={spans}
+						traceMetadata={{
+							startTime: traceData?.payload?.startTimestampMillis || 0,
+							endTime: traceData?.payload?.endTimestampMillis || 0,
+						}}
 						traceWaterfallState={traceWaterfallState}
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
@@ -104,6 +101,8 @@ function TraceWaterfall(): JSX.Element {
 		errorFetchingTraceData,
 		interestedSpanId,
 		spans,
+		traceData?.payload?.endTimestampMillis,
+		traceData?.payload?.startTimestampMillis,
 		traceId,
 		traceWaterfallState,
 		uncollapsedNodes,

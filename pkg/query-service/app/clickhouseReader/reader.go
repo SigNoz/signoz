@@ -1728,6 +1728,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	// generate the response [ spans , metadata ]
 	trace.Spans = selectedSpans
 	trace.UncollapsedNodes = uncollapsedNodes
+	trace.StartTimestampMillis = startTime
+	trace.EndTimestampMillis = endTime
 	return trace, nil
 }
 

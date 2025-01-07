@@ -4,17 +4,25 @@ import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Button, Typography } from 'antd';
 import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
+import TimelineV2 from 'components/TimelineV2/TimelineV2';
+import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
+import { toFixed } from 'utils/toFixed';
 
 // css config
-const COLUMN_MIN_SIZE = 50;
 const CONNECTOR_WIDTH = 28;
 const VERTICAL_CONNECTOR_WIDTH = 1;
+
+interface ITraceMetadata {
+	startTime: number;
+	endTime: number;
+}
 interface ISuccessProps {
 	spans: Span[];
+	traceMetadata: ITraceMetadata;
 	traceWaterfallState: TraceWaterfallStates;
 	interestedSpanId: string;
 	uncollapsedNodes: string[];
@@ -101,16 +109,38 @@ function SpanOverview({
 function SpanDuration({
 	span,
 	interestedSpanId,
+	traceMetadata,
 }: {
 	span: Span;
 	interestedSpanId: string;
+	traceMetadata: ITraceMetadata;
 }): JSX.Element {
+	const { time, timeUnitName } = convertTimeToRelevantUnit(
+		span.durationNano / 1e6,
+	);
+
+	const spread = traceMetadata.endTime - traceMetadata.startTime;
+	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
+	const width = (span.durationNano * 1e2) / (spread * 1e6);
+
+	console.log(leftOffset);
+
 	return (
-		<Typography.Text
-			className={cx(interestedSpanId === span.spanId ? 'interested-span' : '')}
+		<div
+			className={cx(
+				'span-duration',
+				interestedSpanId === span.spanId ? 'interested-span' : '',
+			)}
 		>
-			{span.durationNano}
-		</Typography.Text>
+			<div
+				className="span-line"
+				style={{ left: `${leftOffset}%`, width: `${width}%` }}
+			/>
+			<Typography.Text
+				className="span-line-text"
+				style={{ left: `${leftOffset}%` }}
+			>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
+		</div>
 	);
 }
 
@@ -121,10 +151,12 @@ function getWaterfallColumns({
 	handleCollapseUncollapse,
 	uncollapsedNodes,
 	interestedSpanId,
+	traceMetadata,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	interestedSpanId: string;
+	traceMetadata: ITraceMetadata;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -142,13 +174,21 @@ function getWaterfallColumns({
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
-			header: () => <span>heiji</span>,
+			header: () => (
+				<TimelineV2
+					startTimestamp={traceMetadata.startTime}
+					endTimestamp={traceMetadata.endTime}
+					timelineHeight={22}
+				/>
+			),
 			cell: (props): JSX.Element => (
 				<SpanDuration
 					span={props.row.original}
 					interestedSpanId={interestedSpanId}
+					traceMetadata={traceMetadata}
 				/>
 			),
+			size: 1000,
 		}),
 	];
 
@@ -158,6 +198,7 @@ function getWaterfallColumns({
 function Success(props: ISuccessProps): JSX.Element {
 	const {
 		spans,
+		traceMetadata,
 		traceWaterfallState,
 		interestedSpanId,
 		uncollapsedNodes,
@@ -187,8 +228,9 @@ function Success(props: ISuccessProps): JSX.Element {
 				handleCollapseUncollapse,
 				uncollapsedNodes,
 				interestedSpanId,
+				traceMetadata,
 			}),
-		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId],
+		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId, traceMetadata],
 	);
 
 	return (
@@ -196,9 +238,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			<TableV3
 				columns={columns}
 				data={spans}
-				config={{
-					defaultColumnMinSize: COLUMN_MIN_SIZE,
-				}}
+				config={{}}
 				customClassName="waterfall-table"
 			/>
 		</div>
