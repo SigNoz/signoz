@@ -373,9 +373,9 @@ WITH
             resource_string_service$$name AS service_name,
             name AS span_name,
             CASE
-                WHEN attribute_string_messaging$$system = 'kafka' THEN 'kafka'
+                WHEN attribute_string_messaging$$system != '' THEN attribute_string_messaging$$system
                 WHEN (has(attributes_string, 'celery.action') OR has(attributes_string, 'celery.task_name')) THEN 'celery'
-                ELSE 'other'
+                ELSE 'undefined'
             END AS messaging_system,
             kind_string,
             COALESCE(
