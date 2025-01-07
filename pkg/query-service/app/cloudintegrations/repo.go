@@ -12,6 +12,7 @@ import (
 )
 
 type cloudProviderAccountsRepository interface {
+	// TODO(Raj): All methods should be scoped by cloud provider.
 	listConnected(context.Context) ([]Account, *model.ApiError)
 
 	getByIds(ctx context.Context, ids []string) (map[string]*Account, *model.ApiError)

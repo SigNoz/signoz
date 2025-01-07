@@ -93,8 +93,7 @@ func (c *Controller) GenerateConnectionUrl(
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	// TODO(Raj): Add actual connection url after shipping
-	// cloudformation template for AWS integration
+	// TODO(Raj): Add actual cloudformation template for AWS integration after it has been shipped.
 	connectionUrl := fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration/",
 		req.AgentConfig.Region, req.AgentConfig.Region,
@@ -103,5 +102,42 @@ func (c *Controller) GenerateConnectionUrl(
 	return &GenerateConnectionUrlResponse{
 		AccountId:     account.Id,
 		ConnectionUrl: connectionUrl,
+	}, nil
+}
+
+type AccountStatusResponse struct {
+	Id     string        `json:"id"`
+	Status AccountStatus `json:"status"`
+}
+
+type AccountStatus struct {
+	Integration AccountIntegrationStatus `json:"integration"`
+}
+
+type AccountIntegrationStatus struct {
+	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
+}
+
+func (c *Controller) GetAccountStatus(
+	ctx context.Context, cloudProvider string, accountId string,
+) (
+	*AccountStatusResponse, *model.ApiError,
+) {
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	account, apiErr := c.repo.get(ctx, accountId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	return &AccountStatusResponse{
+		Id: account.Id,
+		Status: AccountStatus{
+			Integration: AccountIntegrationStatus{
+				LastHeartbeatTsMillis: nil,
+			},
+		},
 	}, nil
 }

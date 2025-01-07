@@ -3876,6 +3876,10 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 		"/{cloudProvider}/accounts", am.ViewAccess(aH.CloudIntegrationsListConnectedAccounts),
 	).Methods(http.MethodGet)
 
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/{accountId}/status", am.ViewAccess(aH.CloudIntegrationsGetAccountStatus),
+	).Methods(http.MethodGet)
+
 }
 
 func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
@@ -3915,6 +3919,23 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
 	}
 
 	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	accountId := mux.Vars(r)["accountId"]
+
+	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
+		r.Context(), cloudProvider, accountId,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	aH.Respond(w, resp)
 }
 
 // logs
