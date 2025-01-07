@@ -127,16 +127,11 @@ func buildBuilderQueriesProducerBytes(
 
 func CeleryClickHouseQuery(
 	messagingQueue *MessagingQueue,
-	queryContext string,
+	queryContext string, filters *QueueFilters,
 ) (*v3.QueryRangeParamsV3, error) {
-
-	//start := messagingQueue.Start
-	//end := messagingQueue.End
 
 	unixMilliStart := messagingQueue.Start / 1000000
 	unixMilliEnd := messagingQueue.End / 1000000
-
-	kind := messagingQueue.Variables["kind"]
 
 	var cq *v3.CompositeQuery
 
@@ -145,9 +140,9 @@ func CeleryClickHouseQuery(
 
 		metrics := ""
 
-		if kind == "worker" {
+		if filters.QueryFor[0] == "worker" {
 			metrics = "flower_worker_online"
-		} else if kind == "tasks" {
+		} else if filters.QueryFor[0] == "tasks" {
 			metrics = "flower_worker_number_of_currently_executing_tasks"
 		}
 
@@ -407,14 +402,43 @@ func BuildQRParamsWithCache(
 	return queryRangeParams, err
 }
 
-func getFilters(variables map[string]string) *QueueFilters {
-	return &QueueFilters{
-		ServiceName: parseFilter(variables["service_name"]),
-		SpanName:    parseFilter(variables["span_name"]),
-		Queue:       parseFilter(variables["queue"]),
-		Destination: parseFilter(variables["destination"]),
-		Kind:        parseFilter(variables["kind"]),
+func GetCeleryFilters(variables map[string]string) (*QueueFilters, error) {
+	filters := getFilters(variables)
+	if len(filters.QueryFor) != 1 || len(filters.Status) != 1 {
+		return nil, fmt.Errorf("query_for and status not found in the request")
 	}
+	return filters, nil
+}
+
+func getFilters(variables map[string]string) *QueueFilters {
+	var filters QueueFilters
+
+	if val, ok := variables["service_name"]; ok && val != "" {
+		filters.ServiceName = parseFilter(val)
+	}
+	if val, ok := variables["span_name"]; ok && val != "" {
+		filters.SpanName = parseFilter(val)
+	}
+	if val, ok := variables["queue"]; ok && val != "" {
+		filters.Queue = parseFilter(val)
+	}
+	if val, ok := variables["destination"]; ok && val != "" {
+		filters.Destination = parseFilter(val)
+	}
+	if val, ok := variables["kind"]; ok && val != "" {
+		filters.Kind = parseFilter(val)
+	}
+	if val, ok := variables["query_for"]; ok && val != "" {
+		filters.QueryFor = parseFilter(val)
+	}
+	if val, ok := variables["status"]; ok && val != "" {
+		filters.Status = parseFilter(val)
+	}
+	if val, ok := variables["task_name"]; ok && val != "" {
+		filters.TaskName = parseFilter(val)
+	}
+
+	return &filters
 }
 
 // parseFilter splits a comma-separated string into a []string.

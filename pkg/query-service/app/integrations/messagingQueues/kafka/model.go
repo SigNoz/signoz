@@ -23,6 +23,11 @@ type OnboardingResponse struct {
 	Status    string `json:"status"`
 }
 
+type WorkerResponse struct {
+	Count int      `json:"active_workers"`
+	Names []string `json:"worker_names"`
+}
+
 // QueueFilters
 // ToDo: add capability of dynamic filtering based on any of the filters
 type QueueFilters struct {
@@ -31,8 +36,11 @@ type QueueFilters struct {
 	Queue       []string
 	Destination []string
 	Kind        []string
-	QueryFor    string
-	Status      string
+
+	QueryFor []string
+	Status   []string
+
+	TaskName []string
 }
 
 type CeleryTask struct {

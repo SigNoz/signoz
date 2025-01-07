@@ -4995,7 +4995,15 @@ func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queryRangeParams, err := mq.CeleryClickHouseQuery(messagingQueue, "celeryoverview")
+	filters, err := mq.GetCeleryFilters(messagingQueue.Variables)
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := mq.CeleryClickHouseQuery(messagingQueue, "celeryoverview", filters)
 
 	if err != nil {
 		zap.L().Error(err.Error())
@@ -5013,6 +5021,27 @@ func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
+		return
+	}
+
+	if filters.QueryFor[0] == "worker" {
+
+		var workerNames = make([]string, 0)
+		var workerCount int
+
+		for _, res := range resultFetchLatency {
+			for _, series := range res.Series {
+				if workerName, ok := series.Labels["worker"]; ok {
+					workerNames = append(workerNames, workerName)
+					workerCount++
+				}
+			}
+		}
+
+		aH.Respond(w, mq.WorkerResponse{
+			Count: workerCount,
+			Names: workerNames,
+		})
 		return
 	}
 
