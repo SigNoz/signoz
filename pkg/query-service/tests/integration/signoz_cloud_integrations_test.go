@@ -111,12 +111,26 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAccountId, agentCheckInResp1.Account.Id)
 	require.Equal(testAccountConfig2, *agentCheckInResp1.Account.Config)
 	require.Equal(testAWSAccountId, *agentCheckInResp1.Account.CloudAccountId)
+	require.Nil(agentCheckInResp1.Account.RemovedAt)
 
 	// Should be able to disconnect account.
+	tsBeforeDisconnect := time.Now().Unix()
+	latestAccount = testbed.DisconnectAccountWithQS(
+		"aws", testAccountId,
+	)
+	require.Equal(testAccountId, latestAccount.Id)
+	require.LessOrEqual(tsBeforeDisconnect, *latestAccount.RemovedAt)
 
 	// The agent should receive the disconnected status post disconnection
-
-	require.Equal(1, 2)
+	agentCheckInResp2 := testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+	require.Equal(testAccountId, agentCheckInResp2.Account.Id)
+	require.Equal(testAWSAccountId, *agentCheckInResp2.Account.CloudAccountId)
+	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp1.Account.RemovedAt)
 }
 
 type CloudIntegrationsTestBed struct {
@@ -273,7 +287,31 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 	var resp cloudintegrations.Account
 	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AgentCheckInResponse")
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")
+	}
+
+	return &resp
+}
+
+func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
+	cloudProvider string, accountId string,
+) *cloudintegrations.Account {
+	result := tb.RequestQS(
+		fmt.Sprintf(
+			"/api/v1/cloud-integrations/%s/accounts/%s/disconnect",
+			cloudProvider, accountId,
+		), map[string]any{},
+	)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	var resp cloudintegrations.Account
+	err = json.Unmarshal(dataJson, &resp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")
 	}
 
 	return &resp
