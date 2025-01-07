@@ -31,6 +31,8 @@ type QueueFilters struct {
 	Queue       []string
 	Destination []string
 	Kind        []string
+	QueryFor    string
+	Status      string
 }
 
 type CeleryTask struct {
