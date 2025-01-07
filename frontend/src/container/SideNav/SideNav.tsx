@@ -89,6 +89,8 @@ function SideNav(): JSX.Element {
 	const licenseStatus: string =
 		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
 
+	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
@@ -351,7 +353,11 @@ function SideNav(): JSX.Element {
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"
+							disabled={isWorkspaceBlocked}
 							onClick={(event: MouseEvent): void => {
+								if (isWorkspaceBlocked) {
+									return;
+								}
 								onClickGetStarted(event);
 							}}
 						>
@@ -369,6 +375,11 @@ function SideNav(): JSX.Element {
 								key={item.key || index}
 								item={item}
 								isActive={activeMenuKey === item.key}
+								isDisabled={
+									isWorkspaceBlocked &&
+									item.key !== ROUTES.BILLING &&
+									item.key !== ROUTES.SETTINGS
+								}
 								onClick={(event): void => {
 									handleMenuItemClick(event, item);
 								}}
@@ -380,6 +391,7 @@ function SideNav(): JSX.Element {
 						<NavItem
 							key="keyboardShortcuts"
 							item={shortcutMenuItem}
+							isDisabled={isWorkspaceBlocked}
 							isActive={false}
 							onClick={onClickShortcuts}
 						/>
@@ -389,6 +401,7 @@ function SideNav(): JSX.Element {
 								key="trySignozCloud"
 								item={trySignozCloudMenuItem}
 								isActive={false}
+								isDisabled={isWorkspaceBlocked}
 								onClick={onClickSignozCloud}
 							/>
 						)}
@@ -399,6 +412,7 @@ function SideNav(): JSX.Element {
 									key={item?.key || index}
 									item={item}
 									isActive={activeMenuKey === item?.key}
+									isDisabled={isWorkspaceBlocked}
 									onClick={(event: MouseEvent): void => {
 										handleUserManagentMenuItemClick(item?.key as string, event);
 										logEvent('Sidebar: Menu clicked', {
@@ -415,6 +429,7 @@ function SideNav(): JSX.Element {
 								key={inviteMemberMenuItem.key}
 								item={inviteMemberMenuItem}
 								isActive={activeMenuKey === inviteMemberMenuItem?.key}
+								isDisabled={false}
 								onClick={(event: React.MouseEvent): void => {
 									if (isCtrlMetaKey(event)) {
 										openInNewTab(`${inviteMemberMenuItem.key}`);
@@ -434,6 +449,7 @@ function SideNav(): JSX.Element {
 								key={ROUTES.MY_SETTINGS}
 								item={userSettingsMenuItem}
 								isActive={activeMenuKey === userSettingsMenuItem?.key}
+								isDisabled={false}
 								onClick={(event: MouseEvent): void => {
 									handleUserManagentMenuItemClick(
 										userSettingsMenuItem?.key as string,

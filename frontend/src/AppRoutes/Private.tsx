@@ -11,6 +11,7 @@ import { useQuery } from 'react-query';
 import { matchPath, useLocation } from 'react-router-dom';
 import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
+import { USER_ROLES } from 'types/roles';
 import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
@@ -36,6 +37,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
 	} = useAppContext();
+
+	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -113,11 +116,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const navigateToWorkSpaceBlocked = (route: any): void => {
 		const { path } = route;
 
+		const isRouteEnabledForWorkspaceBlockedState =
+			isAdmin &&
+			(path === ROUTES.ORG_SETTINGS ||
+				path === ROUTES.BILLING ||
+				path === ROUTES.MY_SETTINGS);
+
 		if (
 			path &&
 			path !== ROUTES.WORKSPACE_LOCKED &&
-			path !== ROUTES.ORG_SETTINGS &&
-			path !== ROUTES.BILLING
+			!isRouteEnabledForWorkspaceBlockedState
 		) {
 			history.push(ROUTES.WORKSPACE_LOCKED);
 		}
@@ -132,6 +140,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFetchingLicenses, licenses?.workSpaceBlock, mapRoutes, pathname]);
 
 	const navigateToWorkSpaceSuspended = (route: any): void => {

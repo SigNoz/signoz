@@ -17,6 +17,7 @@ export const getRoutes = (
 	userRole: ROLES | null,
 	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
+	isWorkspaceBlocked: boolean,
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
@@ -26,6 +27,12 @@ export const getRoutes = (
 
 	const isAdmin = userRole === USER_ROLES.ADMIN;
 	const isEditor = userRole === USER_ROLES.EDITOR;
+
+	if (isWorkspaceBlocked && isAdmin) {
+		settings.push(...organizationSettings(t));
+
+		return settings;
+	}
 
 	settings.push(...generalSettings(t));
 
