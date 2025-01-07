@@ -68,9 +68,9 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp.Account.Id)
-	require.Equal(testAccountConfig, agentCheckInResp.Account.Config)
-	require.Equal(testAWSAccountId, agentCheckInResp.Account.CloudAccountId)
-	require.LessOrEqual(t0, agentCheckInResp.Account.CreatedAt)
+	require.Equal(testAccountConfig, *agentCheckInResp.Account.Config)
+	require.Equal(testAWSAccountId, *agentCheckInResp.Account.CloudAccountId)
+	require.LessOrEqual(t0.Unix(), agentCheckInResp.Account.CreatedAt.Unix())
 	require.Nil(agentCheckInResp.Account.RemovedAt)
 
 	// Polling for connection status should return latest status now.

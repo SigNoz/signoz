@@ -50,7 +50,7 @@ func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 	createTablesStatements := `
 		CREATE TABLE IF NOT EXISTS cloud_integrations_accounts(
 			id TEXT PRIMARY KEY NOT NULL,
-			config_json TEXT NOT NULL,
+			config_json TEXT,
 			cloud_account_id TEXT,
 			last_agent_report_json TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -136,6 +136,12 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 
 	result := map[string]*Account{}
 	for _, a := range accounts {
+
+		if a.Config == nil {
+			config := DefaultAccountConfig()
+			a.Config = &config
+		}
+
 		result[a.Id] = &a
 	}
 
@@ -170,58 +176,61 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 ) (*Account, *model.ApiError) {
 	// Insert
 	if id == nil {
-		// config must be specified when inserting
-		if config == nil {
-			return nil, model.BadRequest(fmt.Errorf("account config is required"))
-		}
-
 		newId := uuid.NewString()
-
 		id = &newId
 	}
 
 	// Prepare clause for setting values in `on conflict do update`
-	onConflictUpdates := []string{}
+	onConflictSetStmts := []string{}
 	updateColStmt := func(col string) string {
-		return fmt.Sprintf("set %s=excluded.%s", col, col)
+		return fmt.Sprintf("%s=excluded.%s", col, col)
 	}
 
 	if config != nil {
-		onConflictUpdates = append(
-			onConflictUpdates, updateColStmt("config_json"),
+		onConflictSetStmts = append(
+			onConflictSetStmts, updateColStmt("config_json"),
 		)
 	}
 
 	if cloudAccountId != nil {
-		onConflictUpdates = append(
-			onConflictUpdates, updateColStmt("cloud_account_id"),
+		onConflictSetStmts = append(
+			onConflictSetStmts, updateColStmt("cloud_account_id"),
 		)
 	}
 
 	if agentReport != nil {
-		onConflictUpdates = append(
-			onConflictUpdates, updateColStmt("last_agent_report_json"),
+		onConflictSetStmts = append(
+			onConflictSetStmts, updateColStmt("last_agent_report_json"),
 		)
 	}
 
 	if removedAt != nil {
-		onConflictUpdates = append(
-			onConflictUpdates, updateColStmt("removed_at"),
+		onConflictSetStmts = append(
+			onConflictSetStmts, updateColStmt("removed_at"),
 		)
 	}
 
+	onConflictClause := ""
+	if len(onConflictSetStmts) > 0 {
+		onConflictClause = fmt.Sprintf(
+			"on conflict(id) do update SET\n%s",
+			strings.Join(onConflictSetStmts, ",\n"),
+		)
+	}
+
+	insertQuery := fmt.Sprintf(`
+    INSERT INTO cloud_integrations_accounts (
+      id,
+      config_json,
+      cloud_account_id,
+      last_agent_report_json,
+      removed_at
+    ) values ($1, $2, $3, $4, $5)
+    %s`, onConflictClause,
+	)
+
 	_, dbErr := r.db.ExecContext(
-		ctx, fmt.Sprintf(`
-			INSERT INTO cloud_integrations_accounts (
-				id,
-				config_json,
-				cloud_account_id,
-				last_agent_report_json,
-				removed_at
-			) values ($1, $2, $3, $4, $5)
-			on conflict(id) do update
-      %s
-		`, strings.Join(onConflictUpdates, "\n")),
+		ctx, insertQuery,
 		id, config, cloudAccountId, agentReport, removedAt,
 	)
 	if dbErr != nil {

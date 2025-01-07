@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -139,5 +140,41 @@ func (c *Controller) GetAccountStatus(
 				LastHeartbeatTsMillis: nil,
 			},
 		},
+	}, nil
+}
+
+type AgentCheckInRequest struct {
+	AccountId      string `json:"account_id"`
+	CloudAccountId string `json:"cloud_account_id"`
+	// Arbitrary cloud specific Agent data
+	Data map[string]any `json:"data,omitempty"`
+}
+
+type AgentCheckInResponse struct {
+	Account Account `json:"account"`
+}
+
+func (c *Controller) CheckInAsAgent(
+	ctx context.Context, cloudProvider string, req AgentCheckInRequest,
+) (*AgentCheckInResponse, *model.ApiError) {
+	// Account connection with a simple connection URL may not be available for all providers.
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	agentReport := AgentReport{
+		TimestampSeconds: time.Now().Unix(),
+		Data:             req.Data,
+	}
+
+	account, apiErr := c.repo.upsert(
+		ctx, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
+	}
+
+	return &AgentCheckInResponse{
+		Account: *account,
 	}, nil
 }
