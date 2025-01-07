@@ -84,6 +84,12 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	)
 
 	// The account should now show up in list of connected accounts.
+	accountsListResp2 := testbed.GetAccountsListFromQS("aws")
+	require.Equal(len(accountsListResp2.Accounts), 1,
+		"No accounts should be connected at the beginning",
+	)
+	require.Equal(testAccountId, accountsListResp2.Accounts[0].Id)
+	require.Equal(testAWSAccountId, *accountsListResp2.Accounts[0].CloudAccountId)
 
 	// Should be able to update account settings
 
