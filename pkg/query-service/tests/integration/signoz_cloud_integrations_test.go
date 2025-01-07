@@ -18,8 +18,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func TestCloudIntegrationLifecycle(t *testing.T) {
-	// Test for the happy path of connecting and managing cloud integration accounts
+func TestAWSIntegrationLifecycle(t *testing.T) {
+	// Test for the happy path of connecting and managing AWS integration accounts
 
 	require := require.New(t)
 	testbed := NewCloudIntegrationsTestBed(t, nil)
@@ -44,6 +44,9 @@ func TestCloudIntegrationLifecycle(t *testing.T) {
 	require.NotEmpty(connectionUrl)
 
 	// Should be able to poll for account connection status
+	accountStatusResp := testbed.GetAccountStatusFromQS("aws", accountId)
+	require.Equal(accountId, accountStatusResp.Id)
+	require.Nil(accountStatusResp.Status.Integration.LastHeartbeatTsMillis)
 
 	// The unconnected account should not show up in accounts list yet
 
@@ -128,7 +131,7 @@ func (tb *CloudIntegrationsTestBed) GetAccountsListFromQS(
 	var resp cloudintegrations.AccountsListResponse
 	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
-		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into AccountsListResponse")
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AccountsListResponse")
 	}
 
 	return &resp
@@ -150,7 +153,29 @@ func (tb *CloudIntegrationsTestBed) GenerateConnectionUrlFromQS(
 	var resp cloudintegrations.GenerateConnectionUrlResponse
 	err = json.Unmarshal(dataJson, &resp)
 	if err != nil {
-		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into map[string]any")
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into map[string]any")
+	}
+
+	return &resp
+}
+
+func (tb *CloudIntegrationsTestBed) GetAccountStatusFromQS(
+	cloudProvider string, accountId string,
+) *cloudintegrations.AccountStatusResponse {
+	result := tb.RequestQS(fmt.Sprintf(
+		"/api/v1/cloud-integrations/%s/accounts/%s/status",
+		cloudProvider, accountId,
+	), nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	var resp cloudintegrations.AccountStatusResponse
+	err = json.Unmarshal(dataJson, &resp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AccountStatusResponse")
 	}
 
 	return &resp
