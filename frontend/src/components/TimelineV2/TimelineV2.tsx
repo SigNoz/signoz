@@ -69,13 +69,13 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 						>
 							<text
 								x={index === intervals.length - 1 ? -10 : 0}
-								y={13}
+								y={2 * Math.floor(timelineHeight / 4)}
 								fill={isDarkMode ? 'white' : 'black'}
 							>
 								{interval.label}
 							</text>
 							<line
-								y1={timelineHeight - 5}
+								y1={3 * Math.floor(timelineHeight / 4)}
 								y2={timelineHeight + 0.5}
 								stroke={isDarkMode ? 'white' : 'black'}
 								strokeWidth="1"
