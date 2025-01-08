@@ -105,7 +105,7 @@ function K8sPodsList({
 	);
 
 	useEffect(() => {
-		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '');
+		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '[]');
 
 		if (addedColumns && addedColumns.length > 0) {
 			const availableColumns = defaultAvailableColumns.filter(
