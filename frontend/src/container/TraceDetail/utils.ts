@@ -14,6 +14,9 @@ export const filterSpansByString = (
 	});
 
 type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
+type FilterKeys = (keyof ITraceTree)[];
+
+export const DEFAULT_FILTER_KEYS: FilterKeys = ['name', 'serviceName'];
 
 export interface IIntervalUnit {
 	name: TTimeUnitName;
@@ -71,6 +74,43 @@ export const convertTimeToRelevantUnit = (
 		}
 	}
 	return relevantTime;
+};
+
+export const getFilteredData = (
+	treeData: ITraceTree,
+	searchValue: string,
+	filterKeys: FilterKeys,
+): ITraceTree | null => {
+	if (!searchValue) {
+		return treeData;
+	}
+	function traverse(node: ITraceTree): ITraceTree | null {
+		const newNode: ITraceTree = { ...node, children: [] };
+
+		node.children.forEach((child) => {
+			const newChild = traverse(child);
+			if (newChild) {
+				newNode.children.push(newChild);
+			}
+		});
+
+		if (
+			filterKeys.some((key) => {
+				const val = node[key];
+				if (!val) return false;
+				return JSON.stringify(val)
+					.toLowerCase()
+					.includes(searchValue.toLowerCase());
+			}) ||
+			newNode.children.length > 0
+		) {
+			return newNode;
+		}
+
+		return null;
+	}
+
+	return traverse(treeData);
 };
 
 export const getSortedData = (treeData: ITraceTree): ITraceTree => {
