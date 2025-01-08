@@ -4977,7 +4977,7 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 
@@ -4999,7 +4999,7 @@ func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building filters: %v", err)}, nil)
 		return
 	}
 
@@ -5007,12 +5007,12 @@ func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in qyery range params: %v", err)}, nil)
 		return
 	}
 
