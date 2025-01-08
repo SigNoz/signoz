@@ -1,6 +1,6 @@
 import './HeroSection.style.scss';
 
-import AccountActions from './components/AccountActions';
+import AccountActions from './AccountActions';
 
 function HeroSection(): JSX.Element {
 	return (
@@ -16,7 +16,8 @@ function HeroSection(): JSX.Element {
 				<div className="description">
 					One-click setup for AWS monitoring with SigNoz
 				</div>
-				<AccountActions />
+
+				<AccountActions accounts={[]} />
 			</div>
 		</div>
 	);
