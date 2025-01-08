@@ -213,22 +213,33 @@ function Success(props: ISuccessProps): JSX.Element {
 	} = props;
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 
-	// const handleEndReached = useCallback(() => {
-	// 	setInterestedSpanId(spans[spans.length - 1].spanId);
-	// }, [setInterestedSpanId, spans]);
-
-	// const handleTopReached = useCallback(() => {
-	// 	if (spans[0].parentSpanId !== '') {
-	// 		setInterestedSpanId(spans[0].spanId);
-	// 	}
-	// }, [setInterestedSpanId, spans]);
-
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
 			setInterestedSpanId({ spanId, isUncollapsed: !collapse });
 		},
 		[setInterestedSpanId],
 	);
+
+	const handleVirtualizerInstanceChanged = (
+		instance: Virtualizer<HTMLDivElement, Element>,
+	): void => {
+		const { range } = instance;
+		if (spans.length < 500) return;
+
+		if (range?.startIndex === 0 && instance.isScrolling) {
+			if (spans[0].parentSpanId !== '') {
+				setInterestedSpanId({ spanId: spans[0].spanId, isUncollapsed: false });
+			}
+			return;
+		}
+
+		if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
+			setInterestedSpanId({
+				spanId: spans[spans.length - 1].spanId,
+				isUncollapsed: false,
+			});
+		}
+	};
 
 	const columns = useMemo(
 		() =>
@@ -259,7 +270,9 @@ function Success(props: ISuccessProps): JSX.Element {
 			<TableV3
 				columns={columns}
 				data={spans}
-				config={{}}
+				config={{
+					handleVirtualizerInstanceChanged,
+				}}
 				customClassName="waterfall-table"
 				virtualiserRef={virtualizerRef}
 			/>

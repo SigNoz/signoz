@@ -61,6 +61,9 @@ const MemoizedTableBody = React.memo(
 interface ITableConfig {
 	defaultColumnMinSize?: number;
 	defaultColumnMaxSize?: number;
+	handleVirtualizerInstanceChanged?: (
+		instance: Virtualizer<HTMLDivElement, Element>,
+	) => void;
 }
 interface ITableV3Props<T> {
 	columns: ColumnDef<T, any>[];
@@ -95,6 +98,7 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		getScrollElement: () => tableRef.current,
 		estimateSize: () => 54,
 		overscan: 20,
+		onChange: config.handleVirtualizerInstanceChanged,
 	});
 
 	useEffect(() => {
