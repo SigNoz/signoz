@@ -273,7 +273,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		manageCreditCard({
 			licenseKey: activeLicenseV3?.key || '',
 			successURL: window.location.origin,
-			cancelURL: window.location.href,
+			cancelURL: window.location.origin,
 		});
 	};
 
