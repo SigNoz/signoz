@@ -384,8 +384,12 @@ function DateTimeSelection({
 		}
 	}, [defaultRelativeTime, onSelectHandler]);
 
-	const [modalStartTime, setModalStartTime] = useState<number>(0);
-	const [modalEndTime, setModalEndTime] = useState<number>(0);
+	const [modalStartTime, setModalStartTime] = useState<number>(
+		searchStartTime ? parseInt(searchStartTime, 10) : 0,
+	);
+	const [modalEndTime, setModalEndTime] = useState<number>(
+		searchEndTime ? parseInt(searchEndTime, 10) : 0,
+	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
