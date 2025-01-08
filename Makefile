@@ -98,12 +98,12 @@ build-query-service-static-arm64:
 
 # Steps to build static binary of query service for all platforms
 .PHONY: build-query-service-static-all
-build-query-service-static-all: build-query-service-static-amd64 build-query-service-static-arm64
+build-query-service-static-all: build-query-service-static-amd64 build-query-service-static-arm64 build-frontend-static
 
 # Steps to build and push docker image of query service
 .PHONY: build-query-service-amd64 build-push-query-service
 # Step to build docker image of query service in amd64 (used in build pipeline)
-build-query-service-amd64: build-query-service-static-amd64
+build-query-service-amd64: build-query-service-static-amd64 build-frontend-static
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
@@ -190,4 +190,4 @@ check-no-ee-references:
 	fi
 
 test:
-	go test ./pkg/query-service/...
+	go test ./pkg/...

@@ -24,18 +24,15 @@ import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
-import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
-import AppReducer from 'types/reducer/app';
 import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
@@ -137,9 +134,13 @@ export default function BillingContainer(): JSX.Element {
 		Partial<UsageResponsePayloadProps>
 	>({});
 
-	const { isFetching, data: licensesData, error: licenseError } = useLicense();
-
-	const { user, org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const {
+		user,
+		org,
+		licenses,
+		isFetchingLicenses,
+		licensesFetchError,
+	} = useAppContext();
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
@@ -181,7 +182,7 @@ export default function BillingContainer(): JSX.Element {
 
 			setData(formattedUsageData);
 
-			if (!licensesData?.payload?.onTrial) {
+			if (!licenses?.onTrial) {
 				const remainingDays = getRemainingDays(billingPeriodEnd) - 1;
 
 				setHeaderText(
@@ -195,14 +196,14 @@ export default function BillingContainer(): JSX.Element {
 
 			setApiResponse(data?.payload || {});
 		},
-		[licensesData?.payload?.onTrial],
+		[licenses?.onTrial],
 	);
 
 	const isSubscriptionPastDue =
 		apiResponse.subscriptionStatus === SubscriptionStatus.PastDue;
 
 	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
-		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
+		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.id],
 		{
 			queryFn: () => getUsage(activeLicense?.key || ''),
 			onError: handleError,
@@ -213,25 +214,29 @@ export default function BillingContainer(): JSX.Element {
 
 	useEffect(() => {
 		const activeValidLicense =
-			licensesData?.payload?.licenses?.find(
-				(license) => license.isCurrent === true,
-			) || null;
+			licenses?.licenses?.find((license) => license.isCurrent === true) || null;
 
 		setActiveLicense(activeValidLicense);
 
-		if (!isFetching && licensesData?.payload?.onTrial && !licenseError) {
-			const remainingDays = getRemainingDays(licensesData?.payload?.trialEnd);
+		if (!isFetchingLicenses && licenses?.onTrial && !licensesFetchError) {
+			const remainingDays = getRemainingDays(licenses?.trialEnd);
 
 			setIsFreeTrial(true);
 			setBillAmount(0);
 			setDaysRemaining(remainingDays > 0 ? remainingDays : 0);
 			setHeaderText(
 				`You are in free trial period. Your free trial will end on ${getFormattedDate(
-					licensesData?.payload?.trialEnd,
+					licenses?.trialEnd,
 				)}`,
 			);
 		}
-	}, [isFetching, licensesData?.payload, licenseError]);
+	}, [
+		licenses?.licenses,
+		licenses?.onTrial,
+		licenses?.trialEnd,
+		isFetchingLicenses,
+		licensesFetchError,
+	]);
 
 	const columns: ColumnsType<DataType> = [
 		{
@@ -313,7 +318,7 @@ export default function BillingContainer(): JSX.Element {
 	});
 
 	const handleBilling = useCallback(async () => {
-		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
+		if (isFreeTrial && !licenses?.trialConvertedToSubscription) {
 			logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
@@ -340,7 +345,7 @@ export default function BillingContainer(): JSX.Element {
 	}, [
 		activeLicense?.key,
 		isFreeTrial,
-		licensesData?.payload?.trialConvertedToSubscription,
+		licenses?.trialConvertedToSubscription,
 		manageCreditCard,
 		updateCreditCard,
 	]);
@@ -452,22 +457,21 @@ export default function BillingContainer(): JSX.Element {
 							disabled={isLoading}
 							onClick={handleBilling}
 						>
-							{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
+							{isFreeTrial && !licenses?.trialConvertedToSubscription
 								? t('upgrade_plan')
 								: t('manage_billing')}
 						</Button>
 					</Flex>
 				</Flex>
 
-				{licensesData?.payload?.onTrial &&
-					licensesData?.payload?.trialConvertedToSubscription && (
-						<Typography.Text
-							ellipsis
-							style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
-						>
-							{t('card_details_recieved_and_billing_info')}
-						</Typography.Text>
-					)}
+				{licenses?.onTrial && licenses?.trialConvertedToSubscription && (
+					<Typography.Text
+						ellipsis
+						style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
+					>
+						{t('card_details_recieved_and_billing_info')}
+					</Typography.Text>
+				)}
 
 				{!isLoading && !isFetchingBillingData ? (
 					headerText && (
@@ -510,7 +514,7 @@ export default function BillingContainer(): JSX.Element {
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
-			{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription && (
+			{isFreeTrial && !licenses?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">
 					<Row
 						justify="space-between"

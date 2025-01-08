@@ -7,12 +7,10 @@ import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { Data } from '../DashboardsList';
@@ -34,7 +32,7 @@ export function DeleteButton({
 	routeToListPage,
 }: DeleteButtonProps): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
-	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
@@ -92,7 +90,7 @@ export function DeleteButton({
 
 	const getDeleteTooltipContent = (): string => {
 		if (isLocked) {
-			if (role === USER_ROLES.ADMIN || isAuthor) {
+			if (user.role === USER_ROLES.ADMIN || isAuthor) {
 				return t('dashboard:locked_dashboard_delete_tooltip_admin_author');
 			}
 
@@ -115,7 +113,7 @@ export function DeleteButton({
 						}
 					}}
 					className="delete-btn"
-					disabled={isLocked || (role === USER_ROLES.VIEWER && !isAuthor)}
+					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
 					<DeleteOutlined /> Delete dashboard
 				</TableLinkText>

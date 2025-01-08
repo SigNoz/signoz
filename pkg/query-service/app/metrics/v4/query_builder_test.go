@@ -533,6 +533,75 @@ func TestPrepareMetricQueryGauge(t *testing.T) {
 			},
 			expectedQueryContains: "SELECT host_name, ts, sum(per_series_value) as value FROM (SELECT fingerprint, any(host_name) as host_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'host_name') as host_name, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system_cpu_usage' AND temporality = 'Unspecified' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name = 'system_cpu_usage' AND unix_milli >= 1650991980000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY host_name, ts ORDER BY host_name ASC, ts ASC",
 		},
+		{
+			name: "test gauge query with multiple group by with metric and attribute name containing dot",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:         "A",
+				DataSource:        v3.DataSourceMetrics,
+				AggregateOperator: v3.AggregateOperatorMax,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "system.memory.usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyType("Gauge"),
+					IsColumn: true,
+				},
+				Temporality:      v3.Unspecified,
+				TimeAggregation:  v3.TimeAggregationMax,
+				SpaceAggregation: v3.SpaceAggregationMax,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "host.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "signoz-host",
+						},
+					},
+				},
+				Expression:   "A",
+				Disabled:     false,
+				StepInterval: 60,
+				OrderBy: []v3.OrderBy{
+					{
+						ColumnName: "os.type",
+						Order:      v3.DirectionDesc,
+					},
+					{
+						ColumnName: "state",
+						Order:      v3.DirectionAsc,
+					},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "os.type",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+					{
+						Key:      "state",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+					{
+						Key:      "host.name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+				},
+				Legend:   "",
+				ReduceTo: v3.ReduceToOperatorAvg,
+				Having:   []v3.Having{},
+			},
+			expectedQueryContains: "SELECT `os.type`, state, `host.name`, ts, max(per_series_value) as value FROM (SELECT fingerprint, any(`os.type`) as `os.type`, any(state) as state, any(`host.name`) as `host.name`, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, JSONExtractString(labels, 'state') as state, JSONExtractString(labels, 'host.name') as `host.name`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = 'Unspecified' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'host.name') = 'signoz-host') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1650991980000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY `os.type`, state, `host.name`, ts ORDER BY `os.type` desc, state asc, `host.name` ASC, ts ASC",
+		},
 	}
 
 	for _, testCase := range testCases {

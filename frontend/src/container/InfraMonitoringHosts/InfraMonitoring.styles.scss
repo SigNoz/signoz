@@ -93,7 +93,7 @@
 			}
 
 			.hostname-column-value {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100);
 				font-family: 'Geist Mono';
 				font-style: normal;
 				font-weight: 600;
@@ -136,6 +136,9 @@
 			}
 			.column-header-right {
 				text-align: right;
+			}
+			.column-header-left {
+				text-align: left;
 			}
 			.ant-table-tbody > tr > td {
 				border-bottom: none;

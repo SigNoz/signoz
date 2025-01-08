@@ -7,13 +7,9 @@ import logEvent from 'api/common/logEvent';
 import editOrg from 'api/user/editOrg';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
-import { Dispatch, useEffect, useState } from 'react';
+import { useAppContext } from 'providers/App/App';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { UPDATE_ORG_NAME } from 'types/actions/app';
-import AppReducer from 'types/reducer/app';
 
 export interface OrgData {
 	id: string;
@@ -57,9 +53,8 @@ function OrgQuestions({
 	orgDetails,
 	onNext,
 }: OrgQuestionsProps): JSX.Element {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user, updateOrg } = useAppContext();
 	const { notifications } = useNotifications();
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 
@@ -120,13 +115,7 @@ function OrgQuestions({
 				orgId: currentOrgData.id,
 			});
 			if (statusCode === 200) {
-				dispatch({
-					type: UPDATE_ORG_NAME,
-					payload: {
-						orgId: currentOrgData?.id,
-						name: orgDetails.organisationName,
-					},
-				});
+				updateOrg(currentOrgData?.id, orgDetails.organisationName);
 
 				logEvent('Org Onboarding: Org Name Updated', {
 					organisationName: orgDetails.organisationName,

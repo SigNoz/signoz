@@ -22,16 +22,19 @@
 	}
 }
 
+.state-indicator {
+	width: 15px;
+	.log-state-indicator {
+		padding: 0px;
+	}
+}
+
 .table-timestamp {
 	display: flex;
 	align-items: center;
 
 	.ant-typography {
 		margin-bottom: 0;
-	}
-
-	.log-state-indicator {
-		padding: 0px;
 	}
 }
 
