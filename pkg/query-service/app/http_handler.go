@@ -4996,68 +4996,6 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) {
-	//messagingQueue, apiErr := ParseKafkaQueueBody(r)
-
-	//if apiErr != nil {
-	//	zap.L().Error(apiErr.Err.Error())
-	//	RespondError(w, apiErr, nil)
-	//	return
-	//}
-
-	//filters, err := kafka.GetCeleryFilters(messagingQueue.Variables)
-	//
-	//if err != nil {
-	//	zap.L().Error(err.Error())
-	//	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building filters: %v", err)}, nil)
-	//	return
-	//}
-	//
-	//queryRangeParams, err := kafka.CeleryClickHouseQuery(messagingQueue, "celeryoverview", filters)
-	//
-	//if err != nil {
-	//	zap.L().Error(err.Error())
-	//	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
-	//	return
-	//}
-	//if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-	//	zap.L().Error(err.Error())
-	//	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in qyery range params: %v", err)}, nil)
-	//	return
-	//}
-	//
-	//resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), queryRangeParams)
-	//
-	//if err != nil {
-	//	apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-	//	RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
-	//	return
-	//}
-	//
-	//if filters.QueryFor[0] == "worker" {
-	//
-	//	var workerNames = make([]string, 0)
-	//	var workerCount int
-	//
-	//	for _, res := range resultFetchLatency {
-	//		for _, series := range res.Series {
-	//			if workerName, ok := series.Labels["worker"]; ok {
-	//				workerNames = append(workerNames, workerName)
-	//				workerCount++
-	//			}
-	//		}
-	//	}
-	//
-	//	aH.Respond(w, kafka.WorkerResponse{
-	//		Count: workerCount,
-	//		Names: workerNames,
-	//	})
-	//	return
-	//}
-	//
-	//resp := v3.QueryRangeResponse{
-	//	Result: resultFetchLatency,
-	//}
-	//aH.Respond(w, resp)
 }
 
 func (aH *APIHandler) getCeleryTasks(w http.ResponseWriter, r *http.Request) {

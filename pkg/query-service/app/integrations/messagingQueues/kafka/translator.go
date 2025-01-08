@@ -355,8 +355,6 @@ func BuildClickHouseQuery(
 	var query string
 
 	switch queryContext {
-	//case "overview":
-	//	query = generateOverviewSQL(start, end, getFilters(messagingQueue.Variables))
 	case "producer":
 		query = generateProducerSQL(start, end, topic, partition, queueType)
 	case "consumer":
