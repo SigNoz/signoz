@@ -179,6 +179,9 @@ func main() {
 
 	if len(auth.JwtSecret) == 0 {
 		zap.L().Warn("No JWT secret key is specified.")
+		zap.L().Warn("Please specify a secret if running in production")
+		zap.L().Warn("Adding a dummy JWT token")
+		auth.JwtSecret = baseconst.SIGNOZ_JWT_SECRET
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
 	}
