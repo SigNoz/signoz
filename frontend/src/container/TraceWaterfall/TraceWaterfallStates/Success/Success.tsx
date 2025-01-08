@@ -178,7 +178,7 @@ function getWaterfallColumns({
 					interestedSpanId={interestedSpanId.spanId}
 				/>
 			),
-			size: 400,
+			size: 450,
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
@@ -189,6 +189,7 @@ function getWaterfallColumns({
 					timelineHeight={22}
 				/>
 			),
+			enableResizing: false,
 			cell: (props): JSX.Element => (
 				<SpanDuration
 					span={props.row.original}
@@ -196,7 +197,6 @@ function getWaterfallColumns({
 					traceMetadata={traceMetadata}
 				/>
 			),
-			size: 1000,
 		}),
 	];
 

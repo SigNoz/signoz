@@ -1,16 +1,22 @@
 .success-content {
+	overflow-y: hidden;
+	overflow-x: hidden;
+	max-width: 100%;
+	padding: 0px 20px;
+
 	.waterfall-table {
 		height: 50vh;
 		overflow: auto;
 
 		// default table overrides css for table v3
 		.div-table {
+			width: 100% !important;
 			border: none !important;
 		}
 
 		.div-tr {
 			display: flex;
-			width: fit-content;
+			width: 100%;
 			align-items: center;
 			height: 54px;
 		}
@@ -145,6 +151,12 @@
 			}
 		}
 
+		.div-tr .div-th:nth-child(2) {
+			width: calc(100% - var(--header-span-name-size) * 1px) !important;
+		}
+		.div-tr .div-td:nth-child(2) {
+			width: calc(100% - var(--header-span-name-size) * 1px) !important;
+		}
 		.resizer {
 			position: absolute;
 			top: 0;
