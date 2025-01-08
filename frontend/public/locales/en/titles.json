@@ -56,5 +56,6 @@
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
 	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
 	"MESSAGING_QUEUES": "SigNoz | Messaging Queues",
-	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring"
+	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring",
+	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring"
 }

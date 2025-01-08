@@ -7,9 +7,10 @@ import {
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isFunction } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
@@ -33,6 +34,9 @@ export interface IQuickFiltersConfig {
 	type: FiltersType;
 	title: string;
 	attributeKey: BaseAutocompleteData;
+	aggregateOperator?: string;
+	aggregateAttribute?: string;
+	dataSource?: DataSource;
 	customRendererForValue?: (value: string) => JSX.Element;
 	defaultOpen: boolean;
 }
@@ -40,10 +44,12 @@ export interface IQuickFiltersConfig {
 interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange: () => void;
+	source?: string | null;
+	onFilterChange?: (query: Query) => void;
 }
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
-	const { config, handleFilterVisibilityChange } = props;
+	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
 
 	const {
 		currentQuery,
@@ -78,47 +84,63 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				})),
 			},
 		};
-		redirectWithQueryBuilderData(preparedQuery);
+
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(preparedQuery);
+		} else {
+			redirectWithQueryBuilderData(preparedQuery);
+		}
 	};
 
 	const lastQueryName =
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
+
+	const isInfraMonitoring = source === 'infra-monitoring';
+
 	return (
 		<div className="quick-filters">
-			<section className="header">
-				<section className="left-actions">
-					<FilterOutlined />
-					<Typography.Text className="text">Filters for</Typography.Text>
-					<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-						<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
-					</Tooltip>
+			{!isInfraMonitoring && (
+				<section className="header">
+					<section className="left-actions">
+						<FilterOutlined />
+						<Typography.Text className="text">Filters for</Typography.Text>
+						<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
+							<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
+						</Tooltip>
+					</section>
+
+					<section className="right-actions">
+						<Tooltip title="Reset All">
+							<SyncOutlined className="sync-icon" onClick={handleReset} />
+						</Tooltip>
+						<div className="divider-filter" />
+						<Tooltip title="Collapse Filters">
+							<VerticalAlignTopOutlined
+								rotate={270}
+								onClick={handleFilterVisibilityChange}
+							/>
+						</Tooltip>
+					</section>
 				</section>
-				<section className="right-actions">
-					<Tooltip title="Reset All">
-						<SyncOutlined className="sync-icon" onClick={handleReset} />
-					</Tooltip>
-					<div className="divider-filter" />
-					<Tooltip title="Collapse Filters">
-						<VerticalAlignTopOutlined
-							rotate={270}
-							onClick={handleFilterVisibilityChange}
-						/>
-					</Tooltip>
-				</section>
-			</section>
+			)}
 
 			<section className="filters">
 				{config.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return <Checkbox filter={filter} />;
+							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
 						case FiltersType.SLIDER:
 							return <Slider filter={filter} />;
 						default:
-							return <Checkbox filter={filter} />;
+							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
 					}
 				})}
 			</section>
 		</div>
 	);
 }
+
+QuickFilters.defaultProps = {
+	source: null,
+	onFilterChange: null,
+};
