@@ -245,6 +245,7 @@
 		"phin": "^3.7.1",
 		"body-parser": "1.20.3",
 		"http-proxy-middleware": "3.0.3",
-		"cross-spawn": "7.0.5"
+		"cross-spawn": "7.0.5",
+		"cookie": "^0.7.1"
 	}
 }
