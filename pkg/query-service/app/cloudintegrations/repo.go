@@ -13,11 +13,11 @@ import (
 
 type cloudProviderAccountsRepository interface {
 	// list connected cloud provider accounts.
-	listConnected(ctx context.Context, cloudProvider string) ([]Account, *model.ApiError)
+	listConnected(ctx context.Context, cloudProvider string) ([]AccountRecord, *model.ApiError)
 
-	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*Account, *model.ApiError)
+	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*AccountRecord, *model.ApiError)
 
-	get(ctx context.Context, cloudProvider string, id string) (*Account, *model.ApiError)
+	get(ctx context.Context, cloudProvider string, id string) (*AccountRecord, *model.ApiError)
 
 	// Insert an account or update it by ID for specified non-empty fields
 	upsert(
@@ -28,7 +28,7 @@ type cloudProviderAccountsRepository interface {
 		cloudAccountId *string,
 		agentReport *AgentReport,
 		removedAt *time.Time,
-	) (*Account, *model.ApiError)
+	) (*AccountRecord, *model.ApiError)
 }
 
 func newCloudProviderAccountsRepository(db *sqlx.DB) (
@@ -76,8 +76,8 @@ type cloudProviderAccountsSQLRepository struct {
 
 func (r *cloudProviderAccountsSQLRepository) listConnected(
 	ctx context.Context, cloudProvider string,
-) ([]Account, *model.ApiError) {
-	accounts := []Account{}
+) ([]AccountRecord, *model.ApiError) {
+	accounts := []AccountRecord{}
 
 	err := r.db.SelectContext(
 		ctx, &accounts, `
@@ -109,8 +109,8 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 
 func (r *cloudProviderAccountsSQLRepository) getByIds(
 	ctx context.Context, cloudProvider string, ids []string,
-) (map[string]*Account, *model.ApiError) {
-	accounts := []Account{}
+) (map[string]*AccountRecord, *model.ApiError) {
+	accounts := []AccountRecord{}
 
 	idPlaceholders := []string{}
 	queryArgs := []any{cloudProvider}
@@ -144,7 +144,7 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 		))
 	}
 
-	result := map[string]*Account{}
+	result := map[string]*AccountRecord{}
 	for _, a := range accounts {
 
 		if a.Config == nil {
@@ -160,7 +160,7 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 
 func (r *cloudProviderAccountsSQLRepository) get(
 	ctx context.Context, cloudProvider string, id string,
-) (*Account, *model.ApiError) {
+) (*AccountRecord, *model.ApiError) {
 	res, apiErr := r.getByIds(ctx, cloudProvider, []string{id})
 	if apiErr != nil {
 		return nil, apiErr
@@ -184,7 +184,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	cloudAccountId *string,
 	agentReport *AgentReport,
 	removedAt *time.Time,
-) (*Account, *model.ApiError) {
+) (*AccountRecord, *model.ApiError) {
 	// Insert
 	if id == nil {
 		newId := uuid.NewString()

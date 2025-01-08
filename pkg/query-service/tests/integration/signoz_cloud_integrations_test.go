@@ -237,7 +237,7 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 
 func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 	cloudProvider string, accountId string, newConfig cloudintegrations.AccountConfig,
-) *cloudintegrations.Account {
+) *cloudintegrations.AccountRecord {
 	respDataJson := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/config",
@@ -247,7 +247,7 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 		},
 	)
 
-	var resp cloudintegrations.Account
+	var resp cloudintegrations.AccountRecord
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")
@@ -258,7 +258,7 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 
 func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 	cloudProvider string, accountId string,
-) *cloudintegrations.Account {
+) *cloudintegrations.AccountRecord {
 	respDataJson := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/disconnect",
@@ -266,7 +266,7 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 		), map[string]any{},
 	)
 
-	var resp cloudintegrations.Account
+	var resp cloudintegrations.AccountRecord
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")

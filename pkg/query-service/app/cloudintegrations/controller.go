@@ -8,7 +8,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.uber.org/zap"
 )
 
 var SupportedCloudProviders = []string{
@@ -39,7 +38,7 @@ func NewController(db *sqlx.DB) (
 	}, nil
 }
 
-type ConnectedAccount struct {
+type Account struct {
 	Id             string        `json:"id"`
 	CloudAccountId string        `json:"cloud_account_id"`
 	Config         AccountConfig `json:"config"`
@@ -47,7 +46,7 @@ type ConnectedAccount struct {
 }
 
 type ConnectedAccountsListResponse struct {
-	Accounts []ConnectedAccount `json:"accounts"`
+	Accounts []Account `json:"accounts"`
 }
 
 func (c *Controller) ListConnectedAccounts(
@@ -59,19 +58,14 @@ func (c *Controller) ListConnectedAccounts(
 		return nil, apiErr
 	}
 
-	accounts, apiErr := c.repo.listConnected(ctx, cloudProvider)
+	accountRecords, apiErr := c.repo.listConnected(ctx, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
 
-	connectedAccounts := []ConnectedAccount{}
-	for _, a := range accounts {
-		ca, err := a.connectedAccount()
-		if err != nil {
-			zap.L().Error("invalid connected account record", zap.String("accountId", a.Id), zap.Error(err))
-		} else {
-			connectedAccounts = append(connectedAccounts, *ca)
-		}
+	connectedAccounts := []Account{}
+	for _, a := range accountRecords {
+		connectedAccounts = append(connectedAccounts, a.account())
 	}
 
 	return &ConnectedAccountsListResponse{
@@ -159,7 +153,7 @@ type AgentCheckInRequest struct {
 }
 
 type AgentCheckInResponse struct {
-	Account Account `json:"account"`
+	Account AccountRecord `json:"account"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -208,19 +202,21 @@ func (c *Controller) UpdateAccountConfig(
 		return nil, apiErr
 	}
 
-	account, apiErr := c.repo.upsert(
+	accountRecord, apiErr := c.repo.upsert(
 		ctx, cloudProvider, &accountId, &req.Config, nil, nil, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	return account, nil
+	account := accountRecord.account()
+
+	return &account, nil
 }
 
 func (c *Controller) DisconnectAccount(
 	ctx context.Context, cloudProvider string, accountId string,
-) (*Account, *model.ApiError) {
+) (*AccountRecord, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 // Represents a cloud provider account for cloud integrations
-type Account struct {
+type AccountRecord struct {
 	CloudProvider   string         `json:"cloud_provider" db:"cloud_provider"`
 	Id              string         `json:"id" db:"id"`
 	Config          *AccountConfig `json:"config" db:"config_json"`
@@ -91,7 +91,7 @@ type AccountIntegrationStatus struct {
 	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
 }
 
-func (a *Account) status() AccountStatus {
+func (a *AccountRecord) status() AccountStatus {
 	status := AccountStatus{}
 	if a.LastAgentReport != nil {
 		lastHeartbeat := a.LastAgentReport.TimestampMillis
@@ -100,20 +100,16 @@ func (a *Account) status() AccountStatus {
 	return status
 }
 
-func (a *Account) connectedAccount() (*ConnectedAccount, error) {
-	ca := ConnectedAccount{Id: a.Id, Status: a.status()}
+func (a *AccountRecord) account() Account {
+	ca := Account{Id: a.Id, Status: a.status()}
 
-	if a.CloudAccountId == nil {
-		return nil, fmt.Errorf("account %s has nil cloud account id", a.Id)
-	} else {
+	if a.CloudAccountId != nil {
 		ca.CloudAccountId = *a.CloudAccountId
 	}
 
-	if a.Config == nil {
-		return nil, fmt.Errorf("account %s has nil config", a.Id)
-	} else {
+	if a.Config != nil {
 		ca.Config = *a.Config
 	}
 
-	return &ca, nil
+	return ca
 }
