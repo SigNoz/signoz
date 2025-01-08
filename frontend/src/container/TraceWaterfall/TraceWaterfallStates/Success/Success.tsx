@@ -49,8 +49,18 @@ function SpanOverview({
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 }): JSX.Element {
 	const isRootSpan = span.parentSpanId === '';
+	const spanRef = useRef<HTMLDivElement>(null);
+
+	// useEffect(() => {
+	// 	if (interestedSpanId === span.spanId && spanRef.current) {
+	// 		spanRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	// 	}
+	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, []);
+
 	return (
 		<div
+			ref={spanRef}
 			className={cx(
 				'span-overview',
 				interestedSpanId === span.spanId ? 'interested-span' : '',
@@ -163,6 +173,7 @@ function getWaterfallColumns({
 	interestedSpanId: string;
 	traceMetadata: ITraceMetadata;
 }): ColumnDef<Span, any>[] {
+	console.log('rec');
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
 			id: 'span-name',
@@ -231,10 +242,10 @@ function Success(props: ISuccessProps): JSX.Element {
 				entries.forEach((entry) => {
 					if (entry.isIntersecting) {
 						if (entry.target.id === 'bottomNode') {
-							handleEndReached();
+							// handleEndReached();
 						}
 						if (entry.target.id === 'topNode') {
-							handleTopReached();
+							// handleTopReached();
 						}
 					}
 				});

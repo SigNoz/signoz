@@ -87,7 +87,7 @@ function TraceWaterfall(): JSX.Element {
 							startTime: traceData?.payload?.startTimestampMillis || 0,
 							endTime: traceData?.payload?.endTimestampMillis || 0,
 						}}
-						traceWaterfallState={traceWaterfallState}
+						// traceWaterfallState={traceWaterfallState}
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
 						setInterestedSpanId={setInterestedSpanId}

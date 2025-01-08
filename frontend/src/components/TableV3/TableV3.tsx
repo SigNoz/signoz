@@ -63,10 +63,8 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		},
 		columnResizeMode: 'onChange',
 		getCoreRowModel: getCoreRowModel(),
-		// turn on these flags to get debug logs from these instances
-		debugTable: false,
-		debugHeaders: false,
-		debugColumns: false,
+		// turn on debug flags to get debug logs from these instances
+		debugAll: false,
 	});
 
 	/**
