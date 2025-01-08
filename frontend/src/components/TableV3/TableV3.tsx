@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import React, { useMemo } from 'react';
+import React, { MutableRefObject, useEffect, useMemo } from 'react';
 
 // here we are manually rendering the table body so that we can memoize the same for performant re-renders
 function TableBody<T>({
@@ -26,7 +26,7 @@ function TableBody<T>({
 				const row = rows[virtualRow.index];
 				return (
 					<div
-						key={row.id}
+						key={virtualRow.index}
 						className="div-tr"
 						style={{
 							height: `${virtualRow.size}px`,
@@ -61,17 +61,19 @@ const MemoizedTableBody = React.memo(
 interface ITableConfig {
 	defaultColumnMinSize?: number;
 	defaultColumnMaxSize?: number;
-	initialOffset?: number;
 }
 interface ITableV3Props<T> {
 	columns: ColumnDef<T, any>[];
 	data: T[];
 	config: ITableConfig;
 	customClassName?: string;
+	virtualiserRef?: MutableRefObject<
+		Virtualizer<HTMLDivElement, Element> | undefined
+	>;
 }
 
 export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
-	const { data, columns, config, customClassName = '' } = props;
+	const { data, columns, config, customClassName = '', virtualiserRef } = props;
 
 	const table = useReactTable({
 		data,
@@ -93,8 +95,13 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		getScrollElement: () => tableRef.current,
 		estimateSize: () => 54,
 		overscan: 20,
-		initialOffset: config.initialOffset || 0,
 	});
+
+	useEffect(() => {
+		if (virtualiserRef) {
+			virtualiserRef.current = virtualizer;
+		}
+	}, [virtualiserRef, virtualizer]);
 
 	/**
 	 * Instead of calling `column.getSize()` on every render for every header
@@ -122,6 +129,7 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 				style={{
 					...columnSizeVars, // Define column sizes on the <table> element
 					width: table.getTotalSize(),
+					height: `${virtualizer.getTotalSize()}px`,
 				}}
 			>
 				<div className="div-thead">
@@ -166,4 +174,5 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 
 TableV3.defaultProps = {
 	customClassName: '',
+	virtualiserRef: null,
 };

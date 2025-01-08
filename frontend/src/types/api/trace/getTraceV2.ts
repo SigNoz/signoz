@@ -5,7 +5,7 @@ export interface TraceDetailV2URLProps {
 export interface GetTraceV2PayloadProps {
 	traceId: string;
 	interestedSpanId: string;
-	uncollapsedNodes: string[];
+	isInterestedSpanIdUnCollapsed: boolean;
 }
 
 export interface Span {

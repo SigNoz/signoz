@@ -15,10 +15,11 @@ const useGetTraceV2 = (props: GetTraceV2PayloadProps): UseLicense =>
 			REACT_QUERY_KEY.GET_TRACE_V2,
 			props.traceId,
 			props.interestedSpanId,
-			props.uncollapsedNodes,
+			props.isInterestedSpanIdUnCollapsed,
 		],
 		enabled: !!props.traceId,
 		keepPreviousData: true,
+		refetchOnWindowFocus: false,
 	});
 
 type UseLicense = UseQueryResult<

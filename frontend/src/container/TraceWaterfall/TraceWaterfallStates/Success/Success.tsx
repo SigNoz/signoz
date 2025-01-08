@@ -1,14 +1,23 @@
 import './Success.styles.scss';
 
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Typography } from 'antd';
 import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
-import { Dispatch, SetStateAction, useCallback, useMemo, useRef } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+} from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
@@ -23,11 +32,9 @@ interface ITraceMetadata {
 interface ISuccessProps {
 	spans: Span[];
 	traceMetadata: ITraceMetadata;
-	// traceWaterfallState: TraceWaterfallStates;
-	interestedSpanId: string;
+	interestedSpanId: IInterestedSpan;
 	uncollapsedNodes: string[];
-	setInterestedSpanId: Dispatch<SetStateAction<string | null>>;
-	setUncollapsedNodes: Dispatch<SetStateAction<string[]>>;
+	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 }
 
 function SpanOverview({
@@ -156,10 +163,9 @@ function getWaterfallColumns({
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
-	interestedSpanId: string;
+	interestedSpanId: IInterestedSpan;
 	traceMetadata: ITraceMetadata;
 }): ColumnDef<Span, any>[] {
-	console.log('rec');
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
 			id: 'span-name',
@@ -169,7 +175,7 @@ function getWaterfallColumns({
 					span={props.row.original}
 					handleCollapseUncollapse={handleCollapseUncollapse}
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
-					interestedSpanId={interestedSpanId}
+					interestedSpanId={interestedSpanId.spanId}
 				/>
 			),
 			size: 400,
@@ -186,7 +192,7 @@ function getWaterfallColumns({
 			cell: (props): JSX.Element => (
 				<SpanDuration
 					span={props.row.original}
-					interestedSpanId={interestedSpanId}
+					interestedSpanId={interestedSpanId.spanId}
 					traceMetadata={traceMetadata}
 				/>
 			),
@@ -204,8 +210,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		interestedSpanId,
 		uncollapsedNodes,
 		setInterestedSpanId,
-		setUncollapsedNodes,
 	} = props;
+	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 
 	// const handleEndReached = useCallback(() => {
 	// 	setInterestedSpanId(spans[spans.length - 1].spanId);
@@ -219,15 +225,9 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
-			if (collapse) {
-				setUncollapsedNodes((prev) => prev.filter((id) => id !== spanId));
-				setInterestedSpanId(spanId);
-			} else {
-				setUncollapsedNodes((prev) => [...prev, spanId]);
-				setInterestedSpanId(spanId);
-			}
+			setInterestedSpanId({ spanId, isUncollapsed: !collapse });
 		},
-		[setInterestedSpanId, setUncollapsedNodes],
+		[setInterestedSpanId],
 	);
 
 	const columns = useMemo(
@@ -241,12 +241,18 @@ function Success(props: ISuccessProps): JSX.Element {
 		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId, traceMetadata],
 	);
 
-	const initialOffset = useMemo(() => {
-		const idx = spans.findIndex((span) => span.spanId === interestedSpanId);
-		if (idx === -1) {
-			return 0;
+	useEffect(() => {
+		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
+			const idx = spans.findIndex(
+				(span) => span.spanId === interestedSpanId.spanId,
+			);
+			console.log(idx);
+			if (idx !== -1)
+				virtualizerRef.current.scrollToIndex(idx, {
+					align: 'center',
+					behavior: 'auto',
+				});
 		}
-		return idx;
 	}, [interestedSpanId, spans]);
 
 	return (
@@ -254,10 +260,9 @@ function Success(props: ISuccessProps): JSX.Element {
 			<TableV3
 				columns={columns}
 				data={spans}
-				config={{
-					initialOffset,
-				}}
+				config={{}}
 				customClassName="waterfall-table"
+				virtualiserRef={virtualizerRef}
 			/>
 		</div>
 	);

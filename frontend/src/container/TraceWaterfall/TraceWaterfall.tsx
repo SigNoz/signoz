@@ -13,11 +13,19 @@ import Error from './TraceWaterfallStates/Error/Error';
 import NoData from './TraceWaterfallStates/NoData/NoData';
 import Success from './TraceWaterfallStates/Success/Success';
 
+export interface IInterestedSpan {
+	spanId: string;
+	isUncollapsed: boolean;
+}
+
 function TraceWaterfall(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
 	const urlQuery = useUrlQuery();
-	const [interestedSpanId, setInterestedSpanId] = useState<string | null>(() =>
-		urlQuery.get('spanId'),
+	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
+		() => ({
+			spanId: urlQuery.get('spanId') || '',
+			isUncollapsed: urlQuery.get('spanId') !== '',
+		}),
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const {
@@ -26,8 +34,8 @@ function TraceWaterfall(): JSX.Element {
 		error: errorFetchingTraceData,
 	} = useGetTraceV2({
 		traceId,
-		interestedSpanId: interestedSpanId || '',
-		uncollapsedNodes,
+		interestedSpanId: interestedSpanId.spanId,
+		isInterestedSpanIdUnCollapsed: interestedSpanId.isUncollapsed,
 	});
 
 	useEffect(() => {
@@ -87,11 +95,9 @@ function TraceWaterfall(): JSX.Element {
 							startTime: traceData?.payload?.startTimestampMillis || 0,
 							endTime: traceData?.payload?.endTimestampMillis || 0,
 						}}
-						// traceWaterfallState={traceWaterfallState}
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
 						setInterestedSpanId={setInterestedSpanId}
-						setUncollapsedNodes={setUncollapsedNodes}
 					/>
 				);
 			default:

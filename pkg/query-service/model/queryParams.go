@@ -316,8 +316,8 @@ type SearchTracesParams struct {
 }
 
 type SearchTracesV3Params struct {
-	InterestedSpanID string   `json:"interestedSpanId"`
-	UncollapsedNodes []string `json:"uncollapsedNodes"`
+	InterestedSpanID              string `json:"interestedSpanId"`
+	IsInterestedSpanIdUnCollapsed bool   `json:"isInterestedSpanIdUnCollapsed"`
 }
 
 type SpanFilterParams struct {
