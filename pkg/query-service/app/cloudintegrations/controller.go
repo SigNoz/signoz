@@ -157,9 +157,16 @@ type AgentCheckInResponse struct {
 func (c *Controller) CheckInAsAgent(
 	ctx context.Context, cloudProvider string, req AgentCheckInRequest,
 ) (*AgentCheckInResponse, *model.ApiError) {
-	// Account connection with a simple connection URL may not be available for all providers.
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
+	}
+
+	account, apiErr := c.repo.get(ctx, cloudProvider, req.AccountId)
+	if account != nil && account.CloudAccountId != nil && *account.CloudAccountId != req.CloudAccountId {
+		return nil, model.BadRequest(fmt.Errorf(
+			"can't check in with new %s account id %s for account %s with existing %s id %s",
+			cloudProvider, req.CloudAccountId, account.Id, cloudProvider, *account.CloudAccountId,
+		))
 	}
 
 	agentReport := AgentReport{
@@ -167,9 +174,7 @@ func (c *Controller) CheckInAsAgent(
 		Data:            req.Data,
 	}
 
-	// TODO(Raj): Consider ensuring cloudAccountId is not updated post insertion
-	// Consider getting the account by Id first to validate
-	account, apiErr := c.repo.upsert(
+	account, apiErr = c.repo.upsert(
 		ctx, cloudProvider, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
 	)
 	if apiErr != nil {

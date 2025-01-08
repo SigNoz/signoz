@@ -17,7 +17,6 @@ type cloudProviderAccountsRepository interface {
 
 	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*Account, *model.ApiError)
 
-	// TODO(Raj): Move this to being a helper on the controller?
 	get(ctx context.Context, cloudProvider string, id string) (*Account, *model.ApiError)
 
 	// Insert an account or update it by ID for specified non-empty fields
