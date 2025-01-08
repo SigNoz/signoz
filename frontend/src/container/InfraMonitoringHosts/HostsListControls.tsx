@@ -1,5 +1,6 @@
 import './InfraMonitoring.styles.scss';
 
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -47,6 +48,7 @@ function HostsListControls({
 					onChange={handleChangeTagFilters}
 					isInfraMonitoring
 					disableNavigationShortcuts
+					entity={K8sCategory.HOSTS}
 				/>
 			</div>
 

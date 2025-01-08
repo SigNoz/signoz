@@ -168,7 +168,8 @@ function HostsList(): JSX.Element {
 	const showHostsEmptyState =
 		!isFetching &&
 		!isLoading &&
-		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics);
+		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
+		!filters.items.length;
 
 	return (
 		<div className="hosts-list">

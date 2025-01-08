@@ -4,6 +4,7 @@ export enum VIEWS {
 	TRACES = 'traces',
 	CONTAINERS = 'containers',
 	PROCESSES = 'processes',
+	EVENTS = 'events',
 }
 
 export const VIEW_TYPES = {
@@ -12,4 +13,5 @@ export const VIEW_TYPES = {
 	TRACES: VIEWS.TRACES,
 	CONTAINERS: VIEWS.CONTAINERS,
 	PROCESSES: VIEWS.PROCESSES,
+	EVENTS: VIEWS.EVENTS,
 };
