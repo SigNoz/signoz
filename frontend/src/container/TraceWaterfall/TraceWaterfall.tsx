@@ -34,6 +34,7 @@ function TraceWaterfall(): JSX.Element {
 		error: errorFetchingTraceData,
 	} = useGetTraceV2({
 		traceId,
+		uncollapsedNodes,
 		interestedSpanId: interestedSpanId.spanId,
 		isInterestedSpanIdUnCollapsed: interestedSpanId.isUncollapsed,
 	});

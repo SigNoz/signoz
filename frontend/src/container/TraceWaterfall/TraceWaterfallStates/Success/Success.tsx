@@ -246,7 +246,6 @@ function Success(props: ISuccessProps): JSX.Element {
 			const idx = spans.findIndex(
 				(span) => span.spanId === interestedSpanId.spanId,
 			);
-			console.log(idx);
 			if (idx !== -1)
 				virtualizerRef.current.scrollToIndex(idx, {
 					align: 'center',

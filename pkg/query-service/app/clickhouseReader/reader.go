@@ -1637,7 +1637,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	var preOrderTraversal []*model.Span
 	var traverse func(node *model.Span, level int64, hasSibling bool)
 	var rootToInterestedNodePath func(node *model.Span) bool
-	uncollapsedNodes := []string{}
+	uncollapsedNodes := req.UncollapsedNodes
 
 	// mark the current path from root to the interested node as uncollapsed
 	// Important - do not mark the interested node as uncollapsed in the above exercise to handle node collapses
