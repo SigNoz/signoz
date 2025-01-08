@@ -981,7 +981,7 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		// 	return fmt.Errorf("group by is not supported for list panel type")
 		// }
 
-		if panelType == PanelTypeValue {
+		if panelType == PanelTypeValue && len(b.GroupBy) > 0 {
 			if err := b.SecondaryAggregation.Validate(); err != nil {
 				return fmt.Errorf("series aggregation is required for value type panel with group by: %w", err)
 			}
