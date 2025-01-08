@@ -572,6 +572,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		a.queryName < b.queryName ? -1 : 1,
 	);
 
+	console.log('here', queryTableData, query);
 	// the reason we need this is because the filling of values in rows doesn't account for mismatch enteries
 	// in the response. Example : Series A -> [label1, label2] and Series B -> [label2,label1] this isn't accounted for
 	sortedQueryTableData.forEach((q) => {
