@@ -272,8 +272,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const handleFailedPayment = (): void => {
 		manageCreditCard({
 			licenseKey: activeLicenseV3?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			successURL: window.location.origin,
+			cancelURL: window.location.origin,
 		});
 	};
 

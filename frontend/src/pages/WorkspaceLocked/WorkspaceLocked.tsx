@@ -126,6 +126,12 @@ export default function WorkspaceBlocked(): JSX.Element {
 		});
 	};
 
+	const handleViewBilling = (): void => {
+		logEvent('Workspace Blocked: User Clicked View Billing', {});
+
+		history.push(ROUTES.BILLING);
+	};
+
 	const renderCustomerStories = (
 		filterCondition: (index: number) => boolean,
 	): JSX.Element[] =>
@@ -276,6 +282,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 							{t('trialPlanExpired')}
 						</span>
 						<span className="workspace-locked__modal__header__actions">
+							{isAdmin && (
+								<Button
+									className="workspace-locked__modal__header__actions__billing"
+									type="link"
+									size="small"
+									role="button"
+									onClick={handleViewBilling}
+								>
+									View Billing
+								</Button>
+							)}
+
 							<Typography.Text className="workspace-locked__modal__title">
 								Got Questions?
 							</Typography.Text>
