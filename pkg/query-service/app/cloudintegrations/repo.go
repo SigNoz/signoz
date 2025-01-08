@@ -12,16 +12,16 @@ import (
 )
 
 type cloudProviderAccountsRepository interface {
-	// TODO(Raj): All methods should be scoped by cloud provider.
-	listConnected(context.Context) ([]Account, *model.ApiError)
+	listConnected(ctx context.Context, cloudProvider string) ([]Account, *model.ApiError)
 
-	getByIds(ctx context.Context, ids []string) (map[string]*Account, *model.ApiError)
+	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*Account, *model.ApiError)
 
-	get(ctx context.Context, id string) (*Account, *model.ApiError)
+	get(ctx context.Context, cloudProvider string, id string) (*Account, *model.ApiError)
 
 	// Insert an account or update it by ID for specified non-empty fields
 	upsert(
 		ctx context.Context,
+		cloudProvider string,
 		id *string,
 		config *AccountConfig,
 		cloudAccountId *string,
@@ -49,12 +49,14 @@ func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 
 	createTablesStatements := `
 		CREATE TABLE IF NOT EXISTS cloud_integrations_accounts(
-			id TEXT PRIMARY KEY NOT NULL,
+			cloud_provider TEXT NOT NULL,
+			id TEXT NOT NULL,
 			config_json TEXT,
 			cloud_account_id TEXT,
 			last_agent_report_json TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			removed_at TIMESTAMP
+			removed_at TIMESTAMP,
+			UNIQUE(cloud_provider, id)
 		)
 	`
 	_, err := db.Exec(createTablesStatements)
@@ -71,14 +73,15 @@ type cloudProviderAccountsSQLRepository struct {
 	db *sqlx.DB
 }
 
-func (r *cloudProviderAccountsSQLRepository) listConnected(ctx context.Context) (
-	[]Account, *model.ApiError,
-) {
+func (r *cloudProviderAccountsSQLRepository) listConnected(
+	ctx context.Context, cloudProvider string,
+) ([]Account, *model.ApiError) {
 	accounts := []Account{}
 
 	err := r.db.SelectContext(
 		ctx, &accounts, `
 			select
+				cloud_provider,
 				id,
 				config_json,
 				cloud_account_id,
@@ -87,10 +90,11 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(ctx context.Context) 
 				removed_at
 			from cloud_integrations_accounts
       where
-        removed_at is NULL
+        cloud_provider=$1
+        and removed_at is NULL
         and cloud_account_id is not NULL
 			order by created_at
-		`,
+		`, cloudProvider,
 	)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -102,20 +106,22 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(ctx context.Context) 
 }
 
 func (r *cloudProviderAccountsSQLRepository) getByIds(
-	ctx context.Context, ids []string,
+	ctx context.Context, cloudProvider string, ids []string,
 ) (map[string]*Account, *model.ApiError) {
 	accounts := []Account{}
 
 	idPlaceholders := []string{}
-	idValues := []interface{}{}
+	queryArgs := []any{cloudProvider}
+
 	for _, id := range ids {
 		idPlaceholders = append(idPlaceholders, "?")
-		idValues = append(idValues, id)
+		queryArgs = append(queryArgs, id)
 	}
 
 	err := r.db.SelectContext(
 		ctx, &accounts, fmt.Sprintf(`
 			select
+				cloud_provider,
 				id,
 				config_json,
 				cloud_account_id,
@@ -123,10 +129,12 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 				created_at,
 				removed_at
 			from cloud_integrations_accounts
-			where id in (%s)`,
+			where
+				cloud_provider=?
+				and id in (%s)`,
 			strings.Join(idPlaceholders, ", "),
 		),
-		idValues...,
+		queryArgs...,
 	)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -149,9 +157,9 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 }
 
 func (r *cloudProviderAccountsSQLRepository) get(
-	ctx context.Context, id string,
+	ctx context.Context, cloudProvider string, id string,
 ) (*Account, *model.ApiError) {
-	res, apiErr := r.getByIds(ctx, []string{id})
+	res, apiErr := r.getByIds(ctx, cloudProvider, []string{id})
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -168,6 +176,7 @@ func (r *cloudProviderAccountsSQLRepository) get(
 
 func (r *cloudProviderAccountsSQLRepository) upsert(
 	ctx context.Context,
+	cloudProvider string,
 	id *string,
 	config *AccountConfig,
 	cloudAccountId *string,
@@ -213,25 +222,26 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	onConflictClause := ""
 	if len(onConflictSetStmts) > 0 {
 		onConflictClause = fmt.Sprintf(
-			"on conflict(id) do update SET\n%s",
+			"on conflict(cloud_provider, id) do update SET\n%s",
 			strings.Join(onConflictSetStmts, ",\n"),
 		)
 	}
 
 	insertQuery := fmt.Sprintf(`
     INSERT INTO cloud_integrations_accounts (
+      cloud_provider,
       id,
       config_json,
       cloud_account_id,
       last_agent_report_json,
       removed_at
-    ) values ($1, $2, $3, $4, $5)
+    ) values ($1, $2, $3, $4, $5, $6)
     %s`, onConflictClause,
 	)
 
 	_, dbErr := r.db.ExecContext(
 		ctx, insertQuery,
-		id, config, cloudAccountId, agentReport, removedAt,
+		cloudProvider, id, config, cloudAccountId, agentReport, removedAt,
 	)
 	if dbErr != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -239,7 +249,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		))
 	}
 
-	upsertedAccount, apiErr := r.get(ctx, *id)
+	upsertedAccount, apiErr := r.get(ctx, cloudProvider, *id)
 	if apiErr != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't fetch upserted account by id: %w", apiErr.ToError(),

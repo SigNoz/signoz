@@ -9,6 +9,7 @@ import (
 
 // Represents a cloud provider account for cloud integrations
 type Account struct {
+	CloudProvider   string         `json:"cloud_provider" db:"cloud_provider"`
 	Id              string         `json:"id" db:"id"`
 	Config          *AccountConfig `json:"config_json" db:"config_json"`
 	CloudAccountId  *string        `json:"cloud_account_id" db:"cloud_account_id"`

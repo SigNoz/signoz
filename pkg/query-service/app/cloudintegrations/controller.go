@@ -52,7 +52,7 @@ func (c *Controller) ListConnectedAccounts(
 		return nil, apiErr
 	}
 
-	accounts, apiErr := c.repo.listConnected(ctx)
+	accounts, apiErr := c.repo.listConnected(ctx, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
@@ -89,7 +89,7 @@ func (c *Controller) GenerateConnectionUrl(
 	}
 
 	account, apiErr := c.repo.upsert(
-		ctx, req.AccountId, &req.AccountConfig, nil, nil, nil,
+		ctx, cloudProvider, req.AccountId, &req.AccountConfig, nil, nil, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
@@ -129,7 +129,7 @@ func (c *Controller) GetAccountStatus(
 		return nil, apiErr
 	}
 
-	account, apiErr := c.repo.get(ctx, accountId)
+	account, apiErr := c.repo.get(ctx, cloudProvider, accountId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -170,7 +170,7 @@ func (c *Controller) CheckInAsAgent(
 	// TODO(Raj): Consider ensuring cloudAccountId is not updated post insertion
 	// Consider getting the account by Id first to validate
 	account, apiErr := c.repo.upsert(
-		ctx, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
+		ctx, cloudProvider, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
@@ -196,7 +196,7 @@ func (c *Controller) UpdateAccountConfig(
 	}
 
 	account, apiErr := c.repo.upsert(
-		ctx, &accountId, &req.Config, nil, nil, nil,
+		ctx, cloudProvider, &accountId, &req.Config, nil, nil, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
@@ -214,7 +214,7 @@ func (c *Controller) DisconnectAccount(
 
 	tsNow := time.Now()
 	account, apiErr := c.repo.upsert(
-		ctx, &accountId, nil, nil, nil, &tsNow,
+		ctx, cloudProvider, &accountId, nil, nil, nil, &tsNow,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
