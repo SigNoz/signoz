@@ -2525,31 +2525,56 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 // RegisterMessagingQueuesRoutes adds messaging-queues routes
 func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *AuthMiddleware) {
 
-	// SubRouter for kafka
-	kafkaRouter := router.PathPrefix("/api/v1/messaging-queues/kafka").Subrouter()
+	// Main messaging queues router
+	messagingQueuesRouter := router.PathPrefix("/api/v1/messaging-queues").Subrouter()
+
+	// Queue Overview route
+	messagingQueuesRouter.HandleFunc("/queue-overview", am.ViewAccess(aH.getQueueOverview)).Methods(http.MethodPost)
+
+	// -------------------------------------------------
+	// Kafka-specific routes
+	kafkaRouter := messagingQueuesRouter.PathPrefix("/kafka").Subrouter()
 
 	onboardingRouter := kafkaRouter.PathPrefix("/onboarding").Subrouter()
+
 	onboardingRouter.HandleFunc("/producers", am.ViewAccess(aH.onboardProducers)).Methods(http.MethodPost)
 	onboardingRouter.HandleFunc("/consumers", am.ViewAccess(aH.onboardConsumers)).Methods(http.MethodPost)
 	onboardingRouter.HandleFunc("/kafka", am.ViewAccess(aH.onboardKafka)).Methods(http.MethodPost)
 
 	partitionLatency := kafkaRouter.PathPrefix("/partition-latency").Subrouter()
+
 	partitionLatency.HandleFunc("/overview", am.ViewAccess(aH.getPartitionOverviewLatencyData)).Methods(http.MethodPost)
 	partitionLatency.HandleFunc("/consumer", am.ViewAccess(aH.getConsumerPartitionLatencyData)).Methods(http.MethodPost)
 
 	consumerLagRouter := kafkaRouter.PathPrefix("/consumer-lag").Subrouter()
+
 	consumerLagRouter.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerData)).Methods(http.MethodPost)
 	consumerLagRouter.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerData)).Methods(http.MethodPost)
 	consumerLagRouter.HandleFunc("/network-latency", am.ViewAccess(aH.getNetworkData)).Methods(http.MethodPost)
 
 	topicThroughput := kafkaRouter.PathPrefix("/topic-throughput").Subrouter()
+
 	topicThroughput.HandleFunc("/producer", am.ViewAccess(aH.getProducerThroughputOverview)).Methods(http.MethodPost)
 	topicThroughput.HandleFunc("/producer-details", am.ViewAccess(aH.getProducerThroughputDetails)).Methods(http.MethodPost)
 	topicThroughput.HandleFunc("/consumer", am.ViewAccess(aH.getConsumerThroughputOverview)).Methods(http.MethodPost)
 	topicThroughput.HandleFunc("/consumer-details", am.ViewAccess(aH.getConsumerThroughputDetails)).Methods(http.MethodPost)
 
 	spanEvaluation := kafkaRouter.PathPrefix("/span").Subrouter()
+
 	spanEvaluation.HandleFunc("/evaluation", am.ViewAccess(aH.getProducerConsumerEval)).Methods(http.MethodPost)
+
+	// -------------------------------------------------
+	// Celery-specific routes
+	celeryRouter := messagingQueuesRouter.PathPrefix("/celery").Subrouter()
+
+	// Celery overview routes
+	celeryRouter.HandleFunc("/overview", am.ViewAccess(aH.getCeleryOverview)).Methods(http.MethodPost)
+
+	// Celery tasks routes
+	celeryRouter.HandleFunc("/tasks", am.ViewAccess(aH.getCeleryTasks)).Methods(http.MethodPost)
+
+	// Celery performance routes
+	celeryRouter.HandleFunc("/performance", am.ViewAccess(aH.getCeleryPerformance)).Methods(http.MethodPost)
 
 	// for other messaging queues, add SubRouters here
 }
@@ -4220,7 +4245,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, false)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -4959,4 +4984,40 @@ func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, field)
+}
+
+func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
+	// ToDo: add capability of dynamic filtering based on any of the filters using QueueFilters
+
+	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	chq, err := mq.BuildClickHouseQuery(messagingQueue, "", "overview")
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement celery overview logic for both worker and tasks types
+}
+
+func (aH *APIHandler) getCeleryTasks(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement celery tasks logic for both state and list types
+}
+
+func (aH *APIHandler) getCeleryPerformance(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement celery performance logic for error, rate, and latency types
 }
