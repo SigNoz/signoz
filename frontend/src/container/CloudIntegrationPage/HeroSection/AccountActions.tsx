@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { CloudAccount } from '../ServicesSection/types';
+import IntegrationModal from './IntegrationModal';
 
 interface AccountActionsProps {
 	accounts: CloudAccount[];
@@ -53,6 +54,7 @@ function AccountActions({ accounts }: AccountActionsProps): JSX.Element {
 	const [activeAccountId, setActiveAccountId] = useState<string | null>(
 		urlQuery.get('accountId') ?? accounts[0]?.cloud_account_id ?? null,
 	);
+	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
 
 	const selectOptions: SelectProps['options'] = accounts.map((account) => ({
 		value: account.cloud_account_id,
@@ -88,10 +90,18 @@ function AccountActions({ accounts }: AccountActionsProps): JSX.Element {
 					</div>
 				</div>
 			) : (
-				<Button type="primary" className="hero-section__action-button primary">
+				<Button
+					className="hero-section__action-button primary"
+					onClick={(): void => setIsIntegrationModalOpen(true)}
+				>
 					Integrate Now
 				</Button>
 			)}
+
+			<IntegrationModal
+				isOpen={isIntegrationModalOpen}
+				onClose={(): void => setIsIntegrationModalOpen(false)}
+			/>
 		</div>
 	);
 }

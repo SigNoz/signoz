@@ -1,6 +1,5 @@
 import './HeroSection.style.scss';
 
-import { cloudAccountsData } from '../ServicesSection/data';
 import AccountActions from './AccountActions';
 
 function HeroSection(): JSX.Element {
@@ -22,7 +21,7 @@ function HeroSection(): JSX.Element {
 					One-click setup for AWS monitoring with SigNoz
 >>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)
 				</div>
-				<AccountActions accounts={cloudAccountsData.accounts} />
+				<AccountActions accounts={[]} />
 			</div>
 		</div>
 	);
