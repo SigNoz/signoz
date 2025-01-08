@@ -20,18 +20,18 @@ import (
 )
 
 func TestAWSIntegrationLifecycle(t *testing.T) {
-	// Test for the happy path of connecting and managing AWS integration accounts
+	// Test for happy path of connecting and managing AWS integration accounts
 
 	t0 := time.Now()
 	require := require.New(t)
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
-	accountsListResp := testbed.GetAccountsListFromQS("aws")
+	accountsListResp := testbed.GetConnectedAccountsListFromQS("aws")
 	require.Equal(len(accountsListResp.Accounts), 0,
 		"No accounts should be connected at the beginning",
 	)
 
-	// Should be able to generate connection url - initializing an account
+	// Should be able to generate a connection url from UI - initializing an integration account
 	testAccountConfig := cloudintegrations.AccountConfig{
 		EnabledRegions: []string{"us-east-1", "us-east-2"},
 	}
@@ -47,19 +47,16 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	connectionUrl := connectionUrlResp.ConnectionUrl
 	require.NotEmpty(connectionUrl)
 
-	// Should be able to poll for account connection status
+	// Should be able to poll for account connection status from the UI
 	accountStatusResp := testbed.GetAccountStatusFromQS("aws", testAccountId)
 	require.Equal(testAccountId, accountStatusResp.Id)
 	require.Nil(accountStatusResp.Status.Integration.LastHeartbeatTsMillis)
 
-	// The unconnected account should not show up in accounts list yet
-	accountsListResp1 := testbed.GetAccountsListFromQS("aws")
-	require.Equal(0, len(accountsListResp1.Accounts),
-		"No accounts should be connected at the beginning",
-	)
+	// The unconnected account should not show up in connected accounts list yet
+	accountsListResp1 := testbed.GetConnectedAccountsListFromQS("aws")
+	require.Equal(0, len(accountsListResp1.Accounts))
 
-	// An agent should be able to check in to the new account
-	// Should get the settings that were specified while generating connection url
+	// An agent installed in user's AWS account should be able to check in for the new integration account
 	tsMillisBeforeAgentCheckIn := time.Now().UnixMilli()
 	testAWSAccountId := "4563215233"
 	agentCheckInResp := testbed.CheckInAsAgentWithQS(
@@ -74,7 +71,7 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.LessOrEqual(t0.Unix(), agentCheckInResp.Account.CreatedAt.Unix())
 	require.Nil(agentCheckInResp.Account.RemovedAt)
 
-	// Polling for connection status should now return latest status
+	// Polling for connection status from UI should now return latest status
 	accountStatusResp1 := testbed.GetAccountStatusFromQS("aws", testAccountId)
 	require.Equal(testAccountId, accountStatusResp1.Id)
 	require.NotNil(accountStatusResp1.Status.Integration.LastHeartbeatTsMillis)
@@ -84,14 +81,12 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	)
 
 	// The account should now show up in list of connected accounts.
-	accountsListResp2 := testbed.GetAccountsListFromQS("aws")
-	require.Equal(len(accountsListResp2.Accounts), 1,
-		"No accounts should be connected at the beginning",
-	)
+	accountsListResp2 := testbed.GetConnectedAccountsListFromQS("aws")
+	require.Equal(len(accountsListResp2.Accounts), 1)
 	require.Equal(testAccountId, accountsListResp2.Accounts[0].Id)
 	require.Equal(testAWSAccountId, *accountsListResp2.Accounts[0].CloudAccountId)
 
-	// Should be able to update account settings
+	// Should be able to update account config from UI
 	testAccountConfig2 := cloudintegrations.AccountConfig{
 		EnabledRegions: []string{"us-east-2", "us-west-1"},
 	}
@@ -101,7 +96,7 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAccountId, latestAccount.Id)
 	require.Equal(testAccountConfig2, *latestAccount.Config)
 
-	// The agent should now receive latest settings.
+	// The agent should now receive latest account config.
 	agentCheckInResp1 := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
 			AccountId:      testAccountId,
@@ -113,15 +108,13 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAWSAccountId, *agentCheckInResp1.Account.CloudAccountId)
 	require.Nil(agentCheckInResp1.Account.RemovedAt)
 
-	// Should be able to disconnect account.
+	// Should be able to disconnect/remove account from UI.
 	tsBeforeDisconnect := time.Now()
-	latestAccount = testbed.DisconnectAccountWithQS(
-		"aws", testAccountId,
-	)
+	latestAccount = testbed.DisconnectAccountWithQS("aws", testAccountId)
 	require.Equal(testAccountId, latestAccount.Id)
 	require.LessOrEqual(tsBeforeDisconnect, *latestAccount.RemovedAt)
 
-	// The agent should receive the disconnected status post disconnection
+	// The agent should receive the disconnected status in account config post disconnection
 	agentCheckInResp2 := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
 			AccountId:      testAccountId,
@@ -152,11 +145,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
-	mockClickhouse.MatchExpectationsInOrder(false)
-
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                      reader,
 		AppDao:                      dao.DB(),
 		CloudIntegrationsController: controller,
 		FeatureFlags:                fm,
@@ -176,25 +165,19 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	}
 
 	return &CloudIntegrationsTestBed{
-		t:              t,
-		testUser:       user,
-		qsHttpHandler:  router,
-		mockClickhouse: mockClickhouse,
+		t:             t,
+		testUser:      user,
+		qsHttpHandler: router,
 	}
 }
 
-func (tb *CloudIntegrationsTestBed) GetAccountsListFromQS(
+func (tb *CloudIntegrationsTestBed) GetConnectedAccountsListFromQS(
 	cloudProvider string,
 ) *cloudintegrations.AccountsListResponse {
-	result := tb.RequestQS(fmt.Sprintf("/api/v1/cloud-integrations/%s/accounts", cloudProvider), nil)
-
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
+	respDataJson := tb.RequestQS(fmt.Sprintf("/api/v1/cloud-integrations/%s/accounts", cloudProvider), nil)
 
 	var resp cloudintegrations.AccountsListResponse
-	err = json.Unmarshal(dataJson, &resp)
+	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AccountsListResponse")
 	}
@@ -205,18 +188,13 @@ func (tb *CloudIntegrationsTestBed) GetAccountsListFromQS(
 func (tb *CloudIntegrationsTestBed) GenerateConnectionUrlFromQS(
 	cloudProvider string, req cloudintegrations.GenerateConnectionUrlRequest,
 ) *cloudintegrations.GenerateConnectionUrlResponse {
-	result := tb.RequestQS(
+	respDataJson := tb.RequestQS(
 		fmt.Sprintf("/api/v1/cloud-integrations/%s/accounts/generate-connection-url", cloudProvider),
 		req,
 	)
 
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
-
 	var resp cloudintegrations.GenerateConnectionUrlResponse
-	err = json.Unmarshal(dataJson, &resp)
+	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into map[string]any")
 	}
@@ -227,18 +205,13 @@ func (tb *CloudIntegrationsTestBed) GenerateConnectionUrlFromQS(
 func (tb *CloudIntegrationsTestBed) GetAccountStatusFromQS(
 	cloudProvider string, accountId string,
 ) *cloudintegrations.AccountStatusResponse {
-	result := tb.RequestQS(fmt.Sprintf(
+	respDataJson := tb.RequestQS(fmt.Sprintf(
 		"/api/v1/cloud-integrations/%s/accounts/%s/status",
 		cloudProvider, accountId,
 	), nil)
 
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
-
 	var resp cloudintegrations.AccountStatusResponse
-	err = json.Unmarshal(dataJson, &resp)
+	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AccountStatusResponse")
 	}
@@ -249,17 +222,12 @@ func (tb *CloudIntegrationsTestBed) GetAccountStatusFromQS(
 func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 	cloudProvider string, req cloudintegrations.AgentCheckInRequest,
 ) *cloudintegrations.AgentCheckInResponse {
-	result := tb.RequestQS(
+	respDataJson := tb.RequestQS(
 		fmt.Sprintf("/api/v1/cloud-integrations/%s/agent-check-in", cloudProvider), req,
 	)
 
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
-
 	var resp cloudintegrations.AgentCheckInResponse
-	err = json.Unmarshal(dataJson, &resp)
+	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AgentCheckInResponse")
 	}
@@ -270,7 +238,7 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 	cloudProvider string, accountId string, newConfig cloudintegrations.AccountConfig,
 ) *cloudintegrations.Account {
-	result := tb.RequestQS(
+	respDataJson := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/config",
 			cloudProvider, accountId,
@@ -279,13 +247,8 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 		},
 	)
 
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
-
 	var resp cloudintegrations.Account
-	err = json.Unmarshal(dataJson, &resp)
+	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")
 	}
@@ -296,20 +259,15 @@ func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
 func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 	cloudProvider string, accountId string,
 ) *cloudintegrations.Account {
-	result := tb.RequestQS(
+	respDataJson := tb.RequestQS(
 		fmt.Sprintf(
 			"/api/v1/cloud-integrations/%s/accounts/%s/disconnect",
 			cloudProvider, accountId,
 		), map[string]any{},
 	)
 
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
-
 	var resp cloudintegrations.Account
-	err = json.Unmarshal(dataJson, &resp)
+	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into Account")
 	}
@@ -320,7 +278,7 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 func (tb *CloudIntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
-) *app.ApiResponse {
+) (responseDataJson []byte) {
 	req, err := AuthenticatedRequestForTest(
 		tb.testUser, path, postData,
 	)
@@ -332,5 +290,10 @@ func (tb *CloudIntegrationsTestBed) RequestQS(
 	if err != nil {
 		tb.t.Fatalf("test request failed: %v", err)
 	}
-	return result
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+	return dataJson
 }
