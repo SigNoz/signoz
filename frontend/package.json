@@ -44,6 +44,7 @@
 		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/design-tokens": "1.1.4",
 		"@tanstack/react-table": "8.20.6",
+		"@tanstack/react-virtual": "3.11.2",
 		"@uiw/react-md-editor": "3.23.5",
 		"@visx/group": "3.3.0",
 		"@visx/shape": "3.5.0",

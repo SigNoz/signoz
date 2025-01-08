@@ -1,8 +1,8 @@
 .success-content {
-	width: 100%;
-	height: 100%;
-
 	.waterfall-table {
+		height: 50vh;
+		overflow: auto;
+
 		// default table overrides css for table v3
 		.div-table {
 			border: none !important;

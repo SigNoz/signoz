@@ -8,14 +8,7 @@ import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo, useRef } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
@@ -50,13 +43,6 @@ function SpanOverview({
 }): JSX.Element {
 	const isRootSpan = span.parentSpanId === '';
 	const spanRef = useRef<HTMLDivElement>(null);
-
-	// useEffect(() => {
-	// 	if (interestedSpanId === span.spanId && spanRef.current) {
-	// 		spanRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-	// 	}
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, []);
 
 	return (
 		<div
@@ -220,49 +206,16 @@ function Success(props: ISuccessProps): JSX.Element {
 		setInterestedSpanId,
 		setUncollapsedNodes,
 	} = props;
-	const topElementRef = useRef(null);
-	const bottomElementRef = useRef(null);
 
-	const handleEndReached = useCallback(() => {
-		setInterestedSpanId(spans[spans.length - 1].spanId);
-	}, [setInterestedSpanId, spans]);
+	// const handleEndReached = useCallback(() => {
+	// 	setInterestedSpanId(spans[spans.length - 1].spanId);
+	// }, [setInterestedSpanId, spans]);
 
-	const handleTopReached = useCallback(() => {
-		if (spans[0].parentSpanId !== '') {
-			setInterestedSpanId(spans[0].spanId);
-		}
-	}, [setInterestedSpanId, spans]);
-
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	useEffect(() => {
-		const topEl = topElementRef.current;
-		const bottomEl = bottomElementRef.current;
-		const observer = new IntersectionObserver(
-			async (entries) => {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						if (entry.target.id === 'bottomNode') {
-							// handleEndReached();
-						}
-						if (entry.target.id === 'topNode') {
-							// handleTopReached();
-						}
-					}
-				});
-			},
-			{
-				threshold: 1.0,
-			},
-		);
-
-		if (topElementRef.current) observer.observe(topElementRef.current);
-		if (bottomElementRef.current) observer.observe(bottomElementRef.current);
-
-		return (): void => {
-			if (topEl) observer.unobserve(topEl);
-			if (bottomEl) observer.unobserve(bottomEl);
-		};
-	}, [handleEndReached, handleTopReached]);
+	// const handleTopReached = useCallback(() => {
+	// 	if (spans[0].parentSpanId !== '') {
+	// 		setInterestedSpanId(spans[0].spanId);
+	// 	}
+	// }, [setInterestedSpanId, spans]);
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -288,16 +241,24 @@ function Success(props: ISuccessProps): JSX.Element {
 		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId, traceMetadata],
 	);
 
+	const initialOffset = useMemo(() => {
+		const idx = spans.findIndex((span) => span.spanId === interestedSpanId);
+		if (idx === -1) {
+			return 0;
+		}
+		return idx;
+	}, [interestedSpanId, spans]);
+
 	return (
 		<div className="success-content">
-			<div ref={topElementRef} id="topNode" />
 			<TableV3
 				columns={columns}
 				data={spans}
-				config={{}}
+				config={{
+					initialOffset,
+				}}
 				customClassName="waterfall-table"
 			/>
-			<div ref={bottomElementRef} id="bottomNode" />
 		</div>
 	);
 }
