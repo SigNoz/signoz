@@ -11,9 +11,9 @@ import (
 type Account struct {
 	CloudProvider   string         `json:"cloud_provider" db:"cloud_provider"`
 	Id              string         `json:"id" db:"id"`
-	Config          *AccountConfig `json:"config_json" db:"config_json"`
+	Config          *AccountConfig `json:"config" db:"config_json"`
 	CloudAccountId  *string        `json:"cloud_account_id" db:"cloud_account_id"`
-	LastAgentReport *AgentReport   `json:"last_agent_report_json" db:"last_agent_report_json"`
+	LastAgentReport *AgentReport   `json:"last_agent_report" db:"last_agent_report_json"`
 	CreatedAt       time.Time      `json:"created_at" db:"created_at"`
 	RemovedAt       *time.Time     `json:"removed_at" db:"removed_at"`
 }
@@ -81,4 +81,39 @@ func (r *AgentReport) Value() (driver.Value, error) {
 		)
 	}
 	return serialized, nil
+}
+
+type AccountStatus struct {
+	Integration AccountIntegrationStatus `json:"integration"`
+}
+
+type AccountIntegrationStatus struct {
+	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
+}
+
+func (a *Account) status() AccountStatus {
+	status := AccountStatus{}
+	if a.LastAgentReport != nil {
+		lastHeartbeat := a.LastAgentReport.TimestampMillis
+		status.Integration.LastHeartbeatTsMillis = &lastHeartbeat
+	}
+	return status
+}
+
+func (a *Account) connectedAccount() (*ConnectedAccount, error) {
+	ca := ConnectedAccount{Id: a.Id, Status: a.status()}
+
+	if a.CloudAccountId == nil {
+		return nil, fmt.Errorf("account %s has nil cloud account id", a.Id)
+	} else {
+		ca.CloudAccountId = *a.CloudAccountId
+	}
+
+	if a.Config == nil {
+		return nil, fmt.Errorf("account %s has nil config", a.Id)
+	} else {
+		ca.Config = *a.Config
+	}
+
+	return &ca, nil
 }

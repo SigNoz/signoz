@@ -84,7 +84,7 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	accountsListResp2 := testbed.GetConnectedAccountsListFromQS("aws")
 	require.Equal(len(accountsListResp2.Accounts), 1)
 	require.Equal(testAccountId, accountsListResp2.Accounts[0].Id)
-	require.Equal(testAWSAccountId, *accountsListResp2.Accounts[0].CloudAccountId)
+	require.Equal(testAWSAccountId, accountsListResp2.Accounts[0].CloudAccountId)
 
 	// Should be able to update account config from UI
 	testAccountConfig2 := cloudintegrations.AccountConfig{
@@ -173,10 +173,10 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 
 func (tb *CloudIntegrationsTestBed) GetConnectedAccountsListFromQS(
 	cloudProvider string,
-) *cloudintegrations.AccountsListResponse {
+) *cloudintegrations.ConnectedAccountsListResponse {
 	respDataJson := tb.RequestQS(fmt.Sprintf("/api/v1/cloud-integrations/%s/accounts", cloudProvider), nil)
 
-	var resp cloudintegrations.AccountsListResponse
+	var resp cloudintegrations.ConnectedAccountsListResponse
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AccountsListResponse")

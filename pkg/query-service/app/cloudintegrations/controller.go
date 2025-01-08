@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 var SupportedCloudProviders = []string{
@@ -38,15 +39,21 @@ func NewController(db *sqlx.DB) (
 	}, nil
 }
 
-type AccountsListResponse struct {
-	// TODO(Raj): Update shape of account in API response
-	Accounts []Account `json:"accounts"`
+type ConnectedAccount struct {
+	Id             string        `json:"id"`
+	CloudAccountId string        `json:"cloud_account_id"`
+	Config         AccountConfig `json:"config"`
+	Status         AccountStatus `json:"status"`
+}
+
+type ConnectedAccountsListResponse struct {
+	Accounts []ConnectedAccount `json:"accounts"`
 }
 
 func (c *Controller) ListConnectedAccounts(
 	ctx context.Context, cloudProvider string,
 ) (
-	*AccountsListResponse, *model.ApiError,
+	*ConnectedAccountsListResponse, *model.ApiError,
 ) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
@@ -57,8 +64,18 @@ func (c *Controller) ListConnectedAccounts(
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
 
-	return &AccountsListResponse{
-		Accounts: accounts,
+	connectedAccounts := []ConnectedAccount{}
+	for _, a := range accounts {
+		ca, err := a.connectedAccount()
+		if err != nil {
+			zap.L().Error("invalid connected account record", zap.String("accountId", a.Id), zap.Error(err))
+		} else {
+			connectedAccounts = append(connectedAccounts, *ca)
+		}
+	}
+
+	return &ConnectedAccountsListResponse{
+		Accounts: connectedAccounts,
 	}, nil
 }
 
@@ -112,14 +129,6 @@ type AccountStatusResponse struct {
 	Status AccountStatus `json:"status"`
 }
 
-type AccountStatus struct {
-	Integration AccountIntegrationStatus `json:"integration"`
-}
-
-type AccountIntegrationStatus struct {
-	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
-}
-
 func (c *Controller) GetAccountStatus(
 	ctx context.Context, cloudProvider string, accountId string,
 ) (
@@ -134,10 +143,9 @@ func (c *Controller) GetAccountStatus(
 		return nil, apiErr
 	}
 
-	resp := AccountStatusResponse{Id: account.Id}
-
-	if account.LastAgentReport != nil {
-		resp.Status.Integration.LastHeartbeatTsMillis = &account.LastAgentReport.TimestampMillis
+	resp := AccountStatusResponse{
+		Id:     account.Id,
+		Status: account.status(),
 	}
 
 	return &resp, nil
