@@ -12,19 +12,13 @@ func generateOverviewSQL(start, end int64, filters *QueueFilters) string {
 	startSeconds := float64(start) / 1e9
 	endSeconds := float64(end) / 1e9
 
-	// Compute time range difference in Go
 	timeRangeSecs := endSeconds - startSeconds
 
-	// Example ts_bucket boundaries (could be your own logic)
 	tsBucketStart := startSeconds - 1800
 	tsBucketEnd := endSeconds
 
-	// Build WHERE clauses for optional filters
-	// We always require messaging_system IN ('kafka', 'celery'), but
-	// we add additional AND conditions only if the slices are non-empty.
 	var whereClauses []string
 
-	// Mandatory base filter: show only kafka/celery
 	whereClauses = append(whereClauses, "messaging_system IN ('kafka', 'celery')")
 
 	if len(filters.ServiceName) > 0 {
@@ -34,7 +28,6 @@ func generateOverviewSQL(start, end int64, filters *QueueFilters) string {
 		whereClauses = append(whereClauses, inClause("span_name", filters.SpanName))
 	}
 	if len(filters.Queue) > 0 {
-		// "queue" in the struct refers to the messaging_system in the DB
 		whereClauses = append(whereClauses, inClause("messaging_system", filters.Queue))
 	}
 	if len(filters.Destination) > 0 {
@@ -51,8 +44,6 @@ func generateOverviewSQL(start, end int64, filters *QueueFilters) string {
 		whereSQL = fmt.Sprintf("AND %s", whereSQL)
 	}
 
-	// Final query string
-	// Note the use of %f for float64 values in fmt.Sprintf
 	query := fmt.Sprintf(`
 WITH
     processed_traces AS (

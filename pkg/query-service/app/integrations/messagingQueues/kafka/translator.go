@@ -79,9 +79,10 @@ func buildBuilderQueriesProducerBytes(
 			Type:     v3.AttributeKeyType("Gauge"),
 			IsColumn: true,
 		},
-		Temporality:      v3.Unspecified,
-		TimeAggregation:  v3.TimeAggregationAvg,
-		SpaceAggregation: v3.SpaceAggregationAvg,
+		AggregateOperator: v3.AggregateOperatorAvg,
+		Temporality:       v3.Unspecified,
+		TimeAggregation:   v3.TimeAggregationAvg,
+		SpaceAggregation:  v3.SpaceAggregationAvg,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{
