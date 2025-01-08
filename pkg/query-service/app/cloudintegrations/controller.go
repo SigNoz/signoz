@@ -134,23 +134,10 @@ func (c *Controller) GetAccountStatus(
 		return nil, apiErr
 	}
 
-	var lastAgentReportTsMillis *int64
-	if account.LastAgentReport != nil {
-		// TODO(Raj): Investigate why agent reports are scanned to empty values
-		// from NULL columns even when report is a pointer
-		lastReportTsMillis := account.LastAgentReport.TimestampMillis
-		if lastReportTsMillis > 0 {
-			lastAgentReportTsMillis = &lastReportTsMillis
-		}
-	}
+	resp := AccountStatusResponse{Id: account.Id}
 
-	resp := AccountStatusResponse{
-		Id: account.Id,
-		Status: AccountStatus{
-			Integration: AccountIntegrationStatus{
-				LastHeartbeatTsMillis: lastAgentReportTsMillis,
-			},
-		},
+	if account.LastAgentReport != nil {
+		resp.Status.Integration.LastHeartbeatTsMillis = &account.LastAgentReport.TimestampMillis
 	}
 
 	return &resp, nil

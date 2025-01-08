@@ -28,15 +28,21 @@ func DefaultAccountConfig() AccountConfig {
 }
 
 // For serializing from db
-func (c *AccountConfig) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, &c)
+func (c *AccountConfig) Scan(src any) error {
+	data, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("tried to scan from %T instead of bytes", src)
 	}
-	return nil
+
+	return json.Unmarshal(data, &c)
 }
 
 // For serializing to db
 func (c *AccountConfig) Value() (driver.Value, error) {
+	if c == nil {
+		return nil, nil
+	}
+
 	serialized, err := json.Marshal(c)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -52,19 +58,25 @@ type AgentReport struct {
 }
 
 // For serializing from db
-func (c *AgentReport) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, &c)
+func (r *AgentReport) Scan(src any) error {
+	data, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("tried to scan from %T instead of bytes", src)
 	}
-	return nil
+
+	return json.Unmarshal(data, &r)
 }
 
 // For serializing to db
-func (c *AgentReport) Value() (driver.Value, error) {
-	serialized, err := json.Marshal(c)
+func (r *AgentReport) Value() (driver.Value, error) {
+	if r == nil {
+		return nil, nil
+	}
+
+	serialized, err := json.Marshal(r)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"couldn't serialize cloud account config to JSON: %w", err,
+			"couldn't serialize agent report to JSON: %w", err,
 		)
 	}
 	return serialized, nil
