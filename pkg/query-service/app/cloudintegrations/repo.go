@@ -12,10 +12,12 @@ import (
 )
 
 type cloudProviderAccountsRepository interface {
+	// list connected cloud provider accounts.
 	listConnected(ctx context.Context, cloudProvider string) ([]Account, *model.ApiError)
 
 	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*Account, *model.ApiError)
 
+	// TODO(Raj): Move this to being a helper on the controller?
 	get(ctx context.Context, cloudProvider string, id string) (*Account, *model.ApiError)
 
 	// Insert an account or update it by ID for specified non-empty fields
@@ -93,6 +95,7 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
         cloud_provider=$1
         and removed_at is NULL
         and cloud_account_id is not NULL
+        and last_agent_report_json is not NULL
 			order by created_at
 		`, cloudProvider,
 	)
