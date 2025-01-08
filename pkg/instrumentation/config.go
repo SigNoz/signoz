@@ -2,12 +2,8 @@ package instrumentation
 
 import (
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
-	"go.signoz.io/signoz/pkg/confmap"
 	"go.uber.org/zap/zapcore"
 )
-
-// Config satisfies the confmap.Config interface
-var _ confmap.Config = (*Config)(nil)
 
 // Config holds the configuration for all instrumentation components.
 type Config struct {
@@ -41,7 +37,7 @@ type MetricsConfig struct {
 	contribsdkconfig.MeterProvider `mapstructure:",squash"`
 }
 
-func (c *Config) NewWithDefaults() confmap.Config {
+func (c *Config) NewWithDefaults() *Config {
 	return &Config{
 		Logs: LogsConfig{
 			Enabled: false,

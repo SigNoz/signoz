@@ -1,35 +1,63 @@
 package config
 
-import (
-	"context"
+import "context"
 
-	"go.signoz.io/signoz/pkg/cache"
-	signozconfmap "go.signoz.io/signoz/pkg/confmap"
-	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/web"
-)
+// NewConfigFunc is a function that creates a new config.
+type NewConfigFunc = func() Config
 
-// This map contains the default values of all config structs
-var (
-	defaults = map[string]signozconfmap.Config{
-		"instrumentation": &instrumentation.Config{},
-		"web":             &web.Config{},
-		"cache":           &cache.Config{},
-	}
-)
-
-// Config defines the entire configuration of signoz.
-type Config struct {
-	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
-	Web             web.Config             `mapstructure:"web"`
-	Cache           cache.Config           `mapstructure:"cache"`
+// ConfigFactory is a factory that creates a new config.
+type ConfigFactory interface {
+	New() Config
 }
 
-func New(ctx context.Context, settings ProviderSettings) (*Config, error) {
-	provider, err := NewProvider(settings)
+// NewProviderFactory creates a new provider factory.
+func NewConfigFactory(f NewConfigFunc) ConfigFactory {
+	return &configFactory{f: f}
+}
+
+// configFactory is a factory that implements the ConfigFactory interface.
+type configFactory struct {
+	f NewConfigFunc
+}
+
+// New creates a new provider.
+func (factory *configFactory) New() Config {
+	return factory.f()
+}
+
+// Config is an interface that defines methods for creating and validating configurations.
+type Config interface {
+	// Key returns the name of the root key of the config.
+	Key() string
+	// Validate the configuration and returns an error if invalid.
+	Validate() error
+}
+
+func New(ctx context.Context, resolverConfig ResolverConfig, configFactories []ConfigFactory) (*Conf, error) {
+	// Get the config from the resolver
+	resolver, err := NewResolver(resolverConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return provider.Get(ctx)
+	resolvedConf, err := resolver.Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := NewConf()
+	// Set the default configs
+	for _, factory := range configFactories {
+		c := factory.New()
+		if err := conf.Set(c.Key(), c); err != nil {
+			return nil, err
+		}
+	}
+
+	err = conf.Merge(resolvedConf)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }

@@ -82,7 +82,7 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	SkipWebFrontend   bool
+	Config            signoz.Config
 }
 
 // Server runs HTTP api service
@@ -351,7 +351,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
-func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*http.Server, error) {
+func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
 
 	r := baseapp.NewRouter()
 
@@ -396,11 +396,9 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*
 
 	handler = handlers.CompressHandler(handler)
 
-	if !s.serverOptions.SkipWebFrontend {
-		err := web.AddToRouter(r)
-		if err != nil {
-			return nil, err
-		}
+	err := web.AddToRouter(r)
+	if err != nil {
+		return nil, err
 	}
 
 	return &http.Server{

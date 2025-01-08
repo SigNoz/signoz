@@ -1,12 +1,5 @@
 package server
 
-import (
-	"go.signoz.io/signoz/pkg/confmap"
-)
-
-// Config satisfies the confmap.Config interface
-var _ confmap.Config = (*Config)(nil)
-
 // Config holds the configuration for http.
 type Config struct {
 	//Address specifies the TCP address for the server to listen on, in the form "host:port".
@@ -15,7 +8,7 @@ type Config struct {
 	Address string `mapstructure:"address"`
 }
 
-func (c *Config) NewWithDefaults() confmap.Config {
+func (c *Config) NewWithDefaults() *Config {
 	return &Config{
 		Address: "0.0.0.0:8080",
 	}

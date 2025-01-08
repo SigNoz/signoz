@@ -5,6 +5,8 @@
 
 ##################### Web #####################
 web:
+  # Whether to enable the web frontend
+  enabled: true
   # The prefix to serve web on
   prefix: /
   # The directory containing the static build files.
