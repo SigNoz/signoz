@@ -35,11 +35,9 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle } from './styles';
-import { areArraysEqual } from './util';
+import { areArraysEqual, checkAPIInvocation, IDependencyData } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
-
-const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
 
 enum ToggleTagValue {
 	Only = 'Only',
@@ -57,6 +55,7 @@ interface VariableItemProps {
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
+	dependencyData: IDependencyData | null;
 }
 
 const getSelectValue = (
@@ -79,6 +78,7 @@ function VariableItem({
 	onValueUpdate,
 	variablesToGetUpdated,
 	setVariablesToGetUpdated,
+	dependencyData,
 }: VariableItemProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
@@ -88,59 +88,19 @@ function VariableItem({
 		(state) => state.globalTime,
 	);
 
-	useEffect(() => {
-		if (variableData.allSelected && variableData.type === 'QUERY') {
-			setVariablesToGetUpdated((prev) => {
-				const variablesQueue = [...prev.filter((v) => v !== variableData.name)];
-				if (variableData.name) {
-					variablesQueue.push(variableData.name);
-				}
-				return variablesQueue;
-			});
+	const validVariableUpdate = (): boolean => {
+		if (!variableData.name) {
+			return false;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [minTime, maxTime]);
+
+		// variableData.name is present as the top element or next in the queue - variablesToGetUpdated
+		return Boolean(
+			variablesToGetUpdated.length &&
+				variablesToGetUpdated[0] === variableData.name,
+		);
+	};
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
-
-	const getDependentVariables = (queryValue: string): string[] => {
-		const matches = queryValue.match(variableRegexPattern);
-
-		// Extract variable names from the matches array without {{ . }}
-		return matches
-			? matches.map((match) => match.replace(variableRegexPattern, '$1'))
-			: [];
-	};
-
-	const getQueryKey = (variableData: IDashboardVariable): string[] => {
-		let dependentVariablesStr = '';
-
-		const dependentVariables = getDependentVariables(
-			variableData.queryValue || '',
-		);
-
-		const variableName = variableData.name || '';
-
-		dependentVariables?.forEach((element) => {
-			const [, variable] =
-				Object.entries(existingVariables).find(
-					([, value]) => value.name === element,
-				) || [];
-
-			dependentVariablesStr += `${element}${variable?.selectedValue}`;
-		});
-
-		const variableKey = dependentVariablesStr.replace(/\s/g, '');
-
-		// added this time dependency for variables query as API respects the passed time range now
-		return [
-			REACT_QUERY_KEY.DASHBOARD_BY_ID,
-			variableName,
-			variableKey,
-			`${minTime}`,
-			`${maxTime}`,
-		];
-	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const getOptions = (variablesRes: VariableResponseProps | null): void => {
@@ -184,9 +144,7 @@ function VariableItem({
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							(variablesToGetUpdated.includes(variableData.name) ||
-								valueNotInList ||
-								variableData.allSelected)
+							(validVariableUpdate() || valueNotInList || variableData.allSelected)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -224,36 +182,64 @@ function VariableItem({
 		}
 	};
 
-	const { isLoading } = useQuery(getQueryKey(variableData), {
-		enabled: variableData && variableData.type === 'QUERY',
-		queryFn: () =>
-			dashboardVariablesQuery({
-				query: variableData.queryValue || '',
-				variables: variablePropsToPayloadVariables(existingVariables),
-			}),
-		refetchOnWindowFocus: false,
-		onSuccess: (response) => {
-			getOptions(response.payload);
-		},
-		onError: (error: {
-			details: {
-				error: string;
-			};
-		}) => {
-			const { details } = error;
+	const { isLoading } = useQuery(
+		[
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			variableData.name || '',
+			`${minTime}`,
+			`${maxTime}`,
+			JSON.stringify(dependencyData?.order),
+		],
+		{
+			enabled:
+				variableData &&
+				variableData.type === 'QUERY' &&
+				checkAPIInvocation(
+					variablesToGetUpdated,
+					variableData,
+					dependencyData?.parentDependencyGraph,
+				),
+			queryFn: () =>
+				dashboardVariablesQuery({
+					query: variableData.queryValue || '',
+					variables: variablePropsToPayloadVariables(existingVariables),
+				}),
+			refetchOnWindowFocus: false,
+			onSuccess: (response) => {
+				getOptions(response.payload);
+				setVariablesToGetUpdated((prev) =>
+					prev.filter((v) => v !== variableData.name),
+				);
+			},
+			onError: (error: {
+				details: {
+					error: string;
+				};
+			}) => {
+				const { details } = error;
 
-			if (details.error) {
-				let message = details.error;
-				if (details.error.includes('Syntax error:')) {
-					message =
-						'Please make sure query is valid and dependent variables are selected';
+				if (details.error) {
+					let message = details.error;
+					if (details.error.includes('Syntax error:')) {
+						message =
+							'Please make sure query is valid and dependent variables are selected';
+					}
+					setErrorMessage(message);
 				}
-				setErrorMessage(message);
-			}
+			},
 		},
-	});
+	);
 
 	const handleChange = (value: string | string[]): void => {
+		// if value is equal to selected value then return
+		if (
+			value === variableData.selectedValue ||
+			(Array.isArray(value) &&
+				Array.isArray(variableData.selectedValue) &&
+				areArraysEqual(value, variableData.selectedValue))
+		) {
+			return;
+		}
 		if (variableData.name) {
 			if (
 				value === ALL_SELECT_VALUE ||
