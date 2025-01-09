@@ -29,4 +29,4 @@ jobs:
       PRIMUS_REF: main
       GITHUB_REPOSITORY_NAME: charts
       GITHUB_EVENT_NAME: prereleaser
-      GITHUB_EVENT_PAYLOAD: "{\"release_type\": \"${{ needs.detect.outputs.release_type }}\"}"
+      GITHUB_EVENT_PAYLOAD: "{\"release_type\":\"${{ needs.detect.outputs.release_type }}\"}"
