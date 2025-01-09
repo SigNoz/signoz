@@ -23,21 +23,17 @@ func New(config sqlstore.Config, providerConfig sqlstore.ProviderConfig) (sqlsto
 		return nil, fmt.Errorf("provider %q is not supported by sqlite", config.Provider)
 	}
 
-	sqlDB, err := sql.Open("sqlite3", "file:"+config.Sqlite.Path)
+	sqlDB, err := sql.Open("sqlite3", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxOpenConns(config.Sqlite.MaxOpenConns)
+	providerConfig.Logger.Info("connected to sqlite", zap.String("path", config.Sqlite.Path))
+
+	// Set connection options
+	sqlDB.SetMaxOpenConns(config.Connection.MaxOpenConns)
+
+	// Initialize ORMs
 	bunDB := bun.NewDB(sqlDB, sqlitedialect.New())
-
-	providerConfig.Logger.Info("connected to sqlite", zap.String("path", config.Sqlite.Path+"?_foreign_keys=true"))
-
-	// enable foreign key support
-	if _, err := bunDB.Exec("PRAGMA foreign_keys = ON;"); err != nil {
-		return nil, err
-	}
-	providerConfig.Logger.Info("enabled foreign key support in sqlite", zap.String("path", config.Sqlite.Path))
-
 	sqlxDB := sqlx.NewDb(sqlDB, "sqlite3")
 
 	return &provider{

@@ -6,14 +6,18 @@ import "go.signoz.io/signoz/pkg/config"
 var _ config.Config = (*Config)(nil)
 
 type Config struct {
-	Provider string         `mapstructure:"provider"`
-	Sqlite   SqliteConfig   `mapstructure:"sqlite"`
-	Postgres PostgresConfig `mapstructure:"postgres"`
+	Provider   string           `mapstructure:"provider"`
+	Connection ConnectionConfig `mapstructure:",squash"`
+	Sqlite     SqliteConfig     `mapstructure:"sqlite"`
+	Postgres   PostgresConfig   `mapstructure:"postgres"`
 }
 
 type SqliteConfig struct {
-	Path         string `mapstructure:"path"`
-	MaxOpenConns int    `mapstructure:"max_open_conns"`
+	Path string `mapstructure:"path"`
+}
+
+type ConnectionConfig struct {
+	MaxOpenConns int `mapstructure:"max_open_conns"`
 }
 
 type PostgresConfig struct {
@@ -31,9 +35,11 @@ func NewConfigFactory() config.ConfigFactory {
 func newConfig() config.Config {
 	return &Config{
 		Provider: "sqlite",
-		Sqlite: SqliteConfig{
-			Path:         "/var/lib/signoz/signoz.db",
+		Connection: ConnectionConfig{
 			MaxOpenConns: 100,
+		},
+		Sqlite: SqliteConfig{
+			Path: "/var/lib/signoz/signoz.db",
 		},
 	}
 
