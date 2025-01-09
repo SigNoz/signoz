@@ -3,11 +3,14 @@ package queues
 import (
 	"fmt"
 	"strings"
+
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	format "go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 // generateOverviewSQL builds the ClickHouse SQL query with optional filters.
 // If a filter slice is empty, the query does not constrain on that field.
-func generateOverviewSQL(start, end int64, filters *QueueFilters) string {
+func generateOverviewSQL(start, end int64, item []v3.FilterItem) string {
 	// Convert from nanoseconds to float seconds in Go to avoid decimal overflow in ClickHouse
 	startSeconds := float64(start) / 1e9
 	endSeconds := float64(end) / 1e9
@@ -19,26 +22,26 @@ func generateOverviewSQL(start, end int64, filters *QueueFilters) string {
 
 	var whereClauses []string
 
-	whereClauses = append(whereClauses, "messaging_system IN ('kafka', 'celery')")
+	whereClauses = append(whereClauses, fmt.Sprintf("timestamp >= toDateTime64(%f, 9)", startSeconds))
+	whereClauses = append(whereClauses, fmt.Sprintf("timestamp <= toDateTime64(%f, 9)", endSeconds))
 
-	if len(filters.ServiceName) > 0 {
-		whereClauses = append(whereClauses, inClause("service_name", filters.ServiceName))
-	}
-	if len(filters.SpanName) > 0 {
-		whereClauses = append(whereClauses, inClause("span_name", filters.SpanName))
-	}
-	if len(filters.Queue) > 0 {
-		whereClauses = append(whereClauses, inClause("messaging_system", filters.Queue))
-	}
-	if len(filters.Destination) > 0 {
-		whereClauses = append(whereClauses, inClause("destination", filters.Destination))
-	}
-	if len(filters.Kind) > 0 {
-		whereClauses = append(whereClauses, inClause("kind_string", filters.Kind))
+	for _, filter := range item {
+		switch filter.Key.Key {
+		case "service.name":
+			whereClauses = append(whereClauses, fmt.Sprintf("%s IN (%s)", "service_name", format.ClickHouseFormattedValue(filter.Value)))
+		case "name":
+			whereClauses = append(whereClauses, fmt.Sprintf("%s IN (%s)", "span_name", format.ClickHouseFormattedValue(filter.Value)))
+		case "destination":
+			whereClauses = append(whereClauses, fmt.Sprintf("%s IN (%s)", "destination", format.ClickHouseFormattedValue(filter.Value)))
+		case "queue":
+			whereClauses = append(whereClauses, fmt.Sprintf("%s IN (%s)", "messaging_system", format.ClickHouseFormattedValue(filter.Value)))
+		case "kind_string":
+			whereClauses = append(whereClauses, fmt.Sprintf("%s IN (%s)", "kind_string", format.ClickHouseFormattedValue(filter.Value)))
+		}
 	}
 
 	// Combine all WHERE clauses with AND
-	whereSQL := strings.Join(whereClauses, "\n    AND ")
+	whereSQL := strings.Join(whereClauses, "\n            AND ")
 
 	if len(whereSQL) > 0 {
 		whereSQL = fmt.Sprintf("AND %s", whereSQL)
@@ -64,9 +67,7 @@ WITH
             status_code
         FROM signoz_traces.distributed_signoz_index_v3
         WHERE
-            timestamp >= toDateTime64(%f, 9)
-            AND timestamp <= toDateTime64(%f, 9)
-            AND ts_bucket_start >= toDateTime64(%f, 9)
+            ts_bucket_start >= toDateTime64(%f, 9)
             AND ts_bucket_start <= toDateTime64(%f, 9)
             AND (
                 attribute_string_messaging$$system = 'kafka'
@@ -108,23 +109,9 @@ FROM
 ORDER BY
     aggregated_metrics.service_name,
     aggregated_metrics.span_name;
-`,
-		startSeconds, endSeconds,
-		tsBucketStart, tsBucketEnd,
+`, tsBucketStart, tsBucketEnd,
 		whereSQL, timeRangeSecs,
 	)
 
 	return query
-}
-
-// inClause returns SQL like "fieldName IN ('val1','val2','val3')"
-func inClause(fieldName string, values []string) string {
-	// Quote and escape each value for safety
-	var quoted []string
-	for _, v := range values {
-		// Simple escape: replace any single quotes in v
-		safeVal := strings.ReplaceAll(v, "'", "''")
-		quoted = append(quoted, fmt.Sprintf("'%s'", safeVal))
-	}
-	return fmt.Sprintf("%s IN (%s)", fieldName, strings.Join(quoted, ","))
 }
