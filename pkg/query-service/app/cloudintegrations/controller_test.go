@@ -125,7 +125,7 @@ func TestAgentCheckIns(t *testing.T) {
 			CloudAccountId: testCloudAccountId1,
 		},
 	)
-	require.NotNil(apiErr)
+	require.Nil(apiErr)
 
 	// should be able to keep checking in
 	_, apiErr = controller.CheckInAsAgent(
@@ -134,7 +134,7 @@ func TestAgentCheckIns(t *testing.T) {
 			CloudAccountId: testCloudAccountId1,
 		},
 	)
-	require.NotNil(apiErr)
+	require.Nil(apiErr)
 }
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {

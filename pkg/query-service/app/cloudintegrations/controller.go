@@ -164,11 +164,19 @@ func (c *Controller) CheckInAsAgent(
 		return nil, apiErr
 	}
 
-	account, apiErr := c.repo.get(ctx, cloudProvider, req.AccountId)
-	if account != nil && account.CloudAccountId != nil && *account.CloudAccountId != req.CloudAccountId {
+	existingAccount, apiErr := c.repo.get(ctx, cloudProvider, req.AccountId)
+	if existingAccount != nil && existingAccount.CloudAccountId != nil && *existingAccount.CloudAccountId != req.CloudAccountId {
 		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in with new %s account id %s for account %s with existing %s id %s",
-			cloudProvider, req.CloudAccountId, account.Id, cloudProvider, *account.CloudAccountId,
+			cloudProvider, req.CloudAccountId, existingAccount.Id, cloudProvider, *existingAccount.CloudAccountId,
+		))
+	}
+
+	existingAccount, apiErr = c.repo.getConnectedCloudAccount(ctx, cloudProvider, req.CloudAccountId)
+	if existingAccount != nil && existingAccount.Id != req.AccountId {
+		return nil, model.BadRequest(fmt.Errorf(
+			"can't check in to %s account %s with id %s. already connected with id %s",
+			cloudProvider, req.CloudAccountId, req.AccountId, existingAccount.Id,
 		))
 	}
 
@@ -177,7 +185,7 @@ func (c *Controller) CheckInAsAgent(
 		Data:            req.Data,
 	}
 
-	account, apiErr = c.repo.upsert(
+	account, apiErr := c.repo.upsert(
 		ctx, cloudProvider, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
 	)
 	if apiErr != nil {
