@@ -73,7 +73,6 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 export interface ITraceMetaData {
 	globalEnd: number;
 	globalStart: number;
-	levels: number;
 	spread: number;
 	totalSpans: number;
 }
