@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
@@ -83,4 +84,19 @@ func TestAgentCheckIns(t *testing.T) {
 		},
 	)
 	require.NotNil(apiErr)
+}
+
+func TestCantDisconnectNonExistentAccount(t *testing.T) {
+	require := require.New(t)
+	testDB, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(testDB)
+	require.NoError(err)
+
+	// Attempting to disconnect a non-existent account should return error
+	account, apiErr := controller.DisconnectAccount(
+		context.TODO(), "aws", uuid.NewString(),
+	)
+	require.NotNil(apiErr)
+	require.Equal(model.ErrorNotFound, apiErr.Type())
+	require.Nil(account)
 }

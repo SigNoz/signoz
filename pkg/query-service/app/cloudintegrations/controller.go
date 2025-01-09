@@ -222,12 +222,17 @@ func (c *Controller) DisconnectAccount(
 		return nil, apiErr
 	}
 
+	account, apiErr := c.repo.get(ctx, cloudProvider, accountId)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't disconnect account")
+	}
+
 	tsNow := time.Now()
-	account, apiErr := c.repo.upsert(
+	account, apiErr = c.repo.upsert(
 		ctx, cloudProvider, &accountId, nil, nil, nil, &tsNow,
 	)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
+		return nil, model.WrapApiError(apiErr, "couldn't disconnect account")
 	}
 
 	return account, nil
