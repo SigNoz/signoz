@@ -1,0 +1,52 @@
+package migrations
+
+import (
+	"context"
+
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/sqlstore"
+)
+
+type addPipelines struct {
+	config sqlstore.MigrationConfig
+}
+
+func NewAddPipelinesMigrationFactory() sqlstore.MigrationFactory {
+	return sqlstore.NewMigrationFactory(newAddPipelines)
+}
+
+func newAddPipelines(config sqlstore.MigrationConfig) sqlstore.Migration {
+	return &addPipelines{config: config}
+}
+
+func (migration *addPipelines) Register(migrations *migrate.Migrations) error {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (migration *addPipelines) Up(ctx context.Context, db *bun.DB) error {
+	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS pipelines(
+		id TEXT PRIMARY KEY,
+		order_id INTEGER,
+		enabled BOOLEAN,
+		created_by TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		name VARCHAR(400) NOT NULL,
+		alias VARCHAR(20) NOT NULL,
+		description TEXT,
+		filter TEXT NOT NULL,
+		config_json TEXT
+	);`); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (migration *addPipelines) Down(ctx context.Context, db *bun.DB) error {
+	return nil
+}

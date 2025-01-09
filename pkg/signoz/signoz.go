@@ -1,9 +1,14 @@
 package signoz
 
 import (
+	"context"
+
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/cache/strategy/memory"
 	"go.signoz.io/signoz/pkg/cache/strategy/redis"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/sqlstore/migrations"
+	sqlstoreprovider "go.signoz.io/signoz/pkg/sqlstore/provider"
 	"go.signoz.io/signoz/pkg/web"
 	"go.signoz.io/signoz/pkg/web/noop"
 	"go.signoz.io/signoz/pkg/web/router"
@@ -11,8 +16,9 @@ import (
 )
 
 type SigNoz struct {
-	Cache cache.Cache
-	Web   web.Web
+	Cache    cache.Cache
+	Web      web.Web
+	SqlStore sqlstore.SqlStore
 }
 
 func New(config Config) (*SigNoz, error) {
@@ -38,8 +44,25 @@ func New(config Config) (*SigNoz, error) {
 		web = noop.New()
 	}
 
+	sqlStoreProvider, err := sqlstoreprovider.New(config.SqlStore, sqlstore.ProviderConfig{Logger: zap.L()})
+	if err != nil {
+		return nil, err
+	}
+
+	migrations, err := migrations.New(sqlstore.MigrationConfig{Logger: zap.L()})
+	if err != nil {
+		return nil, err
+	}
+
+	sqlStore := sqlstore.NewSqlStore(sqlStoreProvider, migrations)
+	err = sqlStore.Migrate(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	return &SigNoz{
-		Cache: cache,
-		Web:   web,
+		Cache:    cache,
+		Web:      web,
+		SqlStore: sqlStore,
 	}, nil
 }

@@ -66,10 +66,6 @@ func Initiate(options *ManagerOptions) (*Manager, error) {
 		configSubscribers: map[string]func(){},
 	}
 
-	err := m.initDB(options.DBEngine)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not init agentConf db")
-	}
 	return m, nil
 }
 

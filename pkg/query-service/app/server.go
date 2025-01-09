@@ -27,6 +27,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
@@ -35,8 +36,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/signoz"
 
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -96,24 +97,13 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 }
 
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
+	if err := dao.InitDao(signoz.SqlStore.Provider().SqlxDB()); err != nil {
 		return nil, err
 	}
-
-	if err := preferences.InitDB(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
-		return nil, err
-	}
-
-	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
-	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
-
-	if err != nil {
-		return nil, err
-	}
-
-	localDB.SetMaxOpenConns(10)
+	preferences.InitDB(signoz.SqlStore.Provider().SqlxDB())
+	dashboards.InitDB(signoz.SqlStore.Provider().SqlxDB())
+	explorer.InitWithDB(signoz.SqlStore.Provider().SqlxDB())
 
 	// initiate feature manager
 	fm := featureManager.StartManager()
@@ -125,7 +115,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(
-			localDB,
+			signoz.SqlStore.Provider().SqlxDB(),
 			serverOptions.PromConfigPath,
 			fm,
 			serverOptions.MaxIdleConns,
@@ -140,7 +130,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	} else {
 		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
 	}
+
 	skipConfig := &model.SkipConfig{}
+	var err error
 	if serverOptions.SkipTopLvlOpsPath != "" {
 		// read skip config
 		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
@@ -161,7 +153,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	rm, err := makeRulesManager(
 		serverOptions.PromConfigPath,
 		constants.GetAlertManagerApiPrefix(),
-		serverOptions.RuleRepoURL, localDB, reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
+		serverOptions.RuleRepoURL, signoz.SqlStore.Provider().SqlxDB(), reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +170,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	integrationsController, err := integrations.NewController(localDB)
+	integrationsController, err := integrations.NewController(signoz.SqlStore.Provider().SqlxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
@@ -189,7 +181,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		signoz.SqlStore.Provider().SqlxDB(), "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -241,13 +233,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	_, err = opAmpModel.InitDB(localDB)
-	if err != nil {
-		return nil, err
-	}
+	opAmpModel.InitDB(signoz.SqlStore.Provider().SqlxDB())
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       localDB,
+		DB:       signoz.SqlStore.Provider().SqlxDB(),
 		DBEngine: "sqlite",
 		AgentFeatures: []agentConf.AgentFeature{
 			logParsingPipelineController,

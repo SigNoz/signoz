@@ -16,22 +16,6 @@ type DataMigration struct {
 	Succeeded bool   `db:"succeeded"`
 }
 
-func initSchema(conn *sqlx.DB) error {
-	tableSchema := `
-		CREATE TABLE IF NOT EXISTS data_migrations (
-			id SERIAL PRIMARY KEY,
-			version VARCHAR(255) NOT NULL UNIQUE,
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			succeeded BOOLEAN NOT NULL DEFAULT FALSE
-		);
-	`
-	_, err := conn.Exec(tableSchema)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func getMigrationVersion(conn *sqlx.DB, version string) (*DataMigration, error) {
 	var migration DataMigration
 	err := conn.Get(&migration, "SELECT * FROM data_migrations WHERE version = $1", version)
@@ -42,18 +26,6 @@ func getMigrationVersion(conn *sqlx.DB, version string) (*DataMigration, error) 
 		return nil, err
 	}
 	return &migration, nil
-}
-
-func Migrate(dsn string) error {
-	conn, err := sqlx.Connect("sqlite3", dsn)
-	if err != nil {
-		return err
-	}
-	if err := initSchema(conn); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func ClickHouseMigrate(conn driver.Conn, cluster string) error {

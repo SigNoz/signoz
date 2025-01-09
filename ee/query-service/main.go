@@ -18,7 +18,6 @@ import (
 	"go.signoz.io/signoz/pkg/config/provider/envprovider"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
 	"google.golang.org/grpc"
@@ -150,7 +149,6 @@ func main() {
 	}
 
 	serverOptions := &app.ServerOptions{
-		SigNoz:            signoz,
 		HTTPHostPort:      baseconst.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
@@ -167,7 +165,6 @@ func main() {
 		GatewayUrl:        gatewayUrl,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
-		Config:            config,
 	}
 
 	// Read the jwt secret key
@@ -179,13 +176,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
-		zap.L().Error("Failed to migrate", zap.Error(err))
-	} else {
-		zap.L().Info("Migration successful")
-	}
-
-	server, err := app.NewServer(serverOptions)
+	server, err := app.NewServer(serverOptions, config, signoz)
 	if err != nil {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}

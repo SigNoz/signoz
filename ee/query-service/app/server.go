@@ -64,7 +64,6 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
-	SigNoz            *signoz.SigNoz
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
@@ -82,7 +81,6 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	Config            signoz.Config
 }
 
 // Server runs HTTP api service
@@ -112,26 +110,15 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 }
 
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
+func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
+	modelDao, err := dao.InitDao(signoz.SqlStore.Provider().SqlxDB())
 	if err != nil {
 		return nil, err
 	}
 
-	baseexplorer.InitWithDSN(baseconst.RELATIONAL_DATASOURCE_PATH)
-
-	if err := preferences.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
-		return nil, err
-	}
-
-	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
-
-	if err != nil {
-		return nil, err
-	}
-
-	localDB.SetMaxOpenConns(10)
+	baseexplorer.InitWithDB(signoz.SqlStore.Provider().SqlxDB())
+	preferences.InitDB(signoz.SqlStore.Provider().SqlxDB())
+	dashboards.InitDB(signoz.SqlStore.Provider().SqlxDB())
 
 	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
 	if err != nil {
@@ -139,7 +126,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager("sqlite", signoz.SqlStore.Provider().SqlxDB())
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +140,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		qb := db.NewDataConnector(
-			localDB,
+			signoz.SqlStore.Provider().SqlxDB(),
 			serverOptions.PromConfigPath,
 			lm,
 			serverOptions.MaxIdleConns,
@@ -189,7 +176,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	rm, err := makeRulesManager(serverOptions.PromConfigPath,
 		baseconst.GetAlertManagerApiPrefix(),
 		serverOptions.RuleRepoURL,
-		localDB,
+		signoz.SqlStore.Provider().SqlxDB(),
 		reader,
 		c,
 		serverOptions.DisableRules,
@@ -210,12 +197,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}()
 
 	// initiate opamp
-	_, err = opAmpModel.InitDB(localDB)
-	if err != nil {
-		return nil, err
-	}
+	_ = opAmpModel.InitDB(signoz.SqlStore.Provider().SqlxDB())
 
-	integrationsController, err := integrations.NewController(localDB)
+	integrationsController, err := integrations.NewController(signoz.SqlStore.Provider().SqlxDB())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
@@ -231,7 +215,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		signoz.SqlStore.Provider().SqlxDB(), "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -239,7 +223,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:            localDB,
+		DB:            signoz.SqlStore.Provider().SqlxDB(),
 		DBEngine:      AppDbEngine,
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
@@ -302,7 +286,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		usageManager:       usageManager,
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
+	httpServer, err := s.createPublicServer(apiHandler, signoz.Web)
 
 	if err != nil {
 		return nil, err

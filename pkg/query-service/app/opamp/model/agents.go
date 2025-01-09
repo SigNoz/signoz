@@ -30,28 +30,15 @@ func (a *Agents) Count() int {
 }
 
 // Initialize the database and create schema if needed
-func InitDB(qsDB *sqlx.DB) (*sqlx.DB, error) {
+func InitDB(qsDB *sqlx.DB) *sqlx.DB {
 	db = qsDB
-
-	tableSchema := `CREATE TABLE IF NOT EXISTS agents (
-		agent_id TEXT PRIMARY KEY UNIQUE,
-		started_at datetime NOT NULL,
-		terminated_at datetime,
-		current_status TEXT NOT NULL,
-		effective_config TEXT NOT NULL
-	);`
-
-	_, err := db.Exec(tableSchema)
-	if err != nil {
-		return nil, fmt.Errorf("error in creating agents table: %s", err.Error())
-	}
-
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),
 		connections: make(map[types.Connection]map[string]bool),
 		mux:         sync.RWMutex{},
 	}
-	return db, nil
+
+	return qsDB
 }
 
 // RemoveConnection removes the connection all Agent instances associated with the
