@@ -214,26 +214,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				/>
 			),
 		},
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<Computer size={14} className="k8s-quick-filters-category-label-icon" />
-		// 				<Typography.Text>Deployments</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.DEPLOYMENTS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={DeploymentsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
 		{
 			label: (
 				<div className="k8s-quick-filters-category-label">
@@ -398,6 +378,14 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sDaemonSetsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.DEPLOYMENTS && (
+							<K8sDeploymentsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 					</div>
