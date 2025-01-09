@@ -20,7 +20,7 @@ export interface FlamegraphSpan {
 }
 
 export interface GetTraceFlamegraphSuccessResponse {
-	spans: FlamegraphSpan[];
+	spans: FlamegraphSpan[][];
 	startTimestampMillis: number;
 	endTimestampMillis: number;
 }

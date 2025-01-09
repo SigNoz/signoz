@@ -1740,12 +1740,13 @@ func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID
 	trace := new(model.SearchFlamegraphTracesV3Response)
 	var startTime, endTime, durationNano uint64
 	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
+	var traceIdLevelledFlamegraph = map[string]map[int64][]*model.FlamegraphSpan{}
 	var traceRoots []string
 	var useCache bool = true
 
 	// get the trace tree from cache!
 	cachedTraceData := new(model.SearchFlamegraphTracesV3Cache)
-	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("trace-detail-waterfall-%v", traceID), cachedTraceData, false)
+	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("trace-detail-y-waterfall-%v", traceID), cachedTraceData, false)
 	if err != nil {
 		// if there is error in retrieving the cache, log the same and move with ch queries.
 		zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
@@ -1763,7 +1764,7 @@ func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID
 		startTime = cachedTraceData.StartTime
 		endTime = cachedTraceData.EndTime
 		durationNano = cachedTraceData.DurationNano
-		spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
+		traceIdLevelledFlamegraph = cachedTraceData.SpanIdToSpanNodeMap
 		traceRoots = cachedTraceData.TraceRoots
 	}
 
@@ -1850,62 +1851,65 @@ func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID
 				traceRoots = append(traceRoots, spanNode.SpanID)
 			}
 		}
+		// determestic sort for the children based on timestamp and span name
+		for _, spanNode := range spanIdToSpanNodeMap {
+			sort.Slice(spanNode.Children, func(i, j int) bool {
+				if spanNode.Children[i].TimeUnixNano == spanNode.Children[j].TimeUnixNano {
+					return spanNode.Children[i].Name < spanNode.Children[j].Name
+				}
+				return spanNode.Children[i].TimeUnixNano < spanNode.Children[j].TimeUnixNano
+			})
+		}
+		// if there are multiple roots that means we have missing spans. how to handle this case ??
+		if len(traceRoots) > 1 {
+			zap.L().Info(fmt.Sprintf("the trace %v has missing spans", traceID))
+			return nil, nil
+		}
+
+		// now traverse through the tree and create a bfs traversal for the tree
+		// then select the range of spans based on the interested span id
+
+		var traverse func(node *model.FlamegraphSpan, level int64)
+		var bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
+		traverse = func(node *model.FlamegraphSpan, level int64) {
+			ok, exists := bfsMapForTrace[level]
+			if exists {
+				bfsMapForTrace[level] = append(ok, node)
+			} else {
+				bfsMapForTrace[level] = []*model.FlamegraphSpan{node}
+			}
+			for _, child := range node.Children {
+				traverse(child, level+1)
+			}
+		}
+		for _, rootSpanID := range traceRoots {
+			if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
+				bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
+				traverse(rootNode, 0)
+				traceIdLevelledFlamegraph[rootSpanID] = bfsMapForTrace
+			}
+		}
 
 		traceCache := model.SearchFlamegraphTracesV3Cache{
 			StartTime:           startTime,
 			EndTime:             endTime,
 			DurationNano:        durationNano,
-			SpanIdToSpanNodeMap: spanIdToSpanNodeMap,
+			SpanIdToSpanNodeMap: traceIdLevelledFlamegraph,
 			TraceRoots:          traceRoots,
 		}
 
-		err = r.CacheV2.Store(ctx, fmt.Sprintf("trace-detail-waterfall-%v", traceID), &traceCache, time.Minute*5)
+		err = r.CacheV2.Store(ctx, fmt.Sprintf("trace-detail-y-waterfall-%v", traceID), &traceCache, time.Minute*5)
 		if err != nil {
 			zap.L().Debug("failed to store cache", zap.String("traceID", traceID), zap.Error(err))
 		}
 	}
 
-	// determestic sort for the children based on timestamp and span name
-	for _, spanNode := range spanIdToSpanNodeMap {
-		sort.Slice(spanNode.Children, func(i, j int) bool {
-			if spanNode.Children[i].TimeUnixNano == spanNode.Children[j].TimeUnixNano {
-				return spanNode.Children[i].Name < spanNode.Children[j].Name
+	selectedSpans := [][]*model.FlamegraphSpan{}
+	for _, trace := range traceRoots {
+		for level, levelNodes := range traceIdLevelledFlamegraph[trace] {
+			if level >= req.Level-20 && level <= req.Level+30 {
+				selectedSpans = append(selectedSpans, levelNodes)
 			}
-			return spanNode.Children[i].TimeUnixNano < spanNode.Children[j].TimeUnixNano
-		})
-	}
-	// if there are multiple roots that means we have missing spans. how to handle this case ??
-	if len(traceRoots) > 1 {
-		zap.L().Info(fmt.Sprintf("the trace %v has missing spans", traceID))
-		return nil, nil
-	}
-
-	// now traverse through the tree and create a bfs traversal for the tree
-	// then select the range of spans based on the interested span id
-
-	var breathOrderTraversal []*model.FlamegraphSpan
-	for _, rootSpanID := range traceRoots {
-		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
-			breathOrderTraversal = append(breathOrderTraversal, rootNode)
-			rootNode.Level = 0
-			queue := []*model.FlamegraphSpan{rootNode}
-			for len(queue) > 0 {
-				currentNode := queue[0]
-				queue = queue[1:]
-
-				for _, child := range currentNode.Children {
-					child.Level = currentNode.Level + 1
-					breathOrderTraversal = append(breathOrderTraversal, child)
-					queue = append(queue, child)
-				}
-			}
-		}
-	}
-
-	selectedSpans := []*model.FlamegraphSpan{}
-	for _, node := range breathOrderTraversal {
-		if node.Level >= req.Level-20 && node.Level <= req.Level+30 {
-			selectedSpans = append(selectedSpans, node)
 		}
 	}
 

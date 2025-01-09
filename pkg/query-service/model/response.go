@@ -325,11 +325,11 @@ func (cachedTracesV3 *SearchTracesV3Cache) UnmarshalBinary(data []byte) error {
 }
 
 type SearchFlamegraphTracesV3Cache struct {
-	StartTime           uint64                     `json:"startTime"`
-	EndTime             uint64                     `json:"endTime"`
-	DurationNano        uint64                     `json:"durationNano"`
-	SpanIdToSpanNodeMap map[string]*FlamegraphSpan `json:"spanIdToSpanNodeMap"`
-	TraceRoots          []string                   `json:"traceRoots"`
+	StartTime           uint64                                 `json:"startTime"`
+	EndTime             uint64                                 `json:"endTime"`
+	DurationNano        uint64                                 `json:"durationNano"`
+	SpanIdToSpanNodeMap map[string]map[int64][]*FlamegraphSpan `json:"spanIdToSpanNodeMap"`
+	TraceRoots          []string                               `json:"traceRoots"`
 }
 
 func (cachedTracesV3 *SearchFlamegraphTracesV3Cache) MarshalBinary() (data []byte, err error) {
@@ -353,10 +353,10 @@ type SearchTracesV3Response struct {
 }
 
 type SearchFlamegraphTracesV3Response struct {
-	StartTimestampMillis uint64            `json:"startTimestampMillis"`
-	EndTimestampMillis   uint64            `json:"endTimestampMillis"`
-	DurationNano         uint64            `json:"durationNano"`
-	Spans                []*FlamegraphSpan `json:"spans"`
+	StartTimestampMillis uint64              `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
+	DurationNano         uint64              `json:"durationNano"`
+	Spans                [][]*FlamegraphSpan `json:"spans"`
 }
 
 type OtelSpanRef struct {
