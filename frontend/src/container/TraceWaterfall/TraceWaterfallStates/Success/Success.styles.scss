@@ -14,6 +14,13 @@
 			border: none !important;
 		}
 
+		.div-thead {
+			position: sticky;
+			top: 0;
+			z-index: 2;
+			background-color: var(--bg-ink-500) !important;
+		}
+
 		.div-tr {
 			display: flex;
 			width: 100%;
@@ -158,19 +165,20 @@
 			width: calc(100% - var(--header-span-name-size) * 1px) !important;
 		}
 		.resizer {
+			width: 10px !important;
 			position: absolute;
 			top: 0;
-			height: 100%;
+			height: 50vh;
 			right: 0;
 			width: 2px;
-			background: lightgray;
+			background: var(--bg-slate-400);
 			cursor: col-resize;
 			user-select: none;
 			touch-action: none;
 		}
 
 		.resizer.isResizing {
-			background: blue;
+			background: var(--bg-slate-300);
 			opacity: 1;
 		}
 
