@@ -34,7 +34,7 @@ import (
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testbed := NewLogPipelinesTestBed(t, nil)
+	testbed := NewLogPipelinesTestBed(t, utils.NewQueryServiceDBForTests(t))
 	require := require.New(t)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
@@ -461,7 +461,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	}
 
 	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
-		testDB, "sqlite", ic.GetPipelinesForInstalledIntegrations,
+		testDB, ic.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
@@ -481,11 +481,10 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	}
 
 	// Mock an available opamp agent
-	testDB = opampModel.InitDB(testDB)
+	_ = opampModel.InitDB(testDB)
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       testDB,
-		DBEngine: "sqlite",
+		DB: testDB,
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})

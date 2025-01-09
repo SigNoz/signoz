@@ -215,7 +215,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		signoz.SqlStore.Provider().SqlxDB(), "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		signoz.SqlStore.Provider().SqlxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -224,7 +224,6 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
 		DB:            signoz.SqlStore.Provider().SqlxDB(),
-		DBEngine:      AppDbEngine,
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
 	if err != nil {

@@ -27,7 +27,6 @@ type LogParsingPipelineController struct {
 
 func NewLogParsingPipelinesController(
 	db *sqlx.DB,
-	engine string,
 	getIntegrationPipelines func(context.Context) ([]Pipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(db)

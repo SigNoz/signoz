@@ -181,7 +181,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		signoz.SqlStore.Provider().SqlxDB(), "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		signoz.SqlStore.Provider().SqlxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -236,8 +236,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	opAmpModel.InitDB(signoz.SqlStore.Provider().SqlxDB())
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       signoz.SqlStore.Provider().SqlxDB(),
-		DBEngine: "sqlite",
+		DB: signoz.SqlStore.Provider().SqlxDB(),
 		AgentFeatures: []agentConf.AgentFeature{
 			logParsingPipelineController,
 		},
