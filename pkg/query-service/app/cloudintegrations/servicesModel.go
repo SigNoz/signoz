@@ -1,4 +1,5 @@
-package cloudservicesintegration
+// TODO(Raj): move these into model.go after base branch is in
+package cloudintegrations
 
 import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"

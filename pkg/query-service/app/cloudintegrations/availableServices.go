@@ -1,4 +1,4 @@
-package cloudservicesintegration
+package cloudintegrations
 
 import "context"
 
