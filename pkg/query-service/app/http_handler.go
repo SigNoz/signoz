@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
+	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
@@ -50,11 +51,11 @@ import (
 
 	"go.uber.org/zap"
 
-	mq "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
-	signozio "go.signoz.io/signoz/pkg/query-service/integrations/signozio"
+	"go.signoz.io/signoz/pkg/query-service/integrations/signozio"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
@@ -2565,14 +2566,14 @@ func (aH *APIHandler) onboardProducers(
 	w http.ResponseWriter, r *http.Request,
 
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_producers")
+	chq, err := kafka.BuildClickHouseQuery(messagingQueue, kafka.KafkaQueue, "onboard_producers")
 
 	if err != nil {
 		zap.L().Error(err.Error())
@@ -2588,7 +2589,7 @@ func (aH *APIHandler) onboardProducers(
 		return
 	}
 
-	var entries []mq.OnboardingResponse
+	var entries []kafka.OnboardingResponse
 
 	for _, result := range results {
 
@@ -2601,7 +2602,7 @@ func (aH *APIHandler) onboardProducers(
 				attribute = "telemetry ingestion"
 				if intValue != 0 {
 					entries = nil
-					entry := mq.OnboardingResponse{
+					entry := kafka.OnboardingResponse{
 						Attribute: attribute,
 						Message:   "No data available in the given time range",
 						Status:    "0",
@@ -2645,7 +2646,7 @@ func (aH *APIHandler) onboardProducers(
 				}
 			}
 
-			entry := mq.OnboardingResponse{
+			entry := kafka.OnboardingResponse{
 				Attribute: attribute,
 				Message:   message,
 				Status:    status,
@@ -2667,14 +2668,14 @@ func (aH *APIHandler) onboardConsumers(
 	w http.ResponseWriter, r *http.Request,
 
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	chq, err := mq.BuildClickHouseQuery(messagingQueue, mq.KafkaQueue, "onboard_consumers")
+	chq, err := kafka.BuildClickHouseQuery(messagingQueue, kafka.KafkaQueue, "onboard_consumers")
 
 	if err != nil {
 		zap.L().Error(err.Error())
@@ -2690,7 +2691,7 @@ func (aH *APIHandler) onboardConsumers(
 		return
 	}
 
-	var entries []mq.OnboardingResponse
+	var entries []kafka.OnboardingResponse
 
 	for _, result := range result {
 		for key, value := range result.Data {
@@ -2702,7 +2703,7 @@ func (aH *APIHandler) onboardConsumers(
 				attribute = "telemetry ingestion"
 				if intValue != 0 {
 					entries = nil
-					entry := mq.OnboardingResponse{
+					entry := kafka.OnboardingResponse{
 						Attribute: attribute,
 						Message:   "No data available in the given time range",
 						Status:    "0",
@@ -2786,7 +2787,7 @@ func (aH *APIHandler) onboardConsumers(
 				}
 			}
 
-			entry := mq.OnboardingResponse{
+			entry := kafka.OnboardingResponse{
 				Attribute: attribute,
 				Message:   message,
 				Status:    status,
@@ -2807,14 +2808,14 @@ func (aH *APIHandler) onboardKafka(
 	w http.ResponseWriter, r *http.Request,
 
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	queryRangeParams, err := mq.BuildBuilderQueriesKafkaOnboarding(messagingQueue)
+	queryRangeParams, err := kafka.BuildBuilderQueriesKafkaOnboarding(messagingQueue)
 
 	if err != nil {
 		zap.L().Error(err.Error())
@@ -2829,7 +2830,7 @@ func (aH *APIHandler) onboardKafka(
 		return
 	}
 
-	var entries []mq.OnboardingResponse
+	var entries []kafka.OnboardingResponse
 
 	var fetchLatencyState, consumerLagState bool
 
@@ -2853,7 +2854,7 @@ func (aH *APIHandler) onboardKafka(
 	}
 
 	if !fetchLatencyState && !consumerLagState {
-		entries = append(entries, mq.OnboardingResponse{
+		entries = append(entries, kafka.OnboardingResponse{
 			Attribute: "telemetry ingestion",
 			Message:   "No data available in the given time range",
 			Status:    "0",
@@ -2861,26 +2862,26 @@ func (aH *APIHandler) onboardKafka(
 	}
 
 	if !fetchLatencyState {
-		entries = append(entries, mq.OnboardingResponse{
+		entries = append(entries, kafka.OnboardingResponse{
 			Attribute: "kafka_consumer_fetch_latency_avg",
 			Message:   "Metric kafka_consumer_fetch_latency_avg is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
-		entries = append(entries, mq.OnboardingResponse{
+		entries = append(entries, kafka.OnboardingResponse{
 			Attribute: "kafka_consumer_fetch_latency_avg",
 			Status:    "1",
 		})
 	}
 
 	if !consumerLagState {
-		entries = append(entries, mq.OnboardingResponse{
+		entries = append(entries, kafka.OnboardingResponse{
 			Attribute: "kafka_consumer_group_lag",
 			Message:   "Metric kafka_consumer_group_lag is not present in the given time range.",
 			Status:    "0",
 		})
 	} else {
-		entries = append(entries, mq.OnboardingResponse{
+		entries = append(entries, kafka.OnboardingResponse{
 			Attribute: "kafka_consumer_group_lag",
 			Status:    "1",
 		})
@@ -2892,10 +2893,10 @@ func (aH *APIHandler) onboardKafka(
 func (aH *APIHandler) getNetworkData(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	attributeCache := &mq.Clients{
+	attributeCache := &kafka.Clients{
 		Hash: make(map[string]struct{}),
 	}
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -2903,7 +2904,7 @@ func (aH *APIHandler) getNetworkData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "throughput", attributeCache)
+	queryRangeParams, err := kafka.BuildQRParamsWithCache(messagingQueue, "throughput", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2942,7 +2943,7 @@ func (aH *APIHandler) getNetworkData(
 		}
 	}
 
-	queryRangeParams, err = mq.BuildQRParamsWithCache(messagingQueue, "fetch-latency", attributeCache)
+	queryRangeParams, err = kafka.BuildQRParamsWithCache(messagingQueue, "fetch-latency", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -2992,7 +2993,7 @@ func (aH *APIHandler) getProducerData(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	// parse the query params to retrieve the messaging queue struct
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3000,7 +3001,7 @@ func (aH *APIHandler) getProducerData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3033,7 +3034,7 @@ func (aH *APIHandler) getProducerData(
 func (aH *APIHandler) getConsumerData(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3041,7 +3042,7 @@ func (aH *APIHandler) getConsumerData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3075,7 +3076,7 @@ func (aH *APIHandler) getConsumerData(
 func (aH *APIHandler) getPartitionOverviewLatencyData(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3083,7 +3084,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3117,7 +3118,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(
 func (aH *APIHandler) getConsumerPartitionLatencyData(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3125,7 +3126,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3162,7 +3163,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(
 func (aH *APIHandler) getProducerThroughputOverview(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3170,11 +3171,11 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		return
 	}
 
-	attributeCache := &mq.Clients{
+	attributeCache := &kafka.Clients{
 		Hash: make(map[string]struct{}),
 	}
 
-	producerQueryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
+	producerQueryRangeParams, err := kafka.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3212,7 +3213,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 		}
 	}
 
-	queryRangeParams, err := mq.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
+	queryRangeParams, err := kafka.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3265,7 +3266,7 @@ func (aH *APIHandler) getProducerThroughputOverview(
 func (aH *APIHandler) getProducerThroughputDetails(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3273,7 +3274,7 @@ func (aH *APIHandler) getProducerThroughputDetails(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3307,7 +3308,7 @@ func (aH *APIHandler) getProducerThroughputDetails(
 func (aH *APIHandler) getConsumerThroughputOverview(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3315,7 +3316,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3349,7 +3350,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(
 func (aH *APIHandler) getConsumerThroughputDetails(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3357,7 +3358,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3394,7 +3395,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(
 func (aH *APIHandler) getProducerConsumerEval(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -3402,7 +3403,7 @@ func (aH *APIHandler) getProducerConsumerEval(
 		return
 	}
 
-	queryRangeParams, err := mq.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
+	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval")
 	if err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
@@ -3431,13 +3432,22 @@ func (aH *APIHandler) getProducerConsumerEval(
 	aH.Respond(w, resp)
 }
 
-// ParseMessagingQueueBody parse for messaging queue params
-func ParseMessagingQueueBody(r *http.Request) (*mq.MessagingQueue, *model.ApiError) {
-	messagingQueue := new(mq.MessagingQueue)
+// ParseKafkaQueueBody parse for messaging queue params
+func ParseKafkaQueueBody(r *http.Request) (*kafka.MessagingQueue, *model.ApiError) {
+	messagingQueue := new(kafka.MessagingQueue)
 	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 	return messagingQueue, nil
+}
+
+// ParseQueueBody parses for any queue
+func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError) {
+	queue := new(queues2.QueueListRequest)
+	if err := json.NewDecoder(r.Body).Decode(queue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return queue, nil
 }
 
 // Preferences
@@ -4963,9 +4973,8 @@ func (aH *APIHandler) updateTraceField(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
-	// ToDo: add capability of dynamic filtering based on any of the filters using QueueFilters
 
-	messagingQueue, apiErr := ParseMessagingQueueBody(r)
+	queueListRequest, apiErr := ParseQueueBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -4973,11 +4982,11 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chq, err := mq.BuildClickHouseQuery(messagingQueue, "", "overview")
+	chq, err := queues2.BuildOverviewQuery(queueListRequest)
 
 	if err != nil {
 		zap.L().Error(err.Error())
-		RespondError(w, apiErr, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 
@@ -4987,7 +4996,6 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery overview logic for both worker and tasks types
 }
 
 func (aH *APIHandler) getCeleryTasks(w http.ResponseWriter, r *http.Request) {
