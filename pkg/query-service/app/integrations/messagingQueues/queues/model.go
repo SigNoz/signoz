@@ -25,11 +25,3 @@ func (qr *QueueListRequest) Validate() error {
 	}
 	return nil
 }
-
-type QueueFilters struct {
-	ServiceName []string
-	SpanName    []string
-	Queue       []string
-	Destination []string
-	Kind        []string
-}
