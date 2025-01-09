@@ -84,6 +84,57 @@ func TestAgentCheckIns(t *testing.T) {
 		},
 	)
 	require.NotNil(apiErr)
+
+	// The agent should not be able to check-in with a particular cloud account id
+	// if another connected AccountRecord exists for same cloud account
+	// i.e. there can't be 2 connected account records for the same cloud account id
+	// at any point in time.
+	existingConnected, apiErr := controller.repo.getConnectedCloudAccount(
+		context.TODO(), "aws", testCloudAccountId1,
+	)
+	require.Nil(apiErr)
+	require.NotNil(existingConnected)
+	require.Equal(testCloudAccountId1, *existingConnected.CloudAccountId)
+	require.Nil(existingConnected.RemovedAt)
+
+	testAccountId2 := uuid.NewString()
+	_, apiErr = controller.CheckInAsAgent(
+		context.TODO(), "aws", AgentCheckInRequest{
+			AccountId:      testAccountId2,
+			CloudAccountId: testCloudAccountId1,
+		},
+	)
+	require.NotNil(apiErr)
+
+	// After disconnecting existing account record, the agent should be able to
+	// connected for a particular cloud account id
+	_, apiErr = controller.DisconnectAccount(
+		context.TODO(), "aws", testAccountId1,
+	)
+
+	existingConnected, apiErr = controller.repo.getConnectedCloudAccount(
+		context.TODO(), "aws", testCloudAccountId1,
+	)
+	require.Nil(existingConnected)
+	require.NotNil(apiErr)
+	require.Equal(model.ErrorNotFound, apiErr.Type())
+
+	_, apiErr = controller.CheckInAsAgent(
+		context.TODO(), "aws", AgentCheckInRequest{
+			AccountId:      testAccountId2,
+			CloudAccountId: testCloudAccountId1,
+		},
+	)
+	require.NotNil(apiErr)
+
+	// should be able to keep checking in
+	_, apiErr = controller.CheckInAsAgent(
+		context.TODO(), "aws", AgentCheckInRequest{
+			AccountId:      testAccountId2,
+			CloudAccountId: testCloudAccountId1,
+		},
+	)
+	require.NotNil(apiErr)
 }
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {

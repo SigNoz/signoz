@@ -17,6 +17,10 @@ type cloudProviderAccountsRepository interface {
 
 	get(ctx context.Context, cloudProvider string, id string) (*AccountRecord, *model.ApiError)
 
+	getConnectedCloudAccount(
+		ctx context.Context, cloudProvider string, cloudAccountId string,
+	) (*AccountRecord, *model.ApiError)
+
 	// Insert an account or update it by (cloudProvider, id)
 	// for specified non-empty fields
 	upsert(
@@ -132,6 +136,44 @@ func (r *cloudProviderAccountsSQLRepository) get(
 	if err == sql.ErrNoRows {
 		return nil, model.NotFoundError(fmt.Errorf(
 			"couldn't find account with Id %s", id,
+		))
+	} else if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query cloud provider accounts: %w", err,
+		))
+	}
+
+	return &result, nil
+}
+
+func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
+	ctx context.Context, cloudProvider string, cloudAccountId string,
+) (*AccountRecord, *model.ApiError) {
+	var result AccountRecord
+
+	err := r.db.GetContext(
+		ctx, &result, `
+			select
+				cloud_provider,
+				id,
+				config_json,
+				cloud_account_id,
+				last_agent_report_json,
+				created_at,
+				removed_at
+			from cloud_integrations_accounts
+			where
+				cloud_provider=$1
+				and cloud_account_id=$2
+				and last_agent_report_json is not NULL
+				and removed_at is NULL
+		`,
+		cloudProvider, cloudAccountId,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"couldn't find connected cloud account %s", cloudAccountId,
 		))
 	} else if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
