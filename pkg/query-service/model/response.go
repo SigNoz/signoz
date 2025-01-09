@@ -295,6 +295,19 @@ type Span struct {
 	Level       int64 `json:"level"`
 }
 
+type FlamegraphSpan struct {
+	TimeUnixNano uint64            `json:"timestamp"`
+	DurationNano int64             `json:"durationNano"`
+	SpanID       string            `json:"spanId"`
+	ParentSpanId string            `json:"parentSpanId"`
+	TraceID      string            `json:"traceId"`
+	HasError     bool              `json:"hasError"`
+	ServiceName  string            `json:"serviceName"`
+	Name         string            `json:"name"`
+	Level        int64             `json:"level"`
+	Children     []*FlamegraphSpan `json:"children"`
+}
+
 type SearchTracesV3Cache struct {
 	StartTime           uint64           `json:"startTime"`
 	EndTime             uint64           `json:"endTime"`
@@ -311,6 +324,21 @@ func (cachedTracesV3 *SearchTracesV3Cache) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, cachedTracesV3)
 }
 
+type SearchFlamegraphTracesV3Cache struct {
+	StartTime           uint64                     `json:"startTime"`
+	EndTime             uint64                     `json:"endTime"`
+	DurationNano        uint64                     `json:"durationNano"`
+	SpanIdToSpanNodeMap map[string]*FlamegraphSpan `json:"spanIdToSpanNodeMap"`
+	TraceRoots          []string                   `json:"traceRoots"`
+}
+
+func (cachedTracesV3 *SearchFlamegraphTracesV3Cache) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(cachedTracesV3)
+}
+func (cachedTracesV3 *SearchFlamegraphTracesV3Cache) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, cachedTracesV3)
+}
+
 type SearchTracesV3Response struct {
 	StartTimestampMillis  uint64  `json:"startTimestampMillis"`
 	EndTimestampMillis    uint64  `json:"endTimestampMillis"`
@@ -322,6 +350,13 @@ type SearchTracesV3Response struct {
 	Spans                 []*Span `json:"spans"`
 	// this is needed for frontend and query service sync
 	UncollapsedNodes []string `json:"uncollapsedNodes"`
+}
+
+type SearchFlamegraphTracesV3Response struct {
+	StartTimestampMillis uint64            `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64            `json:"endTimestampMillis"`
+	DurationNano         uint64            `json:"durationNano"`
+	Spans                []*FlamegraphSpan `json:"spans"`
 }
 
 type OtelSpanRef struct {

@@ -42,6 +42,7 @@ type Reader interface {
 	// Search Interfaces
 	SearchTraces(ctx context.Context, params *model.SearchTracesParams, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error)
 	SearchTracesV3(ctx context.Context, traceID string, req *model.SearchTracesV3Params) (*model.SearchTracesV3Response, *model.ApiError)
+	SearchFlamegraphTracesV3(ctx context.Context, traceID string, req *model.SearchFlamegraphTracesV3Params) (*model.SearchFlamegraphTracesV3Response, *model.ApiError)
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)

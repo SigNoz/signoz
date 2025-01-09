@@ -321,6 +321,10 @@ type SearchTracesV3Params struct {
 	UncollapsedNodes              []string `json:"uncollapsedNodes"`
 }
 
+type SearchFlamegraphTracesV3Params struct {
+	Level int64 `json:"level"`
+}
+
 type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
