@@ -33,7 +33,7 @@ func newConfig() config.Config {
 		Provider: "sqlite",
 		Sqlite: SqliteConfig{
 			Path:         "/var/lib/signoz/signoz.db",
-			MaxOpenConns: 10,
+			MaxOpenConns: 100,
 		},
 	}
 

@@ -33,7 +33,13 @@ type sqlStore struct {
 }
 
 func NewSqlStore(provider Provider, migrations *migrate.Migrations) *sqlStore {
-	migrator := migrate.NewMigrator(provider.BunDB(), migrations, migrate.WithMarkAppliedOnSuccess(true))
+	migrator := migrate.NewMigrator(
+		provider.BunDB(),
+		migrations,
+		migrate.WithMarkAppliedOnSuccess(true),
+		migrate.WithLocksTableName("migration_lock"),
+		migrate.WithTableName("migration"),
+	)
 
 	return &sqlStore{
 		provider: provider,
