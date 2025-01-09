@@ -15,11 +15,7 @@ import (
 
 func NewTestIntegrationsManager(t *testing.T) *Manager {
 	testDB := utils.NewQueryServiceDBForTests(t)
-
-	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
-	if err != nil {
-		t.Fatalf("could not init sqlite DB for installed integrations: %v", err)
-	}
+	installedIntegrationsRepo := NewInstalledIntegrationsSqliteRepo(testDB)
 
 	return &Manager{
 		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},

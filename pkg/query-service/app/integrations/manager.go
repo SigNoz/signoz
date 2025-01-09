@@ -123,12 +123,7 @@ type Manager struct {
 }
 
 func NewManager(db *sqlx.DB) (*Manager, error) {
-	iiRepo, err := NewInstalledIntegrationsSqliteRepo(db)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not init sqlite DB for installed integrations: %w", err,
-		)
-	}
+	iiRepo := NewInstalledIntegrationsSqliteRepo(db)
 
 	return &Manager{
 		availableIntegrationsRepo: &BuiltInIntegrations{},

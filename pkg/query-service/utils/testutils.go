@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -8,6 +9,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/dao"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/sqlstore/migrations"
+	sqlstoreprovider "go.signoz.io/signoz/pkg/sqlstore/provider"
+	"go.uber.org/zap"
 )
 
 func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
@@ -19,20 +24,33 @@ func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
-	testDB, err = sqlx.Open("sqlite3", testDBFilePath)
+	sqlStoreProvider, err := sqlstoreprovider.New(sqlstore.Config{
+		Provider: "sqlite",
+		Sqlite: sqlstore.SqliteConfig{
+			Path: testDBFilePath,
+		},
+	}, sqlstore.ProviderConfig{Logger: zap.NewNop()})
 	if err != nil {
-		t.Fatalf("could not open test db sqlite file: %v", err)
+		t.Fatalf("could not create sqlite provider: %v", err)
 	}
 
-	return testDB, testDBFilePath
-}
+	migrations, err := migrations.New(sqlstore.MigrationConfig{Logger: zap.L()})
+	if err != nil {
+		t.Fatalf("could not create migrations: %v", err)
+	}
 
-func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
-	testDB, testDBFilePath := NewTestSqliteDB(t)
+	sqlStore := sqlstore.NewSqlStore(sqlStoreProvider, migrations)
+	err = sqlStore.Migrate(context.Background())
+	if err != nil {
+		t.Fatalf("could not run migrations: %v", err)
+	}
 
-	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao("sqlite", testDBFilePath)
-	dashboards.InitDB(testDBFilePath)
+	err = dao.InitDao(sqlStore.Provider().SqlxDB())
+	if err != nil {
+		t.Fatalf("could not init dao: %v", err)
+	}
 
-	return testDB
+	dashboards.InitDB(sqlStore.Provider().SqlxDB())
+
+	return sqlStore.Provider().SqlxDB()
 }
