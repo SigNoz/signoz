@@ -2,6 +2,7 @@ package cloudintegrations
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -13,8 +14,6 @@ import (
 
 type cloudProviderAccountsRepository interface {
 	listConnected(ctx context.Context, cloudProvider string) ([]AccountRecord, *model.ApiError)
-
-	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*AccountRecord, *model.ApiError)
 
 	get(ctx context.Context, cloudProvider string, id string) (*AccountRecord, *model.ApiError)
 
@@ -107,22 +106,13 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 	return accounts, nil
 }
 
-func (r *cloudProviderAccountsSQLRepository) getByIds(
-	ctx context.Context, cloudProvider string, ids []string,
-) (map[string]*AccountRecord, *model.ApiError) {
+func (r *cloudProviderAccountsSQLRepository) get(
+	ctx context.Context, cloudProvider string, id string,
+) (*AccountRecord, *model.ApiError) {
+	var result AccountRecord
 
-	records := []AccountRecord{}
-
-	idPlaceholders := []string{}
-	queryArgs := []any{cloudProvider}
-
-	for _, id := range ids {
-		idPlaceholders = append(idPlaceholders, "?")
-		queryArgs = append(queryArgs, id)
-	}
-
-	err := r.db.SelectContext(
-		ctx, &records, fmt.Sprintf(`
+	err := r.db.GetContext(
+		ctx, &result, `
 			select
 				cloud_provider,
 				id,
@@ -133,42 +123,23 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 				removed_at
 			from cloud_integrations_accounts
 			where
-				cloud_provider=?
-				and id in (%s)`,
-			strings.Join(idPlaceholders, ", "),
-		),
-		queryArgs...,
+				cloud_provider=$1
+				and id=$2
+		`,
+		cloudProvider, id,
 	)
-	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not query cloud provider account: %w", err,
-		))
-	}
 
-	result := map[string]*AccountRecord{}
-	for _, a := range records {
-		result[a.Id] = &a
-	}
-
-	return result, nil
-}
-
-func (r *cloudProviderAccountsSQLRepository) get(
-	ctx context.Context, cloudProvider string, id string,
-) (*AccountRecord, *model.ApiError) {
-	res, apiErr := r.getByIds(ctx, cloudProvider, []string{id})
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	account := res[id]
-	if account == nil {
+	if err == sql.ErrNoRows {
 		return nil, model.NotFoundError(fmt.Errorf(
 			"couldn't find account with Id %s", id,
 		))
+	} else if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query cloud provider accounts: %w", err,
+		))
 	}
 
-	return account, nil
+	return &result, nil
 }
 
 func (r *cloudProviderAccountsSQLRepository) upsert(
