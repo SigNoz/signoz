@@ -50,7 +50,7 @@ import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
 import PodTraces from './PodTraces/PodTraces';
 
-const TimeRangeOffset = 1000000;
+const TimeRangeOffset = 1000000000;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function PodDetails({

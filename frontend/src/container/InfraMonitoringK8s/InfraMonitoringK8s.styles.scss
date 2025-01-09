@@ -39,10 +39,6 @@
 		.ant-collapse-header {
 			border-bottom: 1px solid var(--bg-slate-400);
 			padding: 12px 8px;
-
-			&[aria-expanded='true'] {
-				background: var(--bg-ink-400);
-			}
 		}
 
 		.ant-collapse-content-box {
@@ -271,8 +267,6 @@
 
 				.group-by-label {
 					min-width: max-content;
-
-					color: var(--bg-vanilla-100, #c0c1c3);
 					font-size: 13px;
 					font-style: normal;
 					font-weight: 400;
@@ -282,7 +276,6 @@
 					border-radius: 2px 0px 0px 2px;
 					border: 1px solid var(--bg-slate-400, #1d212d);
 					border-right: none;
-					background: var(--bg-ink-100, #16181d);
 					border-top-right-radius: 0px;
 					border-bottom-right-radius: 0px;
 

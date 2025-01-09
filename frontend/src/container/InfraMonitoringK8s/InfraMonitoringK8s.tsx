@@ -262,6 +262,8 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const handleCategoryChange = (key: string | string[]): void => {
 		if (Array.isArray(key) && key.length > 0) {
 			setSelectedCategory(key[0] as string);
+			// Reset filters
+			handleChangeQueryData('filters', { items: [], op: 'and' });
 		}
 	};
 
