@@ -34,7 +34,7 @@ export const useGetK8sDeploymentsList: UseGetK8sDeploymentsList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_HOST_LIST, requestData];
+		return [REACT_QUERY_KEY.GET_DEPLOYMENT_LIST, requestData];
 	}, [options?.queryKey, requestData]);
 
 	return useQuery<
