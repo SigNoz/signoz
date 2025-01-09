@@ -83,6 +83,7 @@ type GenerateConnectionUrlRequest struct {
 }
 
 type SigNozAgentConfig struct {
+	// The region in which SigNoz agent should be installed.
 	Region string `json:"region"`
 }
 

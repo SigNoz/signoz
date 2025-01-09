@@ -109,6 +109,8 @@ func (a *AccountRecord) account() Account {
 
 	if a.Config != nil {
 		ca.Config = *a.Config
+	} else {
+		ca.Config = DefaultAccountConfig()
 	}
 
 	return ca

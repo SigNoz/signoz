@@ -12,14 +12,14 @@ import (
 )
 
 type cloudProviderAccountsRepository interface {
-	// list connected cloud provider accounts.
 	listConnected(ctx context.Context, cloudProvider string) ([]AccountRecord, *model.ApiError)
 
 	getByIds(ctx context.Context, cloudProvider string, ids []string) (map[string]*AccountRecord, *model.ApiError)
 
 	get(ctx context.Context, cloudProvider string, id string) (*AccountRecord, *model.ApiError)
 
-	// Insert an account or update it by ID for specified non-empty fields
+	// Insert an account or update it by (cloudProvider, id)
+	// for specified non-empty fields
 	upsert(
 		ctx context.Context,
 		cloudProvider string,
@@ -90,11 +90,11 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 				created_at,
 				removed_at
 			from cloud_integrations_accounts
-      where
-        cloud_provider=$1
-        and removed_at is NULL
-        and cloud_account_id is not NULL
-        and last_agent_report_json is not NULL
+			where
+				cloud_provider=$1
+				and removed_at is NULL
+				and cloud_account_id is not NULL
+				and last_agent_report_json is not NULL
 			order by created_at
 		`, cloudProvider,
 	)
@@ -110,7 +110,8 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 func (r *cloudProviderAccountsSQLRepository) getByIds(
 	ctx context.Context, cloudProvider string, ids []string,
 ) (map[string]*AccountRecord, *model.ApiError) {
-	accounts := []AccountRecord{}
+
+	records := []AccountRecord{}
 
 	idPlaceholders := []string{}
 	queryArgs := []any{cloudProvider}
@@ -121,7 +122,7 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 	}
 
 	err := r.db.SelectContext(
-		ctx, &accounts, fmt.Sprintf(`
+		ctx, &records, fmt.Sprintf(`
 			select
 				cloud_provider,
 				id,
@@ -145,13 +146,7 @@ func (r *cloudProviderAccountsSQLRepository) getByIds(
 	}
 
 	result := map[string]*AccountRecord{}
-	for _, a := range accounts {
-
-		if a.Config == nil {
-			config := DefaultAccountConfig()
-			a.Config = &config
-		}
-
+	for _, a := range records {
 		result[a.Id] = &a
 	}
 
@@ -193,31 +188,31 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 
 	// Prepare clause for setting values in `on conflict do update`
 	onConflictSetStmts := []string{}
-	updateColStmt := func(col string) string {
+	setColStatement := func(col string) string {
 		return fmt.Sprintf("%s=excluded.%s", col, col)
 	}
 
 	if config != nil {
 		onConflictSetStmts = append(
-			onConflictSetStmts, updateColStmt("config_json"),
+			onConflictSetStmts, setColStatement("config_json"),
 		)
 	}
 
 	if cloudAccountId != nil {
 		onConflictSetStmts = append(
-			onConflictSetStmts, updateColStmt("cloud_account_id"),
+			onConflictSetStmts, setColStatement("cloud_account_id"),
 		)
 	}
 
 	if agentReport != nil {
 		onConflictSetStmts = append(
-			onConflictSetStmts, updateColStmt("last_agent_report_json"),
+			onConflictSetStmts, setColStatement("last_agent_report_json"),
 		)
 	}
 
 	if removedAt != nil {
 		onConflictSetStmts = append(
-			onConflictSetStmts, updateColStmt("removed_at"),
+			onConflictSetStmts, setColStatement("removed_at"),
 		)
 	}
 
@@ -230,14 +225,14 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	}
 
 	insertQuery := fmt.Sprintf(`
-    INSERT INTO cloud_integrations_accounts (
-      cloud_provider,
-      id,
-      config_json,
-      cloud_account_id,
-      last_agent_report_json,
-      removed_at
-    ) values ($1, $2, $3, $4, $5, $6)
+		INSERT INTO cloud_integrations_accounts (
+			cloud_provider,
+			id,
+			config_json,
+			cloud_account_id,
+			last_agent_report_json,
+			removed_at
+		) values ($1, $2, $3, $4, $5, $6)
     %s`, onConflictClause,
 	)
 
