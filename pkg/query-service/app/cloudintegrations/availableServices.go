@@ -57,14 +57,14 @@ func init() {
 	}
 }
 
-//go:embed services/*
+//go:embed serviceDefinitions/*
 var serviceDefinitionFiles embed.FS
 
 func readAllServiceDefinitions() error {
-	rootDirName := "services"
+	rootDirName := "serviceDefinitions"
 	cloudProviderDirs, err := fs.ReadDir(serviceDefinitionFiles, rootDirName)
 	if err != nil {
-		return fmt.Errorf("couldn't dirs in /services: %w", err)
+		return fmt.Errorf("couldn't read dirs in %s: %w", rootDirName, err)
 	}
 
 	availableServices = map[string]map[string]CloudServiceDetails{}
