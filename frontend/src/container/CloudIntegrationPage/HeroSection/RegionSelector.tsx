@@ -1,7 +1,8 @@
 import './RegionSelector.style.scss';
 
 import { Checkbox } from 'antd';
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useRegionSelection } from 'hooks/integrations/aws/useRegionSelection';
+import { Dispatch, SetStateAction } from 'react';
 
 import { regions } from '../ServicesSection/data';
 
@@ -14,37 +15,15 @@ export function RegionSelector({
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
 }): JSX.Element {
-	const allRegionIds = useMemo(
-		() => regions.flatMap((r) => r.subRegions.map((sr) => sr.id)),
-		[],
-	);
-	const handleSelectAll = (checked: boolean): void => {
-		setIncludeAllRegions(checked);
-		setSelectedRegions(checked ? ['all'] : []);
-	};
-
-	const handleRegionSelect = (regionId: string): void => {
-		if (selectedRegions.includes('all')) {
-			const filteredRegionIds = allRegionIds.filter((id) => id !== regionId);
-
-			setSelectedRegions(filteredRegionIds);
-			setIncludeAllRegions(false);
-			return;
-		}
-
-		setSelectedRegions((prev) => {
-			const newSelection = prev.includes(regionId)
-				? prev.filter((id) => id !== regionId)
-				: [...prev, regionId];
-
-			if (newSelection.length === allRegionIds.length) {
-				setIncludeAllRegions(true);
-				return ['all'];
-			}
-
-			return newSelection;
-		});
-	};
+	const {
+		allRegionIds,
+		handleSelectAll,
+		handleRegionSelect,
+	} = useRegionSelection({
+		selectedRegions,
+		setSelectedRegions,
+		setIncludeAllRegions,
+	});
 
 	return (
 		<div className="region-selector">

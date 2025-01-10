@@ -4,7 +4,6 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Modal, Select, Switch } from 'antd';
 import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Region, SubRegion } from 'types/regions';
 
 import { regions } from '../ServicesSection/data';
 import { RegionSelector } from './RegionSelector';
@@ -138,8 +137,8 @@ function IntegrationModal({
 								style={{ height: '44px' }}
 								className="cloud-integrations-form__select"
 							>
-								{regions.flatMap((region: Region) =>
-									region.subRegions.map((subRegion: SubRegion) => (
+								{regions.flatMap((region) =>
+									region.subRegions.map((subRegion) => (
 										<Select.Option key={subRegion.id} value={subRegion.id}>
 											{subRegion.displayName}
 										</Select.Option>
