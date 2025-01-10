@@ -60,7 +60,7 @@ function K8sNodesList({
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>({ columnName: 'cpu', order: 'desc' });
 
 	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
 

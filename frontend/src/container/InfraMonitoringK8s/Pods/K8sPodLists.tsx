@@ -124,7 +124,7 @@ function K8sPodsList({
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>(null);
+	} | null>({ columnName: 'cpu', order: 'desc' });
 
 	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(null);
 
