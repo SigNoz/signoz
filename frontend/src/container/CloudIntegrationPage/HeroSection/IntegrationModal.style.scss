@@ -23,6 +23,9 @@
 
 	.ant-modal-title {
 		color: var(--bg-vanilla-100);
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px;
 	}
 	.ant-modal-body {
 		padding: 16px 24px 24px;
@@ -57,9 +60,46 @@
 	}
 
 	.cloud-integrations-form {
-		display: flex;
-		flex-direction: column;
-		gap: 38px;
+		.disabled {
+			opacity: 0.4;
+		}
+		&,
+		&__content {
+			display: flex;
+			flex-direction: column;
+			gap: 38px;
+		}
+		&__alert {
+			&.ant-alert {
+				padding: 12px;
+				border-radius: 6px;
+				font-size: 14px;
+				line-height: 22px; /* 157.143% */
+				letter-spacing: -0.07px;
+			}
+			&.ant-alert-error {
+				color: var(--bg-sakura-400);
+				border: 1px solid rgba(242, 71, 105, 0.1);
+				background: rgba(242, 71, 105, 0.1);
+			}
+			&.ant-alert-warning {
+				color: var(--bg-amber-400);
+				border: 1px solid rgba(255, 205, 86, 0.1);
+				background: rgba(255, 205, 86, 0.1);
+			}
+			&-message {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				.retry-time {
+					font-family: 'Geist Mono';
+					font-size: 14px;
+					font-weight: 600;
+					line-height: 22px;
+					letter-spacing: -0.07px;
+				}
+			}
+		}
 		&__form-group {
 			display: flex;
 			flex-direction: column;

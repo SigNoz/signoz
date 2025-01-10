@@ -9,7 +9,12 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+<<<<<<< HEAD
 import IntegrationModal from './IntegrationModal';
+=======
+import { CloudAccount } from '../ServicesSection/types';
+import CloudAccountSetupModal from './components/CloudAccountSetupModal';
+>>>>>>> 4e8aae120 (feat: integrate now modal states and json server API integration)
 
 interface AccountOptionItemProps {
 	label: React.ReactNode;
@@ -116,7 +121,7 @@ function AccountActions(): JSX.Element {
 				</Button>
 			)}
 
-			<IntegrationModal
+			<CloudAccountSetupModal
 				isOpen={isIntegrationModalOpen}
 				onClose={(): void => setIsIntegrationModalOpen(false)}
 			/>
