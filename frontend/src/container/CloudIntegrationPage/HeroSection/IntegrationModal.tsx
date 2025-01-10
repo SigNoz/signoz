@@ -1,19 +1,79 @@
 import './IntegrationModal.style.scss';
 
+<<<<<<< HEAD
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Modal, Select, Switch } from 'antd';
 import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
 import { useState } from 'react';
+=======
+import { Button, Modal } from 'antd';
+import { useIntegrationModal } from 'hooks/integrations/aws/useIntegrationModal';
+import { useCallback } from 'react';
 
-interface IntegrationModalProps {
-	isOpen: boolean;
-	onClose: () => void;
+import { RegionForm } from './components/RegionForm';
+import { RegionSelector } from './RegionSelector';
+import { SuccessView } from './SuccessView';
+import { ActiveViewEnum, IntegrationModalProps, ModalStateEnum } from './types';
+>>>>>>> 4e8aae120 (feat: integrate now modal states and json server API integration)
+
+function getModalTitle(
+	activeView: ActiveViewEnum,
+	modalState: ModalStateEnum,
+): string {
+	if (
+		activeView === ActiveViewEnum.SELECT_REGIONS &&
+		modalState === ModalStateEnum.FORM
+	) {
+		return 'Which regions do you want to monitor?';
+	}
+	if (modalState === ModalStateEnum.SUCCESS) {
+		return 'AWS Webservice Integration';
+	}
+	return 'Add AWS Account';
+}
+
+function getModalFooter(
+	activeView: ActiveViewEnum,
+	selectedRegions: string[],
+	allRegions: string[],
+	onClose: () => void,
+	onSetActiveView: () => void,
+): React.ReactNode[] | null {
+	if (activeView === ActiveViewEnum.SELECT_REGIONS) {
+		return [
+			<Button
+				onClick={onClose}
+				type="default"
+				className="integrations-modal-footer__close-button"
+				key="close-button"
+			>
+				Close
+			</Button>,
+			<Button
+				onClick={onSetActiveView}
+				className="integrations-modal-footer__confirm-button"
+				type="primary"
+				key="confirm-selection"
+			>
+				Confirm Selection{' '}
+				<span className="integrations-modal-footer__confirm-selection-count">
+					(
+					{selectedRegions.includes('all')
+						? allRegions.length
+						: selectedRegions.length}
+					)
+				</span>
+			</Button>,
+		];
+	}
+	return null;
 }
 
 function IntegrationModal({
 	isOpen,
 	onClose,
 }: IntegrationModalProps): JSX.Element {
+<<<<<<< HEAD
 	const [form] = Form.useForm();
 	const [isLoading, setIsLoading] = useState(false);
 	const [activeView, setActiveView] = useState<'select-regions' | 'form'>(
@@ -124,7 +184,98 @@ function IntegrationModal({
 				<div>
 					<div>Select Region(s)</div>
 				</div>
+=======
+	const {
+		form,
+		modalState,
+		setModalState,
+		isLoading,
+		activeView,
+		selectedRegions,
+		includeAllRegions,
+		isGeneratingUrl,
+		setSelectedRegions,
+		setIncludeAllRegions,
+		handleIncludeAllRegionsChange,
+		handleRegionSelect,
+		handleSubmit,
+		handleClose,
+		setActiveView,
+		allRegions,
+		accountId,
+		selectedDeploymentRegion,
+		handleRegionChange,
+	} = useIntegrationModal({ onClose });
+
+	const renderContent = useCallback(() => {
+		if (modalState === ModalStateEnum.SUCCESS) {
+			return <SuccessView />;
+		}
+
+		if (activeView === ActiveViewEnum.SELECT_REGIONS) {
+			return (
+				<RegionSelector
+					selectedRegions={selectedRegions}
+					setSelectedRegions={setSelectedRegions}
+					setIncludeAllRegions={setIncludeAllRegions}
+				/>
+			);
+		}
+
+		return (
+			<RegionForm
+				form={form}
+				modalState={modalState}
+				setModalState={setModalState}
+				selectedRegions={selectedRegions}
+				includeAllRegions={includeAllRegions}
+				isLoading={isLoading}
+				isGeneratingUrl={isGeneratingUrl}
+				onIncludeAllRegionsChange={handleIncludeAllRegionsChange}
+				onRegionSelect={handleRegionSelect}
+				onSubmit={handleSubmit}
+				accountId={accountId}
+				selectedDeploymentRegion={selectedDeploymentRegion}
+				handleRegionChange={handleRegionChange}
+			/>
+		);
+	}, [
+		modalState,
+		activeView,
+		form,
+		setModalState,
+		selectedRegions,
+		includeAllRegions,
+		isLoading,
+		isGeneratingUrl,
+		handleIncludeAllRegionsChange,
+		handleRegionSelect,
+		handleSubmit,
+		accountId,
+		selectedDeploymentRegion,
+		handleRegionChange,
+		setSelectedRegions,
+		setIncludeAllRegions,
+	]);
+
+	return (
+		<Modal
+			title={getModalTitle(activeView, modalState)}
+			centered
+			open={isOpen}
+			onCancel={handleClose}
+			footer={getModalFooter(
+				activeView,
+				selectedRegions,
+				allRegions,
+				handleClose,
+				() => setActiveView(ActiveViewEnum.FORM),
+>>>>>>> 4e8aae120 (feat: integrate now modal states and json server API integration)
 			)}
+			width={672}
+			rootClassName="cloud-integrations-modal"
+		>
+			{renderContent()}
 		</Modal>
 	);
 }
