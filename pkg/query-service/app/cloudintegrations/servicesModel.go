@@ -14,6 +14,21 @@ type CloudServiceSummary struct {
 	// context of a cloud provider account.
 	Config *CloudServiceConfig `json:"config,omitempty"`
 }
+
+type CloudServiceDetails struct {
+	CloudServiceSummary
+
+	Overview string `json:"overview"` // markdown
+
+	Assets CloudServiceAssets `json:"assets"`
+
+	SupportedSignals SupportedSignals `json:"supported_signals"`
+
+	DataCollected DataCollectedForService `json:"data_collected"`
+
+	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
+}
+
 type CloudServiceConfig struct {
 	Logs    CloudServiceLogsConfig    `json:"logs"`
 	Metrics CloudServiceMetricsConfig `json:"metrics"`
@@ -27,20 +42,13 @@ type CloudServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-type CloudServiceDetails struct {
-	CloudServiceSummary
-
-	Overview string `json:"overview"` // markdown
-
-	Assets CloudServiceAssets `json:"assets"`
-
-	DataCollected DataCollectedForService `json:"data_collected"`
-
-	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
-}
-
 type CloudServiceAssets struct {
 	Dashboards []dashboards.Data `json:"dashboards"`
+}
+
+type SupportedSignals struct {
+	Logs    bool `json:"logs"`
+	Metrics bool `json:"metrics"`
 }
 
 type DataCollectedForService struct {
