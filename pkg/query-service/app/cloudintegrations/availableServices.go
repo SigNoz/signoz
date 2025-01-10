@@ -30,7 +30,19 @@ func listCloudProviderServices(
 func getCloudProviderService(
 	cloudProvider string, serviceId string,
 ) (*CloudServiceDetails, *model.ApiError) {
-	return nil, model.NotFoundError(fmt.Errorf("%s service not found: %s", cloudProvider, serviceId))
+	cloudServices := availableServices[cloudProvider]
+	if cloudServices == nil {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"unsupported cloud provider: %s", cloudProvider,
+		))
+	}
+
+	svc, exists := cloudServices[serviceId]
+	if !exists {
+		return nil, model.NotFoundError(fmt.Errorf("%s service not found: %s", cloudProvider, serviceId))
+	}
+
+	return &svc, nil
 }
 
 // Service details read from ./services

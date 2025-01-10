@@ -30,5 +30,5 @@ func TestAvailableServices(t *testing.T) {
 		"aws", awsSvcs[0].Id,
 	)
 	require.Nil(apiErr)
-	require.Equal(svc, awsSvcs[0])
+	require.Equal(*svc, awsSvcs[0])
 }
