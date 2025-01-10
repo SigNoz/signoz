@@ -3,7 +3,10 @@ import { Button, Form, Select, Switch } from 'antd';
 import cx from 'classnames';
 import { useAccountStatus } from 'hooks/integrations/aws/useAccountStatus';
 import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/components/RegionForm.tsx
 import { useRef } from 'react';
+=======
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/components/RegionForm.tsx
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 
 import { regions } from '../../ServicesSection/data';
@@ -35,6 +38,7 @@ export function RegionForm({
 	selectedDeploymentRegion,
 	handleRegionChange,
 }: RegionFormProps): JSX.Element {
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/components/RegionForm.tsx
 	const startTimeRef = useRef(Date.now());
 	const refetchInterval = 10 * 1000;
 	const errorTimeout = 5 * 60 * 1000;
@@ -43,13 +47,22 @@ export function RegionForm({
 		accountId ?? null,
 		{
 			refetchInterval,
+=======
+	const { isLoading: isAccountStatusLoading } = useAccountStatus(
+		accountId ?? null,
+		{
+			refetchInterval: 5000,
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/components/RegionForm.tsx
 			enabled: !!accountId && modalState === ModalStateEnum.WAITING,
 			onSuccess: (data: AccountStatusResponse) => {
 				if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
 					setModalState(ModalStateEnum.SUCCESS);
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/components/RegionForm.tsx
 				} else if (Date.now() - startTimeRef.current >= errorTimeout) {
 					// 5 minutes in milliseconds
 					setModalState(ModalStateEnum.ERROR);
+=======
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/components/RegionForm.tsx
 				}
 			},
 			onError: () => {

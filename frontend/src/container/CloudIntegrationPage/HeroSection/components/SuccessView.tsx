@@ -41,6 +41,7 @@ export function SuccessView(): JSX.Element {
 					/>
 				</div>
 			)}
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/SuccessView.tsx
 			<div className="cloud-account-setup-success-view">
 				<div className="cloud-account-setup-success-view__icon">
 					<img src="Icons/solid-check-circle.svg" alt="Success" />
@@ -51,12 +52,29 @@ export function SuccessView(): JSX.Element {
 						<h3>Your AWS Web Service integration is all set.</h3>
 					</div>
 					<div className="cloud-account-setup-success-view__description">
+=======
+			<div className="cloud-integrations-form-success-view">
+				<div className="cloud-integrations-form-success-view__icon">
+					<img src="Icons/solid-check-circle.svg" alt="Success" />
+				</div>
+				<div className="cloud-integrations-form-success-view__content">
+					<div className="cloud-integrations-form-success-view__title">
+						<h3>🎉 Success! </h3>
+						<h3>Your AWS Web Service integration is all set.</h3>
+					</div>
+					<div className="cloud-integrations-form-success-view__description">
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/SuccessView.tsx
 						<p>Your observability journey is off to a great start. </p>
 						<p>Now that your data is flowing, here’s what you can do next:</p>
 					</div>
 				</div>
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/SuccessView.tsx
 				<div className="cloud-account-setup-success-view__what-next">
 					<h4 className="cloud-account-setup-success-view__what-next-title">
+=======
+				<div className="cloud-integrations-form-success-view__what-next">
+					<h4 className="cloud-integrations-form-success-view__what-next-title">
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/SuccessView.tsx
 						WHAT NEXT
 					</h4>
 					<div className="what-next-items-wrapper">
@@ -79,7 +97,11 @@ export function SuccessView(): JSX.Element {
 						))}
 					</div>
 				</div>
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/SuccessView.tsx
 				<div className="cloud-account-setup-success-view__footer">
+=======
+				<div className="cloud-integrations-form-success-view__footer">
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/SuccessView.tsx
 					<Button type="primary" block onClick={handleGoToDashboards}>
 						Go to Dashboards
 					</Button>

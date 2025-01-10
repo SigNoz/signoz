@@ -12,7 +12,11 @@ export function useServiceDetails(
 		[...SERVICE_DETAILS_QUERY_KEY, serviceId, accountId],
 		() => getServiceDetails(serviceId, accountId),
 		{
+<<<<<<< HEAD
 			enabled: !!serviceId,
+=======
+			enabled: Boolean(serviceId),
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 		},
 	);
 }

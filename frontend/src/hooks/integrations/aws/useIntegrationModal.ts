@@ -3,8 +3,13 @@ import { FormInstance } from 'antd/lib';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
+<<<<<<< HEAD
 } from 'container/CloudIntegrationPage/HeroSection/types';
 import { regions } from 'container/CloudIntegrationPage/ServicesSection/data';
+=======
+} from 'pages/Integrations/CloudIntegrationPage/HeroSection/types';
+import { regions } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/data';
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 import {
 	Dispatch,
 	SetStateAction,

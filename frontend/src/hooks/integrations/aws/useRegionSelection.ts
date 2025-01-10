@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { regions } from 'container/CloudIntegrationPage/ServicesSection/data';
+=======
+import { regions } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/data';
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 import { Dispatch, SetStateAction, useMemo } from 'react';
 
 interface UseRegionSelectionProps {

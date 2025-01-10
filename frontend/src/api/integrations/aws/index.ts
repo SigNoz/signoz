@@ -3,19 +3,28 @@ import {
 	CloudAccount,
 	Service,
 	ServiceData,
+<<<<<<< HEAD
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import {
 	AccountConfigPayload,
 	AccountConfigResponse,
 	ConnectionUrlResponse,
 } from 'types/api/integrations/aws';
+=======
+} from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
+import { ConnectionUrlResponse } from 'types/api/integrations/aws';
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get(
 		'http://localhost:3000/api/v1/cloud-integrations/aws/accounts',
 	);
+<<<<<<< HEAD
 
 	return response.data.data;
+=======
+	return response.data.data.accounts;
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 };
 
 export const getAwsServices = async (
@@ -28,7 +37,11 @@ export const getAwsServices = async (
 			params,
 		},
 	);
+<<<<<<< HEAD
 	return response.data.data;
+=======
+	return response.data.data.services;
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 };
 
 export const getServiceDetails = async (
@@ -54,6 +67,7 @@ export const generateConnectionUrl = async (params: {
 	);
 	return response.data.data;
 };
+<<<<<<< HEAD
 
 export const updateAccountConfig = async (
 	accountId: string,
@@ -65,3 +79,5 @@ export const updateAccountConfig = async (
 	);
 	return response.data;
 };
+=======
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)

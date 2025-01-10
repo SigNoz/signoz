@@ -1,4 +1,8 @@
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/SuccessView.style.scss
 .cloud-account-setup-success-view {
+=======
+.cloud-integrations-form-success-view {
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/SuccessView.style.scss
 	display: flex;
 	flex-direction: column;
 	gap: 40px;
@@ -13,7 +17,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 14px;
+<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/SuccessView.style.scss
 		.cloud-account-setup-success-view {
+=======
+		.cloud-integrations-form-success-view {
+>>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/SuccessView.style.scss
 			&__title {
 				h3 {
 					color: var(--bg-vanilla-100);
