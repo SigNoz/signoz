@@ -25,6 +25,7 @@ import (
 	"github.com/prometheus/prometheus/promql"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
@@ -102,6 +103,8 @@ type APIHandler struct {
 
 	IntegrationsController *integrations.Controller
 
+	CloudIntegrationsController *cloudintegrations.Controller
+
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -154,6 +157,9 @@ type APIHandlerOpts struct {
 
 	// Integrations
 	IntegrationsController *integrations.Controller
+
+	// Cloud Provider Integrations
+	CloudIntegrationsController *cloudintegrations.Controller
 
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
@@ -226,6 +232,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
+		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -3865,6 +3872,157 @@ func (aH *APIHandler) UninstallIntegration(
 	}
 
 	aH.Respond(w, map[string]interface{}{})
+}
+
+// cloud provider integrations
+func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionUrl),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts", am.ViewAccess(aH.CloudIntegrationsListConnectedAccounts),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/{accountId}/status", am.ViewAccess(aH.CloudIntegrationsGetAccountStatus),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/{accountId}/config", am.EditAccess(aH.CloudIntegrationsUpdateAccountConfig),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/accounts/{accountId}/disconnect", am.EditAccess(aH.CloudIntegrationsDisconnectAccount),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/agent-check-in", am.EditAccess(aH.CloudIntegrationsAgentCheckIn),
+	).Methods(http.MethodPost)
+
+}
+
+func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+
+	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
+		r.Context(), cloudProvider,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+
+	req := cloudintegrations.GenerateConnectionUrlRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
+		r.Context(), cloudProvider, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	accountId := mux.Vars(r)["accountId"]
+
+	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
+		r.Context(), cloudProvider, accountId,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+
+	req := cloudintegrations.AgentCheckInRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
+		r.Context(), cloudProvider, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	accountId := mux.Vars(r)["accountId"]
+
+	req := cloudintegrations.UpdateAccountConfigRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
+		r.Context(), cloudProvider, accountId, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	accountId := mux.Vars(r)["accountId"]
+
+	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
+		r.Context(), cloudProvider, accountId,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
 }
 
 // logs
