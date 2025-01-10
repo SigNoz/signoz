@@ -1,0 +1,30 @@
+{
+  "id": "ec2",
+  "title": "EC2",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "assets": {
+    "dashboards": []
+  },
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "ec2_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric CPUUtilization"
+      },
+      {
+        "name": "ec2_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric CPUUtilization"
+      }
+    ],
+    "logs": []
+  }
+}
