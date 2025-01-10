@@ -3,7 +3,10 @@ import './IntegrationModal.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Modal, Select, Switch } from 'antd';
 import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import { regions } from '../ServicesSection/data';
+import { RegionSelector } from './RegionSelector';
 
 interface IntegrationModalProps {
 	isOpen: boolean;
@@ -19,27 +22,93 @@ function IntegrationModal({
 	const [activeView, setActiveView] = useState<'select-regions' | 'form'>(
 		'form',
 	);
+	const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+	const [includeAllRegions, setIncludeAllRegions] = useState(false);
+	const allRegions = useMemo(
+		() => regions.flatMap((r) => r.subRegions.map((sr) => sr.name)),
+		[],
+	);
 
 	const handleSubmit = async (): Promise<void> => {
-		setIsLoading(true);
 		try {
+			setIsLoading(true);
 			const values = await form.validateFields();
-			console.log('Form values:', values);
-			// Handle form submission
+
+			console.log(values);
 		} catch (error) {
-			console.error('Validation failed:', error);
+			console.error('Form submission failed:', error);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
+	const handleIncludeAllRegionsChange = (checked: boolean): void => {
+		setIncludeAllRegions(checked);
+		if (checked) {
+			// Include "all" when selecting all regions
+			setSelectedRegions(['all']);
+		} else {
+			// Clear selections when switch is turned off
+			setSelectedRegions([]);
+		}
+	};
+
+	const getRegionPreviewText = (selectedRegions: string[]): string[] => {
+		if (selectedRegions.includes('all')) {
+			// Get all region names
+			return allRegions;
+		}
+
+		// For non-all selections, return the region names
+		return selectedRegions;
+	};
+
+	const handleClose = (): void => {
+		setActiveView('form');
+		setSelectedRegions([]);
+		setIncludeAllRegions(false);
+		onClose();
+	};
+
 	return (
 		<Modal
-			title="Add AWS Account"
+			title={
+				activeView === 'form'
+					? 'Add AWS Account'
+					: 'Which regions do you want to monitor?'
+			}
 			centered
 			open={isOpen}
-			onCancel={onClose}
-			footer={null}
+			onCancel={handleClose}
+			footer={
+				activeView === 'select-regions'
+					? [
+							<Button
+								onClick={onClose}
+								type="default"
+								className="integrations-modal-footer__close-button"
+								key="close-button"
+							>
+								Close
+							</Button>,
+							<Button
+								onClick={(): void => setActiveView('form')}
+								className="integrations-modal-footer__confirm-button"
+								type="primary"
+								key="confirm-selection"
+							>
+								Confirm Selection{' '}
+								<span className="integrations-modal-footer__confirm-selection-count">
+									(
+									{selectedRegions.includes('all')
+										? allRegions.length
+										: selectedRegions.length}
+									)
+								</span>
+							</Button>,
+					  ]
+					: null
+			}
 			width={672}
 			rootClassName="cloud-integrations-modal"
 		>
@@ -68,7 +137,13 @@ function IntegrationModal({
 								style={{ height: '44px' }}
 								className="cloud-integrations-form__select"
 							>
-								<Select.Option value="us-east-1">US East (N. Virginia)</Select.Option>
+								{regions.flatMap((region) =>
+									region.subRegions.map((subRegion) => (
+										<Select.Option key={subRegion.id} value={subRegion.id}>
+											{subRegion.displayName}
+										</Select.Option>
+									)),
+								)}
 							</Select>
 						</Form.Item>
 					</div>
@@ -83,19 +158,42 @@ function IntegrationModal({
 
 						<Form.Item
 							name="monitorRegions"
-							rules={[{ required: true, message: 'Please select regions to monitor' }]}
+							rules={[
+								{
+									validator: async (): Promise<void> => {
+										if (selectedRegions.length === 0) {
+											throw new Error('Please select at least one region to monitor');
+										}
+									},
+									message: 'Please select at least one region to monitor',
+								},
+							]}
 							className="cloud-integrations-form__form-item"
 						>
 							<div className="cloud-integrations-form__include-all-regions-switch">
-								<Switch size="small" />
-								<span>Include all regions</span>
+								<Switch
+									size="small"
+									checked={includeAllRegions}
+									onChange={handleIncludeAllRegionsChange}
+								/>
+								<button
+									className="cloud-integrations-form__include-all-regions-switch-label"
+									type="button"
+									onClick={(): void => handleIncludeAllRegionsChange(!includeAllRegions)}
+								>
+									Include all regions
+								</button>
 							</div>
 							<Select
 								style={{ height: '44px' }}
 								suffixIcon={null}
-								value="Select Region(s)"
-								className="cloud-integrations-form__select"
+								placeholder="Select Region(s)"
+								className="cloud-integrations-form__select monitor-regions"
 								onClick={(): void => setActiveView('select-regions')}
+								mode="multiple"
+								maxTagCount={3}
+								value={getRegionPreviewText(selectedRegions)}
+								disabled
 							/>
 						</Form.Item>
 					</div>
@@ -113,6 +211,7 @@ function IntegrationModal({
 							htmlType="submit"
 							className="cloud-integrations-form__submit-button"
 							loading={isLoading}
+							disabled={selectedRegions?.length === 0}
 							block
 						>
 							Launch Cloud Formation Template
@@ -121,9 +220,11 @@ function IntegrationModal({
 					</Form.Item>
 				</Form>
 			) : (
-				<div>
-					<div>Select Region(s)</div>
-				</div>
+				<RegionSelector
+					selectedRegions={selectedRegions}
+					setSelectedRegions={setSelectedRegions}
+					setIncludeAllRegions={setIncludeAllRegions}
+				/>
 			)}
 		</Modal>
 	);

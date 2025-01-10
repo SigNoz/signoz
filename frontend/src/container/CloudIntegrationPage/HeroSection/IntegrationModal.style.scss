@@ -27,6 +27,31 @@
 	.ant-modal-body {
 		padding: 16px 24px 24px;
 	}
+	.ant-modal-footer {
+		padding: 24px;
+		display: flex;
+		justify-content: end;
+		gap: 12px;
+		.integrations-modal-footer {
+			&__confirm-button {
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+				font-size: 12px;
+				font-weight: 500;
+			}
+			&__confirm-selection-count {
+				font-family: 'Geist Mono';
+			}
+			&__close-button {
+				background: var(--bg-slate-400);
+				border-radius: 2px;
+				color: var(--bg-vanilla-100);
+				font-family: 'Inter';
+				font-size: 12px;
+				font-weight: 500;
+			}
+		}
+	}
 
 	.ant-typography {
 		color: var(--bg-vanilla-100);
@@ -86,6 +111,13 @@
 				line-height: 20px;
 				letter-spacing: -0.07px;
 			}
+			&.monitor-regions {
+				.ant-select-selector,
+				.ant-select-selection-item,
+				input {
+					cursor: pointer !important;
+				}
+			}
 		}
 		&__form-item {
 			margin: 0;
@@ -99,6 +131,15 @@
 			line-height: 18px;
 			letter-spacing: -0.06px;
 			margin-bottom: 12px;
+			&-label {
+				background-color: transparent;
+				border: none;
+				color: var(--bg-vanilla-400);
+				font-size: 12px;
+				line-height: 18px; /* 150% */
+				letter-spacing: -0.06px;
+				cursor: pointer;
+			}
 		}
 		&__note {
 			padding: 12px;
@@ -121,6 +162,9 @@
 			align-items: center;
 			justify-content: center;
 			gap: 8px;
+			&:disabled {
+				opacity: 0.4;
+			}
 		}
 	}
 }
