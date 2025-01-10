@@ -97,22 +97,9 @@ function NodeDetails({
 					op: '=',
 					value: node?.meta.k8s_node_name || '',
 				},
-				{
-					id: uuidv4(),
-					key: {
-						key: QUERY_KEYS.K8S_CLUSTER_NAME,
-						dataType: DataTypes.String,
-						type: 'resource',
-						isColumn: false,
-						isJSON: false,
-						id: 'k8s_node_name--string--resource--false',
-					},
-					op: '=',
-					value: node?.meta.k8s_cluster_name || '',
-				},
 			],
 		}),
-		[node?.meta.k8s_node_name, node?.meta.k8s_cluster_name],
+		[node?.meta.k8s_node_name],
 	);
 
 	const initialEventsFilters = useMemo(

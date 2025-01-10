@@ -104,19 +104,6 @@ function PodDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_CLUSTER_NAME,
-						dataType: DataTypes.String,
-						type: 'resource',
-						isColumn: false,
-						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
-					},
-					op: '=',
-					value: pod?.meta.k8s_cluster_name || '',
-				},
-				{
-					id: uuidv4(),
-					key: {
 						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
@@ -129,11 +116,7 @@ function PodDetails({
 				},
 			],
 		}),
-		[
-			pod?.meta.k8s_cluster_name,
-			pod?.meta.k8s_namespace_name,
-			pod?.meta.k8s_pod_name,
-		],
+		[pod?.meta.k8s_namespace_name, pod?.meta.k8s_pod_name],
 	);
 
 	const initialEventsFilters = useMemo(
