@@ -19,7 +19,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func TestAWSIntegrationLifecycle(t *testing.T) {
+func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// Test for happy path of connecting and managing AWS integration accounts
 
 	t0 := time.Now()
@@ -124,6 +124,17 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAccountId, agentCheckInResp2.Account.Id)
 	require.Equal(testAWSAccountId, *agentCheckInResp2.Account.CloudAccountId)
 	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.Account.RemovedAt)
+}
+
+func TestAWSIntegrationServices(t *testing.T) {
+	require := require.New(t)
+
+	testbed := NewCloudIntegrationsTestBed(t, nil)
+
+	svcListResp := testbed.GetCloudProviderServicesFromQS("aws", nil)
+
+	// testbed.GetAvailableServices("aws")
+	require.Greater(len(svcListResp.Services), 0)
 }
 
 type CloudIntegrationsTestBed struct {
@@ -275,6 +286,19 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 	return &resp
 }
 
+func (tb *CloudIntegrationsTestBed) GetCloudProviderServicesFromQS(
+	cloudProvider string, accountId *string,
+) *cloudintegrations.ListCloudServicesResponse {
+	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services", cloudProvider)
+	if accountId != nil {
+		path = fmt.Sprintf("%s?account_id=%s", path, *accountId)
+	}
+
+	return RequestQSAndParseResp[cloudintegrations.ListCloudServicesResponse](
+		tb, path, nil,
+	)
+}
+
 func (tb *CloudIntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
@@ -296,4 +320,21 @@ func (tb *CloudIntegrationsTestBed) RequestQS(
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 	return dataJson
+}
+
+func RequestQSAndParseResp[ResponseType any](
+	tb *CloudIntegrationsTestBed,
+	path string,
+	postData interface{},
+) *ResponseType {
+	respDataJson := tb.RequestQS(path, postData)
+
+	var resp ResponseType
+
+	err := json.Unmarshal(respDataJson, &resp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into %T", resp)
+	}
+
+	return &resp
 }
