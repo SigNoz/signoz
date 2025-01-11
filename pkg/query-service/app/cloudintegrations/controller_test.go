@@ -30,7 +30,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.NotEmpty(resp1.AccountId)
 
 	testAccountId := resp1.AccountId
-	account, apiErr := controller.repo.get(
+	account, apiErr := controller.accountsRepo.get(
 		context.TODO(), "aws", testAccountId,
 	)
 	require.Nil(apiErr)
@@ -47,7 +47,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.Nil(apiErr)
 	require.Equal(testAccountId, resp2.AccountId)
 
-	account, apiErr = controller.repo.get(
+	account, apiErr = controller.accountsRepo.get(
 		context.TODO(), "aws", testAccountId,
 	)
 	require.Nil(apiErr)
@@ -89,7 +89,7 @@ func TestAgentCheckIns(t *testing.T) {
 	// if another connected AccountRecord exists for same cloud account
 	// i.e. there can't be 2 connected account records for the same cloud account id
 	// at any point in time.
-	existingConnected, apiErr := controller.repo.getConnectedCloudAccount(
+	existingConnected, apiErr := controller.accountsRepo.getConnectedCloudAccount(
 		context.TODO(), "aws", testCloudAccountId1,
 	)
 	require.Nil(apiErr)
@@ -112,7 +112,7 @@ func TestAgentCheckIns(t *testing.T) {
 		context.TODO(), "aws", testAccountId1,
 	)
 
-	existingConnected, apiErr = controller.repo.getConnectedCloudAccount(
+	existingConnected, apiErr = controller.accountsRepo.getConnectedCloudAccount(
 		context.TODO(), "aws", testCloudAccountId1,
 	)
 	require.Nil(existingConnected)

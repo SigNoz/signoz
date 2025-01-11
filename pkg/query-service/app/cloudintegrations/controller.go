@@ -22,19 +22,19 @@ func validateCloudProviderName(name string) *model.ApiError {
 }
 
 type Controller struct {
-	repo cloudProviderAccountsRepository
+	accountsRepo cloudProviderAccountsRepository
 }
 
 func NewController(db *sqlx.DB) (
 	*Controller, error,
 ) {
-	repo, err := newCloudProviderAccountsRepository(db)
+	accountsRepo, err := newCloudProviderAccountsRepository(db)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
 	}
 
 	return &Controller{
-		repo: repo,
+		accountsRepo: accountsRepo,
 	}, nil
 }
 
@@ -58,7 +58,7 @@ func (c *Controller) ListConnectedAccounts(
 		return nil, apiErr
 	}
 
-	accountRecords, apiErr := c.repo.listConnected(ctx, cloudProvider)
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
@@ -100,7 +100,7 @@ func (c *Controller) GenerateConnectionUrl(
 		return nil, model.BadRequest(fmt.Errorf("unsupported cloud provider: %s", cloudProvider))
 	}
 
-	account, apiErr := c.repo.upsert(
+	account, apiErr := c.accountsRepo.upsert(
 		ctx, cloudProvider, req.AccountId, &req.AccountConfig, nil, nil, nil,
 	)
 	if apiErr != nil {
@@ -133,7 +133,7 @@ func (c *Controller) GetAccountStatus(
 		return nil, apiErr
 	}
 
-	account, apiErr := c.repo.get(ctx, cloudProvider, accountId)
+	account, apiErr := c.accountsRepo.get(ctx, cloudProvider, accountId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -164,7 +164,7 @@ func (c *Controller) CheckInAsAgent(
 		return nil, apiErr
 	}
 
-	existingAccount, apiErr := c.repo.get(ctx, cloudProvider, req.AccountId)
+	existingAccount, apiErr := c.accountsRepo.get(ctx, cloudProvider, req.AccountId)
 	if existingAccount != nil && existingAccount.CloudAccountId != nil && *existingAccount.CloudAccountId != req.CloudAccountId {
 		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in with new %s account id %s for account %s with existing %s id %s",
@@ -172,7 +172,7 @@ func (c *Controller) CheckInAsAgent(
 		))
 	}
 
-	existingAccount, apiErr = c.repo.getConnectedCloudAccount(ctx, cloudProvider, req.CloudAccountId)
+	existingAccount, apiErr = c.accountsRepo.getConnectedCloudAccount(ctx, cloudProvider, req.CloudAccountId)
 	if existingAccount != nil && existingAccount.Id != req.AccountId {
 		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in to %s account %s with id %s. already connected with id %s",
@@ -185,7 +185,7 @@ func (c *Controller) CheckInAsAgent(
 		Data:            req.Data,
 	}
 
-	account, apiErr := c.repo.upsert(
+	account, apiErr := c.accountsRepo.upsert(
 		ctx, cloudProvider, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
 	)
 	if apiErr != nil {
@@ -211,7 +211,7 @@ func (c *Controller) UpdateAccountConfig(
 		return nil, apiErr
 	}
 
-	accountRecord, apiErr := c.repo.upsert(
+	accountRecord, apiErr := c.accountsRepo.upsert(
 		ctx, cloudProvider, &accountId, &req.Config, nil, nil, nil,
 	)
 	if apiErr != nil {
@@ -230,13 +230,13 @@ func (c *Controller) DisconnectAccount(
 		return nil, apiErr
 	}
 
-	account, apiErr := c.repo.get(ctx, cloudProvider, accountId)
+	account, apiErr := c.accountsRepo.get(ctx, cloudProvider, accountId)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't disconnect account")
 	}
 
 	tsNow := time.Now()
-	account, apiErr = c.repo.upsert(
+	account, apiErr = c.accountsRepo.upsert(
 		ctx, cloudProvider, &accountId, nil, nil, nil, &tsNow,
 	)
 	if apiErr != nil {
