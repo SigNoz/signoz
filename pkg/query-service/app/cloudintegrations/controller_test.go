@@ -12,7 +12,7 @@ import (
 
 func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
+	testDB := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(testDB)
 	require.NoError(err)
 
@@ -56,7 +56,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 
 func TestAgentCheckIns(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
+	testDB := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(testDB)
 	require.NoError(err)
 
@@ -139,7 +139,7 @@ func TestAgentCheckIns(t *testing.T) {
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
+	testDB := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(testDB)
 	require.NoError(err)
 

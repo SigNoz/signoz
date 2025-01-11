@@ -206,7 +206,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SqlStore.Provider().SqlxDB())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create cloud provider integrations controller: %w", err,

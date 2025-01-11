@@ -15,12 +15,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
+func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
 		t.Fatalf("could not create temp file for test db: %v", err)
 	}
-	testDBFilePath = testDBFile.Name()
+	testDBFilePath := testDBFile.Name()
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
