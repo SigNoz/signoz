@@ -271,3 +271,18 @@ func (c *Controller) ListServices(
 		Services: summaries,
 	}, nil
 }
+
+func (c *Controller) GetServiceDetails(
+	ctx context.Context, cloudProvider string, serviceId string, accountId *string,
+) (*CloudServiceDetails, *model.ApiError) {
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	service, apiErr := getCloudProviderService(cloudProvider, serviceId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	return service, nil
+}

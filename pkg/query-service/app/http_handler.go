@@ -3906,6 +3906,10 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 		"/{cloudProvider}/services", am.ViewAccess(aH.CloudIntegrationsListServices),
 	).Methods(http.MethodGet)
 
+	subRouter.HandleFunc(
+		"/{cloudProvider}/services/{serviceId}", am.ViewAccess(aH.CloudIntegrationsGetServiceDetails),
+	).Methods(http.MethodGet)
+
 }
 
 func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
@@ -4036,6 +4040,23 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 
 	resp, apiErr := aH.CloudIntegrationsController.ListServices(
 		r.Context(), cloudProvider, nil,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	serviceId := mux.Vars(r)["serviceId"]
+
+	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
+		r.Context(), cloudProvider, serviceId, nil,
 	)
 
 	if apiErr != nil {
