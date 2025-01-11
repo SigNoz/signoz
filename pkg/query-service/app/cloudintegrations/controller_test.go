@@ -151,3 +151,68 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 	require.Nil(account)
 }
+
+func TestConfigureService(t *testing.T) {
+	require := require.New(t)
+	testDB, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(testDB)
+	require.NoError(err)
+
+	services, apiErr := listCloudProviderServices("aws")
+	require.Nil(apiErr)
+	testSvcId := services[0].Id
+
+	// should be able to configure a service for a connected account
+	testCloudAccountId := "546311234"
+	testConnectedAccount := makeTestConnectedAccount(t, controller, testCloudAccountId)
+	require.Nil(testConnectedAccount.RemovedAt)
+
+	svcDetails, apiErr := controller.GetServiceDetails(
+		context.TODO(), "aws", testSvcId, &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+	require.Equal(testSvcId, svcDetails.Id)
+	require.Nil(svcDetails.Config)
+
+	testSvcConfig := CloudServiceConfig{
+		Metrics: &CloudServiceMetricsConfig{
+			Enabled: true,
+		},
+	}
+	resp, apiErr := controller.UpdateServiceConfig(
+		context.TODO(), "aws", testCloudAccountId, testSvcId, testSvcConfig,
+	)
+	require.Nil(apiErr)
+	require.Equal(testSvcId, resp.Id)
+	require.Equal(testSvcConfig, resp.Config)
+
+	svcDetails, apiErr = controller.GetServiceDetails(
+		context.TODO(), "aws", testSvcId, &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+	require.Equal(testSvcId, svcDetails.Id)
+	require.Equal(testSvcConfig, *svcDetails.Config)
+
+	// should not be able to configure a service for
+	// a cloud account id that is not connected yet
+	require.Equal(1, 2)
+
+}
+
+func makeTestConnectedAccount(t *testing.T, controller *Controller, cloudAccountId string) *AccountRecord {
+	require := require.New(t)
+
+	testAccountId := uuid.NewString()
+	resp, apiErr := controller.CheckInAsAgent(
+		context.TODO(), "aws", AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: cloudAccountId,
+		},
+	)
+	require.Nil(apiErr)
+	require.Equal(testAccountId, resp.Account.Id)
+	require.Equal(cloudAccountId, *resp.Account.CloudAccountId)
+
+	return &resp.Account
+
+}

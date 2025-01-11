@@ -140,7 +140,6 @@ func TestAWSIntegrationServices(t *testing.T) {
 	}
 
 	// should be able to get details of a particular service.
-	// should not contain config or status
 	svcId := svcListResp.Services[0].Id
 	svcDetailResp := testbed.GetServiceDetailFromQS("aws", svcId, nil)
 	require.Equal(svcId, svcDetailResp.Id)

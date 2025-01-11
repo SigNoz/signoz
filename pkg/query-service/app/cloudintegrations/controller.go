@@ -251,7 +251,7 @@ type ListServicesResponse struct {
 }
 
 func (c *Controller) ListServices(
-	ctx context.Context, cloudProvider string, accountId *string,
+	ctx context.Context, cloudProvider string, cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
@@ -273,7 +273,7 @@ func (c *Controller) ListServices(
 }
 
 func (c *Controller) GetServiceDetails(
-	ctx context.Context, cloudProvider string, serviceId string, accountId *string,
+	ctx context.Context, cloudProvider string, serviceId string, cloudAccountId *string,
 ) (*CloudServiceDetails, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
@@ -285,4 +285,26 @@ func (c *Controller) GetServiceDetails(
 	}
 
 	return service, nil
+}
+
+type UpdateServiceConfigResponse struct {
+	Id     string             `json:"id"`
+	Config CloudServiceConfig `json:"config"`
+}
+
+func (c *Controller) UpdateServiceConfig(
+	ctx context.Context,
+	cloudProvider string,
+	cloudAccountId string,
+	serviceId string,
+	config CloudServiceConfig,
+) (*UpdateServiceConfigResponse, *model.ApiError) {
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	return &UpdateServiceConfigResponse{
+		Id:     serviceId,
+		Config: CloudServiceConfig{},
+	}, nil
 }

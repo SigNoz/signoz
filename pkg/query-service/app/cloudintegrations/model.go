@@ -143,8 +143,8 @@ type CloudServiceDetails struct {
 }
 
 type CloudServiceConfig struct {
-	Logs    CloudServiceLogsConfig    `json:"logs"`
-	Metrics CloudServiceMetricsConfig `json:"metrics"`
+	Logs    *CloudServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
 type CloudServiceLogsConfig struct {
