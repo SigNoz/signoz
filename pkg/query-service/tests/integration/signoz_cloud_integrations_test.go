@@ -131,10 +131,33 @@ func TestAWSIntegrationServices(t *testing.T) {
 
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
-	svcListResp := testbed.GetCloudProviderServicesFromQS("aws", nil)
-
-	// testbed.GetAvailableServices("aws")
+	// should be able to list available cloud services.
+	svcListResp := testbed.GetServicesFromQS("aws", nil)
 	require.Greater(len(svcListResp.Services), 0)
+	for _, svc := range svcListResp.Services {
+		require.NotEmpty(svc.Id)
+		require.Nil(svc.Config)
+	}
+
+	// should be able to get details of a particular service.
+	// should not contain config or status
+	svcId := svcListResp.Services[0].Id
+	svcDetailResp := testbed.GetServiceDetailFromQS("aws", svcId, nil)
+	require.Equal(svcId, svcDetailResp.Id)
+	require.NotEmpty(svcDetailResp.Overview)
+	require.Nil(svcDetailResp.Config)
+	require.Nil(svcDetailResp.ConnectionStatus)
+
+	// should not be able to configure service in ctx of
+	// an account that is not connected right now.
+	// Make this a controller test
+
+	// should be able to configure a service in the ctx of an account
+
+	// service list should include config when queried in the ctx of an account
+
+	// service detail should include config and status info when
+	// queried in the ctx of an account
 }
 
 type CloudIntegrationsTestBed struct {
@@ -286,7 +309,7 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 	return &resp
 }
 
-func (tb *CloudIntegrationsTestBed) GetCloudProviderServicesFromQS(
+func (tb *CloudIntegrationsTestBed) GetServicesFromQS(
 	cloudProvider string, accountId *string,
 ) *cloudintegrations.ListServicesResponse {
 	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services", cloudProvider)
@@ -295,6 +318,19 @@ func (tb *CloudIntegrationsTestBed) GetCloudProviderServicesFromQS(
 	}
 
 	return RequestQSAndParseResp[cloudintegrations.ListServicesResponse](
+		tb, path, nil,
+	)
+}
+
+func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
+	cloudProvider string, serviceId string, accountId *string,
+) *cloudintegrations.CloudServiceDetails {
+	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s", cloudProvider, serviceId)
+	if accountId != nil {
+		path = fmt.Sprintf("%s?account_id=%s", path, *accountId)
+	}
+
+	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](
 		tb, path, nil,
 	)
 }
