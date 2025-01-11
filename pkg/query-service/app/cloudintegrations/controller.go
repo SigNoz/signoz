@@ -245,3 +245,29 @@ func (c *Controller) DisconnectAccount(
 
 	return account, nil
 }
+
+type ListServicesResponse struct {
+	Services []CloudServiceSummary `json:"services"`
+}
+
+func (c *Controller) ListServices(
+	ctx context.Context, cloudProvider string, accountId *string,
+) (*ListServicesResponse, *model.ApiError) {
+	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
+		return nil, apiErr
+	}
+
+	services, apiErr := listCloudProviderServices(cloudProvider)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	summaries := []CloudServiceSummary{}
+	for _, s := range services {
+		summaries = append(summaries, s.CloudServiceSummary)
+	}
+
+	return &ListServicesResponse{
+		Services: summaries,
+	}, nil
+}

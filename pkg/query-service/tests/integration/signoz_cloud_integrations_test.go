@@ -288,13 +288,13 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 
 func (tb *CloudIntegrationsTestBed) GetCloudProviderServicesFromQS(
 	cloudProvider string, accountId *string,
-) *cloudintegrations.ListCloudServicesResponse {
+) *cloudintegrations.ListServicesResponse {
 	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services", cloudProvider)
 	if accountId != nil {
 		path = fmt.Sprintf("%s?account_id=%s", path, *accountId)
 	}
 
-	return RequestQSAndParseResp[cloudintegrations.ListCloudServicesResponse](
+	return RequestQSAndParseResp[cloudintegrations.ListServicesResponse](
 		tb, path, nil,
 	)
 }
