@@ -147,10 +147,6 @@ func TestAWSIntegrationServices(t *testing.T) {
 	require.Nil(svcDetailResp.Config)
 	require.Nil(svcDetailResp.ConnectionStatus)
 
-	// should not be able to configure service in ctx of
-	// an account that is not connected right now.
-	// Make this a controller test
-
 	// should be able to configure a service in the ctx of an account
 
 	// service list should include config when queried in the ctx of an account

@@ -333,6 +333,20 @@ func (c *Controller) UpdateServiceConfig(
 		return nil, apiErr
 	}
 
+	// can only update config for a connected cloud account id
+	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
+		ctx, cloudProvider, cloudAccountId,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't find connected cloud account")
+	}
+
+	// can only update config for a valid service.
+	_, apiErr = getCloudProviderService(cloudProvider, serviceId)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "unsupported service")
+	}
+
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
 		ctx, cloudProvider, cloudAccountId, serviceId, config,
 	)

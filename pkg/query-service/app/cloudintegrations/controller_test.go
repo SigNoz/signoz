@@ -207,9 +207,28 @@ func TestConfigureService(t *testing.T) {
 		}
 	}
 
-	// should not be able to configure a service for
-	// a cloud account id that is not connected yet
-	require.Equal(1, 2)
+	// should not be able to configure service after cloud account has been disconnected
+	_, apiErr = controller.DisconnectAccount(
+		context.TODO(), "aws", testConnectedAccount.Id,
+	)
+	require.Nil(apiErr)
+
+	_, apiErr = controller.UpdateServiceConfig(
+		context.TODO(), "aws", testCloudAccountId, testSvcId, testSvcConfig,
+	)
+	require.NotNil(apiErr)
+
+	// should not be able to configure a service for a cloud account id that is not connected yet
+	_, apiErr = controller.UpdateServiceConfig(
+		context.TODO(), "aws", "9999999999", testSvcId, testSvcConfig,
+	)
+	require.NotNil(apiErr)
+
+	// should not be able to set config for an unsupported service
+	_, apiErr = controller.UpdateServiceConfig(
+		context.TODO(), "aws", testCloudAccountId, "bad-service", testSvcConfig,
+	)
+	require.NotNil(apiErr)
 
 }
 
