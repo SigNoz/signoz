@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -147,12 +148,45 @@ func TestAWSIntegrationServices(t *testing.T) {
 	require.Nil(svcDetailResp.Config)
 	require.Nil(svcDetailResp.ConnectionStatus)
 
-	// should be able to configure a service in the ctx of an account
+	// should be able to configure a service in the ctx of a connected account
+
+	// create a connected account
+	testAccountId := uuid.NewString()
+	testAWSAccountId := "389389489489"
+	testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+
+	testSvcConfig := cloudintegrations.CloudServiceConfig{
+		Metrics: &cloudintegrations.CloudServiceMetricsConfig{
+			Enabled: true,
+		},
+	}
+	updateSvcConfigResp := testbed.UpdateServiceConfigWithQS("aws", svcId, cloudintegrations.UpdateServiceConfigRequest{
+		CloudAccountId: testAWSAccountId,
+		Config:         testSvcConfig,
+	})
+	require.Equal(svcId, updateSvcConfigResp.Id)
+	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
 
 	// service list should include config when queried in the ctx of an account
+	svcListResp = testbed.GetServicesFromQS("aws", &testAWSAccountId)
+	require.Greater(len(svcListResp.Services), 0)
+	for _, svc := range svcListResp.Services {
+		if svc.Id == svcId {
+			require.Equal(testSvcConfig, svc.Config)
+		}
+	}
 
 	// service detail should include config and status info when
 	// queried in the ctx of an account
+	svcDetailResp = testbed.GetServiceDetailFromQS("aws", svcId, &testAWSAccountId)
+	require.Equal(svcId, svcDetailResp.Id)
+	require.Equal(testSvcConfig, svcDetailResp.Config)
+
 }
 
 type CloudIntegrationsTestBed struct {
@@ -327,6 +361,15 @@ func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
 
 	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](
 		tb, path, nil,
+	)
+}
+func (tb *CloudIntegrationsTestBed) UpdateServiceConfigWithQS(
+	cloudProvider string, serviceId string, req any,
+) *cloudintegrations.UpdateServiceConfigResponse {
+	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s/config", cloudProvider, serviceId)
+
+	return RequestQSAndParseResp[cloudintegrations.UpdateServiceConfigResponse](
+		tb, path, req,
 	)
 }
 
