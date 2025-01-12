@@ -3,6 +3,7 @@ import { Button, Form, Select, Switch } from 'antd';
 import cx from 'classnames';
 import { useAccountStatus } from 'hooks/integrations/aws/useAccountStatus';
 import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
+import { useRef } from 'react';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 
 import { regions } from '../../ServicesSection/data';
@@ -34,14 +35,21 @@ export function RegionForm({
 	selectedDeploymentRegion,
 	handleRegionChange,
 }: RegionFormProps): JSX.Element {
+	const startTimeRef = useRef(Date.now());
+	const refetchInterval = 10 * 1000;
+	const errorTimeout = 5 * 60 * 1000;
+
 	const { isLoading: isAccountStatusLoading } = useAccountStatus(
 		accountId ?? null,
 		{
-			refetchInterval: 5000,
+			refetchInterval,
 			enabled: !!accountId && modalState === ModalStateEnum.WAITING,
 			onSuccess: (data: AccountStatusResponse) => {
 				if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
 					setModalState(ModalStateEnum.SUCCESS);
+				} else if (Date.now() - startTimeRef.current >= errorTimeout) {
+					// 5 minutes in milliseconds
+					setModalState(ModalStateEnum.ERROR);
 				}
 			},
 			onError: () => {
