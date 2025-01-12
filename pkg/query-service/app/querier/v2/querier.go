@@ -219,6 +219,19 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			continue
 		}
 		wg.Add(1)
+
+		// Create the modified context before launching goroutine for each query
+		queryCtx := ctx
+		if promQuery.MaxTimeSeries != 0 || promQuery.MaxSamples != 0 {
+			queryCtx = context.WithValue(ctx, constants.ResultOverflowMode, "throw")
+			if promQuery.MaxTimeSeries != 0 {
+				queryCtx = context.WithValue(queryCtx, constants.MaxRowsToGroupBy, promQuery.MaxTimeSeries)
+			}
+			if promQuery.MaxSamples != 0 {
+				queryCtx = context.WithValue(queryCtx, constants.MaxResultRows, promQuery.MaxSamples)
+			}
+		}
+
 		go func(queryName string, promQuery *v3.PromQuery) {
 			defer wg.Done()
 			cacheKey, ok := cacheKeys[queryName]
@@ -226,16 +239,17 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			if !ok || params.NoCache {
 				zap.L().Info("skipping cache for metrics prom query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
 				query := metricsV4.BuildPromQuery(promQuery, params.Step, params.Start, params.End)
-				series, err := q.execPromQuery(ctx, query)
+				series, err := q.execPromQuery(queryCtx, query)
 				channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: series}
 				return
 			}
+
 			misses := q.queryCache.FindMissingTimeRanges(params.Start, params.End, params.Step, cacheKey)
 			zap.L().Info("cache misses for metrics prom query", zap.Any("misses", misses))
 			missedSeries := make([]querycache.CachedSeriesData, 0)
 			for _, miss := range misses {
 				query := metricsV4.BuildPromQuery(promQuery, params.Step, miss.Start, miss.End)
-				series, err := q.execPromQuery(ctx, query)
+				series, err := q.execPromQuery(queryCtx, query)
 				if err != nil {
 					channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: nil}
 					return

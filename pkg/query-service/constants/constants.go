@@ -734,3 +734,10 @@ func init() {
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
+
+// ClickHouse context settings
+const (
+	ResultOverflowMode = "result_overflow_mode"
+	MaxRowsToGroupBy   = "max_rows_to_group_by"
+	MaxResultRows      = "max_result_rows"
+)
