@@ -20,11 +20,16 @@ export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 		'http://localhost:3000/api/v1/cloud-integrations/aws/accounts',
 	);
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 	return response.data.data;
 =======
 	return response.data.data.accounts;
 >>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
+=======
+
+	return response.data.data;
+>>>>>>> bfef06ee7 (feat: get accounts from json-server API, and redirect Add new account to the integrations modal)
 };
 
 export const getAwsServices = async (
