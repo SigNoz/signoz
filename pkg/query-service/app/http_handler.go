@@ -4662,8 +4662,8 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 			userEmail, err := auth.GetEmailFromJwt(r.Context())
 			if err == nil {
-				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
-				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
+				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
 
 					if dashboardMatched {
 						var dashboardID, widgetID string
@@ -4689,13 +4689,18 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							widgetID = widgetIDMatch[1]
 						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
-							"queryType":   queryRangeParams.CompositeQuery.QueryType,
-							"panelType":   queryRangeParams.CompositeQuery.PanelType,
-							"tracesUsed":  signozTracesUsed,
-							"logsUsed":    signozLogsUsed,
-							"metricsUsed": signozMetricsUsed,
-							"dashboardId": dashboardID,
-							"widgetId":    widgetID,
+							"queryType":             queryRangeParams.CompositeQuery.QueryType,
+							"panelType":             queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":            queryInfoResult.TracesUsed,
+							"logsUsed":              queryInfoResult.LogsUsed,
+							"metricsUsed":           queryInfoResult.MetricsUsed,
+							"numberOfQueries":       queryInfoResult.NumberOfQueries,
+							"groupByApplied":        queryInfoResult.GroupByApplied,
+							"aggregateOperator":     queryInfoResult.AggregateOperator,
+							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
+							"filterApplied":         queryInfoResult.FilterApplied,
+							"dashboardId":           dashboardID,
+							"widgetId":              widgetID,
 						}, userEmail, true, false)
 					}
 					if alertMatched {
@@ -4712,12 +4717,17 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							alertID = alertIDMatch[1]
 						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
-							"queryType":   queryRangeParams.CompositeQuery.QueryType,
-							"panelType":   queryRangeParams.CompositeQuery.PanelType,
-							"tracesUsed":  signozTracesUsed,
-							"logsUsed":    signozLogsUsed,
-							"metricsUsed": signozMetricsUsed,
-							"alertId":     alertID,
+							"queryType":             queryRangeParams.CompositeQuery.QueryType,
+							"panelType":             queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":            queryInfoResult.TracesUsed,
+							"logsUsed":              queryInfoResult.LogsUsed,
+							"metricsUsed":           queryInfoResult.MetricsUsed,
+							"numberOfQueries":       queryInfoResult.NumberOfQueries,
+							"groupByApplied":        queryInfoResult.GroupByApplied,
+							"aggregateOperator":     queryInfoResult.AggregateOperator,
+							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
+							"filterApplied":         queryInfoResult.FilterApplied,
+							"alertId":               alertID,
 						}, userEmail, true, false)
 					}
 				}
