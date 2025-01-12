@@ -22,7 +22,8 @@ func validateCloudProviderName(name string) *model.ApiError {
 }
 
 type Controller struct {
-	accountsRepo cloudProviderAccountsRepository
+	accountsRepo      cloudProviderAccountsRepository
+	serviceConfigRepo serviceConfigRepository
 }
 
 func NewController(db *sqlx.DB) (
@@ -33,8 +34,14 @@ func NewController(db *sqlx.DB) (
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
 	}
 
+	serviceConfigRepo, err := newServiceConfigRepository(db)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create cloud provider service config repo: %w", err)
+	}
+
 	return &Controller{
-		accountsRepo: accountsRepo,
+		accountsRepo:      accountsRepo,
+		serviceConfigRepo: serviceConfigRepo,
 	}, nil
 }
 
@@ -284,6 +291,20 @@ func (c *Controller) GetServiceDetails(
 		return nil, apiErr
 	}
 
+	if cloudAccountId != nil {
+		config, apiErr := c.serviceConfigRepo.get(
+			ctx, cloudProvider, *cloudAccountId, serviceId,
+		)
+		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
+			return nil, model.WrapApiError(apiErr, "couldn't fetch service config")
+		}
+
+		if config != nil {
+			service.Config = config
+		}
+
+	}
+
 	return service, nil
 }
 
@@ -303,8 +324,15 @@ func (c *Controller) UpdateServiceConfig(
 		return nil, apiErr
 	}
 
+	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
+		ctx, cloudProvider, cloudAccountId, serviceId, config,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't update service config")
+	}
+
 	return &UpdateServiceConfigResponse{
 		Id:     serviceId,
-		Config: CloudServiceConfig{},
+		Config: *updatedConfig,
 	}, nil
 }

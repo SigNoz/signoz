@@ -161,6 +161,7 @@ func TestConfigureService(t *testing.T) {
 	services, apiErr := listCloudProviderServices("aws")
 	require.Nil(apiErr)
 	testSvcId := services[0].Id
+	require.Nil(services[0].Config)
 
 	// should be able to configure a service for a connected account
 	testCloudAccountId := "546311234"

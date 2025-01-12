@@ -147,6 +147,31 @@ type CloudServiceConfig struct {
 	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
 }
 
+// For serializing from db
+func (c *CloudServiceConfig) Scan(src any) error {
+	data, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("tried to scan from %T instead of bytes", src)
+	}
+
+	return json.Unmarshal(data, &c)
+}
+
+// For serializing to db
+func (c *CloudServiceConfig) Value() (driver.Value, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	serialized, err := json.Marshal(c)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't serialize cloud service config to JSON: %w", err,
+		)
+	}
+	return serialized, nil
+}
+
 type CloudServiceLogsConfig struct {
 	Enabled bool `json:"enabled"`
 }
