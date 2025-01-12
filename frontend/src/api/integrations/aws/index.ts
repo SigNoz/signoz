@@ -4,7 +4,11 @@ import {
 	Service,
 	ServiceData,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { ConnectionUrlResponse } from 'types/api/integrations/aws';
+import {
+	AccountConfigPayload,
+	AccountConfigResponse,
+	ConnectionUrlResponse,
+} from 'types/api/integrations/aws';
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get(
@@ -49,4 +53,15 @@ export const generateConnectionUrl = async (params: {
 		params,
 	);
 	return response.data.data;
+};
+
+export const updateAccountConfig = async (
+	accountId: string,
+	payload: AccountConfigPayload,
+): Promise<AccountConfigResponse> => {
+	const response = await axios.put<AccountConfigResponse>(
+		`http://localhost:3000/api/v1/cloud-integrations/aws/accounts/${accountId}/config`,
+		payload,
+	);
+	return response.data;
 };
