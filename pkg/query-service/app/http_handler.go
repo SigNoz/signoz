@@ -3910,6 +3910,10 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 		"/{cloudProvider}/services/{serviceId}", am.ViewAccess(aH.CloudIntegrationsGetServiceDetails),
 	).Methods(http.MethodGet)
 
+	subRouter.HandleFunc(
+		"/{cloudProvider}/services/{serviceId}/config", am.EditAccess(aH.CloudIntegrationsUpdateServiceConfig),
+	).Methods(http.MethodPost)
+
 }
 
 func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
@@ -4038,8 +4042,15 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 
+	var cloudAccountId *string
+
+	cloudAccountIdQP := r.URL.Query().Get("cloud_account_id")
+	if len(cloudAccountIdQP) > 0 {
+		cloudAccountId = &cloudAccountIdQP
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListServices(
-		r.Context(), cloudProvider, nil,
+		r.Context(), cloudProvider, cloudAccountId,
 	)
 
 	if apiErr != nil {
@@ -4055,8 +4066,15 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	serviceId := mux.Vars(r)["serviceId"]
 
+	var cloudAccountId *string
+
+	cloudAccountIdQP := r.URL.Query().Get("cloud_account_id")
+	if len(cloudAccountIdQP) > 0 {
+		cloudAccountId = &cloudAccountIdQP
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
-		r.Context(), cloudProvider, serviceId, nil,
+		r.Context(), cloudProvider, serviceId, cloudAccountId,
 	)
 
 	if apiErr != nil {
@@ -4064,6 +4082,30 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		return
 	}
 	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	serviceId := mux.Vars(r)["serviceId"]
+
+	req := cloudintegrations.UpdateServiceConfigRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
+		r.Context(), cloudProvider, serviceId, req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
 }
 
 // logs

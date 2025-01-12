@@ -269,11 +269,14 @@ func (c *Controller) ListServices(
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
 
-	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
-		ctx, cloudProvider, *cloudAccountId,
-	)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "couldn't get service configs for cloud account")
+	svcConfigs := map[string]*CloudServiceConfig{}
+	if cloudAccountId != nil {
+		svcConfigs, apiErr = c.serviceConfigRepo.getAllForAccount(
+			ctx, cloudProvider, *cloudAccountId,
+		)
+		if apiErr != nil {
+			return nil, model.WrapApiError(apiErr, "couldn't get service configs for cloud account")
+		}
 	}
 
 	summaries := []CloudServiceSummary{}
@@ -317,6 +320,11 @@ func (c *Controller) GetServiceDetails(
 	return service, nil
 }
 
+type UpdateServiceConfigRequest struct {
+	CloudAccountId string             `json:"cloud_account_id"`
+	Config         CloudServiceConfig `json:"config"`
+}
+
 type UpdateServiceConfigResponse struct {
 	Id     string             `json:"id"`
 	Config CloudServiceConfig `json:"config"`
@@ -325,9 +333,8 @@ type UpdateServiceConfigResponse struct {
 func (c *Controller) UpdateServiceConfig(
 	ctx context.Context,
 	cloudProvider string,
-	cloudAccountId string,
 	serviceId string,
-	config CloudServiceConfig,
+	req UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
@@ -335,7 +342,7 @@ func (c *Controller) UpdateServiceConfig(
 
 	// can only update config for a connected cloud account id
 	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
-		ctx, cloudProvider, cloudAccountId,
+		ctx, cloudProvider, req.CloudAccountId,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't find connected cloud account")
@@ -348,7 +355,7 @@ func (c *Controller) UpdateServiceConfig(
 	}
 
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
-		ctx, cloudProvider, cloudAccountId, serviceId, config,
+		ctx, cloudProvider, req.CloudAccountId, serviceId, req.Config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't update service config")

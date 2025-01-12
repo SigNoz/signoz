@@ -177,7 +177,8 @@ func TestAWSIntegrationServices(t *testing.T) {
 	require.Greater(len(svcListResp.Services), 0)
 	for _, svc := range svcListResp.Services {
 		if svc.Id == svcId {
-			require.Equal(testSvcConfig, svc.Config)
+			require.NotNil(svc.Config)
+			require.Equal(testSvcConfig, *svc.Config)
 		}
 	}
 
@@ -185,7 +186,8 @@ func TestAWSIntegrationServices(t *testing.T) {
 	// queried in the ctx of an account
 	svcDetailResp = testbed.GetServiceDetailFromQS("aws", svcId, &testAWSAccountId)
 	require.Equal(svcId, svcDetailResp.Id)
-	require.Equal(testSvcConfig, svcDetailResp.Config)
+	require.NotNil(svcDetailResp.Config)
+	require.Equal(testSvcConfig, *svcDetailResp.Config)
 
 }
 
@@ -339,11 +341,11 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 }
 
 func (tb *CloudIntegrationsTestBed) GetServicesFromQS(
-	cloudProvider string, accountId *string,
+	cloudProvider string, cloudAccountId *string,
 ) *cloudintegrations.ListServicesResponse {
 	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services", cloudProvider)
-	if accountId != nil {
-		path = fmt.Sprintf("%s?account_id=%s", path, *accountId)
+	if cloudAccountId != nil {
+		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
 	}
 
 	return RequestQSAndParseResp[cloudintegrations.ListServicesResponse](
@@ -352,11 +354,11 @@ func (tb *CloudIntegrationsTestBed) GetServicesFromQS(
 }
 
 func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
-	cloudProvider string, serviceId string, accountId *string,
+	cloudProvider string, serviceId string, cloudAccountId *string,
 ) *cloudintegrations.CloudServiceDetails {
 	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s", cloudProvider, serviceId)
-	if accountId != nil {
-		path = fmt.Sprintf("%s?account_id=%s", path, *accountId)
+	if cloudAccountId != nil {
+		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
 	}
 
 	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](

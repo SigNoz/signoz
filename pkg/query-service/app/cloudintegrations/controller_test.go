@@ -184,7 +184,10 @@ func TestConfigureService(t *testing.T) {
 		},
 	}
 	updateSvcConfigResp, apiErr := controller.UpdateServiceConfig(
-		context.TODO(), "aws", testCloudAccountId, testSvcId, testSvcConfig,
+		context.TODO(), "aws", testSvcId, UpdateServiceConfigRequest{
+			CloudAccountId: testCloudAccountId,
+			Config:         testSvcConfig,
+		},
 	)
 	require.Nil(apiErr)
 	require.Equal(testSvcId, updateSvcConfigResp.Id)
@@ -214,19 +217,30 @@ func TestConfigureService(t *testing.T) {
 	require.Nil(apiErr)
 
 	_, apiErr = controller.UpdateServiceConfig(
-		context.TODO(), "aws", testCloudAccountId, testSvcId, testSvcConfig,
+		context.TODO(), "aws", testSvcId,
+		UpdateServiceConfigRequest{
+			CloudAccountId: testCloudAccountId,
+			Config:         testSvcConfig,
+		},
 	)
 	require.NotNil(apiErr)
 
 	// should not be able to configure a service for a cloud account id that is not connected yet
 	_, apiErr = controller.UpdateServiceConfig(
-		context.TODO(), "aws", "9999999999", testSvcId, testSvcConfig,
+		context.TODO(), "aws", testSvcId,
+		UpdateServiceConfigRequest{
+			CloudAccountId: "9999999999",
+			Config:         testSvcConfig,
+		},
 	)
 	require.NotNil(apiErr)
 
 	// should not be able to set config for an unsupported service
 	_, apiErr = controller.UpdateServiceConfig(
-		context.TODO(), "aws", testCloudAccountId, "bad-service", testSvcConfig,
+		context.TODO(), "aws", "bad-service", UpdateServiceConfigRequest{
+			CloudAccountId: testCloudAccountId,
+			Config:         testSvcConfig,
+		},
 	)
 	require.NotNil(apiErr)
 
