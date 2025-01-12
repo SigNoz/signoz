@@ -158,13 +158,16 @@ func TestConfigureService(t *testing.T) {
 	controller, err := NewController(testDB)
 	require.NoError(err)
 
-	services, apiErr := listCloudProviderServices("aws")
+	testCloudAccountId := "546311234"
+
+	svcListResp, apiErr := controller.ListServices(
+		context.TODO(), "aws", &testCloudAccountId,
+	)
 	require.Nil(apiErr)
-	testSvcId := services[0].Id
-	require.Nil(services[0].Config)
+	testSvcId := svcListResp.Services[0].Id
+	require.Nil(svcListResp.Services[0].Config)
 
 	// should be able to configure a service for a connected account
-	testCloudAccountId := "546311234"
 	testConnectedAccount := makeTestConnectedAccount(t, controller, testCloudAccountId)
 	require.Nil(testConnectedAccount.RemovedAt)
 
@@ -180,12 +183,12 @@ func TestConfigureService(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	resp, apiErr := controller.UpdateServiceConfig(
+	updateSvcConfigResp, apiErr := controller.UpdateServiceConfig(
 		context.TODO(), "aws", testCloudAccountId, testSvcId, testSvcConfig,
 	)
 	require.Nil(apiErr)
-	require.Equal(testSvcId, resp.Id)
-	require.Equal(testSvcConfig, resp.Config)
+	require.Equal(testSvcId, updateSvcConfigResp.Id)
+	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
 
 	svcDetails, apiErr = controller.GetServiceDetails(
 		context.TODO(), "aws", testSvcId, &testCloudAccountId,
@@ -193,6 +196,16 @@ func TestConfigureService(t *testing.T) {
 	require.Nil(apiErr)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Equal(testSvcConfig, *svcDetails.Config)
+
+	svcListResp, apiErr = controller.ListServices(
+		context.TODO(), "aws", &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+	for _, svc := range svcListResp.Services {
+		if svc.Id == testSvcId {
+			require.Equal(testSvcConfig, *svc.Config)
+		}
+	}
 
 	// should not be able to configure a service for
 	// a cloud account id that is not connected yet

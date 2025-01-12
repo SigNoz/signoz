@@ -266,12 +266,21 @@ func (c *Controller) ListServices(
 
 	services, apiErr := listCloudProviderServices(cloudProvider)
 	if apiErr != nil {
-		return nil, apiErr
+		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
+	}
+
+	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
+		ctx, cloudProvider, *cloudAccountId,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't get service configs for cloud account")
 	}
 
 	summaries := []CloudServiceSummary{}
 	for _, s := range services {
-		summaries = append(summaries, s.CloudServiceSummary)
+		summary := s.CloudServiceSummary
+		summary.Config = svcConfigs[summary.Id]
+		summaries = append(summaries, summary)
 	}
 
 	return &ListServicesResponse{

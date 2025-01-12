@@ -10,12 +10,6 @@ import (
 )
 
 type serviceConfigRepository interface {
-	list(
-		ctx context.Context,
-		cloudProvider string,
-		cloudAccountId string,
-	) ([]CloudServiceConfig, *model.ApiError)
-
 	get(
 		ctx context.Context,
 		cloudProvider string,
@@ -30,6 +24,15 @@ type serviceConfigRepository interface {
 		serviceId string,
 		config CloudServiceConfig,
 	) (*CloudServiceConfig, *model.ApiError)
+
+	getAllForAccount(
+		ctx context.Context,
+		cloudProvider string,
+		cloudAccountId string,
+	) (
+		configsBySvcId map[string]*CloudServiceConfig,
+		apiErr *model.ApiError,
+	)
 }
 
 func newServiceConfigRepository(db *sqlx.DB) (
@@ -71,15 +74,6 @@ func initServiceConfigSqliteDBIfNeeded(db *sqlx.DB) error {
 
 type serviceConfigSQLRepository struct {
 	db *sqlx.DB
-}
-
-func (r *serviceConfigSQLRepository) list(
-	ctx context.Context,
-	cloudProvider string,
-	cloudAccountId string,
-) ([]CloudServiceConfig, *model.ApiError) {
-
-	return []CloudServiceConfig{}, nil
 }
 
 func (r *serviceConfigSQLRepository) get(
@@ -156,4 +150,42 @@ func (r *serviceConfigSQLRepository) upsert(
 
 	return upsertedConfig, nil
 
+}
+
+func (r *serviceConfigSQLRepository) getAllForAccount(
+	ctx context.Context,
+	cloudProvider string,
+	cloudAccountId string,
+) (map[string]*CloudServiceConfig, *model.ApiError) {
+	type ServiceConfigScanResult struct {
+		ServiceId string             `db:"service_id"`
+		Config    CloudServiceConfig `db:"config_json"`
+	}
+	svcConfigs := []ServiceConfigScanResult{}
+
+	err := r.db.SelectContext(
+		ctx, &svcConfigs, `
+			select
+				service_id,
+				config_json
+			from cloud_integrations_service_configs
+			where
+				cloud_provider=$1
+				and cloud_account_id=$2
+		`,
+		cloudProvider, cloudAccountId,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query service configs from db: %w", err,
+		))
+	}
+
+	result := map[string]*CloudServiceConfig{}
+
+	for _, sc := range svcConfigs {
+		result[sc.ServiceId] = &sc.Config
+	}
+
+	return result, nil
 }
