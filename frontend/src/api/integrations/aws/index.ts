@@ -12,8 +12,16 @@ import {
 } from 'types/api/integrations/aws';
 =======
 } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
+<<<<<<< HEAD
 import { ConnectionUrlResponse } from 'types/api/integrations/aws';
 >>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
+=======
+import {
+	AccountConfigPayload,
+	AccountConfigResponse,
+	ConnectionUrlResponse,
+} from 'types/api/integrations/aws';
+>>>>>>> b0fb28fc6 (feat: account settings)
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get(
@@ -73,6 +81,9 @@ export const generateConnectionUrl = async (params: {
 	return response.data.data;
 };
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> b0fb28fc6 (feat: account settings)
 
 export const updateAccountConfig = async (
 	accountId: string,
@@ -84,5 +95,8 @@ export const updateAccountConfig = async (
 	);
 	return response.data;
 };
+<<<<<<< HEAD
 =======
 >>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
+=======
+>>>>>>> b0fb28fc6 (feat: account settings)

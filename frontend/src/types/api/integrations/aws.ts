@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
-
-=======
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 export interface GenerateConnectionUrlPayload {
 	agent_config: {
 		region: string;
@@ -29,17 +24,3 @@ export interface AccountStatusResponse {
 		};
 	};
 }
-<<<<<<< HEAD
-
-export interface AccountConfigPayload {
-	config: {
-		regions: string[];
-	};
-}
-
-export interface AccountConfigResponse {
-	status: string;
-	data: CloudAccount;
-}
-=======
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
