@@ -21,7 +21,7 @@ function HeroSection(): JSX.Element {
 					One-click setup for AWS monitoring with SigNoz
 >>>>>>> 6c3b326ef (feat: implement basic cloud account management UI in HeroSection)
 				</div>
-				<AccountActions accounts={[]} />
+				<AccountActions />
 			</div>
 		</div>
 	);

@@ -3,17 +3,13 @@ import './AccountActions.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select } from 'antd';
 import { SelectProps } from 'antd/lib';
+import { useAwsAccounts } from 'hooks/integrations/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { CloudAccount } from '../ServicesSection/types';
 import IntegrationModal from './IntegrationModal';
-
-interface AccountActionsProps {
-	accounts: CloudAccount[];
-}
 
 interface AccountOptionItemProps {
 	label: React.ReactNode;
@@ -48,22 +44,40 @@ function renderOption(
 	);
 }
 
-function AccountActions({ accounts }: AccountActionsProps): JSX.Element {
+function AccountActions(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const [activeAccountId, setActiveAccountId] = useState<string | null>(
-		urlQuery.get('accountId') ?? accounts[0]?.cloud_account_id ?? null,
+	const { data: accounts } = useAwsAccounts();
+
+	const initialAccountId = useMemo(
+		() =>
+			accounts?.length
+				? urlQuery.get('accountId') || accounts[0].cloud_account_id
+				: null,
+		[accounts, urlQuery],
 	);
+
+	const [activeAccountId, setActiveAccountId] = useState<string | null>(
+		initialAccountId,
+	);
+
+	// Update state when initial value changes
+	useEffect(() => {
+		if (initialAccountId !== null) {
+			setActiveAccountId(initialAccountId);
+		}
+	}, [initialAccountId]);
+
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
 
-	const selectOptions: SelectProps['options'] = accounts.map((account) => ({
+	const selectOptions: SelectProps['options'] = accounts?.map((account) => ({
 		value: account.cloud_account_id,
 		label: account.cloud_account_id,
 	}));
 
 	return (
 		<div className="hero-section__actions">
-			{accounts.length ? (
+			{accounts?.length ? (
 				<div className="hero-section__actions-with-account">
 					<Select
 						value={`Account: ${activeAccountId}`}
@@ -81,7 +95,11 @@ function AccountActions({ accounts }: AccountActionsProps): JSX.Element {
 						}}
 					/>
 					<div className="hero-section__action-buttons">
-						<Button type="primary" className="hero-section__action-button primary">
+						<Button
+							type="primary"
+							className="hero-section__action-button primary"
+							onClick={(): void => setIsIntegrationModalOpen(true)}
+						>
 							Add New AWS Account
 						</Button>
 						<Button type="default" className="hero-section__action-button secondary">

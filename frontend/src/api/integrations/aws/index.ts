@@ -10,7 +10,8 @@ export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get(
 		'http://localhost:3000/api/v1/cloud-integrations/aws/accounts',
 	);
-	return response.data.data.accounts;
+
+	return response.data.data;
 };
 
 export const getAwsServices = async (
