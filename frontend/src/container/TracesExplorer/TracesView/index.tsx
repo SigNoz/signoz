@@ -75,7 +75,7 @@ function TracesView({ isFilterApplied }: TracesViewProps): JSX.Element {
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && (tableData || []).length !== 0) {
-			logEvent('Traces Explorer: Data Present', {
+			logEvent('Traces Explorer: Data present', {
 				panelType: 'TRACE',
 			});
 		}
