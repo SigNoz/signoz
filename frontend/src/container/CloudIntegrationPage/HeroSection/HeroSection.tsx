@@ -16,7 +16,6 @@ function HeroSection(): JSX.Element {
 				<div className="description">
 					One-click setup for AWS monitoring with SigNoz
 				</div>
-
 				<AccountActions accounts={[]} />
 			</div>
 		</div>
