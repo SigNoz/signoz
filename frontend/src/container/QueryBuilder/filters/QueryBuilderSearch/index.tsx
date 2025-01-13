@@ -95,6 +95,7 @@ function QueryBuilderSearch({
 		isMulti,
 		isFetching,
 		setSearchKey,
+		setSearchValue,
 		searchKey,
 		key,
 		exampleQueries,
@@ -145,7 +146,11 @@ function QueryBuilderSearch({
 
 		const tagEditHandler = (value: string): void => {
 			updateTag(value);
-			handleSearch(value);
+			if (isInfraMonitoring) {
+				setSearchValue(value);
+			} else {
+				handleSearch(value);
+			}
 		};
 
 		const isDisabled = !!searchValue;

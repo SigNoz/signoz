@@ -153,6 +153,7 @@ export const useAutoComplete = (
 		isMulti,
 		isFetching,
 		setSearchKey,
+		setSearchValue,
 		searchKey,
 		key,
 		exampleQueries,
@@ -172,6 +173,7 @@ interface IAutoComplete {
 	isMulti: boolean;
 	isFetching: boolean;
 	setSearchKey: (value: string) => void;
+	setSearchValue: (value: string) => void;
 	searchKey: string;
 	key: string;
 	exampleQueries: TagFilter[];
