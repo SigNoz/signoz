@@ -20,7 +20,6 @@ function TraceFlamegraph(): JSX.Element {
 		level,
 		traceId,
 	});
-	console.log(data, isFetching, error);
 
 	// get the current state of trace flamegraph based on the API lifecycle
 	const traceFlamegraphState = useMemo(() => {

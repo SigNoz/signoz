@@ -2,6 +2,8 @@ import './TraceMetadata.styles.scss';
 
 import { Button, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import { ArrowLeft, CalendarClock, DraftingCompass, Timer } from 'lucide-react';
 import { getFormattedDateWithMinutesAndSeconds } from 'utils/timeUtils';
 
@@ -30,7 +32,10 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 			<section className="metadata-info">
 				<div className="first-row">
 					<Button className="previous-btn">
-						<ArrowLeft size={14} />
+						<ArrowLeft
+							size={14}
+							onClick={(): void => history.push(ROUTES.TRACES_EXPLORER)}
+						/>
 					</Button>
 					<div className="trace-name">
 						<DraftingCompass size={14} className="drafting" />

@@ -24,6 +24,10 @@
 			top: 0;
 			z-index: 2;
 			background-color: var(--bg-ink-500) !important;
+
+			.div-tr {
+				height: 16px;
+			}
 		}
 
 		.div-tr {
@@ -44,7 +48,7 @@
 			position: relative;
 			font-weight: bold;
 			text-align: center;
-			height: 54px;
+			height: 0px;
 		}
 
 		.div-td {
