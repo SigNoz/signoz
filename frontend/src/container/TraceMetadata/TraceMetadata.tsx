@@ -3,7 +3,7 @@ import './TraceMetadata.styles.scss';
 import { Button, Typography } from 'antd';
 import { ArrowLeft, CalendarClock, DraftingCompass, Timer } from 'lucide-react';
 
-interface ITraceMetadataProps {
+export interface ITraceMetadataProps {
 	traceID: string;
 	rootServiceName: string;
 	rootSpanName: string;

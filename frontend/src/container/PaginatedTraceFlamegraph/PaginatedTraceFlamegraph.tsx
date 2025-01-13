@@ -1,5 +1,6 @@
 import './PaginatedTraceFlamegraph.styles.scss';
 
+import { Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
@@ -87,7 +88,14 @@ function TraceFlamegraph(): JSX.Element {
 		traceId,
 	]);
 
-	return <div className="trace-flamegraph">{getContent}</div>;
+	return (
+		<div className="flamegraph">
+			<div className="flamegraph-chart">{getContent}</div>
+			<div className="flamegraph-stats">
+				<Typography.Text>%age exec times</Typography.Text>
+			</div>
+		</div>
+	);
 }
 
 export default TraceFlamegraph;

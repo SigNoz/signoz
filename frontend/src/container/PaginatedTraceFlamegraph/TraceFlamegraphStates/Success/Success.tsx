@@ -3,6 +3,7 @@
 import './Success.styles.scss';
 
 import { Tooltip } from 'antd';
+import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso } from 'react-virtuoso';
@@ -76,15 +77,21 @@ function Success(props: ISuccessProps): JSX.Element {
 		[setLevel, spans],
 	);
 	return (
-		<div className="trace-flamegraph">
-			<Virtuoso
-				height="40vh"
-				className="trace-flamegraph-virtuoso"
-				data={spans}
-				itemContent={renderSpanLevel}
-				rangeChanged={handleRangeChanged}
+		<>
+			<div className="trace-flamegraph">
+				<Virtuoso
+					className="trace-flamegraph-virtuoso"
+					data={spans}
+					itemContent={renderSpanLevel}
+					rangeChanged={handleRangeChanged}
+				/>
+			</div>
+			<TimelineV2
+				startTimestamp={traceMetadata.startTime}
+				endTimestamp={traceMetadata.endTime}
+				timelineHeight={22}
 			/>
-		</div>
+		</>
 	);
 }
 
