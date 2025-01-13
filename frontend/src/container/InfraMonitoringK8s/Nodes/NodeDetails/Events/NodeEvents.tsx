@@ -155,6 +155,7 @@ export default function Events({
 					id: event.data.id,
 					key: event.data.id,
 					resources_string: event.data.resources_string,
+					attributes_string: event.data.attributes_string,
 				}),
 			);
 
