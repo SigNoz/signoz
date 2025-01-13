@@ -38,7 +38,7 @@ interface ServiceConfig {
 	metrics: ConfigStatus;
 }
 
-interface ServiceStatus {
+export interface IServiceStatus {
 	logs: DataStatus | null;
 	metrics: DataStatus | null;
 }
@@ -56,7 +56,7 @@ interface ServiceData {
 		metrics: Metric[];
 	};
 	config?: ServiceConfig; // Optional - included only with account_id
-	status?: ServiceStatus; // Optional - included only with account_id
+	status?: IServiceStatus; // Optional - included only with account_id
 }
 
 interface CloudAccountConfig {

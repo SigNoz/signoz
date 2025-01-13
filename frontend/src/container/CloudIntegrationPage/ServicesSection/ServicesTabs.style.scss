@@ -107,7 +107,34 @@
 		}
 		.service-details__right-actions {
 			display: flex;
+			align-items: center;
 			gap: 8px;
+			.service-status {
+				display: flex;
+				align-items: center;
+				padding: 2px 8px;
+				font-family: 'Geist Mono';
+				font-size: 12px;
+				font-weight: 500;
+				letter-spacing: 0.54px;
+				border-radius: 2px;
+				line-height: normal;
+				&--connected {
+					border: 1px solid rgba(37, 225, 146, 0.1);
+					background: rgba(37, 225, 146, 0.1);
+					color: var(--bg-forest-400);
+				}
+				&--stale-data {
+					background: rgba(255, 215, 120, 0.1);
+					border: 1px solid rgba(255, 215, 120, 0.1);
+					color: var(--bg-amber-400);
+				}
+				&--no-data {
+					border: 1px solid rgba(234, 109, 113, 0.1);
+					background: rgba(234, 109, 113, 0.1);
+					color: var(--bg-cherry-400);
+				}
+			}
 			.configure-button {
 				display: flex;
 				align-items: center;
