@@ -7,6 +7,9 @@ import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Wrench } from 'lucide-react';
+import { useState } from 'react';
+
+import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
 	logsLastReceivedTimestamp: number | undefined,
@@ -51,6 +54,9 @@ function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const accountId = urlQuery.get('accountId');
 	const serviceId = urlQuery.get('service');
+	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
+		false,
+	);
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
@@ -91,7 +97,10 @@ function ServiceDetails(): JSX.Element | null {
 					{serviceDetailsData?.status && (
 						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
-					<Button className="configure-button">
+					<Button
+						className="configure-button"
+						onClick={(): void => setIsConfigureServiceModalOpen(true)}
+					>
 						<Wrench size={12} color={Color.BG_VANILLA_400} />
 						Configure
 					</Button>
@@ -103,6 +112,11 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />
 			</div>
+			<ConfigureServiceModal
+				isOpen={isConfigureServiceModalOpen}
+				onClose={(): void => setIsConfigureServiceModalOpen(false)}
+				serviceName={serviceDetailsData.title}
+			/>
 		</div>
 	);
 }
