@@ -1,3 +1,5 @@
+import './TraceDetailV2.styles.scss';
+
 import { Tabs } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
