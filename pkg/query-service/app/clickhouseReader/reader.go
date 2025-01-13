@@ -1461,6 +1461,7 @@ func contains(slice []string, item string) bool {
 func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, req *model.SearchTracesV3Params) (*model.SearchTracesV3Response, *model.ApiError) {
 	trace := new(model.SearchTracesV3Response)
 	var startTime, endTime, durationNano uint64
+	var totalErrorSpans int64
 	var spanIdToSpanNodeMap = map[string]*model.Span{}
 	var traceRoots []string
 	var useCache bool = true
@@ -1487,6 +1488,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		durationNano = cachedTraceData.DurationNano
 		spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
 		traceRoots = cachedTraceData.TraceRoots
+		trace.TotalSpansCount = cachedTraceData.TotalSpans
+		trace.TotalErrorSpansCount = cachedTraceData.TotalErrorSpans
 	}
 
 	if !useCache {
@@ -1503,6 +1506,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			zap.L().Error("Error in processing sql query", zap.Error(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %w", err)}
 		}
+		trace.TotalSpansCount = int64(traceSummary.NumSpans)
 
 		// fetch all the spans belonging to the trace from the main table
 		var searchScanResponses []model.SpanItemV2
@@ -1572,6 +1576,10 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
 				durationNano = uint64(jsonItem.DurationNano)
 			}
+
+			if jsonItem.HasError {
+				totalErrorSpans = totalErrorSpans + 1
+			}
 		}
 
 		// traverse through the map and append each node to the children array of the parent node
@@ -1607,6 +1615,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			StartTime:           startTime,
 			EndTime:             endTime,
 			DurationNano:        durationNano,
+			TotalSpans:          int64(traceSummary.NumSpans),
+			TotalErrorSpans:     totalErrorSpans,
 			SpanIdToSpanNodeMap: spanIdToSpanNodeMap,
 			TraceRoots:          traceRoots,
 		}
@@ -1697,6 +1707,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
 			_ = rootToInterestedNodePath(rootNode)
 			traverse(rootNode, 0, false)
+			trace.RootServiceName = rootNode.ServiceName
+			trace.RootServiceEntryPoint = rootNode.Name
 		}
 	}
 
@@ -1733,6 +1745,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	trace.UncollapsedNodes = uncollapsedNodes
 	trace.StartTimestampMillis = startTime
 	trace.EndTimestampMillis = endTime
+	trace.TotalErrorSpansCount = totalErrorSpans
 	return trace, nil
 }
 

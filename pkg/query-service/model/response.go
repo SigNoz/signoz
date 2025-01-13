@@ -312,6 +312,8 @@ type SearchTracesV3Cache struct {
 	StartTime           uint64           `json:"startTime"`
 	EndTime             uint64           `json:"endTime"`
 	DurationNano        uint64           `json:"durationNano"`
+	TotalSpans          int64            `json:"totalSpans"`
+	TotalErrorSpans     int64            `json:"totalErrorSpans"`
 	SpanIdToSpanNodeMap map[string]*Span `json:"spanIdToSpanNodeMap"`
 	TraceRoots          []string         `json:"traceRoots"`
 }
@@ -345,8 +347,8 @@ type SearchTracesV3Response struct {
 	DurationNano          uint64  `json:"durationNano"`
 	RootServiceName       string  `json:"rootServiceName"`
 	RootServiceEntryPoint string  `json:"rootServiceEntryPoint"`
-	TotalSpansCount       uint64  `json:"totalSpansCount"`
-	TotalErrorSpansCount  uint64  `json:"TotalErrorSpansCount"`
+	TotalSpansCount       int64   `json:"totalSpansCount"`
+	TotalErrorSpansCount  int64   `json:"totalErrorSpansCount"`
 	Spans                 []*Span `json:"spans"`
 	// this is needed for frontend and query service sync
 	UncollapsedNodes []string `json:"uncollapsedNodes"`

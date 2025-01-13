@@ -99,10 +99,10 @@ function TraceDetailsV2(): JSX.Element {
 					(traceData?.payload?.startTimestampMillis || 0)
 				}
 				startTime={(traceData?.payload?.startTimestampMillis || 0) / 1e3}
-				rootServiceName="XXXX"
-				rootSpanName="YYY"
-				totalErrorSpans={13}
-				totalSpans={300}
+				rootServiceName={traceData?.payload?.rootServiceName || ''}
+				rootSpanName={traceData?.payload?.rootServiceEntryPoint || ''}
+				totalErrorSpans={traceData?.payload?.totalErrorSpansCount || 0}
+				totalSpans={traceData?.payload?.totalSpansCount || 0}
 			/>
 			<Tabs items={items} animated className="settings-tabs" />;
 		</div>
