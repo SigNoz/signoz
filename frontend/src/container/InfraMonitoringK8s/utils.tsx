@@ -160,11 +160,11 @@ const columnsConfig = [
 		key: 'podName',
 		width: 180,
 		ellipsis: true,
-		sorter: true,
+		sorter: false,
 		className: 'column column-pod-name',
 	},
 	{
-		title: <div className="column-header">CPU Req Usage (%)</div>,
+		title: <div className="column-header med-col">CPU Req Usage (%)</div>,
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
 		width: 180,
@@ -174,7 +174,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">CPU Limit Usage (%)</div>,
+		title: <div className="column-header med-col">CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
 		width: 120,
@@ -192,7 +192,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Req Usage (%)</div>,
+		title: <div className="column-heade med-col">Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
 		width: 120,
@@ -201,7 +201,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Limit Usage (%)</div>,
+		title: <div className="column-header med-col">Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
 		width: 120,
@@ -251,7 +251,7 @@ export const nodeColumnConfig = {
 	dataIndex: 'node',
 	key: 'node',
 	width: 100,
-	sorter: true,
+	sorter: false,
 	ellipsis: true,
 	align: 'left',
 	className: 'column column-node',
@@ -262,7 +262,7 @@ export const clusterColumnConfig = {
 	dataIndex: 'cluster',
 	key: 'cluster',
 	width: 100,
-	sorter: true,
+	sorter: false,
 	ellipsis: true,
 	align: 'left',
 	className: 'column column-cluster',
@@ -341,7 +341,7 @@ export const formatDataForTable = (
 				attribute="CPU Request"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podCPURequest} />
+					<EntityProgressBar value={pod.podCPURequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -352,7 +352,7 @@ export const formatDataForTable = (
 				attribute="CPU Limit"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podCPULimit} />
+					<EntityProgressBar value={pod.podCPULimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -368,7 +368,7 @@ export const formatDataForTable = (
 				attribute="Memory Request"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podMemoryRequest} />
+					<EntityProgressBar value={pod.podMemoryRequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -379,7 +379,7 @@ export const formatDataForTable = (
 				attribute="Memory Limit"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podMemoryLimit} />
+					<EntityProgressBar value={pod.podMemoryLimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),

@@ -15,6 +15,7 @@ import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
+import classNames from 'classnames';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -338,18 +339,6 @@ function K8sPodsList({
 		setSelectedPodUID(null);
 	};
 
-	const showPodsTable =
-		!isError &&
-		!isLoading &&
-		!isFetching &&
-		!(formattedPodsData.length === 0 && queryFilters.items.length > 0);
-
-	const showNoFilteredPodsMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedPodsData.length === 0 &&
-		queryFilters.items.length > 0;
-
 	const handleAddColumn = useCallback(
 		(column: IPodColumn): void => {
 			setAddedColumns((prev) => [...prev, column]);
@@ -505,54 +494,54 @@ function K8sPodsList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{showNoFilteredPodsMessage && (
-				<div className="no-filtered-hosts-message-container">
-					<div className="no-filtered-hosts-message-content">
-						<img
-							src="/Icons/emptyState.svg"
-							alt="thinking-emoji"
-							className="empty-state-svg"
-						/>
+			<Table
+				className={classNames('k8s-list-table', {
+					'expanded-k8s-list-table': isGroupedByAttribute,
+				})}
+				dataSource={isFetching || isLoading ? [] : formattedPodsData}
+				columns={columns}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total: totalCount,
+					showSizeChanger: false,
+					hideOnSinglePage: true,
+				}}
+				loading={{
+					spinning: isFetching || isLoading,
+					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+				}}
+				locale={{
+					emptyText:
+						isFetching || isLoading ? null : (
+							<div className="no-filtered-hosts-message-container">
+								<div className="no-filtered-hosts-message-content">
+									<img
+										src="/Icons/emptyState.svg"
+										alt="thinking-emoji"
+										className="empty-state-svg"
+									/>
 
-						<Typography.Text className="no-filtered-hosts-message">
-							This query had no results. Edit your query and try again!
-						</Typography.Text>
-					</div>
-				</div>
-			)}
-
-			{(isFetching || isLoading) && <LoadingContainer />}
-
-			{showPodsTable && (
-				<Table
-					className="k8s-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedPodsData}
-					columns={columns}
-					pagination={{
-						current: currentPage,
-						pageSize,
-						total: totalCount,
-						showSizeChanger: false,
-						hideOnSinglePage: true,
-					}}
-					loading={{
-						spinning: isFetching || isLoading,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-					}}
-					scroll={{ x: true }}
-					tableLayout="fixed"
-					onChange={handleTableChange}
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => handleRowClick(record),
-						className: 'clickable-row',
-					})}
-					expandable={{
-						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-						expandIcon: expandRowIconRenderer,
-						expandedRowKeys,
-					}}
-				/>
-			)}
+									<Typography.Text className="no-filtered-hosts-message">
+										This query had no results. Edit your query and try again!
+									</Typography.Text>
+								</div>
+							</div>
+						),
+				}}
+				scroll={{ x: true }}
+				tableLayout="fixed"
+				onChange={handleTableChange}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => handleRowClick(record),
+					className: 'clickable-row',
+				})}
+				expandable={{
+					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+					expandIcon: expandRowIconRenderer,
+					expandedRowKeys,
+				}}
+			/>
 
 			{selectedPodData && (
 				<PodDetails
