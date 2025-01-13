@@ -9,6 +9,10 @@
 		overflow-x: hidden;
 		padding: 0px 20px;
 
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
+
 		// default table overrides css for table v3
 		.div-table {
 			width: 100% !important;

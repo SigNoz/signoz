@@ -5,7 +5,6 @@ import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Typography } from 'antd';
 import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
-import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
@@ -182,13 +181,7 @@ function getWaterfallColumns({
 		}),
 		columnDefHelper.display({
 			id: 'span-duration',
-			header: () => (
-				<TimelineV2
-					startTimestamp={traceMetadata.startTime}
-					endTimestamp={traceMetadata.endTime}
-					timelineHeight={22}
-				/>
-			),
+			header: () => <div />,
 			enableResizing: false,
 			cell: (props): JSX.Element => (
 				<SpanDuration
