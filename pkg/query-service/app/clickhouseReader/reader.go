@@ -1746,7 +1746,7 @@ func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID
 
 	// get the trace tree from cache!
 	cachedTraceData := new(model.SearchFlamegraphTracesV3Cache)
-	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("trace-detail-y-waterfall-%v", traceID), cachedTraceData, false)
+	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("trace-detail-waterfall-%v", traceID), cachedTraceData, false)
 	if err != nil {
 		// if there is error in retrieving the cache, log the same and move with ch queries.
 		zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
@@ -1867,12 +1867,12 @@ func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID
 		}
 
 		// now traverse through the tree and create a bfs traversal for the tree
-		// then select the range of spans based on the interested span id
-
+		// then select the range of spans based on the level
 		var traverse func(node *model.FlamegraphSpan, level int64)
 		var bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
 		traverse = func(node *model.FlamegraphSpan, level int64) {
 			ok, exists := bfsMapForTrace[level]
+			node.Level = level
 			if exists {
 				bfsMapForTrace[level] = append(ok, node)
 			} else {
@@ -1898,7 +1898,7 @@ func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID
 			TraceRoots:          traceRoots,
 		}
 
-		err = r.CacheV2.Store(ctx, fmt.Sprintf("trace-detail-y-waterfall-%v", traceID), &traceCache, time.Minute*5)
+		err = r.CacheV2.Store(ctx, fmt.Sprintf("trace-detail-waterfall-%v", traceID), &traceCache, time.Minute*5)
 		if err != nil {
 			zap.L().Debug("failed to store cache", zap.String("traceID", traceID), zap.Error(err))
 		}

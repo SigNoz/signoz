@@ -27,6 +27,14 @@ function TraceWaterfall(): JSX.Element {
 			isUncollapsed: urlQuery.get('spanId') !== '',
 		}),
 	);
+
+	useEffect(() => {
+		setInterestedSpanId({
+			spanId: urlQuery.get('spanId') || '',
+			isUncollapsed: urlQuery.get('spanId') !== '',
+		});
+	}, [urlQuery]);
+
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
 	const {
 		data: traceData,
