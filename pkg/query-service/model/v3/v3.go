@@ -31,6 +31,26 @@ func (d DataSource) Validate() error {
 	}
 }
 
+type SpanSearchScope string
+
+const (
+	SpanSearchScopeAll        SpanSearchScope = "all_spans"
+	SpanSearchScopeEntryPoint SpanSearchScope = "entry_point_spans"
+	SpanSearchScopeRoot       SpanSearchScope = "root_spans"
+)
+
+func (s SpanSearchScope) validateSpanScope() error {
+	if s == "" {
+		return nil
+	}
+	switch s {
+	case SpanSearchScopeAll, SpanSearchScopeEntryPoint, SpanSearchScopeRoot:
+		return nil
+	default:
+		return fmt.Errorf("invalid span search scope: %s", s)
+	}
+}
+
 type AggregateOperator string
 
 const (
@@ -786,6 +806,7 @@ func (m *MetricValueFilter) Clone() *MetricValueFilter {
 type BuilderQuery struct {
 	QueryName            string            `json:"queryName"`
 	StepInterval         int64             `json:"stepInterval"`
+	SpanSearchScope      SpanSearchScope   `json:"spanSearchScope,omitempty"`
 	DataSource           DataSource        `json:"dataSource"`
 	AggregateOperator    AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute   AttributeKey      `json:"aggregateAttribute,omitempty"`

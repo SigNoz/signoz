@@ -274,10 +274,18 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 			if len(mq.SelectColumns) == 0 {
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
-			// add it to the select labels
 			selectLabels = getSelectLabels(mq.SelectColumns)
-			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
-			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
+			if mq.SpanSearchScope == v3.SpanSearchScopeAll || mq.SpanSearchScope == "" {
+				// add it to the select labels
+				queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
+				query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
+			} else if mq.SpanSearchScope == v3.SpanSearchScopeEntryPoint {
+				queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, span_id, trace_id,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where ((name, `resource_string_service$$name`) IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) and %s %s" + "%s"
+				query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
+			} else if mq.SpanSearchScope == v3.SpanSearchScopeRoot {
+				queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where parent_span_id = '' AND %s %s" + "%s"
+				query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
+			}
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
 		}
