@@ -2,6 +2,7 @@ interface Service {
 	id: string;
 	title: string;
 	icon: string;
+	config: ServiceConfig;
 }
 
 interface Dashboard {
@@ -59,6 +60,11 @@ interface ServiceData {
 	status?: IServiceStatus; // Optional - included only with account_id
 }
 
+interface ServiceDetailsResponse {
+	status: 'success';
+	data: ServiceData;
+}
+
 interface CloudAccountConfig {
 	regions: string[];
 }
@@ -82,4 +88,10 @@ interface CloudAccountsData {
 	accounts: CloudAccount[];
 }
 
-export type { CloudAccount, CloudAccountsData, Service, ServiceData };
+export type {
+	CloudAccount,
+	CloudAccountsData,
+	Service,
+	ServiceData,
+	ServiceDetailsResponse,
+};

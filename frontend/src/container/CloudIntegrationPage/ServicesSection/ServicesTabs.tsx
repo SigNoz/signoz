@@ -3,12 +3,8 @@ import './ServicesTabs.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import type { SelectProps, TabsProps } from 'antd';
 import { Select, Tabs } from 'antd';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { serviceDetails, services } from './data';
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
 
@@ -36,34 +32,14 @@ function ServicesFilter(): JSX.Element {
 }
 
 function ServicesSection(): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
-	const [activeService, setActiveService] = useState<string | null>(
-		urlQuery.get('service') || serviceDetails[0].id,
-	);
-
-	const handleServiceClick = (serviceId: string): void => {
-		setActiveService(serviceId);
-		urlQuery.set('service', serviceId);
-		navigate({ search: urlQuery.toString() });
-	};
-
-	const activeServiceDetails = serviceDetails.find(
-		(service) => service.id === activeService,
-	);
-
 	return (
 		<div className="services-section">
 			<div className="services-section__sidebar">
 				<ServicesFilter />
-				<ServicesList
-					services={services}
-					onClick={handleServiceClick}
-					activeService={activeService}
-				/>
+				<ServicesList />
 			</div>
 			<div className="services-section__content">
-				{activeServiceDetails && <ServiceDetails service={activeServiceDetails} />}
+				<ServiceDetails />
 			</div>
 		</div>
 	);

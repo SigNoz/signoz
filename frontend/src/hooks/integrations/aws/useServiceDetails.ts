@@ -12,7 +12,7 @@ export function useServiceDetails(
 		[...SERVICE_DETAILS_QUERY_KEY, serviceId, accountId],
 		() => getServiceDetails(serviceId, accountId),
 		{
-			enabled: Boolean(serviceId),
+			enabled: !!serviceId,
 		},
 	);
 }

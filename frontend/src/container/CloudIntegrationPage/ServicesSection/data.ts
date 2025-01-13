@@ -7,16 +7,40 @@ const services: Service[] = [
 		id: 'aws-elasticache',
 		title: 'AWS ElastiCache',
 		icon: '/Logos/aws-dark.svg?a=11',
+		config: {
+			logs: {
+				enabled: true,
+			},
+			metrics: {
+				enabled: false,
+			},
+		},
 	},
 	{
 		id: 'amazon-eks',
 		title: 'AWS EKS',
 		icon: '/Logos/aws-dark.svg?a=21',
+		config: {
+			logs: {
+				enabled: true,
+			},
+			metrics: {
+				enabled: false,
+			},
+		},
 	},
 	{
 		id: 'amazon-dynamo-db',
 		title: 'Amazon DynamoDB',
 		icon: '/Logos/aws-dark.svg?a=31',
+		config: {
+			logs: {
+				enabled: true,
+			},
+			metrics: {
+				enabled: false,
+			},
+		},
 	},
 ];
 

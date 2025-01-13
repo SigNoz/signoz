@@ -28,7 +28,7 @@ export const getAwsServices = async (
 			params,
 		},
 	);
-	return response.data.data.services;
+	return response.data.data;
 };
 
 export const getServiceDetails = async (
