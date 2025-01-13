@@ -74,7 +74,10 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
+			urlQuery.set('accountId', initialAccount.cloud_account_id);
+			navigate({ search: urlQuery.toString() });
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
