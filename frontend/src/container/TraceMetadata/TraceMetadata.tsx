@@ -1,14 +1,16 @@
 import './TraceMetadata.styles.scss';
 
 import { Button, Typography } from 'antd';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { ArrowLeft, CalendarClock, DraftingCompass, Timer } from 'lucide-react';
+import { getFormattedDateWithMinutesAndSeconds } from 'utils/timeUtils';
 
 export interface ITraceMetadataProps {
 	traceID: string;
 	rootServiceName: string;
 	rootSpanName: string;
-	startTime: string;
-	duration: string;
+	startTime: number;
+	duration: number;
 	totalSpans: number;
 	totalErrorSpans: number;
 }
@@ -44,11 +46,15 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 					</div>
 					<div className="trace-duration">
 						<Timer size={14} />
-						<Typography.Text className="text">{duration}</Typography.Text>
+						<Typography.Text className="text">
+							{getYAxisFormattedValue(`${duration}`, 'ms')}
+						</Typography.Text>
 					</div>
 					<div className="start-time-info">
 						<CalendarClock size={14} />
-						<Typography.Text className="text">{startTime}</Typography.Text>
+						<Typography.Text className="text">
+							{getFormattedDateWithMinutesAndSeconds(startTime)}
+						</Typography.Text>
 					</div>
 				</div>
 			</section>

@@ -3,10 +3,51 @@ import './TraceDetailV2.styles.scss';
 import { Button, Tabs, Typography } from 'antd';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
-import TraceWaterfall from 'container/TraceWaterfall/TraceWaterfall';
+import TraceWaterfall, {
+	IInterestedSpan,
+} from 'container/TraceWaterfall/TraceWaterfall';
+import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Braces, DraftingCompass } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 function TraceDetailsV2(): JSX.Element {
+	const { id: traceId } = useParams<TraceDetailV2URLProps>();
+	const urlQuery = useUrlQuery();
+	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
+		() => ({
+			spanId: urlQuery.get('spanId') || '',
+			isUncollapsed: urlQuery.get('spanId') !== '',
+		}),
+	);
+
+	useEffect(() => {
+		setInterestedSpanId({
+			spanId: urlQuery.get('spanId') || '',
+			isUncollapsed: urlQuery.get('spanId') !== '',
+		});
+	}, [urlQuery]);
+
+	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
+	const {
+		data: traceData,
+		isFetching: isFetchingTraceData,
+		error: errorFetchingTraceData,
+	} = useGetTraceV2({
+		traceId,
+		uncollapsedNodes,
+		interestedSpanId: interestedSpanId.spanId,
+		isInterestedSpanIdUnCollapsed: interestedSpanId.isUncollapsed,
+	});
+
+	useEffect(() => {
+		if (traceData && traceData.payload && traceData.payload.uncollapsedNodes) {
+			setUncollapsedNodes(traceData.payload.uncollapsedNodes);
+		}
+	}, [traceData]);
+
 	const items = [
 		{
 			label: (
@@ -22,7 +63,15 @@ function TraceDetailsV2(): JSX.Element {
 			children: (
 				<>
 					<TraceFlamegraph />
-					<TraceWaterfall />
+					<TraceWaterfall
+						traceData={traceData}
+						isFetchingTraceData={isFetchingTraceData}
+						errorFetchingTraceData={errorFetchingTraceData}
+						traceId={traceId}
+						interestedSpanId={interestedSpanId}
+						setInterestedSpanId={setInterestedSpanId}
+						uncollapsedNodes={uncollapsedNodes}
+					/>
 				</>
 			),
 		},
@@ -44,9 +93,12 @@ function TraceDetailsV2(): JSX.Element {
 	return (
 		<div className="trace-layout">
 			<TraceMetadata
-				traceID="00000000000000003797aaa32a57bed0"
-				duration="XX"
-				startTime="XX"
+				traceID={traceId}
+				duration={
+					(traceData?.payload?.endTimestampMillis || 0) -
+					(traceData?.payload?.startTimestampMillis || 0)
+				}
+				startTime={(traceData?.payload?.startTimestampMillis || 0) / 1e3}
 				rootServiceName="XXXX"
 				rootSpanName="YYY"
 				totalErrorSpans={13}
