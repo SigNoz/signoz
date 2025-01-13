@@ -6,6 +6,7 @@
 	"api_keys": "API Keys",
 	"my_settings": "My Settings",
 	"overview_metrics": "Overview Metrics",
+	"custom_domain_settings": "Custom Domain Settings",
 	"dbcall_metrics": "Database Calls",
 	"external_metrics": "External Calls",
 	"pipeline": "Pipeline",

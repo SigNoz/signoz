@@ -32,6 +32,7 @@ import (
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/signoz"
 	"go.signoz.io/signoz/pkg/web"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -39,6 +40,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
@@ -62,6 +64,7 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
+	SigNoz            *signoz.SigNoz
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
@@ -109,7 +112,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 }
 
 // NewServer creates and initializes Server
-func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
+func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
@@ -219,6 +222,13 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 		)
 	}
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't create cloud provider integrations controller: %w", err,
+		)
+	}
+
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
@@ -269,6 +279,7 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 		FeatureFlags:                  lm,
 		LicenseManager:                lm,
 		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
@@ -291,7 +302,7 @@ func NewServer(serverOptions *ServerOptions, web *web.Web) (*Server, error) {
 		usageManager:       usageManager,
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler, web)
+	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
 
 	if err != nil {
 		return nil, err
@@ -368,6 +379,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
+	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)

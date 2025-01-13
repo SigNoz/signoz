@@ -69,6 +69,8 @@ const DashboardContext = createContext<IDashboardContext>({
 	updateLocalStorageDashboardVariables: () => {},
 	variablesToGetUpdated: [],
 	setVariablesToGetUpdated: () => {},
+	dashboardQueryRangeCalled: false,
+	setDashboardQueryRangeCalled: () => {},
 });
 
 interface Props {
@@ -84,6 +86,11 @@ export function DashboardProvider({
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
+
+	const [
+		dashboardQueryRangeCalled,
+		setDashboardQueryRangeCalled,
+	] = useState<boolean>(false);
 
 	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
@@ -407,6 +414,8 @@ export function DashboardProvider({
 			updateLocalStorageDashboardVariables,
 			variablesToGetUpdated,
 			setVariablesToGetUpdated,
+			dashboardQueryRangeCalled,
+			setDashboardQueryRangeCalled,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -424,6 +433,8 @@ export function DashboardProvider({
 			currentDashboard,
 			variablesToGetUpdated,
 			setVariablesToGetUpdated,
+			dashboardQueryRangeCalled,
+			setDashboardQueryRangeCalled,
 		],
 	);
 

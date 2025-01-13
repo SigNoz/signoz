@@ -40,7 +40,7 @@ function OptionRenderer({
 interface OptionRendererProps {
 	label: string;
 	value: string;
-	dataType: string;
+	dataType: string | undefined;
 	type: string;
 }
 

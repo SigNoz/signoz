@@ -49,6 +49,14 @@ $dark-theme: 'darkMode';
 				display: flex;
 				align-items: center;
 				gap: 16px;
+
+				.ant-btn-link {
+					color: var(--text-vanilla-400);
+
+					.#{$light-theme} & {
+						color: var(--text-ink-200);
+					}
+				}
 			}
 		}
 		.ant-modal-content {

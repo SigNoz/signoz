@@ -33,6 +33,7 @@
 	"ORG_SETTINGS": "SigNoz | Organization Settings",
 	"INGESTION_SETTINGS": "SigNoz | Ingestion Settings",
 	"API_KEYS": "SigNoz | API Keys",
+	"CUSTOM_DOMAIN_SETTINGS": "SigNoz | Custom Domain Settings",
 	"SOMETHING_WENT_WRONG": "SigNoz | Something Went Wrong",
 	"UN_AUTHORIZED": "SigNoz | Unauthorized",
 	"NOT_FOUND": "SigNoz | Page Not Found",
@@ -55,5 +56,6 @@
 	"ALERT_HISTORY": "SigNoz | Alert Rule History",
 	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
 	"MESSAGING_QUEUES": "SigNoz | Messaging Queues",
-	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring"
+	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring",
+	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring"
 }
