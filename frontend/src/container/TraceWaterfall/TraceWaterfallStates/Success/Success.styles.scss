@@ -2,11 +2,12 @@
 	overflow-y: hidden;
 	overflow-x: hidden;
 	max-width: 100%;
-	padding: 0px 20px;
 
 	.waterfall-table {
 		height: 50vh;
 		overflow: auto;
+		overflow-x: hidden;
+		padding: 0px 20px;
 
 		// default table overrides css for table v3
 		.div-table {

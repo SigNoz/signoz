@@ -44,7 +44,7 @@ function TraceDetailsV2(): JSX.Element {
 	return (
 		<div className="trace-layout">
 			<TraceMetadata
-				traceID="XXX"
+				traceID="00000000000000003797aaa32a57bed0"
 				duration="XX"
 				startTime="XX"
 				rootServiceName="XXXX"
