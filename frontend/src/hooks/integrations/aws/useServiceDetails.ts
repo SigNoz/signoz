@@ -1,5 +1,5 @@
 import { getServiceDetails } from 'api/integrations/aws';
-import { ServiceData } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
+import { ServiceData } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useQuery, UseQueryResult } from 'react-query';
 
 export const SERVICE_DETAILS_QUERY_KEY = ['aws-service-details'];
@@ -12,11 +12,7 @@ export function useServiceDetails(
 		[...SERVICE_DETAILS_QUERY_KEY, serviceId, accountId],
 		() => getServiceDetails(serviceId, accountId),
 		{
-<<<<<<< HEAD
 			enabled: !!serviceId,
-=======
-			enabled: Boolean(serviceId),
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 		},
 	);
 }

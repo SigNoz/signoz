@@ -1,43 +1,21 @@
-import axios from 'api';
+import axios from 'axios';
 import {
 	CloudAccount,
 	Service,
 	ServiceData,
-<<<<<<< HEAD
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import {
 	AccountConfigPayload,
 	AccountConfigResponse,
 	ConnectionUrlResponse,
 } from 'types/api/integrations/aws';
-=======
-} from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
-<<<<<<< HEAD
-import { ConnectionUrlResponse } from 'types/api/integrations/aws';
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
-=======
-import {
-	AccountConfigPayload,
-	AccountConfigResponse,
-	ConnectionUrlResponse,
-} from 'types/api/integrations/aws';
->>>>>>> b0fb28fc6 (feat: account settings)
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get(
 		'http://localhost:3000/api/v1/cloud-integrations/aws/accounts',
 	);
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 	return response.data.data;
-=======
-	return response.data.data.accounts;
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
-=======
-
-	return response.data.data;
->>>>>>> bfef06ee7 (feat: get accounts from json-server API, and redirect Add new account to the integrations modal)
 };
 
 export const getAwsServices = async (
@@ -50,11 +28,8 @@ export const getAwsServices = async (
 			params,
 		},
 	);
-<<<<<<< HEAD
+
 	return response.data.data;
-=======
-	return response.data.data.services;
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
 };
 
 export const getServiceDetails = async (
@@ -80,10 +55,6 @@ export const generateConnectionUrl = async (params: {
 	);
 	return response.data.data;
 };
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> b0fb28fc6 (feat: account settings)
 
 export const updateAccountConfig = async (
 	accountId: string,
@@ -95,8 +66,3 @@ export const updateAccountConfig = async (
 	);
 	return response.data;
 };
-<<<<<<< HEAD
-=======
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration)
-=======
->>>>>>> b0fb28fc6 (feat: account settings)
