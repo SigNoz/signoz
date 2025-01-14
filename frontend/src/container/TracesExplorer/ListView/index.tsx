@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -18,7 +19,7 @@ import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -145,12 +146,24 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
-	const isDataPresent =
+	const isDataAbsent =
 		!isLoading &&
 		!isFetching &&
 		!isError &&
 		transformedQueryTableData.length === 0;
 
+	useEffect(() => {
+		if (
+			!isLoading &&
+			!isFetching &&
+			!isError &&
+			transformedQueryTableData.length !== 0
+		) {
+			logEvent('Traces Explorer: Data present', {
+				panelType,
+			});
+		}
+	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
@@ -168,11 +181,11 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<TracesLoading />
 			)}
 
-			{isDataPresent && !isFilterApplied && (
+			{isDataAbsent && !isFilterApplied && (
 				<NoLogs dataSource={DataSource.TRACES} />
 			)}
 
-			{isDataPresent && isFilterApplied && (
+			{isDataAbsent && isFilterApplied && (
 				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
 			)}
 

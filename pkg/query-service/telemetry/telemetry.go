@@ -82,6 +82,19 @@ var OSS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_LICENSE_ACT_FAILED:       {},
 }
 
+type QueryInfoResult struct {
+	LogsUsed              bool
+	MetricsUsed           bool
+	TracesUsed            bool
+	FilterApplied         bool
+	GroupByApplied        bool
+	AggregateOperator     v3.AggregateOperator
+	AggregateAttributeKey string
+	QueryType             v3.QueryType
+	PanelType             v3.PanelType
+	NumberOfQueries       int
+}
+
 const api_key = "9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr"
 
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
@@ -107,43 +120,54 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool, bool) {
-	signozLogsUsed := false
-	signozMetricsUsed := false
-	signozTracesUsed := false
+func (telemetry *Telemetry) CheckQueryInfo(postData *v3.QueryRangeParamsV3) QueryInfoResult {
+	queryInfoResult := QueryInfoResult{}
+	if postData != nil && postData.CompositeQuery != nil {
+		queryInfoResult.PanelType = postData.CompositeQuery.PanelType
+		queryInfoResult.QueryType = postData.CompositeQuery.QueryType
+		if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+			queryInfoResult.NumberOfQueries = len(postData.CompositeQuery.BuilderQueries)
+			for _, query := range postData.CompositeQuery.BuilderQueries {
+				if query.DataSource == v3.DataSourceLogs {
+					queryInfoResult.LogsUsed = true
+				} else if query.DataSource == v3.DataSourceMetrics {
+					queryInfoResult.MetricsUsed = true
 
-	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		for _, query := range postData.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceLogs && query.Filters != nil && len(query.Filters.Items) > 0 {
-				signozLogsUsed = true
-			} else if query.DataSource == v3.DataSourceMetrics &&
-				!strings.Contains(query.AggregateAttribute.Key, "signoz_") &&
-				len(query.AggregateAttribute.Key) > 0 {
-				signozMetricsUsed = true
-			} else if query.DataSource == v3.DataSourceTraces && query.Filters != nil && len(query.Filters.Items) > 0 {
-				signozTracesUsed = true
+				} else if query.DataSource == v3.DataSourceTraces {
+					queryInfoResult.TracesUsed = true
+				}
+				if query.Filters != nil && len(query.Filters.Items) > 0 {
+					queryInfoResult.FilterApplied = true
+				}
+				if query.GroupBy != nil && len(query.GroupBy) > 0 {
+					queryInfoResult.GroupByApplied = true
+				}
+				queryInfoResult.AggregateOperator = query.AggregateOperator
+				if len(query.AggregateAttribute.Key) > 0 && !strings.Contains(query.AggregateAttribute.Key, "signoz_") {
+					queryInfoResult.AggregateAttributeKey = query.AggregateAttribute.Key
+				}
 			}
-		}
-	} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
-		for _, query := range postData.CompositeQuery.PromQueries {
-			if !strings.Contains(query.Query, "signoz_") && len(query.Query) > 0 {
-				signozMetricsUsed = true
+		} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			for _, query := range postData.CompositeQuery.PromQueries {
+				if !strings.Contains(query.Query, "signoz_") && len(query.Query) > 0 {
+					queryInfoResult.MetricsUsed = true
+				}
 			}
-		}
-	} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
-		for _, query := range postData.CompositeQuery.ClickHouseQueries {
-			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
-				signozMetricsUsed = true
-			}
-			if strings.Contains(query.Query, "signoz_logs") && len(query.Query) > 0 {
-				signozLogsUsed = true
-			}
-			if strings.Contains(query.Query, "signoz_traces") && len(query.Query) > 0 {
-				signozTracesUsed = true
+		} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			for _, query := range postData.CompositeQuery.ClickHouseQueries {
+				if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
+					queryInfoResult.MetricsUsed = true
+				}
+				if strings.Contains(query.Query, "signoz_logs") && len(query.Query) > 0 {
+					queryInfoResult.LogsUsed = true
+				}
+				if strings.Contains(query.Query, "signoz_traces") && len(query.Query) > 0 {
+					queryInfoResult.TracesUsed = true
+				}
 			}
 		}
 	}
-	return signozLogsUsed, signozMetricsUsed, signozTracesUsed
+	return queryInfoResult
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
@@ -350,6 +374,7 @@ func createTelemetry() {
 						"dashboardWithTraceChQuery":       dashboardsInfo.DashboardsWithTraceChQuery,
 						"dashboardNamesWithTraceChQuery":  dashboardsInfo.DashboardNamesWithTraceChQuery,
 						"totalAlerts":                     alertsInfo.TotalAlerts,
+						"totalActiveAlerts":               alertsInfo.TotalActiveAlerts,
 						"alertsWithTSV2":                  alertsInfo.AlertsWithTSV2,
 						"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
 						"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
@@ -383,11 +408,38 @@ func createTelemetry() {
 							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
 						}
 					}
+					telemetry.SendIdentityEvent(map[string]interface{}{
+						"total_logs":                  totalLogs,
+						"total_traces":                totalSpans,
+						"total_metrics":               totalSamples,
+						"total_users":                 userCount,
+						"total_channels":              alertsInfo.TotalChannels,
+						"total_dashboards_with_panel": dashboardsInfo.TotalDashboardsWithPanelAndName,
+						"total_saved_views":           savedViewsInfo.TotalSavedViews,
+						"total_active_alerts":         alertsInfo.TotalActiveAlerts,
+						"total_traces_based_alerts":   alertsInfo.TracesBasedAlerts,
+						"total_logs_based_alerts":     alertsInfo.LogsBasedAlerts,
+						"total_metric_based_alerts":   alertsInfo.MetricBasedAlerts,
+						"total_anomaly_based_alerts":  alertsInfo.AnomalyBasedAlerts,
+						"total_metrics_based_panels":  dashboardsInfo.MetricBasedPanels,
+						"total_logs_based_panels":     dashboardsInfo.LogsBasedPanels,
+						"total_traces_based_panels":   dashboardsInfo.TracesBasedPanels,
+					})
 				}
 			}
 		}
 		if err != nil || apiErr != nil {
 			telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
+		}
+
+		if totalLogs > 0 {
+			telemetry.SendIdentityEvent(map[string]interface{}{"sent_logs": true})
+		}
+		if totalSpans > 0 {
+			telemetry.SendIdentityEvent(map[string]interface{}{"sent_traces": true})
+		}
+		if totalSamples > 0 {
+			telemetry.SendIdentityEvent(map[string]interface{}{"sent_metrics": true})
 		}
 
 		getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(ctx)
@@ -514,6 +566,42 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 			UserId:  a.ipAddress,
 			GroupId: a.getCompanyDomain(),
 			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		})
+	}
+}
+
+func (a *Telemetry) SendIdentityEvent(data map[string]interface{}) {
+
+	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
+		return
+	}
+	traits := analytics.NewTraits()
+
+	for k, v := range data {
+		traits.Set(k, v)
+	}
+	if a.saasOperator != nil {
+
+		a.saasOperator.Enqueue(analytics.Identify{
+			UserId: a.GetUserEmail(),
+			Traits: traits,
+		})
+		a.saasOperator.Enqueue(analytics.Group{
+			UserId:  a.userEmail,
+			GroupId: a.getCompanyDomain(),
+			Traits:  traits,
+		})
+	}
+	if a.ossOperator != nil {
+		a.ossOperator.Enqueue(analytics.Identify{
+			UserId: a.ipAddress,
+			Traits: traits,
+		})
+		// Updating a groups properties
+		a.ossOperator.Enqueue(analytics.Group{
+			UserId:  a.ipAddress,
+			GroupId: a.getCompanyDomain(),
+			Traits:  traits,
 		})
 	}
 }

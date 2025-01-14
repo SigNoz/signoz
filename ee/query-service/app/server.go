@@ -512,32 +512,29 @@ func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}
 		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
-	signozMetricsUsed := false
-	signozLogsUsed := false
-	signozTracesUsed := false
-	if postData != nil {
+	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
 
-		if postData.CompositeQuery != nil {
-			data["queryType"] = postData.CompositeQuery.QueryType
-			data["panelType"] = postData.CompositeQuery.PanelType
-
-			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
-		}
-	}
-
-	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
-		if signozMetricsUsed {
+	if (queryInfoResult.MetricsUsed || queryInfoResult.LogsUsed || queryInfoResult.TracesUsed) && (queryInfoResult.FilterApplied) {
+		if queryInfoResult.MetricsUsed {
 			telemetry.GetInstance().AddActiveMetricsUser()
 		}
-		if signozLogsUsed {
+		if queryInfoResult.LogsUsed {
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
-		if signozTracesUsed {
+		if queryInfoResult.TracesUsed {
 			telemetry.GetInstance().AddActiveTracesUser()
 		}
-		data["metricsUsed"] = signozMetricsUsed
-		data["logsUsed"] = signozLogsUsed
-		data["tracesUsed"] = signozTracesUsed
+		data["metricsUsed"] = queryInfoResult.MetricsUsed
+		data["logsUsed"] = queryInfoResult.LogsUsed
+		data["tracesUsed"] = queryInfoResult.TracesUsed
+		data["filterApplied"] = queryInfoResult.FilterApplied
+		data["groupByApplied"] = queryInfoResult.GroupByApplied
+		data["aggregateOperator"] = queryInfoResult.AggregateOperator
+		data["aggregateAttributeKey"] = queryInfoResult.AggregateAttributeKey
+		data["numberOfQueries"] = queryInfoResult.NumberOfQueries
+		data["queryType"] = queryInfoResult.QueryType
+		data["panelType"] = queryInfoResult.PanelType
+
 		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 		if err == nil {
 			// switch case to set data["screen"] based on the referrer
