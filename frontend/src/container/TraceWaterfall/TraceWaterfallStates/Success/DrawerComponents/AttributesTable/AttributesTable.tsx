@@ -18,15 +18,13 @@ function AttributesTable(props: IAttributesTable): JSX.Element {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const flattenSpanData: Record<string, string> = useMemo(
-		() => (span ? flattenObject(span) : {}),
+		() => (span.tagMap ? flattenObject(span.tagMap) : {}),
 		[span],
 	);
 
 	const datasource = Object.keys(flattenSpanData)
 		.filter((attribute) => attribute.includes(fieldSearchInput))
 		.map((key) => ({ field: key, value: flattenSpanData[key] }));
-
-	console.log(flattenSpanData, datasource);
 
 	const columns: ColumnsType<Record<string, string>> = [
 		{
@@ -47,8 +45,10 @@ function AttributesTable(props: IAttributesTable): JSX.Element {
 			width: 50,
 			ellipsis: false,
 			className: 'attribute-value',
-			render: (): JSX.Element => (
-				<Typography.Text className="field-value">X</Typography.Text>
+			render: (fieldValue): JSX.Element => (
+				<Typography.Text className="field-value">
+					{fieldValue.value}
+				</Typography.Text>
 			),
 		},
 	];

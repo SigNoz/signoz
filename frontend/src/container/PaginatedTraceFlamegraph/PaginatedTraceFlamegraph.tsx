@@ -102,7 +102,6 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 				<div className="stats">
 					{Object.keys(serviceExecTime).map((service) => {
 						const spread = endTime - startTime;
-						console.log(spread, serviceExecTime[service] / 1e6);
 						const value = ((serviceExecTime[service] / 1e6) * 100) / spread;
 						return (
 							<div key={service} className="value-row">
