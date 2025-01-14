@@ -142,13 +142,11 @@
 					height: 12px;
 					top: 35%;
 					border-radius: 2px;
-					background: var(--bg-cherry-500);
 				}
 
 				.span-line-text {
 					position: absolute;
 					top: 65%;
-					color: var(--bg-cherry-300);
 					font-variant-numeric: lining-nums tabular-nums stacked-fractions
 						slashed-zero;
 					font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;

@@ -5,8 +5,11 @@ import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Typography } from 'antd';
 import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
+import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
 import {
@@ -49,6 +52,16 @@ function SpanOverview({
 }): JSX.Element {
 	const isRootSpan = span.parentSpanId === '';
 	const spanRef = useRef<HTMLDivElement>(null);
+	const isDarkMode = useIsDarkMode();
+
+	let color = generateColor(
+		span.serviceName,
+		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+	);
+
+	if (span.hasError) {
+		color = `var(--bg-cherry-500)`;
+	}
 
 	return (
 		<div
@@ -105,7 +118,7 @@ function SpanOverview({
 					<Typography.Text className="span-name">{span.name}</Typography.Text>
 				</section>
 				<section className="second-row">
-					<div style={{ width: '1px', background: 'lightgray', height: '100%' }} />
+					<div style={{ width: '2px', background: color, height: '100%' }} />
 					<Typography.Text className="service-name">
 						{span.serviceName}
 					</Typography.Text>
@@ -133,6 +146,16 @@ function SpanDuration({
 	const spread = traceMetadata.endTime - traceMetadata.startTime;
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
+	const isDarkMode = useIsDarkMode();
+
+	let color = generateColor(
+		span.serviceName,
+		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+	);
+
+	if (span.hasError) {
+		color = `var(--bg-cherry-500)`;
+	}
 
 	return (
 		<div
@@ -143,11 +166,15 @@ function SpanDuration({
 		>
 			<div
 				className="span-line"
-				style={{ left: `${leftOffset}%`, width: `${width}%` }}
+				style={{
+					left: `${leftOffset}%`,
+					width: `${width}%`,
+					backgroundColor: color,
+				}}
 			/>
 			<Typography.Text
 				className="span-line-text"
-				style={{ left: `${leftOffset}%` }}
+				style={{ left: `${leftOffset}%`, color }}
 			>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 		</div>
 	);

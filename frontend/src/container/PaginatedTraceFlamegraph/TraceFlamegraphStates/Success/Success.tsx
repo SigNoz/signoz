@@ -4,6 +4,9 @@ import './Success.styles.scss';
 
 import { Tooltip } from 'antd';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
+import { themeColors } from 'constants/theme';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso } from 'react-virtuoso';
@@ -24,6 +27,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	const { spans, setLevel, traceMetadata } = props;
 	const { search } = useLocation();
 	const history = useHistory();
+	const isDarkMode = useIsDarkMode();
 	const renderSpanLevel = useCallback(
 		(_: number, spans: FlamegraphSpan[]): JSX.Element => (
 			<div className="flamegraph-row">
@@ -37,11 +41,24 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 					const toolTipText = `${span.name}`;
 					const searchParams = new URLSearchParams(search);
+
+					let color = generateColor(
+						span.serviceName,
+						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+					);
+
+					if (span.hasError) {
+						color = `var(--bg-cherry-500)`;
+					}
 					return (
 						<Tooltip title={toolTipText} key={span.spanId}>
 							<div
 								className="span-item"
-								style={{ left: `${leftOffset}%`, width: `${width}%` }}
+								style={{
+									left: `${leftOffset}%`,
+									width: `${width}%`,
+									backgroundColor: color,
+								}}
 								onClick={(event): void => {
 									event.stopPropagation();
 									event.preventDefault();
