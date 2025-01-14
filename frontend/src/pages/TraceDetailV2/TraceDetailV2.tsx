@@ -62,7 +62,11 @@ function TraceDetailsV2(): JSX.Element {
 			key: 'flamegraph',
 			children: (
 				<>
-					<TraceFlamegraph />
+					<TraceFlamegraph
+						serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap || {}}
+						startTime={traceData?.payload?.startTimestampMillis || 0}
+						endTime={traceData?.payload?.endTimestampMillis || 0}
+					/>
 					<TraceWaterfall
 						traceData={traceData}
 						isFetchingTraceData={isFetchingTraceData}

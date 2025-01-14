@@ -1,6 +1,6 @@
 import './PaginatedTraceFlamegraph.styles.scss';
 
-import { Typography } from 'antd';
+import { Progress, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
@@ -13,7 +13,14 @@ import Error from './TraceFlamegraphStates/Error/Error';
 import NoData from './TraceFlamegraphStates/NoData/NoData';
 import Success from './TraceFlamegraphStates/Success/Success';
 
-function TraceFlamegraph(): JSX.Element {
+interface ITraceFlamegraphProps {
+	serviceExecTime: Record<string, number>;
+	startTime: number;
+	endTime: number;
+}
+
+function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
+	const { serviceExecTime, startTime, endTime } = props;
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const [level, setLevel] = useState<number>(0);
 	const { data, isFetching, error } = useGetTraceFlamegraph({
@@ -91,7 +98,20 @@ function TraceFlamegraph(): JSX.Element {
 		<div className="flamegraph">
 			<div className="flamegraph-chart">{getContent}</div>
 			<div className="flamegraph-stats">
-				<Typography.Text>%age exec times</Typography.Text>
+				<div className="exec-time-service">% exec time</div>
+				<div className="stats">
+					{Object.keys(serviceExecTime).map((service) => {
+						const spread = endTime - startTime;
+						console.log(spread, serviceExecTime[service] / 1e6);
+						const value = ((serviceExecTime[service] / 1e6) * 100) / spread;
+						return (
+							<div key={service} className="value-row">
+								<Typography.Text className="service-name">{service}</Typography.Text>
+								<Progress percent={value} className="service-progress-indicator" />
+							</div>
+						);
+					})}
+				</div>
 			</div>
 		</div>
 	);

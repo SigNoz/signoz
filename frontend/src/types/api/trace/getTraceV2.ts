@@ -42,4 +42,5 @@ export interface GetTraceV2SuccessResponse {
 	totalErrorSpansCount: number;
 	rootServiceName: string;
 	rootServiceEntryPoint: string;
+	serviceNameToTotalDurationMap: Record<string, number>;
 }

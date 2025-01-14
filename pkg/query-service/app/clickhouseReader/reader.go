@@ -1476,7 +1476,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		serviceNameToTotalDurationMap = cachedTraceData.ServiceNameToTotalDurationMap
 		traceRoots = cachedTraceData.TraceRoots
 		response.TotalSpansCount = cachedTraceData.TotalSpans
-		response.TotalErrorSpansCount = cachedTraceData.TotalErrorSpans
+		totalErrorSpans = cachedTraceData.TotalErrorSpans
 	}
 
 	if !useCache {
