@@ -1,8 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Form, Select, Switch } from 'antd';
+import { Form, Select, Switch } from 'antd';
 import cx from 'classnames';
 import { useAccountStatus } from 'hooks/integrations/aws/useAccountStatus';
-import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useRef } from 'react';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 
@@ -26,8 +26,6 @@ export function RegionForm({
 	setModalState,
 	selectedRegions,
 	includeAllRegions,
-	isLoading,
-	isGeneratingUrl,
 	onIncludeAllRegionsChange,
 	onRegionSelect,
 	onSubmit,
@@ -167,24 +165,6 @@ export function RegionForm({
 						or latency reasons.
 					</div>
 				</div>
-				<Form.Item>
-					<Button
-						type="primary"
-						htmlType="submit"
-						className="cloud-account-setup-form__submit-button"
-						loading={isLoading || isGeneratingUrl}
-						disabled={
-							!form.getFieldValue('region') ||
-							selectedRegions?.length === 0 ||
-							isGeneratingUrl ||
-							isFormDisabled
-						}
-						block
-					>
-						Launch Cloud Formation Template
-						<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />
-					</Button>
-				</Form.Item>
 			</div>
 		</Form>
 	);

@@ -1,17 +1,12 @@
 import './CloudAccountSetupModal.style.scss';
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Button } from 'antd';
-=======
-import { Button, Form } from 'antd';
->>>>>>> 4e8aae120 (feat: integrate now modal states and json server API integration)
-=======
-import { Button } from 'antd';
->>>>>>> 294b1e1d3 (refactor: make account settings modal more readable and overall improvements)
+import { Color } from '@signozhq/design-tokens';
 import SignozModal from 'components/SignozModal/SignozModal';
+import ROUTES from 'constants/routes';
 import { useIntegrationModal } from 'hooks/integrations/aws/useIntegrationModal';
+import { SquareArrowOutUpRight } from 'lucide-react';
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import {
 	ActiveViewEnum,
@@ -21,59 +16,6 @@ import {
 import { RegionForm } from './RegionForm';
 import { RegionSelector } from './RegionSelector';
 import { SuccessView } from './SuccessView';
-
-function getModalTitle(
-	activeView: ActiveViewEnum,
-	modalState: ModalStateEnum,
-): string {
-	if (
-		activeView === ActiveViewEnum.SELECT_REGIONS &&
-		modalState === ModalStateEnum.FORM
-	) {
-		return 'Which regions do you want to monitor?';
-	}
-	if (modalState === ModalStateEnum.SUCCESS) {
-		return 'AWS Webservice Integration';
-	}
-	return 'Add AWS Account';
-}
-
-function getModalFooter(
-	activeView: ActiveViewEnum,
-	selectedRegions: string[],
-	allRegions: string[],
-	onClose: () => void,
-	onSetActiveView: () => void,
-): React.ReactNode[] | null {
-	if (activeView === ActiveViewEnum.SELECT_REGIONS) {
-		return [
-			<Button
-				onClick={onClose}
-				type="default"
-				className="account-setup-modal-footer__close-button"
-				key="close-button"
-			>
-				Close
-			</Button>,
-			<Button
-				onClick={onSetActiveView}
-				className="account-setup-modal-footer__confirm-button"
-				type="primary"
-				key="confirm-selection"
-			>
-				Confirm Selection{' '}
-				<span className="account-setup-modal-footer__confirm-selection-count">
-					(
-					{selectedRegions.includes('all')
-						? allRegions.length
-						: selectedRegions.length}
-					)
-				</span>
-			</Button>,
-		];
-	}
-	return null;
-}
 
 function CloudAccountSetupModal({
 	isOpen,
@@ -123,14 +65,14 @@ function CloudAccountSetupModal({
 				setModalState={setModalState}
 				selectedRegions={selectedRegions}
 				includeAllRegions={includeAllRegions}
-				isLoading={isLoading}
-				isGeneratingUrl={isGeneratingUrl}
 				onIncludeAllRegionsChange={handleIncludeAllRegionsChange}
 				onRegionSelect={handleRegionSelect}
 				onSubmit={handleSubmit}
 				accountId={accountId}
 				selectedDeploymentRegion={selectedDeploymentRegion}
 				handleRegionChange={handleRegionChange}
+				isLoading={false}
+				isGeneratingUrl={false}
 			/>
 		);
 	}, [
@@ -140,8 +82,6 @@ function CloudAccountSetupModal({
 		setModalState,
 		selectedRegions,
 		includeAllRegions,
-		isLoading,
-		isGeneratingUrl,
 		handleIncludeAllRegionsChange,
 		handleRegionSelect,
 		handleSubmit,
@@ -152,19 +92,91 @@ function CloudAccountSetupModal({
 		setIncludeAllRegions,
 	]);
 
+	const getSelectedRegionsCount = useCallback(
+		(): number =>
+			selectedRegions.includes('all') ? allRegions.length : selectedRegions.length,
+		[selectedRegions, allRegions],
+	);
+
+	const navigate = useNavigate();
+	const handleGoToDashboards = useCallback((): void => {
+		navigate(ROUTES.ALL_DASHBOARD);
+	}, [navigate]);
+
+	const getModalConfig = useCallback(() => {
+		// Handle success state first
+		if (modalState === ModalStateEnum.SUCCESS) {
+			return {
+				title: 'AWS Webservice Integration',
+				okText: (
+					<div className="cloud-account-setup-success-view__footer-button">
+						Go to Dashboards
+					</div>
+				),
+				block: true,
+				onOk: handleGoToDashboards,
+				cancelButtonProps: { style: { display: 'none' } },
+				disabled: false,
+			};
+		}
+
+		// Handle other views
+		const viewConfigs = {
+			[ActiveViewEnum.FORM]: {
+				title: 'Add AWS Account',
+				okText: (
+					<div className="cloud-account-setup-form__submit-button-content">
+						Launch Cloud Formation Template{' '}
+						<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />
+					</div>
+				),
+				onOk: handleSubmit,
+				disabled:
+					isLoading || isGeneratingUrl || modalState === ModalStateEnum.WAITING,
+				cancelButtonProps: { style: { display: 'none' } },
+			},
+			[ActiveViewEnum.SELECT_REGIONS]: {
+				title: 'Which regions do you want to monitor?',
+				okText: `Confirm Selection (${getSelectedRegionsCount()})`,
+				onOk: (): void => setActiveView(ActiveViewEnum.FORM),
+				isLoading: isLoading || isGeneratingUrl,
+				cancelButtonProps: { style: { display: 'block' } },
+				disabled: false,
+			},
+		};
+
+		return viewConfigs[activeView];
+	}, [
+		modalState,
+		handleSubmit,
+		getSelectedRegionsCount,
+		isLoading,
+		isGeneratingUrl,
+		activeView,
+		handleGoToDashboards,
+		setActiveView,
+	]);
+
+	const modalConfig = getModalConfig();
+
 	return (
 		<SignozModal
 			open={isOpen}
 			className="cloud-account-setup-modal"
-			title={getModalTitle(activeView, modalState)}
+			title={modalConfig.title}
 			onCancel={handleClose}
-			footer={getModalFooter(
-				activeView,
-				selectedRegions,
-				allRegions,
-				handleClose,
-				() => setActiveView(ActiveViewEnum.FORM),
-			)}
+			onOk={modalConfig.onOk}
+			okText={modalConfig.okText}
+			okButtonProps={{
+				loading: isLoading,
+				disabled: selectedRegions.length === 0 || modalConfig.disabled,
+				className:
+					activeView === ActiveViewEnum.FORM
+						? 'cloud-account-setup-form__submit-button'
+						: 'account-setup-modal-footer__confirm-button',
+				block: activeView === ActiveViewEnum.FORM,
+			}}
+			cancelButtonProps={modalConfig.cancelButtonProps}
 			width={672}
 		>
 			{renderContent()}
