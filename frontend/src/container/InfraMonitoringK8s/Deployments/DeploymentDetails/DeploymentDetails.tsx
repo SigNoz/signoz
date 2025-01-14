@@ -87,7 +87,7 @@ function DeploymentDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_NODE_NAME,
+						key: QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
@@ -100,7 +100,7 @@ function DeploymentDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_CLUSTER_NAME,
+						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
@@ -108,11 +108,11 @@ function DeploymentDetails({
 						id: 'k8s_deployment_name--string--resource--false',
 					},
 					op: '=',
-					value: deployment?.meta.k8s_cluster_name || '',
+					value: deployment?.meta.k8s_namespace_name || '',
 				},
 			],
 		}),
-		[deployment?.meta.k8s_deployment_name, deployment?.meta.k8s_cluster_name],
+		[deployment?.meta.k8s_deployment_name, deployment?.meta.k8s_namespace_name],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -223,14 +223,15 @@ function DeploymentDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
 					(item) =>
-						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
+						item.key?.key !== 'id' &&
+						item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 				);
 
 				logEvent(
@@ -258,7 +259,7 @@ function DeploymentDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
@@ -275,7 +276,7 @@ function DeploymentDetails({
 					items: [
 						...primaryFilters,
 						...value.items.filter(
-							(item) => item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
+							(item) => item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};

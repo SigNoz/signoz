@@ -49,7 +49,7 @@ function PodLogs({
 		const newRestFilters = filters.items.filter(
 			(item) =>
 				item.key?.key !== 'id' &&
-				![QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+				![QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 					item.key?.key ?? '',
 				),
 		);
