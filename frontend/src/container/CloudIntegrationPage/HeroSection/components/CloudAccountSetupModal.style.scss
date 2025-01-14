@@ -19,30 +19,6 @@
 		}
 	}
 
-	.ant-select {
-		border-radius: 2px !important;
-		&-selector {
-			background: var(--bg-ink-300) !important;
-			border: 1px solid var(--bg-slate-400) !important;
-			border-radius: 2px !important;
-		}
-	}
-
-	.ant-select-dropdown {
-		background: var(--bg-ink-400);
-		border: 1px solid var(--bg-ink-300);
-		-webkit-backdrop-filter: blur(20px);
-		backdrop-filter: blur(20px);
-	}
-
-	.ant-select-item {
-		color: var(--bg-vanilla-100);
-
-		&-option-selected {
-			background: var(--bg-ink-300);
-		}
-	}
-
 	.cloud-account-setup-form {
 		.disabled {
 			opacity: 0.4;
@@ -58,7 +34,7 @@
 				padding: 12px;
 				border-radius: 6px;
 				font-size: 14px;
-				line-height: 22px; /* 157.143% */
+				line-height: 22px;
 				letter-spacing: -0.07px;
 			}
 			&.ant-alert-error {
