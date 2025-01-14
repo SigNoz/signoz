@@ -15,28 +15,32 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, uncollapsedSpans *[]string, isSelectedSpanIDUnCollapsed bool) bool {
+func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, uncollapsedSpans []string, isSelectedSpanIDUnCollapsed bool) (bool, []string) {
+	spansFromRootToNode := []string{}
 	if node.SpanID == selectedSpanId {
 		if isSelectedSpanIDUnCollapsed {
-			*uncollapsedSpans = append(*uncollapsedSpans, node.SpanID)
+			spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
 		}
-		return true
+		return true, spansFromRootToNode
 	}
 	isPresentInSubtreeForTheNode := false
 	for _, child := range node.Children {
-		isPresentInThisSubtree := getPathFromRootToSelectedSpanId(child, selectedSpanId, uncollapsedSpans, isSelectedSpanIDUnCollapsed)
+		isPresentInThisSubtree, _spansFromRootToNode := getPathFromRootToSelectedSpanId(child, selectedSpanId, uncollapsedSpans, isSelectedSpanIDUnCollapsed)
 		// if the interested node is present in the given subtree then add the span node to uncollapsed node list
 		if isPresentInThisSubtree {
-			if !contains(*uncollapsedSpans, node.SpanID) {
-				*uncollapsedSpans = append(*uncollapsedSpans, node.SpanID)
+			if !contains(uncollapsedSpans, node.SpanID) {
+				spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
 			}
 			isPresentInSubtreeForTheNode = true
+			spansFromRootToNode = append(spansFromRootToNode, _spansFromRootToNode...)
 		}
 	}
-	return isPresentInSubtreeForTheNode
+	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
-func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []string, preorderTraversal *[]*model.Span, level uint64, isPartOfPreorder bool, hasSibling bool) {
+func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreorder bool, hasSibling bool, selectedSpanId string) ([]*model.Span, int) {
+	preOrderTraversal := []*model.Span{}
+	selectedSpanIndex := -1
 	sort.Slice(span.Children, func(i, j int) bool {
 		if span.Children[i].TimeUnixNano == span.Children[j].TimeUnixNano {
 			return span.Children[i].Name < span.Children[j].Name
@@ -67,13 +71,35 @@ func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []st
 		SubTreeNodeCount: 0,
 	}
 	if isPartOfPreorder {
-		*preorderTraversal = append(*preorderTraversal, &nodeWithoutChildren)
+		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
+		if nodeWithoutChildren.SpanID == selectedSpanId {
+			selectedSpanIndex = len(preOrderTraversal)
+		}
 	}
 
 	for index, child := range span.Children {
-		traverseTraceAndAddRequiredMetadata(child, uncollapsedSpans, preorderTraversal, level+1, isPartOfPreorder && contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1))
+		_childTraversal, _selectedSpanIndex := traverseTraceAndAddRequiredMetadata(child, uncollapsedSpans, level+1, isPartOfPreorder && contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
+		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
+		if _selectedSpanIndex != -1 {
+			selectedSpanIndex = _selectedSpanIndex
+		}
 		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
 		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
 	}
 
+	return preOrderTraversal, selectedSpanIndex
+
+}
+
+func bfsTraversalForTrace(span *model.FlamegraphSpan, level int64, bfsMap *map[int64][]*model.FlamegraphSpan) {
+	ok, exists := (*bfsMap)[level]
+	span.Level = level
+	if exists {
+		(*bfsMap)[level] = append(ok, span)
+	} else {
+		(*bfsMap)[level] = []*model.FlamegraphSpan{span}
+	}
+	for _, child := range span.Children {
+		bfsTraversalForTrace(child, level+1, bfsMap)
+	}
 }
