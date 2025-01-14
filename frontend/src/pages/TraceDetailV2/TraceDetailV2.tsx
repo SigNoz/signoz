@@ -104,7 +104,7 @@ function TraceDetailsV2(): JSX.Element {
 				totalErrorSpans={traceData?.payload?.totalErrorSpansCount || 0}
 				totalSpans={traceData?.payload?.totalSpansCount || 0}
 			/>
-			<Tabs items={items} animated className="settings-tabs" />;
+			<Tabs items={items} animated className="settings-tabs" />
 		</div>
 	);
 }
