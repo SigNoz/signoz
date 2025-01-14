@@ -1,54 +1,96 @@
 import './ConfigureServiceModal.styles.scss';
 
 import { Form, Modal, Switch } from 'antd';
+import {
+	ServiceConfig,
+	SupportedSignals,
+} from 'container/CloudIntegrationPage/ServicesSection/types';
+import { SERVICE_DETAILS_QUERY_KEY } from 'hooks/integrations/aws/useServiceDetails';
+import { useUpdateServiceConfig } from 'hooks/integrations/aws/useUpdateServiceConfig';
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 
 interface IConfigureServiceModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	serviceName: string;
+	serviceId: string;
+	cloudAccountId: string;
+	supportedSignals: SupportedSignals;
+	initialConfig?: ServiceConfig;
 }
 
 function ConfigureServiceModal({
 	isOpen,
 	onClose,
 	serviceName,
+	serviceId,
+	cloudAccountId,
+	initialConfig,
+	supportedSignals,
 }: IConfigureServiceModalProps): JSX.Element {
 	const [form] = Form.useForm();
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Track current form values
 	const [currentValues, setCurrentValues] = useState({
-		metrics: false,
-		logs: false,
+		metrics: initialConfig?.metrics?.enabled || false,
+		logs: initialConfig?.logs?.enabled || false,
 	});
 
-	// Watch form values in real time
-	const handleValuesChange = useCallback(
-		(changedValues: any, allValues: any) => {
-			setCurrentValues(allValues);
-		},
-		[],
-	);
+	const {
+		mutate: updateServiceConfig,
+		isLoading: isUpdating,
+	} = useUpdateServiceConfig();
+
+	const queryClient = useQueryClient();
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {
 			const values = await form.validateFields();
 			setIsLoading(true);
 
-			console.log('Form values:', values);
-			onClose();
+			updateServiceConfig(
+				{
+					serviceId,
+					payload: {
+						cloud_account_id: cloudAccountId,
+						config: {
+							logs: {
+								enabled: values.logs,
+							},
+							metrics: {
+								enabled: values.metrics,
+							},
+						},
+					},
+				},
+				{
+					onSuccess: () => {
+						queryClient.invalidateQueries([...SERVICE_DETAILS_QUERY_KEY, serviceId]);
+						onClose();
+					},
+					onError: (error) => {
+						console.error('Failed to update service config:', error);
+					},
+				},
+			);
 		} catch (error) {
 			console.error('Form submission failed:', error);
 		} finally {
 			setIsLoading(false);
 		}
-	}, [form, onClose]);
+	}, [
+		form,
+		updateServiceConfig,
+		serviceId,
+		cloudAccountId,
+		queryClient,
+		onClose,
+	]);
 
 	const isSaveDisabled = useMemo(
-		() =>
-			// Compare current values with initial values
-			currentValues.metrics === false && currentValues.logs === false,
+		() => currentValues.metrics === false && currentValues.logs === false,
 		[currentValues],
 	);
 
@@ -68,7 +110,7 @@ function ConfigureServiceModal({
 			okButtonProps={{
 				disabled: isSaveDisabled,
 				className: 'account-settings-modal__footer-save-button',
-				loading: isLoading,
+				loading: isLoading || isUpdating,
 			}}
 			onCancel={handleClose}
 			onOk={handleSubmit}
@@ -83,61 +125,71 @@ function ConfigureServiceModal({
 				form={form}
 				layout="vertical"
 				initialValues={{
-					metrics: false,
-					logs: false,
+					metrics: initialConfig?.metrics?.enabled || false,
+					logs: initialConfig?.logs?.enabled || false,
 				}}
-				onValuesChange={handleValuesChange}
 			>
 				<div className=" configure-service-modal__body">
-					<Form.Item
-						name="metrics"
-						valuePropName="checked"
-						className="configure-service-modal__body-form-item"
-					>
-						<div className="configure-service-modal__body-regions-switch-switch">
-							<Switch
-								checked={currentValues.metrics}
-								onChange={(checked): void => {
-									setCurrentValues((prev) => ({ ...prev, metrics: checked }));
-									// form.setFieldsValue({ metrics: checked });
-								}}
-							/>
-							<span className="configure-service-modal__body-regions-switch-switch-label">
-								Metric Collection
-							</span>
-						</div>
-						<div className="configure-service-modal__body-switch-description">
-							Metric Collection is enabled for this AWS account. We recommend keeping
-							this enabled, but you can disable metric collection if you do not want to
-							monitor your AWS infrastructure.
-						</div>
-					</Form.Item>
+					{supportedSignals.metrics && (
+						<Form.Item
+							name="metrics"
+							valuePropName="checked"
+							className="configure-service-modal__body-form-item"
+						>
+							<div className="configure-service-modal__body-regions-switch-switch">
+								<Switch
+									checked={currentValues.metrics}
+									onChange={(checked): void => {
+										setCurrentValues((prev) => ({ ...prev, metrics: checked }));
+										form.setFieldsValue({ metrics: checked });
+									}}
+								/>
+								<span className="configure-service-modal__body-regions-switch-switch-label">
+									Metric Collection
+								</span>
+							</div>
+							<div className="configure-service-modal__body-switch-description">
+								Metric Collection is enabled for this AWS account. We recommend keeping
+								this enabled, but you can disable metric collection if you do not want
+								to monitor your AWS infrastructure.
+							</div>
+						</Form.Item>
+					)}
 
-					<Form.Item
-						name="logs"
-						valuePropName="checked"
-						className="configure-service-modal__body-form-item"
-					>
-						<div className="configure-service-modal__body-regions-switch-switch">
-							<Switch
-								checked={currentValues.logs}
-								onChange={(checked): void => {
-									setCurrentValues((prev) => ({ ...prev, logs: checked }));
-									// form.setFieldsValue({ logs: checked });
-								}}
-							/>
-							<span className="configure-service-modal__body-regions-switch-switch-label">
-								Log Collection
-							</span>
-						</div>
-						<div className="configure-service-modal__body-switch-description">
-							To ingest logs from your AWS services, you must complete several steps
-						</div>
-					</Form.Item>
+					{supportedSignals.logs && (
+						<Form.Item
+							name="logs"
+							valuePropName="checked"
+							className="configure-service-modal__body-form-item"
+						>
+							<div className="configure-service-modal__body-regions-switch-switch">
+								<Switch
+									checked={currentValues.logs}
+									onChange={(checked): void => {
+										setCurrentValues((prev) => ({ ...prev, logs: checked }));
+										form.setFieldsValue({ logs: checked });
+									}}
+								/>
+								<span className="configure-service-modal__body-regions-switch-switch-label">
+									Log Collection
+								</span>
+							</div>
+							<div className="configure-service-modal__body-switch-description">
+								To ingest logs from your AWS services, you must complete several steps
+							</div>
+						</Form.Item>
+					)}
 				</div>
 			</Form>
 		</Modal>
 	);
 }
+
+ConfigureServiceModal.defaultProps = {
+	initialConfig: {
+		metrics: { enabled: false },
+		logs: { enabled: false },
+	},
+};
 
 export default ConfigureServiceModal;

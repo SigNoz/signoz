@@ -116,6 +116,10 @@ function ServiceDetails(): JSX.Element | null {
 				isOpen={isConfigureServiceModalOpen}
 				onClose={(): void => setIsConfigureServiceModalOpen(false)}
 				serviceName={serviceDetailsData.title}
+				serviceId={serviceId || ''}
+				cloudAccountId={accountId || ''}
+				initialConfig={serviceDetailsData.config}
+				supportedSignals={serviceDetailsData.supported_signals || {}}
 			/>
 		</div>
 	);

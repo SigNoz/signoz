@@ -3,6 +3,8 @@ import {
 	CloudAccount,
 	Service,
 	ServiceData,
+	UpdateServiceConfigPayload,
+	UpdateServiceConfigResponse,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import {
 	AccountConfigPayload,
@@ -64,5 +66,17 @@ export const updateAccountConfig = async (
 		`http://localhost:3000/api/v1/cloud-integrations/aws/accounts/${accountId}/config`,
 		payload,
 	);
+	return response.data;
+};
+
+export const updateServiceConfig = async (
+	serviceId: string,
+	payload: UpdateServiceConfigPayload,
+): Promise<UpdateServiceConfigResponse> => {
+	const response = await axios.post<UpdateServiceConfigResponse>(
+		`http://localhost:3000/api/v1/cloud-integrations/aws/services/${serviceId}/config`,
+		payload,
+	);
+	console.log({ serviceId });
 	return response.data;
 };
