@@ -3,18 +3,54 @@ import './ServicesTabs.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import type { SelectProps, TabsProps } from 'antd';
 import { Select, Tabs } from 'antd';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ChevronDown } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
+import { Service } from './types';
 
-const selectOptions: SelectProps['options'] = [
-	{ value: 'all_services', label: 'All Services (24)' },
-	{ value: 'enabled', label: 'Enabled (12)' },
-	{ value: 'available', label: 'Available (12)' },
-];
+interface ServicesFilterProps {
+	accountId: string;
+	onFilterChange: (value: 'all_services' | 'enabled' | 'available') => void;
+}
 
-function ServicesFilter(): JSX.Element {
+function ServicesFilter({
+	accountId,
+	onFilterChange,
+}: ServicesFilterProps): JSX.Element | null {
+	const queryClient = useQueryClient();
+	const services = queryClient.getQueryData<Service[]>([
+		REACT_QUERY_KEY.AWS_SERVICES,
+		accountId,
+	]);
+
+	const { enabledCount, availableCount } = useMemo(() => {
+		if (!services) return { enabledCount: 0, availableCount: 0 };
+
+		return services.reduce(
+			(acc, service) => {
+				const isEnabled =
+					service.config.logs.enabled || service.config.metrics.enabled;
+				return {
+					enabledCount: acc.enabledCount + (isEnabled ? 1 : 0),
+					availableCount: acc.availableCount + (isEnabled ? 0 : 1),
+				};
+			},
+			{ enabledCount: 0, availableCount: 0 },
+		);
+	}, [services]);
+
+	const selectOptions: SelectProps['options'] = [
+		{ value: 'all_services', label: `All Services (${services?.length || 0})` },
+		{ value: 'enabled', label: `Enabled (${enabledCount})` },
+		{ value: 'available', label: `Available (${availableCount})` },
+	];
+
+	if (services?.length === 0) return null;
+
 	return (
 		<div className="services-filter">
 			<Select
@@ -23,20 +59,26 @@ function ServicesFilter(): JSX.Element {
 				options={selectOptions}
 				className="services-sidebar__select"
 				suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
-				onChange={(value): void => {
-					console.log('selected region:', value);
-				}}
+				onChange={onFilterChange}
 			/>
 		</div>
 	);
 }
 
-function ServicesSection(): JSX.Element {
+interface ServicesSectionProps {
+	accountId: string;
+}
+
+function ServicesSection({ accountId }: ServicesSectionProps): JSX.Element {
+	const [activeFilter, setActiveFilter] = useState<
+		'all_services' | 'enabled' | 'available'
+	>('all_services');
+
 	return (
 		<div className="services-section">
 			<div className="services-section__sidebar">
-				<ServicesFilter />
-				<ServicesList />
+				<ServicesFilter accountId={accountId} onFilterChange={setActiveFilter} />
+				<ServicesList accountId={accountId} filter={activeFilter} />
 			</div>
 			<div className="services-section__content">
 				<ServiceDetails />
@@ -45,12 +87,16 @@ function ServicesSection(): JSX.Element {
 	);
 }
 
-function ServicesTabs(): JSX.Element {
+interface ServicesTabsProps {
+	accountId: string;
+}
+
+function ServicesTabs({ accountId }: ServicesTabsProps): JSX.Element {
 	const tabItems: TabsProps['items'] = [
 		{
 			key: 'services',
 			label: 'Services For Integration',
-			children: <ServicesSection />,
+			children: <ServicesSection accountId={accountId} />,
 		},
 	];
 
