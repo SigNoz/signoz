@@ -160,6 +160,7 @@ export default function Events({
 					id: event.data.id,
 					key: event.data.id,
 					resources_string: event.data.resources_string,
+					attributes_string: event.data.attributes_string,
 				}),
 			);
 
@@ -179,7 +180,9 @@ export default function Events({
 	}, [eventsData]);
 
 	const handleExpandRow = (record: EventDataType): JSX.Element => (
-		<EventContents data={record.resources_string} />
+		<EventContents
+			data={{ ...record.attributes_string, ...record.resources_string }}
+		/>
 	);
 
 	const handlePrev = (): void => {
