@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
 import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDashboards';
 import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
@@ -108,7 +109,10 @@ function ServiceDetails(): JSX.Element | null {
 				</div>
 			</div>
 			<div className="service-details__overview">
-				{serviceDetailsData?.overview}
+				<MarkdownRenderer
+					variables={{}}
+					markdownContent={serviceDetailsData?.overview}
+				/>
 			</div>
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />
