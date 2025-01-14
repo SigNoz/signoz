@@ -2,11 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Alert, Spin } from 'antd';
 import { LoaderCircle, TriangleAlert } from 'lucide-react';
 
-<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/AlertMessage.tsx
 import { ModalStateEnum } from '../types';
-=======
-import { ModalStateEnum } from './types';
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/AlertMessage.tsx
 
 function AlertMessage({
 	modalState,
@@ -18,11 +14,7 @@ function AlertMessage({
 			return (
 				<Alert
 					message={
-<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/AlertMessage.tsx
 						<div className="cloud-account-setup-form__alert-message">
-=======
-						<div className="cloud-integrations-form__alert-message">
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/AlertMessage.tsx
 							<Spin
 								indicator={
 									<LoaderCircle
@@ -36,11 +28,7 @@ function AlertMessage({
 							<span className="retry-time">10</span> secs...
 						</div>
 					}
-<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/AlertMessage.tsx
 					className="cloud-account-setup-form__alert"
-=======
-					className="cloud-integrations-form__alert"
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/AlertMessage.tsx
 					type="warning"
 				/>
 			);
@@ -48,7 +36,6 @@ function AlertMessage({
 			return (
 				<Alert
 					message={
-<<<<<<< HEAD:frontend/src/container/CloudIntegrationPage/HeroSection/components/AlertMessage.tsx
 						<div className="cloud-account-setup-form__alert-message">
 							<TriangleAlert type="solid" size={15} color={Color.BG_SAKURA_400} />
 							{`We couldn't establish a connection to your AWS account. Please try again`}
@@ -56,15 +43,6 @@ function AlertMessage({
 					}
 					type="error"
 					className="cloud-account-setup-form__alert"
-=======
-						<div className="cloud-integrations-form__alert-message">
-							<TriangleAlert type="solid" size={15} color={Color.BG_SAKURA_400} />
-							We couldn’t establish a connection to your AWS account. Please try again
-						</div>
-					}
-					type="error"
-					className="cloud-integrations-form__alert"
->>>>>>> d7c67cfa6 (feat: integrate now modal states and json server API integration):frontend/src/pages/Integrations/CloudIntegrationPage/HeroSection/AlertMessage.tsx
 				/>
 			);
 		default:

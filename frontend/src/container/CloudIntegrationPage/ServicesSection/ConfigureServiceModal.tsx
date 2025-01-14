@@ -1,6 +1,7 @@
 import './ConfigureServiceModal.styles.scss';
 
-import { Form, Modal, Switch } from 'antd';
+import { Form, Switch } from 'antd';
+import SignozModal from 'components/SignozModal/SignozModal';
 import {
 	ServiceConfig,
 	SupportedSignals,
@@ -100,7 +101,7 @@ function ConfigureServiceModal({
 	}, [form, onClose]);
 
 	return (
-		<Modal
+		<SignozModal
 			title={
 				<div className="account-settings-modal__title">Configure {serviceName}</div>
 			}
@@ -119,7 +120,7 @@ function ConfigureServiceModal({
 				className: 'account-settings-modal__footer-close-button',
 			}}
 			width={672}
-			rootClassName="cloud-integrations-modal configure-service-modal"
+			rootClassName=" configure-service-modal"
 		>
 			<Form
 				form={form}
@@ -181,7 +182,7 @@ function ConfigureServiceModal({
 					)}
 				</div>
 			</Form>
-		</Modal>
+		</SignozModal>
 	);
 }
 
