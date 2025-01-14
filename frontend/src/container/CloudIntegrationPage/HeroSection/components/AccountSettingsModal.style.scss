@@ -66,6 +66,9 @@
 				}
 			}
 		}
+		&-regions-select {
+			margin-top: 8px;
+		}
 	}
 
 	&__footer {
@@ -95,7 +98,7 @@
 		}
 	}
 	.ant-modal-body {
-		padding-bottom: 0;
+		padding-bottom: 0 !important;
 	}
 	.ant-modal-footer {
 		margin: 0;

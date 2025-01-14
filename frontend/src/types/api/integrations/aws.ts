@@ -1,4 +1,4 @@
-import { CloudAccount } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
+import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
 
 export interface GenerateConnectionUrlPayload {
 	agent_config: {

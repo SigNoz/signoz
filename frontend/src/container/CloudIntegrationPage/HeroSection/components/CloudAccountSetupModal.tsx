@@ -1,11 +1,10 @@
 import './CloudAccountSetupModal.style.scss';
 
-import { Button, Form } from 'antd';
+import { Button } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { useIntegrationModal } from 'hooks/integrations/aws/useIntegrationModal';
 import { useCallback } from 'react';
 
-import { regions } from '../../ServicesSection/data';
 import {
 	ActiveViewEnum,
 	IntegrationModalProps,

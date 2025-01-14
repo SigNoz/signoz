@@ -9,6 +9,8 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { CloudAccount } from '../../ServicesSection/types';
+import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
 
 interface AccountOptionItemProps {
@@ -33,8 +35,9 @@ function AccountOptionItem({
 }
 
 function renderOption(
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	option: any,
-	activeAccountId: string | null,
+	activeAccountId: string | undefined,
 ): JSX.Element {
 	return (
 		<AccountOptionItem
@@ -44,31 +47,40 @@ function renderOption(
 	);
 }
 
+const getAccountById = (
+	accounts: CloudAccount[],
+	accountId: string,
+): CloudAccount | null =>
+	accounts.find((account) => account.cloud_account_id === accountId) || null;
+
 function AccountActions(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
 	const { data: accounts } = useAwsAccounts();
 
-	const initialAccountId = useMemo(
+	const initialAccount = useMemo(
 		() =>
 			accounts?.length
-				? urlQuery.get('accountId') || accounts[0].cloud_account_id
+				? getAccountById(accounts, urlQuery.get('accountId') || '') || accounts[0]
 				: null,
 		[accounts, urlQuery],
 	);
 
-	const [activeAccountId, setActiveAccountId] = useState<string | null>(
-		initialAccountId,
+	const [activeAccount, setActiveAccount] = useState<CloudAccount | null>(
+		initialAccount,
 	);
 
 	// Update state when initial value changes
 	useEffect(() => {
-		if (initialAccountId !== null) {
-			setActiveAccountId(initialAccountId);
+		if (initialAccount !== null) {
+			setActiveAccount(initialAccount);
 		}
-	}, [initialAccountId]);
+	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
+		false,
+	);
 
 	const selectOptions: SelectProps['options'] = accounts?.map((account) => ({
 		value: account.cloud_account_id,
@@ -80,16 +92,16 @@ function AccountActions(): JSX.Element {
 			{accounts?.length ? (
 				<div className="hero-section__actions-with-account">
 					<Select
-						value={`Account: ${activeAccountId}`}
+						value={`Account: ${activeAccount?.cloud_account_id}`}
 						options={selectOptions}
 						rootClassName="cloud-account-selector"
 						placeholder="Select AWS Account"
 						suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 						optionRender={(option): JSX.Element =>
-							renderOption(option, activeAccountId)
+							renderOption(option, activeAccount?.cloud_account_id)
 						}
 						onChange={(value): void => {
-							setActiveAccountId(value);
+							setActiveAccount(getAccountById(accounts, value));
 							urlQuery.set('accountId', value);
 							navigate({ search: urlQuery.toString() });
 						}}
@@ -102,7 +114,11 @@ function AccountActions(): JSX.Element {
 						>
 							Add New AWS Account
 						</Button>
-						<Button type="default" className="hero-section__action-button secondary">
+						<Button
+							type="default"
+							className="hero-section__action-button secondary"
+							onClick={(): void => setIsAccountSettingsModalOpen(true)}
+						>
 							Account Settings
 						</Button>
 					</div>
@@ -119,6 +135,13 @@ function AccountActions(): JSX.Element {
 			<CloudAccountSetupModal
 				isOpen={isIntegrationModalOpen}
 				onClose={(): void => setIsIntegrationModalOpen(false)}
+			/>
+
+			<AccountSettingsModal
+				isOpen={isAccountSettingsModalOpen}
+				onClose={(): void => setIsAccountSettingsModalOpen(false)}
+				account={activeAccount as CloudAccount}
+				setActiveAccount={setActiveAccount}
 			/>
 		</div>
 	);

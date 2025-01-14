@@ -4,15 +4,16 @@ import { Modal, ModalProps } from 'antd';
 
 function SignozModal({
 	children,
-	className = '',
+
+	rootClassName = '',
 	...rest
 }: ModalProps): JSX.Element {
 	return (
 		<Modal
 			centered
 			width={672}
-			rootClassName={`signoz-modal ${className}`}
 			cancelText="Close"
+			rootClassName={`signoz-modal ${rootClassName}`}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
 		>
