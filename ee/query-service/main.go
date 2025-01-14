@@ -3,15 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/config"
 	signozconfig "go.signoz.io/signoz/pkg/config"
@@ -22,67 +18,12 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
 	pkgversion "go.signoz.io/signoz/pkg/version"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	prommodel "github.com/prometheus/common/model"
-
-	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
-	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
-	config := zap.NewProductionConfig()
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	config.EncoderConfig.EncodeDuration = zapcore.MillisDurationEncoder
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	config.EncoderConfig.TimeKey = "timestamp"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-
-	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config.EncoderConfig)
-	consoleEncoder := zapcore.NewJSONEncoder(config.EncoderConfig)
-	defaultLogLevel := zapcore.InfoLevel
-
-	res := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("query-service"),
-	)
-
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
-	)
-
-	if enableQueryServiceLogOTLPExport {
-		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-		defer cancel()
-		conn, err := grpc.DialContext(ctx, baseconst.OTLPTarget, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Fatalf("failed to establish connection: %v", err)
-		} else {
-			logExportBatchSizeInt, err := strconv.Atoi(baseconst.LogExportBatchSize)
-			if err != nil {
-				logExportBatchSizeInt = 512
-			}
-			ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
-				BatchSize:      logExportBatchSizeInt,
-				ResourceSchema: semconv.SchemaURL,
-				Resource:       res,
-			}))
-			core = zapcore.NewTee(
-				zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
-				zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
-			)
-		}
-	}
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-
-	return logger
-}
 
 func init() {
 	prommodel.NameValidationScheme = prommodel.UTF8Validation
@@ -101,7 +42,6 @@ func main() {
 	var useLogsNewSchema bool
 	var useTraceNewSchema bool
 	var cacheConfigPath, fluxInterval string
-	var enableQueryServiceLogOTLPExport bool
 	var preferSpanMetrics bool
 
 	var maxIdleConns int
@@ -122,16 +62,10 @@ func main() {
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
-	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
 	flag.BoolVar(&useLicensesV3, "use-licenses-v3", false, "use licenses_v3 schema for licenses")
 	flag.Parse()
-
-	loggerMgr := initZapLog(enableQueryServiceLogOTLPExport)
-
-	zap.ReplaceGlobals(loggerMgr)
-	defer loggerMgr.Sync() // flushes buffer, if any
 
 	version.PrintVersion()
 
@@ -160,6 +94,8 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create instrumentation", zap.Error(err))
 	}
+	zap.ReplaceGlobals(instrumentation.Logger())
+	defer instrumentation.Logger().Sync() // flushes buffer, if any
 
 	signoz, err := signoz.New(context.Background(), instrumentation, config, signoz.NewProviderFactories())
 	if err != nil {

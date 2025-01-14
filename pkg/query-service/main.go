@@ -23,15 +23,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func initZapLog() *zap.Logger {
-	config := zap.NewProductionConfig()
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	config.EncoderConfig.TimeKey = "timestamp"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	logger, _ := config.Build()
-	return logger
-}
-
 func init() {
 	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
@@ -71,13 +62,6 @@ func main() {
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.Parse()
 
-	loggerMgr := initZapLog()
-	zap.ReplaceGlobals(loggerMgr)
-	defer loggerMgr.Sync() // flushes buffer, if any
-
-	logger := loggerMgr.Sugar()
-	version.PrintVersion()
-
 	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
 		Uris: []string{"env:"},
 		ProviderFactories: []config.ProviderFactory{
@@ -103,6 +87,11 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create instrumentation", zap.Error(err))
 	}
+	zap.ReplaceGlobals(instrumentation.Logger())
+	defer instrumentation.Logger().Sync() // flushes buffer, if any
+
+	logger := instrumentation.Logger().Sugar()
+	version.PrintVersion()
 
 	signoz, err := signoz.New(context.Background(), instrumentation, config, signoz.NewProviderFactories())
 	if err != nil {
