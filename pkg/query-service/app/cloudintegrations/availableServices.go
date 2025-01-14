@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"sort"
 
 	koanfJson "github.com/knadh/koanf/parsers/json"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
@@ -24,7 +25,12 @@ func listCloudProviderServices(
 		))
 	}
 
-	return maps.Values(cloudServices), nil
+	services := maps.Values(cloudServices)
+	sort.Slice(services, func(i, j int) bool {
+		return services[i].Id < services[j].Id
+	})
+
+	return services, nil
 }
 
 func getCloudProviderService(
@@ -39,21 +45,26 @@ func getCloudProviderService(
 
 	svc, exists := cloudServices[serviceId]
 	if !exists {
-		return nil, model.NotFoundError(fmt.Errorf("%s service not found: %s", cloudProvider, serviceId))
+		return nil, model.NotFoundError(fmt.Errorf(
+			"%s service not found: %s", cloudProvider, serviceId,
+		))
 	}
 
 	return &svc, nil
 }
 
-// Service details read from ./services
+// End of API. Logic for reading service definition files follows
+
+// Service details read from ./serviceDefinitions
 // { "providerName": { "service_id": {...}} }
 var availableServices map[string]map[string]CloudServiceDetails
 
 func init() {
-
 	err := readAllServiceDefinitions()
 	if err != nil {
-		panic(fmt.Errorf("couldn't read cloud service definitions: %w", err))
+		panic(fmt.Errorf(
+			"couldn't read cloud service definitions: %w", err,
+		))
 	}
 }
 
@@ -61,13 +72,14 @@ func init() {
 var serviceDefinitionFiles embed.FS
 
 func readAllServiceDefinitions() error {
+	availableServices = map[string]map[string]CloudServiceDetails{}
+
 	rootDirName := "serviceDefinitions"
+
 	cloudProviderDirs, err := fs.ReadDir(serviceDefinitionFiles, rootDirName)
 	if err != nil {
 		return fmt.Errorf("couldn't read dirs in %s: %w", rootDirName, err)
 	}
-
-	availableServices = map[string]map[string]CloudServiceDetails{}
 
 	for _, d := range cloudProviderDirs {
 		if !d.IsDir() {
@@ -108,7 +120,7 @@ func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
 		svcDirPath := path.Join(cloudProviderDirPath, d.Name())
 		s, err := readServiceDefinition(svcDirPath)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't svc definition for %s: %w", d.Name(), err)
+			return nil, fmt.Errorf("couldn't read svc definition for %s: %w", d.Name(), err)
 		}
 
 		_, exists := svcDefs[s.Id]

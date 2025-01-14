@@ -123,7 +123,7 @@ type CloudServiceSummary struct {
 	Title string `json:"title"`
 	Icon  string `json:"icon"`
 
-	// Provided only if the service has been configured in the
+	// Present only if the service has been configured in the
 	// context of a cloud provider account.
 	Config *CloudServiceConfig `json:"config,omitempty"`
 }

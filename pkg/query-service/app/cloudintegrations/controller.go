@@ -258,8 +258,11 @@ type ListServicesResponse struct {
 }
 
 func (c *Controller) ListServices(
-	ctx context.Context, cloudProvider string, cloudAccountId *string,
+	ctx context.Context,
+	cloudProvider string,
+	cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
+
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -275,7 +278,9 @@ func (c *Controller) ListServices(
 			ctx, cloudProvider, *cloudAccountId,
 		)
 		if apiErr != nil {
-			return nil, model.WrapApiError(apiErr, "couldn't get service configs for cloud account")
+			return nil, model.WrapApiError(
+				apiErr, "couldn't get service configs for cloud account",
+			)
 		}
 	}
 
@@ -283,6 +288,7 @@ func (c *Controller) ListServices(
 	for _, s := range services {
 		summary := s.CloudServiceSummary
 		summary.Config = svcConfigs[summary.Id]
+
 		summaries = append(summaries, summary)
 	}
 
@@ -292,8 +298,12 @@ func (c *Controller) ListServices(
 }
 
 func (c *Controller) GetServiceDetails(
-	ctx context.Context, cloudProvider string, serviceId string, cloudAccountId *string,
+	ctx context.Context,
+	cloudProvider string,
+	serviceId string,
+	cloudAccountId *string,
 ) (*CloudServiceDetails, *model.ApiError) {
+
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -314,7 +324,6 @@ func (c *Controller) GetServiceDetails(
 		if config != nil {
 			service.Config = config
 		}
-
 	}
 
 	return service, nil
@@ -336,6 +345,7 @@ func (c *Controller) UpdateServiceConfig(
 	serviceId string,
 	req UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, *model.ApiError) {
+
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}

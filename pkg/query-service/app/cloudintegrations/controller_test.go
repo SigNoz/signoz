@@ -160,16 +160,14 @@ func TestConfigureService(t *testing.T) {
 
 	testCloudAccountId := "546311234"
 
+	// should start out without any service config
 	svcListResp, apiErr := controller.ListServices(
 		context.TODO(), "aws", &testCloudAccountId,
 	)
 	require.Nil(apiErr)
+
 	testSvcId := svcListResp.Services[0].Id
 	require.Nil(svcListResp.Services[0].Config)
-
-	// should be able to configure a service for a connected account
-	testConnectedAccount := makeTestConnectedAccount(t, controller, testCloudAccountId)
-	require.Nil(testConnectedAccount.RemovedAt)
 
 	svcDetails, apiErr := controller.GetServiceDetails(
 		context.TODO(), "aws", testSvcId, &testCloudAccountId,
@@ -177,6 +175,11 @@ func TestConfigureService(t *testing.T) {
 	require.Nil(apiErr)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Nil(svcDetails.Config)
+
+	// should be able to configure a service for a connected account
+	testConnectedAccount := makeTestConnectedAccount(t, controller, testCloudAccountId)
+	require.Nil(testConnectedAccount.RemovedAt)
+	require.Equal(testCloudAccountId, testConnectedAccount.CloudAccountId)
 
 	testSvcConfig := CloudServiceConfig{
 		Metrics: &CloudServiceMetricsConfig{
@@ -249,6 +252,7 @@ func TestConfigureService(t *testing.T) {
 func makeTestConnectedAccount(t *testing.T, controller *Controller, cloudAccountId string) *AccountRecord {
 	require := require.New(t)
 
+	// a check in from SigNoz agent creates or updates a connected account.
 	testAccountId := uuid.NewString()
 	resp, apiErr := controller.CheckInAsAgent(
 		context.TODO(), "aws", AgentCheckInRequest{

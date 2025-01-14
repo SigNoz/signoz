@@ -38,8 +38,11 @@ type serviceConfigRepository interface {
 func newServiceConfigRepository(db *sqlx.DB) (
 	*serviceConfigSQLRepository, error,
 ) {
+
 	if err := initServiceConfigSqliteDBIfNeeded(db); err != nil {
-		return nil, fmt.Errorf("could not init sqlite DB for cloudintegrations service configs: %w", err)
+		return nil, fmt.Errorf(
+			"could not init sqlite DB for cloudintegrations service configs: %w", err,
+		)
 	}
 
 	return &serviceConfigSQLRepository{
@@ -48,6 +51,7 @@ func newServiceConfigRepository(db *sqlx.DB) (
 }
 
 func initServiceConfigSqliteDBIfNeeded(db *sqlx.DB) error {
+
 	if db == nil {
 		return fmt.Errorf("db is required")
 	}
@@ -103,6 +107,7 @@ func (r *serviceConfigSQLRepository) get(
 			"couldn't find %s %s config for %s",
 			cloudProvider, serviceId, cloudAccountId,
 		))
+
 	} else if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't query cloud service config: %w", err,
@@ -157,14 +162,16 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 	cloudProvider string,
 	cloudAccountId string,
 ) (map[string]*CloudServiceConfig, *model.ApiError) {
-	type ServiceConfigScanResult struct {
+
+	type ScannedServiceConfigRecord struct {
 		ServiceId string             `db:"service_id"`
 		Config    CloudServiceConfig `db:"config_json"`
 	}
-	svcConfigs := []ServiceConfigScanResult{}
+
+	records := []ScannedServiceConfigRecord{}
 
 	err := r.db.SelectContext(
-		ctx, &svcConfigs, `
+		ctx, &records, `
 			select
 				service_id,
 				config_json
@@ -183,8 +190,8 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 
 	result := map[string]*CloudServiceConfig{}
 
-	for _, sc := range svcConfigs {
-		result[sc.ServiceId] = &sc.Config
+	for _, r := range records {
+		result[r.ServiceId] = &r.Config
 	}
 
 	return result, nil

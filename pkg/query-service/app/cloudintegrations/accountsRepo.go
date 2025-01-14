@@ -1,4 +1,3 @@
-// TODO(Raj): rename this file to accountsRepo.go or accounts?
 package cloudintegrations
 
 import (
@@ -52,7 +51,7 @@ func initAccountsSqliteDBIfNeeded(db *sqlx.DB) error {
 		return fmt.Errorf("db is required")
 	}
 
-	createTableStatement := `
+	createTablesStatements := `
 		CREATE TABLE IF NOT EXISTS cloud_integrations_accounts(
 			cloud_provider TEXT NOT NULL,
 			id TEXT NOT NULL,
@@ -64,7 +63,7 @@ func initAccountsSqliteDBIfNeeded(db *sqlx.DB) error {
 			UNIQUE(cloud_provider, id)
 		)
 	`
-	_, err := db.Exec(createTableStatement)
+	_, err := db.Exec(createTablesStatements)
 	if err != nil {
 		return fmt.Errorf(
 			"could not ensure cloud provider accounts schema in sqlite DB: %w", err,
