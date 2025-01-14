@@ -470,7 +470,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 		dashboardInfo := countPanelsInDashboard(dashboard.Data)
 		dashboardsInfo.LogsBasedPanels += dashboardInfo.LogsBasedPanels
 		dashboardsInfo.TracesBasedPanels += dashboardInfo.TracesBasedPanels
-		dashboardsInfo.MetricBasedPanels += dashboardsInfo.MetricBasedPanels
+		dashboardsInfo.MetricBasedPanels += dashboardInfo.MetricBasedPanels
 		dashboardsInfo.LogsPanelsWithAttrContainsOp += dashboardInfo.LogsPanelsWithAttrContainsOp
 		dashboardsInfo.DashboardsWithLogsChQuery += dashboardInfo.DashboardsWithLogsChQuery
 		dashboardsInfo.DashboardsWithTraceChQuery += dashboardInfo.DashboardsWithTraceChQuery

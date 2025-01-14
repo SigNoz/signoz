@@ -32,12 +32,15 @@ import (
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/web"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
@@ -61,6 +64,7 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
+	SigNoz            *signoz.SigNoz
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
@@ -78,6 +82,7 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	SkipWebFrontend   bool
 }
 
 // Server runs HTTP api service
@@ -217,6 +222,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		)
 	}
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't create cloud provider integrations controller: %w", err,
+		)
+	}
+
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
@@ -267,6 +279,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FeatureFlags:                  lm,
 		LicenseManager:                lm,
 		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
@@ -289,7 +302,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		usageManager:       usageManager,
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler)
+	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
 
 	if err != nil {
 		return nil, err
@@ -338,7 +351,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
-func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
+func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*http.Server, error) {
 
 	r := baseapp.NewRouter()
 
@@ -366,6 +379,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
+	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
@@ -381,6 +395,13 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	handler := c.Handler(r)
 
 	handler = handlers.CompressHandler(handler)
+
+	if !s.serverOptions.SkipWebFrontend {
+		err := web.AddToRouter(r)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &http.Server{
 		Handler: handler,
@@ -491,32 +512,29 @@ func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}
 		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
-	signozMetricsUsed := false
-	signozLogsUsed := false
-	signozTracesUsed := false
-	if postData != nil {
+	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
 
-		if postData.CompositeQuery != nil {
-			data["queryType"] = postData.CompositeQuery.QueryType
-			data["panelType"] = postData.CompositeQuery.PanelType
-
-			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
-		}
-	}
-
-	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
-		if signozMetricsUsed {
+	if (queryInfoResult.MetricsUsed || queryInfoResult.LogsUsed || queryInfoResult.TracesUsed) && (queryInfoResult.FilterApplied) {
+		if queryInfoResult.MetricsUsed {
 			telemetry.GetInstance().AddActiveMetricsUser()
 		}
-		if signozLogsUsed {
+		if queryInfoResult.LogsUsed {
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
-		if signozTracesUsed {
+		if queryInfoResult.TracesUsed {
 			telemetry.GetInstance().AddActiveTracesUser()
 		}
-		data["metricsUsed"] = signozMetricsUsed
-		data["logsUsed"] = signozLogsUsed
-		data["tracesUsed"] = signozTracesUsed
+		data["metricsUsed"] = queryInfoResult.MetricsUsed
+		data["logsUsed"] = queryInfoResult.LogsUsed
+		data["tracesUsed"] = queryInfoResult.TracesUsed
+		data["filterApplied"] = queryInfoResult.FilterApplied
+		data["groupByApplied"] = queryInfoResult.GroupByApplied
+		data["aggregateOperator"] = queryInfoResult.AggregateOperator
+		data["aggregateAttributeKey"] = queryInfoResult.AggregateAttributeKey
+		data["numberOfQueries"] = queryInfoResult.NumberOfQueries
+		data["queryType"] = queryInfoResult.QueryType
+		data["panelType"] = queryInfoResult.PanelType
+
 		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 		if err == nil {
 			// switch case to set data["screen"] based on the referrer

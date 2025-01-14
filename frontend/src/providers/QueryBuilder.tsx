@@ -27,7 +27,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
-import { cloneDeep, get, merge, set } from 'lodash-es';
+import { cloneDeep, get, isEqual, merge, set } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -53,6 +53,7 @@ import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
+	IsDefaultQueryProps,
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
@@ -87,6 +88,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	initQueryBuilderData: () => {},
 	handleOnUnitsChange: () => {},
 	isStagedQueryUpdated: () => false,
+	isDefaultQuery: () => false,
 });
 
 export function QueryBuilderProvider({
@@ -95,7 +97,8 @@ export function QueryBuilderProvider({
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
-	const currentPathnameRef = useRef<string | null>(null);
+
+	const currentPathnameRef = useRef<string | null>(location.pathname);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -249,6 +252,88 @@ export function QueryBuilderProvider({
 		[getElementWithActualOperator],
 	);
 
+	const extractRelevantKeys = useCallback(
+		(queryData: IBuilderQuery): IBuilderQuery => {
+			const {
+				dataSource,
+				queryName,
+				aggregateOperator,
+				aggregateAttribute,
+				timeAggregation,
+				spaceAggregation,
+				functions,
+				filters,
+				expression,
+				disabled,
+				stepInterval,
+				having,
+				groupBy,
+				legend,
+			} = queryData;
+
+			return {
+				dataSource,
+				queryName,
+				aggregateOperator,
+				// remove id from aggregateAttribute
+				aggregateAttribute: {
+					...aggregateAttribute,
+					id: '',
+				},
+				timeAggregation,
+				spaceAggregation,
+				functions,
+				filters,
+				expression,
+				disabled,
+				stepInterval,
+				having,
+				groupBy,
+				legend,
+				// set to default values
+				orderBy: [],
+				limit: null,
+				reduceTo: 'avg',
+			};
+		},
+		[],
+	);
+
+	const isDefaultQuery = useCallback(
+		({ currentQuery, sourcePage }: IsDefaultQueryProps): boolean => {
+			// Get default query with updated operators
+			const defaultQuery = updateAllQueriesOperators(
+				initialQueriesMap[sourcePage],
+				PANEL_TYPES.LIST,
+				sourcePage,
+			);
+
+			// Early return if query types don't match
+			if (currentQuery.queryType !== defaultQuery.queryType) {
+				return false;
+			}
+
+			// Only compare builder queries
+			if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) {
+				return false;
+			}
+
+			// If there is more than one query, then it is not a default query
+			if (currentQuery.builder.queryData.length > 1) {
+				return false;
+			}
+
+			const currentBuilderData = extractRelevantKeys(
+				currentQuery.builder.queryData[0],
+			);
+			const defaultBuilderData = extractRelevantKeys(
+				defaultQuery.builder.queryData[0],
+			);
+
+			return isEqual(currentBuilderData, defaultBuilderData);
+		},
+		[updateAllQueriesOperators, extractRelevantKeys],
+	);
 	const updateQueriesData = useCallback(
 		<T extends keyof QueryBuilderData>(
 			query: Query,
@@ -814,14 +899,14 @@ export function QueryBuilderProvider({
 	};
 
 	useEffect(() => {
-		if (stagedQuery && location.pathname !== currentPathnameRef.current) {
+		if (location.pathname !== currentPathnameRef.current) {
 			currentPathnameRef.current = location.pathname;
 
 			setStagedQuery(null);
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
 		}
-	}, [location, stagedQuery, currentQuery]);
+	}, [location.pathname]);
 
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {
@@ -883,6 +968,7 @@ export function QueryBuilderProvider({
 			handleRunQuery,
 			resetQuery,
 			updateAllQueriesOperators,
+			isDefaultQuery,
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
@@ -909,6 +995,7 @@ export function QueryBuilderProvider({
 			redirectWithQueryBuilderData,
 			handleRunQuery,
 			updateAllQueriesOperators,
+			isDefaultQuery,
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,

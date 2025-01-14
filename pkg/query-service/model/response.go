@@ -618,6 +618,7 @@ type TagsInfo struct {
 
 type AlertsInfo struct {
 	TotalAlerts                  int      `json:"totalAlerts"`
+	TotalActiveAlerts            int      `json:"totalActiveAlerts"`
 	LogsBasedAlerts              int      `json:"logsBasedAlerts"`
 	MetricBasedAlerts            int      `json:"metricBasedAlerts"`
 	AnomalyBasedAlerts           int      `json:"anomalyBasedAlerts"`

@@ -11,15 +11,9 @@ import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import {
-	UPDATE_IS_FETCHING_ORG_PREFERENCES,
-	UPDATE_ORG_PREFERENCES,
-} from 'types/actions/app';
-import AppReducer from 'types/reducer/app';
 
 import {
 	AboutSigNozQuestions,
@@ -68,8 +62,7 @@ const ONBOARDING_COMPLETE_EVENT_NAME = 'Org Onboarding: Complete';
 
 function OnboardingQuestionaire(): JSX.Element {
 	const { notifications } = useNotifications();
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-	const dispatch = useDispatch();
+	const { org, updateOrgPreferences } = useAppContext();
 	const [currentStep, setCurrentStep] = useState<number>(1);
 	const [orgDetails, setOrgDetails] = useState<OrgDetails>(INITIAL_ORG_DETAILS);
 	const [signozDetails, setSignozDetails] = useState<SignozDetails>(
@@ -116,19 +109,9 @@ function OnboardingQuestionaire(): JSX.Element {
 		enabled: false,
 		refetchOnWindowFocus: false,
 		onSuccess: (response) => {
-			dispatch({
-				type: UPDATE_IS_FETCHING_ORG_PREFERENCES,
-				payload: {
-					isFetchingOrgPreferences: false,
-				},
-			});
-
-			dispatch({
-				type: UPDATE_ORG_PREFERENCES,
-				payload: {
-					orgPreferences: response.payload?.data || null,
-				},
-			});
+			if (response.payload && response.payload.data) {
+				updateOrgPreferences(response.payload.data);
+			}
 
 			setUpdatingOrgOnboardingStatus(false);
 

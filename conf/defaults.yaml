@@ -1,0 +1,32 @@
+##################### SigNoz Configuration Defaults #####################
+# 
+# Do not modify this file
+#
+
+##################### Web #####################
+web:
+  # The prefix to serve web on
+  prefix: /
+  # The directory containing the static build files.
+  directory: /etc/signoz/web
+
+##################### Cache #####################
+cache:
+  # specifies the caching provider to use.
+  provider: memory
+  # memory: Uses in-memory caching.
+  memory:
+    # Time-to-live for cache entries in memory. Specify the duration in ns
+    ttl: 60000000000
+    # The interval at which the cache will be cleaned up
+    cleanupInterval: 
+  # redis: Uses Redis as the caching backend.
+  redis:
+    # The hostname or IP address of the Redis server.
+    host: localhost
+    # The port on which the Redis server is running. Default is usually 6379.
+    port: 6379
+    # The password for authenticating with the Redis server, if required.
+    password: 
+    # The Redis database number to use
+    db: 0
