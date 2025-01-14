@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Alert, Spin } from 'antd';
 import { LoaderCircle, TriangleAlert } from 'lucide-react';
 
-import { ModalStateEnum } from './types';
+import { ModalStateEnum } from '../types';
 
 function AlertMessage({
 	modalState,

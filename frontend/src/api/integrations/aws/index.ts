@@ -3,7 +3,7 @@ import {
 	CloudAccount,
 	Service,
 	ServiceData,
-} from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
+} from 'container/CloudIntegrationPage/ServicesSection/types';
 import { ConnectionUrlResponse } from 'types/api/integrations/aws';
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {

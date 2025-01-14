@@ -1,6 +1,6 @@
 import './HeroSection.style.scss';
 
-import AccountActions from './AccountActions';
+import AccountActions from './components/AccountActions';
 
 function HeroSection(): JSX.Element {
 	return (

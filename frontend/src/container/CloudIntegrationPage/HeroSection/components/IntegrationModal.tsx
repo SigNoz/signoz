@@ -5,7 +5,7 @@ import { Button, Form, Modal, Select, Switch } from 'antd';
 import { ChevronDown, SquareArrowOutUpRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { regions } from '../ServicesSection/data';
+import { regions } from '../../ServicesSection/data';
 import { RegionSelector } from './RegionSelector';
 
 interface IntegrationModalProps {

@@ -7,8 +7,8 @@ import { useRef } from 'react';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 
 import { regions } from '../../ServicesSection/data';
-import AlertMessage from '../AlertMessage';
 import { ModalStateEnum, RegionFormProps } from '../types';
+import AlertMessage from './AlertMessage';
 
 const allRegions = (): string[] =>
 	regions.flatMap((r) => r.subRegions.map((sr) => sr.name));
