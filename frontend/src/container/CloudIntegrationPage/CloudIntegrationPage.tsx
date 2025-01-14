@@ -1,5 +1,3 @@
-import './CloudIntegrationPage.style.scss';
-
 import Header from './Header/Header';
 import HeroSection from './HeroSection/HeroSection';
 import ServicesTabs from './ServicesSection/ServicesTabs';

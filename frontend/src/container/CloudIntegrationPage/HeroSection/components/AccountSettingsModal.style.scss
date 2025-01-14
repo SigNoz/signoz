@@ -109,3 +109,81 @@
 		margin: 0;
 	}
 }
+
+.lightMode {
+	.account-settings-modal {
+		&__title-account-id {
+			color: var(--bg-ink-500);
+		}
+
+		&__body {
+			border-color: var(--bg-vanilla-300);
+
+			&-account-info {
+				&-connected-account-details {
+					&-title {
+						color: var(--bg-ink-500);
+					}
+
+					&-account-id {
+						color: var(--bg-ink-400);
+
+						&-account-id {
+							color: var(--bg-ink-500);
+						}
+					}
+				}
+			}
+
+			&-regions-switch {
+				&-title {
+					color: var(--bg-ink-500);
+				}
+
+				&-switch {
+					&-label {
+						color: var(--bg-ink-400);
+
+						&:hover {
+							color: var(--bg-ink-500);
+						}
+					}
+				}
+			}
+		}
+
+		&__footer {
+			&-close-button,
+			&-save-button {
+				color: var(--bg-vanilla-100);
+			}
+
+			&-close-button {
+				background: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-vanilla-300);
+				color: var(--bg-ink-400);
+
+				&:hover {
+					border-color: var(--bg-vanilla-400);
+					color: var(--bg-ink-500);
+				}
+			}
+
+			&-save-button {
+				// Keep primary button same as dark mode
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+
+				&:disabled {
+					background: var(--bg-robin-500);
+					color: var(--bg-vanilla-100);
+					opacity: 0.6;
+				}
+
+				&:not(:disabled):hover {
+					background: var(--bg-robin-400);
+				}
+			}
+		}
+	}
+}

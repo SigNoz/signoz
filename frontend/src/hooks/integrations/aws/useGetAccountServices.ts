@@ -1,5 +1,5 @@
 import { getAwsServices } from 'api/integrations/aws';
-import { Service } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/types';
+import { Service } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useQuery, UseQueryResult } from 'react-query';
 
 export const SERVICES_QUERY_KEY = ['aws-services'];

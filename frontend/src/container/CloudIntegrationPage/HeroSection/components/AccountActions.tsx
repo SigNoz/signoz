@@ -74,14 +74,10 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
-<<<<<<< HEAD
 			urlQuery.set('accountId', initialAccount.cloud_account_id);
 			navigate({ search: urlQuery.toString() });
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-=======
-		}
->>>>>>> 294b1e1d3 (refactor: make account settings modal more readable and overall improvements)
 	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
