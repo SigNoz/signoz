@@ -41,22 +41,22 @@ export function SuccessView(): JSX.Element {
 					/>
 				</div>
 			)}
-			<div className="cloud-integrations-form-success-view">
-				<div className="cloud-integrations-form-success-view__icon">
+			<div className="cloud-account-setup-success-view">
+				<div className="cloud-account-setup-success-view__icon">
 					<img src="Icons/solid-check-circle.svg" alt="Success" />
 				</div>
-				<div className="cloud-integrations-form-success-view__content">
-					<div className="cloud-integrations-form-success-view__title">
+				<div className="cloud-account-setup-success-view__content">
+					<div className="cloud-account-setup-success-view__title">
 						<h3>🎉 Success! </h3>
 						<h3>Your AWS Web Service integration is all set.</h3>
 					</div>
-					<div className="cloud-integrations-form-success-view__description">
+					<div className="cloud-account-setup-success-view__description">
 						<p>Your observability journey is off to a great start. </p>
 						<p>Now that your data is flowing, here’s what you can do next:</p>
 					</div>
 				</div>
-				<div className="cloud-integrations-form-success-view__what-next">
-					<h4 className="cloud-integrations-form-success-view__what-next-title">
+				<div className="cloud-account-setup-success-view__what-next">
+					<h4 className="cloud-account-setup-success-view__what-next-title">
 						WHAT NEXT
 					</h4>
 					<div className="what-next-items-wrapper">
@@ -79,7 +79,7 @@ export function SuccessView(): JSX.Element {
 						))}
 					</div>
 				</div>
-				<div className="cloud-integrations-form-success-view__footer">
+				<div className="cloud-account-setup-success-view__footer">
 					<Button type="primary" block onClick={handleGoToDashboards}>
 						Go to Dashboards
 					</Button>

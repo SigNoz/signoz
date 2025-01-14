@@ -9,7 +9,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import IntegrationModal from './IntegrationModal';
+import CloudAccountSetupModal from './CloudAccountSetupModal';
 
 interface AccountOptionItemProps {
 	label: React.ReactNode;
@@ -116,7 +116,7 @@ function AccountActions(): JSX.Element {
 				</Button>
 			)}
 
-			<IntegrationModal
+			<CloudAccountSetupModal
 				isOpen={isIntegrationModalOpen}
 				onClose={(): void => setIsIntegrationModalOpen(false)}
 			/>

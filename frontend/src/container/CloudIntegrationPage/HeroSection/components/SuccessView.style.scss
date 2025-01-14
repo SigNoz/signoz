@@ -1,4 +1,4 @@
-.cloud-integrations-form-success-view {
+.cloud-account-setup-success-view {
 	display: flex;
 	flex-direction: column;
 	gap: 40px;
@@ -13,7 +13,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 14px;
-		.cloud-integrations-form-success-view {
+		.cloud-account-setup-success-view {
 			&__title {
 				h3 {
 					color: var(--bg-vanilla-100);

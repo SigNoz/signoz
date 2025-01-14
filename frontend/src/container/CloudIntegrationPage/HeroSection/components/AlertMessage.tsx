@@ -14,7 +14,7 @@ function AlertMessage({
 			return (
 				<Alert
 					message={
-						<div className="cloud-integrations-form__alert-message">
+						<div className="cloud-account-setup-form__alert-message">
 							<Spin
 								indicator={
 									<LoaderCircle
@@ -28,7 +28,7 @@ function AlertMessage({
 							<span className="retry-time">10</span> secs...
 						</div>
 					}
-					className="cloud-integrations-form__alert"
+					className="cloud-account-setup-form__alert"
 					type="warning"
 				/>
 			);
@@ -36,13 +36,13 @@ function AlertMessage({
 			return (
 				<Alert
 					message={
-						<div className="cloud-integrations-form__alert-message">
+						<div className="cloud-account-setup-form__alert-message">
 							<TriangleAlert type="solid" size={15} color={Color.BG_SAKURA_400} />
-							We couldn’t establish a connection to your AWS account. Please try again
+							{`We couldn't establish a connection to your AWS account. Please try again`}
 						</div>
 					}
 					type="error"
-					className="cloud-integrations-form__alert"
+					className="cloud-account-setup-form__alert"
 				/>
 			);
 		default:

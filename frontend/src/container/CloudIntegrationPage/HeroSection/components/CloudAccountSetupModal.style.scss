@@ -1,90 +1,25 @@
-.cloud-integrations-modal {
-	.ant-modal-content {
-		padding: 0;
-		background: var(--bg-ink-400);
-		border: 1px solid var(--bg-slate-500);
-	}
-
-	.ant-modal-header {
-		background: var(--bg-ink-400);
-		border-bottom: none;
-		padding: 12px 24px 8px;
-		border-bottom: 1px solid var(--bg-slate-500);
-		margin-bottom: 0;
-	}
-	.ant-modal-close {
-		top: 15px;
-		height: 14px;
-		width: 14px;
-		.ant-modal-close-x {
+.cloud-account-setup-modal {
+	.account-setup-modal-footer {
+		&__confirm-button {
+			background: var(--bg-robin-500);
+			color: var(--bg-vanilla-100);
 			font-size: 12px;
+			font-weight: 500;
+		}
+		&__confirm-selection-count {
+			font-family: 'Geist Mono';
+		}
+		&__close-button {
+			background: var(--bg-slate-400);
+			border-radius: 2px;
+			color: var(--bg-vanilla-100);
+			font-family: 'Inter';
+			font-size: 12px;
+			font-weight: 500;
 		}
 	}
 
-	.ant-modal-title {
-		color: var(--bg-vanilla-100);
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 20px;
-	}
-	.ant-modal-body {
-		padding: 16px 24px 24px;
-	}
-	.ant-modal-footer {
-		padding: 24px;
-		display: flex;
-		justify-content: end;
-		gap: 12px;
-		.integrations-modal-footer {
-			&__confirm-button {
-				background: var(--bg-robin-500);
-				color: var(--bg-vanilla-100);
-				font-size: 12px;
-				font-weight: 500;
-			}
-			&__confirm-selection-count {
-				font-family: 'Geist Mono';
-			}
-			&__close-button {
-				background: var(--bg-slate-400);
-				border-radius: 2px;
-				color: var(--bg-vanilla-100);
-				font-family: 'Inter';
-				font-size: 12px;
-				font-weight: 500;
-			}
-		}
-	}
-
-	.ant-typography {
-		color: var(--bg-vanilla-100);
-	}
-
-	.ant-select {
-		border-radius: 2px !important;
-		&-selector {
-			background: var(--bg-ink-300) !important;
-			border: 1px solid var(--bg-slate-400) !important;
-			border-radius: 2px !important;
-		}
-	}
-
-	.ant-select-dropdown {
-		background: var(--bg-ink-400);
-		border: 1px solid var(--bg-ink-300);
-		-webkit-backdrop-filter: blur(20px);
-		backdrop-filter: blur(20px);
-	}
-
-	.ant-select-item {
-		color: var(--bg-vanilla-100);
-
-		&-option-selected {
-			background: var(--bg-ink-300);
-		}
-	}
-
-	.cloud-integrations-form {
+	.cloud-account-setup-form {
 		.disabled {
 			opacity: 0.4;
 		}
@@ -99,7 +34,7 @@
 				padding: 12px;
 				border-radius: 6px;
 				font-size: 14px;
-				line-height: 22px; /* 157.143% */
+				line-height: 22px;
 				letter-spacing: -0.07px;
 			}
 			&.ant-alert-error {
@@ -169,7 +104,7 @@
 				border: none;
 				color: var(--bg-vanilla-400);
 				font-size: 12px;
-				line-height: 18px; /* 150% */
+				line-height: 18px;
 				letter-spacing: -0.06px;
 				cursor: pointer;
 			}
@@ -191,10 +126,12 @@
 			font-size: 14px;
 			font-weight: 500;
 			line-height: 20px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 8px;
+			&-content {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+			}
 			&:disabled {
 				opacity: 0.4;
 			}
