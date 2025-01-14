@@ -8,6 +8,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
+	Bolt,
 	Boxes,
 	Computer,
 	Container,
@@ -22,12 +23,14 @@ import K8sClustersList from './Clusters/K8sClustersList';
 import {
 	ClustersQuickFiltersConfig,
 	DeploymentsQuickFiltersConfig,
+	JobsQuickFiltersConfig,
 	K8sCategories,
 	NamespaceQuickFiltersConfig,
 	NodesQuickFiltersConfig,
 	PodsQuickFiltersConfig,
 } from './constants';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
+import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNamespacesList from './Namespaces/K8sNamespacesList';
 import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
@@ -209,22 +212,42 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// 	label: (
 		// 		<div className="k8s-quick-filters-category-label">
 		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<Bolt size={14} className="k8s-quick-filters-category-label-icon" />
-		// 				<Typography.Text>Jobs</Typography.Text>
+		// 				<Computer size={14} className="k8s-quick-filters-category-label-icon" />
+		// 				<Typography.Text>Deployments</Typography.Text>
 		// 			</div>
 		// 		</div>
 		// 	),
-		// 	key: K8sCategories.JOBS,
+		// 	key: K8sCategories.DEPLOYMENTS,
 		// 	showArrow: false,
 		// 	children: (
 		// 		<QuickFilters
 		// 			source="infra-monitoring"
-		// 			config={JobsQuickFiltersConfig}
+		// 			config={DeploymentsQuickFiltersConfig}
 		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
 		// 			onFilterChange={handleFilterChange}
 		// 		/>
 		// 	),
 		// },
+		{
+			label: (
+				<div className="k8s-quick-filters-category-label">
+					<div className="k8s-quick-filters-category-label-container">
+						<Bolt size={14} className="k8s-quick-filters-category-label-icon" />
+						<Typography.Text>Jobs</Typography.Text>
+					</div>
+				</div>
+			),
+			key: K8sCategories.JOBS,
+			showArrow: false,
+			children: (
+				<QuickFilters
+					source="infra-monitoring"
+					config={JobsQuickFiltersConfig}
+					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
+				/>
+			),
+		},
 		// {
 		// 	label: (
 		// 		<div className="k8s-quick-filters-category-label">
@@ -348,6 +371,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.JOBS && (
+							<K8sJobsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
 						)}
 					</div>
