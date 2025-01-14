@@ -37,24 +37,21 @@ export function RegionForm({
 	const refetchInterval = 10 * 1000;
 	const errorTimeout = 5 * 60 * 1000;
 
-	const { isLoading: isAccountStatusLoading } = useAccountStatus(
-		accountId ?? null,
-		{
-			refetchInterval,
-			enabled: !!accountId && modalState === ModalStateEnum.WAITING,
-			onSuccess: (data: AccountStatusResponse) => {
-				if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
-					setModalState(ModalStateEnum.SUCCESS);
-				} else if (Date.now() - startTimeRef.current >= errorTimeout) {
-					// 5 minutes in milliseconds
-					setModalState(ModalStateEnum.ERROR);
-				}
-			},
-			onError: () => {
+	const { isLoading: isAccountStatusLoading } = useAccountStatus(accountId, {
+		refetchInterval,
+		enabled: !!accountId && modalState === ModalStateEnum.WAITING,
+		onSuccess: (data: AccountStatusResponse) => {
+			if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
+				setModalState(ModalStateEnum.SUCCESS);
+			} else if (Date.now() - startTimeRef.current >= errorTimeout) {
+				// 5 minutes in milliseconds
 				setModalState(ModalStateEnum.ERROR);
-			},
+			}
 		},
-	);
+		onError: () => {
+			setModalState(ModalStateEnum.ERROR);
+		},
+	});
 
 	const isFormDisabled =
 		modalState === ModalStateEnum.WAITING || isAccountStatusLoading;
