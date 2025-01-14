@@ -71,8 +71,6 @@ function CloudAccountSetupModal({
 				accountId={accountId}
 				selectedDeploymentRegion={selectedDeploymentRegion}
 				handleRegionChange={handleRegionChange}
-				isLoading={false}
-				isGeneratingUrl={false}
 			/>
 		);
 	}, [

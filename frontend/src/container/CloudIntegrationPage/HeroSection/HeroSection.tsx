@@ -12,13 +12,7 @@ function HeroSection(): JSX.Element {
 			style={
 				isDarkMode
 					? {
-							backgroundImage: `linear-gradient(
-					90deg,
-					rgba(18, 19, 23, 0.95) 0%,
-					rgba(18, 19, 23, 0.8) 50%,
-					rgba(18, 19, 23, 0.6) 100%
-				),
-				url('/Images/integrations-hero-bg.png')`,
+							backgroundImage: `url('/Images/integrations-hero-bg.png')`,
 					  }
 					: {}
 			}
