@@ -10,6 +10,7 @@ import (
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/version"
 	"go.uber.org/zap"
 )
@@ -19,6 +20,7 @@ type Instrumentation interface {
 	Logger() *zap.Logger
 	MeterProvider() sdkmetric.MeterProvider
 	TracerProvider() sdktrace.TracerProvider
+	ToProviderSettings() factory.ProviderSettings
 }
 
 // Instrumentation holds the core components for application instrumentation.
@@ -99,6 +101,15 @@ func (i *instrumentation) MeterProvider() sdkmetric.MeterProvider {
 
 func (i *instrumentation) TracerProvider() sdktrace.TracerProvider {
 	return i.tracerProvider
+}
+
+func (i *instrumentation) ToProviderSettings() factory.ProviderSettings {
+	return factory.ProviderSettings{
+		LoggerProvider: i.LoggerProvider(),
+		ZapLogger:      i.Logger(),
+		MeterProvider:  i.MeterProvider(),
+		TracerProvider: i.TracerProvider(),
+	}
 }
 
 // attributes merges the input attributes with the resource attributes.

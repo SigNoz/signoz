@@ -19,7 +19,7 @@ type SigNoz struct {
 }
 
 func New(ctx context.Context, instrumentation instrumentation.Instrumentation, config Config, factories ProviderFactories) (*SigNoz, error) {
-	providerSettings := NewProviderSettings(instrumentation)
+	providerSettings := instrumentation.ToProviderSettings()
 
 	cache, err := factory.NewFromFactory(ctx, providerSettings, config.Cache, factories.CacheProviderFactories, config.Cache.Provider)
 	if err != nil {

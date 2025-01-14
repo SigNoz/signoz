@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/instrumentation/instrumentationtest"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/sqlstore"
@@ -24,7 +25,7 @@ func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
-	sqlStoreProvider, err := factory.NewFromFactory(context.Background(), factory.ProviderSettings{}, sqlstore.Config{
+	sqlStoreProvider, err := factory.NewFromFactory(context.Background(), instrumentationtest.New().ToProviderSettings(), sqlstore.Config{
 		Provider: "sqlite",
 		Sqlite: sqlstore.SqliteConfig{
 			Path: testDBFilePath,
@@ -34,7 +35,7 @@ func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {
 		t.Fatalf("could not create sqlite provider: %v", err)
 	}
 
-	migrations, err := migrations.New(context.Background(), factory.ProviderSettings{}, sqlstore.Config{
+	migrations, err := migrations.New(context.Background(), instrumentationtest.New().ToProviderSettings(), sqlstore.Config{
 		Provider: "sqlite",
 		Sqlite: sqlstore.SqliteConfig{
 			Path: testDBFilePath,
