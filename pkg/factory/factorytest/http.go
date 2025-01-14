@@ -1,12 +1,14 @@
-package registry
+package factorytest
 
 import (
 	"context"
 	"net"
 	"net/http"
+
+	"go.signoz.io/signoz/pkg/factory"
 )
 
-var _ NamedService = (*httpService)(nil)
+var _ factory.Service = (*httpService)(nil)
 
 type httpService struct {
 	Listener net.Listener
@@ -14,15 +16,15 @@ type httpService struct {
 	name     string
 }
 
-func newHttpService(name string) (*httpService, error) {
+func NewHttpService(name string) (*httpService, error) {
 	return &httpService{
 		name:   name,
 		Server: &http.Server{},
 	}, nil
 }
 
-func (service *httpService) Name() string {
-	return service.name
+func (service *httpService) Name() factory.Name {
+	return factory.MustNewName(service.name)
 }
 
 func (service *httpService) Start(ctx context.Context) error {

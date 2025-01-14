@@ -6,31 +6,27 @@ import (
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/pkg/registry"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 
-var _ registry.NamedService = (*Server)(nil)
+var _ factory.Service = (*Server)(nil)
 
 type Server struct {
 	srv     *http.Server
 	logger  *zap.Logger
 	handler http.Handler
 	cfg     Config
-	name    string
+	name    factory.Name
 }
 
-func New(logger *zap.Logger, name string, cfg Config, handler http.Handler) (*Server, error) {
+func New(logger *zap.Logger, name factory.Name, cfg Config, handler http.Handler) (*Server, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("cannot build http server, handler is required")
 	}
 
 	if logger == nil {
 		return nil, fmt.Errorf("cannot build http server, logger is required")
-	}
-
-	if name == "" {
-		return nil, fmt.Errorf("cannot build http server, name is required")
 	}
 
 	srv := &http.Server{
@@ -50,7 +46,7 @@ func New(logger *zap.Logger, name string, cfg Config, handler http.Handler) (*Se
 	}, nil
 }
 
-func (server *Server) Name() string {
+func (server *Server) Name() factory.Name {
 	return server.name
 }
 

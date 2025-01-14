@@ -2,7 +2,6 @@ package instrumentation
 
 import (
 	"context"
-	"fmt"
 
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	sdklog "go.opentelemetry.io/otel/log"
@@ -15,6 +14,9 @@ import (
 	"go.uber.org/zap"
 )
 
+var _ factory.Service = (*SDK)(nil)
+var _ Instrumentation = (*SDK)(nil)
+
 type Instrumentation interface {
 	LoggerProvider() sdklog.LoggerProvider
 	Logger() *zap.Logger
@@ -23,17 +25,15 @@ type Instrumentation interface {
 	ToProviderSettings() factory.ProviderSettings
 }
 
-// Instrumentation holds the core components for application instrumentation.
-type instrumentation struct {
-	loggerProvider sdklog.LoggerProvider
-	logger         *zap.Logger
-	meterProvider  sdkmetric.MeterProvider
-	tracerProvider sdktrace.TracerProvider
+// SDK holds the core components for application instrumentation.
+type SDK struct {
+	sdk    contribsdkconfig.SDK
+	logger *zap.Logger
 }
 
 // New creates a new Instrumentation instance with configured providers.
 // It sets up logging, tracing, and metrics based on the provided configuration.
-func New(ctx context.Context, build version.Build, cfg Config) (Instrumentation, error) {
+func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
 	// Set default resource attributes if not provided
 	if cfg.Resource.Attributes == nil {
 		cfg.Resource.Attributes = map[string]any{
@@ -64,46 +64,78 @@ func New(ctx context.Context, build version.Build, cfg Config) (Instrumentation,
 		SchemaUrl:  &sch,
 	}
 
-	loggerProvider, err := newLoggerProvider(ctx, cfg, configResource)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create logger provider: %w", err)
+	var loggerProvider *contribsdkconfig.LoggerProvider
+	if cfg.Logs.Enabled {
+		loggerProvider = &contribsdkconfig.LoggerProvider{
+			Processors: []contribsdkconfig.LogRecordProcessor{
+				{Batch: &cfg.Logs.Processors.Batch},
+			},
+		}
 	}
 
-	tracerProvider, err := newTracerProvider(ctx, cfg, configResource)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create tracer provider: %w", err)
+	var tracerProvider *contribsdkconfig.TracerProvider
+	if cfg.Traces.Enabled {
+		tracerProvider = &contribsdkconfig.TracerProvider{
+			Processors: []contribsdkconfig.SpanProcessor{
+				{Batch: &cfg.Traces.Processors.Batch},
+			},
+			Sampler: &cfg.Traces.Sampler,
+		}
 	}
 
-	meterProvider, err := newMeterProvider(ctx, cfg, configResource)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create meter provider: %w", err)
+	var meterProvider *contribsdkconfig.MeterProvider
+	if cfg.Metrics.Enabled {
+		meterProvider = &contribsdkconfig.MeterProvider{
+			Readers: []contribsdkconfig.MetricReader{
+				{Pull: &cfg.Metrics.Readers.Pull},
+			},
+		}
 	}
 
-	return &instrumentation{
-		loggerProvider: loggerProvider,
-		tracerProvider: tracerProvider,
-		meterProvider:  meterProvider,
-		logger:         newLogger(cfg, loggerProvider),
+	sdk, err := contribsdkconfig.NewSDK(
+		contribsdkconfig.WithContext(ctx),
+		contribsdkconfig.WithOpenTelemetryConfiguration(contribsdkconfig.OpenTelemetryConfiguration{
+			LoggerProvider: loggerProvider,
+			TracerProvider: tracerProvider,
+			MeterProvider:  meterProvider,
+			Resource:       &configResource,
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SDK{
+		sdk:    sdk,
+		logger: newLogger(cfg, sdk.LoggerProvider()),
 	}, nil
 }
 
-func (i *instrumentation) LoggerProvider() sdklog.LoggerProvider {
-	return i.loggerProvider
+func (i *SDK) Start(ctx context.Context) error {
+	return nil
 }
 
-func (i *instrumentation) Logger() *zap.Logger {
+func (i *SDK) Stop(ctx context.Context) error {
+	return i.sdk.Shutdown(ctx)
+}
+
+func (i *SDK) LoggerProvider() sdklog.LoggerProvider {
+	return i.sdk.LoggerProvider()
+}
+
+func (i *SDK) Logger() *zap.Logger {
 	return i.logger
 }
 
-func (i *instrumentation) MeterProvider() sdkmetric.MeterProvider {
-	return i.meterProvider
+func (i *SDK) MeterProvider() sdkmetric.MeterProvider {
+	return i.sdk.MeterProvider()
 }
 
-func (i *instrumentation) TracerProvider() sdktrace.TracerProvider {
-	return i.tracerProvider
+func (i *SDK) TracerProvider() sdktrace.TracerProvider {
+	return i.sdk.TracerProvider()
 }
 
-func (i *instrumentation) ToProviderSettings() factory.ProviderSettings {
+func (i *SDK) ToProviderSettings() factory.ProviderSettings {
 	return factory.ProviderSettings{
 		LoggerProvider: i.LoggerProvider(),
 		ZapLogger:      i.Logger(),

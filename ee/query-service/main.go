@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,7 +23,6 @@ import (
 	prommodel "github.com/prometheus/common/model"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func init() {
@@ -79,21 +79,13 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	instrumentation, err := instrumentation.New(context.Background(), pkgversion.Build{}, instrumentation.Config{
-		Logs: instrumentation.LogsConfig{
-			Enabled: false,
-			Level:   zapcore.InfoLevel,
-		},
-		Traces: instrumentation.TracesConfig{
-			Enabled: false,
-		},
-		Metrics: instrumentation.MetricsConfig{
-			Enabled: false,
-		},
-	})
+	instrumentation, err := instrumentation.New(context.Background(), pkgversion.Build{}, config.Instrumentation)
 	if err != nil {
+		fmt.Println(err, err.Error())
 		zap.L().Fatal("Failed to create instrumentation", zap.Error(err))
 	}
+	defer instrumentation.Stop(context.Background())
+
 	zap.ReplaceGlobals(instrumentation.Logger())
 	defer instrumentation.Logger().Sync() // flushes buffer, if any
 

@@ -6,19 +6,22 @@ import (
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/web"
 )
 
 // Config defines the entire configuration of signoz.
 type Config struct {
-	Web      web.Config      `mapstructure:"web"`
-	Cache    cache.Config    `mapstructure:"cache"`
-	SQLStore sqlstore.Config `mapstructure:"sqlstore"`
+	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
+	Web             web.Config             `mapstructure:"web"`
+	Cache           cache.Config           `mapstructure:"cache"`
+	SQLStore        sqlstore.Config        `mapstructure:"sqlstore"`
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Config, error) {
 	configFactories := []factory.ConfigFactory{
+		instrumentation.NewConfigFactory(),
 		web.NewConfigFactory(),
 		sqlstore.NewConfigFactory(),
 		cache.NewConfigFactory(),

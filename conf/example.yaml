@@ -3,6 +3,32 @@
 # Do not modify this file
 #
 
+##################### Instrumentation #####################
+instrumentation:
+  logs:
+    level: info
+    enabled: false
+    processors:
+      batch:
+        exporter:
+          otlp:
+            endpoint: localhost:4317
+  traces:
+    enabled: false
+    processors:
+      batch:
+        exporter:
+          otlp:
+            endpoint: localhost:4317
+  metrics:
+    enabled: true
+    readers:
+      pull:
+        exporter:
+          prometheus:
+            host: "0.0.0.0"
+            port: 9090
+
 ##################### Web #####################
 web:
   # Whether to enable the web frontend

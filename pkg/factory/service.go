@@ -1,4 +1,4 @@
-package registry
+package factory
 
 import "context"
 
@@ -7,10 +7,4 @@ type Service interface {
 	Start(context.Context) error
 	// Stops a service.
 	Stop(context.Context) error
-}
-
-type NamedService interface {
-	// Identifier of a service. It should be unique across all services.
-	Name() string
-	Service
 }
