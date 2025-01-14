@@ -40,6 +40,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
@@ -223,6 +224,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		)
 	}
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't create cloud provider integrations controller: %w", err,
+		)
+	}
+
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
@@ -273,6 +281,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FeatureFlags:                  lm,
 		LicenseManager:                lm,
 		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
@@ -372,6 +381,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
+	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
@@ -504,32 +514,29 @@ func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}
 		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
-	signozMetricsUsed := false
-	signozLogsUsed := false
-	signozTracesUsed := false
-	if postData != nil {
+	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
 
-		if postData.CompositeQuery != nil {
-			data["queryType"] = postData.CompositeQuery.QueryType
-			data["panelType"] = postData.CompositeQuery.PanelType
-
-			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
-		}
-	}
-
-	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
-		if signozMetricsUsed {
+	if (queryInfoResult.MetricsUsed || queryInfoResult.LogsUsed || queryInfoResult.TracesUsed) && (queryInfoResult.FilterApplied) {
+		if queryInfoResult.MetricsUsed {
 			telemetry.GetInstance().AddActiveMetricsUser()
 		}
-		if signozLogsUsed {
+		if queryInfoResult.LogsUsed {
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
-		if signozTracesUsed {
+		if queryInfoResult.TracesUsed {
 			telemetry.GetInstance().AddActiveTracesUser()
 		}
-		data["metricsUsed"] = signozMetricsUsed
-		data["logsUsed"] = signozLogsUsed
-		data["tracesUsed"] = signozTracesUsed
+		data["metricsUsed"] = queryInfoResult.MetricsUsed
+		data["logsUsed"] = queryInfoResult.LogsUsed
+		data["tracesUsed"] = queryInfoResult.TracesUsed
+		data["filterApplied"] = queryInfoResult.FilterApplied
+		data["groupByApplied"] = queryInfoResult.GroupByApplied
+		data["aggregateOperator"] = queryInfoResult.AggregateOperator
+		data["aggregateAttributeKey"] = queryInfoResult.AggregateAttributeKey
+		data["numberOfQueries"] = queryInfoResult.NumberOfQueries
+		data["queryType"] = queryInfoResult.QueryType
+		data["panelType"] = queryInfoResult.PanelType
+
 		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 		if err == nil {
 			// switch case to set data["screen"] based on the referrer

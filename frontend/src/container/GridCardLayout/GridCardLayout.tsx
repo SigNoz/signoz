@@ -1,5 +1,6 @@
 import './GridCardLayout.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
@@ -61,6 +62,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setPanelMap,
 		setSelectedDashboard,
 		isDashboardLocked,
+		dashboardQueryRangeCalled,
+		setDashboardQueryRangeCalled,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -123,6 +126,25 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	useEffect(() => {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
+
+	useEffect(() => {
+		setDashboardQueryRangeCalled(false);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			// Send Sentry event if query_range is not called within expected timeframe (2 mins) when there are widgets
+			if (!dashboardQueryRangeCalled && data?.widgets?.length) {
+				Sentry.captureEvent({
+					message: `Dashboard query range not called within expected timeframe even when there are ${data?.widgets?.length} widgets`,
+					level: 'warning',
+				});
+			}
+		}, 120000);
+
+		return (): void => clearTimeout(timeoutId);
+	}, [dashboardQueryRangeCalled, data?.widgets?.length]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {

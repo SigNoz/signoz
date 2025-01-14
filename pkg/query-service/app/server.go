@@ -13,6 +13,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -183,6 +185,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create cloud provider integrations controller: %w", err)
+	}
+
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
 	)
@@ -202,6 +209,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
 		IntegrationsController:        integrationsController,
+		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
@@ -312,6 +320,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
+	api.RegisterCloudIntegrationsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)
@@ -456,12 +465,13 @@ func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 }
 
 func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v3/query_range"
+	pathToExtractBodyFromV3 := "/api/v3/query_range"
+	pathToExtractBodyFromV4 := "/api/v4/query_range"
 
 	data := map[string]interface{}{}
 	var postData *v3.QueryRangeParamsV3
 
-	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+	if (r.Method == "POST") && ((path == pathToExtractBodyFromV3) || (path == pathToExtractBodyFromV4)) {
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
@@ -479,34 +489,64 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 		return nil, false
 	}
 
-	signozMetricsUsed := false
-	signozLogsUsed := false
-	signozTracesUsed := false
-	if postData != nil {
+	referrer := r.Header.Get("Referer")
 
-		if postData.CompositeQuery != nil {
-			data["queryType"] = postData.CompositeQuery.QueryType
-			data["panelType"] = postData.CompositeQuery.PanelType
-
-			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
-		}
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the referrer", zap.Error(err))
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
+	}
+	logsExplorerMatched, err := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the logs explorer: ", zap.Error(err))
+	}
+	traceExplorerMatched, err := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
-	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
-		if signozMetricsUsed {
+	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
+
+	if (queryInfoResult.MetricsUsed || queryInfoResult.LogsUsed || queryInfoResult.TracesUsed) && (queryInfoResult.FilterApplied) {
+		if queryInfoResult.MetricsUsed {
 			telemetry.GetInstance().AddActiveMetricsUser()
 		}
-		if signozLogsUsed {
+		if queryInfoResult.LogsUsed {
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
-		if signozTracesUsed {
+		if queryInfoResult.TracesUsed {
 			telemetry.GetInstance().AddActiveTracesUser()
 		}
-		data["metricsUsed"] = signozMetricsUsed
-		data["logsUsed"] = signozLogsUsed
-		data["tracesUsed"] = signozTracesUsed
+		data["metricsUsed"] = queryInfoResult.MetricsUsed
+		data["logsUsed"] = queryInfoResult.LogsUsed
+		data["tracesUsed"] = queryInfoResult.TracesUsed
+		data["filterApplied"] = queryInfoResult.FilterApplied
+		data["groupByApplied"] = queryInfoResult.GroupByApplied
+		data["aggregateOperator"] = queryInfoResult.AggregateOperator
+		data["aggregateAttributeKey"] = queryInfoResult.AggregateAttributeKey
+		data["numberOfQueries"] = queryInfoResult.NumberOfQueries
+		data["queryType"] = queryInfoResult.QueryType
+		data["panelType"] = queryInfoResult.PanelType
+
 		userEmail, err := auth.GetEmailFromJwt(r.Context())
 		if err == nil {
+			// switch case to set data["screen"] based on the referrer
+			switch {
+			case dashboardMatched:
+				data["screen"] = "panel"
+			case alertMatched:
+				data["screen"] = "alert"
+			case logsExplorerMatched:
+				data["screen"] = "logs-explorer"
+			case traceExplorerMatched:
+				data["screen"] = "traces-explorer"
+			default:
+				data["screen"] = "unknown"
+				return data, true
+			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
 		}
 	}
