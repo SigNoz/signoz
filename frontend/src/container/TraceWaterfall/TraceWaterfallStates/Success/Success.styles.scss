@@ -2,11 +2,16 @@
 	overflow-y: hidden;
 	overflow-x: hidden;
 	max-width: 100%;
-	padding: 0px 20px;
 
 	.waterfall-table {
 		height: 50vh;
 		overflow: auto;
+		overflow-x: hidden;
+		padding: 0px 20px;
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
 
 		// default table overrides css for table v3
 		.div-table {
@@ -19,6 +24,10 @@
 			top: 0;
 			z-index: 2;
 			background-color: var(--bg-ink-500) !important;
+
+			.div-tr {
+				height: 16px;
+			}
 		}
 
 		.div-tr {
@@ -39,7 +48,7 @@
 			position: relative;
 			font-weight: bold;
 			text-align: center;
-			height: 54px;
+			height: 0px;
 		}
 
 		.div-td {

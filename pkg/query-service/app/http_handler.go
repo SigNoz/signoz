@@ -538,6 +538,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/traces/flamegraph/{traceId}", am.ViewAccess(aH.SearchFlamegraphTracesV3)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v2/traces/{traceId}", am.ViewAccess(aH.SearchTracesV3)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
@@ -1785,6 +1786,29 @@ func (aH *APIHandler) SearchTracesV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := aH.reader.SearchTracesV3(r.Context(), traceID, req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) SearchFlamegraphTracesV3(w http.ResponseWriter, r *http.Request) {
+	traceID := mux.Vars(r)["traceId"]
+	if traceID == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("traceID is required")}, nil)
+		return
+	}
+
+	req := new(model.SearchFlamegraphTracesV3Params)
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.reader.SearchFlamegraphTracesV3(r.Context(), traceID, req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return

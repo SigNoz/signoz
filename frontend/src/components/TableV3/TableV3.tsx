@@ -155,6 +155,9 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 											onDoubleClick: (): void => header.column.resetSize(),
 											onMouseDown: header.getResizeHandler(),
 											onTouchStart: header.getResizeHandler(),
+											style: {
+												display: !header.column.getCanResize() ? 'none' : '',
+											},
 											className: `resizer ${
 												header.column.getIsResizing() ? 'isResizing' : ''
 											}`,

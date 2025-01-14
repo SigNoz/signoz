@@ -2,11 +2,9 @@ import './TraceWaterfall.styles.scss';
 
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
-import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
+import { Dispatch, SetStateAction, useMemo } from 'react';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { GetTraceV2SuccessResponse } from 'types/api/trace/getTraceV2';
 
 import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
@@ -18,33 +16,29 @@ export interface IInterestedSpan {
 	isUncollapsed: boolean;
 }
 
-function TraceWaterfall(): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV2URLProps>();
-	const urlQuery = useUrlQuery();
-	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
-		() => ({
-			spanId: urlQuery.get('spanId') || '',
-			isUncollapsed: urlQuery.get('spanId') !== '',
-		}),
-	);
-	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
+interface ITraceWaterfallProps {
+	traceId: string;
+	uncollapsedNodes: string[];
+	traceData:
+		| SuccessResponse<GetTraceV2SuccessResponse, unknown>
+		| ErrorResponse
+		| undefined;
+	isFetchingTraceData: boolean;
+	errorFetchingTraceData: unknown;
+	interestedSpanId: IInterestedSpan;
+	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
+}
+
+function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	const {
-		data: traceData,
-		isFetching: isFetchingTraceData,
-		error: errorFetchingTraceData,
-	} = useGetTraceV2({
+		traceData,
+		isFetchingTraceData,
+		errorFetchingTraceData,
+		interestedSpanId,
 		traceId,
 		uncollapsedNodes,
-		interestedSpanId: interestedSpanId.spanId,
-		isInterestedSpanIdUnCollapsed: interestedSpanId.isUncollapsed,
-	});
-
-	useEffect(() => {
-		if (traceData && traceData.payload && traceData.payload.uncollapsedNodes) {
-			setUncollapsedNodes(traceData.payload.uncollapsedNodes);
-		}
-	}, [traceData]);
-
+		setInterestedSpanId,
+	} = props;
 	// get the current state of trace waterfall based on the API lifecycle
 	const traceWaterfallState = useMemo(() => {
 		if (isFetchingTraceData) {
@@ -107,6 +101,7 @@ function TraceWaterfall(): JSX.Element {
 	}, [
 		errorFetchingTraceData,
 		interestedSpanId,
+		setInterestedSpanId,
 		spans,
 		traceData?.payload?.endTimestampMillis,
 		traceData?.payload?.startTimestampMillis,

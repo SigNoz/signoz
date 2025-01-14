@@ -1461,6 +1461,7 @@ func contains(slice []string, item string) bool {
 func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, req *model.SearchTracesV3Params) (*model.SearchTracesV3Response, *model.ApiError) {
 	trace := new(model.SearchTracesV3Response)
 	var startTime, endTime, durationNano uint64
+	var totalErrorSpans int64
 	var spanIdToSpanNodeMap = map[string]*model.Span{}
 	var traceRoots []string
 	var useCache bool = true
@@ -1487,6 +1488,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		durationNano = cachedTraceData.DurationNano
 		spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
 		traceRoots = cachedTraceData.TraceRoots
+		trace.TotalSpansCount = cachedTraceData.TotalSpans
+		trace.TotalErrorSpansCount = cachedTraceData.TotalErrorSpans
 	}
 
 	if !useCache {
@@ -1503,6 +1506,7 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			zap.L().Error("Error in processing sql query", zap.Error(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %w", err)}
 		}
+		trace.TotalSpansCount = int64(traceSummary.NumSpans)
 
 		// fetch all the spans belonging to the trace from the main table
 		var searchScanResponses []model.SpanItemV2
@@ -1572,6 +1576,10 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
 				durationNano = uint64(jsonItem.DurationNano)
 			}
+
+			if jsonItem.HasError {
+				totalErrorSpans = totalErrorSpans + 1
+			}
 		}
 
 		// traverse through the map and append each node to the children array of the parent node
@@ -1607,6 +1615,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 			StartTime:           startTime,
 			EndTime:             endTime,
 			DurationNano:        durationNano,
+			TotalSpans:          int64(traceSummary.NumSpans),
+			TotalErrorSpans:     totalErrorSpans,
 			SpanIdToSpanNodeMap: spanIdToSpanNodeMap,
 			TraceRoots:          traceRoots,
 		}
@@ -1697,6 +1707,8 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
 			_ = rootToInterestedNodePath(rootNode)
 			traverse(rootNode, 0, false)
+			trace.RootServiceName = rootNode.ServiceName
+			trace.RootServiceEntryPoint = rootNode.Name
 		}
 	}
 
@@ -1731,6 +1743,191 @@ func (r *ClickHouseReader) SearchTracesV3(ctx context.Context, traceID string, r
 	// generate the response [ spans , metadata ]
 	trace.Spans = selectedSpans
 	trace.UncollapsedNodes = uncollapsedNodes
+	trace.StartTimestampMillis = startTime
+	trace.EndTimestampMillis = endTime
+	trace.TotalErrorSpansCount = totalErrorSpans
+	return trace, nil
+}
+
+func (r *ClickHouseReader) SearchFlamegraphTracesV3(ctx context.Context, traceID string, req *model.SearchFlamegraphTracesV3Params) (*model.SearchFlamegraphTracesV3Response, *model.ApiError) {
+	trace := new(model.SearchFlamegraphTracesV3Response)
+	var startTime, endTime, durationNano uint64
+	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
+	var traceIdLevelledFlamegraph = map[string]map[int64][]*model.FlamegraphSpan{}
+	var traceRoots []string
+	var useCache bool = true
+
+	// get the trace tree from cache!
+	cachedTraceData := new(model.SearchFlamegraphTracesV3Cache)
+	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("trace-detail-waterfall-%v", traceID), cachedTraceData, false)
+	if err != nil {
+		// if there is error in retrieving the cache, log the same and move with ch queries.
+		zap.L().Debug("error in retrieving cached trace data", zap.Error(err))
+		useCache = false
+	}
+
+	if cacheStatus != cache.RetrieveStatusHit {
+		useCache = false
+	}
+
+	// if there is no error and there has been a perfect hit for cache then get the data
+	if err == nil && cacheStatus == cache.RetrieveStatusHit {
+		// cache hit is successful, retrieve the required data
+		zap.L().Info("cache is successfully hit, applying cache for trace details", zap.String("traceID", traceID))
+		startTime = cachedTraceData.StartTime
+		endTime = cachedTraceData.EndTime
+		durationNano = cachedTraceData.DurationNano
+		traceIdLevelledFlamegraph = cachedTraceData.SpanIdToSpanNodeMap
+		traceRoots = cachedTraceData.TraceRoots
+	}
+
+	if !useCache {
+		zap.L().Info("cache miss for trace details", zap.String("traceID", traceID))
+
+		// fetch the start, end and number of spans from the summary table, start and end are required for the trace query
+		var traceSummary model.TraceSummary
+		summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE trace_id=$1", r.TraceDB, r.traceSummaryTable)
+		err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return trace, nil
+			}
+			zap.L().Error("Error in processing sql query", zap.Error(err))
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %w", err)}
+		}
+
+		// fetch all the spans belonging to the trace from the main table
+		var searchScanResponses []model.SpanItemV2
+		query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, resource_string_service$$name, name,parent_span_id FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName)
+		start := time.Now()
+		err = r.db.Select(ctx, &searchScanResponses, query, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
+		zap.L().Info(query)
+		if err != nil {
+			zap.L().Error("Error in processing sql query", zap.Error(err))
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %w", err)}
+		}
+		end := time.Now()
+		zap.L().Debug("searchWaterfallTracesV3SQLQuery took: ", zap.Duration("duration", end.Sub(start)))
+
+		// create the trace tree based on the spans fetched above
+		// create a map of [spanId]: spanNode
+		for _, item := range searchScanResponses {
+			// create the span node
+			jsonItem := model.FlamegraphSpan{
+				SpanID:       item.SpanID,
+				TraceID:      item.TraceID,
+				ServiceName:  item.ServiceName,
+				Name:         item.Name,
+				DurationNano: int64(item.DurationNano),
+				HasError:     item.HasError,
+				ParentSpanId: item.ParentSpanId,
+				Children:     make([]*model.FlamegraphSpan, 0),
+			}
+
+			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
+			// assign the span node to the span map
+			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
+
+			// metadata calculation
+			if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+				startTime = jsonItem.TimeUnixNano
+			}
+			if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+				endTime = jsonItem.TimeUnixNano
+			}
+			if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+				durationNano = uint64(jsonItem.DurationNano)
+			}
+		}
+
+		// traverse through the map and append each node to the children array of the parent node
+		// capture the root nodes as well
+		for _, spanNode := range spanIdToSpanNodeMap {
+			if spanNode.ParentSpanId != "" {
+				if parentNode, exists := spanIdToSpanNodeMap[spanNode.ParentSpanId]; exists {
+					parentNode.Children = append(parentNode.Children, spanNode)
+				} else {
+					// insert the missing spans
+					missingSpan := model.FlamegraphSpan{
+						SpanID:       spanNode.ParentSpanId,
+						TraceID:      spanNode.TraceID,
+						ServiceName:  "",
+						Name:         "Missing Span",
+						DurationNano: 0,
+						HasError:     false,
+						Children:     make([]*model.FlamegraphSpan, 0),
+					}
+					missingSpan.Children = append(missingSpan.Children, spanNode)
+					spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
+				}
+			} else {
+				traceRoots = append(traceRoots, spanNode.SpanID)
+			}
+		}
+		// determestic sort for the children based on timestamp and span name
+		for _, spanNode := range spanIdToSpanNodeMap {
+			sort.Slice(spanNode.Children, func(i, j int) bool {
+				if spanNode.Children[i].TimeUnixNano == spanNode.Children[j].TimeUnixNano {
+					return spanNode.Children[i].Name < spanNode.Children[j].Name
+				}
+				return spanNode.Children[i].TimeUnixNano < spanNode.Children[j].TimeUnixNano
+			})
+		}
+		// if there are multiple roots that means we have missing spans. how to handle this case ??
+		if len(traceRoots) > 1 {
+			zap.L().Info(fmt.Sprintf("the trace %v has missing spans", traceID))
+			return nil, nil
+		}
+
+		// now traverse through the tree and create a bfs traversal for the tree
+		// then select the range of spans based on the level
+		var traverse func(node *model.FlamegraphSpan, level int64)
+		var bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
+		traverse = func(node *model.FlamegraphSpan, level int64) {
+			ok, exists := bfsMapForTrace[level]
+			node.Level = level
+			if exists {
+				bfsMapForTrace[level] = append(ok, node)
+			} else {
+				bfsMapForTrace[level] = []*model.FlamegraphSpan{node}
+			}
+			for _, child := range node.Children {
+				traverse(child, level+1)
+			}
+		}
+		for _, rootSpanID := range traceRoots {
+			if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
+				bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
+				traverse(rootNode, 0)
+				traceIdLevelledFlamegraph[rootSpanID] = bfsMapForTrace
+			}
+		}
+
+		traceCache := model.SearchFlamegraphTracesV3Cache{
+			StartTime:           startTime,
+			EndTime:             endTime,
+			DurationNano:        durationNano,
+			SpanIdToSpanNodeMap: traceIdLevelledFlamegraph,
+			TraceRoots:          traceRoots,
+		}
+
+		err = r.CacheV2.Store(ctx, fmt.Sprintf("trace-detail-waterfall-%v", traceID), &traceCache, time.Minute*5)
+		if err != nil {
+			zap.L().Debug("failed to store cache", zap.String("traceID", traceID), zap.Error(err))
+		}
+	}
+
+	selectedSpans := [][]*model.FlamegraphSpan{}
+	for _, trace := range traceRoots {
+		for level, levelNodes := range traceIdLevelledFlamegraph[trace] {
+			if level >= req.Level-20 && level <= req.Level+30 {
+				selectedSpans = append(selectedSpans, levelNodes)
+			}
+		}
+	}
+
+	// generate the response [ spans , metadata ]
+	trace.Spans = selectedSpans
 	trace.StartTimestampMillis = startTime
 	trace.EndTimestampMillis = endTime
 	return trace, nil

@@ -37,4 +37,8 @@ export interface GetTraceV2SuccessResponse {
 	uncollapsedNodes: string[];
 	startTimestampMillis: number;
 	endTimestampMillis: number;
+	totalSpansCount: number;
+	totalErrorSpansCount: number;
+	rootServiceName: string;
+	rootServiceEntryPoint: string;
 }

@@ -1,0 +1,16 @@
+.flamegraph {
+	display: flex;
+	height: 20vh;
+	border-bottom: 1px solid var(--bg-slate-400);
+
+	.flamegraph-chart {
+		width: 80%;
+		padding: 15px;
+	}
+
+	.flamegraph-stats {
+		width: 20%;
+		display: flex;
+		border-left: 1px solid var(--bg-slate-400);
+	}
+}
