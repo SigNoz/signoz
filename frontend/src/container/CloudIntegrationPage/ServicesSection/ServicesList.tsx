@@ -1,3 +1,4 @@
+import Spinner from 'components/Spinner';
 import { useGetAccountServices } from 'hooks/integrations/aws/useGetAccountServices';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useState } from 'react';
@@ -25,8 +26,7 @@ function ServicesList(): JSX.Element {
 		navigate({ search: urlQuery.toString() });
 	};
 
-	if (isLoading) return <div>Loading...</div>;
-
+	if (isLoading) return <Spinner size="large" height="25vh" />;
 	if (!services) return <div>No services found</div>;
 	return (
 		<div className="services-list">

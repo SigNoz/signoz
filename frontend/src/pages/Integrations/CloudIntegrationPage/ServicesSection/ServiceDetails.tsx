@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
+import Spinner from 'components/Spinner';
 import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDashboards';
 import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
 import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/types';
@@ -64,7 +65,7 @@ function ServiceDetails(): JSX.Element | null {
 	);
 
 	if (isLoading) {
-		return <div>Loading...</div>;
+		return <Spinner size="large" height="50vh" />;
 	}
 
 	if (!serviceDetailsData) {
