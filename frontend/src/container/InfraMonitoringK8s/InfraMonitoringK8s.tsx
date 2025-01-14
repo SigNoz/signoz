@@ -404,6 +404,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
+
+						{selectedCategory === K8sCategories.JOBS && (
+							<K8sJobsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
 					</div>
 				</div>
 			</div>
