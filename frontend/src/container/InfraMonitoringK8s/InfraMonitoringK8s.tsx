@@ -7,19 +7,20 @@ import { Collapse, Tooltip, Typography } from 'antd';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ArrowUpDown, Container, Workflow } from 'lucide-react';
-import { Bolt, Container, Workflow } from 'lucide-react'; 
+import { ArrowUpDown, Bolt, Container, Group, Workflow } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
+	DaemonSetsQuickFiltersConfig,
 	JobsQuickFiltersConfig,
 	K8sCategories,
 	NodesQuickFiltersConfig,
 	PodsQuickFiltersConfig,
 	StatefulsetsQuickFiltersConfig,
 } from './constants';
+import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
@@ -219,26 +220,26 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				/>
 			),
 		},
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<Group size={14} className="k8s-quick-filters-category-label-icon" />
-		// 				<Typography.Text>DaemonSets</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.DAEMONSETS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={DaemonSetsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
+		{
+			label: (
+				<div className="k8s-quick-filters-category-label">
+					<div className="k8s-quick-filters-category-label-container">
+						<Group size={14} className="k8s-quick-filters-category-label-icon" />
+						<Typography.Text>DaemonSets</Typography.Text>
+					</div>
+				</div>
+			),
+			key: K8sCategories.DAEMONSETS,
+			showArrow: false,
+			children: (
+				<QuickFilters
+					source="infra-monitoring"
+					config={DaemonSetsQuickFiltersConfig}
+					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
+				/>
+			),
+		},
 		{
 			label: (
 				<div className="k8s-quick-filters-category-label">
@@ -319,7 +320,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 						{selectedCategory === K8sCategories.STATEFULSETS && (
 							<K8sStatefulSetsList
-                <K8sJobsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
@@ -327,6 +327,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 						{selectedCategory === K8sCategories.JOBS && (
 							<K8sJobsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.DAEMONSETS && (
+							<K8sDaemonSetsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
