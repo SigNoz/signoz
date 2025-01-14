@@ -1,9 +1,12 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Success.styles.scss';
 
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Typography } from 'antd';
 import cx from 'classnames';
+import DetailsDrawer from 'components/DetailsDrawer/DetailsDrawer';
 import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
@@ -19,9 +22,13 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
+	useState,
 } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
+
+import { items } from './constants';
+import DrawerDescriptiveContent from './DrawerComponents/DrawerDescriptiveContent/DrawerDescriptiveContent';
 
 // css config
 const CONNECTOR_WIDTH = 28;
@@ -44,11 +51,15 @@ function SpanOverview({
 	isSpanCollapsed,
 	interestedSpanId,
 	handleCollapseUncollapse,
+	setTraceDetailsOpen,
+	setSpanDetails,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
 	interestedSpanId: string;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
+	setTraceDetailsOpen: Dispatch<SetStateAction<boolean>>;
+	setSpanDetails: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const isRootSpan = span.parentSpanId === '';
 	const spanRef = useRef<HTMLDivElement>(null);
@@ -78,6 +89,10 @@ function SpanOverview({
 				}px`,
 				borderLeft: isRootSpan ? 'none' : `1px solid lightgray`,
 			}}
+			onClick={(): void => {
+				setSpanDetails(span);
+				setTraceDetailsOpen(true);
+			}}
 		>
 			{!isRootSpan && (
 				<div
@@ -96,9 +111,11 @@ function SpanOverview({
 				<section className="first-row">
 					{span.hasChildren ? (
 						<Button
-							onClick={(): void =>
-								handleCollapseUncollapse(span.spanId, !isSpanCollapsed)
-							}
+							onClick={(event): void => {
+								event.stopPropagation();
+								event.preventDefault();
+								handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
+							}}
 							className="collapse-uncollapse-button"
 						>
 							{isSpanCollapsed ? (
@@ -134,10 +151,14 @@ function SpanDuration({
 	span,
 	interestedSpanId,
 	traceMetadata,
+	setTraceDetailsOpen,
+	setSpanDetails,
 }: {
 	span: Span;
 	interestedSpanId: string;
 	traceMetadata: ITraceMetadata;
+	setTraceDetailsOpen: Dispatch<SetStateAction<boolean>>;
+	setSpanDetails: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
 		span.durationNano / 1e6,
@@ -163,6 +184,10 @@ function SpanDuration({
 				'span-duration',
 				interestedSpanId === span.spanId ? 'interested-span' : '',
 			)}
+			onClick={(): void => {
+				setSpanDetails(span);
+				setTraceDetailsOpen(true);
+			}}
 		>
 			<div
 				className="span-line"
@@ -188,11 +213,15 @@ function getWaterfallColumns({
 	uncollapsedNodes,
 	interestedSpanId,
 	traceMetadata,
+	setTraceDetailsOpen,
+	setSpanDetails,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	interestedSpanId: IInterestedSpan;
 	traceMetadata: ITraceMetadata;
+	setTraceDetailsOpen: Dispatch<SetStateAction<boolean>>;
+	setSpanDetails: Dispatch<SetStateAction<Span | undefined>>;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -204,6 +233,8 @@ function getWaterfallColumns({
 					handleCollapseUncollapse={handleCollapseUncollapse}
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
 					interestedSpanId={interestedSpanId.spanId}
+					setTraceDetailsOpen={setTraceDetailsOpen}
+					setSpanDetails={setSpanDetails}
 				/>
 			),
 			size: 450,
@@ -217,6 +248,8 @@ function getWaterfallColumns({
 					span={props.row.original}
 					interestedSpanId={interestedSpanId.spanId}
 					traceMetadata={traceMetadata}
+					setTraceDetailsOpen={setTraceDetailsOpen}
+					setSpanDetails={setSpanDetails}
 				/>
 			),
 		}),
@@ -234,6 +267,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		setInterestedSpanId,
 	} = props;
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
+	const [traceDetailsOpen, setTraceDetailsOpen] = useState<boolean>(false);
+	const [spanDetails, setSpanDetails] = useState<Span>();
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -270,6 +305,8 @@ function Success(props: ISuccessProps): JSX.Element {
 				uncollapsedNodes,
 				interestedSpanId,
 				traceMetadata,
+				setTraceDetailsOpen,
+				setSpanDetails,
 			}),
 		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId, traceMetadata],
 	);
@@ -298,6 +335,15 @@ function Success(props: ISuccessProps): JSX.Element {
 				customClassName="waterfall-table"
 				virtualiserRef={virtualizerRef}
 			/>
+			{spanDetails && (
+				<DetailsDrawer
+					open={traceDetailsOpen}
+					setOpen={setTraceDetailsOpen}
+					title="Span Details"
+					items={items}
+					descriptiveContent={<DrawerDescriptiveContent span={spanDetails} />}
+				/>
+			)}
 		</div>
 	);
 }
