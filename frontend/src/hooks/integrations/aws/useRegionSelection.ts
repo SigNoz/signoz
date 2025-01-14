@@ -1,4 +1,4 @@
-import { regions } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/data';
+import { regions } from 'container/CloudIntegrationPage/ServicesSection/data';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 
 interface UseRegionSelectionProps {
