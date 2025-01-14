@@ -12,15 +12,15 @@ const getTraceV2 = async (
 	props: GetTraceV2PayloadProps,
 ): Promise<SuccessResponse<GetTraceV2SuccessResponse> | ErrorResponse> => {
 	try {
-		let uncollapsedNodes = [...props.uncollapsedNodes];
-		if (!props.isInterestedSpanIdUnCollapsed) {
-			uncollapsedNodes = uncollapsedNodes.filter(
-				(node) => node !== props.interestedSpanId,
+		let uncollapsedSpans = [...props.uncollapsedSpans];
+		if (!props.isSelectedSpanIDUnCollapsed) {
+			uncollapsedSpans = uncollapsedSpans.filter(
+				(node) => node !== props.selectedSpanId,
 			);
 		}
 		const postData: GetTraceV2PayloadProps = {
 			...props,
-			uncollapsedNodes,
+			uncollapsedSpans,
 		};
 		const response = await axios.post<GetTraceV2SuccessResponse>(
 			`/traces/${props.traceId}`,

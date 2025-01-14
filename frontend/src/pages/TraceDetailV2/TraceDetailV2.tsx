@@ -37,14 +37,14 @@ function TraceDetailsV2(): JSX.Element {
 		error: errorFetchingTraceData,
 	} = useGetTraceV2({
 		traceId,
-		uncollapsedNodes,
-		interestedSpanId: interestedSpanId.spanId,
-		isInterestedSpanIdUnCollapsed: interestedSpanId.isUncollapsed,
+		uncollapsedSpans: uncollapsedNodes,
+		selectedSpanId: interestedSpanId.spanId,
+		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 	});
 
 	useEffect(() => {
-		if (traceData && traceData.payload && traceData.payload.uncollapsedNodes) {
-			setUncollapsedNodes(traceData.payload.uncollapsedNodes);
+		if (traceData && traceData.payload && traceData.payload.uncollapsedSpans) {
+			setUncollapsedNodes(traceData.payload.uncollapsedSpans);
 		}
 	}, [traceData]);
 

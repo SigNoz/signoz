@@ -93,7 +93,9 @@ function SpanOverview({
 							) : (
 								<ChevronDown size={14} />
 							)}
-							<Typography.Text className="children-count">XX</Typography.Text>
+							<Typography.Text className="children-count">
+								{span.subTreeNodeCount}
+							</Typography.Text>
 						</Button>
 					) : (
 						<Button className="collapse-uncollapse-button">

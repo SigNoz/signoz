@@ -4,9 +4,9 @@ export interface TraceDetailV2URLProps {
 
 export interface GetTraceV2PayloadProps {
 	traceId: string;
-	interestedSpanId: string;
-	uncollapsedNodes: string[];
-	isInterestedSpanIdUnCollapsed: boolean;
+	selectedSpanId: string;
+	uncollapsedSpans: string[];
+	isSelectedSpanIDUnCollapsed: boolean;
 }
 
 export interface Span {
@@ -29,12 +29,13 @@ export interface Span {
 	spanKind: string;
 	hasChildren: boolean;
 	hasSibling: boolean;
+	subTreeNodeCount: number;
 	level: number;
 }
 
 export interface GetTraceV2SuccessResponse {
 	spans: Span[];
-	uncollapsedNodes: string[];
+	uncollapsedSpans: string[];
 	startTimestampMillis: number;
 	endTimestampMillis: number;
 	totalSpansCount: number;

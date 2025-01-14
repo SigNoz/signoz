@@ -14,8 +14,8 @@ const useGetTraceV2 = (props: GetTraceV2PayloadProps): UseLicense =>
 		queryKey: [
 			REACT_QUERY_KEY.GET_TRACE_V2,
 			props.traceId,
-			props.interestedSpanId,
-			props.isInterestedSpanIdUnCollapsed,
+			props.selectedSpanId,
+			props.isSelectedSpanIDUnCollapsed,
 		],
 		enabled: !!props.traceId,
 		keepPreviousData: true,

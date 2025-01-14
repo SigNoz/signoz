@@ -290,9 +290,10 @@ type Span struct {
 	Children         []*Span           `json:"children"`
 
 	// the below two fields are for frontend to render the spans
-	HasChildren bool  `json:"hasChildren"`
-	HasSiblings bool  `json:"hasSiblings"`
-	Level       int64 `json:"level"`
+	SubTreeNodeCount uint64 `json:"subTreeNodeCount"`
+	HasChildren      bool   `json:"hasChildren"`
+	HasSiblings      bool   `json:"hasSiblings"`
+	Level            uint64 `json:"level"`
 }
 
 type FlamegraphSpan struct {
@@ -308,22 +309,22 @@ type FlamegraphSpan struct {
 	Children     []*FlamegraphSpan `json:"children"`
 }
 
-type SearchTracesV3Cache struct {
-	StartTime           uint64           `json:"startTime"`
-	EndTime             uint64           `json:"endTime"`
-	DurationNano        uint64           `json:"durationNano"`
-	TotalSpans          int64            `json:"totalSpans"`
-	TotalErrorSpans     int64            `json:"totalErrorSpans"`
-	SpanIdToSpanNodeMap map[string]*Span `json:"spanIdToSpanNodeMap"`
-	TraceRoots          []string         `json:"traceRoots"`
+type GetWaterfallSpansForTraceWithMetadataCache struct {
+	StartTime                     uint64            `json:"startTime"`
+	EndTime                       uint64            `json:"endTime"`
+	DurationNano                  uint64            `json:"durationNano"`
+	TotalSpans                    uint64            `json:"totalSpans"`
+	TotalErrorSpans               uint64            `json:"totalErrorSpans"`
+	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
+	SpanIdToSpanNodeMap           map[string]*Span  `json:"spanIdToSpanNodeMap"`
+	TraceRoots                    []string          `json:"traceRoots"`
 }
 
-// SearchTracesV3Cache needs to implement the below functions for binary marshalling in case we use redis
-func (cachedTracesV3 *SearchTracesV3Cache) MarshalBinary() (data []byte, err error) {
-	return json.Marshal(cachedTracesV3)
+func (c *GetWaterfallSpansForTraceWithMetadataCache) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(c)
 }
-func (cachedTracesV3 *SearchTracesV3Cache) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, cachedTracesV3)
+func (c *GetWaterfallSpansForTraceWithMetadataCache) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, c)
 }
 
 type SearchFlamegraphTracesV3Cache struct {
@@ -341,17 +342,18 @@ func (cachedTracesV3 *SearchFlamegraphTracesV3Cache) UnmarshalBinary(data []byte
 	return json.Unmarshal(data, cachedTracesV3)
 }
 
-type SearchTracesV3Response struct {
-	StartTimestampMillis  uint64  `json:"startTimestampMillis"`
-	EndTimestampMillis    uint64  `json:"endTimestampMillis"`
-	DurationNano          uint64  `json:"durationNano"`
-	RootServiceName       string  `json:"rootServiceName"`
-	RootServiceEntryPoint string  `json:"rootServiceEntryPoint"`
-	TotalSpansCount       int64   `json:"totalSpansCount"`
-	TotalErrorSpansCount  int64   `json:"totalErrorSpansCount"`
-	Spans                 []*Span `json:"spans"`
+type GetWaterfallSpansForTraceWithMetadataResponse struct {
+	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
+	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
+	DurationNano                  uint64            `json:"durationNano"`
+	RootServiceName               string            `json:"rootServiceName"`
+	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
+	TotalSpansCount               uint64            `json:"totalSpansCount"`
+	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
+	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
+	Spans                         []*Span           `json:"spans"`
 	// this is needed for frontend and query service sync
-	UncollapsedNodes []string `json:"uncollapsedNodes"`
+	UncollapsedSpans []string `json:"uncollapsedSpans"`
 }
 
 type SearchFlamegraphTracesV3Response struct {
