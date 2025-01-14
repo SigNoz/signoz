@@ -111,14 +111,14 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
-	modelDao, err := dao.InitDao(signoz.SqlStore.Provider().SqlxDB())
+	modelDao, err := dao.InitDao(signoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, err
 	}
 
-	baseexplorer.InitWithDB(signoz.SqlStore.Provider().SqlxDB())
-	preferences.InitDB(signoz.SqlStore.Provider().SqlxDB())
-	dashboards.InitDB(signoz.SqlStore.Provider().SqlxDB())
+	baseexplorer.InitWithDB(signoz.SQLStore.SQLxDB())
+	preferences.InitDB(signoz.SQLStore.SQLxDB())
+	dashboards.InitDB(signoz.SQLStore.SQLxDB())
 
 	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
 	if err != nil {
@@ -126,7 +126,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", signoz.SqlStore.Provider().SqlxDB())
+	lm, err := licensepkg.StartManager("sqlite", signoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		qb := db.NewDataConnector(
-			signoz.SqlStore.Provider().SqlxDB(),
+			signoz.SQLStore.SQLxDB(),
 			serverOptions.PromConfigPath,
 			lm,
 			serverOptions.MaxIdleConns,
@@ -176,7 +176,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	rm, err := makeRulesManager(serverOptions.PromConfigPath,
 		baseconst.GetAlertManagerApiPrefix(),
 		serverOptions.RuleRepoURL,
-		signoz.SqlStore.Provider().SqlxDB(),
+		signoz.SQLStore.SQLxDB(),
 		reader,
 		c,
 		serverOptions.DisableRules,
@@ -197,16 +197,16 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 	}()
 
 	// initiate opamp
-	_ = opAmpModel.InitDB(signoz.SqlStore.Provider().SqlxDB())
+	_ = opAmpModel.InitDB(signoz.SQLStore.SQLxDB())
 
-	integrationsController, err := integrations.NewController(signoz.SqlStore.Provider().SqlxDB())
+	integrationsController, err := integrations.NewController(signoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SqlStore.Provider().SqlxDB())
+	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create cloud provider integrations controller: %w", err,
@@ -215,7 +215,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		signoz.SqlStore.Provider().SqlxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
+		signoz.SQLStore.SQLxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func NewServer(serverOptions *ServerOptions, config signoz.Config, signoz *signo
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:            signoz.SqlStore.Provider().SqlxDB(),
+		DB:            signoz.SQLStore.SQLxDB(),
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
 	if err != nil {

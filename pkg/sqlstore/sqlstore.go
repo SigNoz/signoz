@@ -8,23 +8,24 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.uber.org/zap"
 )
 
-type SqlStore interface {
-	Provider() Provider
+type SQLStore interface {
+	Provider
 	Migrate(context.Context) error
 	Rollback(context.Context) error
 }
 
-type ProviderConfig struct {
-	Logger *zap.Logger
+type Migration interface {
+	Register(*migrate.Migrations) error
+	Up(context.Context, *bun.DB) error
+	Down(context.Context, *bun.DB) error
 }
 
 type Provider interface {
-	SqlDB() *sql.DB
+	SQLDB() *sql.DB
 	BunDB() *bun.DB
-	SqlxDB() *sqlx.DB
+	SQLxDB() *sqlx.DB
 }
 
 type sqlStore struct {
@@ -32,7 +33,7 @@ type sqlStore struct {
 	migrator *migrate.Migrator
 }
 
-func NewSqlStore(provider Provider, migrations *migrate.Migrations) *sqlStore {
+func NewSQLStore(provider Provider, migrations *migrate.Migrations) SQLStore {
 	migrator := migrate.NewMigrator(
 		provider.BunDB(),
 		migrations,
@@ -92,6 +93,14 @@ func (sqlstore *sqlStore) Rollback(ctx context.Context) error {
 	return nil
 }
 
-func (sqlstore *sqlStore) Provider() Provider {
-	return sqlstore.provider
+func (sqlstore *sqlStore) BunDB() *bun.DB {
+	return sqlstore.provider.BunDB()
+}
+
+func (sqlstore *sqlStore) SQLDB() *sql.DB {
+	return sqlstore.provider.SQLDB()
+}
+
+func (sqlstore *sqlStore) SQLxDB() *sqlx.DB {
+	return sqlstore.provider.SQLxDB()
 }

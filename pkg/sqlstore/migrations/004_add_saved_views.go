@@ -5,19 +5,20 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type addSavedViews struct {
-	config sqlstore.MigrationConfig
+	settings factory.ProviderSettings
 }
 
-func NewAddSavedViewsMigrationFactory() sqlstore.MigrationFactory {
-	return sqlstore.NewMigrationFactory(newAddSavedViews)
+func NewAddSavedViewsFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_saved_views"), newAddSavedViews)
 }
 
-func newAddSavedViews(config sqlstore.MigrationConfig) sqlstore.Migration {
-	return &addSavedViews{config: config}
+func newAddSavedViews(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+	return &addSavedViews{settings: settings}, nil
 }
 
 func (migration *addSavedViews) Register(migrations *migrate.Migrations) error {

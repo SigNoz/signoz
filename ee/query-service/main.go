@@ -16,10 +16,12 @@ import (
 	"go.signoz.io/signoz/pkg/config"
 	signozconfig "go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/config/provider/envprovider"
+	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
+	pkgversion "go.signoz.io/signoz/pkg/version"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -143,7 +145,23 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(config)
+	instrumentation, err := instrumentation.New(context.Background(), pkgversion.Build{}, instrumentation.Config{
+		Logs: instrumentation.LogsConfig{
+			Enabled: false,
+			Level:   zapcore.InfoLevel,
+		},
+		Traces: instrumentation.TracesConfig{
+			Enabled: false,
+		},
+		Metrics: instrumentation.MetricsConfig{
+			Enabled: false,
+		},
+	})
+	if err != nil {
+		zap.L().Fatal("Failed to create instrumentation", zap.Error(err))
+	}
+
+	signoz, err := signoz.New(context.Background(), instrumentation, config, signoz.NewProviderFactories())
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}

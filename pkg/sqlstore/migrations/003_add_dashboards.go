@@ -5,19 +5,20 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type addDashboards struct {
-	config sqlstore.MigrationConfig
+	settings factory.ProviderSettings
 }
 
-func NewAddDashboardsMigrationFactory() sqlstore.MigrationFactory {
-	return sqlstore.NewMigrationFactory(newAddDashboards)
+func NewAddDashboardsFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_dashboards"), newAddDashboards)
 }
 
-func newAddDashboards(config sqlstore.MigrationConfig) sqlstore.Migration {
-	return &addDashboards{config: config}
+func newAddDashboards(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+	return &addDashboards{settings: settings}, nil
 }
 
 func (migration *addDashboards) Register(migrations *migrate.Migrations) error {

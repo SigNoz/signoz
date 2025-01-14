@@ -14,17 +14,24 @@ import (
 	"go.uber.org/zap"
 )
 
+type Instrumentation interface {
+	LoggerProvider() sdklog.LoggerProvider
+	Logger() *zap.Logger
+	MeterProvider() sdkmetric.MeterProvider
+	TracerProvider() sdktrace.TracerProvider
+}
+
 // Instrumentation holds the core components for application instrumentation.
-type Instrumentation struct {
-	LoggerProvider sdklog.LoggerProvider
-	Logger         *zap.Logger
-	MeterProvider  sdkmetric.MeterProvider
-	TracerProvider sdktrace.TracerProvider
+type instrumentation struct {
+	loggerProvider sdklog.LoggerProvider
+	logger         *zap.Logger
+	meterProvider  sdkmetric.MeterProvider
+	tracerProvider sdktrace.TracerProvider
 }
 
 // New creates a new Instrumentation instance with configured providers.
 // It sets up logging, tracing, and metrics based on the provided configuration.
-func New(ctx context.Context, build version.Build, cfg Config) (*Instrumentation, error) {
+func New(ctx context.Context, build version.Build, cfg Config) (Instrumentation, error) {
 	// Set default resource attributes if not provided
 	if cfg.Resource.Attributes == nil {
 		cfg.Resource.Attributes = map[string]any{
@@ -70,12 +77,28 @@ func New(ctx context.Context, build version.Build, cfg Config) (*Instrumentation
 		return nil, fmt.Errorf("cannot create meter provider: %w", err)
 	}
 
-	return &Instrumentation{
-		LoggerProvider: loggerProvider,
-		TracerProvider: tracerProvider,
-		MeterProvider:  meterProvider,
-		Logger:         newLogger(cfg, loggerProvider),
+	return &instrumentation{
+		loggerProvider: loggerProvider,
+		tracerProvider: tracerProvider,
+		meterProvider:  meterProvider,
+		logger:         newLogger(cfg, loggerProvider),
 	}, nil
+}
+
+func (i *instrumentation) LoggerProvider() sdklog.LoggerProvider {
+	return i.loggerProvider
+}
+
+func (i *instrumentation) Logger() *zap.Logger {
+	return i.logger
+}
+
+func (i *instrumentation) MeterProvider() sdkmetric.MeterProvider {
+	return i.meterProvider
+}
+
+func (i *instrumentation) TracerProvider() sdktrace.TracerProvider {
+	return i.tracerProvider
 }
 
 // attributes merges the input attributes with the resource attributes.

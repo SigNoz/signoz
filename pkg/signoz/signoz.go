@@ -4,58 +4,46 @@ import (
 	"context"
 
 	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/cache/strategy/memory"
-	"go.signoz.io/signoz/pkg/cache/strategy/redis"
+	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/instrumentation"
+
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/migrations"
-	sqlstoreprovider "go.signoz.io/signoz/pkg/sqlstore/provider"
 	"go.signoz.io/signoz/pkg/web"
-	"go.signoz.io/signoz/pkg/web/noop"
-	"go.signoz.io/signoz/pkg/web/router"
-	"go.uber.org/zap"
 )
 
 type SigNoz struct {
 	Cache    cache.Cache
 	Web      web.Web
-	SqlStore sqlstore.SqlStore
+	SQLStore sqlstore.SQLStore
 }
 
-func New(config Config) (*SigNoz, error) {
-	var cache cache.Cache
-	var web web.Web
+func New(ctx context.Context, instrumentation instrumentation.Instrumentation, config Config, factories ProviderFactories) (*SigNoz, error) {
+	providerSettings := NewProviderSettings(instrumentation)
 
-	// init for the cache
-	switch config.Cache.Provider {
-	case "memory":
-		cache = memory.New(&config.Cache.Memory)
-	case "redis":
-		cache = redis.New(&config.Cache.Redis)
-	}
-
-	switch config.Web.Enabled {
-	case true:
-		_web, err := router.New(zap.L(), config.Web)
-		if err != nil {
-			return nil, err
-		}
-		web = _web
-	case false:
-		web = noop.New()
-	}
-
-	sqlStoreProvider, err := sqlstoreprovider.New(config.SqlStore, sqlstore.ProviderConfig{Logger: zap.L()})
+	cache, err := factory.NewFromFactory(ctx, providerSettings, config.Cache, factories.CacheProviderFactories, config.Cache.Provider)
 	if err != nil {
 		return nil, err
 	}
 
-	migrations, err := migrations.New(sqlstore.MigrationConfig{Logger: zap.L()})
+	web, err := factory.NewFromFactory(ctx, providerSettings, config.Web, factories.WebProviderFactories, config.Web.GetProvider())
 	if err != nil {
 		return nil, err
 	}
 
-	sqlStore := sqlstore.NewSqlStore(sqlStoreProvider, migrations)
-	err = sqlStore.Migrate(context.Background())
+	sqlStoreProvider, err := factory.NewFromFactory(ctx, providerSettings, config.SQLStore, factories.SQLStoreProviderFactories, config.SQLStore.Provider)
+	if err != nil {
+		return nil, err
+	}
+
+	migrations, err := migrations.New(ctx, providerSettings, config.SQLStore, factories.SQLStoreMigrationFactories)
+	if err != nil {
+		return nil, err
+	}
+
+	sqlStore := sqlstore.NewSQLStore(sqlStoreProvider, migrations)
+
+	err = sqlStore.Migrate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +51,6 @@ func New(config Config) (*SigNoz, error) {
 	return &SigNoz{
 		Cache:    cache,
 		Web:      web,
-		SqlStore: sqlStore,
+		SQLStore: sqlStore,
 	}, nil
 }

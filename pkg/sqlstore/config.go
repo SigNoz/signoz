@@ -1,9 +1,8 @@
 package sqlstore
 
-import "go.signoz.io/signoz/pkg/config"
-
-// Config satisfies the confmap.Config interface
-var _ config.Config = (*Config)(nil)
+import (
+	"go.signoz.io/signoz/pkg/factory"
+)
 
 type Config struct {
 	Provider   string           `mapstructure:"provider"`
@@ -28,11 +27,11 @@ type PostgresConfig struct {
 	Database string `mapstructure:"database"`
 }
 
-func NewConfigFactory() config.ConfigFactory {
-	return config.NewConfigFactory(newConfig)
+func NewConfigFactory() factory.ConfigFactory {
+	return factory.NewConfigFactory(factory.MustNewName("sqlstore"), newConfig)
 }
 
-func newConfig() config.Config {
+func newConfig() factory.Config {
 	return &Config{
 		Provider: "sqlite",
 		Connection: ConnectionConfig{
@@ -45,10 +44,6 @@ func newConfig() config.Config {
 
 }
 
-func (c *Config) Key() string {
-	return "sqlstore"
-}
-
-func (c *Config) Validate() error {
+func (c Config) Validate() error {
 	return nil
 }

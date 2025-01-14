@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -8,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.uber.org/zap"
 )
@@ -18,7 +20,11 @@ type provider struct {
 	sqlxDB *sqlx.DB
 }
 
-func New(config sqlstore.Config, providerConfig sqlstore.ProviderConfig) (sqlstore.Provider, error) {
+func NewFactory() factory.ProviderFactory[sqlstore.Provider, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("sqlite"), New)
+}
+
+func New(ctx context.Context, settings factory.ProviderSettings, config sqlstore.Config) (sqlstore.Provider, error) {
 	if config.Provider != "sqlite" {
 		return nil, fmt.Errorf("provider %q is not supported by sqlite", config.Provider)
 	}
@@ -27,7 +33,8 @@ func New(config sqlstore.Config, providerConfig sqlstore.ProviderConfig) (sqlsto
 	if err != nil {
 		return nil, err
 	}
-	providerConfig.Logger.Info("connected to sqlite", zap.String("path", config.Sqlite.Path))
+
+	settings.ZapLogger.Info("connected to sqlite", zap.String("path", config.Sqlite.Path))
 
 	// Set connection options
 	sqlDB.SetMaxOpenConns(config.Connection.MaxOpenConns)
@@ -47,10 +54,10 @@ func (e *provider) BunDB() *bun.DB {
 	return e.bunDB
 }
 
-func (e *provider) SqlDB() *sql.DB {
+func (e *provider) SQLDB() *sql.DB {
 	return e.sqlDB
 }
 
-func (e *provider) SqlxDB() *sqlx.DB {
+func (e *provider) SQLxDB() *sqlx.DB {
 	return e.sqlxDB
 }

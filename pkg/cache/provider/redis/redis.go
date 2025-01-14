@@ -8,16 +8,21 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	_cache "go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 
 type cache struct {
 	client *redis.Client
-	opts   *_cache.Redis
+	opts   _cache.Redis
 }
 
-func New(opts *_cache.Redis) *cache {
-	return &cache{opts: opts}
+func NewFactory() factory.ProviderFactory[_cache.Cache, _cache.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("redis"), New)
+}
+
+func New(ctx context.Context, settings factory.ProviderSettings, config _cache.Config) (_cache.Cache, error) {
+	return &cache{opts: config.Redis}, nil
 }
 
 // WithClient creates a new cache with the given client
@@ -85,11 +90,6 @@ func (c *cache) Ping(ctx context.Context) error {
 // GetClient returns the redis client
 func (c *cache) GetClient() *redis.Client {
 	return c.client
-}
-
-// GetOptions returns the options
-func (c *cache) GetOptions() *_cache.Redis {
-	return c.opts
 }
 
 // GetTTL returns the TTL for the cache entry

@@ -5,19 +5,20 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type addPreferences struct {
-	config sqlstore.MigrationConfig
+	settings factory.ProviderSettings
 }
 
-func NewAddPreferencesMigrationFactory() sqlstore.MigrationFactory {
-	return sqlstore.NewMigrationFactory(newAddPreferences)
+func NewAddPreferencesFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_preferences"), newAddPreferences)
 }
 
-func newAddPreferences(config sqlstore.MigrationConfig) sqlstore.Migration {
-	return &addPreferences{config: config}
+func newAddPreferences(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+	return &addPreferences{settings: settings}, nil
 }
 
 func (migration *addPreferences) Register(migrations *migrate.Migrations) error {

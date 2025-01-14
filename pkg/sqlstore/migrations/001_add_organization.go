@@ -5,19 +5,20 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type addOrganization struct {
-	config sqlstore.MigrationConfig
+	settings factory.ProviderSettings
 }
 
-func NewAddOrganizationMigrationFactory() sqlstore.MigrationFactory {
-	return sqlstore.NewMigrationFactory(newAddOrganization)
+func NewAddOrganizationFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_organization"), newAddOrganization)
 }
 
-func newAddOrganization(config sqlstore.MigrationConfig) sqlstore.Migration {
-	return &addOrganization{config: config}
+func newAddOrganization(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+	return &addOrganization{settings: settings}, nil
 }
 
 func (migration *addOrganization) Register(migrations *migrate.Migrations) error {

@@ -5,6 +5,8 @@ import (
 
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
+	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/web"
 )
@@ -13,14 +15,14 @@ import (
 type Config struct {
 	Web      web.Config      `mapstructure:"web"`
 	Cache    cache.Config    `mapstructure:"cache"`
-	SqlStore sqlstore.Config `mapstructure:"sqlstore"`
+	SQLStore sqlstore.Config `mapstructure:"sqlstore"`
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Config, error) {
-	configFactories := []config.ConfigFactory{
+	configFactories := []factory.ConfigFactory{
 		web.NewConfigFactory(),
-		cache.NewConfigFactory(),
 		sqlstore.NewConfigFactory(),
+		cache.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -34,4 +36,13 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 	}
 
 	return config, nil
+}
+
+func NewProviderSettings(instrumentation instrumentation.Instrumentation) factory.ProviderSettings {
+	return factory.ProviderSettings{
+		LoggerProvider: instrumentation.LoggerProvider(),
+		ZapLogger:      instrumentation.Logger(),
+		MeterProvider:  instrumentation.MeterProvider(),
+		TracerProvider: instrumentation.TracerProvider(),
+	}
 }

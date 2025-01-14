@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/config/provider/envprovider"
+	"go.signoz.io/signoz/pkg/factory"
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
@@ -22,7 +23,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 				envprovider.NewFactory(),
 			},
 		},
-		[]config.ConfigFactory{
+		[]factory.ConfigFactory{
 			NewConfigFactory(),
 		},
 	)

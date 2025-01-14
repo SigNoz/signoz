@@ -30,13 +30,6 @@ func (conf *Conf) MergeAt(input *Conf, path string) error {
 	return conf.Koanf.MergeAt(input.Koanf, path)
 }
 
-// func (conf *Conf) Unmarshal(input any) error {
-
-// 	return conf.Koanf.UnmarshalWithConf("", input, koanf.UnmarshalConf{
-// 		Tag: "mapstructure",
-// 	})
-// }
-
 func (conf *Conf) Unmarshal(path string, input any) error {
 	dc := &mapstructure.DecoderConfig{
 		TagName:          "mapstructure",

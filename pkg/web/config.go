@@ -1,11 +1,8 @@
 package web
 
 import (
-	"go.signoz.io/signoz/pkg/config"
+	"go.signoz.io/signoz/pkg/factory"
 )
-
-// Config satisfies the confmap.Config interface
-var _ config.Config = (*Config)(nil)
 
 // Config holds the configuration for web.
 type Config struct {
@@ -18,23 +15,26 @@ type Config struct {
 	Directory string `mapstructure:"directory"`
 }
 
-func NewConfigFactory() config.ConfigFactory {
-	return config.NewConfigFactory(newConfig)
+func NewConfigFactory() factory.ConfigFactory {
+	return factory.NewConfigFactory(factory.MustNewName("web"), newConfig)
 }
 
-func newConfig() config.Config {
+func newConfig() factory.Config {
 	return &Config{
 		Enabled:   true,
 		Prefix:    "/",
 		Directory: "/etc/signoz/web",
 	}
-
 }
 
-func (c *Config) Key() string {
-	return "web"
-}
-
-func (c *Config) Validate() error {
+func (c Config) Validate() error {
 	return nil
+}
+
+func (c Config) GetProvider() string {
+	if c.Enabled {
+		return "router"
+	}
+
+	return "noop"
 }

@@ -5,19 +5,20 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type addPipelines struct {
-	config sqlstore.MigrationConfig
+	settings factory.ProviderSettings
 }
 
-func NewAddPipelinesMigrationFactory() sqlstore.MigrationFactory {
-	return sqlstore.NewMigrationFactory(newAddPipelines)
+func NewAddPipelinesFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_pipelines"), newAddPipelines)
 }
 
-func newAddPipelines(config sqlstore.MigrationConfig) sqlstore.Migration {
-	return &addPipelines{config: config}
+func newAddPipelines(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+	return &addPipelines{settings: settings}, nil
 }
 
 func (migration *addPipelines) Register(migrations *migrate.Migrations) error {

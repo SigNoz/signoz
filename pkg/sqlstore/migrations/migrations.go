@@ -8,6 +8,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
@@ -15,24 +16,21 @@ var (
 	ErrNoExecute = errors.New("no execute")
 )
 
-func New(config sqlstore.MigrationConfig) (*migrate.Migrations, error) {
+func New(
+	ctx context.Context,
+	settings factory.ProviderSettings,
+	config sqlstore.Config,
+	factories factory.NamedMap[factory.ProviderFactory[sqlstore.Migration, sqlstore.Config]],
+) (*migrate.Migrations, error) {
 	migrations := migrate.NewMigrations()
 
-	factories := []sqlstore.MigrationFactory{
-		NewAddDataMigrationsMigrationFactory(),
-		NewAddOrganizationMigrationFactory(),
-		NewAddPreferencesMigrationFactory(),
-		NewAddDashboardsMigrationFactory(),
-		NewAddSavedViewsMigrationFactory(),
-		NewAddAgentsMigrationFactory(),
-		NewAddPipelinesMigrationFactory(),
-		NewAddIntegrationsMigrationFactory(),
-	}
+	for _, factory := range factories.GetInOrder() {
+		migration, err := factory.New(ctx, settings, config)
+		if err != nil {
+			return nil, err
+		}
 
-	for _, factory := range factories {
-		migration := factory.New(config)
-
-		err := migration.Register(migrations)
+		err = migration.Register(migrations)
 		if err != nil {
 			return nil, err
 		}
