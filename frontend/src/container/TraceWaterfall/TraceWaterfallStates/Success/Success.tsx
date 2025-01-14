@@ -4,7 +4,7 @@ import './Success.styles.scss';
 
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
-import { Button, Typography } from 'antd';
+import { Button, TabsProps, Typography } from 'antd';
 import cx from 'classnames';
 import DetailsDrawer from 'components/DetailsDrawer/DetailsDrawer';
 import { TableV3 } from 'components/TableV3/TableV3';
@@ -14,7 +14,7 @@ import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
-import { ChevronDown, ChevronRight, Leaf } from 'lucide-react';
+import { Anvil, Bookmark, ChevronDown, ChevronRight, Leaf } from 'lucide-react';
 import {
 	Dispatch,
 	SetStateAction,
@@ -27,7 +27,7 @@ import {
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
-import { items } from './constants';
+import AttributesTable from './DrawerComponents/AttributesTable/AttributesTable';
 import DrawerDescriptiveContent from './DrawerComponents/DrawerDescriptiveContent/DrawerDescriptiveContent';
 
 // css config
@@ -258,6 +258,37 @@ function getWaterfallColumns({
 	return waterfallColumns;
 }
 
+function getItems(span: Span): TabsProps['items'] {
+	return [
+		{
+			label: (
+				<Button
+					type="text"
+					icon={<Bookmark size="14" />}
+					className="flamegraph-waterfall-toggle"
+				>
+					Attributes
+				</Button>
+			),
+			key: 'attributes',
+			children: <AttributesTable span={span} />,
+		},
+		{
+			label: (
+				<Button
+					type="text"
+					icon={<Anvil size="14" />}
+					className="flamegraph-waterfall-toggle"
+				>
+					Events
+				</Button>
+			),
+			key: 'events',
+			children: <Typography.Text>Eventss</Typography.Text>,
+		},
+	];
+}
+
 function Success(props: ISuccessProps): JSX.Element {
 	const {
 		spans,
@@ -340,7 +371,7 @@ function Success(props: ISuccessProps): JSX.Element {
 					open={traceDetailsOpen}
 					setOpen={setTraceDetailsOpen}
 					title="Span Details"
-					items={items}
+					items={getItems(spanDetails)}
 					descriptiveContent={<DrawerDescriptiveContent span={spanDetails} />}
 				/>
 			)}

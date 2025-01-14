@@ -32,6 +32,10 @@
 	.ant-drawer-body {
 		padding: 16px;
 		background: var(--bg-ink-400);
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
 	}
 
 	.details-drawer-tabs {
