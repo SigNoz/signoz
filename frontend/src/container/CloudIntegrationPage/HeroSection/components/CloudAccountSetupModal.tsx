@@ -1,10 +1,14 @@
 import './CloudAccountSetupModal.style.scss';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Button } from 'antd';
 =======
 import { Button, Form } from 'antd';
 >>>>>>> 4e8aae120 (feat: integrate now modal states and json server API integration)
+=======
+import { Button } from 'antd';
+>>>>>>> 294b1e1d3 (refactor: make account settings modal more readable and overall improvements)
 import SignozModal from 'components/SignozModal/SignozModal';
 import { useIntegrationModal } from 'hooks/integrations/aws/useIntegrationModal';
 import { useCallback } from 'react';
