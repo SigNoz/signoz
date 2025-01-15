@@ -179,7 +179,8 @@ func TestConfigureService(t *testing.T) {
 	// should be able to configure a service for a connected account
 	testConnectedAccount := makeTestConnectedAccount(t, controller, testCloudAccountId)
 	require.Nil(testConnectedAccount.RemovedAt)
-	require.Equal(testCloudAccountId, testConnectedAccount.CloudAccountId)
+	require.NotNil(testConnectedAccount.CloudAccountId)
+	require.Equal(testCloudAccountId, *testConnectedAccount.CloudAccountId)
 
 	testSvcConfig := CloudServiceConfig{
 		Metrics: &CloudServiceMetricsConfig{
