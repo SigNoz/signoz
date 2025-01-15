@@ -425,6 +425,9 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 				for idx, groupBy := range query.GroupBy {
 					parts = append(parts, fmt.Sprintf("groupBy-%d=%s", idx, groupBy.CacheKey()))
 				}
+				if params.CompositeQuery.PanelType == v3.PanelTypeValue {
+					parts = append(parts, fmt.Sprintf("secondaryAggregation=%s", query.SecondaryAggregation))
+				}
 			}
 
 			if len(query.Having) > 0 {
