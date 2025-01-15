@@ -1300,13 +1300,14 @@ func TestGenerateCacheKeysMetricsBuilder(t *testing.T) {
 					QueryType: v3.QueryTypeBuilder,
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"A": {
-							QueryName:          "A",
-							StepInterval:       60,
-							DataSource:         v3.DataSourceMetrics,
-							AggregateOperator:  v3.AggregateOperatorSumRate,
-							Expression:         "A",
-							AggregateAttribute: v3.AttributeKey{Key: "signoz_latency_bucket"},
-							Temporality:        v3.Delta,
+							QueryName:            "A",
+							StepInterval:         60,
+							DataSource:           v3.DataSourceMetrics,
+							AggregateOperator:    v3.AggregateOperatorSumRate,
+							SecondaryAggregation: v3.SecondaryAggregationMax,
+							Expression:           "A",
+							AggregateAttribute:   v3.AttributeKey{Key: "signoz_latency_bucket"},
+							Temporality:          v3.Delta,
 							Filters: &v3.FilterSet{
 								Operator: "AND",
 								Items: []v3.FilterItem{
@@ -1333,7 +1334,7 @@ func TestGenerateCacheKeysMetricsBuilder(t *testing.T) {
 				},
 			},
 			expectedCacheKeys: map[string]string{
-				"A": "source=metrics&step=60&aggregate=sum_rate&timeAggregation=&spaceAggregation=&aggregateAttribute=signoz_latency_bucket---false&filter-0=key:service_name---false,op:=,value:A&groupBy-0=service_name---false&groupBy-1=le---false&having-0=column:value,op:>,value:100",
+				"A": "source=metrics&step=60&aggregate=sum_rate&timeAggregation=&spaceAggregation=&aggregateAttribute=signoz_latency_bucket---false&filter-0=key:service_name---false,op:=,value:A&groupBy-0=service_name---false&groupBy-1=le---false&secondaryAggregation=max&having-0=column:value,op:>,value:100",
 			},
 		},
 		{
