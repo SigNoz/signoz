@@ -79,6 +79,10 @@ export default function CustomDomainSettings(): JSX.Element {
 	});
 
 	useEffect(() => {
+		if (isFetchingDeploymentsData) {
+			return;
+		}
+
 		if (deploymentsData?.data?.status === 'success') {
 			setHosts(deploymentsData.data.data.hosts);
 
@@ -102,7 +106,12 @@ export default function CustomDomainSettings(): JSX.Element {
 		if (deploymentsData?.data?.data.state === 'HEALTHY') {
 			setIsPollingEnabled(false);
 		}
-	}, [deploymentsData, refetchDeploymentsData, isPollingEnabled]);
+	}, [
+		deploymentsData,
+		refetchDeploymentsData,
+		isPollingEnabled,
+		isFetchingDeploymentsData,
+	]);
 
 	const onUpdateCustomDomainSettings = (): void => {
 		editForm

@@ -272,8 +272,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const handleFailedPayment = (): void => {
 		manageCreditCard({
 			licenseKey: activeLicenseV3?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			successURL: window.location.origin,
+			cancelURL: window.location.origin,
 		});
 	};
 
@@ -292,8 +292,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
 	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
-	const isInfraMonitoringHosts = (): boolean =>
-		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS';
+	const isInfraMonitoring = (): boolean =>
+		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
+		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -422,7 +423,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isAlertHistory() ||
 											isAlertOverview() ||
 											isMessagingQueues() ||
-											isInfraMonitoringHosts()
+											isInfraMonitoring()
 												? 0
 												: '0 1rem',
 

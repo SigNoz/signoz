@@ -430,7 +430,7 @@ export default function BillingContainer(): JSX.Element {
 				<Flex justify="space-between" align="center">
 					<Flex vertical>
 						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
-							{isCloudUserVal ? t('enterprise_cloud') : t('enterprise')}{' '}
+							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
 							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
 						</Typography.Title>
 						{!isLoading && !isFetchingBillingData ? (

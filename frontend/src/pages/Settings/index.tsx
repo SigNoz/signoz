@@ -11,7 +11,9 @@ import { getRoutes } from './utils';
 
 function SettingsPage(): JSX.Element {
 	const { pathname } = useLocation();
-	const { user, featureFlags } = useAppContext();
+	const { user, featureFlags, licenses } = useAppContext();
+
+	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
@@ -24,8 +26,15 @@ function SettingsPage(): JSX.Element {
 			?.active || false;
 
 	const routes = useMemo(
-		() => getRoutes(user.role, isCurrentOrgSettings, isGatewayEnabled, t),
-		[user.role, isCurrentOrgSettings, isGatewayEnabled, t],
+		() =>
+			getRoutes(
+				user.role,
+				isCurrentOrgSettings,
+				isGatewayEnabled,
+				isWorkspaceBlocked,
+				t,
+			),
+		[user.role, isCurrentOrgSettings, isGatewayEnabled, isWorkspaceBlocked, t],
 	);
 
 	return <RouteTab routes={routes} activeKey={pathname} history={history} />;
