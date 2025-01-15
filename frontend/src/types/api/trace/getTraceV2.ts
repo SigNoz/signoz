@@ -9,6 +9,11 @@ export interface GetTraceV2PayloadProps {
 	isSelectedSpanIDUnCollapsed: boolean;
 }
 
+export interface Event {
+	name: string;
+	timeUnixNano: number;
+	attributeMap: Record<string, string>;
+}
 export interface Span {
 	timestamp: number;
 	durationNano: number;

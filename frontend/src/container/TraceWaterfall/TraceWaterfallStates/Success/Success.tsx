@@ -29,6 +29,7 @@ import { toFixed } from 'utils/toFixed';
 
 import AttributesTable from './DrawerComponents/AttributesTable/AttributesTable';
 import DrawerDescriptiveContent from './DrawerComponents/DrawerDescriptiveContent/DrawerDescriptiveContent';
+import EventsTable from './DrawerComponents/EventsTable/EventsTable';
 
 // css config
 const CONNECTOR_WIDTH = 28;
@@ -258,7 +259,7 @@ function getWaterfallColumns({
 	return waterfallColumns;
 }
 
-function getItems(span: Span): TabsProps['items'] {
+function getItems(span: Span, startTime: number): TabsProps['items'] {
 	return [
 		{
 			label: (
@@ -284,7 +285,7 @@ function getItems(span: Span): TabsProps['items'] {
 				</Button>
 			),
 			key: 'events',
-			children: <Typography.Text>Eventss</Typography.Text>,
+			children: <EventsTable span={span} startTime={startTime} />,
 		},
 	];
 }
@@ -371,7 +372,8 @@ function Success(props: ISuccessProps): JSX.Element {
 					open={traceDetailsOpen}
 					setOpen={setTraceDetailsOpen}
 					title="Span Details"
-					items={getItems(spanDetails)}
+					defaultActiveKey="attributes"
+					items={getItems(spanDetails, traceMetadata.startTime)}
 					descriptiveContent={<DrawerDescriptiveContent span={spanDetails} />}
 				/>
 			)}
