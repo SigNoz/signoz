@@ -3,7 +3,10 @@ import './PaginatedTraceFlamegraph.styles.scss';
 import { Progress, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
+import { themeColors } from 'constants/theme';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
@@ -27,6 +30,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		level,
 		traceId,
 	});
+	const isDarkMode = useIsDarkMode();
 
 	// get the current state of trace flamegraph based on the API lifecycle
 	const traceFlamegraphState = useMemo(() => {
@@ -102,11 +106,27 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 				<div className="stats">
 					{Object.keys(serviceExecTime).map((service) => {
 						const spread = endTime - startTime;
-						const value = ((serviceExecTime[service] / 1e6) * 100) / spread;
+						const value = (serviceExecTime[service] * 100) / spread;
+						const color = generateColor(
+							service,
+							isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+						);
 						return (
 							<div key={service} className="value-row">
-								<Typography.Text className="service-name">{service}</Typography.Text>
-								<Progress percent={value} className="service-progress-indicator" />
+								<section className="service-name">
+									<div className="square-box" style={{ backgroundColor: color }} />
+									<Typography.Text className="service-text">{service}</Typography.Text>
+								</section>
+								<section className="progress-service">
+									<Progress
+										percent={parseFloat(value.toFixed(2))}
+										className="service-progress-indicator"
+										showInfo={false}
+									/>
+									<Typography.Text className="percent-value">
+										{parseFloat(value.toFixed(2))}%
+									</Typography.Text>
+								</section>
 							</div>
 						);
 					})}

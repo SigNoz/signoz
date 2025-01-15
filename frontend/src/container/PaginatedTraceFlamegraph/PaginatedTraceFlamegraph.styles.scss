@@ -29,7 +29,7 @@
 			margin-bottom: 16px;
 			color: var(--bg-vanilla-100);
 			font-family: Inter;
-			font-size: 12px;
+			font-size: 14px;
 			font-style: normal;
 			font-weight: 400;
 			line-height: 18px; /* 150% */
@@ -53,19 +53,52 @@
 
 				.service-name {
 					display: flex;
+					align-items: center;
+					gap: 8px;
 					flex-shrink: 0;
-					color: var(--bg-vanilla-400);
-					font-family: 'Space Mono';
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
+
+					.service-text {
+						color: var(--bg-vanilla-400);
+						font-family: 'Space Mono';
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: normal;
+					}
+
+					.square-box {
+						height: 8px;
+						width: 8px;
+					}
 				}
 
-				.service-progress-indicator {
-					width: 100px;
-					margin-inline-end: 0px !important;
-					margin-bottom: 0px !important;
+				.progress-service {
+					display: flex;
+					align-items: center;
+					width: 85px;
+					gap: 8px;
+					justify-content: flex-start;
+
+					.service-progress-indicator {
+						width: fit-content;
+						margin-inline-end: 0px !important;
+						margin-bottom: 0px !important;
+
+						.ant-progress-inner {
+							width: 30px;
+						}
+					}
+
+					.percent-value {
+						color: var(--bg-vanilla-100);
+						text-align: right;
+						font-family: 'Geist Mono';
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: normal;
+						letter-spacing: 0.48px;
+					}
 				}
 			}
 		}

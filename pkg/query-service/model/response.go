@@ -271,7 +271,7 @@ type SearchSpanResponseItem struct {
 
 type Span struct {
 	TimeUnixNano     uint64            `json:"timestamp"`
-	DurationNano     int64             `json:"durationNano"`
+	DurationNano     uint64            `json:"durationNano"`
 	SpanID           string            `json:"spanId"`
 	RootSpanID       string            `json:"rootSpanId"`
 	ParentSpanId     string            `json:"parentSpanId"`
@@ -298,7 +298,7 @@ type Span struct {
 
 type FlamegraphSpan struct {
 	TimeUnixNano uint64            `json:"timestamp"`
-	DurationNano int64             `json:"durationNano"`
+	DurationNano uint64            `json:"durationNano"`
 	SpanID       string            `json:"spanId"`
 	ParentSpanId string            `json:"parentSpanId"`
 	TraceID      string            `json:"traceId"`

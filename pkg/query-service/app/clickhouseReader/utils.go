@@ -55,7 +55,7 @@ func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []st
 		TimeUnixNano:     span.TimeUnixNano,
 		Name:             span.Name,
 		Kind:             int32(span.Kind),
-		DurationNano:     int64(span.DurationNano),
+		DurationNano:     span.DurationNano,
 		HasError:         span.HasError,
 		StatusMessage:    span.StatusMessage,
 		StatusCodeString: span.StatusCodeString,

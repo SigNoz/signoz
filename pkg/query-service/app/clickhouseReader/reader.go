@@ -1449,6 +1449,61 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	return &searchSpansResult, nil
 }
 
+type Interval struct {
+	StartTime uint64
+	Duration  uint64
+	Service   string
+}
+
+func calculateServiceTime(serviceIntervals map[string][]Interval) map[string]uint64 {
+	totalTimes := make(map[string]uint64)
+
+	for service, serviceIntervals := range serviceIntervals {
+		sort.Slice(serviceIntervals, func(i, j int) bool {
+			return serviceIntervals[i].StartTime < serviceIntervals[j].StartTime
+		})
+		mergedIntervals := mergeIntervals(serviceIntervals)
+		totalTime := uint64(0)
+		for _, interval := range mergedIntervals {
+			totalTime += interval.Duration
+		}
+		totalTimes[service] = totalTime
+	}
+
+	return totalTimes
+}
+
+func mergeIntervals(intervals []Interval) []Interval {
+	if len(intervals) == 0 {
+		return nil
+	}
+
+	var merged []Interval
+	current := intervals[0]
+
+	for i := 1; i < len(intervals); i++ {
+		next := intervals[i]
+		if current.StartTime+current.Duration >= next.StartTime {
+			endTime := max(current.StartTime+current.Duration, next.StartTime+next.Duration)
+			current.Duration = endTime - current.StartTime
+		} else {
+			merged = append(merged, current)
+			current = next
+		}
+	}
+	// Add the last interval
+	merged = append(merged, current)
+
+	return merged
+}
+
+func max(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Context, traceID string, req *model.GetWaterfallSpansForTraceWithMetadataParams) (*model.GetWaterfallSpansForTraceWithMetadataResponse, *model.ApiError) {
 	response := new(model.GetWaterfallSpansForTraceWithMetadataResponse)
 	var startTime, endTime, durationNano, totalErrorSpans uint64
@@ -1506,6 +1561,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		end := time.Now()
 		zap.L().Debug("GetWaterfallSpansForTraceWithMetadata took: ", zap.Duration("duration", end.Sub(start)))
 
+		var serviceNameIntervalMap = map[string][]Interval{}
 		for _, item := range searchScanResponses {
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
@@ -1531,7 +1587,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				ServiceName:      item.ServiceName,
 				Name:             item.Name,
 				Kind:             int32(item.Kind),
-				DurationNano:     int64(item.DurationNano),
+				DurationNano:     item.DurationNano,
 				HasError:         item.HasError,
 				StatusMessage:    item.StatusMessage,
 				StatusCodeString: item.StatusCodeString,
@@ -1543,28 +1599,28 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				Children:         make([]*model.Span, 0),
 			}
 
-			if ok, exists := serviceNameToTotalDurationMap[jsonItem.ServiceName]; exists {
-				serviceNameToTotalDurationMap[jsonItem.ServiceName] = ok + uint64(jsonItem.DurationNano)
-			} else {
-				serviceNameToTotalDurationMap[jsonItem.ServiceName] = uint64(jsonItem.DurationNano)
-			}
-
 			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
+
+			serviceNameIntervalMap[jsonItem.ServiceName] =
+				append(serviceNameIntervalMap[jsonItem.ServiceName], Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano / 1000000, Service: jsonItem.ServiceName})
+
 			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
 
 			if startTime == 0 || jsonItem.TimeUnixNano < startTime {
 				startTime = jsonItem.TimeUnixNano
 			}
-			if endTime == 0 || jsonItem.TimeUnixNano > endTime {
-				endTime = jsonItem.TimeUnixNano
+			if endTime == 0 || (jsonItem.TimeUnixNano+(jsonItem.DurationNano/1000000)) > endTime {
+				endTime = jsonItem.TimeUnixNano + (jsonItem.DurationNano / 1000000)
 			}
-			if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
-				durationNano = uint64(jsonItem.DurationNano)
+			if durationNano == 0 || jsonItem.DurationNano > durationNano {
+				durationNano = jsonItem.DurationNano
 			}
 			if jsonItem.HasError {
 				totalErrorSpans = totalErrorSpans + 1
 			}
 		}
+
+		serviceNameToTotalDurationMap = calculateServiceTime(serviceNameIntervalMap)
 
 		// traverse through the map and append each node to the children array of the parent node
 		// capture the root nodes as well
@@ -1728,7 +1784,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 				TraceID:      item.TraceID,
 				ServiceName:  item.ServiceName,
 				Name:         item.Name,
-				DurationNano: int64(item.DurationNano),
+				DurationNano: (item.DurationNano),
 				HasError:     item.HasError,
 				ParentSpanId: item.ParentSpanId,
 				Children:     make([]*model.FlamegraphSpan, 0),
@@ -1742,8 +1798,8 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			if startTime == 0 || jsonItem.TimeUnixNano < startTime {
 				startTime = jsonItem.TimeUnixNano
 			}
-			if endTime == 0 || jsonItem.TimeUnixNano > endTime {
-				endTime = jsonItem.TimeUnixNano
+			if endTime == 0 || (jsonItem.TimeUnixNano+(jsonItem.DurationNano/1000000)) > endTime {
+				endTime = jsonItem.TimeUnixNano + (jsonItem.DurationNano / 1000000)
 			}
 			if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
 				durationNano = uint64(jsonItem.DurationNano)
