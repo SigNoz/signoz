@@ -1,8 +1,7 @@
 import 'uplot/dist/uPlot.min.css';
 import './AnomalyAlertEvaluationView.styles.scss';
 
-import { Checkbox, Typography } from 'antd';
-import Search from 'antd/es/input/Search';
+import { Checkbox, Input, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -15,6 +14,8 @@ import { useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
 import tooltipPlugin from './tooltipPlugin';
+
+const { Search } = Input;
 
 function UplotChart({
 	data,

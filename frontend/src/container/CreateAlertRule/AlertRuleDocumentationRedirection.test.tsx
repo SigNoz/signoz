@@ -2,9 +2,12 @@ import ROUTES from 'constants/routes';
 import CreateAlertPage from 'pages/CreateAlert';
 import { MemoryRouter, Route } from 'react-router-dom';
 import { act, fireEvent, render } from 'tests/test-utils';
-import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
+import {
+	ALERT_TYPE_TO_TITLE,
+	ALERT_TYPE_URL_MAP,
+	AlertTypesWithoutAnomaly,
+} from './constants';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -39,7 +42,7 @@ window.ResizeObserver =
 
 function findLinkForAlertType(
 	links: HTMLElement[],
-	alertType: AlertTypes,
+	alertType: AlertTypesWithoutAnomaly,
 ): HTMLElement {
 	const link = links.find(
 		(el) =>
@@ -84,7 +87,7 @@ describe('Alert rule documentation redirection', () => {
 		expect(getByText('choose_alert_type')).toBeInTheDocument();
 
 		// Check for alert type titles and descriptions
-		Object.values(AlertTypes).forEach((alertType) => {
+		Object.values(AlertTypesWithoutAnomaly).forEach((alertType) => {
 			const title = ALERT_TYPE_TO_TITLE[alertType];
 			expect(getByText(title)).toBeInTheDocument();
 			expect(getByText(`${title}_desc`)).toBeInTheDocument();
@@ -103,11 +106,11 @@ describe('Alert rule documentation redirection', () => {
 		const clickHereLinks = getAllByText(
 			'Click here to see how to create a sample alert.',
 		);
-		const alertTypeCount = Object.keys(AlertTypes).length;
+		const alertTypeCount = Object.keys(AlertTypesWithoutAnomaly).length;
 
 		expect(clickHereLinks).toHaveLength(alertTypeCount);
 
-		Object.values(AlertTypes).forEach((alertType) => {
+		Object.values(AlertTypesWithoutAnomaly).forEach((alertType) => {
 			const linkForAlertType = findLinkForAlertType(clickHereLinks, alertType);
 			const expectedUrl = ALERT_TYPE_URL_MAP[alertType];
 
@@ -117,9 +120,9 @@ describe('Alert rule documentation redirection', () => {
 		expect(mockWindowOpen).toHaveBeenCalledTimes(alertTypeCount);
 	});
 
-	Object.values(AlertTypes).forEach((alertType) => {
+	Object.values(AlertTypesWithoutAnomaly).forEach((alertType) => {
 		it(`should redirect to create alert page for ${alertType} and "Check an example alert" should redirect to the correct documentation`, () => {
-			const { getByTestId, getByText } = renderResult;
+			const { getByTestId, getByRole } = renderResult;
 
 			const alertTypeLink = getByTestId(`alert-type-card-${alertType}`);
 
@@ -128,7 +131,11 @@ describe('Alert rule documentation redirection', () => {
 			});
 
 			act(() => {
-				fireEvent.click(getByText('Check an example alert'));
+				fireEvent.click(
+					getByRole('button', {
+						name: /alert setup guide/i,
+					}),
+				);
 			});
 
 			expect(mockWindowOpen).toHaveBeenCalledWith(
