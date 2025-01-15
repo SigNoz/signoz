@@ -130,9 +130,10 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 		return apiError.Err
 	}
 
-	if len(orgs) > 1 {
-		return errors.Errorf("Found %d organizations, expected one or none.", len(orgs))
-	}
+	// TODO(mlg): reconsider how to handle this
+	//if len(orgs) > 1 {
+	//	return errors.Errorf("Found %d organizations, expected one or none.", len(orgs))
+	//}
 
 	var org model.Organization
 	if len(orgs) == 1 {

@@ -50,7 +50,7 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if all looks good, call auth
-	resp, err := baseauth.Login(ctx, &req)
+	resp, err := baseauth.Login(ctx, &req, nil)
 	if ah.HandleError(w, err, http.StatusUnauthorized) {
 		return
 	}
