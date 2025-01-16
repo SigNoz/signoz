@@ -33,7 +33,7 @@ func MustNewNamedMap[T Named](factories ...T) NamedMap[T] {
 	return nm
 }
 
-func (n NamedMap[T]) Get(namestr string) (t T, err error) {
+func (n *NamedMap[T]) Get(namestr string) (t T, err error) {
 	name, err := NewName(namestr)
 	if err != nil {
 		return
@@ -49,16 +49,17 @@ func (n NamedMap[T]) Get(namestr string) (t T, err error) {
 	return
 }
 
-func (n NamedMap[T]) Add(factory T) (err error) {
+func (n *NamedMap[T]) Add(factory T) (err error) {
 	name := factory.Name()
 	if _, ok := n.factories[name]; ok {
 		return fmt.Errorf("factory %q already exists", name)
 	}
 
 	n.factories[name] = factory
+	n.factoriesInOrder = append(n.factoriesInOrder, factory)
 	return nil
 }
 
-func (n NamedMap[T]) GetInOrder() []T {
+func (n *NamedMap[T]) GetInOrder() []T {
 	return n.factoriesInOrder
 }

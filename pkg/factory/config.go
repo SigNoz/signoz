@@ -21,7 +21,7 @@ type configFactory struct {
 	newConfigFunc NewConfigFunc
 }
 
-// New creates a new config.
+// Name returns the name of the factory.
 func (factory *configFactory) Name() Name {
 	return factory.name
 }
