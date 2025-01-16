@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/require-default-props */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable prefer-destructuring */
 
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
