@@ -12,6 +12,8 @@ type NamedMap[T Named] struct {
 	factoriesInOrder []T
 }
 
+// NewNamedMap creates a new NamedMap from a list of factories.
+// It returns an error if the factories have duplicate names.
 func NewNamedMap[T Named](factories ...T) (NamedMap[T], error) {
 	fmap := make(map[Name]T)
 	for _, factory := range factories {
@@ -25,6 +27,8 @@ func NewNamedMap[T Named](factories ...T) (NamedMap[T], error) {
 	return NamedMap[T]{factories: fmap, factoriesInOrder: factories}, nil
 }
 
+// MustNewNamedMap creates a new NamedMap from a list of factories.
+// It panics if the factories have duplicate names.
 func MustNewNamedMap[T Named](factories ...T) NamedMap[T] {
 	nm, err := NewNamedMap(factories...)
 	if err != nil {
@@ -33,6 +37,8 @@ func MustNewNamedMap[T Named](factories ...T) NamedMap[T] {
 	return nm
 }
 
+// Get returns the factory for the given name by string.
+// It returns an error if the factory is not found or the name is invalid.
 func (n *NamedMap[T]) Get(namestr string) (t T, err error) {
 	name, err := NewName(namestr)
 	if err != nil {
@@ -49,6 +55,8 @@ func (n *NamedMap[T]) Get(namestr string) (t T, err error) {
 	return
 }
 
+// Add adds a factory to the NamedMap.
+// It returns an error if the factory already exists.
 func (n *NamedMap[T]) Add(factory T) (err error) {
 	name := factory.Name()
 	if _, ok := n.factories[name]; ok {
@@ -60,6 +68,7 @@ func (n *NamedMap[T]) Add(factory T) (err error) {
 	return nil
 }
 
+// GetInOrder returns the factories in the order they were added.
 func (n *NamedMap[T]) GetInOrder() []T {
 	return n.factoriesInOrder
 }
