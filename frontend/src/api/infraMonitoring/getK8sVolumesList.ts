@@ -17,20 +17,21 @@ export interface K8sVolumesListPayload {
 }
 
 export interface K8sVolumesData {
-	volumeName: string;
-	cpuUsage: number;
-	memoryUsage: number;
-	desiredPods: number;
-	availablePods: number;
-	cpuRequest: number;
-	memoryRequest: number;
-	cpuLimit: number;
-	memoryLimit: number;
-	restarts: number;
+	persistentVolumeClaimName: string;
+	volumeAvailable: number;
+	volumeCapacity: number;
+	volumeInodes: number;
+	volumeInodesFree: number;
+	volumeInodesUsed: number;
+	volumeUsage: number;
 	meta: {
 		k8s_cluster_name: string;
-		k8s_volume_name: string;
 		k8s_namespace_name: string;
+		k8s_node_name: string;
+		k8s_persistentvolumeclaim_name: string;
+		k8s_pod_name: string;
+		k8s_pod_uid: string;
+		k8s_statefulset_name: string;
 	};
 }
 
@@ -52,7 +53,7 @@ export const getK8sVolumesList = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<K8sVolumesListResponse> | ErrorResponse> => {
 	try {
-		const response = await ApiBaseInstance.post('/volumes/list', props, {
+		const response = await ApiBaseInstance.post('/pvcs/list', props, {
 			signal,
 			headers,
 		});

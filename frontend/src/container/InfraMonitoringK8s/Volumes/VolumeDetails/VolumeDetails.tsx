@@ -95,11 +95,11 @@ function VolumeDetails({
 						id: 'k8s_volume_name--string--resource--false',
 					},
 					op: '=',
-					value: volume?.volumeName || '',
+					value: volume?.persistentVolumeClaimName || '',
 				},
 			],
 		}),
-		[volume?.volumeName],
+		[volume?.persistentVolumeClaimName],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -130,11 +130,11 @@ function VolumeDetails({
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
-					value: volume?.volumeName || '',
+					value: volume?.persistentVolumeClaimName || '',
 				},
 			],
 		}),
-		[volume?.volumeName],
+		[volume?.persistentVolumeClaimName],
 	);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
@@ -151,7 +151,7 @@ function VolumeDetails({
 
 	useEffect(() => {
 		logEvent('Infra Monitoring: Volumes list details page visited', {
-			volume: volume?.volumeName,
+			volume: volume?.persistentVolumeClaimName,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -198,7 +198,7 @@ function VolumeDetails({
 			}
 
 			logEvent('Infra Monitoring: Volumes list details time updated', {
-				volume: volume?.volumeName,
+				volume: volume?.persistentVolumeClaimName,
 				interval,
 			});
 		},
@@ -221,7 +221,7 @@ function VolumeDetails({
 				);
 
 				logEvent('Infra Monitoring: Volumes list details logs filters applied', {
-					volume: volume?.volumeName,
+					volume: volume?.persistentVolumeClaimName,
 				});
 
 				return {
@@ -248,7 +248,7 @@ function VolumeDetails({
 				);
 
 				logEvent('Infra Monitoring: Volumes list details traces filters applied', {
-					volume: volume?.volumeName,
+					volume: volume?.persistentVolumeClaimName,
 				});
 
 				return {
@@ -272,19 +272,19 @@ function VolumeDetails({
 				const volumeKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const volumeNameFilter = prevFilters.items.find(
+				const persistentVolumeClaimNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
 				logEvent('Infra Monitoring: Volumes list details events filters applied', {
-					volume: volume?.volumeName,
+					volume: volume?.persistentVolumeClaimName,
 				});
 
 				return {
 					op: 'AND',
 					items: [
 						volumeKindFilter,
-						volumeNameFilter,
+						persistentVolumeClaimNameFilter,
 						...value.items.filter(
 							(item) =>
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
@@ -308,7 +308,7 @@ function VolumeDetails({
 		}
 
 		logEvent('Infra Monitoring: Volumes list details explore clicked', {
-			volume: volume?.volumeName,
+			volume: volume?.persistentVolumeClaimName,
 			view: selectedView,
 		});
 
@@ -385,7 +385,9 @@ function VolumeDetails({
 			title={
 				<>
 					<Divider type="vertical" />
-					<Typography.Text className="title">{volume?.volumeName}</Typography.Text>
+					<Typography.Text className="title">
+						{volume?.persistentVolumeClaimName}
+					</Typography.Text>
 				</>
 			}
 			placement="right"
@@ -419,7 +421,9 @@ function VolumeDetails({
 							</div>
 							<div className="values-row">
 								<Typography.Text className="volume-details-metadata-value">
-									<Tooltip title={volume.volumeName}>{volume.volumeName}</Tooltip>
+									<Tooltip title={volume.persistentVolumeClaimName}>
+										{volume.persistentVolumeClaimName}
+									</Tooltip>
 								</Typography.Text>
 								<Typography.Text className="volume-details-metadata-value">
 									<Tooltip title="Cluster name">{volume.meta.k8s_cluster_name}</Tooltip>

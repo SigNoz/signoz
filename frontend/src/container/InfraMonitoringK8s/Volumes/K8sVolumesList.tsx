@@ -269,7 +269,9 @@ function K8sVolumesList({
 	const selectedVolumeData = useMemo(() => {
 		if (!selectedVolumeUID) return null;
 		return (
-			volumesData.find((volume) => volume.volumeName === selectedVolumeUID) || null
+			volumesData.find(
+				(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
+			) || null
 		);
 	}, [selectedVolumeUID, volumesData]);
 

@@ -13,27 +13,27 @@ import { IEntityColumn } from '../utils';
 
 export const defaultAddedColumns: IEntityColumn[] = [
 	{
-		label: 'Volume Name',
-		value: 'volumeName',
-		id: 'volumeName',
+		label: 'PVC Name',
+		value: 'pvcName',
+		id: 'pvcName',
 		canRemove: false,
 	},
 	{
-		label: 'Cluster Name',
-		value: 'clusterName',
-		id: 'clusterName',
+		label: 'Volume Capacity',
+		value: 'capacity',
+		id: 'capacity',
 		canRemove: false,
 	},
 	{
-		label: 'CPU Utilization (cores)',
-		value: 'cpu',
-		id: 'cpu',
+		label: 'Volume Utilization',
+		value: 'usage',
+		id: 'usage',
 		canRemove: false,
 	},
 	{
-		label: 'Memory Utilization (bytes)',
-		value: 'memory',
-		id: 'memory',
+		label: 'Volume Available',
+		value: 'available',
+		id: 'available',
 		canRemove: false,
 	},
 ];
@@ -41,17 +41,17 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sVolumesRowData {
 	key: string;
 	volumeUID: string;
-	volumeName: string;
-	clusterName: string;
-	cpu: React.ReactNode;
-	memory: React.ReactNode;
+	pvcName: React.ReactNode;
+	capacity: React.ReactNode;
+	usage: React.ReactNode;
+	available: React.ReactNode;
 	groupedByMeta?: any;
 }
 
 const volumeGroupColumnConfig = {
 	title: (
 		<div className="column-header pod-group-header">
-			<Group size={14} /> NAMESPACE GROUP
+			<Group size={14} /> VOLUME GROUP
 		</div>
 	),
 	dataIndex: 'volumeGroup',
@@ -72,35 +72,35 @@ export const getK8sVolumesListQuery = (): K8sVolumesListPayload => ({
 
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">Volume Name</div>,
-		dataIndex: 'volumeName',
-		key: 'volumeName',
+		title: <div className="column-header-left">PVC Name</div>,
+		dataIndex: 'pvcName',
+		key: 'pvcName',
 		ellipsis: true,
 		width: 120,
 		sorter: false,
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Cluster Name</div>,
-		dataIndex: 'clusterName',
-		key: 'clusterName',
+		title: <div className="column-header-left">Volume Capacity</div>,
+		dataIndex: 'capacity',
+		key: 'capacity',
 		ellipsis: true,
 		width: 120,
-		sorter: false,
+		sorter: true,
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">CPU Usage (cores)</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
+		title: <div className="column-header-left">Volume Utilization</div>,
+		dataIndex: 'usage',
+		key: 'usage',
 		width: 100,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Mem Usage</div>,
-		dataIndex: 'memory',
-		key: 'memory',
+		title: <div className="column-header-left">Volume Available</div>,
+		dataIndex: 'available',
+		key: 'available',
 		width: 80,
 		sorter: true,
 		align: 'left',
@@ -112,7 +112,7 @@ export const getK8sVolumesListColumns = (
 ): ColumnType<K8sVolumesRowData>[] => {
 	if (groupBy.length > 0) {
 		const filteredColumns = [...columnsConfig].filter(
-			(column) => column.key !== 'volumeName' && column.key !== 'clusterName',
+			(column) => column.key !== 'pvcName',
 		);
 		filteredColumns.unshift(volumeGroupColumnConfig);
 		return filteredColumns as ColumnType<K8sVolumesRowData>[];
@@ -147,18 +147,22 @@ export const formatDataForTable = (
 	groupBy: IBuilderQuery['groupBy'],
 ): K8sVolumesRowData[] =>
 	data.map((volume) => ({
-		key: volume.volumeName,
-		volumeUID: volume.volumeName,
-		volumeName: volume.volumeName,
-		clusterName: volume.meta.k8s_cluster_name,
-		cpu: (
-			<ValidateColumnValueWrapper value={volume.cpuUsage}>
-				{volume.cpuUsage}
+		key: volume.persistentVolumeClaimName,
+		volumeUID: volume.persistentVolumeClaimName,
+		pvcName: volume.persistentVolumeClaimName,
+		available: (
+			<ValidateColumnValueWrapper value={volume.volumeAvailable}>
+				{formatBytes(volume.volumeAvailable)}
 			</ValidateColumnValueWrapper>
 		),
-		memory: (
-			<ValidateColumnValueWrapper value={volume.memoryUsage}>
-				{formatBytes(volume.memoryUsage)}
+		capacity: (
+			<ValidateColumnValueWrapper value={volume.volumeCapacity}>
+				{formatBytes(volume.volumeCapacity)}
+			</ValidateColumnValueWrapper>
+		),
+		usage: (
+			<ValidateColumnValueWrapper value={volume.volumeUsage}>
+				{formatBytes(volume.volumeUsage)}
 			</ValidateColumnValueWrapper>
 		),
 		volumeGroup: getGroupByEle(volume, groupBy),
