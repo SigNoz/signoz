@@ -1,4 +1,4 @@
-package noop
+package noopweb
 
 import (
 	"context"

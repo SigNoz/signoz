@@ -12,8 +12,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/migrations"
-	"go.signoz.io/signoz/pkg/sqlstore/provider/sqlite"
+	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
+	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator"
+	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator/migrations"
 )
 
 func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {
@@ -25,22 +26,19 @@ func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
-	sqlStoreProvider, err := factory.NewFromFactory(context.Background(), instrumentationtest.New().ToProviderSettings(), sqlstore.Config{
+	config := sqlstore.Config{
 		Provider: "sqlite",
 		Sqlite: sqlstore.SqliteConfig{
 			Path: testDBFilePath,
 		},
-	}, factory.MustNewNamedMap(sqlite.NewFactory()), "sqlite")
+	}
+
+	sqlStore, err := factory.NewFromFactory(context.Background(), instrumentationtest.New().ToProviderSettings(), config, factory.MustNewNamedMap(sqlitesqlstore.NewFactory()), "sqlite")
 	if err != nil {
 		t.Fatalf("could not create sqlite provider: %v", err)
 	}
 
-	migrations, err := migrations.New(context.Background(), instrumentationtest.New().ToProviderSettings(), sqlstore.Config{
-		Provider: "sqlite",
-		Sqlite: sqlstore.SqliteConfig{
-			Path: testDBFilePath,
-		},
-	}, factory.MustNewNamedMap(
+	migrations, err := sqlstoremigrator.NewMigrations(context.Background(), instrumentationtest.New().ToProviderSettings(), config, factory.MustNewNamedMap(
 		migrations.NewAddDataMigrationsFactory(),
 		migrations.NewAddOrganizationFactory(),
 		migrations.NewAddPreferencesFactory(),
@@ -54,8 +52,9 @@ func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {
 		t.Fatalf("could not create migrations: %v", err)
 	}
 
-	sqlStore := sqlstore.NewSQLStore(sqlStoreProvider, migrations)
-	err = sqlStore.Migrate(context.Background())
+	sqlStoreMigrator := sqlstoremigrator.New(context.Background(), instrumentationtest.New().ToProviderSettings(), sqlStore, migrations, config)
+
+	err = sqlStoreMigrator.Migrate(context.Background())
 	if err != nil {
 		t.Fatalf("could not run migrations: %v", err)
 	}

@@ -10,7 +10,7 @@ import (
 
 	prommodel "github.com/prometheus/common/model"
 	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/config/provider/envprovider"
+	"go.signoz.io/signoz/pkg/config/envprovider"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"

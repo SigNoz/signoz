@@ -13,11 +13,11 @@ type addAgents struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddAgentsFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddAgentsFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_agents"), newAddAgents)
 }
 
-func newAddAgents(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddAgents(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addAgents{settings: settings}, nil
 }
 

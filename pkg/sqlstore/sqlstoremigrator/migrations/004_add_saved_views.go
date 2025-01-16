@@ -13,11 +13,11 @@ type addSavedViews struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddSavedViewsFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddSavedViewsFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_saved_views"), newAddSavedViews)
 }
 
-func newAddSavedViews(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddSavedViews(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addSavedViews{settings: settings}, nil
 }
 

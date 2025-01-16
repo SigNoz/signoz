@@ -1,4 +1,4 @@
-package sqlite
+package sqlitesqlstore
 
 import (
 	"context"
@@ -20,11 +20,11 @@ type provider struct {
 	sqlxDB *sqlx.DB
 }
 
-func NewFactory() factory.ProviderFactory[sqlstore.Provider, sqlstore.Config] {
+func NewFactory() factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("sqlite"), New)
 }
 
-func New(ctx context.Context, settings factory.ProviderSettings, config sqlstore.Config) (sqlstore.Provider, error) {
+func New(ctx context.Context, settings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStore, error) {
 	if config.Provider != "sqlite" {
 		return nil, fmt.Errorf("provider %q is not supported by sqlite", config.Provider)
 	}

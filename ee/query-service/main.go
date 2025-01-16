@@ -12,7 +12,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/config"
 	signozconfig "go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/config/provider/envprovider"
+	"go.signoz.io/signoz/pkg/config/envprovider"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"

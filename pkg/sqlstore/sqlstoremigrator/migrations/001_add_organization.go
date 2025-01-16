@@ -13,11 +13,11 @@ type addOrganization struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddOrganizationFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddOrganizationFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_organization"), newAddOrganization)
 }
 
-func newAddOrganization(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddOrganization(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addOrganization{settings: settings}, nil
 }
 

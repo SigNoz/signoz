@@ -6,16 +6,17 @@ import (
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator"
 
 	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/migrations"
 	"go.signoz.io/signoz/pkg/web"
 )
 
 type SigNoz struct {
-	Cache    cache.Cache
-	Web      web.Web
-	SQLStore sqlstore.SQLStore
+	Cache            cache.Cache
+	Web              web.Web
+	SQLStore         sqlstore.SQLStore
+	SQLStoreMigrator sqlstore.SQLStoreMigrator
 }
 
 func New(ctx context.Context, instrumentation instrumentation.Instrumentation, config Config, factories ProviderFactories) (*SigNoz, error) {
@@ -31,19 +32,19 @@ func New(ctx context.Context, instrumentation instrumentation.Instrumentation, c
 		return nil, err
 	}
 
-	sqlStoreProvider, err := factory.NewFromFactory(ctx, providerSettings, config.SQLStore, factories.SQLStoreProviderFactories, config.SQLStore.Provider)
+	sqlStore, err := factory.NewFromFactory(ctx, providerSettings, config.SQLStore, factories.SQLStoreProviderFactories, config.SQLStore.Provider)
 	if err != nil {
 		return nil, err
 	}
 
-	migrations, err := migrations.New(ctx, providerSettings, config.SQLStore, factories.SQLStoreMigrationFactories)
+	migrations, err := sqlstoremigrator.NewMigrations(ctx, providerSettings, config.SQLStore, factories.SQLStoreMigrationFactories)
 	if err != nil {
 		return nil, err
 	}
 
-	sqlStore := sqlstore.NewSQLStore(sqlStoreProvider, migrations)
+	sqlStoreMigrator := sqlstoremigrator.New(ctx, providerSettings, sqlStore, migrations, config.SQLStore)
 
-	err = sqlStore.Migrate(ctx)
+	err = sqlStoreMigrator.Migrate(ctx)
 	if err != nil {
 		return nil, err
 	}

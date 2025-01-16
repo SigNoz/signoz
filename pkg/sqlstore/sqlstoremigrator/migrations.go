@@ -1,4 +1,4 @@
-package migrations
+package sqlstoremigrator
 
 import (
 	"context"
@@ -16,11 +16,11 @@ var (
 	ErrNoExecute = errors.New("no execute")
 )
 
-func New(
+func NewMigrations(
 	ctx context.Context,
 	settings factory.ProviderSettings,
 	config sqlstore.Config,
-	factories factory.NamedMap[factory.ProviderFactory[sqlstore.Migration, sqlstore.Config]],
+	factories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config]],
 ) (*migrate.Migrations, error) {
 	migrations := migrate.NewMigrations()
 

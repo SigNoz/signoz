@@ -13,11 +13,11 @@ type addPipelines struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddPipelinesFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddPipelinesFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_pipelines"), newAddPipelines)
 }
 
-func newAddPipelines(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddPipelines(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addPipelines{settings: settings}, nil
 }
 

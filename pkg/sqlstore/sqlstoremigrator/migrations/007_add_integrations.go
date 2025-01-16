@@ -13,11 +13,11 @@ type addIntegrations struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddIntegrationsFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddIntegrationsFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_integrations"), newAddIntegrations)
 }
 
-func newAddIntegrations(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddIntegrations(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addIntegrations{settings: settings}, nil
 }
 

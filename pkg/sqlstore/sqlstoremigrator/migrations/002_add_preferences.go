@@ -13,11 +13,11 @@ type addPreferences struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddPreferencesFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddPreferencesFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_preferences"), newAddPreferences)
 }
 
-func newAddPreferences(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddPreferences(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addPreferences{settings: settings}, nil
 }
 

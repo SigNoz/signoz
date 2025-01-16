@@ -13,11 +13,11 @@ type addDataMigrations struct {
 	settings factory.ProviderSettings
 }
 
-func NewAddDataMigrationsFactory() factory.ProviderFactory[sqlstore.Migration, sqlstore.Config] {
+func NewAddDataMigrationsFactory() factory.ProviderFactory[sqlstore.SQLStoreMigration, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_data_migrations"), newAddDataMigrations)
 }
 
-func newAddDataMigrations(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.Migration, error) {
+func newAddDataMigrations(_ context.Context, settings factory.ProviderSettings, _ sqlstore.Config) (sqlstore.SQLStoreMigration, error) {
 	return &addDataMigrations{settings: settings}, nil
 }
 
