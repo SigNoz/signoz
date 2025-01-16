@@ -329,6 +329,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
 						)}
+
 					</div>
 				</div>
 			</div>
