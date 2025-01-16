@@ -329,110 +329,95 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	for name, v := range params.CompositeQuery.BuilderQueries {
 		qName = name
 		pageSize = v.PageSize
-
-		// for traces specifically
 		limit = v.Limit
 		offset = v.Offset
 	}
+
+	// check if it is a logs query
+	isLogs := false
+	if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
+		isLogs = true
+	}
+
 	data := []*v3.Row{}
 
-	tracesLimit := limit + offset
+	limitWithOffset := limit + offset
+	if isLogs {
+		// for logs we use pageSize to define the current limit and limit to define the absolute limit
+		limitWithOffset = pageSize + offset
+		if limit > 0 && offset >= limit {
+			return nil, nil, fmt.Errorf("max limit exceeded")
+		}
+	}
 
 	for _, v := range tsRanges {
 		params.Start = v.Start
 		params.End = v.End
-
 		length := uint64(0)
-		// this will to run only once
 
-		// appending the filter to get the next set of data
-		if params.CompositeQuery.BuilderQueries[qName].DataSource == v3.DataSourceLogs {
-			params.CompositeQuery.BuilderQueries[qName].PageSize = pageSize - uint64(len(data))
-			queries, err := q.builder.PrepareQueries(params)
-			if err != nil {
-				return nil, nil, err
-			}
-			for name, query := range queries {
-				rowList, err := q.reader.GetListResultV3(ctx, query)
-				if err != nil {
-					errs := []error{err}
-					errQueriesByName := map[string]error{
-						name: err,
-					}
-					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
-				}
-				length += uint64(len(rowList))
-				data = append(data, rowList...)
-			}
+		// max limit + offset is 10k for pagination for traces/logs
+		// TODO(nitya): define something for logs
+		if !isLogs && limitWithOffset > constants.TRACE_V4_MAX_PAGINATION_LIMIT {
+			return nil, nil, fmt.Errorf("maximum traces that can be paginated is 10000")
+		}
 
-			if length > 0 {
-				params.CompositeQuery.BuilderQueries[qName].Filters.Items = append(params.CompositeQuery.BuilderQueries[qName].Filters.Items, v3.FilterItem{
-					Key: v3.AttributeKey{
-						Key:      "id",
-						IsColumn: true,
-						DataType: "string",
-					},
-					Operator: v3.FilterOperatorLessThan,
-					Value:    data[len(data)-1].Data["id"],
-				})
-			}
+		// we are updating the offset and limit based on the number of traces/logs we have found in the current timerange
+		// eg -
+		// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+		//
+		// if 100 traces/logs are there in [t1, t10] then 100 will return immediately.
+		// if 10 traces/logs are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
+		// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=0, limit=100
 
-			if uint64(len(data)) >= pageSize {
-				break
-			}
+		//
+		// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
+		//
+		// If we find 150 traces/logs with limit=150 and offset=0 in [t1, t10] then we return immediately 100 traces/logs
+		// If we find 50 in [t1, t10] with limit=150 and offset=0 then it will set limit = 100 and offset=0 and search in the next timerange of [t10, 20]
+		// if we don't find any trace in [t1, t10], then we search in [t10, 20] with limit=150 and offset=0
+
+		params.CompositeQuery.BuilderQueries[qName].Offset = 0
+		// if datasource is logs
+		if isLogs {
+			// for logs we use limit to define the absolute limit and pagesize to define the current limit
+			params.CompositeQuery.BuilderQueries[qName].PageSize = limitWithOffset
 		} else {
-			// TRACE
-			// we are updating the offset and limit based on the number of traces we have found in the current timerange
-			// eg -
-			// 1)offset = 0, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
-			//
-			// if 100 traces are there in [t1, t10] then 100 will return immediately.
-			// if 10 traces are there in [t1, t10] then we get 10, set offset to 0 and limit to 90, search in the next timerange of [t10, 20]
-			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with offset=0, limit=100
+			params.CompositeQuery.BuilderQueries[qName].Limit = limitWithOffset
+		}
 
-			//
-			// 2) offset = 50, limit = 100, tsRanges = [t1, t10], [t10, 20], [t20, t30]
-			//
-			// If we find 150 traces with limit=150 and offset=0 in [t1, t10] then we return immediately 100 traces
-			// If we find 50 in [t1, t10] with limit=150 and offset=0 then it will set limit = 100 and offset=0 and search in the next timerange of [t10, 20]
-			// if we don't find any trace in [t1, t10], then we search in [t10, 20] with limit=150 and offset=0
-
-			// max limit + offset is 10k for pagination
-			if tracesLimit > constants.TRACE_V4_MAX_PAGINATION_LIMIT {
-				return nil, nil, fmt.Errorf("maximum traces that can be paginated is 10000")
-			}
-
-			params.CompositeQuery.BuilderQueries[qName].Offset = 0
-			params.CompositeQuery.BuilderQueries[qName].Limit = tracesLimit
-			queries, err := q.builder.PrepareQueries(params)
+		queries, err := q.builder.PrepareQueries(params)
+		if err != nil {
+			return nil, nil, err
+		}
+		for name, query := range queries {
+			rowList, err := q.reader.GetListResultV3(ctx, query)
 			if err != nil {
-				return nil, nil, err
-			}
-			for name, query := range queries {
-				rowList, err := q.reader.GetListResultV3(ctx, query)
-				if err != nil {
-					errs := []error{err}
-					errQueriesByName := map[string]error{
-						name: err,
-					}
-					return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+				errs := []error{err}
+				errQueriesByName := map[string]error{
+					name: err,
 				}
-				length += uint64(len(rowList))
+				return nil, errQueriesByName, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...))
+			}
+			length += uint64(len(rowList))
 
-				// skip the traces unless offset is 0
-				for _, row := range rowList {
-					if offset == 0 {
-						data = append(data, row)
-					} else {
-						offset--
-					}
+			// skip the traces unless offset is 0
+			for _, row := range rowList {
+				if offset == 0 {
+					data = append(data, row)
+				} else {
+					offset--
 				}
 			}
-			tracesLimit = tracesLimit - length
+		}
 
-			if uint64(len(data)) >= limit {
-				break
-			}
+		limitWithOffset = limitWithOffset - length
+
+		if isLogs && uint64(len(data)) >= pageSize {
+			// for logs
+			break
+		} else if !isLogs && uint64(len(data)) >= limit {
+			// for traces
+			break
 		}
 	}
 	res = append(res, &v3.Result{
@@ -454,12 +439,20 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 				break
 			}
 
-			// only allow of logs queries with timestamp ordering desc
-			// TODO(nitya): allow for timestamp asc
-			if (v.DataSource == v3.DataSourceLogs || v.DataSource == v3.DataSourceTraces) &&
+			// for traces: allow only with timestamp ordering desc
+			// for logs: allow only with timestamp ordering desc and id ordering desc
+			if v.DataSource == v3.DataSourceTraces &&
 				len(v.OrderBy) == 1 &&
 				v.OrderBy[0].ColumnName == "timestamp" &&
 				v.OrderBy[0].Order == "desc" {
+				startEndArr := utils.GetListTsRanges(params.Start, params.End)
+				return q.runWindowBasedListQuery(ctx, params, startEndArr)
+			} else if v.DataSource == v3.DataSourceLogs &&
+				len(v.OrderBy) == 2 &&
+				v.OrderBy[0].ColumnName == "timestamp" &&
+				v.OrderBy[0].Order == "desc" &&
+				v.OrderBy[1].ColumnName == "id" &&
+				v.OrderBy[1].Order == "desc" {
 				startEndArr := utils.GetListTsRanges(params.Start, params.End)
 				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			}
