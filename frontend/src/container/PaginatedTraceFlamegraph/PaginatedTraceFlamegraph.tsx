@@ -6,6 +6,7 @@ import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -25,10 +26,13 @@ interface ITraceFlamegraphProps {
 function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	const { serviceExecTime, startTime, endTime } = props;
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
-	const [level, setLevel] = useState<number>(0);
+	const urlQuery = useUrlQuery();
+	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
+		urlQuery.get('spanId') || '',
+	);
 	const { data, isFetching, error } = useGetTraceFlamegraph({
-		level,
 		traceId,
+		selectedSpanId: firstSpanAtFetchLevel,
 	});
 	const isDarkMode = useIsDarkMode();
 
@@ -79,7 +83,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 				return (
 					<Success
 						spans={spans}
-						setLevel={setLevel}
+						firstSpanAtFetchLevel={firstSpanAtFetchLevel}
+						setFirstSpanAtFetchLevel={setFirstSpanAtFetchLevel}
 						traceMetadata={{
 							startTime: data?.payload?.startTimestampMillis || 0,
 							endTime: data?.payload?.endTimestampMillis || 0,
@@ -93,6 +98,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		data?.payload?.endTimestampMillis,
 		data?.payload?.startTimestampMillis,
 		error,
+		firstSpanAtFetchLevel,
 		spans,
 		traceFlamegraphState,
 		traceId,

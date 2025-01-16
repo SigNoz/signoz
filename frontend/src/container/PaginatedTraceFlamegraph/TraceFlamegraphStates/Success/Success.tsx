@@ -7,9 +7,15 @@ import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+} from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { ListRange, Virtuoso } from 'react-virtuoso';
+import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 interface ITraceMetadata {
@@ -19,15 +25,22 @@ interface ITraceMetadata {
 
 interface ISuccessProps {
 	spans: FlamegraphSpan[][];
-	setLevel: Dispatch<SetStateAction<number>>;
+	firstSpanAtFetchLevel: string;
+	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	traceMetadata: ITraceMetadata;
 }
 
 function Success(props: ISuccessProps): JSX.Element {
-	const { spans, setLevel, traceMetadata } = props;
+	const {
+		spans,
+		setFirstSpanAtFetchLevel,
+		traceMetadata,
+		firstSpanAtFetchLevel,
+	} = props;
 	const { search } = useLocation();
 	const history = useHistory();
 	const isDarkMode = useIsDarkMode();
+	const virtuosoRef = useRef<VirtuosoHandle>(null);
 	const renderSpanLevel = useCallback(
 		(_: number, spans: FlamegraphSpan[]): JSX.Element => (
 			<div className="flamegraph-row">
@@ -78,25 +91,38 @@ function Success(props: ISuccessProps): JSX.Element {
 	const handleRangeChanged = useCallback(
 		(range: ListRange) => {
 			// if there are less than 50 levels on any load that means a single API call is sufficient
-			if (spans.length <= 50) {
+			if (spans.length < 50) {
 				return;
 			}
 
 			const { startIndex, endIndex } = range;
-			if (startIndex === 0) {
-				setLevel(spans[0][0].level);
+			if (startIndex === 0 && spans[0][0].level !== 0) {
+				setFirstSpanAtFetchLevel(spans[0][0].spanId);
 			}
 
 			if (endIndex === spans.length - 1) {
-				setLevel(spans[spans.length - 1][spans.length - 1].level);
+				setFirstSpanAtFetchLevel(spans[spans.length - 1][0].spanId);
 			}
 		},
-		[setLevel, spans],
+		[setFirstSpanAtFetchLevel, spans],
 	);
+
+	useEffect(() => {
+		const index = spans.findIndex(
+			(span) => span[0].spanId === firstSpanAtFetchLevel,
+		);
+
+		virtuosoRef.current?.scrollToIndex({
+			index,
+			behavior: 'auto',
+		});
+	}, [firstSpanAtFetchLevel, spans]);
+
 	return (
 		<>
 			<div className="trace-flamegraph">
 				<Virtuoso
+					ref={virtuosoRef}
 					className="trace-flamegraph-virtuoso"
 					data={spans}
 					itemContent={renderSpanLevel}

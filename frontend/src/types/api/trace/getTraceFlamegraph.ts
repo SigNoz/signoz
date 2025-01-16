@@ -4,7 +4,7 @@ export interface TraceDetailFlamegraphURLProps {
 
 export interface GetTraceFlamegraphPayloadProps {
 	traceId: string;
-	level: number;
+	selectedSpanId: string;
 }
 
 export interface FlamegraphSpan {

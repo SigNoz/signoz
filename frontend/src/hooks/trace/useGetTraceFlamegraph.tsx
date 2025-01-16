@@ -13,7 +13,7 @@ const useGetTraceFlamegraph = (
 	useQuery({
 		queryFn: () => getTraceFlamegraph(props),
 		// if any of the props changes then we need to trigger an API call as the older data will be obsolete
-		queryKey: [REACT_QUERY_KEY.GET_TRACE_V2, props.traceId, props.level],
+		queryKey: [REACT_QUERY_KEY.GET_TRACE_V2, props.traceId, props.selectedSpanId],
 		enabled: !!props.traceId,
 		keepPreviousData: true,
 		refetchOnWindowFocus: false,

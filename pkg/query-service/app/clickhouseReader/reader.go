@@ -1869,8 +1869,25 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			return keys[i] < keys[j]
 		})
 
+		var selectedLevel int64 = 0
+		if req.SelectedSpanID != "" {
+			selectedLevel = findLevelForSelectedSpan(traceIdLevelledFlamegraph[trace], req.SelectedSpanID)
+		}
+
+		lowerLimit := selectedLevel - 20
+		upperLimit := selectedLevel + 30
+
+		if lowerLimit < 0 {
+			upperLimit = upperLimit - lowerLimit
+			lowerLimit = 0
+		}
+
+		if upperLimit > int64(len(keys)) {
+			upperLimit = int64(len(keys))
+		}
+
 		for _, level := range keys {
-			if ok, exists := traceIdLevelledFlamegraph[trace][level]; exists {
+			if ok, exists := traceIdLevelledFlamegraph[trace][level]; exists && (level >= lowerLimit) && (level < upperLimit) {
 				selectedSpans = append(selectedSpans, ok)
 			}
 		}

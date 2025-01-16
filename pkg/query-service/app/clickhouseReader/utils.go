@@ -103,3 +103,18 @@ func bfsTraversalForTrace(span *model.FlamegraphSpan, level int64, bfsMap *map[i
 		bfsTraversalForTrace(child, level+1, bfsMap)
 	}
 }
+
+func findLevelForSelectedSpan(levelSpanNodesMap map[int64][]*model.FlamegraphSpan, selectedSpanId string) int64 {
+	var selectedSpanLevel int64 = 0
+
+	for level, spans := range levelSpanNodesMap {
+		for _, span := range spans {
+			if span.SpanID == selectedSpanId {
+				selectedSpanLevel = level
+				break
+			}
+		}
+	}
+
+	return int64(selectedSpanLevel)
+}
