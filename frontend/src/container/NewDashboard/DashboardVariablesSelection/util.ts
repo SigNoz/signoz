@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isNull } from 'lodash-es';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export function areArraysEqual(
@@ -31,29 +31,39 @@ export const convertVariablesToDbFormat = (
 		return result;
 	}, {});
 
-const getDependentVariables = (queryValue: string): string[] => {
-	// Combined pattern for all formats:
-	// {{.variable_name}} - original format
-	// $variable_name - dollar prefix format
-	// [[variable_name]] - square bracket format
-	// {{variable_name}} - without dot format
-	const variableRegexPattern = /(?:\{\{\s*\.?([^\s}]+)\s*\}\}|\$([^\s\W]+)|\[\[([^\]]+)\]\])/g;
+const getDependentVariablesBasedOnVariableName = (
+	variableName: string,
+	variables: IDashboardVariable[],
+): string[] => {
+	if (!variables || !Array.isArray(variables)) {
+		return [];
+	}
 
-	const matches = queryValue.match(variableRegexPattern);
+	return variables
+		?.map((variable: any) => {
+			if (variable.type === 'QUERY') {
+				// Combined pattern for all formats
+				// {{.variable_name}} - original format
+				// $variable_name - dollar prefix format
+				// [[variable_name]] - square bracket format
+				// {{variable_name}} - without dot format
+				const patterns = [
+					`\\{\\{\\s*?\\.${variableName}\\s*?\\}\\}`, // {{.var}}
+					`\\{\\{\\s*${variableName}\\s*\\}\\}`, // {{var}}
+					`\\$${variableName}\\b`, // $var
+					`\\[\\[\\s*${variableName}\\s*\\]\\]`, // [[var]]
+				];
+				const combinedRegex = new RegExp(patterns.join('|'));
 
-	// Extract variable names from the matches array, handling all formats
-	return matches
-		? matches.map((match) => {
-				if (match.startsWith('$')) {
-					return match.slice(1); // Remove $ prefix
+				const queryValue = variable.queryValue || '';
+				const dependVarReMatch = queryValue.match(combinedRegex);
+				if (dependVarReMatch !== null && dependVarReMatch.length > 0) {
+					return variable.name;
 				}
-				if (match.startsWith('[[')) {
-					return match.slice(2, -2); // Remove [[ and ]]
-				}
-				// Handle both {{.var}} and {{var}} formats
-				return match.replace(/\{\{\s*\.?([^\s}]+)\s*\}\}/, '$1');
-		  })
-		: [];
+			}
+			return null;
+		})
+		.filter((val: string | null) => !isNull(val));
 };
 export type VariableGraph = Record<string, string[]>;
 
@@ -64,24 +74,21 @@ export const buildDependencies = (
 
 	// Initialize empty arrays for all variables first
 	variables.forEach((variable) => {
-		if (variable.name && variable.type === 'QUERY') {
+		if (variable.name) {
 			graph[variable.name] = [];
 		}
 	});
 
 	// For each QUERY variable, add it as a dependent to its referenced variables
 	variables.forEach((variable) => {
-		if (variable.type === 'QUERY' && variable.name) {
-			const dependentVariables = getDependentVariables(variable.queryValue || '');
+		if (variable.name) {
+			const dependentVariables = getDependentVariablesBasedOnVariableName(
+				variable.name,
+				variables,
+			);
 
 			// For each referenced variable, add the current query as a dependent
-			dependentVariables.forEach((referencedVar) => {
-				if (graph[referencedVar]) {
-					graph[referencedVar].push(variable.name as string);
-				} else {
-					graph[referencedVar] = [variable.name as string];
-				}
-			});
+			graph[variable.name] = dependentVariables;
 		}
 	});
 

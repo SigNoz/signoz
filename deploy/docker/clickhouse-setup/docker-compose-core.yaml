@@ -57,7 +57,7 @@ services:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.21}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.23}
     container_name: otel-migrator
     command:
       - "sync"
@@ -73,7 +73,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.21}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.23}
     command: ["--config=/etc/otel-collector-config.yaml", "--manager-config=/etc/manager-config.yaml", "--copy-path=/var/tmp/collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     # user: root # required for reading docker container logs
     volumes:

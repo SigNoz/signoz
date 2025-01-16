@@ -51,4 +51,8 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.WORKSPACE_LOCKED]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES_DETAIL]: [QueryParams.resourceAttributes],
+	[ROUTES.INFRASTRUCTURE_MONITORING_HOSTS]: [QueryParams.resourceAttributes],
+	[ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES]: [
+		QueryParams.resourceAttributes,
+	],
 };

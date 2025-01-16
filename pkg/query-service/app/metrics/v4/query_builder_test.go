@@ -533,6 +533,75 @@ func TestPrepareMetricQueryGauge(t *testing.T) {
 			},
 			expectedQueryContains: "SELECT host_name, ts, sum(per_series_value) as value FROM (SELECT fingerprint, any(host_name) as host_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'host_name') as host_name, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system_cpu_usage' AND temporality = 'Unspecified' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name = 'system_cpu_usage' AND unix_milli >= 1650991980000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY host_name, ts ORDER BY host_name ASC, ts ASC",
 		},
+		{
+			name: "test gauge query with multiple group by with metric and attribute name containing dot",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:         "A",
+				DataSource:        v3.DataSourceMetrics,
+				AggregateOperator: v3.AggregateOperatorMax,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "system.memory.usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyType("Gauge"),
+					IsColumn: true,
+				},
+				Temporality:      v3.Unspecified,
+				TimeAggregation:  v3.TimeAggregationMax,
+				SpaceAggregation: v3.SpaceAggregationMax,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "host.name",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "signoz-host",
+						},
+					},
+				},
+				Expression:   "A",
+				Disabled:     false,
+				StepInterval: 60,
+				OrderBy: []v3.OrderBy{
+					{
+						ColumnName: "os.type",
+						Order:      v3.DirectionDesc,
+					},
+					{
+						ColumnName: "state",
+						Order:      v3.DirectionAsc,
+					},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "os.type",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+					{
+						Key:      "state",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+					{
+						Key:      "host.name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+				},
+				Legend:   "",
+				ReduceTo: v3.ReduceToOperatorAvg,
+				Having:   []v3.Having{},
+			},
+			expectedQueryContains: "SELECT `os.type`, state, `host.name`, ts, max(per_series_value) as value FROM (SELECT fingerprint, any(`os.type`) as `os.type`, any(state) as state, any(`host.name`) as `host.name`, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, JSONExtractString(labels, 'state') as state, JSONExtractString(labels, 'host.name') as `host.name`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = 'Unspecified' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'host.name') = 'signoz-host') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1650991980000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY `os.type`, state, `host.name`, ts ORDER BY `os.type` desc, state asc, `host.name` ASC, ts ASC",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -540,6 +609,152 @@ func TestPrepareMetricQueryGauge(t *testing.T) {
 			// 1650991982000 - April 26, 2022 10:23:02 PM
 			// 1651078382000 - April 27, 2022 10:23:02 PM
 			query, err := PrepareMetricQuery(1650991982000, 1651078382000, v3.QueryTypeBuilder, v3.PanelTypeGraph, testCase.builderQuery, metricsV3.Options{})
+			assert.Nil(t, err)
+			assert.Contains(t, query, testCase.expectedQueryContains)
+		})
+	}
+}
+
+func TestPrepareMetricQueryValueTypePanelWithGroupBY(t *testing.T) {
+	t.Setenv("USE_METRICS_PRE_AGGREGATION", "false")
+	testCases := []struct {
+		name                  string
+		builderQuery          *v3.BuilderQuery
+		expectedQueryContains string
+	}{
+		{
+			name: "test temporality = cumulative, panel = value, series agg = max group by state",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:         "A",
+				DataSource:        v3.DataSourceMetrics,
+				AggregateOperator: v3.AggregateOperatorMin,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "system_memory_usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyType("Gauge"),
+					IsColumn: true,
+				},
+				Temporality:          v3.Delta,
+				TimeAggregation:      v3.TimeAggregationAnyLast,
+				SpaceAggregation:     v3.SpaceAggregationAvg,
+				SecondaryAggregation: v3.SecondaryAggregationMax,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "os_type",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "linux",
+						},
+					},
+				},
+				Expression:   "A",
+				Disabled:     false,
+				StepInterval: 60,
+				OrderBy: []v3.OrderBy{
+					{
+						ColumnName: "state",
+						Order:      v3.DirectionDesc,
+					},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "state",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+				},
+				Legend:   "",
+				ReduceTo: v3.ReduceToOperatorSum,
+				Having: []v3.Having{
+					{
+						ColumnName: "AVG(system_memory_usage)",
+						Operator:   v3.HavingOperatorGreaterThan,
+						Value:      5,
+					},
+				},
+			},
+			expectedQueryContains: "SELECT max(value) as aggregated_value, ts FROM (SELECT state, ts, avg(per_series_value) as value FROM (SELECT fingerprint, any(state) as state, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, anyLast(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'state') as state, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'system_memory_usage' AND temporality = 'Delta' AND unix_milli >= 1735891200000 AND unix_milli < 1735894800000 AND JSONExtractString(labels, 'os_type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system_memory_usage' AND unix_milli >= 1735891800000 AND unix_milli < 1735894800000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY state, ts ORDER BY state desc, ts ASC) GROUP BY ts ORDER BY ts",
+		},
+		{
+			name: "test temporality = cumulative, panel = value, series agg = max group by state, host_name",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:         "A",
+				DataSource:        v3.DataSourceMetrics,
+				AggregateOperator: v3.AggregateOperatorMin,
+				AggregateAttribute: v3.AttributeKey{
+					Key:      "system_memory_usage",
+					DataType: v3.AttributeKeyDataTypeFloat64,
+					Type:     v3.AttributeKeyType("Gauge"),
+					IsColumn: true,
+				},
+				Temporality:          v3.Cumulative,
+				TimeAggregation:      v3.TimeAggregationAnyLast,
+				SpaceAggregation:     v3.SpaceAggregationAvg,
+				SecondaryAggregation: v3.SecondaryAggregationMax,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "os_type",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "linux",
+						},
+					},
+				},
+				Expression:   "A",
+				Disabled:     false,
+				StepInterval: 60,
+				OrderBy: []v3.OrderBy{
+					{
+						ColumnName: "state",
+						Order:      v3.DirectionDesc,
+					},
+				},
+				GroupBy: []v3.AttributeKey{
+					{
+						Key:      "state",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+					{
+						Key:      "host_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+						IsColumn: false,
+					},
+				},
+				Legend:   "",
+				ReduceTo: v3.ReduceToOperatorSum,
+				Having: []v3.Having{
+					{
+						ColumnName: "AVG(system_memory_usage)",
+						Operator:   v3.HavingOperatorGreaterThan,
+						Value:      5,
+					},
+				},
+			},
+			expectedQueryContains: "SELECT max(value) as aggregated_value, ts FROM (SELECT state, host_name, ts, avg(per_series_value) as value FROM (SELECT fingerprint, any(state) as state, any(host_name) as host_name, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, anyLast(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'state') as state, JSONExtractString(labels, 'host_name') as host_name, fingerprint FROM signoz_metrics.time_series_v4 WHERE metric_name = 'system_memory_usage' AND temporality = 'Cumulative' AND unix_milli >= 1735891200000 AND unix_milli < 1735894800000 AND JSONExtractString(labels, 'os_type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system_memory_usage' AND unix_milli >= 1735891800000 AND unix_milli < 1735894800000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY state, host_name, ts ORDER BY state desc, host_name ASC, ts ASC) GROUP BY ts ORDER BY ts",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			// 1735891811000 - Friday, 3 January 2025 13:40:11 GMT+05:30
+			// 1735894811000 - Friday, 3 January 2025 14:30:11 GMT+05:30
+			query, err := PrepareMetricQuery(1735891811000, 1735894811000, v3.QueryTypeBuilder, v3.PanelTypeValue, testCase.builderQuery, metricsV3.Options{})
 			assert.Nil(t, err)
 			assert.Contains(t, query, testCase.expectedQueryContains)
 		})
