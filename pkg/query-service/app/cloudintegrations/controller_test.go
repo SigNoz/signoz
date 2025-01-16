@@ -30,7 +30,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.NotEmpty(resp1.AccountId)
 
 	testAccountId := resp1.AccountId
-	account, apiErr := controller.repo.get(
+	account, apiErr := controller.accountsRepo.get(
 		context.TODO(), "aws", testAccountId,
 	)
 	require.Nil(apiErr)
@@ -47,7 +47,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require.Nil(apiErr)
 	require.Equal(testAccountId, resp2.AccountId)
 
-	account, apiErr = controller.repo.get(
+	account, apiErr = controller.accountsRepo.get(
 		context.TODO(), "aws", testAccountId,
 	)
 	require.Nil(apiErr)
@@ -89,7 +89,7 @@ func TestAgentCheckIns(t *testing.T) {
 	// if another connected AccountRecord exists for same cloud account
 	// i.e. there can't be 2 connected account records for the same cloud account id
 	// at any point in time.
-	existingConnected, apiErr := controller.repo.getConnectedCloudAccount(
+	existingConnected, apiErr := controller.accountsRepo.getConnectedCloudAccount(
 		context.TODO(), "aws", testCloudAccountId1,
 	)
 	require.Nil(apiErr)
@@ -112,7 +112,7 @@ func TestAgentCheckIns(t *testing.T) {
 		context.TODO(), "aws", testAccountId1,
 	)
 
-	existingConnected, apiErr = controller.repo.getConnectedCloudAccount(
+	existingConnected, apiErr = controller.accountsRepo.getConnectedCloudAccount(
 		context.TODO(), "aws", testCloudAccountId1,
 	)
 	require.Nil(existingConnected)
@@ -150,4 +150,121 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require.NotNil(apiErr)
 	require.Equal(model.ErrorNotFound, apiErr.Type())
 	require.Nil(account)
+}
+
+func TestConfigureService(t *testing.T) {
+	require := require.New(t)
+	testDB, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(testDB)
+	require.NoError(err)
+
+	testCloudAccountId := "546311234"
+
+	// should start out without any service config
+	svcListResp, apiErr := controller.ListServices(
+		context.TODO(), "aws", &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+
+	testSvcId := svcListResp.Services[0].Id
+	require.Nil(svcListResp.Services[0].Config)
+
+	svcDetails, apiErr := controller.GetServiceDetails(
+		context.TODO(), "aws", testSvcId, &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+	require.Equal(testSvcId, svcDetails.Id)
+	require.Nil(svcDetails.Config)
+
+	// should be able to configure a service for a connected account
+	testConnectedAccount := makeTestConnectedAccount(t, controller, testCloudAccountId)
+	require.Nil(testConnectedAccount.RemovedAt)
+	require.NotNil(testConnectedAccount.CloudAccountId)
+	require.Equal(testCloudAccountId, *testConnectedAccount.CloudAccountId)
+
+	testSvcConfig := CloudServiceConfig{
+		Metrics: &CloudServiceMetricsConfig{
+			Enabled: true,
+		},
+	}
+	updateSvcConfigResp, apiErr := controller.UpdateServiceConfig(
+		context.TODO(), "aws", testSvcId, UpdateServiceConfigRequest{
+			CloudAccountId: testCloudAccountId,
+			Config:         testSvcConfig,
+		},
+	)
+	require.Nil(apiErr)
+	require.Equal(testSvcId, updateSvcConfigResp.Id)
+	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
+
+	svcDetails, apiErr = controller.GetServiceDetails(
+		context.TODO(), "aws", testSvcId, &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+	require.Equal(testSvcId, svcDetails.Id)
+	require.Equal(testSvcConfig, *svcDetails.Config)
+
+	svcListResp, apiErr = controller.ListServices(
+		context.TODO(), "aws", &testCloudAccountId,
+	)
+	require.Nil(apiErr)
+	for _, svc := range svcListResp.Services {
+		if svc.Id == testSvcId {
+			require.Equal(testSvcConfig, *svc.Config)
+		}
+	}
+
+	// should not be able to configure service after cloud account has been disconnected
+	_, apiErr = controller.DisconnectAccount(
+		context.TODO(), "aws", testConnectedAccount.Id,
+	)
+	require.Nil(apiErr)
+
+	_, apiErr = controller.UpdateServiceConfig(
+		context.TODO(), "aws", testSvcId,
+		UpdateServiceConfigRequest{
+			CloudAccountId: testCloudAccountId,
+			Config:         testSvcConfig,
+		},
+	)
+	require.NotNil(apiErr)
+
+	// should not be able to configure a service for a cloud account id that is not connected yet
+	_, apiErr = controller.UpdateServiceConfig(
+		context.TODO(), "aws", testSvcId,
+		UpdateServiceConfigRequest{
+			CloudAccountId: "9999999999",
+			Config:         testSvcConfig,
+		},
+	)
+	require.NotNil(apiErr)
+
+	// should not be able to set config for an unsupported service
+	_, apiErr = controller.UpdateServiceConfig(
+		context.TODO(), "aws", "bad-service", UpdateServiceConfigRequest{
+			CloudAccountId: testCloudAccountId,
+			Config:         testSvcConfig,
+		},
+	)
+	require.NotNil(apiErr)
+
+}
+
+func makeTestConnectedAccount(t *testing.T, controller *Controller, cloudAccountId string) *AccountRecord {
+	require := require.New(t)
+
+	// a check in from SigNoz agent creates or updates a connected account.
+	testAccountId := uuid.NewString()
+	resp, apiErr := controller.CheckInAsAgent(
+		context.TODO(), "aws", AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: cloudAccountId,
+		},
+	)
+	require.Nil(apiErr)
+	require.Equal(testAccountId, resp.Account.Id)
+	require.Equal(cloudAccountId, *resp.Account.CloudAccountId)
+
+	return &resp.Account
+
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func TestAWSIntegrationLifecycle(t *testing.T) {
+func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// Test for happy path of connecting and managing AWS integration accounts
 
 	t0 := time.Now()
@@ -124,6 +125,70 @@ func TestAWSIntegrationLifecycle(t *testing.T) {
 	require.Equal(testAccountId, agentCheckInResp2.Account.Id)
 	require.Equal(testAWSAccountId, *agentCheckInResp2.Account.CloudAccountId)
 	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.Account.RemovedAt)
+}
+
+func TestAWSIntegrationServices(t *testing.T) {
+	require := require.New(t)
+
+	testbed := NewCloudIntegrationsTestBed(t, nil)
+
+	// should be able to list available cloud services.
+	svcListResp := testbed.GetServicesFromQS("aws", nil)
+	require.Greater(len(svcListResp.Services), 0)
+	for _, svc := range svcListResp.Services {
+		require.NotEmpty(svc.Id)
+		require.Nil(svc.Config)
+	}
+
+	// should be able to get details of a particular service.
+	svcId := svcListResp.Services[0].Id
+	svcDetailResp := testbed.GetServiceDetailFromQS("aws", svcId, nil)
+	require.Equal(svcId, svcDetailResp.Id)
+	require.NotEmpty(svcDetailResp.Overview)
+	require.Nil(svcDetailResp.Config)
+	require.Nil(svcDetailResp.ConnectionStatus)
+
+	// should be able to configure a service in the ctx of a connected account
+
+	// create a connected account
+	testAccountId := uuid.NewString()
+	testAWSAccountId := "389389489489"
+	testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+
+	testSvcConfig := cloudintegrations.CloudServiceConfig{
+		Metrics: &cloudintegrations.CloudServiceMetricsConfig{
+			Enabled: true,
+		},
+	}
+	updateSvcConfigResp := testbed.UpdateServiceConfigWithQS("aws", svcId, cloudintegrations.UpdateServiceConfigRequest{
+		CloudAccountId: testAWSAccountId,
+		Config:         testSvcConfig,
+	})
+	require.Equal(svcId, updateSvcConfigResp.Id)
+	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
+
+	// service list should include config when queried in the ctx of an account
+	svcListResp = testbed.GetServicesFromQS("aws", &testAWSAccountId)
+	require.Greater(len(svcListResp.Services), 0)
+	for _, svc := range svcListResp.Services {
+		if svc.Id == svcId {
+			require.NotNil(svc.Config)
+			require.Equal(testSvcConfig, *svc.Config)
+		}
+	}
+
+	// service detail should include config and status info when
+	// queried in the ctx of an account
+	svcDetailResp = testbed.GetServiceDetailFromQS("aws", svcId, &testAWSAccountId)
+	require.Equal(svcId, svcDetailResp.Id)
+	require.NotNil(svcDetailResp.Config)
+	require.Equal(testSvcConfig, *svcDetailResp.Config)
+
 }
 
 type CloudIntegrationsTestBed struct {
@@ -275,6 +340,41 @@ func (tb *CloudIntegrationsTestBed) DisconnectAccountWithQS(
 	return &resp
 }
 
+func (tb *CloudIntegrationsTestBed) GetServicesFromQS(
+	cloudProvider string, cloudAccountId *string,
+) *cloudintegrations.ListServicesResponse {
+	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services", cloudProvider)
+	if cloudAccountId != nil {
+		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
+	}
+
+	return RequestQSAndParseResp[cloudintegrations.ListServicesResponse](
+		tb, path, nil,
+	)
+}
+
+func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
+	cloudProvider string, serviceId string, cloudAccountId *string,
+) *cloudintegrations.CloudServiceDetails {
+	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s", cloudProvider, serviceId)
+	if cloudAccountId != nil {
+		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
+	}
+
+	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](
+		tb, path, nil,
+	)
+}
+func (tb *CloudIntegrationsTestBed) UpdateServiceConfigWithQS(
+	cloudProvider string, serviceId string, req any,
+) *cloudintegrations.UpdateServiceConfigResponse {
+	path := fmt.Sprintf("/api/v1/cloud-integrations/%s/services/%s/config", cloudProvider, serviceId)
+
+	return RequestQSAndParseResp[cloudintegrations.UpdateServiceConfigResponse](
+		tb, path, req,
+	)
+}
+
 func (tb *CloudIntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
@@ -296,4 +396,21 @@ func (tb *CloudIntegrationsTestBed) RequestQS(
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 	return dataJson
+}
+
+func RequestQSAndParseResp[ResponseType any](
+	tb *CloudIntegrationsTestBed,
+	path string,
+	postData interface{},
+) *ResponseType {
+	respDataJson := tb.RequestQS(path, postData)
+
+	var resp ResponseType
+
+	err := json.Unmarshal(respDataJson, &resp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into %T", resp)
+	}
+
+	return &resp
 }
