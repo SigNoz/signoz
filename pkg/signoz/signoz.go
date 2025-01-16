@@ -6,12 +6,13 @@ import (
 	"go.signoz.io/signoz/pkg/cache/rediscache"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/web"
+	"go.signoz.io/signoz/pkg/web/routerweb"
 	"go.uber.org/zap"
 )
 
 type SigNoz struct {
 	Cache cache.Cache
-	Web   *web.Web
+	Web   web.Web
 }
 
 func New(config *config.Config, skipWebFrontend bool) (*SigNoz, error) {
@@ -25,7 +26,7 @@ func New(config *config.Config, skipWebFrontend bool) (*SigNoz, error) {
 		cache = rediscache.New(&config.Cache.Redis)
 	}
 
-	web, err := web.New(zap.L(), config.Web)
+	web, err := routerweb.New(zap.L(), config.Web)
 	if err != nil && !skipWebFrontend {
 		return nil, err
 	}
