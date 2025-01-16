@@ -322,7 +322,6 @@ type GetWaterfallSpansForTraceWithMetadataParams struct {
 }
 
 type GetFlamegraphSpansForTraceParams struct {
-	Level          int64  `json:"level"`
 	SelectedSpanID string `json:"selectedSpanId"`
 }
 

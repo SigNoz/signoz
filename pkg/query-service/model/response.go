@@ -306,6 +306,7 @@ type FlamegraphSpan struct {
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
 	Level        int64             `json:"level"`
+	References   []OtelSpanRef     `json:"references,omitempty"`
 	Children     []*FlamegraphSpan `json:"children"`
 }
 

@@ -1625,28 +1625,33 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		// traverse through the map and append each node to the children array of the parent node
 		// capture the root nodes as well
 		for _, spanNode := range spanIdToSpanNodeMap {
-			if spanNode.ParentSpanId != "" {
-				if parentNode, exists := spanIdToSpanNodeMap[spanNode.ParentSpanId]; exists {
-					parentNode.Children = append(parentNode.Children, spanNode)
-				} else {
-					// insert the missing spans
-					missingSpan := model.Span{
-						SpanID:           spanNode.ParentSpanId,
-						TraceID:          spanNode.TraceID,
-						ServiceName:      "",
-						Name:             "Missing Span",
-						Kind:             0,
-						DurationNano:     0,
-						HasError:         false,
-						StatusMessage:    "",
-						StatusCodeString: "",
-						SpanKind:         "",
-						Children:         make([]*model.Span, 0),
+			hasParentRelationship := false
+			for _, reference := range spanNode.References {
+				if reference.RefType == "CHILD_OF" && reference.SpanId != "" {
+					hasParentRelationship = true
+					if parentNode, exists := spanIdToSpanNodeMap[reference.SpanId]; exists {
+						parentNode.Children = append(parentNode.Children, spanNode)
+					} else {
+						// insert the missing spans
+						missingSpan := model.Span{
+							SpanID:           reference.SpanId,
+							TraceID:          spanNode.TraceID,
+							ServiceName:      "",
+							Name:             "Missing Span",
+							Kind:             0,
+							DurationNano:     0,
+							HasError:         false,
+							StatusMessage:    "",
+							StatusCodeString: "",
+							SpanKind:         "",
+							Children:         make([]*model.Span, 0),
+						}
+						missingSpan.Children = append(missingSpan.Children, spanNode)
+						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
 					}
-					missingSpan.Children = append(missingSpan.Children, spanNode)
-					spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
 				}
-			} else {
+			}
+			if !hasParentRelationship {
 				traceRoots = append(traceRoots, spanNode.SpanID)
 			}
 		}
@@ -1764,7 +1769,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 		// fetch all the spans belonging to the trace from the main table
 		var searchScanResponses []model.SpanItemV2
-		query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, resource_string_service$$name, name,parent_span_id FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName)
+		query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name,parent_span_id FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName)
 		start := time.Now()
 		err = r.db.Select(ctx, &searchScanResponses, query, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
 		zap.L().Info(query)
@@ -1778,6 +1783,12 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 		// create the trace tree based on the spans fetched above
 		// create a map of [spanId]: spanNode
 		for _, item := range searchScanResponses {
+			ref := []model.OtelSpanRef{}
+			err := json.Unmarshal([]byte(item.References), &ref)
+			if err != nil {
+				zap.L().Error("Error unmarshalling references", zap.Error(err))
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error in unmarshalling references: %w", err)}
+			}
 			// create the span node
 			jsonItem := model.FlamegraphSpan{
 				SpanID:       item.SpanID,
@@ -1787,6 +1798,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 				DurationNano: (item.DurationNano),
 				HasError:     item.HasError,
 				ParentSpanId: item.ParentSpanId,
+				References:   ref,
 				Children:     make([]*model.FlamegraphSpan, 0),
 			}
 
@@ -1808,24 +1820,29 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 		// traverse through the map and append each node to the children array of the parent node
 		for _, spanNode := range spanIdToSpanNodeMap {
-			if spanNode.ParentSpanId != "" {
-				if parentNode, exists := spanIdToSpanNodeMap[spanNode.ParentSpanId]; exists {
-					parentNode.Children = append(parentNode.Children, spanNode)
-				} else {
-					// insert the missing spans
-					missingSpan := model.FlamegraphSpan{
-						SpanID:       spanNode.ParentSpanId,
-						TraceID:      spanNode.TraceID,
-						ServiceName:  "",
-						Name:         "Missing Span",
-						DurationNano: 0,
-						HasError:     false,
-						Children:     make([]*model.FlamegraphSpan, 0),
+			hasParentRelationship := false
+			for _, reference := range spanNode.References {
+				if reference.RefType == "CHILD_OF" && reference.SpanId != "" {
+					hasParentRelationship = true
+					if parentNode, exists := spanIdToSpanNodeMap[reference.SpanId]; exists {
+						parentNode.Children = append(parentNode.Children, spanNode)
+					} else {
+						// insert the missing spans
+						missingSpan := model.FlamegraphSpan{
+							SpanID:       reference.SpanId,
+							TraceID:      spanNode.TraceID,
+							ServiceName:  "",
+							Name:         "Missing Span",
+							DurationNano: 0,
+							HasError:     false,
+							Children:     make([]*model.FlamegraphSpan, 0),
+						}
+						missingSpan.Children = append(missingSpan.Children, spanNode)
+						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
 					}
-					missingSpan.Children = append(missingSpan.Children, spanNode)
-					spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
 				}
-			} else {
+			}
+			if !hasParentRelationship {
 				traceRoots = append(traceRoots, spanNode.SpanID)
 			}
 		}
