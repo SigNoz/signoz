@@ -7,7 +7,7 @@ import (
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator/migrations"
+	"go.signoz.io/signoz/pkg/sqlstoremigrator/migrations"
 	"go.signoz.io/signoz/pkg/web"
 	"go.signoz.io/signoz/pkg/web/noopweb"
 	"go.signoz.io/signoz/pkg/web/routerweb"

@@ -6,7 +6,7 @@ import (
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator"
+	"go.signoz.io/signoz/pkg/sqlstoremigrator"
 
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/web"

@@ -13,8 +13,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator/migrations"
+	"go.signoz.io/signoz/pkg/sqlstoremigrator"
+	"go.signoz.io/signoz/pkg/sqlstoremigrator/migrations"
 )
 
 func NewQueryServiceDBForTests(t *testing.T) (testDB *sqlx.DB) {

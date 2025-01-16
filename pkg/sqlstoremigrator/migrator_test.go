@@ -12,8 +12,8 @@ import (
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation/instrumentationtest"
 	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstoremigrator/migrations/migrationstest"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlstoretest"
+	"go.signoz.io/signoz/pkg/sqlstoremigrator/migrations/migrationstest"
 )
 
 func TestMigratorWithSqliteAndNoopMigration(t *testing.T) {
