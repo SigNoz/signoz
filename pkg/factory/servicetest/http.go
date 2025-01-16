@@ -1,4 +1,4 @@
-package factorytest
+package servicetest
 
 import (
 	"context"
