@@ -66,8 +66,17 @@ function DashboardVariableSelection(): JSX.Element | null {
 			const depGrp = buildDependencies(variablesTableData);
 			const { order, graph } = buildDependencyGraph(depGrp);
 			const parentDependencyGraph = buildParentDependencyGraph(graph);
+
+			// cleanup order to only include variables that are of type 'QUERY'
+			const cleanedOrder = order.filter((variable) => {
+				const variableData = variablesTableData.find(
+					(v: IDashboardVariable) => v.name === variable,
+				);
+				return variableData?.type === 'QUERY';
+			});
+
 			setDependencyData({
-				order,
+				order: cleanedOrder,
 				graph,
 				parentDependencyGraph,
 			});
