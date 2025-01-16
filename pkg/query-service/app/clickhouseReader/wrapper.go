@@ -45,7 +45,7 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 		settings["log_comment"] = logComment
 	}
 
-	if ctx.Value("enfore_max_result_rows") != nil {
+	if ctx.Value("enforce_max_result_rows") != nil {
 		settings["max_result_rows"] = c.settings.MaxResultRowsForCHQuery
 	}
 

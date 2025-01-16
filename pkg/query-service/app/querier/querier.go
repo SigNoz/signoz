@@ -542,7 +542,7 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3)
 		case v3.QueryTypePromQL:
 			results, errQueriesByName, err = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:
-			ctx = context.WithValue(ctx, "enfore_max_result_rows", true)
+			ctx = context.WithValue(ctx, "enforce_max_result_rows", true)
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
 				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
 			} else {
