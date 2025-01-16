@@ -7,7 +7,7 @@ import { Collapse, Tooltip, Typography } from 'antd';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Computer, Container, Workflow } from 'lucide-react';
+import { Computer, Container, FilePenLine, Workflow } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -15,10 +15,12 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DeploymentsQuickFiltersConfig,
 	K8sCategories,
+	NamespaceQuickFiltersConfig,
 	NodesQuickFiltersConfig,
 	PodsQuickFiltersConfig,
 } from './constants';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
+import K8sNamespacesList from './Namespaces/K8sNamespacesList';
 import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
 
@@ -89,29 +91,29 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			),
 		},
 		// NOTE - Enabled these as we release new entities
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<FilePenLine
-		// 					size={14}
-		// 					className="k8s-quick-filters-category-label-icon"
-		// 				/>
-		// 				<Typography.Text>Namespace</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.NAMESPACES,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={NamespaceQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
+		{
+			label: (
+				<div className="k8s-quick-filters-category-label">
+					<div className="k8s-quick-filters-category-label-container">
+						<FilePenLine
+							size={14}
+							className="k8s-quick-filters-category-label-icon"
+						/>
+						<Typography.Text>Namespace</Typography.Text>
+					</div>
+				</div>
+			),
+			key: K8sCategories.NAMESPACES,
+			showArrow: false,
+			children: (
+				<QuickFilters
+					source="infra-monitoring"
+					config={NamespaceQuickFiltersConfig}
+					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
+				/>
+			),
+		},
 		// {
 		// 	label: (
 		// 		<div className="k8s-quick-filters-category-label">
@@ -323,6 +325,14 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
 						)}
+
+						{selectedCategory === K8sCategories.NAMESPACES && (
+							<K8sNamespacesList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
 					</div>
 				</div>
 			</div>

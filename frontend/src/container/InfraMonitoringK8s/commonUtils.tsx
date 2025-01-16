@@ -3,7 +3,7 @@
 
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import Table, { ColumnsType } from 'antd/es/table';
 import { Progress } from 'antd/lib';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
@@ -171,5 +171,62 @@ export function EventContents({
 			showHeader={false}
 			className="event-content-container"
 		/>
+	);
+}
+
+export const getMetricsTableData = (data: any): any[] => {
+	if (data?.params && data?.payload?.data?.result?.length) {
+		const rowsData = (data?.payload.data.result[0] as any).table.rows;
+		const columnsData = (data?.payload.data.result[0] as any).table.columns;
+		const builderQueries = data.params?.compositeQuery?.builderQueries;
+		const columns = columnsData.map((columnData: any) => {
+			console.log({ columnData });
+			if (columnData.isValueColumn) {
+				return {
+					key: columnData.name,
+					label: builderQueries[columnData.name].legend,
+					isValueColumn: true,
+				};
+			}
+			return {
+				key: columnData.name,
+				label: columnData.name,
+				isValueColumn: false,
+			};
+		});
+
+		const rows = rowsData.map((rowData: any) => rowData.data);
+		return [{ rows, columns }];
+	}
+	return [{ rows: [], columns: [] }];
+};
+
+export function MetricsTable({
+	rows,
+	columns,
+}: {
+	rows: any[];
+	columns: any[];
+}): JSX.Element {
+	const columnsData = columns.map((col: any) => ({
+		title: <Tooltip title={col.label}>{col.label}</Tooltip>,
+		dataIndex: col.key,
+		key: col.key,
+		sorter: false,
+		ellipsis: true,
+		render: (value: string) => <Tooltip title={value}>{value}</Tooltip>,
+	}));
+
+	return (
+		<div className="metrics-table">
+			<Table
+				dataSource={rows}
+				columns={columnsData}
+				tableLayout="fixed"
+				pagination={{ pageSize: 10, showSizeChanger: false }}
+				scroll={{ y: 200 }}
+				sticky
+			/>
+		</div>
 	);
 }
