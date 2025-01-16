@@ -1,0 +1,17 @@
+.infra-monitoring-container {
+	.deployments-list-table {
+		.expanded-table-container {
+			padding-left: 20px;
+		}
+
+		.ant-table-cell {
+			min-width: 180px !important;
+			max-width: 180px !important;
+		}
+
+		.ant-table-row-expand-icon-cell {
+			min-width: 30px !important;
+			max-width: 30px !important;
+		}
+	}
+}

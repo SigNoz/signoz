@@ -1,5 +1,6 @@
 import './TimeSeriesView.styles.scss';
 
+import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
@@ -119,6 +120,20 @@ function TimeSeriesView({
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useEffect(() => {
+		if (chartData[0] && chartData[0]?.length !== 0 && !isLoading && !isError) {
+			if (dataSource === DataSource.TRACES) {
+				logEvent('Traces Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
+			} else if (dataSource === DataSource.LOGS) {
+				logEvent('Logs Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
+			}
+		}
+	}, [isLoading, isError, chartData, dataSource]);
 
 	const { timezone } = useTimezone();
 
