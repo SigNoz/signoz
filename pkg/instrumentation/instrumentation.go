@@ -1,85 +1,34 @@
 package instrumentation
 
 import (
-	"context"
-	"fmt"
+	"os"
 
-	contribsdkconfig "go.opentelemetry.io/contrib/config"
+	"go.opentelemetry.io/contrib/bridges/otelzap"
 	sdklog "go.opentelemetry.io/otel/log"
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
-	"go.signoz.io/signoz/pkg/version"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-// Instrumentation holds the core components for application instrumentation.
-type Instrumentation struct {
-	LoggerProvider sdklog.LoggerProvider
-	Logger         *zap.Logger
-	MeterProvider  sdkmetric.MeterProvider
-	TracerProvider sdktrace.TracerProvider
+// Instrumentation provides the core components for application instrumentation.
+type Instrumentation interface {
+	// LoggerProvider returns the OpenTelemetry logger provider.
+	LoggerProvider() sdklog.LoggerProvider
+	// Logger returns the Zap logger.
+	Logger() *zap.Logger
+	// MeterProvider returns the OpenTelemetry meter provider.
+	MeterProvider() sdkmetric.MeterProvider
+	// TracerProvider returns the OpenTelemetry tracer provider.
+	TracerProvider() sdktrace.TracerProvider
+	// ToProviderSettings converts instrumentation to provider settings.
+	ToProviderSettings() factory.ProviderSettings
 }
 
-// New creates a new Instrumentation instance with configured providers.
-// It sets up logging, tracing, and metrics based on the provided configuration.
-func New(ctx context.Context, build version.Build, cfg Config) (*Instrumentation, error) {
-	// Set default resource attributes if not provided
-	if cfg.Resource.Attributes == nil {
-		cfg.Resource.Attributes = map[string]any{
-			string(semconv.ServiceNameKey):    build.Name,
-			string(semconv.ServiceVersionKey): build.Version,
-		}
-	}
-
-	// Create a new resource with default detectors.
-	// The upstream contrib repository is not taking detectors into account.
-	// We are, therefore, using some sensible defaults here.
-	resource, err := sdkresource.New(
-		ctx,
-		sdkresource.WithContainer(),
-		sdkresource.WithFromEnv(),
-		sdkresource.WithHost(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Prepare the resource configuration by merging
-	// resource and attributes.
-	sch := semconv.SchemaURL
-	configResource := contribsdkconfig.Resource{
-		Attributes: attributes(cfg.Resource.Attributes, resource),
-		Detectors:  nil,
-		SchemaUrl:  &sch,
-	}
-
-	loggerProvider, err := newLoggerProvider(ctx, cfg, configResource)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create logger provider: %w", err)
-	}
-
-	tracerProvider, err := newTracerProvider(ctx, cfg, configResource)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create tracer provider: %w", err)
-	}
-
-	meterProvider, err := newMeterProvider(ctx, cfg, configResource)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create meter provider: %w", err)
-	}
-
-	return &Instrumentation{
-		LoggerProvider: loggerProvider,
-		TracerProvider: tracerProvider,
-		MeterProvider:  meterProvider,
-		Logger:         newLogger(cfg, loggerProvider),
-	}, nil
-}
-
-// attributes merges the input attributes with the resource attributes.
-func attributes(input map[string]any, resource *sdkresource.Resource) map[string]any {
+// Merges the input attributes with the resource attributes.
+func mergeAttributes(input map[string]any, resource *sdkresource.Resource) map[string]any {
 	output := make(map[string]any)
 
 	for k, v := range input {
@@ -92,4 +41,15 @@ func attributes(input map[string]any, resource *sdkresource.Resource) map[string
 	}
 
 	return output
+}
+
+// newLogger creates a new Zap logger with the configured level and output.
+// It combines a JSON encoder for stdout and an OpenTelemetry bridge.
+func newLogger(cfg Config, provider sdklog.LoggerProvider) *zap.Logger {
+	core := zapcore.NewTee(
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapcore.AddSync(os.Stdout), cfg.Logs.Level),
+		otelzap.NewCore("go.signoz.io/pkg/instrumentation", otelzap.WithLoggerProvider(provider)),
+	)
+
+	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 }
