@@ -1,6 +1,6 @@
 import './TraceDetailV2.styles.scss';
 
-import { Button, Tabs, Typography } from 'antd';
+import { Button, Tabs } from 'antd';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
 import TraceWaterfall, {
@@ -8,7 +8,7 @@ import TraceWaterfall, {
 } from 'container/TraceWaterfall/TraceWaterfall';
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Braces, DraftingCompass } from 'lucide-react';
+import { DraftingCompass } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
@@ -79,19 +79,19 @@ function TraceDetailsV2(): JSX.Element {
 				</>
 			),
 		},
-		{
-			label: (
-				<Button
-					type="text"
-					icon={<Braces size={14} />}
-					className="span-list-toggle"
-				>
-					Span List
-				</Button>
-			),
-			key: 'span-list',
-			children: <Typography.Text>Span List</Typography.Text>,
-		},
+		// {
+		// 	label: (
+		// 		<Button
+		// 			type="text"
+		// 			icon={<Braces size={14} />}
+		// 			className="span-list-toggle"
+		// 		>
+		// 			Span List
+		// 		</Button>
+		// 	),
+		// 	key: 'span-list',
+		// 	children: <Typography.Text>Span List</Typography.Text>,
+		// },
 	];
 
 	return (

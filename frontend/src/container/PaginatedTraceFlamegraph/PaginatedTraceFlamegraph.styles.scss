@@ -19,7 +19,8 @@
 
 		.exec-time-service {
 			display: flex;
-			height: 62px;
+			height: 30px;
+			flex-shrink: 0;
 			justify-content: center;
 			align-items: center;
 			border-radius: 2px 0px 0px 2px;
