@@ -129,6 +129,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -143,6 +148,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			fluxInterval,
 			nil,
 		)
 		go clickhouseReader.Start(readerReady)
@@ -174,11 +180,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
 		}
 	}()
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-	if err != nil {
-		return nil, err
-	}
 
 	integrationsController, err := integrations.NewController(localDB)
 	if err != nil {

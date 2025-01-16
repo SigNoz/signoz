@@ -29,9 +29,10 @@ func NewDataConnector(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
+	fluxInterval time.Duration,
 	cacheV2 cacheV2.Cache,
 ) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster, useLogsNewSchema, useTraceNewSchema, cacheV2)
+	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster, useLogsNewSchema, useTraceNewSchema, fluxInterval, cacheV2)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
 		appdb:            localDB,

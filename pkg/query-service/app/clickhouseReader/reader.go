@@ -159,7 +159,8 @@ type ClickHouseReader struct {
 	traceResourceTableV3 string
 	traceSummaryTable    string
 
-	CacheV2 cacheV2.Cache
+	fluxInterval time.Duration
+	cacheV2      cacheV2.Cache
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -173,6 +174,7 @@ func NewReader(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
+	fluxInterval time.Duration,
 	cacheV2 cacheV2.Cache,
 ) *ClickHouseReader {
 
@@ -184,7 +186,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, cacheV2)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxInterval, cacheV2)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -196,6 +198,7 @@ func NewReaderFromClickhouseConnection(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
+	fluxInterval time.Duration,
 	cacheV2 cacheV2.Cache,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
@@ -283,7 +286,8 @@ func NewReaderFromClickhouseConnection(
 		traceResourceTableV3: options.primary.TraceResourceTableV3,
 		traceSummaryTable:    options.primary.TraceSummaryTable,
 
-		CacheV2: cacheV2,
+		fluxInterval: fluxInterval,
+		cacheV2:      cacheV2,
 	}
 }
 
@@ -1513,7 +1517,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var useCache bool = true
 
 	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
-	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), cachedTraceData, false)
+	cacheStatus, err := r.cacheV2.Retrieve(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), cachedTraceData, false)
 	if err != nil {
 		zap.L().Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", zap.Error(err))
 		useCache = false
@@ -1523,15 +1527,23 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	}
 
 	if err == nil && cacheStatus == cache.RetrieveStatusHit {
-		zap.L().Info("cache is successfully hit, applying cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
-		startTime = cachedTraceData.StartTime
-		endTime = cachedTraceData.EndTime
-		durationNano = cachedTraceData.DurationNano
-		spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
-		serviceNameToTotalDurationMap = cachedTraceData.ServiceNameToTotalDurationMap
-		traceRoots = cachedTraceData.TraceRoots
-		response.TotalSpansCount = cachedTraceData.TotalSpans
-		totalErrorSpans = cachedTraceData.TotalErrorSpans
+
+		if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxInterval {
+			useCache = false
+		}
+
+		if useCache {
+			zap.L().Info("cache is successfully hit, applying cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
+			startTime = cachedTraceData.StartTime
+			endTime = cachedTraceData.EndTime
+			durationNano = cachedTraceData.DurationNano
+			spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
+			serviceNameToTotalDurationMap = cachedTraceData.ServiceNameToTotalDurationMap
+			traceRoots = cachedTraceData.TraceRoots
+			response.TotalSpansCount = cachedTraceData.TotalSpans
+			totalErrorSpans = cachedTraceData.TotalErrorSpans
+		}
+
 	}
 
 	if !useCache {
@@ -1667,7 +1679,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			TraceRoots:                    traceRoots,
 		}
 
-		err = r.CacheV2.Store(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), &traceCache, time.Minute*5)
+		err = r.cacheV2.Store(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), &traceCache, time.Minute*5)
 		if err != nil {
 			zap.L().Debug("failed to store cache fpr getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID), zap.Error(err))
 		}
@@ -1732,7 +1744,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 	// get the trace tree from cache!
 	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
-	cacheStatus, err := r.CacheV2.Retrieve(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), cachedTraceData, false)
+	cacheStatus, err := r.cacheV2.Retrieve(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), cachedTraceData, false)
 	if err != nil {
 		zap.L().Debug("error in retrieving getFlamegraphSpansForTrace cache", zap.Error(err))
 		useCache = false
@@ -1743,13 +1755,19 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 	}
 
 	if err == nil && cacheStatus == cache.RetrieveStatusHit {
-		zap.L().Info("cache is successfully hit, applying cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
 
-		startTime = cachedTraceData.StartTime
-		endTime = cachedTraceData.EndTime
-		durationNano = cachedTraceData.DurationNano
-		traceIdLevelledFlamegraph = cachedTraceData.TraceIdLevelledFlamegraph
-		traceRoots = cachedTraceData.TraceRoots
+		if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxInterval {
+			useCache = false
+		}
+
+		if useCache {
+			zap.L().Info("cache is successfully hit, applying cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
+			startTime = cachedTraceData.StartTime
+			endTime = cachedTraceData.EndTime
+			durationNano = cachedTraceData.DurationNano
+			traceIdLevelledFlamegraph = cachedTraceData.TraceIdLevelledFlamegraph
+			traceRoots = cachedTraceData.TraceRoots
+		}
 	}
 
 	if !useCache {
@@ -1870,7 +1888,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			TraceRoots:                traceRoots,
 		}
 
-		err = r.CacheV2.Store(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), &traceCache, time.Minute*5)
+		err = r.cacheV2.Store(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), &traceCache, time.Minute*5)
 		if err != nil {
 			zap.L().Debug("failed to store cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID), zap.Error(err))
 		}

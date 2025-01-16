@@ -47,6 +47,7 @@ func NewMockClickhouseReader(
 		"",
 		true,
 		true,
+		time.Duration(time.Second),
 		nil,
 	)
 

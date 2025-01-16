@@ -157,6 +157,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	modelDao.SetFlagProvider(lm)
 	readerReady := make(chan bool)
 
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.DataConnector
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -171,6 +176,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			fluxInterval,
 			serverOptions.SigNoz.Cache,
 		)
 		go qb.Start(readerReady)
@@ -261,12 +267,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-
-	if err != nil {
-		return nil, err
-	}
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
