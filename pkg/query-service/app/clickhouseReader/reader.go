@@ -218,6 +218,7 @@ func NewReaderFromClickhouseConnection(
 			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
 			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
 			OptimizeReadInOrderRegexCompiled:    regexCompiled,
+			MaxResultRowsForCHQuery:             constants.MaxResultRowsForCHQuery,
 		},
 	}
 

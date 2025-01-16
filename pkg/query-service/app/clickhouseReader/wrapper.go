@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"regexp"
-	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -18,6 +17,7 @@ type ClickhouseQuerySettings struct {
 	MaxBytesToRead                      string
 	OptimizeReadInOrderRegex            string
 	OptimizeReadInOrderRegexCompiled    *regexp.Regexp
+	MaxResultRowsForCHQuery             int
 }
 
 type clickhouseConnWrapper struct {
@@ -45,8 +45,8 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 		settings["log_comment"] = logComment
 	}
 
-	if strings.Contains(query, "signoz_traces") {
-		settings["max_result_rows"] = 100000
+	if ctx.Value("enfore_max_result_rows") != nil {
+		settings["max_result_rows"] = c.settings.MaxResultRowsForCHQuery
 	}
 
 	if c.settings.MaxBytesToRead != "" {
