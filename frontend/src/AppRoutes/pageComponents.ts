@@ -247,3 +247,10 @@ export const InfrastructureMonitoring = Loadable(
 			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
 		),
 );
+
+export const CeleryTask = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryTask" */ 'pages/Celery/CeleryTask/CeleryTask'
+		),
+);

@@ -1,0 +1,36 @@
+.celery-task-graph-grid-container {
+	width: 100%;
+	display: grid;
+	grid-template-rows: 1fr;
+	gap: 10px;
+
+	.celery-task-graph-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		align-items: flex-start;
+		gap: 10px;
+		width: 100%;
+
+		.celery-task-graph {
+			height: 350px !important;
+			padding: 10px;
+			width: 100%;
+			box-sizing: border-box;
+		}
+	}
+
+	.celery-task-graph-grid-bottom {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		align-items: flex-start;
+		gap: 10px;
+		width: 100%;
+
+		.celery-task-graph {
+			height: 350px !important;
+			padding: 10px;
+			width: 100%;
+			box-sizing: border-box;
+		}
+	}
+}
