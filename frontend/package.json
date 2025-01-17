@@ -21,7 +21,7 @@
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
 		"test": "jest --coverage",
-		"test:changedsince": "jest --changedSince=develop --coverage --silent"
+		"test:changedsince": "jest --changedSince=main --coverage --silent"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -43,6 +43,7 @@
 		"@sentry/react": "8.41.0",
 		"@sentry/webpack-plugin": "2.22.6",
 		"@signozhq/design-tokens": "1.1.4",
+		"@tanstack/react-table": "8.20.6",
 		"@uiw/react-md-editor": "3.23.5",
 		"@visx/group": "3.3.0",
 		"@visx/shape": "3.5.0",
@@ -153,6 +154,7 @@
 		"@babel/preset-typescript": "^7.21.4",
 		"@commitlint/cli": "^16.3.0",
 		"@commitlint/config-conventional": "^16.2.4",
+		"@faker-js/faker": "9.3.0",
 		"@jest/globals": "^27.5.1",
 		"@playwright/test": "^1.22.0",
 		"@testing-library/jest-dom": "5.16.5",
@@ -243,6 +245,7 @@
 		"phin": "^3.7.1",
 		"body-parser": "1.20.3",
 		"http-proxy-middleware": "3.0.3",
-		"cross-spawn": "7.0.5"
+		"cross-spawn": "7.0.5",
+		"cookie": "^0.7.1"
 	}
 }

@@ -127,7 +127,6 @@ function TimezonePicker({
 	setIsOpen,
 	isOpenedFromFooter,
 }: TimezonePickerProps): JSX.Element {
-	console.log({ isOpenedFromFooter });
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(

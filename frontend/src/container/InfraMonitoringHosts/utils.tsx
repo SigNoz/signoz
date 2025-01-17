@@ -26,6 +26,7 @@ export const getHostListsQuery = (): HostListPayload => ({
 	groupBy: [],
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
+
 export const getTabsItems = (): TabsProps['items'] => [
 	{
 		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,

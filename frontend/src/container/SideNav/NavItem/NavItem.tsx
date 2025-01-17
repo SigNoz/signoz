@@ -11,17 +11,28 @@ export default function NavItem({
 	item,
 	isActive,
 	onClick,
+	isDisabled,
 }: {
 	item: SidebarItem;
 	isActive: boolean;
 	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+	isDisabled: boolean;
 }): JSX.Element {
 	const { label, icon, isBeta, isNew } = item;
 
 	return (
 		<div
-			className={cx('nav-item', isActive ? 'active' : '')}
-			onClick={(event): void => onClick(event)}
+			className={cx(
+				'nav-item',
+				isActive ? 'active' : '',
+				isDisabled ? 'disabled' : '',
+			)}
+			onClick={(event): void => {
+				if (isDisabled) {
+					return;
+				}
+				onClick(event);
+			}}
 		>
 			<div className="nav-item-active-marker" />
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>

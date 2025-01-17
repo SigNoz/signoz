@@ -10,6 +10,7 @@ import {
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
+	CustomDomainSettings,
 	DashboardPage,
 	DashboardWidget,
 	EditAlertChannelsAlerts,
@@ -289,6 +290,13 @@ const routes: AppRoutes[] = [
 		key: 'MY_SETTINGS',
 	},
 	{
+		path: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		exact: true,
+		component: CustomDomainSettings,
+		isPrivate: true,
+		key: 'CUSTOM_DOMAIN_SETTINGS',
+	},
+	{
 		path: ROUTES.LOGS,
 		exact: true,
 		component: Logs,
@@ -405,6 +413,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: InfrastructureMonitoring,
 		key: 'INFRASTRUCTURE_MONITORING_HOSTS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
+		exact: true,
+		component: InfrastructureMonitoring,
+		key: 'INFRASTRUCTURE_MONITORING_KUBERNETES',
 		isPrivate: true,
 	},
 ];

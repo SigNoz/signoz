@@ -44,6 +44,7 @@ function GridCardGraph({
 		toScrollWidgetId,
 		setToScrollWidgetId,
 		variablesToGetUpdated,
+		setDashboardQueryRangeCalled,
 	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -202,11 +203,13 @@ function GridCardGraph({
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
+				setDashboardQueryRangeCalled(true);
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
+				setDashboardQueryRangeCalled(true);
 			},
 		},
 	);

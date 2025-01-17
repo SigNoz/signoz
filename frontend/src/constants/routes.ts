@@ -34,6 +34,7 @@ const ROUTES = {
 	MY_SETTINGS: '/my-settings',
 	SETTINGS: '/settings',
 	ORG_SETTINGS: '/settings/org-settings',
+	CUSTOM_DOMAIN_SETTINGS: '/settings/custom-domain-settings',
 	API_KEYS: '/settings/api-keys',
 	INGESTION_SETTINGS: '/settings/ingestion-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
@@ -61,6 +62,7 @@ const ROUTES = {
 	MESSAGING_QUEUES: '/messaging-queues',
 	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
 	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
+	INFRASTRUCTURE_MONITORING_KUBERNETES: '/infrastructure-monitoring/kubernetes',
 } as const;
 
 export default ROUTES;
