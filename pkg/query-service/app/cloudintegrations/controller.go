@@ -127,8 +127,9 @@ func (c *Controller) GenerateConnectionUrl(
 }
 
 type AccountStatusResponse struct {
-	Id     string        `json:"id"`
-	Status AccountStatus `json:"status"`
+	Id             string        `json:"id"`
+	CloudAccountId *string       `json:"cloud_account_id,omitempty"`
+	Status         AccountStatus `json:"status"`
 }
 
 func (c *Controller) GetAccountStatus(
@@ -146,8 +147,9 @@ func (c *Controller) GetAccountStatus(
 	}
 
 	resp := AccountStatusResponse{
-		Id:     account.Id,
-		Status: account.status(),
+		Id:             account.Id,
+		CloudAccountId: account.CloudAccountId,
+		Status:         account.status(),
 	}
 
 	return &resp, nil
