@@ -26,7 +26,6 @@ export default function CeleryTaskDetail({
 	onClose,
 }: CeleryTaskDetailProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	console.log(task);
 
 	return (
 		<Drawer

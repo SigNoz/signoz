@@ -3,6 +3,8 @@
 	display: grid;
 	grid-template-rows: 1fr;
 	gap: 10px;
+	padding-bottom: 16px;
+	margin-bottom: 16px;
 
 	.celery-task-graph-grid {
 		display: grid;
@@ -12,10 +14,20 @@
 		width: 100%;
 
 		.celery-task-graph {
-			height: 350px !important;
-			padding: 10px;
+			height: 380px !important;
+			padding: 6px;
 			width: 100%;
 			box-sizing: border-box;
+
+			.ant-card-body {
+				height: calc(100% - 24px);
+
+				.widget-graph-container {
+					&.bar {
+						height: calc(100% - 116px);
+					}
+				}
+			}
 		}
 	}
 
@@ -27,10 +39,56 @@
 		width: 100%;
 
 		.celery-task-graph {
-			height: 350px !important;
+			height: 380px !important;
 			padding: 10px;
 			width: 100%;
 			box-sizing: border-box;
 		}
+	}
+}
+
+.celery-task-states {
+	border-bottom: 1px solid var(--bg-ink-200);
+
+	&__tab {
+		min-width: 140px;
+		padding: 12px 13px 12px 12px;
+		cursor: pointer;
+		position: relative;
+
+		&:not([data-last-tab='true']) {
+			border-right: 1px solid var(--bg-ink-200);
+		}
+
+		&--selected {
+			background-color: rgba(38, 38, 38, 0.5);
+		}
+	}
+
+	&__label-wrapper {
+		margin-bottom: 8px;
+	}
+
+	&__label {
+		font-family: 'Inter';
+		font-size: 14px;
+		color: var(--bg-vanilla-400);
+		line-height: 20px;
+	}
+
+	&__value {
+		font-family: 'Geist Mono';
+		font-size: 24px;
+		color: var(--bg-vanilla-100);
+		line-height: 32px;
+	}
+
+	&__indicator {
+		position: absolute;
+		width: 100%;
+		height: 2px;
+		bottom: 0;
+		left: 0;
+		background-color: var(--bg-vanilla-100);
 	}
 }

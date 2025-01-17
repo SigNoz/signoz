@@ -12,6 +12,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
+import { CeleryTaskGraphStates } from './CeleryTaskGraphStates';
 
 function CeleryTaskGraph({
 	widgetData,
@@ -49,6 +50,7 @@ function CeleryTaskGraph({
 			$panelType={PANEL_TYPES.TIME_SERIES}
 			className="celery-task-graph"
 		>
+			{widgetData.title === 'All' && <CeleryTaskGraphStates />}
 			<GridCard
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
