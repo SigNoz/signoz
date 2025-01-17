@@ -1,4 +1,4 @@
-package migration
+package sqlmigration
 
 import (
 	"context"
@@ -6,16 +6,15 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
 )
 
 type addPreferences struct{}
 
-func NewAddPreferencesFactory() factory.ProviderFactory[sqlmigrator.SQLMigration, sqlmigrator.Config] {
+func NewAddPreferencesFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_preferences"), newAddPreferences)
 }
 
-func newAddPreferences(_ context.Context, _ factory.ProviderSettings, _ sqlmigrator.Config) (sqlmigrator.SQLMigration, error) {
+func newAddPreferences(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
 	return &addPreferences{}, nil
 }
 

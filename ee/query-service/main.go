@@ -10,17 +10,24 @@ import (
 	"syscall"
 	"time"
 
-	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
-	signozconfig "go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/confmap/provider/signozenvprovider"
+	"go.signoz.io/signoz/pkg/cache/memorycache"
+	"go.signoz.io/signoz/pkg/cache/rediscache"
+	"go.signoz.io/signoz/pkg/config"
+	"go.signoz.io/signoz/pkg/config/envprovider"
+	"go.signoz.io/signoz/pkg/config/fileprovider"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/sqlmigration"
+	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
+	"go.signoz.io/signoz/pkg/web/noopweb"
+	"go.signoz.io/signoz/pkg/web/routerweb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -108,7 +115,6 @@ func main() {
 	var dialTimeout time.Duration
 	var gatewayUrl string
 	var useLicensesV3 bool
-	var skipWebFrontend bool
 
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
@@ -126,7 +132,6 @@ func main() {
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
 	flag.BoolVar(&useLicensesV3, "use-licenses-v3", false, "use licenses_v3 schema for licenses")
-	flag.BoolVar(&skipWebFrontend, "skip-web-frontend", false, "skip web frontend")
 	flag.Parse()
 
 	loggerMgr := initZapLog(enableQueryServiceLogOTLPExport)
@@ -136,19 +141,40 @@ func main() {
 
 	version.PrintVersion()
 
-	config, err := signozconfig.New(context.Background(), signozconfig.ProviderSettings{
-		ResolverSettings: confmap.ResolverSettings{
-			URIs: []string{"signozenv:"},
-			ProviderFactories: []confmap.ProviderFactory{
-				signozenvprovider.NewFactory(),
-			},
+	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
+		Uris: []string{"env:"},
+		ProviderFactories: []config.ProviderFactory{
+			envprovider.NewFactory(),
+			fileprovider.NewFactory(),
 		},
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(config, skipWebFrontend)
+	signoz, err := signoz.New(context.Background(), config, signoz.ProviderConfig{
+		CacheProviderFactories: factory.MustNewNamedMap(
+			memorycache.NewFactory(),
+			rediscache.NewFactory(),
+		),
+		WebProviderFactories: factory.MustNewNamedMap(
+			routerweb.NewFactory(),
+			noopweb.NewFactory(),
+		),
+		SQLStoreProviderFactories: factory.MustNewNamedMap(
+			sqlitesqlstore.NewFactory(),
+		),
+		SQLMigrationProviderFactories: factory.MustNewNamedMap(
+			sqlmigration.NewAddDataMigrationsFactory(),
+			sqlmigration.NewAddOrganizationFactory(),
+			sqlmigration.NewAddPreferencesFactory(),
+			sqlmigration.NewAddDashboardsFactory(),
+			sqlmigration.NewAddSavedViewsFactory(),
+			sqlmigration.NewAddAgentsFactory(),
+			sqlmigration.NewAddPipelinesFactory(),
+			sqlmigration.NewAddIntegrationsFactory(),
+		),
+	})
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
@@ -171,7 +197,6 @@ func main() {
 		GatewayUrl:        gatewayUrl,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
-		SkipWebFrontend:   skipWebFrontend,
 	}
 
 	// Read the jwt secret key

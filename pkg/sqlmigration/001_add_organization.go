@@ -1,4 +1,4 @@
-package migration
+package sqlmigration
 
 import (
 	"context"
@@ -6,16 +6,15 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
 )
 
 type addOrganization struct{}
 
-func NewAddOrganizationFactory() factory.ProviderFactory[sqlmigrator.SQLMigration, sqlmigrator.Config] {
+func NewAddOrganizationFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_organization"), newAddOrganization)
 }
 
-func newAddOrganization(_ context.Context, _ factory.ProviderSettings, _ sqlmigrator.Config) (sqlmigrator.SQLMigration, error) {
+func newAddOrganization(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
 	return &addOrganization{}, nil
 }
 
