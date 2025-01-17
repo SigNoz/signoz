@@ -1,4 +1,4 @@
-import './NamespaceTraces.styles.scss';
+import '../../../EntityDetailsUtils/entityTraces.styles.scss';
 
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
@@ -25,7 +25,10 @@ import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getNamespaceTracesQueryPayload, selectedColumns } from './constants';
+import {
+	getEntityTracesQueryPayload,
+	selectedEntityTracesColumns,
+} from '../../../EntityDetailsUtils/utils';
 
 interface Props {
 	timeRange: {
@@ -86,7 +89,7 @@ function NamespaceTraces({
 
 	const queryPayload = useMemo(
 		() =>
-			getNamespaceTracesQueryPayload(
+			getEntityTracesQueryPayload(
 				timeRange.startTime,
 				timeRange.endTime,
 				paginationQueryData?.offset || offset,
@@ -115,7 +118,7 @@ function NamespaceTraces({
 		enabled: !!queryPayload,
 	});
 
-	const traceListColumns = getListColumns(selectedColumns);
+	const traceListColumns = getListColumns(selectedEntityTracesColumns);
 
 	useEffect(() => {
 		if (data?.payload?.data?.newResult?.data?.result) {
@@ -138,8 +141,8 @@ function NamespaceTraces({
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
 
 	return (
-		<div className="namespace-metric-traces">
-			<div className="namespace-metric-traces-header">
+		<div className="entity-metric-traces">
+			<div className="entity-metric-traces-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
@@ -175,7 +178,7 @@ function NamespaceTraces({
 			)}
 
 			{!isError && traces.length > 0 && (
-				<div className="namespace-traces-table">
+				<div className="entity-traces-table">
 					<TraceExplorerControls
 						isLoading={isFetching}
 						totalCount={totalCount}

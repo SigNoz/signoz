@@ -1,4 +1,4 @@
-import './NamespaceMetrics.styles.scss';
+import '../../../EntityDetailsUtils/entityMetrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
@@ -150,11 +150,11 @@ function NamespaceMetrics({
 					/>
 				</div>
 			</div>
-			<Row gutter={24} className="namespace-metrics-container">
+			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
 					<Col span={12} key={namespaceWidgetInfo[idx].title}>
 						<Typography.Text>{namespaceWidgetInfo[idx].title}</Typography.Text>
-						<Card bordered className="namespace-metrics-card" ref={graphRef}>
+						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
 					</Col>
