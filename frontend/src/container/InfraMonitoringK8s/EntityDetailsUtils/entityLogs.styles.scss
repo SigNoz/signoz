@@ -1,4 +1,4 @@
-.pod-logs-container {
+.entity-logs-container {
 	margin-top: 1rem;
 
 	.filter-section {
@@ -19,7 +19,7 @@
 		}
 	}
 
-	.pod-logs-header {
+	.entity-logs-header {
 		display: flex;
 		justify-content: space-between;
 		gap: 8px;
@@ -29,7 +29,7 @@
 		border: 1px solid var(--bg-slate-500);
 	}
 
-	.pod-logs {
+	.entity-logs {
 		margin-top: 1rem;
 
 		.virtuoso-list {
@@ -64,7 +64,7 @@
 	}
 }
 
-.pod-logs-list-container {
+.entity-logs-list-container {
 	flex: 1;
 	height: calc(100vh - 272px) !important;
 	display: flex;
@@ -77,7 +77,7 @@
 	}
 }
 
-.pod-logs-list-card {
+.entity-logs-list-card {
 	width: 100%;
 	margin-top: 12px;
 

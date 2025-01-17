@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/no-duplicate-string */
-import './PodDetails.styles.scss';
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -13,6 +13,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
 	CustomTimeType,
@@ -44,7 +45,6 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS } from './constants';
 import Events from './Events/Events';
 import Metrics from './Metrics/Metrics';
 import { PodDetailProps } from './PodDetail.interfaces';
@@ -423,49 +423,49 @@ function PodDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="pod-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{pod && (
 				<>
-					<div className="pod-detail-drawer__pod">
-						<div className="pod-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="pod-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									NAMESPACE
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="pod-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="pod-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Node
 								</Typography.Text>
 							</div>
 
 							<div className="values-row">
-								<Typography.Text className="pod-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={pod.meta.k8s_namespace_name}>
 										{pod.meta.k8s_namespace_name}
 									</Tooltip>
 								</Typography.Text>
 
-								<Typography.Text className="pod-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={pod.meta.k8s_cluster_name}>
 										{pod.meta.k8s_cluster_name}
 									</Tooltip>
 								</Typography.Text>
 
-								<Typography.Text className="pod-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={pod.meta.k8s_node_name}>
 										{pod.meta.k8s_node_name}
 									</Tooltip>

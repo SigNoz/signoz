@@ -1,11 +1,5 @@
-.empty-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 100%;
-}
-
-.host-metrics-container {
+// Metrics
+.entity-metrics-container {
 	margin-top: 1rem;
 }
 
@@ -20,7 +14,7 @@
 	border: 1px solid var(--bg-slate-500);
 }
 
-.host-metrics-card {
+.entity-metrics-card {
 	margin: 8px 0 1rem 0;
 	height: 300px;
 	padding: 10px;

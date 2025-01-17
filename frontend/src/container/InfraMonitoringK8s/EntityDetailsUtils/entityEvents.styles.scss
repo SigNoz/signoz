@@ -1,4 +1,5 @@
-.pod-events-container {
+// Events
+.entity-events-container {
 	margin-top: 1rem;
 
 	.filter-section {
@@ -19,7 +20,7 @@
 		}
 	}
 
-	.pod-events-header {
+	.entity-events-header {
 		display: flex;
 		justify-content: space-between;
 		gap: 8px;
@@ -29,7 +30,7 @@
 		border: 1px solid var(--bg-slate-500);
 	}
 
-	.pod-events {
+	.entity-events {
 		margin-top: 1rem;
 
 		.virtuoso-list {
@@ -87,7 +88,7 @@
 			}
 		}
 
-		.ant-table-thead > tr > th:has(.hostname-column-header) {
+		.ant-table-thead > tr > th:has(.entityname-column-header) {
 			background: var(--bg-ink-400);
 		}
 
@@ -100,11 +101,11 @@
 			border-bottom: none;
 		}
 
-		.ant-table-cell:has(.hostname-column-value) {
+		.ant-table-cell:has(.entityname-column-value) {
 			background: var(--bg-ink-400);
 		}
 
-		.hostname-column-value {
+		.entityname-column-value {
 			color: var(--bg-vanilla-100);
 			font-family: 'Geist Mono';
 			font-style: normal;
@@ -190,7 +191,7 @@
 	}
 }
 
-.pod-events-list-container {
+.entity-events-list-container {
 	flex: 1;
 	height: calc(100vh - 300px) !important;
 	display: flex;
@@ -203,7 +204,7 @@
 	}
 }
 
-.pod-events-list-card {
+.entity-events-list-card {
 	width: 100%;
 	margin-top: 12px;
 
@@ -271,7 +272,7 @@
 	}
 }
 
-.pod-events-footer {
+.entity-events-footer {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
@@ -297,7 +298,7 @@
 	}
 
 	.periscope-btn {
-		&.ghost {
+		&.gentity {
 			border: none;
 			background: transparent;
 		}

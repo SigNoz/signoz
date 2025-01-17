@@ -1,4 +1,4 @@
-import './PodLogs.styles.scss';
+import '../../../EntityDetailsUtils/entityLogs.styles.scss';
 
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -64,8 +64,8 @@ function PodLogsDetailedView({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
-		<div className="host-metrics-logs-container">
-			<div className="host-metrics-logs-header">
+		<div className="entity-metrics-logs-container">
+			<div className="entity-metrics-logs-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch

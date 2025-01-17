@@ -1,4 +1,4 @@
-import './Metrics.styles.scss';
+import '../../../EntityDetailsUtils/entityMetrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
@@ -20,7 +20,7 @@ import { useQueries, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { getPodQueryPayload, podWidgetInfo } from '../../constants';
+import { getPodQueryPayload, podWidgetInfo } from './constants';
 
 interface MetricsTabProps {
 	timeRange: {
@@ -123,11 +123,11 @@ function Metrics({
 					/>
 				</div>
 			</div>
-			<Row gutter={24} className="host-metrics-container">
+			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
 					<Col span={12} key={podWidgetInfo[idx].title}>
 						<Typography.Text>{podWidgetInfo[idx].title}</Typography.Text>
-						<Card bordered className="host-metrics-card" ref={graphRef}>
+						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
 					</Col>
