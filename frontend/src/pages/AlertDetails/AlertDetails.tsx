@@ -8,7 +8,7 @@ import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
@@ -79,6 +79,11 @@ function AlertDetails(): JSX.Element {
 		isValidRuleId,
 		alertDetailsResponse,
 	} = useGetAlertRuleDetails();
+
+	useEffect(() => {
+		const alertTitle = alertDetailsResponse?.payload?.data.alert;
+		document.title = alertTitle || document.title;
+	}, [alertDetailsResponse?.payload?.data.alert, isRefetching]);
 
 	if (
 		isError ||
