@@ -31,7 +31,7 @@ func (c Config) Validate() error {
 	return nil
 }
 
-func (c Config) GetProvider() string {
+func (c Config) Provider() string {
 	if c.Enabled {
 		return "router"
 	}
