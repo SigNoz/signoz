@@ -9,7 +9,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Container, Workflow } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -24,6 +24,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useState(K8sCategories.PODS);
+	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -37,14 +38,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		entityVersion: '',
 	});
 
-	const handleFilterChange = useCallback(
-		(query: Query): void => {
-			// update the current query with the new filters
-			// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
-			handleChangeQueryData('filters', query.builder.queryData[0].filters);
-		},
-		[handleChangeQueryData],
-	);
+	const handleFilterChange = (query: Query): void => {
+		// update the current query with the new filters
+		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
+		handleChangeQueryData('filters', query.builder.queryData[0].filters);
+		setQuickFiltersLastUpdated(Date.now());
+	};
 
 	const items: CollapseProps['items'] = [
 		{
@@ -304,6 +303,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sPodLists
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
@@ -311,6 +311,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sNodesList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 					</div>

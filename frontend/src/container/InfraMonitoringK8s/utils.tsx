@@ -131,7 +131,7 @@ export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
 
 const podGroupColumnConfig = {
 	title: (
-		<div className="column-header pod-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> POD GROUP
 		</div>
 	),
@@ -140,7 +140,7 @@ const podGroupColumnConfig = {
 	ellipsis: true,
 	width: 180,
 	sorter: false,
-	className: 'column column-pod-group',
+	className: 'column entity-group-header',
 };
 
 export const dummyColumnConfig = {

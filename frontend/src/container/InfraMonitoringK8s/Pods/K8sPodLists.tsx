@@ -48,9 +48,11 @@ import PodDetails from './PodDetails/PodDetails';
 function K8sPodsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
+	quickFiltersLastUpdated,
 }: {
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
+	quickFiltersLastUpdated: number;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -104,6 +106,11 @@ function K8sPodsList({
 		true, // isInfraMonitoring
 		K8sCategory.PODS, // infraMonitoringEntity
 	);
+
+	// Reset pagination every time quick filters are changed
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [quickFiltersLastUpdated]);
 
 	useEffect(() => {
 		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '[]');
@@ -163,7 +170,7 @@ function K8sPodsList({
 		selectedRowData: K8sPodsRowData,
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
-			items: [],
+			items: [...query.filters.items],
 			op: 'and',
 		};
 
@@ -202,6 +209,7 @@ function K8sPodsList({
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData]);
 
 	const {

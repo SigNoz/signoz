@@ -13,6 +13,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
 	CustomTimeType,
 	Time,
@@ -245,11 +246,13 @@ function PodDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						...primaryFilters,
-						...newFilters,
-						...(paginationFilter ? [paginationFilter] : []),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							...primaryFilters,
+							...newFilters,
+							...(paginationFilter ? [paginationFilter] : []),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},
@@ -274,12 +277,14 @@ function PodDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						...primaryFilters,
-						...value.items.filter(
-							(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
-						),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							...primaryFilters,
+							...value.items.filter(
+								(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
+							),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},

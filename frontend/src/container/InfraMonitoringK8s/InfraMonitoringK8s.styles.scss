@@ -827,6 +827,24 @@
 }
 
 .lightMode {
+	.infra-monitoring-container {
+		.k8s-list-table {
+			.ant-table-expanded-row {
+				&:hover {
+					background: var(--bg-vanilla-100) !important;
+				}
+
+				.ant-table-cell {
+					background: var(--bg-vanilla-100) !important;
+				}
+
+				.ant-table .ant-table-thead > tr > th {
+					padding: 4px 16px !important;
+				}
+			}
+		}
+	}
+
 	.event-content-container {
 		.ant-table {
 			background: var(--bg-vanilla-100);
@@ -848,6 +866,13 @@
 					background: var(--bg-vanilla-300);
 				}
 			}
+		}
+	}
+
+	.entity-group-header {
+		.ant-tag {
+			background-color: var(--bg-vanilla-300) !important;
+			color: #1d212d;
 		}
 	}
 }

@@ -64,7 +64,7 @@ export interface K8sNodesRowData {
 
 const nodeGroupColumnConfig = {
 	title: (
-		<div className="column-header node-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> NODE GROUP
 		</div>
 	),
@@ -74,6 +74,7 @@ const nodeGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
