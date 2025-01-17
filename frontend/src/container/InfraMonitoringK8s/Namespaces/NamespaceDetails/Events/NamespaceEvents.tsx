@@ -1,10 +1,15 @@
 /* eslint-disable no-nested-ternary */
-import './NamespaceEvents.styles.scss';
+import '../../../EntityDetailsUtils/entityEvents.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import {
+	EntityDetailsEmptyContainer,
+	getEntityEventsOrLogsQueryPayload,
+} from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import LoadingContainer from 'container/InfraMonitoringK8s/LoadingContainer';
 import LogsError from 'container/LogsError/LogsError';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
@@ -24,9 +29,6 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
-
-import { getNamespacesEventsQueryPayload } from './constants';
-import NoEventsContainer from './NoEventsContainer';
 
 interface EventDataType {
 	key: string;
@@ -110,7 +112,7 @@ export default function Events({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getNamespacesEventsQueryPayload(
+		const basePayload = getEntityEventsOrLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -283,8 +285,8 @@ export default function Events({
 		);
 
 	return (
-		<div className="namespace-events-container">
-			<div className="namespace-events-header">
+		<div className="entity-events-container">
+			<div className="entity-events-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
@@ -310,14 +312,17 @@ export default function Events({
 			{isLoading && <LoadingContainer />}
 
 			{!isLoading && !isError && formattedNamespaceEvents.length === 0 && (
-				<NoEventsContainer />
+				<EntityDetailsEmptyContainer
+					category={K8sCategory.NAMESPACES}
+					view="events"
+				/>
 			)}
 
 			{isError && !isLoading && <LogsError />}
 
 			{!isLoading && !isError && formattedNamespaceEvents.length > 0 && (
-				<div className="namespace-events-list-container">
-					<div className="namespace-events-list-card">
+				<div className="entity-events-list-container">
+					<div className="entity-events-list-card">
 						<Table<EventDataType>
 							loading={isLoading && page > 1}
 							columns={columns}
@@ -335,9 +340,9 @@ export default function Events({
 			)}
 
 			{!isError && formattedNamespaceEvents.length > 0 && (
-				<div className="namespace-events-footer">
+				<div className="entity-events-footer">
 					<Button
-						className="namespace-events-footer-button periscope-btn ghost"
+						className="entity-events-footer-button periscope-btn ghost"
 						type="link"
 						onClick={handlePrev}
 						disabled={page === 1 || isFetching || isLoading}
@@ -347,7 +352,7 @@ export default function Events({
 					</Button>
 
 					<Button
-						className="namespace-events-footer-button periscope-btn ghost"
+						className="entity-events-footer-button periscope-btn ghost"
 						type="link"
 						onClick={handleNext}
 						disabled={hasReachedEndOfEvents || isFetching || isLoading}

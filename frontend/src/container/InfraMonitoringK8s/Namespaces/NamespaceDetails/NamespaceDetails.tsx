@@ -12,6 +12,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
 	CustomTimeType,
 	Time,
@@ -42,7 +43,6 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS } from './constants';
 import NamespaceEvents from './Events';
 import NamespaceLogs from './Logs';
 import NamespaceMetrics from './Metrics';
@@ -403,35 +403,35 @@ function NamespaceDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="namespace-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{namespace && (
 				<>
-					<div className="namespace-detail-drawer__namespace">
-						<div className="namespace-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="namespace-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Namespace Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="namespace-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Typography.Text className="namespace-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={namespace.namespaceName}>
 										{namespace.namespaceName}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="namespace-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title="Cluster name">
 										{namespace.meta.k8s_cluster_name}
 									</Tooltip>
