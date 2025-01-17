@@ -1,4 +1,4 @@
-import './NodeMetrics.styles.scss';
+import '../../../EntityDetailsUtils/entityMetrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import { K8sNodesData } from 'api/infraMonitoring/getK8sNodesList';
@@ -123,11 +123,11 @@ function NodeMetrics({
 					/>
 				</div>
 			</div>
-			<Row gutter={24} className="node-metrics-container">
+			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
 					<Col span={12} key={nodeWidgetInfo[idx].title}>
 						<Typography.Text>{nodeWidgetInfo[idx].title}</Typography.Text>
-						<Card bordered className="node-metrics-card" ref={graphRef}>
+						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
 					</Col>

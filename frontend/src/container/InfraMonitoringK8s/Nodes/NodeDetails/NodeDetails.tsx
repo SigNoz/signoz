@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import './NodeDetails.styles.scss';
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -43,7 +43,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS } from './constants';
+import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
 import NodeEvents from './Events';
 import NodeLogs from './Logs';
 import NodeMetrics from './Metrics';
@@ -402,35 +402,35 @@ function NodeDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="node-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{node && (
 				<>
-					<div className="node-detail-drawer__node">
-						<div className="node-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="node-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Node Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="node-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Typography.Text className="node-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={node.meta.k8s_node_name}>
 										{node.meta.k8s_node_name}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="node-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title="Cluster name">{node.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>

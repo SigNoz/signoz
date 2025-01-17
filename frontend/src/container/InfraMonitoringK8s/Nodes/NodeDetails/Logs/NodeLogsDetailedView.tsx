@@ -1,4 +1,5 @@
-import './NodeLogs.styles.scss';
+/* eslint-disable no-nested-ternary */
+import '../../../EntityDetailsUtils/entityLogs.styles.scss';
 
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -64,8 +65,8 @@ function NodeLogsDetailedView({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
-		<div className="node-logs-container">
-			<div className="node-logs-header">
+		<div className="entity-logs-container">
+			<div className="entity-logs-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch

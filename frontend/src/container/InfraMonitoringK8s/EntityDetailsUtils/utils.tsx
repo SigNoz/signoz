@@ -21,6 +21,7 @@ export const QUERY_KEYS = {
 	K8S_POD_NAME: 'k8s.pod.name',
 	K8S_NAMESPACE_NAME: 'k8s.namespace.name',
 	K8S_CLUSTER_NAME: 'k8s.cluster.name',
+	K8S_NODE_NAME: 'k8s.node.name',
 };
 
 /**
