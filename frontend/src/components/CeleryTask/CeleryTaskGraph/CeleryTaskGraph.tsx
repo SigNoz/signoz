@@ -87,6 +87,7 @@ function CeleryTaskGraph({
 			$panelType={PANEL_TYPES.TIME_SERIES || panelType}
 			className="celery-task-graph"
 		>
+			{widgetData.title === 'All' && <CeleryTaskGraphStates />}
 			<GridCard
 				widget={applyCeleryTaskFilter ? updatedWidgetData : widgetData}
 				headerMenuList={[...ViewMenuAction]}
