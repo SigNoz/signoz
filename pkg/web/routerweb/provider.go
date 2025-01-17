@@ -1,6 +1,7 @@
 package routerweb
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -8,26 +9,25 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/web"
-	"go.uber.org/zap"
 )
 
 const (
 	indexFileName string = "index.html"
 )
 
-type Web struct {
-	logger *zap.Logger
-	cfg    web.Config
+type provider struct {
+	config web.Config
 }
 
-func New(logger *zap.Logger, cfg web.Config) (*Web, error) {
-	if logger == nil {
-		return nil, fmt.Errorf("cannot build web, logger is required")
-	}
+func NewFactory() factory.ProviderFactory[web.Web, web.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("routerweb"), New)
+}
 
-	fi, err := os.Stat(cfg.Directory)
+func New(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
+	fi, err := os.Stat(config.Directory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot access web directory: %w", err)
 	}
@@ -37,7 +37,7 @@ func New(logger *zap.Logger, cfg web.Config) (*Web, error) {
 		return nil, fmt.Errorf("web directory is not a directory")
 	}
 
-	fi, err = os.Stat(filepath.Join(cfg.Directory, indexFileName))
+	fi, err = os.Stat(filepath.Join(config.Directory, indexFileName))
 	if err != nil {
 		return nil, fmt.Errorf("cannot access %q in web directory: %w", indexFileName, err)
 	}
@@ -46,19 +46,18 @@ func New(logger *zap.Logger, cfg web.Config) (*Web, error) {
 		return nil, fmt.Errorf("%q does not exist", indexFileName)
 	}
 
-	return &Web{
-		logger: logger.Named("go.signoz.io/pkg/web"),
-		cfg:    cfg,
+	return &provider{
+		config: config,
 	}, nil
 }
 
-func (web *Web) AddToRouter(router *mux.Router) error {
+func (provider *provider) AddToRouter(router *mux.Router) error {
 	cache := middleware.NewCache(7 * 24 * time.Hour)
-	err := router.PathPrefix(web.cfg.Prefix).
+	err := router.PathPrefix(provider.config.Prefix).
 		Handler(
 			http.StripPrefix(
-				web.cfg.Prefix,
-				cache.Wrap(http.HandlerFunc(web.ServeHTTP)),
+				provider.config.Prefix,
+				cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
 			),
 		).GetError()
 	if err != nil {
@@ -68,15 +67,15 @@ func (web *Web) AddToRouter(router *mux.Router) error {
 	return nil
 }
 
-func (web *Web) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Join internally call path.Clean to prevent directory traversal
-	path := filepath.Join(web.cfg.Directory, req.URL.Path)
+	path := filepath.Join(provider.config.Directory, req.URL.Path)
 
 	// check whether a file exists or is a directory at the given path
 	fi, err := os.Stat(path)
 	if os.IsNotExist(err) || fi.IsDir() {
 		// file does not exist or path is a directory, serve index.html
-		http.ServeFile(rw, req, filepath.Join(web.cfg.Directory, indexFileName))
+		http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
 		return
 	}
 
@@ -89,5 +88,5 @@ func (web *Web) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// otherwise, use http.FileServer to serve the static file
-	http.FileServer(http.Dir(web.cfg.Directory)).ServeHTTP(rw, req)
+	http.FileServer(http.Dir(provider.config.Directory)).ServeHTTP(rw, req)
 }

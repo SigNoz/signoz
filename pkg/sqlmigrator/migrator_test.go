@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation/instrumentationtest"
+	"go.signoz.io/signoz/pkg/sqlmigration"
+	"go.signoz.io/signoz/pkg/sqlmigration/sqlmigrationtest"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlstoretest"
 )
@@ -33,7 +35,7 @@ func TestMigratorWithSqliteAndNoopMigration(t *testing.T) {
 		ctx,
 		providerSettings,
 		sqlstore,
-		MustNewMigrations(ctx, providerSettings, migrationConfig, factory.MustNewNamedMap(NoopMigrationFactory())),
+		sqlmigration.MustNew(ctx, providerSettings, sqlmigration.Config{}, factory.MustNewNamedMap(sqlmigrationtest.NoopMigrationFactory())),
 		migrationConfig,
 	)
 

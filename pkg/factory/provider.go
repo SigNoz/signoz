@@ -25,6 +25,7 @@ func (factory *providerFactory[P, C]) New(ctx context.Context, settings Provider
 	return factory.newProviderFunc(ctx, settings, config)
 }
 
+// NewProviderFactory creates a new provider factory.
 func NewProviderFactory[P Provider, C Config](name Name, newProviderFunc NewProviderFunc[P, C]) ProviderFactory[P, C] {
 	return &providerFactory[P, C]{
 		name:            name,
@@ -32,7 +33,8 @@ func NewProviderFactory[P Provider, C Config](name Name, newProviderFunc NewProv
 	}
 }
 
-func NewFromFactory[P Provider, C Config](ctx context.Context, settings ProviderSettings, config C, factories NamedMap[ProviderFactory[P, C]], key string) (p P, err error) {
+// NewProviderFromNamedMap creates a new provider from a factory based on the input key.
+func NewProviderFromNamedMap[P Provider, C Config](ctx context.Context, settings ProviderSettings, config C, factories NamedMap[ProviderFactory[P, C]], key string) (p P, err error) {
 	providerFactory, err := factories.Get(key)
 	if err != nil {
 		return
