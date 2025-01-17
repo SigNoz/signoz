@@ -182,8 +182,6 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 			default:
 				valueType = "string"
 			}
-		} else {
-			valueType = "string"
 		}
 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 		valueType = "int64"
