@@ -15,7 +15,7 @@ type SigNoz struct {
 	Web   web.Web
 }
 
-func New(config *config.Config, skipWebFrontend bool) (*SigNoz, error) {
+func New(config config.Config, skipWebFrontend bool) (*SigNoz, error) {
 	var cache cache.Cache
 
 	// init for the cache
