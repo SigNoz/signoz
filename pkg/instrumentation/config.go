@@ -2,12 +2,9 @@ package instrumentation
 
 import (
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
-	"go.signoz.io/signoz/pkg/confmap"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap/zapcore"
 )
-
-// Config satisfies the confmap.Config interface
-var _ confmap.Config = (*Config)(nil)
 
 // Config holds the configuration for all instrumentation components.
 type Config struct {
@@ -24,39 +21,69 @@ type Resource struct {
 
 // LogsConfig holds the configuration for the logging component.
 type LogsConfig struct {
-	Enabled                         bool          `mapstructure:"enabled"`
-	Level                           zapcore.Level `mapstructure:"level"`
-	contribsdkconfig.LoggerProvider `mapstructure:",squash"`
+	Enabled    bool           `mapstructure:"enabled"`
+	Level      zapcore.Level  `mapstructure:"level"`
+	Processors LogsProcessors `mapstructure:"processors"`
+}
+
+type LogsProcessors struct {
+	Batch contribsdkconfig.BatchLogRecordProcessor `mapstructure:"batch"`
 }
 
 // TracesConfig holds the configuration for the tracing component.
 type TracesConfig struct {
-	Enabled                         bool `mapstructure:"enabled"`
-	contribsdkconfig.TracerProvider `mapstructure:",squash"`
+	Enabled    bool                     `mapstructure:"enabled"`
+	Processors TracesProcessors         `mapstructure:"processors"`
+	Sampler    contribsdkconfig.Sampler `mapstructure:"sampler"`
+}
+
+type TracesProcessors struct {
+	Batch contribsdkconfig.BatchSpanProcessor `mapstructure:"batch"`
 }
 
 // MetricsConfig holds the configuration for the metrics component.
 type MetricsConfig struct {
-	Enabled                        bool `mapstructure:"enabled"`
-	contribsdkconfig.MeterProvider `mapstructure:",squash"`
+	Enabled bool           `mapstructure:"enabled"`
+	Readers MetricsReaders `mapstructure:"readers"`
 }
 
-func (c *Config) NewWithDefaults() confmap.Config {
-	return &Config{
+type MetricsReaders struct {
+	Pull contribsdkconfig.PullMetricReader `mapstructure:"pull"`
+}
+
+func NewConfigFactory() factory.ConfigFactory {
+	return factory.NewConfigFactory(factory.MustNewName("instrumentation"), newConfig)
+}
+
+func newConfig() factory.Config {
+	host := "0.0.0.0"
+	port := 9090
+
+	return Config{
 		Logs: LogsConfig{
 			Enabled: false,
-			Level:   zapcore.InfoLevel,
+			Level:   zapcore.DebugLevel,
 		},
 		Traces: TracesConfig{
 			Enabled: false,
 		},
 		Metrics: MetricsConfig{
-			Enabled: false,
+			Enabled: true,
+			Readers: MetricsReaders{
+				Pull: contribsdkconfig.PullMetricReader{
+					Exporter: contribsdkconfig.MetricExporter{
+						Prometheus: &contribsdkconfig.Prometheus{
+							Host: &host,
+							Port: &port,
+						},
+					},
+				},
+			},
 		},
 	}
 
 }
 
-func (c *Config) Validate() error {
+func (c Config) Validate() error {
 	return nil
 }
