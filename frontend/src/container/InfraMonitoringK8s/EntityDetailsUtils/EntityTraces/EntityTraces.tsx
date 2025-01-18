@@ -28,7 +28,11 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
+<<<<<<<< HEAD:frontend/src/container/InfraMonitoringK8s/EntityDetailsUtils/EntityTraces/EntityTraces.tsx
 } from '../utils';
+========
+} from './utils';
+>>>>>>>> 600899b20 (chore: refactor traces):frontend/src/container/InfraMonitoringK8s/EntityDetailsUtils/EntityTraces.tsx
 
 interface Props {
 	timeRange: {

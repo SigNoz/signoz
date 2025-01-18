@@ -1,4 +1,4 @@
-import '../../../EntityDetailsUtils/entityTraces.styles.scss';
+import './entityTraces.styles.scss';
 
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
@@ -28,7 +28,11 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
-} from '../../../EntityDetailsUtils/utils';
+<<<<<<<< HEAD:frontend/src/container/InfraMonitoringK8s/EntityDetailsUtils/EntityTraces/EntityTraces.tsx
+} from '../utils';
+========
+} from './utils';
+>>>>>>>> 600899b20 (chore: refactor traces):frontend/src/container/InfraMonitoringK8s/EntityDetailsUtils/EntityTraces.tsx
 
 interface Props {
 	timeRange: {
@@ -43,15 +47,17 @@ interface Props {
 	handleChangeTracesFilters: (value: IBuilderQuery['filters']) => void;
 	tracesFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
+	queryKey: string;
 }
 
-function DeploymentTraces({
+function EntityTraces({
 	timeRange,
 	isModalTimeSelection,
 	handleTimeChange,
 	handleChangeTracesFilters,
 	tracesFilters,
 	selectedInterval,
+	queryKey,
 }: Props): JSX.Element {
 	const [traces, setTraces] = useState<any[]>([]);
 	const [offset] = useState<number>(0);
@@ -106,7 +112,7 @@ function DeploymentTraces({
 
 	const { data, isLoading, isFetching, isError } = useQuery({
 		queryKey: [
-			'deploymentMetricTraces',
+			queryKey,
 			timeRange.startTime,
 			timeRange.endTime,
 			offset,
@@ -199,4 +205,4 @@ function DeploymentTraces({
 	);
 }
 
-export default DeploymentTraces;
+export default EntityTraces;
