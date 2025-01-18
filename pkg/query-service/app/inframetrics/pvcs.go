@@ -374,5 +374,7 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) 
 	resp.Total = len(allVolumeGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }

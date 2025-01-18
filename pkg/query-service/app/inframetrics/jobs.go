@@ -494,5 +494,7 @@ func (d *JobsRepo) GetJobList(ctx context.Context, req model.JobListRequest) (mo
 	resp.Total = len(allJobGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }

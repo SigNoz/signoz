@@ -354,5 +354,6 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 	resp.Total = len(allNodeGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
 	return resp, nil
 }

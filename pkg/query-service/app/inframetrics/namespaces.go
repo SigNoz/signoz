@@ -341,5 +341,7 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.Namespa
 	resp.Total = len(allNamespaceGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }
