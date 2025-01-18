@@ -1,7 +1,6 @@
-import '../../../EntityDetailsUtils/entityMetrics.styles.scss';
+import './entityMetrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
-import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -10,6 +9,7 @@ import {
 	getMetricsTableData,
 	MetricsTable,
 } from 'container/InfraMonitoringK8s/commonUtils';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -17,7 +17,10 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import {
+	GetMetricQueryRange,
+	GetQueryResultsProps,
+} from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useMemo, useRef } from 'react';
@@ -26,9 +29,7 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Options } from 'uplot';
 
-import { getNamespaceQueryPayload, namespaceWidgetInfo } from './constants';
-
-interface NamespaceMetricsProps {
+interface EntityMetricsProps<T> {
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -39,25 +40,39 @@ interface NamespaceMetricsProps {
 		dateTimeRange?: [number, number],
 	) => void;
 	selectedInterval: Time;
-	namespace: K8sNamespacesData;
+	entity: T;
+	entityWidgetInfo: {
+		title: string;
+		yAxisUnit: string;
+	}[];
+	getEntityQueryPayload: (
+		node: T,
+		start: number,
+		end: number,
+	) => GetQueryResultsProps[];
+	queryKey: string;
+	category: K8sCategory;
 }
 
-function NamespaceMetrics({
+function EntityMetrics<T>({
 	selectedInterval,
-	namespace,
+	entity,
 	timeRange,
 	handleTimeChange,
 	isModalTimeSelection,
-}: NamespaceMetricsProps): JSX.Element {
+	entityWidgetInfo,
+	getEntityQueryPayload,
+	queryKey,
+	category,
+}: EntityMetricsProps<T>): JSX.Element {
 	const queryPayloads = useMemo(
-		() =>
-			getNamespaceQueryPayload(namespace, timeRange.startTime, timeRange.endTime),
-		[namespace, timeRange.startTime, timeRange.endTime],
+		() => getEntityQueryPayload(entity, timeRange.startTime, timeRange.endTime),
+		[getEntityQueryPayload, entity, timeRange.startTime, timeRange.endTime],
 	);
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['namespace-metrics', payload, ENTITY_VERSION_V4, 'NAMESPACE'],
+			queryKey: [queryKey, payload, ENTITY_VERSION_V4, category],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
@@ -90,14 +105,21 @@ function NamespaceMetrics({
 					apiResponse: data?.payload,
 					isDarkMode,
 					dimensions,
-					yAxisUnit: namespaceWidgetInfo[idx].yAxisUnit,
+					yAxisUnit: entityWidgetInfo[idx].yAxisUnit,
 					softMax: null,
 					softMin: null,
 					minTimeScale: timeRange.startTime,
 					maxTimeScale: timeRange.endTime,
 				});
 			}),
-		[queries, isDarkMode, dimensions, timeRange.startTime, timeRange.endTime],
+		[
+			queries,
+			isDarkMode,
+			dimensions,
+			entityWidgetInfo,
+			timeRange.startTime,
+			timeRange.endTime,
+		],
 	);
 
 	const renderCardContent = (
@@ -152,8 +174,8 @@ function NamespaceMetrics({
 			</div>
 			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
-					<Col span={12} key={namespaceWidgetInfo[idx].title}>
-						<Typography.Text>{namespaceWidgetInfo[idx].title}</Typography.Text>
+					<Col span={12} key={entityWidgetInfo[idx].title}>
+						<Typography.Text>{entityWidgetInfo[idx].title}</Typography.Text>
 						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
@@ -164,4 +186,4 @@ function NamespaceMetrics({
 	);
 }
 
-export default NamespaceMetrics;
+export default EntityMetrics;
