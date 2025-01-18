@@ -13,6 +13,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
 	CustomTimeType,
 	Time,
@@ -50,7 +51,7 @@ import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
 import PodTraces from './PodTraces/PodTraces';
 
-const TimeRangeOffset = 1000000;
+const TimeRangeOffset = 1000000000;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function PodDetails({
@@ -104,19 +105,6 @@ function PodDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_CLUSTER_NAME,
-						dataType: DataTypes.String,
-						type: 'resource',
-						isColumn: false,
-						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
-					},
-					op: '=',
-					value: pod?.meta.k8s_cluster_name || '',
-				},
-				{
-					id: uuidv4(),
-					key: {
 						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
@@ -129,11 +117,7 @@ function PodDetails({
 				},
 			],
 		}),
-		[
-			pod?.meta.k8s_cluster_name,
-			pod?.meta.k8s_namespace_name,
-			pod?.meta.k8s_pod_name,
-		],
+		[pod?.meta.k8s_namespace_name, pod?.meta.k8s_pod_name],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -262,11 +246,13 @@ function PodDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						...primaryFilters,
-						...newFilters,
-						...(paginationFilter ? [paginationFilter] : []),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							...primaryFilters,
+							...newFilters,
+							...(paginationFilter ? [paginationFilter] : []),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},
@@ -291,12 +277,14 @@ function PodDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						...primaryFilters,
-						...value.items.filter(
-							(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
-						),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							...primaryFilters,
+							...value.items.filter(
+								(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
+							),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},

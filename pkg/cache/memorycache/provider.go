@@ -1,4 +1,4 @@
-package memory
+package memorycache
 
 import (
 	"context"
@@ -10,21 +10,21 @@ import (
 	_cache "go.signoz.io/signoz/pkg/cache"
 )
 
-type cache struct {
+type provider struct {
 	cc *go_cache.Cache
 }
 
-func New(opts *_cache.Memory) *cache {
-	return &cache{cc: go_cache.New(opts.TTL, opts.CleanupInterval)}
+func New(opts *_cache.Memory) *provider {
+	return &provider{cc: go_cache.New(opts.TTL, opts.CleanupInterval)}
 }
 
 // Connect does nothing
-func (c *cache) Connect(_ context.Context) error {
+func (c *provider) Connect(_ context.Context) error {
 	return nil
 }
 
 // Store stores the data in the cache
-func (c *cache) Store(_ context.Context, cacheKey string, data _cache.CacheableEntity, ttl time.Duration) error {
+func (c *provider) Store(_ context.Context, cacheKey string, data _cache.CacheableEntity, ttl time.Duration) error {
 	// check if the data being passed is a pointer and is not nil
 	rv := reflect.ValueOf(data)
 	if rv.Kind() != reflect.Pointer || rv.IsNil() {
@@ -36,7 +36,7 @@ func (c *cache) Store(_ context.Context, cacheKey string, data _cache.CacheableE
 }
 
 // Retrieve retrieves the data from the cache
-func (c *cache) Retrieve(_ context.Context, cacheKey string, dest _cache.CacheableEntity, allowExpired bool) (_cache.RetrieveStatus, error) {
+func (c *provider) Retrieve(_ context.Context, cacheKey string, dest _cache.CacheableEntity, allowExpired bool) (_cache.RetrieveStatus, error) {
 	// check if the destination being passed is a pointer and is not nil
 	dstv := reflect.ValueOf(dest)
 	if dstv.Kind() != reflect.Pointer || dstv.IsNil() {
@@ -65,7 +65,7 @@ func (c *cache) Retrieve(_ context.Context, cacheKey string, dest _cache.Cacheab
 }
 
 // SetTTL sets the TTL for the cache entry
-func (c *cache) SetTTL(_ context.Context, cacheKey string, ttl time.Duration) {
+func (c *provider) SetTTL(_ context.Context, cacheKey string, ttl time.Duration) {
 	item, found := c.cc.Get(cacheKey)
 	if !found {
 		return
@@ -74,23 +74,23 @@ func (c *cache) SetTTL(_ context.Context, cacheKey string, ttl time.Duration) {
 }
 
 // Remove removes the cache entry
-func (c *cache) Remove(_ context.Context, cacheKey string) {
+func (c *provider) Remove(_ context.Context, cacheKey string) {
 	c.cc.Delete(cacheKey)
 }
 
 // BulkRemove removes the cache entries
-func (c *cache) BulkRemove(_ context.Context, cacheKeys []string) {
+func (c *provider) BulkRemove(_ context.Context, cacheKeys []string) {
 	for _, cacheKey := range cacheKeys {
 		c.cc.Delete(cacheKey)
 	}
 }
 
 // Close does nothing
-func (c *cache) Close(_ context.Context) error {
+func (c *provider) Close(_ context.Context) error {
 	return nil
 }
 
 // Configuration returns the cache configuration
-func (c *cache) Configuration() *_cache.Memory {
+func (c *provider) Configuration() *_cache.Memory {
 	return nil
 }
