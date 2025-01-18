@@ -39,7 +39,7 @@ import {
 	formatDataForTable,
 	getK8sPodsListColumns,
 	getK8sPodsListQuery,
-	IPodColumn,
+	IEntityColumn,
 	K8sPodsRowData,
 } from '../utils';
 import PodDetails from './PodDetails/PodDetails';
@@ -60,9 +60,9 @@ function K8sPodsList({
 
 	const [currentPage, setCurrentPage] = useState(1);
 
-	const [addedColumns, setAddedColumns] = useState<IPodColumn[]>([]);
+	const [addedColumns, setAddedColumns] = useState<IEntityColumn[]>([]);
 
-	const [availableColumns, setAvailableColumns] = useState<IPodColumn[]>(
+	const [availableColumns, setAvailableColumns] = useState<IEntityColumn[]>(
 		defaultAvailableColumns,
 	);
 
@@ -348,7 +348,7 @@ function K8sPodsList({
 	};
 
 	const handleAddColumn = useCallback(
-		(column: IPodColumn): void => {
+		(column: IEntityColumn): void => {
 			setAddedColumns((prev) => [...prev, column]);
 
 			setAvailableColumns((prev) => prev.filter((c) => c.value !== column.value));
@@ -375,7 +375,7 @@ function K8sPodsList({
 	}, [groupByFiltersData]);
 
 	const handleRemoveColumn = useCallback(
-		(column: IPodColumn): void => {
+		(column: IEntityColumn): void => {
 			setAddedColumns((prev) => prev.filter((c) => c.value !== column.value));
 
 			setAvailableColumns((prev) => [...prev, column]);

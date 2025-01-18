@@ -26,16 +26,9 @@ export interface IEntityColumn {
 	canRemove: boolean;
 }
 
-export interface IPodColumn {
-	label: string;
-	value: string;
-	id: string;
-	canRemove: boolean;
-}
-
 const columnProgressBarClassName = 'column-progress-bar';
 
-export const defaultAddedColumns: IPodColumn[] = [
+export const defaultAddedColumns: IEntityColumn[] = [
 	{
 		label: 'Pod name',
 		value: 'podName',
@@ -78,12 +71,13 @@ export const defaultAddedColumns: IPodColumn[] = [
 		id: 'memory',
 		canRemove: false,
 	},
-	{
-		label: 'Restarts',
-		value: 'restarts',
-		id: 'restarts',
-		canRemove: false,
-	},
+	// TODO - Re-enable the column once backend issue is fixed
+	// {
+	// 	label: 'Restarts',
+	// 	value: 'restarts',
+	// 	id: 'restarts',
+	// 	canRemove: false,
+	// },
 ];
 
 export const defaultAvailableColumns = [
@@ -219,20 +213,21 @@ const columnsConfig = [
 		align: 'left',
 		className: `column ${columnProgressBarClassName}`,
 	},
-	{
-		title: (
-			<div className="column-header">
-				<Tooltip title="Container Restarts">Restarts</Tooltip>
-			</div>
-		),
-		dataIndex: 'restarts',
-		key: 'restarts',
-		width: 40,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
-	},
+	// TODO - Re-enable the column once backend issue is fixed
+	// {
+	// 	title: (
+	// 		<div className="column-header">
+	// 			<Tooltip title="Container Restarts">Restarts</Tooltip>
+	// 		</div>
+	// 	),
+	// 	dataIndex: 'restarts',
+	// 	key: 'restarts',
+	// 	width: 40,
+	// 	ellipsis: true,
+	// 	sorter: true,
+	// 	align: 'left',
+	// 	className: `column ${columnProgressBarClassName}`,
+	// },
 ];
 
 export const namespaceColumnConfig = {
@@ -275,7 +270,7 @@ export const columnConfigMap = {
 };
 
 export const getK8sPodsListColumns = (
-	addedColumns: IPodColumn[],
+	addedColumns: IEntityColumn[],
 	groupBy: IBuilderQuery['groupBy'],
 ): ColumnType<K8sPodsRowData>[] => {
 	const updatedColumnsConfig = [...columnsConfig];
