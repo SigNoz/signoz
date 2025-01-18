@@ -1,4 +1,4 @@
-import './ClusterMetrics.styles.scss';
+import '../../../EntityDetailsUtils/entityMetrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import { K8sClustersData } from 'api/infraMonitoring/getK8sClustersList';
@@ -56,7 +56,7 @@ function ClusterMetrics({
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['cluster-metrics', payload, ENTITY_VERSION_V4, 'NODE'],
+			queryKey: ['entity-metrics', payload, ENTITY_VERSION_V4, 'NODE'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
@@ -149,11 +149,11 @@ function ClusterMetrics({
 					/>
 				</div>
 			</div>
-			<Row gutter={24} className="cluster-metrics-container">
+			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
 					<Col span={12} key={clusterWidgetInfo[idx].title}>
 						<Typography.Text>{clusterWidgetInfo[idx].title}</Typography.Text>
-						<Card bordered className="cluster-metrics-card" ref={graphRef}>
+						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
 					</Col>

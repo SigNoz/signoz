@@ -1,10 +1,11 @@
 /* eslint-disable no-nested-ternary */
-import './ClusterLogs.styles.scss';
+import '../../../EntityDetailsUtils/entityLogs.styles.scss';
 
 import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -22,9 +23,11 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 } from 'uuid';
 
-import { QUERY_KEYS } from '../constants';
-import { getClusterLogsQueryPayload } from './constants';
-import NoLogsContainer from './NoLogsContainer';
+import {
+	EntityDetailsEmptyContainer,
+	getEntityEventsOrLogsQueryPayload,
+	QUERY_KEYS,
+} from '../../../EntityDetailsUtils/utils';
 
 interface Props {
 	timeRange: {
@@ -63,7 +66,7 @@ function PodLogs({
 	}, [filters]);
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getClusterLogsQueryPayload(
+		const basePayload = getEntityEventsOrLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -179,11 +182,11 @@ function PodLogs({
 
 	const renderContent = useMemo(
 		() => (
-			<Card bordered={false} className="cluster-logs-list-card">
+			<Card bordered={false} className="entity-logs-list-card">
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
-						className="cluster-logs-virtuoso"
-						key="cluster-logs-virtuoso"
+						className="entity-logs-virtuoso"
+						key="entity-logs-virtuoso"
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -200,12 +203,14 @@ function PodLogs({
 	);
 
 	return (
-		<div className="cluster-logs">
+		<div className="entity-logs">
 			{isLoading && <LogsLoading />}
-			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
+			{!isLoading && !isError && logs.length === 0 && (
+				<EntityDetailsEmptyContainer category={K8sCategory.CLUSTERS} view="logs" />
+			)}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="cluster-logs-list-container">{renderContent}</div>
+				<div className="entity-logs-list-container">{renderContent}</div>
 			)}
 		</div>
 	);
