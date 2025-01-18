@@ -540,7 +540,7 @@ function NodeDetails({
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<NodeEvents
+						<Events
 							timeRange={modalTimeRange}
 							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}
