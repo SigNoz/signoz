@@ -1,6 +1,6 @@
-/* eslint-disable no-nested-ternary */
-import '../../../EntityDetailsUtils/entityLogs.styles.scss';
+import './entityLogs.styles.scss';
 
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -12,7 +12,7 @@ import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import NodeLogs from './NodeLogs';
+import EntityLogs from './EntityLogs';
 
 interface Props {
 	timeRange: {
@@ -27,15 +27,21 @@ interface Props {
 	handleChangeLogFilters: (value: IBuilderQuery['filters']) => void;
 	logFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
+	queryKey: string;
+	category: K8sCategory;
+	queryKeyFilters: Array<string>;
 }
 
-function NodeLogsDetailedView({
+function EntityLogsDetailedView({
 	timeRange,
 	isModalTimeSelection,
 	handleTimeChange,
 	handleChangeLogFilters,
 	logFilters,
 	selectedInterval,
+	queryKey,
+	category,
+	queryKeyFilters,
 }: Props): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const updatedCurrentQuery = useMemo(
@@ -88,13 +94,16 @@ function NodeLogsDetailedView({
 					/>
 				</div>
 			</div>
-			<NodeLogs
+			<EntityLogs
 				timeRange={timeRange}
 				handleChangeLogFilters={handleChangeLogFilters}
 				filters={logFilters}
+				queryKey={queryKey}
+				category={category}
+				queryKeyFilters={queryKeyFilters}
 			/>
 		</div>
 	);
 }
 
-export default NodeLogsDetailedView;
+export default EntityLogsDetailedView;

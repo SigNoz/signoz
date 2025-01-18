@@ -46,11 +46,11 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
+import NodeLogs from '../../EntityDetailsUtils/EntityLogs';
 import NodeMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import NodeTraces from '../../EntityDetailsUtils/EntityTraces';
 import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
 import { getNodeMetricsQueryPayload, nodeWidgetInfo } from './constants';
-import NodeLogs from './Logs';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
 
 function NodeDetails({
@@ -523,6 +523,9 @@ function NodeDetails({
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							queryKeyFilters={[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME]}
+							queryKey="nodeLogs"
+							category={K8sCategory.NODES}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (

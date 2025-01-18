@@ -46,11 +46,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import ClusterEvents from '../../EntityDetailsUtils/EntityEvents';
+import ClusterLogs from '../../EntityDetailsUtils/EntityLogs';
 import ClusterMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import ClusterTraces from '../../EntityDetailsUtils/EntityTraces';
 import { ClusterDetailsProps } from './ClusterDetails.interfaces';
 import { clusterWidgetInfo, getClusterMetricsQueryPayload } from './constants';
-import ClusterLogs from './Logs';
 
 function ClusterDetails({
 	cluster,
@@ -514,6 +514,9 @@ function ClusterDetails({
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							queryKey="clusterLogs"
+							category={K8sCategory.CLUSTERS}
+							queryKeyFilters={[QUERY_KEYS.K8S_CLUSTER_NAME]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (

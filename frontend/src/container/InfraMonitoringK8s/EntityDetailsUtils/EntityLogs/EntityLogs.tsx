@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import '../../../EntityDetailsUtils/entityLogs.styles.scss';
+import './entityLogs.styles.scss';
 
 import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
@@ -26,8 +26,7 @@ import { v4 } from 'uuid';
 import {
 	EntityDetailsEmptyContainer,
 	getEntityEventsOrLogsQueryPayload,
-	QUERY_KEYS,
-} from '../../../EntityDetailsUtils/utils';
+} from '../utils';
 
 interface Props {
 	timeRange: {
@@ -36,12 +35,18 @@ interface Props {
 	};
 	handleChangeLogFilters: (filters: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
+	queryKey: string;
+	category: K8sCategory;
+	queryKeyFilters: Array<string>;
 }
 
-function PodLogs({
+function EntityLogs({
 	timeRange,
 	handleChangeLogFilters,
 	filters,
+	queryKey,
+	category,
+	queryKeyFilters,
 }: Props): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [hasReachedEndOfLogs, setHasReachedEndOfLogs] = useState(false);
@@ -51,8 +56,7 @@ function PodLogs({
 	useEffect(() => {
 		const newRestFilters = filters.items.filter(
 			(item) =>
-				item.key?.key !== 'id' &&
-				![QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
+				item.key?.key !== 'id' && !queryKeyFilters.includes(item.key?.key ?? ''),
 		);
 
 		const areFiltersSame = isEqual(restFilters, newRestFilters);
@@ -83,7 +87,7 @@ function PodLogs({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: ['clusterLogs', timeRange.startTime, timeRange.endTime, filters],
+		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 		keepPreviousData: isPaginating,
@@ -206,7 +210,7 @@ function PodLogs({
 		<div className="entity-logs">
 			{isLoading && <LogsLoading />}
 			{!isLoading && !isError && logs.length === 0 && (
-				<EntityDetailsEmptyContainer category={K8sCategory.CLUSTERS} view="logs" />
+				<EntityDetailsEmptyContainer category={category} view="logs" />
 			)}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
@@ -216,4 +220,4 @@ function PodLogs({
 	);
 }
 
-export default PodLogs;
+export default EntityLogs;

@@ -48,11 +48,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import PodEvents from '../../EntityDetailsUtils/EntityEvents';
+import PodLogs from '../../EntityDetailsUtils/EntityLogs';
 import PodMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import PodTraces from '../../EntityDetailsUtils/EntityTraces';
 import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
 import { PodDetailProps } from './PodDetail.interfaces';
-import PodLogs from './PodLogs/PodLogsDetailedView';
 
 const TimeRangeOffset = 1000000000;
 
@@ -561,6 +561,13 @@ function PodDetails({
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_POD_NAME,
+								QUERY_KEYS.K8S_CLUSTER_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
+							queryKey="podLogs"
+							category={K8sCategory.PODS}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (

@@ -46,13 +46,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import NamespaceEvents from '../../EntityDetailsUtils/EntityEvents';
+import NamespaceLogs from '../../EntityDetailsUtils/EntityLogs';
 import NamespaceMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import NamespaceTraces from '../../EntityDetailsUtils/EntityTraces';
 import {
 	getNamespaceMetricsQueryPayload,
 	namespaceWidgetInfo,
 } from './constants';
-import NamespaceLogs from './Logs';
 import { NamespaceDetailsProps } from './NamespaceDetails.interfaces';
 
 function NamespaceDetails({
@@ -529,6 +529,9 @@ function NamespaceDetails({
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							queryKey="namespaceLogs"
+							category={K8sCategory.NAMESPACES}
+							queryKeyFilters={[QUERY_KEYS.K8S_NAMESPACE_NAME]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
