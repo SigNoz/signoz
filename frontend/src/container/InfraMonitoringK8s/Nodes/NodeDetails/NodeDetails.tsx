@@ -13,9 +13,9 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import NodeEvents from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
+import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
 	CustomTimeType,
 	Time,
