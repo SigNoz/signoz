@@ -26,7 +26,7 @@ export const deploymentWidgetInfo = [
 	},
 ];
 
-export const getDeploymentQueryPayload = (
+export const getDeploymentMetricsQueryPayload = (
 	deployment: K8sDeploymentsData,
 	start: number,
 	end: number,

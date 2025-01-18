@@ -47,8 +47,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import Events from '../../EntityDetailsUtils/EntityEvents';
+import Metrics from '../../EntityDetailsUtils/EntityMetrics';
 import PodTraces from '../../EntityDetailsUtils/EntityTraces';
-import Metrics from './Metrics/Metrics';
+import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
 import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
 
@@ -540,11 +541,15 @@ function PodDetails({
 
 					{selectedView === VIEW_TYPES.METRICS && (
 						<Metrics
-							pod={pod}
+							entity={pod}
 							selectedInterval={selectedInterval}
 							timeRange={modalTimeRange}
 							handleTimeChange={handleTimeChange}
 							isModalTimeSelection={isModalTimeSelection}
+							entityWidgetInfo={podWidgetInfo}
+							getEntityQueryPayload={getPodMetricsQueryPayload}
+							category={K8sCategory.PODS}
+							queryKey="podMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (

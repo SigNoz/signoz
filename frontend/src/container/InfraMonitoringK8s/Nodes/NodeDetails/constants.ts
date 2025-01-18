@@ -50,7 +50,7 @@ export const nodeWidgetInfo = [
 	},
 ];
 
-export const getNodeQueryPayload = (
+export const getNodeMetricsQueryPayload = (
 	node: K8sNodesData,
 	start: number,
 	end: number,

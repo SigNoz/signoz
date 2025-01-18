@@ -45,10 +45,11 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
+import NodeMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import NodeTraces from '../../EntityDetailsUtils/EntityTraces';
 import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
+import { getNodeMetricsQueryPayload, nodeWidgetInfo } from './constants';
 import NodeLogs from './Logs';
-import NodeMetrics from './Metrics';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
 
 function NodeDetails({
@@ -506,7 +507,11 @@ function NodeDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							node={node}
+							entity={node}
+							entityWidgetInfo={nodeWidgetInfo}
+							getEntityQueryPayload={getNodeMetricsQueryPayload}
+							category={K8sCategory.NODES}
+							queryKey="nodeMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (

@@ -62,7 +62,7 @@ export const podWidgetInfo = [
 	},
 ];
 
-export const getPodQueryPayload = (
+export const getPodMetricsQueryPayload = (
 	pod: K8sPodsData,
 	start: number,
 	end: number,

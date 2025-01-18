@@ -45,10 +45,14 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import DeploymentEvents from '../../EntityDetailsUtils/EntityEvents';
+import DeploymentMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import DeploymentTraces from '../../EntityDetailsUtils/EntityTraces';
+import {
+	deploymentWidgetInfo,
+	getDeploymentMetricsQueryPayload,
+} from './constants';
 import { DeploymentDetailsProps } from './DeploymentDetails.interfaces';
 import DeploymentLogs from './Logs';
-import DeploymentMetrics from './Metrics';
 
 function DeploymentDetails({
 	deployment,
@@ -537,7 +541,11 @@ function DeploymentDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							deployment={deployment}
+							entity={deployment}
+							entityWidgetInfo={deploymentWidgetInfo}
+							getEntityQueryPayload={getDeploymentMetricsQueryPayload}
+							category={K8sCategory.DEPLOYMENTS}
+							queryKey="deploymentMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
