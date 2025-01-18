@@ -692,7 +692,7 @@ function QueryBuilderSearchV2(
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES[
 					currentFilterItem.key
 						.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-				].map((operator) => ({
+				]?.map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
