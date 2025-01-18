@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import './ClusterDetails.styles.scss';
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -12,6 +12,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
 	CustomTimeType,
 	Time,
@@ -43,7 +44,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ClusterDetailsProps } from './ClusterDetails.interfaces';
-import { QUERY_KEYS } from './constants';
 import ClusterEvents from './Events';
 import ClusterLogs from './Logs';
 import ClusterMetrics from './Metrics';
@@ -393,35 +393,35 @@ function ClusterDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="cluster-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{cluster && (
 				<>
-					<div className="cluster-detail-drawer__cluster">
-						<div className="cluster-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="cluster-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="cluster-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Typography.Text className="cluster-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={cluster.meta.k8s_cluster_name}>
 										{cluster.meta.k8s_cluster_name}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="cluster-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title="Cluster name">{cluster.meta.k8s_cluster_name}</Tooltip>
 								</Typography.Text>
 							</div>
