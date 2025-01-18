@@ -29,11 +29,7 @@ import { v4 } from 'uuid';
 import {
 	EntityDetailsEmptyContainer,
 	getEntityEventsOrLogsQueryPayload,
-<<<<<<<< HEAD:frontend/src/container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents/EntityEvents.tsx
 } from '../utils';
-========
-} from './utils';
->>>>>>>> aee820c29 (chore: refactor events):frontend/src/container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents.tsx
 
 interface EventDataType {
 	key: string;
