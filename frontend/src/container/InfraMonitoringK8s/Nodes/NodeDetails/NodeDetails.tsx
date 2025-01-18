@@ -45,11 +45,11 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
+import NodeTraces from '../../EntityDetailsUtils/EntityTraces';
 import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
 import NodeLogs from './Logs';
 import NodeMetrics from './Metrics';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
-import NodeTraces from './Traces';
 
 function NodeDetails({
 	node,
@@ -527,6 +527,7 @@ function NodeDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="nodeTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

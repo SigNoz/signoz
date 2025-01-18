@@ -1,4 +1,4 @@
-import '../../../EntityDetailsUtils/entityTraces.styles.scss';
+import './entityTraces.styles.scss';
 
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
@@ -28,7 +28,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
-} from '../../../EntityDetailsUtils/utils';
+} from './utils';
 
 interface Props {
 	timeRange: {
@@ -43,15 +43,17 @@ interface Props {
 	handleChangeTracesFilters: (value: IBuilderQuery['filters']) => void;
 	tracesFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
+	queryKey: string;
 }
 
-function PodTraces({
+function EntityTraces({
 	timeRange,
 	isModalTimeSelection,
 	handleTimeChange,
 	handleChangeTracesFilters,
 	tracesFilters,
 	selectedInterval,
+	queryKey,
 }: Props): JSX.Element {
 	const [traces, setTraces] = useState<any[]>([]);
 	const [offset] = useState<number>(0);
@@ -106,7 +108,7 @@ function PodTraces({
 
 	const { data, isLoading, isFetching, isError } = useQuery({
 		queryKey: [
-			'podTraces',
+			queryKey,
 			timeRange.startTime,
 			timeRange.endTime,
 			offset,
@@ -178,7 +180,7 @@ function PodTraces({
 			)}
 
 			{!isError && traces.length > 0 && (
-				<div className="pod-traces-table">
+				<div className="entity-traces-table">
 					<TraceExplorerControls
 						isLoading={isFetching}
 						totalCount={totalCount}
@@ -199,4 +201,4 @@ function PodTraces({
 	);
 }
 
-export default PodTraces;
+export default EntityTraces;

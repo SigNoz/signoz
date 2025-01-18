@@ -45,10 +45,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import ClusterEvents from '../../EntityDetailsUtils/EntityEvents';
+import ClusterTraces from '../../EntityDetailsUtils/EntityTraces';
 import { ClusterDetailsProps } from './ClusterDetails.interfaces';
 import ClusterLogs from './Logs';
 import ClusterMetrics from './Metrics';
-import ClusterTraces from './Traces';
 
 function ClusterDetails({
 	cluster,
@@ -518,6 +518,7 @@ function ClusterDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="clusterTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

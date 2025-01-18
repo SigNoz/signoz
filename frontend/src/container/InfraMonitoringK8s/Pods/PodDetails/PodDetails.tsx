@@ -47,10 +47,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import Events from '../../EntityDetailsUtils/EntityEvents';
+import PodTraces from '../../EntityDetailsUtils/EntityTraces';
 import Metrics from './Metrics/Metrics';
 import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
-import PodTraces from './PodTraces/PodTraces';
 
 const TimeRangeOffset = 1000000000;
 
@@ -565,6 +565,7 @@ function PodDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="podTraces"
 						/>
 					)}
 

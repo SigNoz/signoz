@@ -45,10 +45,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import NamespaceEvents from '../../EntityDetailsUtils/EntityEvents';
+import NamespaceTraces from '../../EntityDetailsUtils/EntityTraces';
 import NamespaceLogs from './Logs';
 import NamespaceMetrics from './Metrics';
 import { NamespaceDetailsProps } from './NamespaceDetails.interfaces';
-import NamespaceTraces from './Traces';
 
 function NamespaceDetails({
 	namespace,
@@ -530,6 +530,7 @@ function NamespaceDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="namespaceTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

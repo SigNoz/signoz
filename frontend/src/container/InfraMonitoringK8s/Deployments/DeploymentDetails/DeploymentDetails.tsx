@@ -45,10 +45,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import DeploymentEvents from '../../EntityDetailsUtils/EntityEvents';
+import DeploymentTraces from '../../EntityDetailsUtils/EntityTraces';
 import { DeploymentDetailsProps } from './DeploymentDetails.interfaces';
 import DeploymentLogs from './Logs';
 import DeploymentMetrics from './Metrics';
-import DeploymentTraces from './Traces';
 
 function DeploymentDetails({
 	deployment,
@@ -558,6 +558,7 @@ function DeploymentDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="deploymentTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
