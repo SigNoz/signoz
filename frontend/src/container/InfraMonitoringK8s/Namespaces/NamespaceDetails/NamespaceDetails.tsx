@@ -12,6 +12,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
 	CustomTimeType,
@@ -43,7 +44,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import NamespaceEvents from './Events';
+import NamespaceEvents from '../../EntityDetailsUtils/EntityEvents';
 import NamespaceLogs from './Logs';
 import NamespaceMetrics from './Metrics';
 import { NamespaceDetailsProps } from './NamespaceDetails.interfaces';
@@ -539,6 +540,8 @@ function NamespaceDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.NAMESPACES}
+							queryKey="namespaceEvents"
 						/>
 					)}
 				</>

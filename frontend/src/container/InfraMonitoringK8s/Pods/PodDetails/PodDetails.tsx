@@ -13,6 +13,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
@@ -45,7 +46,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import Events from './Events/Events';
+import Events from '../../EntityDetailsUtils/EntityEvents';
 import Metrics from './Metrics/Metrics';
 import { PodDetailProps } from './PodDetail.interfaces';
 import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
@@ -572,9 +573,11 @@ function PodDetails({
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
-							handleChangeLogFilters={handleChangeEventsFilters}
+							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.PODS}
+							queryKey="podEvents"
 						/>
 					)}
 				</>

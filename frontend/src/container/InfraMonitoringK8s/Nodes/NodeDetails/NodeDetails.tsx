@@ -12,6 +12,8 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import Events from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
 import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
 	CustomTimeType,
@@ -44,7 +46,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
 import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
-import NodeEvents from './Events';
 import NodeLogs from './Logs';
 import NodeMetrics from './Metrics';
 import { NodeDetailsProps } from './NodeDetails.interfaces';
@@ -529,13 +530,15 @@ function NodeDetails({
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<NodeEvents
+						<Events
 							timeRange={modalTimeRange}
 							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.NODES}
+							queryKey="nodeEvents"
 						/>
 					)}
 				</>

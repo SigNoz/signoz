@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import '../../../EntityDetailsUtils/entityEvents.styles.scss';
+import './entityEvents.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
@@ -29,7 +29,7 @@ import { v4 } from 'uuid';
 import {
 	EntityDetailsEmptyContainer,
 	getEntityEventsOrLogsQueryPayload,
-} from '../../../EntityDetailsUtils/utils';
+} from './utils';
 
 interface EventDataType {
 	key: string;
@@ -51,7 +51,7 @@ interface EventDataType {
 	severity?: string;
 }
 
-interface IDeploymentEventsProps {
+interface IEntityEventsProps {
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -64,6 +64,8 @@ interface IDeploymentEventsProps {
 		dateTimeRange?: [number, number],
 	) => void;
 	selectedInterval: Time;
+	category: K8sCategory;
+	queryKey: string;
 }
 
 const EventsPageSize = 10;
@@ -75,10 +77,12 @@ export default function Events({
 	isModalTimeSelection,
 	handleTimeChange,
 	selectedInterval,
-}: IDeploymentEventsProps): JSX.Element {
+	category,
+	queryKey,
+}: IEntityEventsProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
-	const [formattedDeploymentEvents, setFormattedDeploymentEvents] = useState<
+	const [formattedEntityEvents, setFormattedEntityEvents] = useState<
 		EventDataType[]
 	>([]);
 
@@ -128,12 +132,7 @@ export default function Events({
 	}, [timeRange.startTime, timeRange.endTime, filters]);
 
 	const { data: eventsData, isLoading, isFetching, isError } = useQuery({
-		queryKey: [
-			'deploymentEvents',
-			timeRange.startTime,
-			timeRange.endTime,
-			filters,
-		],
+		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 	});
@@ -167,7 +166,7 @@ export default function Events({
 				}),
 			);
 
-			setFormattedDeploymentEvents(formattedData);
+			setFormattedEntityEvents(formattedData);
 
 			if (
 				!responsePayload ||
@@ -189,11 +188,11 @@ export default function Events({
 	);
 
 	const handlePrev = (): void => {
-		if (!formattedDeploymentEvents.length) return;
+		if (!formattedEntityEvents.length) return;
 
 		setPage(page - 1);
 
-		const firstEvent = formattedDeploymentEvents[0];
+		const firstEvent = formattedEntityEvents[0];
 
 		const newItems = [
 			...filters.items.filter((item) => item.key?.key !== 'id'),
@@ -219,11 +218,10 @@ export default function Events({
 	};
 
 	const handleNext = (): void => {
-		if (!formattedDeploymentEvents.length) return;
+		if (!formattedEntityEvents.length) return;
 
 		setPage(page + 1);
-		const lastEvent =
-			formattedDeploymentEvents[formattedDeploymentEvents.length - 1];
+		const lastEvent = formattedEntityEvents[formattedEntityEvents.length - 1];
 
 		const newItems = [
 			...filters.items.filter((item) => item.key?.key !== 'id'),
@@ -312,16 +310,13 @@ export default function Events({
 
 			{isLoading && <LoadingContainer />}
 
-			{!isLoading && !isError && formattedDeploymentEvents.length === 0 && (
-				<EntityDetailsEmptyContainer
-					category={K8sCategory.DEPLOYMENTS}
-					view="events"
-				/>
+			{!isLoading && !isError && formattedEntityEvents.length === 0 && (
+				<EntityDetailsEmptyContainer category={category} view="events" />
 			)}
 
 			{isError && !isLoading && <LogsError />}
 
-			{!isLoading && !isError && formattedDeploymentEvents.length > 0 && (
+			{!isLoading && !isError && formattedEntityEvents.length > 0 && (
 				<div className="entity-events-list-container">
 					<div className="entity-events-list-card">
 						<Table<EventDataType>
@@ -332,7 +327,7 @@ export default function Events({
 								rowExpandable: (record): boolean => record.body !== 'Not Expandable',
 								expandIcon: handleExpandRowIcon,
 							}}
-							dataSource={formattedDeploymentEvents}
+							dataSource={formattedEntityEvents}
 							pagination={false}
 							rowKey={(record): string => record.id}
 						/>
@@ -340,7 +335,7 @@ export default function Events({
 				</div>
 			)}
 
-			{!isError && formattedDeploymentEvents.length > 0 && (
+			{!isError && formattedEntityEvents.length > 0 && (
 				<div className="entity-events-footer">
 					<Button
 						className="entity-events-footer-button periscope-btn ghost"

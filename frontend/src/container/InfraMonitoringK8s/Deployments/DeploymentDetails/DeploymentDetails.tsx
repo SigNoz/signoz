@@ -12,6 +12,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
 	CustomTimeType,
@@ -43,8 +44,8 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
+import DeploymentEvents from '../../EntityDetailsUtils/EntityEvents';
 import { DeploymentDetailsProps } from './DeploymentDetails.interfaces';
-import DeploymentEvents from './Events';
 import DeploymentLogs from './Logs';
 import DeploymentMetrics from './Metrics';
 import DeploymentTraces from './Traces';
@@ -567,6 +568,8 @@ function DeploymentDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.DEPLOYMENTS}
+							queryKey="deploymentEvents"
 						/>
 					)}
 				</>
