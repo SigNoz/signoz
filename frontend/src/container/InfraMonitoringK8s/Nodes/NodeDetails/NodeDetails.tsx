@@ -5,6 +5,7 @@ import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { K8sNodesData } from 'api/infraMonitoring/getK8sNodesList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -13,7 +14,7 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
-import Events from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
+import NodeEvents from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
 import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/entityDetailUtils';
 import {
 	CustomTimeType,
@@ -502,7 +503,7 @@ function NodeDetails({
 						)}
 					</div>
 					{selectedView === VIEW_TYPES.METRICS && (
-						<NodeMetrics
+						<NodeMetrics<K8sNodesData>
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
@@ -536,7 +537,7 @@ function NodeDetails({
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<Events
+						<NodeEvents
 							timeRange={modalTimeRange}
 							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}

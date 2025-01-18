@@ -28,7 +28,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
-} from './utils';
+} from '../utils';
 
 interface Props {
 	timeRange: {

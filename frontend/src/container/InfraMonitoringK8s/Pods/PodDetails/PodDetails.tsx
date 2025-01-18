@@ -6,6 +6,7 @@ import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -46,12 +47,12 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import Events from '../../EntityDetailsUtils/EntityEvents';
-import Metrics from '../../EntityDetailsUtils/EntityMetrics';
+import PodEvents from '../../EntityDetailsUtils/EntityEvents';
+import PodMetrics from '../../EntityDetailsUtils/EntityMetrics';
 import PodTraces from '../../EntityDetailsUtils/EntityTraces';
 import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
 import { PodDetailProps } from './PodDetail.interfaces';
-import PodLogsDetailedView from './PodLogs/PodLogsDetailedView';
+import PodLogs from './PodLogs/PodLogsDetailedView';
 
 const TimeRangeOffset = 1000000000;
 
@@ -540,7 +541,7 @@ function PodDetails({
 					</div>
 
 					{selectedView === VIEW_TYPES.METRICS && (
-						<Metrics
+						<PodMetrics<K8sPodsData>
 							entity={pod}
 							selectedInterval={selectedInterval}
 							timeRange={modalTimeRange}
@@ -553,7 +554,7 @@ function PodDetails({
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
-						<PodLogsDetailedView
+						<PodLogs
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
@@ -575,7 +576,7 @@ function PodDetails({
 					)}
 
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<Events
+						<PodEvents
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}

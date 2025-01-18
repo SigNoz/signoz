@@ -5,6 +5,7 @@ import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -508,7 +509,7 @@ function NamespaceDetails({
 						)}
 					</div>
 					{selectedView === VIEW_TYPES.METRICS && (
-						<NamespaceMetrics
+						<NamespaceMetrics<K8sNamespacesData>
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}

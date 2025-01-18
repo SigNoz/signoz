@@ -29,7 +29,7 @@ import { v4 } from 'uuid';
 import {
 	EntityDetailsEmptyContainer,
 	getEntityEventsOrLogsQueryPayload,
-} from './utils';
+} from '../utils';
 
 interface EventDataType {
 	key: string;

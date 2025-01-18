@@ -5,6 +5,7 @@ import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { K8sClustersData } from 'api/infraMonitoring/getK8sClustersList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -493,7 +494,7 @@ function ClusterDetails({
 						)}
 					</div>
 					{selectedView === VIEW_TYPES.METRICS && (
-						<ClusterMetrics
+						<ClusterMetrics<K8sClustersData>
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}

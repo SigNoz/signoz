@@ -5,6 +5,7 @@ import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { K8sDeploymentsData } from 'api/infraMonitoring/getK8sDeploymentsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -536,7 +537,7 @@ function DeploymentDetails({
 						)}
 					</div>
 					{selectedView === VIEW_TYPES.METRICS && (
-						<DeploymentMetrics
+						<DeploymentMetrics<K8sDeploymentsData>
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
