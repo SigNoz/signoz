@@ -78,8 +78,6 @@ function PodTraces({
 		[currentQuery],
 	);
 
-	console.log({ updatedCurrentQuery });
-
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(

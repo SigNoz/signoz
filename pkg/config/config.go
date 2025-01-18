@@ -12,9 +12,8 @@ import (
 // This map contains the default values of all config structs
 var (
 	defaults = map[string]signozconfmap.Config{
-		"instrumentation": &instrumentation.Config{},
-		"web":             &web.Config{},
-		"cache":           &cache.Config{},
+		"web":   &web.Config{},
+		"cache": &cache.Config{},
 	}
 )
 

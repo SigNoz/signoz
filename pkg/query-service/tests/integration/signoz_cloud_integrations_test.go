@@ -52,6 +52,7 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	accountStatusResp := testbed.GetAccountStatusFromQS("aws", testAccountId)
 	require.Equal(testAccountId, accountStatusResp.Id)
 	require.Nil(accountStatusResp.Status.Integration.LastHeartbeatTsMillis)
+	require.Nil(accountStatusResp.CloudAccountId)
 
 	// The unconnected account should not show up in connected accounts list yet
 	accountsListResp1 := testbed.GetConnectedAccountsListFromQS("aws")
@@ -75,6 +76,8 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// Polling for connection status from UI should now return latest status
 	accountStatusResp1 := testbed.GetAccountStatusFromQS("aws", testAccountId)
 	require.Equal(testAccountId, accountStatusResp1.Id)
+	require.NotNil(accountStatusResp1.CloudAccountId)
+	require.Equal(testAWSAccountId, *accountStatusResp1.CloudAccountId)
 	require.NotNil(accountStatusResp1.Status.Integration.LastHeartbeatTsMillis)
 	require.LessOrEqual(
 		tsMillisBeforeAgentCheckIn,
