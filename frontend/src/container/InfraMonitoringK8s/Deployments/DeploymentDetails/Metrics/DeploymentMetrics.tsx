@@ -1,4 +1,4 @@
-import './DeploymentMetrics.styles.scss';
+import '../../../EntityDetailsUtils/entityMetrics.styles.scss';
 
 import { Card, Col, Row, Skeleton, Typography } from 'antd';
 import { K8sDeploymentsData } from 'api/infraMonitoring/getK8sDeploymentsList';
@@ -55,7 +55,7 @@ function DeploymentMetrics({
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['deployment-metrics', payload, ENTITY_VERSION_V4, 'NODE'],
+			queryKey: ['deploymentMetrics', payload, ENTITY_VERSION_V4, 'NODE'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
@@ -128,11 +128,11 @@ function DeploymentMetrics({
 					/>
 				</div>
 			</div>
-			<Row gutter={24} className="deployment-metrics-container">
+			<Row gutter={24} className="entity-metrics-container">
 				{queries.map((query, idx) => (
 					<Col span={12} key={deploymentWidgetInfo[idx].title}>
 						<Typography.Text>{deploymentWidgetInfo[idx].title}</Typography.Text>
-						<Card bordered className="deployment-metrics-card" ref={graphRef}>
+						<Card bordered className="entity-metrics-card" ref={graphRef}>
 							{renderCardContent(query, idx)}
 						</Card>
 					</Col>

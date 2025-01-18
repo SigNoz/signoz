@@ -1,4 +1,4 @@
-import './DeploymentLogs.styles.scss';
+import '../../../EntityDetailsUtils/entityLogs.styles.scss';
 
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -64,8 +64,8 @@ function DeploymentLogsDetailedView({
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
-		<div className="deployment-logs-container">
-			<div className="deployment-logs-header">
+		<div className="entity-logs-container">
+			<div className="entity-logs-header">
 				<div className="filter-section">
 					{query && (
 						<QueryBuilderSearch
