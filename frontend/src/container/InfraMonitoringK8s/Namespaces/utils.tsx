@@ -50,7 +50,7 @@ export interface K8sNamespacesRowData {
 
 const namespaceGroupColumnConfig = {
 	title: (
-		<div className="column-header pod-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> NAMESPACE GROUP
 		</div>
 	),
@@ -60,6 +60,7 @@ const namespaceGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sNamespacesListQuery = (): K8sNamespacesListPayload => ({
@@ -112,7 +113,7 @@ export const getK8sNamespacesListColumns = (
 ): ColumnType<K8sNamespacesRowData>[] => {
 	if (groupBy.length > 0) {
 		const filteredColumns = [...columnsConfig].filter(
-			(column) => column.key !== 'namespaceName' && column.key !== 'clusterName',
+			(column) => column.key !== 'namespaceName',
 		);
 		filteredColumns.unshift(namespaceGroupColumnConfig);
 		return filteredColumns as ColumnType<K8sNamespacesRowData>[];

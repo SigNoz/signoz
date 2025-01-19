@@ -107,7 +107,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							size={14}
 							className="k8s-quick-filters-category-label-icon"
 						/>
-						<Typography.Text>Namespace</Typography.Text>
+						<Typography.Text>Namespaces</Typography.Text>
 					</div>
 				</div>
 			),
@@ -331,6 +331,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sDeploymentsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
@@ -338,6 +339,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sNamespacesList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
@@ -345,6 +347,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sClustersList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 					</div>

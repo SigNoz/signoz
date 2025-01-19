@@ -45,9 +45,11 @@ import {
 function K8sNamespacesList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
+	quickFiltersLastUpdated,
 }: {
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
+	quickFiltersLastUpdated: number;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -79,12 +81,28 @@ function K8sNamespacesList({
 		{ value: string; label: string }[]
 	>([]);
 
+	const { currentQuery } = useQueryBuilder();
+
+	const queryFilters = useMemo(
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
+		[currentQuery?.builder?.queryData],
+	);
+
+	// Reset pagination every time quick filters are changed
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [quickFiltersLastUpdated]);
+
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sNamespacesRowData,
 		groupBy: IBuilderQuery['groupBy'],
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
-			items: [],
+			items: [...queryFilters.items],
 			op: 'and',
 		};
 
@@ -123,6 +141,7 @@ function K8sNamespacesList({
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const {
@@ -138,8 +157,6 @@ function K8sNamespacesList({
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 	);
-
-	const { currentQuery } = useQueryBuilder();
 
 	const {
 		data: groupByFiltersData,
@@ -157,15 +174,6 @@ function K8sNamespacesList({
 		},
 		true,
 		K8sCategory.NODES,
-	);
-
-	const queryFilters = useMemo(
-		() =>
-			currentQuery?.builder?.queryData[0]?.filters || {
-				items: [],
-				op: 'and',
-			},
-		[currentQuery?.builder?.queryData],
 	);
 
 	const query = useMemo(() => {
@@ -396,18 +404,6 @@ function K8sNamespacesList({
 		setselectedNamespaceUID(null);
 	};
 
-	const showsNamespacesTable =
-		!isError &&
-		!isLoading &&
-		!isFetching &&
-		!(formattedNamespacesData.length === 0 && queryFilters.items.length > 0);
-
-	const showNoFilteredNamespacesMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedNamespacesData.length === 0 &&
-		queryFilters.items.length > 0;
-
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
 			const groupBy = [];
@@ -456,54 +452,52 @@ function K8sNamespacesList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{showNoFilteredNamespacesMessage && (
-				<div className="no-filtered-hosts-message-container">
-					<div className="no-filtered-hosts-message-content">
-						<img
-							src="/Icons/emptyState.svg"
-							alt="thinking-emoji"
-							className="empty-state-svg"
-						/>
+			<Table
+				className="k8s-list-table namespaces-list-table"
+				dataSource={isFetching || isLoading ? [] : formattedNamespacesData}
+				columns={columns}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total: totalCount,
+					showSizeChanger: false,
+					hideOnSinglePage: true,
+				}}
+				scroll={{ x: true }}
+				loading={{
+					spinning: isFetching || isLoading,
+					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+				}}
+				locale={{
+					emptyText:
+						isFetching || isLoading ? null : (
+							<div className="no-filtered-hosts-message-container">
+								<div className="no-filtered-hosts-message-content">
+									<img
+										src="/Icons/emptyState.svg"
+										alt="thinking-emoji"
+										className="empty-state-svg"
+									/>
 
-						<Typography.Text className="no-filtered-hosts-message">
-							This query had no results. Edit your query and try again!
-						</Typography.Text>
-					</div>
-				</div>
-			)}
-
-			{(isFetching || isLoading) && <LoadingContainer />}
-
-			{showsNamespacesTable && (
-				<Table
-					className="k8s-list-table namespaces-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedNamespacesData}
-					columns={columns}
-					pagination={{
-						current: currentPage,
-						pageSize,
-						total: totalCount,
-						showSizeChanger: false,
-						hideOnSinglePage: true,
-					}}
-					scroll={{ x: true }}
-					loading={{
-						spinning: isFetching || isLoading,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-					}}
-					tableLayout="fixed"
-					onChange={handleTableChange}
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => handleRowClick(record),
-						className: 'clickable-row',
-					})}
-					expandable={{
-						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-						expandIcon: expandRowIconRenderer,
-						expandedRowKeys,
-					}}
-				/>
-			)}
+									<Typography.Text className="no-filtered-hosts-message">
+										This query had no results. Edit your query and try again!
+									</Typography.Text>
+								</div>
+							</div>
+						),
+				}}
+				tableLayout="fixed"
+				onChange={handleTableChange}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => handleRowClick(record),
+					className: 'clickable-row',
+				})}
+				expandable={{
+					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+					expandIcon: expandRowIconRenderer,
+					expandedRowKeys,
+				}}
+			/>
 			<NamespaceDetails
 				namespace={selectedNamespaceData}
 				isModalTimeSelection

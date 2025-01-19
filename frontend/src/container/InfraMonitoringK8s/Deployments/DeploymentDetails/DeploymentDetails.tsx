@@ -13,6 +13,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
@@ -249,11 +250,13 @@ function DeploymentDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						...primaryFilters,
-						...newFilters,
-						...(paginationFilter ? [paginationFilter] : []),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							...primaryFilters,
+							...newFilters,
+							...(paginationFilter ? [paginationFilter] : []),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},
@@ -279,12 +282,14 @@ function DeploymentDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						...primaryFilters,
-						...value.items.filter(
-							(item) => item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
-						),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							...primaryFilters,
+							...value.items.filter(
+								(item) => item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
+							),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},
@@ -311,15 +316,17 @@ function DeploymentDetails({
 
 				return {
 					op: 'AND',
-					items: [
-						deploymentKindFilter,
-						deploymentNameFilter,
-						...value.items.filter(
-							(item) =>
-								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
-								item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-						),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							deploymentKindFilter,
+							deploymentNameFilter,
+							...value.items.filter(
+								(item) =>
+									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
+									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
+							),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},

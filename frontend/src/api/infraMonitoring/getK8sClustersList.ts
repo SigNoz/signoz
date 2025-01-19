@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -46,7 +46,7 @@ export const getK8sClustersList = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<K8sClustersListResponse> | ErrorResponse> => {
 	try {
-		const response = await ApiBaseInstance.post('/clusters/list', props, {
+		const response = await axios.post('/clusters/list', props, {
 			signal,
 			headers,
 		});

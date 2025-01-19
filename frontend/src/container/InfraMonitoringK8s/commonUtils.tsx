@@ -12,6 +12,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useMemo } from 'react';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getInvalidValueTooltipText, K8sCategory } from './constants';
 
@@ -233,3 +234,20 @@ export function MetricsTable({
 		</div>
 	);
 }
+
+export const filterDuplicateFilters = (
+	filters: TagFilterItem[],
+): TagFilterItem[] => {
+	const uniqueFilters = [];
+	const seenIds = new Set();
+
+	// eslint-disable-next-line no-restricted-syntax
+	for (const filter of filters) {
+		if (!seenIds.has(filter.id)) {
+			seenIds.add(filter.id);
+			uniqueFilters.push(filter);
+		}
+	}
+
+	return uniqueFilters;
+};

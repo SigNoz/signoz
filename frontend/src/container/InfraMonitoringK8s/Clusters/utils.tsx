@@ -57,7 +57,7 @@ export interface K8sClustersRowData {
 
 const clusterGroupColumnConfig = {
 	title: (
-		<div className="column-header pod-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> CLUSTER GROUP
 		</div>
 	),
@@ -67,6 +67,7 @@ const clusterGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sClustersListQuery = (): K8sClustersListPayload => ({

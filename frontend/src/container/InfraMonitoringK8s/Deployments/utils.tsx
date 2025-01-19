@@ -97,7 +97,7 @@ export interface K8sDeploymentsRowData {
 
 const deploymentGroupColumnConfig = {
 	title: (
-		<div className="column-header pod-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> DEPLOYMENT GROUP
 		</div>
 	),
@@ -107,6 +107,7 @@ const deploymentGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sDeploymentsListQuery = (): K8sDeploymentsListPayload => ({
@@ -119,7 +120,11 @@ export const getK8sDeploymentsListQuery = (): K8sDeploymentsListPayload => ({
 
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">Deployment Name</div>,
+		title: (
+			<div className="column-header-left deployment-name-header">
+				Deployment Name
+			</div>
+		),
 		dataIndex: 'deploymentName',
 		key: 'deploymentName',
 		ellipsis: true,
@@ -128,7 +133,11 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Namespace Name</div>,
+		title: (
+			<div className="column-header-left namespace-name-header">
+				Namespace Name
+			</div>
+		),
 		dataIndex: 'namespaceName',
 		key: 'namespaceName',
 		ellipsis: true,
@@ -137,7 +146,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Available</div>,
+		title: <div className="column-header-left small-col">Available</div>,
 		dataIndex: 'availableReplicas',
 		key: 'availableReplicas',
 		width: 100,
@@ -145,7 +154,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Desired</div>,
+		title: <div className="column-header-left small-col">Desired</div>,
 		dataIndex: 'desiredReplicas',
 		key: 'desiredReplicas',
 		width: 80,
@@ -153,7 +162,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">CPU Req Usage (%)</div>,
+		title: <div className="column-header-left med-col">CPU Req Usage (%)</div>,
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
 		width: 80,
@@ -161,7 +170,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">CPU Limit Usage (%)</div>,
+		title: <div className="column-header-left med-col">CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
 		width: 50,
@@ -169,7 +178,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">CPU Usage (cores)</div>,
+		title: <div className="column-header- small-col">CPU Usage (cores)</div>,
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 80,
@@ -177,7 +186,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Mem Req Usage (%)</div>,
+		title: <div className="column-header-left med-col">Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
 		width: 50,
@@ -185,7 +194,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Mem Limit Usage (%)</div>,
+		title: <div className="column-header-left med-col">Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
 		width: 80,
@@ -193,7 +202,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Mem Usage</div>,
+		title: <div className="column-header-left small-col">Mem Usage</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 80,
@@ -273,14 +282,14 @@ export const formatDataForTable = (
 		cpu_request: (
 			<ValidateColumnValueWrapper value={deployment.cpuRequest}>
 				<div className="progress-container">
-					<EntityProgressBar value={deployment.cpuRequest} />
+					<EntityProgressBar value={deployment.cpuRequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
 		cpu_limit: (
 			<ValidateColumnValueWrapper value={deployment.cpuLimit}>
 				<div className="progress-container">
-					<EntityProgressBar value={deployment.cpuLimit} />
+					<EntityProgressBar value={deployment.cpuLimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -292,14 +301,14 @@ export const formatDataForTable = (
 		memory_request: (
 			<ValidateColumnValueWrapper value={deployment.memoryRequest}>
 				<div className="progress-container">
-					<EntityProgressBar value={deployment.memoryRequest} />
+					<EntityProgressBar value={deployment.memoryRequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
 		memory_limit: (
 			<ValidateColumnValueWrapper value={deployment.memoryLimit}>
 				<div className="progress-container">
-					<EntityProgressBar value={deployment.memoryLimit} />
+					<EntityProgressBar value={deployment.memoryLimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),

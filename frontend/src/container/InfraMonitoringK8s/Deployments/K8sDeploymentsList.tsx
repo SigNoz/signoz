@@ -15,6 +15,7 @@ import {
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sDeploymentsListPayload } from 'api/infraMonitoring/getK8sDeploymentsList';
+import classNames from 'classnames';
 import { useGetK8sDeploymentsList } from 'hooks/infraMonitoring/useGetK8sDeploymentsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -45,9 +46,11 @@ import {
 function K8sDeploymentsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
+	quickFiltersLastUpdated,
 }: {
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
+	quickFiltersLastUpdated: number;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -79,12 +82,28 @@ function K8sDeploymentsList({
 		{ value: string; label: string }[]
 	>([]);
 
+	const { currentQuery } = useQueryBuilder();
+
+	const queryFilters = useMemo(
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
+		[currentQuery?.builder?.queryData],
+	);
+
+	// Reset pagination every time quick filters are changed
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [quickFiltersLastUpdated]);
+
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sDeploymentsRowData,
 		groupBy: IBuilderQuery['groupBy'],
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
-			items: [],
+			items: [...queryFilters.items],
 			op: 'and',
 		};
 
@@ -123,6 +142,7 @@ function K8sDeploymentsList({
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const {
@@ -138,8 +158,6 @@ function K8sDeploymentsList({
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 	);
-
-	const { currentQuery } = useQueryBuilder();
 
 	const {
 		data: groupByFiltersData,
@@ -157,15 +175,6 @@ function K8sDeploymentsList({
 		},
 		true,
 		K8sCategory.NODES,
-	);
-
-	const queryFilters = useMemo(
-		() =>
-			currentQuery?.builder?.queryData[0]?.filters || {
-				items: [],
-				op: 'and',
-			},
-		[currentQuery?.builder?.queryData],
 	);
 
 	const query = useMemo(() => {
@@ -398,18 +407,6 @@ function K8sDeploymentsList({
 		setselectedDeploymentUID(null);
 	};
 
-	const showsDeploymentsTable =
-		!isError &&
-		!isLoading &&
-		!isFetching &&
-		!(formattedDeploymentsData.length === 0 && queryFilters.items.length > 0);
-
-	const showNoFilteredDeploymentsMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedDeploymentsData.length === 0 &&
-		queryFilters.items.length > 0;
-
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
 			const groupBy = [];
@@ -458,54 +455,55 @@ function K8sDeploymentsList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{showNoFilteredDeploymentsMessage && (
-				<div className="no-filtered-hosts-message-container">
-					<div className="no-filtered-hosts-message-content">
-						<img
-							src="/Icons/emptyState.svg"
-							alt="thinking-emoji"
-							className="empty-state-svg"
-						/>
+			<Table
+				className={classNames('k8s-list-table', 'deployments-list-table', {
+					'expanded-deployments-list-table': isGroupedByAttribute,
+				})}
+				dataSource={isFetching || isLoading ? [] : formattedDeploymentsData}
+				columns={columns}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total: totalCount,
+					showSizeChanger: false,
+					hideOnSinglePage: true,
+				}}
+				scroll={{ x: true }}
+				loading={{
+					spinning: isFetching || isLoading,
+					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+				}}
+				locale={{
+					emptyText:
+						isFetching || isLoading ? null : (
+							<div className="no-filtered-hosts-message-container">
+								<div className="no-filtered-hosts-message-content">
+									<img
+										src="/Icons/emptyState.svg"
+										alt="thinking-emoji"
+										className="empty-state-svg"
+									/>
 
-						<Typography.Text className="no-filtered-hosts-message">
-							This query had no results. Edit your query and try again!
-						</Typography.Text>
-					</div>
-				</div>
-			)}
+									<Typography.Text className="no-filtered-hosts-message">
+										This query had no results. Edit your query and try again!
+									</Typography.Text>
+								</div>
+							</div>
+						),
+				}}
+				tableLayout="fixed"
+				onChange={handleTableChange}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => handleRowClick(record),
+					className: 'clickable-row',
+				})}
+				expandable={{
+					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+					expandIcon: expandRowIconRenderer,
+					expandedRowKeys,
+				}}
+			/>
 
-			{(isFetching || isLoading) && <LoadingContainer />}
-
-			{showsDeploymentsTable && (
-				<Table
-					className="k8s-list-table deployments-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedDeploymentsData}
-					columns={columns}
-					pagination={{
-						current: currentPage,
-						pageSize,
-						total: totalCount,
-						showSizeChanger: false,
-						hideOnSinglePage: true,
-					}}
-					scroll={{ x: true }}
-					loading={{
-						spinning: isFetching || isLoading,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-					}}
-					tableLayout="fixed"
-					onChange={handleTableChange}
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => handleRowClick(record),
-						className: 'clickable-row',
-					})}
-					expandable={{
-						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-						expandIcon: expandRowIconRenderer,
-						expandedRowKeys,
-					}}
-				/>
-			)}
 			<DeploymentDetails
 				deployment={selectedDeploymentData}
 				isModalTimeSelection
