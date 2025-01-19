@@ -228,7 +228,7 @@ export function MetricsTable({
 				columns={columnsData}
 				tableLayout="fixed"
 				pagination={{ pageSize: 10, showSizeChanger: false }}
-				scroll={{ y: 200 }}
+				scroll={{ y: 180 }}
 				sticky
 			/>
 		</div>
