@@ -1,4 +1,4 @@
-package migration
+package sqlmigration
 
 import (
 	"context"
@@ -6,16 +6,15 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
 )
 
 type addDashboards struct{}
 
-func NewAddDashboardsFactory() factory.ProviderFactory[sqlmigrator.SQLMigration, sqlmigrator.Config] {
+func NewAddDashboardsFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_dashboards"), newAddDashboards)
 }
 
-func newAddDashboards(_ context.Context, _ factory.ProviderSettings, _ sqlmigrator.Config) (sqlmigrator.SQLMigration, error) {
+func newAddDashboards(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
 	return &addDashboards{}, nil
 }
 
@@ -96,8 +95,8 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		NewAddColumn().
 		Table("rules").
 		ColumnExpr("created_at datetime").
-		Apply(sqlmigrator.WrapIfNotExists(ctx, db, "rules", "created_at")).
-		Exec(ctx); err != nil && err != sqlmigrator.ErrNoExecute {
+		Apply(WrapIfNotExists(ctx, db, "rules", "created_at")).
+		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
 	}
 
@@ -106,8 +105,8 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		NewAddColumn().
 		Table("rules").
 		ColumnExpr("created_by TEXT").
-		Apply(sqlmigrator.WrapIfNotExists(ctx, db, "rules", "created_by")).
-		Exec(ctx); err != nil && err != sqlmigrator.ErrNoExecute {
+		Apply(WrapIfNotExists(ctx, db, "rules", "created_by")).
+		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
 	}
 
@@ -116,8 +115,8 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		NewAddColumn().
 		Table("rules").
 		ColumnExpr("updated_by TEXT").
-		Apply(sqlmigrator.WrapIfNotExists(ctx, db, "rules", "updated_by")).
-		Exec(ctx); err != nil && err != sqlmigrator.ErrNoExecute {
+		Apply(WrapIfNotExists(ctx, db, "rules", "updated_by")).
+		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
 	}
 
@@ -126,8 +125,8 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		NewAddColumn().
 		Table("dashboards").
 		ColumnExpr("created_by TEXT").
-		Apply(sqlmigrator.WrapIfNotExists(ctx, db, "dashboards", "created_by")).
-		Exec(ctx); err != nil && err != sqlmigrator.ErrNoExecute {
+		Apply(WrapIfNotExists(ctx, db, "dashboards", "created_by")).
+		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
 	}
 
@@ -136,8 +135,8 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		NewAddColumn().
 		Table("dashboards").
 		ColumnExpr("updated_by TEXT").
-		Apply(sqlmigrator.WrapIfNotExists(ctx, db, "dashboards", "updated_by")).
-		Exec(ctx); err != nil && err != sqlmigrator.ErrNoExecute {
+		Apply(WrapIfNotExists(ctx, db, "dashboards", "updated_by")).
+		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
 	}
 
@@ -146,8 +145,8 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		NewAddColumn().
 		Table("dashboards").
 		ColumnExpr("locked INTEGER DEFAULT 0").
-		Apply(sqlmigrator.WrapIfNotExists(ctx, db, "dashboards", "locked")).
-		Exec(ctx); err != nil && err != sqlmigrator.ErrNoExecute {
+		Apply(WrapIfNotExists(ctx, db, "dashboards", "locked")).
+		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
 	}
 
