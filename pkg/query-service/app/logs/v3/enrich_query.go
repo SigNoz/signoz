@@ -167,6 +167,22 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 	// check if the value is a int, float, string, bool
 	valueType := ""
 	switch filter.Value.(type) {
+	// even the filter value is an array the actual type of the value is string.
+	case []interface{}:
+		// check first value type in array and use that
+		if len(filter.Value.([]interface{})) > 0 {
+			firstVal := filter.Value.([]interface{})[0]
+			switch firstVal.(type) {
+			case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+				valueType = "int64"
+			case float32, float64:
+				valueType = "float64"
+			case bool:
+				valueType = "bool"
+			default:
+				valueType = "string"
+			}
+		}
 	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 		valueType = "int64"
 	case float32, float64:

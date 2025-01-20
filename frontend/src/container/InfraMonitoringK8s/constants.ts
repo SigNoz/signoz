@@ -150,6 +150,8 @@ export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isColumn: false,
 			isJSON: false,
 		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
 		dataSource: DataSource.METRICS,
 		defaultOpen: false,
 	},

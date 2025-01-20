@@ -30,7 +30,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/rules"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/signoz"
 	"go.signoz.io/signoz/pkg/web"
@@ -82,7 +81,6 @@ type ServerOptions struct {
 	GatewayUrl        string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
-	SkipWebFrontend   bool
 }
 
 // Server runs HTTP api service
@@ -209,13 +207,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	go func() {
-		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
-		if err != nil {
-			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
-		}
-	}()
 
 	// initiate opamp
 	_, err = opAmpModel.InitDB(localDB)
@@ -353,7 +344,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
-func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*http.Server, error) {
+func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*http.Server, error) {
 
 	r := baseapp.NewRouter()
 
@@ -398,11 +389,9 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web *web.Web) (*
 
 	handler = handlers.CompressHandler(handler)
 
-	if !s.serverOptions.SkipWebFrontend {
-		err := web.AddToRouter(r)
-		if err != nil {
-			return nil, err
-		}
+	err := web.AddToRouter(r)
+	if err != nil {
+		return nil, err
 	}
 
 	return &http.Server{

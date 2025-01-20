@@ -322,6 +322,7 @@ const (
 	AttributeKeyTypeTag                  AttributeKeyType = "tag"
 	AttributeKeyTypeResource             AttributeKeyType = "resource"
 	AttributeKeyTypeInstrumentationScope AttributeKeyType = "scope"
+	AttributeKeyTypeSpanSearchScope      AttributeKeyType = "spanSearchScope"
 )
 
 func (t AttributeKeyType) String() string {

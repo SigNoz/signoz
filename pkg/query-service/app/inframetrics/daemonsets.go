@@ -440,5 +440,7 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonS
 	resp.Total = len(allDaemonSetGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }

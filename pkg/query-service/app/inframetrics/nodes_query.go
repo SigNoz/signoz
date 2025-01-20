@@ -20,7 +20,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -46,7 +46,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -72,7 +72,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -98,7 +98,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -132,7 +132,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -166,7 +166,7 @@ var NodesTableListQuery = v3.QueryRangeParamsV3{
 				},
 				GroupBy: []v3.AttributeKey{
 					{
-						Key:      k8sNodeUIDAttrKey,
+						Key:      k8sNodeGroupAttrKey,
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
