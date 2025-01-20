@@ -31,8 +31,8 @@ func TestGetWithStrings(t *testing.T) {
 }
 
 func TestGetWithNoPrefix(t *testing.T) {
-	t.Setenv("WEB_PREFIX", "/web")
-	t.Setenv("WEB_ENABLED", "false")
+	t.Setenv("K1_K2", "string")
+	t.Setenv("K3_K4", "string")
 	expected := map[string]any{}
 
 	provider := New(config.ProviderConfig{})
