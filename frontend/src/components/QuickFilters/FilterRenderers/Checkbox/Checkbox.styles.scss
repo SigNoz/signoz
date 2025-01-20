@@ -132,16 +132,34 @@
 	}
 	.go-to-docs {
 		display: flex;
-		align-items: center;
-		gap: 4px;
-		cursor: pointer;
-		margin-bottom: 4px;
-		&__text {
-			color: var(--bg-robin-400);
-			font-family: Inter;
-			font-size: 14px;
-			line-height: 20px; /* 142.857% */
-			letter-spacing: -0.07px;
+		flex-direction: column;
+		gap: 64px;
+		&__container {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			margin-top: 4px;
+
+			&-message {
+				color: var(--bg-vanilla-400);
+				font-size: 14px;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+		&__button {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			cursor: pointer;
+			margin-bottom: 4px;
+			&-text {
+				color: var(--bg-robin-400);
+				font-family: Inter;
+				font-size: 14px;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
 		}
 	}
 }

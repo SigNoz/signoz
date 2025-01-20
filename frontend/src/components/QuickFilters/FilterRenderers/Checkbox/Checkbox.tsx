@@ -6,6 +6,7 @@ import './Checkbox.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
+import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
 import cx from 'classnames';
 import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -52,6 +53,7 @@ const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
 	'k8s.pod.name': 'k8s-pod-name',
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	const { isInfraMonitoring, filter, onFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
@@ -454,7 +456,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Typography.Text className="title">{filter.title}</Typography.Text>
 				</section>
 				<section className="right-action">
-					{isOpen && (
+					{isOpen && !!attributeValues.length && (
 						<Typography.Text
 							className="clear-all"
 							onClick={(e): void => {
@@ -473,88 +475,102 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Skeleton paragraph={{ rows: 4 }} />
 				</section>
 			)}
-			{isOpen && !isLoading && (
-				<>
-					<section className="search">
-						<Input
-							placeholder="Filter values"
-							onChange={(e): void => setSearchTextDebounced(e.target.value)}
-							disabled={isFilterDisabled}
-						/>
-					</section>
-					{attributeValues.length > 0 ? (
-						<section className="values">
-							{currentAttributeKeys.map((value: string) => (
-								<div key={value} className="value">
-									<Checkbox
-										onChange={(e): void => onChange(value, e.target.checked, false)}
-										checked={currentFilterState[value]}
-										disabled={isFilterDisabled}
-										rootClassName="check-box"
-									/>
-
-									<div
-										className={cx(
-											'checkbox-value-section',
-											isFilterDisabled ? 'filter-disabled' : '',
-										)}
-										onClick={(): void => {
-											if (isFilterDisabled) {
-												return;
-											}
-											onChange(value, currentFilterState[value], true);
-										}}
-									>
-										{filter.customRendererForValue ? (
-											filter.customRendererForValue(value)
-										) : (
-											<Typography.Text
-												className="value-string"
-												ellipsis={{ tooltip: { placement: 'right' } }}
-											>
-												{value}
-											</Typography.Text>
-										)}
-										<Button type="text" className="only-btn">
-											{isSomeFilterPresentForCurrentAttribute
-												? currentFilterState[value] && !isMultipleValuesTrueForTheKey
-													? 'All'
-													: 'Only'
-												: 'Only'}
-										</Button>
-										<Button type="text" className="toggle-btn">
-											Toggle
-										</Button>
-									</div>
-								</div>
-							))}
-						</section>
-					) : (
-						<section className="no-data">
-							<Typography.Text>No values found</Typography.Text>{' '}
-						</section>
-					)}
-					{visibleItemsCount < attributeValues?.length && (
-						<section className="show-more">
-							<Typography.Text
-								className="show-more-text"
-								onClick={(): void => setVisibleItemsCount((prev) => prev + 10)}
-							>
-								Show More...
-							</Typography.Text>
-						</section>
-					)}
-
-					{!isInfraMonitoring && (
-						<section className="go-to-docs" onClick={handleLearnMoreClick}>
-							<Typography.Text className="go-to-docs__text">
+			{isOpen ? (
+				!isLoading && !isInfraMonitoring && !attributeValues.length ? (
+					<section className="go-to-docs">
+						<div className="go-to-docs__container">
+							<div className="go-to-docs__container-icon">
+								<EmptyQuickFilterIcon />
+							</div>
+							<div className="go-to-docs__container-message">
+								{`You'd need to parse out this attribute to start getting them as a fast
+								filter.`}
+							</div>
+						</div>
+						<div className="go-to-docs__button" onClick={handleLearnMoreClick}>
+							<Typography.Text className="go-to-docs__button-text">
 								Learn more
 							</Typography.Text>
 							<ArrowUpRight size={14} color={Color.BG_ROBIN_400} />
+						</div>
+					</section>
+				) : (
+					<>
+						<section className="search">
+							<Input
+								placeholder="Filter values"
+								onChange={(e): void => setSearchTextDebounced(e.target.value)}
+								disabled={isFilterDisabled}
+							/>
 						</section>
-					)}
-				</>
-			)}
+						{attributeValues.length > 0 ? (
+							<section className="values">
+								{
+									// eslint-disable-next-line sonarjs/cognitive-complexity
+									currentAttributeKeys.map((value: string) => (
+										<div key={value} className="value">
+											<Checkbox
+												onChange={(e): void => onChange(value, e.target.checked, false)}
+												checked={currentFilterState[value]}
+												disabled={isFilterDisabled}
+												rootClassName="check-box"
+											/>
+
+											<div
+												className={cx(
+													'checkbox-value-section',
+													isFilterDisabled ? 'filter-disabled' : '',
+												)}
+												onClick={(): void => {
+													if (isFilterDisabled) {
+														return;
+													}
+													onChange(value, currentFilterState[value], true);
+												}}
+											>
+												{filter.customRendererForValue ? (
+													filter.customRendererForValue(value)
+												) : (
+													<Typography.Text
+														className="value-string"
+														ellipsis={{ tooltip: { placement: 'right' } }}
+													>
+														{value}
+													</Typography.Text>
+												)}
+												<Button type="text" className="only-btn">
+													{isSomeFilterPresentForCurrentAttribute
+														? currentFilterState[value] && !isMultipleValuesTrueForTheKey
+															? 'All'
+															: 'Only'
+														: 'Only'}
+												</Button>
+												<Button type="text" className="toggle-btn">
+													Toggle
+												</Button>
+											</div>
+										</div>
+									))
+								}
+							</section>
+						) : (
+							<section className="no-data">
+								<Typography.Text>No values found</Typography.Text>{' '}
+							</section>
+						)}
+						{visibleItemsCount < attributeValues?.length && (
+							<section className="show-more">
+								<Typography.Text
+									className="show-more-text"
+									onClick={(): void => setVisibleItemsCount((prev) => prev + 10)}
+								>
+									Show More...
+								</Typography.Text>
+							</section>
+						)}
+					</>
+				)
+			) : null}
 		</div>
 	);
 }
