@@ -8,7 +8,15 @@ import (
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/trace"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.uber.org/zap/zapcore"
 )
+
+var zapLogLevelToSlogLevel = map[zapcore.Level]slog.Level{
+	zapcore.DebugLevel: slog.LevelDebug,
+	zapcore.InfoLevel:  slog.LevelInfo,
+	zapcore.WarnLevel:  slog.LevelWarn,
+	zapcore.ErrorLevel: slog.LevelError,
+}
 
 // Instrumentation provides the core components for application instrumentation.
 type Instrumentation interface {

@@ -31,6 +31,10 @@ func (i *noopInstrumentation) Logger() *slog.Logger {
 	return i.logger
 }
 
+func (i *noopInstrumentation) SlogLogger() *slog.Logger {
+	return i.slogLogger
+}
+
 func (i *noopInstrumentation) MeterProvider() sdkmetric.MeterProvider {
 	return i.meterProvider
 }

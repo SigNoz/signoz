@@ -111,6 +111,10 @@ func (i *SDK) Logger() *slog.Logger {
 	return i.logger
 }
 
+func (i *SDK) SlogLogger() *slog.Logger {
+	return i.slogLogger
+}
+
 func (i *SDK) MeterProvider() sdkmetric.MeterProvider {
 	return i.sdk.MeterProvider()
 }
