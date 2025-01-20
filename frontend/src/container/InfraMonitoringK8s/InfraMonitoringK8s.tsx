@@ -8,6 +8,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
+	ArrowUpDown,
 	Bolt,
 	Boxes,
 	Computer,
@@ -28,12 +29,14 @@ import {
 	NamespaceQuickFiltersConfig,
 	NodesQuickFiltersConfig,
 	PodsQuickFiltersConfig,
+	StatefulsetsQuickFiltersConfig,
 } from './constants';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNamespacesList from './Namespaces/K8sNamespacesList';
 import K8sNodesList from './Nodes/K8sNodesList';
 import K8sPodLists from './Pods/K8sPodLists';
+import K8sStatefulSetsList from './StatefulSets/K8sStatefulSetsList';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -268,29 +271,29 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// 		/>
 		// 	),
 		// },
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<ArrowUpDown
-		// 					size={14}
-		// 					className="k8s-quick-filters-category-label-icon"
-		// 				/>
-		// 				<Typography.Text>StatefulSets</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.STATEFULSETS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={StatefulsetsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
+		{
+			label: (
+				<div className="k8s-quick-filters-category-label">
+					<div className="k8s-quick-filters-category-label-container">
+						<ArrowUpDown
+							size={14}
+							className="k8s-quick-filters-category-label-icon"
+						/>
+						<Typography.Text>StatefulSets</Typography.Text>
+					</div>
+				</div>
+			),
+			key: K8sCategories.STATEFULSETS,
+			showArrow: false,
+			children: (
+				<QuickFilters
+					source="infra-monitoring"
+					config={StatefulsetsQuickFiltersConfig}
+					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
+				/>
+			),
+		},
 	];
 
 	const handleCategoryChange = (key: string | string[]): void => {
@@ -371,6 +374,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.STATEFULSETS && (
+							<K8sStatefulSetsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
 						)}
 
