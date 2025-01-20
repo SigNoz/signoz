@@ -560,7 +560,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				end:       1680066458000000000,
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorNoOp,
-					Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{{Key: v3.AttributeKey{Key: "isEntryPoint", Type: v3.AttributeKetTypeSpanSearchScope, IsColumn: false}, Value: true, Operator: v3.FilterOperatorEqual}}},
+					Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{{Key: v3.AttributeKey{Key: "isEntryPoint", Type: v3.AttributeKeyTypeSpanSearchScope, IsColumn: false}, Value: true, Operator: v3.FilterOperatorEqual}}},
 					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},
@@ -576,7 +576,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				end:       1680066458000000000,
 				mq: &v3.BuilderQuery{
 					AggregateOperator: v3.AggregateOperatorNoOp,
-					Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{{Key: v3.AttributeKey{Key: "isRoot", Type: v3.AttributeKetTypeSpanSearchScope, IsColumn: false}, Value: true, Operator: v3.FilterOperatorEqual}}},
+					Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{{Key: v3.AttributeKey{Key: "isRoot", Type: v3.AttributeKeyTypeSpanSearchScope, IsColumn: false}, Value: true, Operator: v3.FilterOperatorEqual}}},
 					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
 				},

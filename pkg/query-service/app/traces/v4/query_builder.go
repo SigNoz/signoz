@@ -94,7 +94,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 		for _, item := range fs.Items {
 
 			// skip if it's a resource attribute or Span search scope attribute
-			if item.Key.Type == v3.AttributeKeyTypeResource || item.Key.Type == v3.AttributeKetTypeSpanSearchScope {
+			if item.Key.Type == v3.AttributeKeyTypeResource || item.Key.Type == v3.AttributeKeyTypeSpanSearchScope {
 				continue
 			}
 
@@ -220,7 +220,7 @@ func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 	}
 	for _, item := range fs.Items {
 		// skip anything other than Span Search scope attribute
-		if item.Key.Type != v3.AttributeKetTypeSpanSearchScope {
+		if item.Key.Type != v3.AttributeKeyTypeSpanSearchScope {
 			continue
 		}
 		keyName := strings.ToLower(item.Key.Key)
