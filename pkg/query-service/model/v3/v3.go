@@ -399,10 +399,12 @@ func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
 }
 
 type PromQuery struct {
-	Query    string `json:"query"`
-	Stats    string `json:"stats,omitempty"`
-	Disabled bool   `json:"disabled"`
-	Legend   string `json:"legend,omitempty"`
+	Query         string `json:"query"`
+	Stats         string `json:"stats,omitempty"`
+	Disabled      bool   `json:"disabled"`
+	Legend        string `json:"legend,omitempty"`
+	MaxTimeSeries int    `json:"maxTimeSeries,omitempty"`
+	MaxSamples    int    `json:"maxSamples,omitempty"`
 }
 
 func (p *PromQuery) Clone() *PromQuery {
