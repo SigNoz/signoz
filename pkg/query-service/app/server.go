@@ -176,13 +176,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	go func() {
-		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
-		if err != nil {
-			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
-		}
-	}()
-
 	integrationsController, err := integrations.NewController(localDB)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
