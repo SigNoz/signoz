@@ -8,18 +8,19 @@ import (
 	"os/signal"
 	"syscall"
 
+	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 
 type Registry struct {
-	services []NamedService
+	services []factory.Service
 	logger   *zap.Logger
 	startCh  chan error
 	stopCh   chan error
 }
 
 // New creates a new registry of services. It needs at least one service in the input.
-func New(logger *zap.Logger, services ...NamedService) (*Registry, error) {
+func New(logger *zap.Logger, services ...factory.Service) (*Registry, error) {
 	if logger == nil {
 		return nil, fmt.Errorf("cannot build registry, logger is required")
 	}
@@ -38,7 +39,7 @@ func New(logger *zap.Logger, services ...NamedService) (*Registry, error) {
 
 func (r *Registry) Start(ctx context.Context) error {
 	for _, s := range r.services {
-		go func(s Service) {
+		go func(s factory.Service) {
 			err := s.Start(ctx)
 			r.startCh <- err
 		}(s)
@@ -66,7 +67,7 @@ func (r *Registry) Wait(ctx context.Context) error {
 
 func (r *Registry) Stop(ctx context.Context) error {
 	for _, s := range r.services {
-		go func(s Service) {
+		go func(s factory.Service) {
 			err := s.Stop(ctx)
 			r.stopCh <- err
 		}(s)

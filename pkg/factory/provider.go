@@ -1,6 +1,8 @@
 package factory
 
-import "context"
+import (
+	"context"
+)
 
 type Provider = any
 
@@ -21,10 +23,17 @@ func (factory *providerFactory[P, C]) Name() Name {
 	return factory.name
 }
 
-func (factory *providerFactory[P, C]) New(ctx context.Context, settings ProviderSettings, config C) (P, error) {
-	return factory.newProviderFunc(ctx, settings, config)
+func (factory *providerFactory[P, C]) New(ctx context.Context, settings ProviderSettings, config C) (p P, err error) {
+	provider, err := factory.newProviderFunc(ctx, settings, config)
+	if err != nil {
+		return
+	}
+
+	p = provider
+	return
 }
 
+// NewProviderFactory creates a new provider factory.
 func NewProviderFactory[P Provider, C Config](name Name, newProviderFunc NewProviderFunc[P, C]) ProviderFactory[P, C] {
 	return &providerFactory[P, C]{
 		name:            name,
@@ -32,7 +41,8 @@ func NewProviderFactory[P Provider, C Config](name Name, newProviderFunc NewProv
 	}
 }
 
-func NewFromFactory[P Provider, C Config](ctx context.Context, settings ProviderSettings, config C, factories NamedMap[ProviderFactory[P, C]], key string) (p P, err error) {
+// NewProviderFromNamedMap creates a new provider from a factory based on the input key.
+func NewProviderFromNamedMap[P Provider, C Config](ctx context.Context, settings ProviderSettings, config C, factories NamedMap[ProviderFactory[P, C]], key string) (p P, err error) {
 	providerFactory, err := factories.Get(key)
 	if err != nil {
 		return
