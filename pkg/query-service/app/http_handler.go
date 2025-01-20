@@ -3902,6 +3902,18 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 		"/{cloudProvider}/agent-check-in", am.EditAccess(aH.CloudIntegrationsAgentCheckIn),
 	).Methods(http.MethodPost)
 
+	subRouter.HandleFunc(
+		"/{cloudProvider}/services", am.ViewAccess(aH.CloudIntegrationsListServices),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/services/{serviceId}", am.ViewAccess(aH.CloudIntegrationsGetServiceDetails),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{cloudProvider}/services/{serviceId}/config", am.EditAccess(aH.CloudIntegrationsUpdateServiceConfig),
+	).Methods(http.MethodPost)
+
 }
 
 func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
@@ -4015,6 +4027,77 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 
 	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
 		r.Context(), cloudProvider, accountId,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) CloudIntegrationsListServices(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+
+	var cloudAccountId *string
+
+	cloudAccountIdQP := r.URL.Query().Get("cloud_account_id")
+	if len(cloudAccountIdQP) > 0 {
+		cloudAccountId = &cloudAccountIdQP
+	}
+
+	resp, apiErr := aH.CloudIntegrationsController.ListServices(
+		r.Context(), cloudProvider, cloudAccountId,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	serviceId := mux.Vars(r)["serviceId"]
+
+	var cloudAccountId *string
+
+	cloudAccountIdQP := r.URL.Query().Get("cloud_account_id")
+	if len(cloudAccountIdQP) > 0 {
+		cloudAccountId = &cloudAccountIdQP
+	}
+
+	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
+		r.Context(), cloudProvider, serviceId, cloudAccountId,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
+	w http.ResponseWriter, r *http.Request,
+) {
+	cloudProvider := mux.Vars(r)["cloudProvider"]
+	serviceId := mux.Vars(r)["serviceId"]
+
+	req := cloudintegrations.UpdateServiceConfigRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
+		r.Context(), cloudProvider, serviceId, req,
 	)
 
 	if apiErr != nil {
@@ -4662,8 +4745,8 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 			userEmail, err := auth.GetEmailFromJwt(r.Context())
 			if err == nil {
-				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
-				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
+				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
 
 					if dashboardMatched {
 						var dashboardID, widgetID string
@@ -4689,13 +4772,18 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							widgetID = widgetIDMatch[1]
 						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
-							"queryType":   queryRangeParams.CompositeQuery.QueryType,
-							"panelType":   queryRangeParams.CompositeQuery.PanelType,
-							"tracesUsed":  signozTracesUsed,
-							"logsUsed":    signozLogsUsed,
-							"metricsUsed": signozMetricsUsed,
-							"dashboardId": dashboardID,
-							"widgetId":    widgetID,
+							"queryType":             queryRangeParams.CompositeQuery.QueryType,
+							"panelType":             queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":            queryInfoResult.TracesUsed,
+							"logsUsed":              queryInfoResult.LogsUsed,
+							"metricsUsed":           queryInfoResult.MetricsUsed,
+							"numberOfQueries":       queryInfoResult.NumberOfQueries,
+							"groupByApplied":        queryInfoResult.GroupByApplied,
+							"aggregateOperator":     queryInfoResult.AggregateOperator,
+							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
+							"filterApplied":         queryInfoResult.FilterApplied,
+							"dashboardId":           dashboardID,
+							"widgetId":              widgetID,
 						}, userEmail, true, false)
 					}
 					if alertMatched {
@@ -4712,12 +4800,17 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							alertID = alertIDMatch[1]
 						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
-							"queryType":   queryRangeParams.CompositeQuery.QueryType,
-							"panelType":   queryRangeParams.CompositeQuery.PanelType,
-							"tracesUsed":  signozTracesUsed,
-							"logsUsed":    signozLogsUsed,
-							"metricsUsed": signozMetricsUsed,
-							"alertId":     alertID,
+							"queryType":             queryRangeParams.CompositeQuery.QueryType,
+							"panelType":             queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":            queryInfoResult.TracesUsed,
+							"logsUsed":              queryInfoResult.LogsUsed,
+							"metricsUsed":           queryInfoResult.MetricsUsed,
+							"numberOfQueries":       queryInfoResult.NumberOfQueries,
+							"groupByApplied":        queryInfoResult.GroupByApplied,
+							"aggregateOperator":     queryInfoResult.AggregateOperator,
+							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
+							"filterApplied":         queryInfoResult.FilterApplied,
+							"alertId":               alertID,
 						}, userEmail, true, false)
 					}
 				}

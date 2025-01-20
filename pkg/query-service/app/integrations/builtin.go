@@ -105,7 +105,7 @@ func readBuiltInIntegration(dirpath string) (
 		)
 	}
 
-	hydrated, err := hydrateFileUris(integrationSpec, dirpath)
+	hydrated, err := HydrateFileUris(integrationSpec, integrationFiles, dirpath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't hydrate files referenced in integration %s: %w", integrationJsonPath, err,
@@ -172,11 +172,11 @@ func validateIntegration(i IntegrationDetails) error {
 	return nil
 }
 
-func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
+func HydrateFileUris(spec interface{}, fs embed.FS, basedir string) (interface{}, error) {
 	if specMap, ok := spec.(map[string]interface{}); ok {
 		result := map[string]interface{}{}
 		for k, v := range specMap {
-			hydrated, err := hydrateFileUris(v, basedir)
+			hydrated, err := HydrateFileUris(v, fs, basedir)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +187,7 @@ func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
 	} else if specSlice, ok := spec.([]interface{}); ok {
 		result := []interface{}{}
 		for _, v := range specSlice {
-			hydrated, err := hydrateFileUris(v, basedir)
+			hydrated, err := HydrateFileUris(v, fs, basedir)
 			if err != nil {
 				return nil, err
 			}
@@ -196,14 +196,14 @@ func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
 		return result, nil
 
 	} else if maybeFileUri, ok := spec.(string); ok {
-		return readFileIfUri(maybeFileUri, basedir)
+		return readFileIfUri(fs, maybeFileUri, basedir)
 	}
 
 	return spec, nil
 
 }
 
-func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
+func readFileIfUri(fs embed.FS, maybeFileUri string, basedir string) (interface{}, error) {
 	fileUriPrefix := "file://"
 	if !strings.HasPrefix(maybeFileUri, fileUriPrefix) {
 		return maybeFileUri, nil
@@ -212,7 +212,7 @@ func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
 	relativePath := maybeFileUri[len(fileUriPrefix):]
 	fullPath := path.Join(basedir, relativePath)
 
-	fileContents, err := integrationFiles.ReadFile(fullPath)
+	fileContents, err := fs.ReadFile(fullPath)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read referenced file: %w", err)
 	}

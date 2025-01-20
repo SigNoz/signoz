@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -47,7 +47,7 @@ export const getK8sNodesList = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<K8sNodesListResponse> | ErrorResponse> => {
 	try {
-		const response = await ApiBaseInstance.post('/nodes/list', props, {
+		const response = await axios.post('/nodes/list', props, {
 			signal,
 			headers,
 		});
