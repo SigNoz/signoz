@@ -12,7 +12,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { K8sCategory } from './constants';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
-import { IPodColumn } from './utils';
+import { IEntityColumn } from './utils';
 
 interface K8sHeaderProps {
 	selectedGroupBy: BaseAutocompleteData[];
@@ -20,11 +20,11 @@ interface K8sHeaderProps {
 	isLoadingGroupByFilters: boolean;
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
 	handleGroupByChange: (value: IBuilderQuery['groupBy']) => void;
-	defaultAddedColumns: IPodColumn[];
-	addedColumns?: IPodColumn[];
-	availableColumns?: IPodColumn[];
-	onAddColumn?: (column: IPodColumn) => void;
-	onRemoveColumn?: (column: IPodColumn) => void;
+	defaultAddedColumns: IEntityColumn[];
+	addedColumns?: IEntityColumn[];
+	availableColumns?: IEntityColumn[];
+	onAddColumn?: (column: IEntityColumn) => void;
+	onRemoveColumn?: (column: IEntityColumn) => void;
 	handleFilterVisibilityChange: () => void;
 	isFiltersVisible: boolean;
 	entity: K8sCategory;

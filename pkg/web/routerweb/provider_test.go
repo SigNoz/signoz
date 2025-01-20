@@ -1,4 +1,4 @@
-package web
+package routerweb
 
 import (
 	"io"
@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/web"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +23,7 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 	expected, err := io.ReadAll(fi)
 	require.NoError(t, err)
 
-	web, err := New(zap.NewNop(), Config{Prefix: "/", Directory: filepath.Join("testdata")})
+	web, err := New(zap.NewNop(), web.Config{Prefix: "/", Directory: filepath.Join("testdata")})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -87,7 +88,7 @@ func TestServeHttpWithPrefix(t *testing.T) {
 	expected, err := io.ReadAll(fi)
 	require.NoError(t, err)
 
-	web, err := New(zap.NewNop(), Config{Prefix: "/web", Directory: filepath.Join("testdata")})
+	web, err := New(zap.NewNop(), web.Config{Prefix: "/web", Directory: filepath.Join("testdata")})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()

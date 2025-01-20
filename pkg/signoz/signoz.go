@@ -2,16 +2,17 @@ package signoz
 
 import (
 	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/cache/strategy/memory"
-	"go.signoz.io/signoz/pkg/cache/strategy/redis"
+	"go.signoz.io/signoz/pkg/cache/memorycache"
+	"go.signoz.io/signoz/pkg/cache/rediscache"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/web"
+	"go.signoz.io/signoz/pkg/web/routerweb"
 	"go.uber.org/zap"
 )
 
 type SigNoz struct {
 	Cache cache.Cache
-	Web   *web.Web
+	Web   web.Web
 }
 
 func New(config *config.Config, skipWebFrontend bool) (*SigNoz, error) {
@@ -20,12 +21,12 @@ func New(config *config.Config, skipWebFrontend bool) (*SigNoz, error) {
 	// init for the cache
 	switch config.Cache.Provider {
 	case "memory":
-		cache = memory.New(&config.Cache.Memory)
+		cache = memorycache.New(&config.Cache.Memory)
 	case "redis":
-		cache = redis.New(&config.Cache.Redis)
+		cache = rediscache.New(&config.Cache.Redis)
 	}
 
-	web, err := web.New(zap.L(), config.Web)
+	web, err := routerweb.New(zap.L(), config.Web)
 	if err != nil && !skipWebFrontend {
 		return nil, err
 	}

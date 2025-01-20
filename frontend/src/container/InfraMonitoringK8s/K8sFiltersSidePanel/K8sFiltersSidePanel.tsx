@@ -7,7 +7,7 @@ import { Button, Input } from 'antd';
 import { GripVertical, TableColumnsSplit, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { IPodColumn } from '../utils';
+import { IEntityColumn } from '../utils';
 
 function K8sFiltersSidePanel({
 	defaultAddedColumns,
@@ -17,12 +17,12 @@ function K8sFiltersSidePanel({
 	onAddColumn = () => {},
 	onRemoveColumn = () => {},
 }: {
-	defaultAddedColumns: IPodColumn[];
+	defaultAddedColumns: IEntityColumn[];
 	onClose: () => void;
-	addedColumns?: IPodColumn[];
-	availableColumns?: IPodColumn[];
-	onAddColumn?: (column: IPodColumn) => void;
-	onRemoveColumn?: (column: IPodColumn) => void;
+	addedColumns?: IEntityColumn[];
+	availableColumns?: IEntityColumn[];
+	onAddColumn?: (column: IEntityColumn) => void;
+	onRemoveColumn?: (column: IEntityColumn) => void;
 }): JSX.Element {
 	const [searchValue, setSearchValue] = useState('');
 	const sidePanelRef = useRef<HTMLDivElement>(null);
