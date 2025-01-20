@@ -13,21 +13,14 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
-	"go.signoz.io/signoz/pkg/cache/memorycache"
-	"go.signoz.io/signoz/pkg/cache/rediscache"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/config/envprovider"
 	"go.signoz.io/signoz/pkg/config/fileprovider"
-	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
-	"go.signoz.io/signoz/pkg/web/noopweb"
-	"go.signoz.io/signoz/pkg/web/routerweb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -152,29 +145,7 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(context.Background(), config, signoz.ProviderConfig{
-		CacheProviderFactories: factory.MustNewNamedMap(
-			memorycache.NewFactory(),
-			rediscache.NewFactory(),
-		),
-		WebProviderFactories: factory.MustNewNamedMap(
-			routerweb.NewFactory(),
-			noopweb.NewFactory(),
-		),
-		SQLStoreProviderFactories: factory.MustNewNamedMap(
-			sqlitesqlstore.NewFactory(),
-		),
-		SQLMigrationProviderFactories: factory.MustNewNamedMap(
-			sqlmigration.NewAddDataMigrationsFactory(),
-			sqlmigration.NewAddOrganizationFactory(),
-			sqlmigration.NewAddPreferencesFactory(),
-			sqlmigration.NewAddDashboardsFactory(),
-			sqlmigration.NewAddSavedViewsFactory(),
-			sqlmigration.NewAddAgentsFactory(),
-			sqlmigration.NewAddPipelinesFactory(),
-			sqlmigration.NewAddIntegrationsFactory(),
-		),
-	})
+	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
