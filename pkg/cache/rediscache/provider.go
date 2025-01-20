@@ -18,7 +18,7 @@ type provider struct {
 }
 
 func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("rediscache"), New)
+	return factory.NewProviderFactory(factory.MustNewName("redis"), New)
 }
 
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {

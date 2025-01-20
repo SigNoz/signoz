@@ -16,7 +16,7 @@ type provider struct {
 }
 
 func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("memorycache"), New)
+	return factory.NewProviderFactory(factory.MustNewName("memory"), New)
 }
 
 func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
