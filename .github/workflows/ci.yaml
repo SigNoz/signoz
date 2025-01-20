@@ -1,4 +1,4 @@
-name: build-pipeline
+name: ci
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ jobs:
       - name: Run check
         run: make check-no-ee-references
 
-  build-frontend:
+  test-frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -28,12 +28,8 @@ jobs:
       - name: TSC
         run: yarn tsc
         working-directory: ./frontend
-      - name: Build frontend docker image
-        shell: bash
-        run: |
-          make build-frontend-amd64
 
-  build-query-service:
+  test-query-service:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -51,7 +47,7 @@ jobs:
         run: |
           make build-query-service-amd64
 
-  build-ee-query-service:
+  test-ee-query-service:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -60,6 +56,10 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
+      - name: Run tests
+        shell: bash
+        run: |
+          make test-ee
       - name: Build EE query-service image
         shell: bash
         run: |

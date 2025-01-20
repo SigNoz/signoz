@@ -191,3 +191,6 @@ check-no-ee-references:
 
 test:
 	go test ./pkg/...
+
+test-ee:
+	go test ./ee/...
