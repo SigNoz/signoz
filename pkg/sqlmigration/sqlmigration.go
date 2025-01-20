@@ -1,4 +1,4 @@
-package sqlmigrator
+package sqlmigration
 
 import (
 	"context"
@@ -11,11 +11,22 @@ import (
 	"go.signoz.io/signoz/pkg/factory"
 )
 
+// SQLMigration is the interface for a single migration.
+type SQLMigration interface {
+	// Register registers the migration with the given migrations. Each migration needs to be registered
+	//in a dedicated `*.go` file so that the correct migration semantics can be detected.
+	Register(*migrate.Migrations) error
+	// Up runs the migration.
+	Up(context.Context, *bun.DB) error
+	// Down rolls back the migration.
+	Down(context.Context, *bun.DB) error
+}
+
 var (
 	ErrNoExecute = errors.New("no execute")
 )
 
-func NewMigrations(
+func New(
 	ctx context.Context,
 	settings factory.ProviderSettings,
 	config Config,
@@ -38,13 +49,13 @@ func NewMigrations(
 	return migrations, nil
 }
 
-func MustNewMigrations(
+func MustNew(
 	ctx context.Context,
 	settings factory.ProviderSettings,
 	config Config,
 	factories factory.NamedMap[factory.ProviderFactory[SQLMigration, Config]],
 ) *migrate.Migrations {
-	migrations, err := NewMigrations(ctx, settings, config, factories)
+	migrations, err := New(ctx, settings, config, factories)
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package migration
+package sqlmigration
 
 import (
 	"context"
@@ -6,16 +6,15 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
 )
 
 type addPipelines struct{}
 
-func NewAddPipelinesFactory() factory.ProviderFactory[sqlmigrator.SQLMigration, sqlmigrator.Config] {
+func NewAddPipelinesFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_pipelines"), newAddPipelines)
 }
 
-func newAddPipelines(_ context.Context, _ factory.ProviderSettings, _ sqlmigrator.Config) (sqlmigrator.SQLMigration, error) {
+func newAddPipelines(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
 	return &addPipelines{}, nil
 }
 

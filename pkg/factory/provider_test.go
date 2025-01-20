@@ -32,10 +32,10 @@ func TestNewProviderFactoryFromFactory(t *testing.T) {
 
 	m := MustNewNamedMap(pf)
 	assert.Equal(t, MustNewName("p1"), pf.Name())
-	p, err := NewFromFactory(context.Background(), ProviderSettings{}, pc1{}, m, "p1")
+	p, err := NewProviderFromNamedMap(context.Background(), ProviderSettings{}, pc1{}, m, "p1")
 	assert.NoError(t, err)
 	assert.IsType(t, p1{}, p)
 
-	_, err = NewFromFactory(context.Background(), ProviderSettings{}, pc1{}, m, "p2")
+	_, err = NewProviderFromNamedMap(context.Background(), ProviderSettings{}, pc1{}, m, "p2")
 	assert.Error(t, err)
 }
