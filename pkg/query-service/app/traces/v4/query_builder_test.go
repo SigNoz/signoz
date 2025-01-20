@@ -585,6 +585,22 @@ func Test_buildTracesQuery(t *testing.T) {
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND parent_span_id = ''  order by timestamp ASC",
 		},
 		{
+			name: "test noop list view with root_spans and entry_point_spans both existing",
+			args: args{
+				panelType: v3.PanelTypeList,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator: v3.AggregateOperatorNoOp,
+					Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{{Key: v3.AttributeKey{Key: "isRoot", Type: v3.AttributeKeyTypeSpanSearchScope, IsColumn: false}, Value: true, Operator: v3.FilterOperatorEqual}, {Key: v3.AttributeKey{Key: "isEntryPoint", Type: v3.AttributeKeyTypeSpanSearchScope, IsColumn: false}, Value: true, Operator: v3.FilterOperatorEqual}}},
+					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
+				},
+			},
+			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND parent_span_id = ''  order by timestamp ASC",
+		},
+		{
 			name: "test noop list view with root_spans with other attributes",
 			args: args{
 				panelType: v3.PanelTypeList,
