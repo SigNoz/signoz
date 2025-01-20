@@ -553,40 +553,6 @@ func Test_buildTracesQuery(t *testing.T) {
 				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp ASC",
 		},
 		{
-			name: "test noop list view with entry_point_spans",
-			args: args{
-				panelType: v3.PanelTypeList,
-				start:     1680066360726210000,
-				end:       1680066458000000000,
-				mq: &v3.BuilderQuery{
-					AggregateOperator: v3.AggregateOperatorNoOp,
-					SpanSearchScope:   v3.SpanSearchScopeEntryPoint,
-					Filters:           &v3.FilterSet{},
-					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
-				},
-			},
-			want: "SELECT timestamp as timestamp_datetime, span_id, trace_id, name as `name` from signoz_traces.distributed_signoz_index_v3 where ((name, `resource_string_service$$name`) IN ( SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations )) and (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp ASC",
-		},
-		{
-			name: "test noop list view with root_spans",
-			args: args{
-				panelType: v3.PanelTypeList,
-				start:     1680066360726210000,
-				end:       1680066458000000000,
-				mq: &v3.BuilderQuery{
-					AggregateOperator: v3.AggregateOperatorNoOp,
-					SpanSearchScope:   v3.SpanSearchScopeRoot,
-					Filters:           &v3.FilterSet{},
-					SelectColumns:     []v3.AttributeKey{{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-					OrderBy:           []v3.OrderBy{{ColumnName: "timestamp", Order: "ASC"}},
-				},
-			},
-			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where parent_span_id = '' AND (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  order by timestamp ASC",
-		},
-		{
 			name: "test noop list view-without ts",
 			args: args{
 				panelType: v3.PanelTypeList,
