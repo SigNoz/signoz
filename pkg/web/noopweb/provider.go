@@ -11,6 +11,10 @@ import (
 
 type provider struct{}
 
+func NewFactory() factory.ProviderFactory[web.Web, web.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("noop"), New)
+}
+
 func New(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
 	return &provider{}, nil
 }
