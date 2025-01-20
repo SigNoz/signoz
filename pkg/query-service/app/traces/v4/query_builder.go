@@ -94,7 +94,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 		for _, item := range fs.Items {
 
 			// skip if it's a resource attribute
-			if item.Key.Type == v3.AttributeKeyTypeResource {
+			if item.Key.Type == v3.AttributeKeyTypeResource || item.Key.Type == v3.AttributeKetTypeSpanSearchScope {
 				continue
 			}
 
@@ -213,6 +213,28 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
+func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
+	var query string
+	if fs == nil || len(fs.Items) == 0 {
+		return "", nil
+	}
+	for _, item := range fs.Items {
+		// skip anything other than resource attribute
+		if item.Key.Type != v3.AttributeKetTypeSpanSearchScope {
+			continue
+		}
+		keyName := item.Key.Key
+		if keyName == constants.SpanSearchScopeRoot {
+			query = "parent_span_id = '' "
+		} else if keyName == constants.SpanSearchScopeEntryPoint {
+			query = "((name, `serviceName`) IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) "
+		} else {
+			return "", fmt.Errorf("invalid scope item type: %s", item.Key.Type)
+		}
+	}
+	return query, nil
+}
+
 func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, error) {
 	tracesStart := utils.GetEpochNanoSecs(start)
 	tracesEnd := utils.GetEpochNanoSecs(end)
@@ -248,6 +270,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery + ")"
 	}
 
+	spanScopeSubQuery, err := buildSpanScopeQuery(mq.Filters)
+	if spanScopeSubQuery != "" {
+		filterSubQuery = filterSubQuery + " AND " + spanScopeSubQuery
+	}
+
 	// timerange will be sent in epoch millisecond
 	selectLabels := getSelectLabels(mq.GroupBy)
 	if selectLabels != "" {
@@ -275,17 +302,9 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			selectLabels = getSelectLabels(mq.SelectColumns)
-			if mq.SpanSearchScope == v3.SpanSearchScopeAll || mq.SpanSearchScope == "" {
-				// add it to the select labels
-				queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
-				query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
-			} else if mq.SpanSearchScope == v3.SpanSearchScopeEntryPoint {
-				queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, span_id, trace_id,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where ((name, `resource_string_service$$name`) IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) and %s %s" + "%s"
-				query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
-			} else if mq.SpanSearchScope == v3.SpanSearchScopeRoot {
-				queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where parent_span_id = '' AND %s %s" + "%s"
-				query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
-			}
+			// add it to the select labels
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
+			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
 		}

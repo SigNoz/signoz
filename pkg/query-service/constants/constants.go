@@ -54,6 +54,9 @@ const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
 
+const SpanSearchScopeRoot = "isRoot"
+const SpanSearchScopeEntryPoint = "isEntryPoint"
+
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
 		return os.Getenv("ALERTMANAGER_API_PREFIX")
