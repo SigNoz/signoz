@@ -19,7 +19,7 @@ var (
 
 	nodeAttrsToEnrich = []string{"k8s_node_name", "k8s_node_uid", "k8s_cluster_name"}
 
-	k8sNodeUIDAttrKey = "k8s_node_uid"
+	k8sNodeGroupAttrKey = "k8s_node_name"
 
 	queryNamesForNodes = map[string][]string{
 		"cpu":                {"A"},
@@ -125,7 +125,7 @@ func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeLis
 			}
 		}
 
-		nodeUID := stringData[k8sNodeUIDAttrKey]
+		nodeUID := stringData[k8sNodeGroupAttrKey]
 		if _, ok := nodeAttrs[nodeUID]; !ok {
 			nodeAttrs[nodeUID] = map[string]string{}
 		}
@@ -220,7 +220,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 	}
 
 	if req.GroupBy == nil {
-		req.GroupBy = []v3.AttributeKey{{Key: k8sNodeUIDAttrKey}}
+		req.GroupBy = []v3.AttributeKey{{Key: k8sNodeGroupAttrKey}}
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
@@ -306,7 +306,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 				NodeMemoryAllocatable: -1,
 			}
 
-			if nodeUID, ok := row.Data[k8sNodeUIDAttrKey].(string); ok {
+			if nodeUID, ok := row.Data[k8sNodeGroupAttrKey].(string); ok {
 				record.NodeUID = nodeUID
 			}
 
