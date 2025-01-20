@@ -7,8 +7,9 @@ import (
 )
 
 func TestNewProviderConfig(t *testing.T) {
-	// This is a compile time test to ensure that provider factories can be created
-	// since we are using the factory.MustNewNamedMap function to initialize the provider factories.
+	// This is a test to ensure that provider factories can be created without panicking since
+	// we are using the factory.MustNewNamedMap function to initialize the provider factories.
+	// It also helps us catch these errors during testing instead of runtime.
 	assert.NotPanics(t, func() {
 		NewProviderConfig()
 	})
