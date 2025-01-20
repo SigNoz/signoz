@@ -405,6 +405,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							/>
 						)}
 
+						{selectedCategory === K8sCategories.STATEFULSETS && (
+							<K8sStatefulSetsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
 						{selectedCategory === K8sCategories.JOBS && (
 							<K8sJobsList
 								isFiltersVisible={showFilters}
