@@ -130,6 +130,20 @@
 			cursor: pointer;
 		}
 	}
+	.go-to-docs {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		cursor: pointer;
+		margin-bottom: 4px;
+		&__text {
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+	}
 }
 
 .lightMode {

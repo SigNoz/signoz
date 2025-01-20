@@ -128,11 +128,24 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{config.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
+							return (
+								<Checkbox
+									isInfraMonitoring={isInfraMonitoring}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 						case FiltersType.SLIDER:
 							return <Slider filter={filter} />;
+						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
-							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
+							return (
+								<Checkbox
+									isInfraMonitoring={isInfraMonitoring}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 					}
 				})}
 			</section>
