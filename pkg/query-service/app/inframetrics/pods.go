@@ -404,5 +404,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 	resp.Total = len(allPodGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }

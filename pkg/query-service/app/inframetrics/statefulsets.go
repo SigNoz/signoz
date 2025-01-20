@@ -440,5 +440,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 	resp.Total = len(allStatefulSetGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }
