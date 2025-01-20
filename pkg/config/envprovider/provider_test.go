@@ -30,6 +30,18 @@ func TestGetWithStrings(t *testing.T) {
 	assert.Equal(t, expected, actual.All())
 }
 
+func TestGetWithNoPrefix(t *testing.T) {
+	t.Setenv("WEB_PREFIX", "/web")
+	t.Setenv("WEB_ENABLED", "false")
+	expected := map[string]any{}
+
+	provider := New(config.ProviderConfig{})
+	actual, err := provider.Get(context.Background(), config.MustNewUri("env:"))
+	require.NoError(t, err)
+
+	assert.Equal(t, expected, actual.All())
+}
+
 func TestGetWithGoTypes(t *testing.T) {
 	t.Setenv("SIGNOZ_BOOL", "true")
 	t.Setenv("SIGNOZ_STRING", "string")

@@ -8,17 +8,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	_cache "go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory/providertest"
 )
 
 // TestNew tests the New function
 func TestNew(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.NotNil(t, c.(*provider).cc)
@@ -56,11 +56,11 @@ func (dce DCacheableEntity) UnmarshalBinary(data []byte) error {
 // TestStore tests the Store function
 // this should fail because of nil pointer error
 func TestStoreWithNilPointer(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	var storeCacheableEntity *CacheableEntity
 	assert.Error(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
@@ -68,22 +68,22 @@ func TestStoreWithNilPointer(t *testing.T) {
 
 // this should fail because of no pointer error
 func TestStoreWithStruct(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	var storeCacheableEntity CacheableEntity
 	assert.Error(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 }
 
 func TestStoreWithNonNilPointer(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -95,11 +95,11 @@ func TestStoreWithNonNilPointer(t *testing.T) {
 
 // TestRetrieve tests the Retrieve function
 func TestRetrieveWithNilPointer(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -112,15 +112,15 @@ func TestRetrieveWithNilPointer(t *testing.T) {
 
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusError)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusError)
 }
 
 func TestRetrieveWitNonPointer(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -133,15 +133,15 @@ func TestRetrieveWitNonPointer(t *testing.T) {
 
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusError)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusError)
 }
 
 func TestRetrieveWithDifferentTypes(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -153,15 +153,15 @@ func TestRetrieveWithDifferentTypes(t *testing.T) {
 	retrieveCacheableEntity := new(DCacheableEntity)
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.Error(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusError)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusError)
 }
 
 func TestRetrieveWithSameTypes(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -173,13 +173,13 @@ func TestRetrieveWithSameTypes(t *testing.T) {
 	retrieveCacheableEntity := new(CacheableEntity)
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusHit)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusHit)
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
 }
 
 // TestSetTTL tests the SetTTL function
 func TestSetTTL(t *testing.T) {
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: _cache.Memory{TTL: 10 * time.Second, CleanupInterval: 1 * time.Second}})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: 10 * time.Second, CleanupInterval: 1 * time.Second}})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -191,7 +191,7 @@ func TestSetTTL(t *testing.T) {
 	time.Sleep(3 * time.Second)
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 
 	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 2*time.Second))
@@ -199,17 +199,17 @@ func TestSetTTL(t *testing.T) {
 	time.Sleep(3 * time.Second)
 	retrieveStatus, err = c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusHit)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusHit)
 	assert.Equal(t, retrieveCacheableEntity, storeCacheableEntity)
 }
 
 // TestRemove tests the Remove function
 func TestRemove(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -222,17 +222,17 @@ func TestRemove(t *testing.T) {
 
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 }
 
 // TestBulkRemove tests the BulkRemove function
 func TestBulkRemove(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -246,22 +246,22 @@ func TestBulkRemove(t *testing.T) {
 
 	retrieveStatus, err := c.Retrieve(context.Background(), "key1", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 
 	retrieveStatus, err = c.Retrieve(context.Background(), "key2", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusKeyMiss)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusKeyMiss)
 	assert.Equal(t, new(CacheableEntity), retrieveCacheableEntity)
 }
 
 // TestCache tests the cache
 func TestCache(t *testing.T) {
-	opts := _cache.Memory{
+	opts := cache.Memory{
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), _cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -272,7 +272,7 @@ func TestCache(t *testing.T) {
 	assert.NoError(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
 	retrieveStatus, err := c.Retrieve(context.Background(), "key", retrieveCacheableEntity, false)
 	assert.NoError(t, err)
-	assert.Equal(t, retrieveStatus, _cache.RetrieveStatusHit)
+	assert.Equal(t, retrieveStatus, cache.RetrieveStatusHit)
 	assert.Equal(t, storeCacheableEntity, retrieveCacheableEntity)
 	c.Remove(context.Background(), "key")
 }
