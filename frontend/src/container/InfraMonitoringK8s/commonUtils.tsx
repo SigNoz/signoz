@@ -100,7 +100,13 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 export const getProgressBarText = (percent: number): React.ReactNode =>
 	`${percent}%`;
 
-export function EntityProgressBar({ value }: { value: number }): JSX.Element {
+export function EntityProgressBar({
+	value,
+	type,
+}: {
+	value: number;
+	type: 'request' | 'limit';
+}): JSX.Element {
 	const percentage = Number((value * 100).toFixed(1));
 
 	return (
@@ -110,7 +116,11 @@ export function EntityProgressBar({ value }: { value: number }): JSX.Element {
 				strokeLinecap="butt"
 				size="small"
 				status="normal"
-				strokeColor={getStrokeColorForLimitUtilization(value)}
+				strokeColor={
+					type === 'limit'
+						? getStrokeColorForLimitUtilization(value)
+						: getStrokeColorForRequestUtilization(value)
+				}
 				className="progress-bar"
 				showInfo={false}
 			/>

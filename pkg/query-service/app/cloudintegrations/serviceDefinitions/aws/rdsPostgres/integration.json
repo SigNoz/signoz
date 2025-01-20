@@ -1,0 +1,30 @@
+{
+  "id": "rds-postgres",
+  "title": "RDS Postgres",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "assets": {
+    "dashboards": []
+  },
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "rds_postgres_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric CPUUtilization"
+      },
+      {
+        "name": "rds_postgres_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric CPUUtilization"
+      }
+    ],
+    "logs": []
+  }
+}
