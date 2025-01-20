@@ -219,15 +219,16 @@ func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 		return "", nil
 	}
 	for _, item := range fs.Items {
-		// skip anything other than resource attribute
+		// skip anything other than Span Search scope attribute
 		if item.Key.Type != v3.AttributeKetTypeSpanSearchScope {
 			continue
 		}
-		keyName := item.Key.Key
+		keyName := strings.ToLower(item.Key.Key)
+
 		if keyName == constants.SpanSearchScopeRoot {
 			query = "parent_span_id = '' "
 		} else if keyName == constants.SpanSearchScopeEntryPoint {
-			query = "((name, `serviceName`) IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) "
+			query = "((name, `resource_string_service$$name`) IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) "
 		} else {
 			return "", fmt.Errorf("invalid scope item type: %s", item.Key.Type)
 		}
