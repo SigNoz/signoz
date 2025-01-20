@@ -32,6 +32,11 @@ has_cmd() {
     command -v "$1" > /dev/null 2>&1
 }
 
+# Check if docker compose plugin is present
+has_docker_compose_plugin() {
+    docker compose version > /dev/null 2>&1
+}
+
 is_mac() {
     [[ $OSTYPE == darwin* ]]
 }
@@ -183,9 +188,7 @@ install_docker() {
         $sudo_cmd yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
         echo "Installing docker"
         $yum_cmd install docker-ce docker-ce-cli containerd.io
-
     fi
-
 }
 
 compose_version () {
@@ -227,12 +230,6 @@ start_docker() {
             echo "Starting docker service"
             $sudo_cmd systemctl start docker.service
         fi
-        # if [[ -z $sudo_cmd ]]; then
-        #     docker ps > /dev/null && true
-        #     if [[ $? -ne 0 ]]; then
-        #         request_sudo
-        #     fi
-        # fi
         if [[ -z $sudo_cmd ]]; then
             if ! docker ps > /dev/null && true; then
                 request_sudo
@@ -265,7 +262,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
 
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
         echo ""
-        echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+        echo -e "$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
         echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
@@ -296,11 +293,6 @@ request_sudo() {
         if (( $EUID != 0 )); then
             sudo_cmd="sudo"
             echo -e "Please enter your sudo password, if prompted."
-            # $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null
-            # if [[ $? -ne 0 ]] && ! $sudo_cmd -v; then
-            #     echo "Need sudo privileges to proceed with the installation."
-            #     exit 1;
-            # fi
             if ! $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null && ! $sudo_cmd -v; then
                 echo "Need sudo privileges to proceed with the installation."
                 exit 1;
@@ -317,6 +309,7 @@ echo -e "👋 Thank you for trying out SigNoz! "
 echo ""
 
 sudo_cmd=""
+docker_compose_cmd=""
 
 # Check sudo permissions
 if (( $EUID != 0 )); then
@@ -362,27 +355,7 @@ else
     SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | $digest_cmd | grep -E -o '[a-zA-Z0-9]{64}')
 fi
 
-# echo ""
-
-# echo -e "👉 ${RED}Two ways to go forward\n"  
-# echo -e "${RED}1) ClickHouse as database (default)\n"  
-# read -p "⚙️  Enter your preference (1/2):" choice_setup 
-
-# while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
-# do
-#     # echo $choice_setup
-#     echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
-#     read -p "⚙️  Enter your preference (1/2):  " choice_setup 
-#     # echo $choice_setup
-# done
-
-# if [[ $choice_setup == "1" || $choice_setup == "" ]];then
-#     setup_type='clickhouse'
-# fi
-
 setup_type='clickhouse'
-
-# echo -e "\n✅ ${CYAN}You have chosen: ${setup_type} setup\n"
 
 # Run bye if failure happens
 trap bye EXIT
@@ -455,8 +428,6 @@ if [[ $desired_os -eq 0 ]]; then
     send_event "os_not_supported"
 fi
 
-# check_ports_occupied
-
 # Check is Docker daemon is installed and available. If not, the install & start Docker for Linux machines. We cannot automatically install Docker Desktop on Mac OS
 if ! is_command_present docker; then
 
@@ -486,27 +457,39 @@ if ! is_command_present docker; then
     fi
 fi
 
+if has_docker_compose_plugin; then
+    echo "docker compose plugin is present, using it"
+    docker_compose_cmd="docker compose"
 # Install docker-compose
-if ! is_command_present docker-compose; then
-    request_sudo
-    install_docker_compose
+else
+    docker_compose_cmd="docker-compose"
+    if ! is_command_present docker-compose; then
+        request_sudo
+        install_docker_compose
+    fi
 fi
 
 start_docker
 
-# $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
-
+# check for open ports, if signoz is not installed
+if is_command_present docker-compose; then
+    if $sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml ps | grep "signoz-query-service" | grep -q "healthy" > /dev/null 2>&1; then
+        echo "SigNoz already installed, skipping the occupied ports check"
+    else
+        check_ports_occupied
+    fi
+fi
 
 echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz.\n"
-$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
+$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml pull
 
 echo ""
 echo "🟡 Starting the SigNoz containers. It may take a few minutes ..."
 echo
-# The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
+# The $docker_compose_cmd command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
-$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
 
 wait_for_containers_start 60
 echo ""
@@ -516,7 +499,7 @@ if [[ $status_code -ne 200 ]]; then
     echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
 
-    echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+    echo -e "$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
     echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
@@ -537,7 +520,7 @@ else
     echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics." 
     echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"
 
-    echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
+    echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
 
     echo ""
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
