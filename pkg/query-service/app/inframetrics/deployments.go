@@ -440,5 +440,7 @@ func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, req model.Deplo
 	resp.Total = len(allDeploymentGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }
