@@ -1,6 +1,10 @@
 package factory
 
-import "context"
+import (
+	"context"
+
+	"go.uber.org/zap"
+)
 
 type Provider = any
 
@@ -21,8 +25,18 @@ func (factory *providerFactory[P, C]) Name() Name {
 	return factory.name
 }
 
-func (factory *providerFactory[P, C]) New(ctx context.Context, settings ProviderSettings, config C) (P, error) {
-	return factory.newProviderFunc(ctx, settings, config)
+func (factory *providerFactory[P, C]) New(ctx context.Context, settings ProviderSettings, config C) (p P, err error) {
+	settings.ZapLogger.Info("Provider is starting", zap.String("name", factory.name.String()))
+
+	provider, err := factory.newProviderFunc(ctx, settings, config)
+	if err != nil {
+		settings.ZapLogger.Error("Failed to start Provider", zap.String("name", factory.name.String()), zap.Error(err))
+		return
+	}
+
+	settings.ZapLogger.Info("Provider started", zap.String("name", factory.name.String()))
+	p = provider
+	return
 }
 
 // NewProviderFactory creates a new provider factory.
