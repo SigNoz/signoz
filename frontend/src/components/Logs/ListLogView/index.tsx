@@ -219,14 +219,12 @@ function ListLogView({
 					<LogStateIndicator type={logType} fontSize={fontSize} />
 					<div>
 						<LogContainer fontSize={fontSize}>
-							{updatedSelecedFields.some((field) => field.name === 'body') && (
-								<LogGeneralField
-									fieldKey="Log"
-									fieldValue={flattenLogData.body}
-									linesPerRow={linesPerRow}
-									fontSize={fontSize}
-								/>
-							)}
+							<LogGeneralField
+								fieldKey="Log"
+								fieldValue={flattenLogData.body}
+								linesPerRow={linesPerRow}
+								fontSize={fontSize}
+							/>
 							{flattenLogData.stream && (
 								<LogGeneralField
 									fieldKey="Stream"
@@ -234,27 +232,23 @@ function ListLogView({
 									fontSize={fontSize}
 								/>
 							)}
-							{updatedSelecedFields.some((field) => field.name === 'timestamp') && (
-								<LogGeneralField
-									fieldKey="Timestamp"
-									fieldValue={timestampValue}
-									fontSize={fontSize}
-								/>
-							)}
+							<LogGeneralField
+								fieldKey="Timestamp"
+								fieldValue={timestampValue}
+								fontSize={fontSize}
+							/>
 
-							{updatedSelecedFields
-								.filter((field) => !['timestamp', 'body'].includes(field.name))
-								.map((field) =>
-									isValidLogField(flattenLogData[field.name] as never) ? (
-										<LogSelectedField
-											key={field.name}
-											fieldKey={field.name}
-											fieldValue={flattenLogData[field.name] as never}
-											onAddToQuery={onAddToQuery}
-											fontSize={fontSize}
-										/>
-									) : null,
-								)}
+							{updatedSelecedFields.map((field) =>
+								isValidLogField(flattenLogData[field.name] as never) ? (
+									<LogSelectedField
+										key={field.name}
+										fieldKey={field.name}
+										fieldValue={flattenLogData[field.name] as never}
+										onAddToQuery={onAddToQuery}
+										fontSize={fontSize}
+									/>
+								) : null,
+							)}
 						</LogContainer>
 					</div>
 				</div>

@@ -73,7 +73,6 @@ function RawLogView({
 	);
 
 	const attributesValues = updatedSelecedFields
-		.filter((field) => !['timestamp', 'body'].includes(field.name))
 		.map((field) => flattenLogData[field.name])
 		.filter((attribute) => {
 			// loadash isEmpty doesnot work with numbers
@@ -93,40 +92,19 @@ function RawLogView({
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const text = useMemo(() => {
-		const parts = [];
+		const date =
+			typeof data.timestamp === 'string'
+				? formatTimezoneAdjustedTimestamp(data.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
+				: formatTimezoneAdjustedTimestamp(
+						data.timestamp / 1e6,
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  );
 
-		// Check if timestamp is selected
-		const showTimestamp = selectedFields.some(
-			(field) => field.name === 'timestamp',
-		);
-		if (showTimestamp) {
-			const date =
-				typeof data.timestamp === 'string'
-					? formatTimezoneAdjustedTimestamp(
-							data.timestamp,
-							'YYYY-MM-DD HH:mm:ss.SSS',
-					  )
-					: formatTimezoneAdjustedTimestamp(
-							data.timestamp / 1e6,
-							'YYYY-MM-DD HH:mm:ss.SSS',
-					  );
-			parts.push(date);
-		}
-
-		// Check if body is selected
-		const showBody = selectedFields.some((field) => field.name === 'body');
-		if (showBody) {
-			parts.push(`${attributesText} ${data.body}`);
-		} else {
-			parts.push(attributesText);
-		}
-
-		return parts.join(' | ');
+		return `${date} | ${attributesText} ${data.body}`;
 	}, [
-		selectedFields,
-		attributesText,
 		data.timestamp,
 		data.body,
+		attributesText,
 		formatTimezoneAdjustedTimestamp,
 	]);
 
