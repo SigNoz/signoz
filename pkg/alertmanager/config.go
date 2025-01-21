@@ -1,12 +1,17 @@
 package alertmanager
 
 import (
+	"net/url"
 	"time"
 
 	"go.signoz.io/signoz/pkg/factory"
 )
 
 type Config struct {
+	// The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
+	// See https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/cmd/alertmanager/main.go#L155C54-L155C249
+	ExternalUrl *url.URL `mapstructure:"external_url"`
+
 	// ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
 	// See https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/config/config.go#L836
 	ResolveTimeout time.Duration `mapstructure:"resolve_timeout"`
@@ -85,6 +90,9 @@ type NFLogConfig struct {
 
 func NewConfig() factory.Config {
 	return Config{
+		ExternalUrl: &url.URL{
+			Host: "localhost:8080",
+		},
 		// Corresponds to the default in upstream (https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/config/config.go#L727)
 		ResolveTimeout: 5 * time.Minute,
 		Route: RouteConfig{

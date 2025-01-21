@@ -12,4 +12,7 @@ type Client interface {
 
 	// SetConfig sets the config into the alertmanager per organization.
 	SetConfig(context.Context, string, *alertmanagertypes.Config) error
+
+	// TestReceiver sends a test alert to a receiver.
+	TestReceiver(context.Context, string, alertmanagertypes.Receiver) error
 }

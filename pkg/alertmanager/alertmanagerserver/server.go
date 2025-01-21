@@ -2,7 +2,6 @@ package alertmanagerserver
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -46,6 +45,7 @@ type Server struct {
 	timeIntervals          map[string][]timeinterval.TimeInterval
 	pipelineBuilder        *notify.PipelineBuilder
 	marker                 *alertmanagertypes.MemMarker
+	tmpl                   *template.Template
 	wg                     sync.WaitGroup
 	stopc                  chan struct{}
 	alertmanagerConfigHash [16]byte
@@ -194,13 +194,14 @@ func (server *Server) ConfigRaw() []byte {
 
 func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertmanagertypes.Config) error {
 	config := alertmanagerConfig.Config()
-	tmpls, err := template.FromGlobs(config.Templates)
+
+	var err error
+	server.tmpl, err = template.FromGlobs(config.Templates)
 	if err != nil {
-		return fmt.Errorf("failed to parse templates: %w", err)
+		return err
 	}
 
-	// TODO: We have to set this
-	//tmpl.ExternalURL = provider.config.ExternalURL
+	server.tmpl.ExternalURL = server.config.ExternalUrl
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -218,7 +219,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.settings.ZapLogger().Info("skipping creation of receiver not referenced by any route", zap.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagertypes.NewReceiverIntegrations(rcv, tmpls, server.settings.SlogLogger())
+		integrations, err := alertmanagertypes.NewReceiverIntegrations(rcv, server.tmpl, server.settings.SlogLogger())
 		if err != nil {
 			return err
 		}
@@ -290,6 +291,10 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	server.alertmanagerConfigRaw = alertmanagerConfig.Raw()
 
 	return nil
+}
+
+func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
+	return alertmanagertypes.TestReceiver(ctx, receiver, server.tmpl, server.settings.SlogLogger())
 }
 
 func (server *Server) Stop(ctx context.Context) error {
