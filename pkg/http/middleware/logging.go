@@ -64,7 +64,7 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			fields = append(fields, zap.Error(err))
 			middleware.logger.Error(logMessage, fields...)
 		} else {
-			// when there is no response body, we don't want to log it
+			// when the status code is 400 or >=500, and the response body is not empty.
 			if badResponseBuffer.Len() != 0 {
 				fields = append(fields, zap.String("response.body", badResponseBuffer.String()))
 			}
