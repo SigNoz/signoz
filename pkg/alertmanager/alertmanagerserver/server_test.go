@@ -19,7 +19,7 @@ import (
 )
 
 func TestServerStartStop(t *testing.T) {
-	server, err := New(context.Background(), providertest.NewSettings(), alertmanager.NewConfig().(alertmanager.Config), "org", memoryalertmanagerstore.New())
+	server, err := New(context.Background(), providertest.NewSettings(), alertmanager.NewConfig().(alertmanager.Config), "org", memoryalertmanagerstore.New([]string{"org"}))
 	require.NoError(t, err)
 
 	require.NoError(t, server.Start(context.Background()))
@@ -27,7 +27,7 @@ func TestServerStartStop(t *testing.T) {
 }
 
 func TestServerWithDefaultConfig(t *testing.T) {
-	server, err := New(context.Background(), providertest.NewSettings(), alertmanager.NewConfig().(alertmanager.Config), "org", memoryalertmanagerstore.New())
+	server, err := New(context.Background(), providertest.NewSettings(), alertmanager.NewConfig().(alertmanager.Config), "org", memoryalertmanagerstore.New([]string{"org"}))
 	require.NoError(t, err)
 
 	require.NoError(t, server.Start(context.Background()))
@@ -37,7 +37,7 @@ func TestServerWithDefaultConfig(t *testing.T) {
 }
 
 func TestServerTestReceiverWebhook(t *testing.T) {
-	server, err := New(context.Background(), providertest.NewSettings(), alertmanager.NewConfig().(alertmanager.Config), "org", memoryalertmanagerstore.New())
+	server, err := New(context.Background(), providertest.NewSettings(), alertmanager.NewConfig().(alertmanager.Config), "org", memoryalertmanagerstore.New([]string{"org"}))
 	require.NoError(t, err)
 
 	webhookListener, err := net.Listen("tcp", "localhost:0")

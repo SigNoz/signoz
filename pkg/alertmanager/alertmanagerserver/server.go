@@ -64,20 +64,20 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	server.marker = alertmanagertypes.NewMarker(server.settings.PrometheusRegisterer())
 
 	// get silences for initial state
-	initialSilences, err := store.GetSilences(ctx)
+	silencesstate, err := store.GetState(ctx, server.orgID, alertmanagertypes.SilenceStateName)
 	if err != nil {
 		return nil, err
 	}
 
 	// get nflog for initial state
-	initialNFlog, err := store.GetNFLog(ctx)
+	nflogstate, err := store.GetState(ctx, server.orgID, alertmanagertypes.NFLogStateName)
 	if err != nil {
 		return nil, err
 	}
 
 	// Initialize silences
 	server.silences, err = silence.New(silence.Options{
-		SnapshotReader: strings.NewReader(initialSilences),
+		SnapshotReader: strings.NewReader(silencesstate),
 		Retention:      config.Silences.Retention,
 		Limits: silence.Limits{
 			MaxSilences:         func() int { return config.Silences.Max },
@@ -92,7 +92,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	// Initialize notification log
 	server.nflog, err = nflog.New(nflog.Options{
-		SnapshotReader: strings.NewReader(initialNFlog),
+		SnapshotReader: strings.NewReader(nflogstate),
 		Retention:      server.config.NFLog.Retention,
 		Metrics:        server.settings.PrometheusRegisterer(),
 		Logger:         server.settings.SlogLogger(),
@@ -112,7 +112,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 				// Don't return here - we need to snapshot our state first.
 			}
 
-			return server.store.CreateSilences(ctx, server.silences)
+			return server.store.SetState(ctx, server.orgID, alertmanagertypes.SilenceStateName, server.silences)
 		})
 
 	}()
@@ -127,7 +127,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 				// Don't return without saving the current state.
 			}
 
-			return server.store.CreateNFLog(ctx, server.nflog)
+			return server.store.SetState(ctx, server.orgID, alertmanagertypes.NFLogStateName, server.nflog)
 		})
 	}()
 
