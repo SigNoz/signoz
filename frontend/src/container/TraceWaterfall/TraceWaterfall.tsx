@@ -89,6 +89,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						traceMetadata={{
 							startTime: traceData?.payload?.startTimestampMillis || 0,
 							endTime: traceData?.payload?.endTimestampMillis || 0,
+							hasMissingSpans: traceData?.payload?.hasMissingSpans || false,
 						}}
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
@@ -104,6 +105,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		setInterestedSpanId,
 		spans,
 		traceData?.payload?.endTimestampMillis,
+		traceData?.payload?.hasMissingSpans,
 		traceData?.payload?.startTimestampMillis,
 		traceId,
 		traceWaterfallState,

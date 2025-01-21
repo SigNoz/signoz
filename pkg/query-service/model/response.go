@@ -353,6 +353,7 @@ type GetWaterfallSpansForTraceWithMetadataResponse struct {
 	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
 	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
 	Spans                         []*Span           `json:"spans"`
+	HasMissingSpans               bool              `json:"hasMissingSpans"`
 	// this is needed for frontend and query service sync
 	UncollapsedSpans []string `json:"uncollapsedSpans"`
 }

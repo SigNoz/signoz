@@ -14,7 +14,15 @@ import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
-import { Anvil, Bookmark, ChevronDown, ChevronRight, Leaf } from 'lucide-react';
+import {
+	AlertCircle,
+	Anvil,
+	ArrowUpRight,
+	Bookmark,
+	ChevronDown,
+	ChevronRight,
+	Leaf,
+} from 'lucide-react';
 import {
 	Dispatch,
 	SetStateAction,
@@ -38,6 +46,7 @@ const VERTICAL_CONNECTOR_WIDTH = 1;
 interface ITraceMetadata {
 	startTime: number;
 	endTime: number;
+	hasMissingSpans: boolean;
 }
 interface ISuccessProps {
 	spans: Span[];
@@ -358,6 +367,23 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<div className="success-content">
+			{traceMetadata.hasMissingSpans && (
+				<div className="missing-spans">
+					<section className="left-info">
+						<AlertCircle size={14} />
+						<Typography.Text className="text">
+							This trace has missing spans
+						</Typography.Text>
+					</section>
+					<Button
+						icon={<ArrowUpRight size={14} />}
+						className="right-info"
+						type="text"
+					>
+						Learn More
+					</Button>
+				</div>
+			)}
 			<TableV3
 				columns={columns}
 				data={spans}

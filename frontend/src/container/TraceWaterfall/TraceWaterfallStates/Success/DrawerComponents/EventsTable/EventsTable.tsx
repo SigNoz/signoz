@@ -15,7 +15,7 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 	const { span, startTime } = props;
 	const events: Event[] = useMemo(() => {
 		const tempEvents = [];
-		for (let i = 0; i < span.event.length; i++) {
+		for (let i = 0; i < span.event?.length; i++) {
 			const parsedEvent = JSON.parse(span.event[i]);
 			tempEvents.push(parsedEvent);
 		}

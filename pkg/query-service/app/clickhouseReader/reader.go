@@ -1713,7 +1713,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				response.RootServiceName = rootNode.ServiceName
 			}
 
-			if response.RootServiceEntryPoint != "" {
+			if response.RootServiceEntryPoint == "" {
 				response.RootServiceEntryPoint = rootNode.Name
 			}
 		}
@@ -1749,6 +1749,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	response.EndTimestampMillis = endTime
 	response.TotalErrorSpansCount = totalErrorSpans
 	response.ServiceNameToTotalDurationMap = serviceNameToTotalDurationMap
+	response.HasMissingSpans = len(traceRoots) > 1
 	return response, nil
 }
 

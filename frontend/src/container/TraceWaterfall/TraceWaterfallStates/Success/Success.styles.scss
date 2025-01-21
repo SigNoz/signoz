@@ -3,6 +3,60 @@
 	overflow-x: hidden;
 	max-width: 100%;
 
+	.missing-spans {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 44px;
+		margin: 16px;
+		padding: 12px;
+		border-radius: 4px;
+		background: rgba(69, 104, 220, 0.1);
+
+		.left-info {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+
+			.text {
+				color: var(--bg-robin-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+
+		.right-info {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column-reverse;
+			gap: 8px;
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+
+		.right-info:hover {
+			background-color: unset;
+			color: var(--bg-robin-200);
+		}
+	}
+
 	.waterfall-table {
 		height: 50vh;
 		overflow: auto;

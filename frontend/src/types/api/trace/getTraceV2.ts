@@ -40,6 +40,7 @@ export interface Span {
 
 export interface GetTraceV2SuccessResponse {
 	spans: Span[];
+	hasMissingSpans: boolean;
 	uncollapsedSpans: string[];
 	startTimestampMillis: number;
 	endTimestampMillis: number;
