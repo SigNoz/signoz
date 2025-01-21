@@ -421,7 +421,7 @@ func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, req model.Deplo
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := deploymentAttrs[record.DeploymentName]; ok {
+			if _, ok := deploymentAttrs[record.DeploymentName]; ok && record.DeploymentName != "" {
 				record.Meta = deploymentAttrs[record.DeploymentName]
 			}
 

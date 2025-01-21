@@ -385,7 +385,7 @@ func (p *PodsRepo) GetPodList(ctx context.Context, req model.PodListRequest) (mo
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := podAttrs[record.PodUID]; ok {
+			if _, ok := podAttrs[record.PodUID]; ok && record.PodUID != "" {
 				record.Meta = podAttrs[record.PodUID]
 			}
 
