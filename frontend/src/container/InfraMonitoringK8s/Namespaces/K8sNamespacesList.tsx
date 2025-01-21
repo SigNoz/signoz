@@ -420,6 +420,8 @@ function K8sNamespacesList({
 				}
 			}
 
+			// Reset pagination on switching to groupBy
+			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 		},

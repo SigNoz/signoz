@@ -296,13 +296,13 @@ function K8sDeploymentsList({
 	const handleRowClick = (record: K8sDeploymentsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedDeploymentUID(record.key);
+			setselectedDeploymentUID(record.deploymentUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
 
 		logEvent('Infra Monitoring: K8s deployment list item clicked', {
-			deploymentUID: record.key,
+			deploymentUID: record.deploymentName,
 		});
 	};
 
@@ -423,6 +423,8 @@ function K8sDeploymentsList({
 				}
 			}
 
+			// Reset pagination on switching to groupBy
+			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 		},

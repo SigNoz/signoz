@@ -161,9 +161,9 @@ export const formatDataForTable = (
 	data: K8sClustersData[],
 	groupBy: IBuilderQuery['groupBy'],
 ): K8sClustersRowData[] =>
-	data.map((cluster) => ({
-		key: cluster.meta.k8s_cluster_name,
-		clusterUID: cluster.clusterUID,
+	data.map((cluster, index) => ({
+		key: index.toString(),
+		clusterUID: cluster.meta.k8s_cluster_name,
 		clusterName: (
 			<Tooltip title={cluster.meta.k8s_cluster_name}>
 				{cluster.meta.k8s_cluster_name}

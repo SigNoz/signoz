@@ -291,7 +291,7 @@ function K8sClustersList({
 	const handleRowClick = (record: K8sClustersRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedClusterName(record.key);
+			setselectedClusterName(record.clusterUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -418,6 +418,8 @@ function K8sClustersList({
 				}
 			}
 
+			// Reset pagination on switching to groupBy
+			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 		},

@@ -147,8 +147,8 @@ export const formatDataForTable = (
 	data: K8sNamespacesData[],
 	groupBy: IBuilderQuery['groupBy'],
 ): K8sNamespacesRowData[] =>
-	data.map((namespace) => ({
-		key: namespace.namespaceName,
+	data.map((namespace, index) => ({
+		key: index.toString(),
 		namespaceUID: namespace.namespaceName,
 		namespaceName: namespace.namespaceName,
 		clusterName: namespace.meta.k8s_cluster_name,
