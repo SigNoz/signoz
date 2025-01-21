@@ -7,8 +7,10 @@ import (
 
 var db ModelDao
 
-func InitDao(db *sqlx.DB) error {
-	if _, err := sqlite.InitDB(db); err != nil {
+func InitDao(inputDB *sqlx.DB) error {
+	var err error
+	db, err = sqlite.InitDB(inputDB)
+	if err != nil {
 		return err
 	}
 
