@@ -1906,7 +1906,6 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			}
 		}
 
-		selectedSpans := [][]*model.FlamegraphSpan{}
 		for _, trace := range traceRoots {
 			keys := make([]int64, 0, len(traceIdLevelledFlamegraph[trace.SpanID]))
 			for key := range traceIdLevelledFlamegraph[trace.SpanID] {
