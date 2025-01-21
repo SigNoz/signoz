@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/rules"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/signoz"
@@ -319,7 +320,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
-	r.Use(setTimeoutMiddleware)
+	r.Use(middleware.NewTimeout(zap.L(), baseconst.TimeoutExcludedRoutes, baseconst.ContextTimeout, baseconst.ContextTimeoutMaxAllowed).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddlewarePrivate)
 	r.Use(baseapp.LogCommentEnricher)
@@ -362,7 +363,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
-	r.Use(setTimeoutMiddleware)
+	r.Use(middleware.NewTimeout(zap.L(), baseconst.TimeoutExcludedRoutes, baseconst.ContextTimeout, baseconst.ContextTimeoutMaxAllowed).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 	r.Use(baseapp.LogCommentEnricher)
@@ -587,23 +588,6 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/timeout.go
-func setTimeoutMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		var cancel context.CancelFunc
-		// check if route is not excluded
-		url := r.URL.Path
-		if _, ok := baseconst.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), baseconst.ContextTimeout)
-			defer cancel()
-		}
-
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
 	})
 }
 

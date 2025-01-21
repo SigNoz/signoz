@@ -254,9 +254,9 @@ const (
 	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME      = "distributed_top_level_operations"
 )
 
-var TimeoutExcludedRoutes = map[string]bool{
-	"/api/v1/logs/tail":     true,
-	"/api/v3/logs/livetail": true,
+var TimeoutExcludedRoutes = map[string]struct{}{
+	"/api/v1/logs/tail":     {},
+	"/api/v3/logs/livetail": {},
 }
 
 // alert related constants
