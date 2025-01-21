@@ -336,22 +336,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							/>
 						)}
 
-						{selectedCategory === K8sCategories.DEPLOYMENTS && (
-							<K8sDeploymentsList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
-						)}
-
-						{selectedCategory === K8sCategories.NAMESPACES && (
-							<K8sNamespacesList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
-						)}
-
 						{selectedCategory === K8sCategories.CLUSTERS && (
 							<K8sClustersList
 								isFiltersVisible={showFilters}
@@ -360,37 +344,16 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							/>
 						)}
 
-						{selectedCategory === K8sCategories.STATEFULSETS && (
-							<K8sStatefulSetsList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-							/>
-						)}
-
-						{selectedCategory === K8sCategories.NAMESPACES && (
-							<K8sNamespacesList
+						{selectedCategory === K8sCategories.DEPLOYMENTS && (
+							<K8sDeploymentsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
-						{selectedCategory === K8sCategories.JOBS && (
-							<K8sJobsList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-							/>
-						)}
-
-						{selectedCategory === K8sCategories.DAEMONSETS && (
-							<K8sDaemonSetsList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-							/>
-						)}
-
-						{selectedCategory === K8sCategories.DEPLOYMENTS && (
-							<K8sDeploymentsList
+						{selectedCategory === K8sCategories.NAMESPACES && (
+							<K8sNamespacesList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
@@ -414,6 +377,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 						{selectedCategory === K8sCategories.JOBS && (
 							<K8sJobsList
+								isFiltersVisible={showFilters}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+							/>
+						)}
+
+						{selectedCategory === K8sCategories.DAEMONSETS && (
+							<K8sDaemonSetsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 							/>
