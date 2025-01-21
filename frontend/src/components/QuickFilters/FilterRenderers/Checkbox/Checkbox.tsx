@@ -475,8 +475,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					<Skeleton paragraph={{ rows: 4 }} />
 				</section>
 			)}
-			{isOpen ? (
-				!isLoading && !isInfraMonitoring && !attributeValues.length ? (
+			{isOpen && !isLoading ? (
+				!isInfraMonitoring && !attributeValues.length ? (
 					<section className="go-to-docs">
 						<div className="go-to-docs__container">
 							<div className="go-to-docs__container-icon">
