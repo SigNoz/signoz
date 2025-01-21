@@ -35,14 +35,8 @@ var (
 )
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(dataSourceName string) (*sqlx.DB, error) {
-	var err error
-
-	db, err = sqlx.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
+func InitDB(inputDB *sqlx.DB) error {
+	db = inputDB
 	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		uuid TEXT NOT NULL UNIQUE,
@@ -51,9 +45,9 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(table_schema)
+	_, err := db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating dashboard table: %s", err.Error())
+		return fmt.Errorf("error in creating dashboard table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
@@ -65,7 +59,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating rules table: %s", err.Error())
+		return fmt.Errorf("error in creating rules table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
@@ -80,7 +74,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
+		return fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
 	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
@@ -96,7 +90,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	);`
 	_, err = db.Exec(tableSchema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
+		return fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
@@ -112,49 +106,49 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
+		return fmt.Errorf("error in creating ttl_status table: %s", err.Error())
 	}
 
 	// sqlite does not support "IF NOT EXISTS"
 	createdAt := `ALTER TABLE rules ADD COLUMN created_at datetime;`
 	_, err = db.Exec(createdAt)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return nil, fmt.Errorf("error in adding column created_at to rules table: %s", err.Error())
+		return fmt.Errorf("error in adding column created_at to rules table: %s", err.Error())
 	}
 
 	createdBy := `ALTER TABLE rules ADD COLUMN created_by TEXT;`
 	_, err = db.Exec(createdBy)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return nil, fmt.Errorf("error in adding column created_by to rules table: %s", err.Error())
+		return fmt.Errorf("error in adding column created_by to rules table: %s", err.Error())
 	}
 
 	updatedBy := `ALTER TABLE rules ADD COLUMN updated_by TEXT;`
 	_, err = db.Exec(updatedBy)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return nil, fmt.Errorf("error in adding column updated_by to rules table: %s", err.Error())
+		return fmt.Errorf("error in adding column updated_by to rules table: %s", err.Error())
 	}
 
 	createdBy = `ALTER TABLE dashboards ADD COLUMN created_by TEXT;`
 	_, err = db.Exec(createdBy)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return nil, fmt.Errorf("error in adding column created_by to dashboards table: %s", err.Error())
+		return fmt.Errorf("error in adding column created_by to dashboards table: %s", err.Error())
 	}
 
 	updatedBy = `ALTER TABLE dashboards ADD COLUMN updated_by TEXT;`
 	_, err = db.Exec(updatedBy)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return nil, fmt.Errorf("error in adding column updated_by to dashboards table: %s", err.Error())
+		return fmt.Errorf("error in adding column updated_by to dashboards table: %s", err.Error())
 	}
 
 	locked := `ALTER TABLE dashboards ADD COLUMN locked INTEGER DEFAULT 0;`
 	_, err = db.Exec(locked)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return nil, fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
+		return fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
 	}
 
 	telemetry.GetInstance().SetDashboardsInfoCallback(GetDashboardsInfo)
 
-	return db, nil
+	return nil
 }
 
 type Dashboard struct {
@@ -288,7 +282,7 @@ func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
-	
+
 	return &dashboard, nil
 }
 
