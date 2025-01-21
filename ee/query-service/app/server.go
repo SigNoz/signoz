@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/rules"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/signoz"
@@ -321,7 +322,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddlewarePrivate)
+	r.Use(middleware.NewLogging(zap.L(), zap.Bool("privatePort", true)).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
 
 	apiHandler.RegisterPrivateRoutes(r)
@@ -364,7 +365,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddleware)
+	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
 
 	apiHandler.RegisterRoutes(r, am)
@@ -395,31 +396,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	return &http.Server{
 		Handler: handler,
 	}, nil
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// loggingMiddleware is used for logging public api calls
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path))
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// loggingMiddlewarePrivate is used for logging private api calls
-// from internal services like alert manager
-func loggingMiddlewarePrivate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
-	})
 }
 
 // TODO(remove): Implemented at pkg/http/middleware/logging.go
