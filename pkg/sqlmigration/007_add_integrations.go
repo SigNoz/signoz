@@ -1,4 +1,4 @@
-package migration
+package sqlmigration
 
 import (
 	"context"
@@ -6,16 +6,15 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
 )
 
 type addIntegrations struct{}
 
-func NewAddIntegrationsFactory() factory.ProviderFactory[sqlmigrator.SQLMigration, sqlmigrator.Config] {
+func NewAddIntegrationsFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_integrations"), newAddIntegrations)
 }
 
-func newAddIntegrations(_ context.Context, _ factory.ProviderSettings, _ sqlmigrator.Config) (sqlmigrator.SQLMigration, error) {
+func newAddIntegrations(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
 	return &addIntegrations{}, nil
 }
 

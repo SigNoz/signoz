@@ -33,8 +33,9 @@ import (
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/web"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -70,6 +71,7 @@ type ServerOptions struct {
 	Cluster           string
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	SigNoz            *signoz.SigNoz
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -166,13 +168,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	go func() {
-		err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
-		if err != nil {
-			zap.L().Error("error while running clickhouse migrations", zap.Error(err))
-		}
-	}()
-
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
 		return nil, err
@@ -226,7 +221,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		unavailableChannel: make(chan healthcheck.Status),
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler)
+	httpServer, err := s.createPublicServer(apiHandler, serverOptions.SigNoz.Web)
 
 	if err != nil {
 		return nil, err
@@ -290,7 +285,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 	}, nil
 }
 
-func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
+func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 
 	r := NewRouter()
 
@@ -334,6 +329,11 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	handler := c.Handler(r)
 
 	handler = handlers.CompressHandler(handler)
+
+	err := web.AddToRouter(r)
+	if err != nil {
+		return nil, err
+	}
 
 	return &http.Server{
 		Handler: handler,

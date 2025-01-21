@@ -338,5 +338,7 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, req model.ClusterList
 	resp.Total = len(allClusterGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
+
 	return resp, nil
 }
