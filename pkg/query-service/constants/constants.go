@@ -738,3 +738,5 @@ func init() {
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
+
+const MaxResultRowsForCHQuery = 1_000_000
