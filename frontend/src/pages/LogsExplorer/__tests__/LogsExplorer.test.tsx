@@ -67,6 +67,12 @@ jest.mock('d3-interpolate', () => ({
 	interpolate: jest.fn(),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 const logsQueryServerRequest = (): void =>
 	server.use(
 		rest.post(queryRangeURL, (req, res, ctx) =>

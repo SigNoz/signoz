@@ -183,7 +183,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			...data,
 			filters: {
 				...data.filters,
-				items: data.filters.items.map((item) => ({
+				items: data.filters?.items?.map((item) => ({
 					...item,
 					id: '',
 				})),

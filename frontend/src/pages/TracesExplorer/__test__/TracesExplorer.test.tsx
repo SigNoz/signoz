@@ -116,6 +116,12 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 describe('TracesExplorer - Filters', () => {
 	// Initial filter panel rendering
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.

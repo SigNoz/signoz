@@ -29,6 +29,12 @@ jest.mock('react-router-dom', () => ({
 const mockWindowOpen = jest.fn();
 window.open = mockWindowOpen;
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 describe('dashboard list page', () => {
 	// should render on updatedAt and descend when the column key and order is messed up
 	it('should render the list even when the columnKey or the order is mismatched', async () => {
