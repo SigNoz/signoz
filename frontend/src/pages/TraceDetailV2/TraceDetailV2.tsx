@@ -79,19 +79,6 @@ function TraceDetailsV2(): JSX.Element {
 				</>
 			),
 		},
-		// {
-		// 	label: (
-		// 		<Button
-		// 			type="text"
-		// 			icon={<Braces size={14} />}
-		// 			className="span-list-toggle"
-		// 		>
-		// 			Span List
-		// 		</Button>
-		// 	),
-		// 	key: 'span-list',
-		// 	children: <Typography.Text>Span List</Typography.Text>,
-		// },
 	];
 
 	return (

@@ -1703,8 +1703,9 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID.SpanID]; exists {
 			_, _spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, req.SelectedSpanID, uncollapsedSpans, req.IsSelectedSpanIDUnCollapsed)
 			uncollapsedSpans = append(uncollapsedSpans, _spansFromRootToNode...)
-			_preOrderTraversal, _selectedSpanIndex := traverseTraceAndAddRequiredMetadata(rootNode, uncollapsedSpans, 0, true, false, req.SelectedSpanID)
+			_preOrderTraversal := traverseTraceAndAddRequiredMetadata(rootNode, uncollapsedSpans, 0, true, false, req.SelectedSpanID)
 
+			_selectedSpanIndex := findIndexForSelectedSpanFromPreOrder(_preOrderTraversal, req.SelectedSpanID)
 			if _selectedSpanIndex != -1 {
 				selectedSpanIndex = _selectedSpanIndex + len(preOrderTraversal)
 			}
@@ -1760,6 +1761,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
 	// map[traceID][level]span
 	var traceIdLevelledFlamegraph = map[string]map[int64][]*model.FlamegraphSpan{}
+	var selectedSpans = [][]*model.FlamegraphSpan{}
 	var traceRoots []*model.FlamegraphSpan
 	var useCache bool = true
 
@@ -1786,7 +1788,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			startTime = cachedTraceData.StartTime
 			endTime = cachedTraceData.EndTime
 			durationNano = cachedTraceData.DurationNano
-			traceIdLevelledFlamegraph = cachedTraceData.TraceIdLevelledFlamegraph
+			selectedSpans = cachedTraceData.SelectedSpans
 			traceRoots = cachedTraceData.TraceRoots
 		}
 	}
@@ -1904,34 +1906,34 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			}
 		}
 
+		selectedSpans := [][]*model.FlamegraphSpan{}
+		for _, trace := range traceRoots {
+			keys := make([]int64, 0, len(traceIdLevelledFlamegraph[trace.SpanID]))
+			for key := range traceIdLevelledFlamegraph[trace.SpanID] {
+				keys = append(keys, key)
+			}
+			sort.Slice(keys, func(i, j int) bool {
+				return keys[i] < keys[j]
+			})
+
+			for _, level := range keys {
+				if ok, exists := traceIdLevelledFlamegraph[trace.SpanID][level]; exists {
+					selectedSpans = append(selectedSpans, ok)
+				}
+			}
+		}
+
 		traceCache := model.GetFlamegraphSpansForTraceCache{
-			StartTime:                 startTime,
-			EndTime:                   endTime,
-			DurationNano:              durationNano,
-			TraceIdLevelledFlamegraph: traceIdLevelledFlamegraph,
-			TraceRoots:                traceRoots,
+			StartTime:     startTime,
+			EndTime:       endTime,
+			DurationNano:  durationNano,
+			SelectedSpans: selectedSpans,
+			TraceRoots:    traceRoots,
 		}
 
 		err = r.cacheV2.Store(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), &traceCache, time.Minute*5)
 		if err != nil {
 			zap.L().Debug("failed to store cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID), zap.Error(err))
-		}
-	}
-
-	selectedSpans := [][]*model.FlamegraphSpan{}
-	for _, trace := range traceRoots {
-		keys := make([]int64, 0, len(traceIdLevelledFlamegraph[trace.SpanID]))
-		for key := range traceIdLevelledFlamegraph[trace.SpanID] {
-			keys = append(keys, key)
-		}
-		sort.Slice(keys, func(i, j int) bool {
-			return keys[i] < keys[j]
-		})
-
-		for _, level := range keys {
-			if ok, exists := traceIdLevelledFlamegraph[trace.SpanID][level]; exists {
-				selectedSpans = append(selectedSpans, ok)
-			}
 		}
 	}
 

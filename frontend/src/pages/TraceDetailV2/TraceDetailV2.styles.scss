@@ -19,11 +19,15 @@
 			color: var(--bg-vanilla-100);
 		}
 	}
+	.ant-tabs-nav {
+		margin: 0px;
+	}
 
 	.trace-layout {
 		display: flex;
 		flex-direction: column;
 		gap: 25px;
+		padding-top: 16px;
 
 		.flamegraph-waterfall-toggle {
 			display: flex;

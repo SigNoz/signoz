@@ -120,7 +120,7 @@ func main() {
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection.)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
-	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
+	flag.StringVar(&fluxInterval, "flux-interval", "0m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")

@@ -38,9 +38,8 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
-func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreorder bool, hasSibling bool, selectedSpanId string) ([]*model.Span, int) {
+func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreorder bool, hasSibling bool, selectedSpanId string) []*model.Span {
 	preOrderTraversal := []*model.Span{}
-	selectedSpanIndex := -1
 	sort.Slice(span.Children, func(i, j int) bool {
 		if span.Children[i].TimeUnixNano == span.Children[j].TimeUnixNano {
 			return span.Children[i].Name < span.Children[j].Name
@@ -72,22 +71,16 @@ func traverseTraceAndAddRequiredMetadata(span *model.Span, uncollapsedSpans []st
 	}
 	if isPartOfPreorder {
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
-		if nodeWithoutChildren.SpanID == selectedSpanId {
-			selectedSpanIndex = len(preOrderTraversal)
-		}
 	}
 
 	for index, child := range span.Children {
-		_childTraversal, _selectedSpanIndex := traverseTraceAndAddRequiredMetadata(child, uncollapsedSpans, level+1, isPartOfPreorder && contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
+		_childTraversal := traverseTraceAndAddRequiredMetadata(child, uncollapsedSpans, level+1, isPartOfPreorder && contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
 		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
-		if _selectedSpanIndex != -1 {
-			selectedSpanIndex = _selectedSpanIndex
-		}
 		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
 		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
 	}
 
-	return preOrderTraversal, selectedSpanIndex
+	return preOrderTraversal
 
 }
 
@@ -116,5 +109,18 @@ func findIndexForSelectedSpan(spans [][]*model.FlamegraphSpan, selectedSpanId st
 		}
 	}
 
-	return int64(selectedSpanLevel)
+	return selectedSpanLevel
+}
+
+func findIndexForSelectedSpanFromPreOrder(spans []*model.Span, selectedSpanId string) int {
+	var selectedSpanIndex = -1
+
+	for index, span := range spans {
+		if span.SpanID == selectedSpanId {
+			selectedSpanIndex = index
+			break
+		}
+	}
+
+	return selectedSpanIndex
 }
