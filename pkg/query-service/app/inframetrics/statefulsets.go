@@ -421,7 +421,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := statefulSetAttrs[record.StatefulSetName]; ok {
+			if _, ok := statefulSetAttrs[record.StatefulSetName]; ok && record.StatefulSetName != "" {
 				record.Meta = statefulSetAttrs[record.StatefulSetName]
 			}
 

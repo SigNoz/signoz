@@ -127,6 +127,18 @@ function HostMetricsLogs({
 				data={logToRender}
 				linesPerRow={5}
 				fontSize={FontSize.MEDIUM}
+				selectedFields={[
+					{
+						dataType: 'string',
+						type: '',
+						name: 'body',
+					},
+					{
+						dataType: 'string',
+						type: '',
+						name: 'timestamp',
+					},
+				]}
 			/>
 		),
 		[],
