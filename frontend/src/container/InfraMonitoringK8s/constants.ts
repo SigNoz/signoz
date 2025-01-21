@@ -386,7 +386,7 @@ export const StatefulsetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 export const DaemonSetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
 		type: FiltersType.CHECKBOX,
-		title: 'DaemonSet',
+		title: 'DaemonSet Name',
 		attributeKey: {
 			key: 'k8s_daemonset_name',
 			dataType: DataTypes.String,
@@ -394,6 +394,39 @@ export const DaemonSetsQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isColumn: false,
 			isJSON: false,
 		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Namespace Name',
+		attributeKey: {
+			key: 'k8s_namespace_name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Cluster Name',
+		attributeKey: {
+			key: 'k8s_cluster_name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		dataSource: DataSource.METRICS,
 		defaultOpen: true,
 	},
 ];
