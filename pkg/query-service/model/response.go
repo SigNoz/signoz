@@ -318,7 +318,7 @@ type GetWaterfallSpansForTraceWithMetadataCache struct {
 	TotalErrorSpans               uint64            `json:"totalErrorSpans"`
 	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
 	SpanIdToSpanNodeMap           map[string]*Span  `json:"spanIdToSpanNodeMap"`
-	TraceRoots                    []string          `json:"traceRoots"`
+	TraceRoots                    []*Span           `json:"traceRoots"`
 }
 
 func (c *GetWaterfallSpansForTraceWithMetadataCache) MarshalBinary() (data []byte, err error) {
@@ -333,7 +333,7 @@ type GetFlamegraphSpansForTraceCache struct {
 	EndTime                   uint64                                 `json:"endTime"`
 	DurationNano              uint64                                 `json:"durationNano"`
 	TraceIdLevelledFlamegraph map[string]map[int64][]*FlamegraphSpan `json:"traceIdLevelledFlamegraph"`
-	TraceRoots                []string                               `json:"traceRoots"`
+	TraceRoots                []*FlamegraphSpan                      `json:"traceRoots"`
 }
 
 func (c *GetFlamegraphSpansForTraceCache) MarshalBinary() (data []byte, err error) {

@@ -1512,7 +1512,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	response := new(model.GetWaterfallSpansForTraceWithMetadataResponse)
 	var startTime, endTime, durationNano, totalErrorSpans uint64
 	var spanIdToSpanNodeMap = map[string]*model.Span{}
-	var traceRoots []string
+	var traceRoots []*model.Span
 	var serviceNameToTotalDurationMap = map[string]uint64{}
 	var useCache bool = true
 
@@ -1650,8 +1650,9 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 							TraceID:          spanNode.TraceID,
 							ServiceName:      "",
 							Name:             "Missing Span",
+							TimeUnixNano:     spanNode.TimeUnixNano,
 							Kind:             0,
-							DurationNano:     0,
+							DurationNano:     spanNode.DurationNano,
 							HasError:         false,
 							StatusMessage:    "",
 							StatusCodeString: "",
@@ -1660,13 +1661,21 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 						}
 						missingSpan.Children = append(missingSpan.Children, spanNode)
 						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
+						traceRoots = append(traceRoots, &missingSpan)
 					}
 				}
 			}
 			if !hasParentRelationship {
-				traceRoots = append(traceRoots, spanNode.SpanID)
+				traceRoots = append(traceRoots, spanNode)
 			}
 		}
+
+		sort.Slice(traceRoots, func(i, j int) bool {
+			if traceRoots[i].TimeUnixNano == traceRoots[j].TimeUnixNano {
+				return traceRoots[i].Name < traceRoots[j].Name
+			}
+			return traceRoots[i].TimeUnixNano < traceRoots[j].TimeUnixNano
+		})
 
 		traceCache := model.GetWaterfallSpansForTraceWithMetadataCache{
 			StartTime:                     startTime,
@@ -1685,23 +1694,28 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		}
 	}
 
-	// if there are multiple roots that means we have missing spans. how to handle this case ??
-	if len(traceRoots) > 1 {
-		zap.L().Info(fmt.Sprintf("the trace %v has missing spans", traceID))
-		return nil, nil
-	}
-
 	var preOrderTraversal = []*model.Span{}
 	uncollapsedSpans := req.UncollapsedSpans
 
 	selectedSpanIndex := -1
 	for _, rootSpanID := range traceRoots {
-		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
+		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID.SpanID]; exists {
 			_, _spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, req.SelectedSpanID, uncollapsedSpans, req.IsSelectedSpanIDUnCollapsed)
 			uncollapsedSpans = append(uncollapsedSpans, _spansFromRootToNode...)
-			preOrderTraversal, selectedSpanIndex = traverseTraceAndAddRequiredMetadata(rootNode, uncollapsedSpans, 0, true, false, req.SelectedSpanID)
-			response.RootServiceName = rootNode.ServiceName
-			response.RootServiceEntryPoint = rootNode.Name
+			_preOrderTraversal, _selectedSpanIndex := traverseTraceAndAddRequiredMetadata(rootNode, uncollapsedSpans, 0, true, false, req.SelectedSpanID)
+
+			if _selectedSpanIndex != -1 {
+				selectedSpanIndex = _selectedSpanIndex + len(preOrderTraversal)
+			}
+			preOrderTraversal = append(preOrderTraversal, _preOrderTraversal...)
+
+			if response.RootServiceName == "" {
+				response.RootServiceName = rootNode.ServiceName
+			}
+
+			if response.RootServiceEntryPoint != "" {
+				response.RootServiceEntryPoint = rootNode.Name
+			}
 		}
 	}
 
@@ -1719,7 +1733,12 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		startIndex = 0
 	}
 	if endIndex > len(preOrderTraversal) {
+		startIndex = startIndex - (endIndex - len(preOrderTraversal))
 		endIndex = len(preOrderTraversal)
+	}
+
+	if startIndex < 0 {
+		startIndex = 0
 	}
 	selectedSpans := preOrderTraversal[startIndex:endIndex]
 
@@ -1739,7 +1758,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
 	// map[traceID][level]span
 	var traceIdLevelledFlamegraph = map[string]map[int64][]*model.FlamegraphSpan{}
-	var traceRoots []string
+	var traceRoots []*model.FlamegraphSpan
 	var useCache bool = true
 
 	// get the trace tree from cache!
@@ -1851,32 +1870,35 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 							TraceID:      spanNode.TraceID,
 							ServiceName:  "",
 							Name:         "Missing Span",
-							DurationNano: 0,
+							TimeUnixNano: spanNode.TimeUnixNano,
+							DurationNano: spanNode.DurationNano,
 							HasError:     false,
 							Children:     make([]*model.FlamegraphSpan, 0),
 						}
 						missingSpan.Children = append(missingSpan.Children, spanNode)
 						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
+						traceRoots = append(traceRoots, &missingSpan)
 					}
 				}
 			}
 			if !hasParentRelationship {
-				traceRoots = append(traceRoots, spanNode.SpanID)
+				traceRoots = append(traceRoots, spanNode)
 			}
 		}
 
-		// if there are multiple roots that means we have missing spans. how to handle this case ??
-		if len(traceRoots) > 1 {
-			zap.L().Info(fmt.Sprintf("the trace %v has missing spans", traceID))
-			return nil, nil
-		}
+		sort.Slice(traceRoots, func(i, j int) bool {
+			if traceRoots[i].TimeUnixNano == traceRoots[j].TimeUnixNano {
+				return traceRoots[i].Name < traceRoots[j].Name
+			}
+			return traceRoots[i].TimeUnixNano < traceRoots[j].TimeUnixNano
+		})
 
 		var bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
 		for _, rootSpanID := range traceRoots {
-			if rootNode, exists := spanIdToSpanNodeMap[rootSpanID]; exists {
+			if rootNode, exists := spanIdToSpanNodeMap[rootSpanID.SpanID]; exists {
 				bfsMapForTrace = map[int64][]*model.FlamegraphSpan{}
 				bfsTraversalForTrace(rootNode, 0, &bfsMapForTrace)
-				traceIdLevelledFlamegraph[rootSpanID] = bfsMapForTrace
+				traceIdLevelledFlamegraph[rootSpanID.SpanID] = bfsMapForTrace
 			}
 		}
 
@@ -1896,39 +1918,44 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 	selectedSpans := [][]*model.FlamegraphSpan{}
 	for _, trace := range traceRoots {
-		keys := make([]int64, 0, len(traceIdLevelledFlamegraph[trace]))
-		for key := range traceIdLevelledFlamegraph[trace] {
+		keys := make([]int64, 0, len(traceIdLevelledFlamegraph[trace.SpanID]))
+		for key := range traceIdLevelledFlamegraph[trace.SpanID] {
 			keys = append(keys, key)
 		}
 		sort.Slice(keys, func(i, j int) bool {
 			return keys[i] < keys[j]
 		})
 
-		var selectedLevel int64 = 0
-		if req.SelectedSpanID != "" {
-			selectedLevel = findLevelForSelectedSpan(traceIdLevelledFlamegraph[trace], req.SelectedSpanID)
-		}
-
-		lowerLimit := selectedLevel - 20
-		upperLimit := selectedLevel + 30
-
-		if lowerLimit < 0 {
-			upperLimit = upperLimit - lowerLimit
-			lowerLimit = 0
-		}
-
-		if upperLimit > int64(len(keys)) {
-			upperLimit = int64(len(keys))
-		}
-
 		for _, level := range keys {
-			if ok, exists := traceIdLevelledFlamegraph[trace][level]; exists && (level >= lowerLimit) && (level < upperLimit) {
+			if ok, exists := traceIdLevelledFlamegraph[trace.SpanID][level]; exists {
 				selectedSpans = append(selectedSpans, ok)
 			}
 		}
 	}
 
-	trace.Spans = selectedSpans
+	var selectedIndex int64 = 0
+	if req.SelectedSpanID != "" {
+		selectedIndex = findIndexForSelectedSpan(selectedSpans, req.SelectedSpanID)
+	}
+
+	lowerLimit := selectedIndex - 20
+	upperLimit := selectedIndex + 30
+
+	if lowerLimit < 0 {
+		upperLimit = upperLimit - lowerLimit
+		lowerLimit = 0
+	}
+
+	if upperLimit > int64(len(selectedSpans)) {
+		lowerLimit = lowerLimit - (upperLimit - int64(len(selectedSpans)))
+		upperLimit = int64(len(selectedSpans))
+	}
+
+	if lowerLimit < 0 {
+		lowerLimit = 0
+	}
+
+	trace.Spans = selectedSpans[lowerLimit:upperLimit]
 	trace.StartTimestampMillis = startTime
 	trace.EndTimestampMillis = endTime
 	return trace, nil
