@@ -12,6 +12,12 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import EntityEvents from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityEvents';
+import EntityLogs from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityLogs';
+import EntityMetrics from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityMetrics';
+import EntityTraces from 'container/InfraMonitoringK8s/EntityDetailsUtils/EntityTraces';
+import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
 	CustomTimeType,
 	Time,
@@ -42,12 +48,11 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS } from './constants';
-import StatefulSetEvents from './Events';
-import StatefulSetLogs from './Logs';
-import StatefulSetMetrics from './Metrics';
+import {
+	getStatefulSetMetricsQueryPayload,
+	statefulSetWidgetInfo,
+} from './constants';
 import { StatefulSetDetailsProps } from './StatefulSetDetails.interfaces';
-import StatefulSetTraces from './Traces';
 
 function StatefulSetDetails({
 	statefulSet,
@@ -92,7 +97,7 @@ function StatefulSetDetails({
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_statefulSet_name--string--resource--false',
+						id: 'k8s_statefulset_name--string--resource--false',
 					},
 					op: '=',
 					value: statefulSet?.meta.k8s_statefulset_name || '',
@@ -105,7 +110,7 @@ function StatefulSetDetails({
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_statefulSet_name--string--resource--false',
+						id: 'k8s_namespace_name--string--resource--false',
 					},
 					op: '=',
 					value: statefulSet?.meta.k8s_namespace_name || '',
@@ -523,42 +528,55 @@ function StatefulSetDetails({
 						)}
 					</div>
 					{selectedView === VIEW_TYPES.METRICS && (
-						<StatefulSetMetrics
+						<EntityMetrics
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							statefulSet={statefulSet}
+							entity={statefulSet}
+							entityWidgetInfo={statefulSetWidgetInfo}
+							getEntityQueryPayload={getStatefulSetMetricsQueryPayload}
+							category={K8sCategory.STATEFULSETS}
+							queryKey="statefulsetMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
-						<StatefulSetLogs
+						<EntityLogs
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							queryKey="statefulsetLogs"
+							category={K8sCategory.STATEFULSETS}
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_STATEFUL_SET_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<StatefulSetTraces
+						<EntityTraces
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="statefulsetTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<StatefulSetEvents
+						<EntityEvents
 							timeRange={modalTimeRange}
 							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.STATEFULSETS}
+							queryKey="statefulsetEvents"
 						/>
 					)}
 				</>
