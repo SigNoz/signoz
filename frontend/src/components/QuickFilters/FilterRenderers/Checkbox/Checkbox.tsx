@@ -4,9 +4,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Checkbox.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
-import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
 import cx from 'classnames';
 import { IQuickFiltersConfig } from 'components/QuickFilters/QuickFilters';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -16,12 +14,14 @@ import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues'
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isEmpty, isEqual, isFunction } from 'lodash-es';
-import { ArrowUpRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
+
+import QuickFilterEmptyState from './QuickFilterEmptyState';
 
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'nin'];
@@ -41,17 +41,6 @@ interface ICheckboxProps {
 	isInfraMonitoring: boolean;
 	onFilterChange?: (query: Query) => void;
 }
-
-const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
-	severity_text: 'severity-text',
-	'deployment.environment': 'environment',
-	'service.name': 'service-name',
-	'host.name': 'hostname',
-	'k8s.cluster.name': 'k8s-cluster-name',
-	'k8s.deployment.name': 'k8s-deployment-name',
-	'k8s.namespace.name': 'k8s-namespace-name',
-	'k8s.pod.name': 'k8s-pod-name',
-};
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
@@ -425,15 +414,6 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		}
 	};
 
-	const handleLearnMoreClick = (): void => {
-		const section = QUICK_FILTER_DOC_PATHS[filter.attributeKey.key];
-
-		window.open(
-			`https://signoz.io/docs/logs-management/features/logs-quick-filters#${section}`,
-			'_blank',
-		);
-	};
-
 	return (
 		<div className="checkbox-filter">
 			<section
@@ -477,23 +457,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 			)}
 			{isOpen && !isLoading ? (
 				!isInfraMonitoring && !attributeValues.length ? (
-					<section className="go-to-docs">
-						<div className="go-to-docs__container">
-							<div className="go-to-docs__container-icon">
-								<EmptyQuickFilterIcon />
-							</div>
-							<div className="go-to-docs__container-message">
-								{`You'd need to parse out this attribute to start getting them as a fast
-								filter.`}
-							</div>
-						</div>
-						<div className="go-to-docs__button" onClick={handleLearnMoreClick}>
-							<Typography.Text className="go-to-docs__button-text">
-								Learn more
-							</Typography.Text>
-							<ArrowUpRight size={14} color={Color.BG_ROBIN_400} />
-						</div>
-					</section>
+					<QuickFilterEmptyState attributeKey={filter.attributeKey.key} />
 				) : (
 					<>
 						<section className="search">

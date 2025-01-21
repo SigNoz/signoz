@@ -152,7 +152,8 @@
 			align-items: center;
 			gap: 4px;
 			cursor: pointer;
-			margin-bottom: 4px;
+			margin: 0 0 4px;
+			padding: 0;
 			&-text {
 				color: var(--bg-robin-400);
 				font-family: Inter;
