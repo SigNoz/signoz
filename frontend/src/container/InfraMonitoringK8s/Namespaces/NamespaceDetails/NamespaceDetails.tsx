@@ -1,12 +1,11 @@
 /* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
-import '../../EntityDetailsUtils/entityDetails.styles.scss';
+import './NamespaceDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
+import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -14,7 +13,6 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
 import {
@@ -47,30 +45,30 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import PodEvents from '../../EntityDetailsUtils/EntityEvents';
-import PodLogs from '../../EntityDetailsUtils/EntityLogs';
-import PodMetrics from '../../EntityDetailsUtils/EntityMetrics';
-import PodTraces from '../../EntityDetailsUtils/EntityTraces';
-import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
-import { PodDetailProps } from './PodDetail.interfaces';
+import NamespaceEvents from '../../EntityDetailsUtils/EntityEvents';
+import NamespaceLogs from '../../EntityDetailsUtils/EntityLogs';
+import NamespaceMetrics from '../../EntityDetailsUtils/EntityMetrics';
+import NamespaceTraces from '../../EntityDetailsUtils/EntityTraces';
+import {
+	getNamespaceMetricsQueryPayload,
+	namespaceWidgetInfo,
+} from './constants';
+import { NamespaceDetailsProps } from './NamespaceDetails.interfaces';
 
-const TimeRangeOffset = 1000000000;
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function PodDetails({
-	pod,
+function NamespaceDetails({
+	namespace,
 	onClose,
 	isModalTimeSelection,
-}: PodDetailProps): JSX.Element {
+}: NamespaceDetailsProps): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
+	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
 	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
+	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
 		maxTime,
 	]);
 
@@ -95,32 +93,19 @@ function PodDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_POD_NAME,
-						dataType: DataTypes.String,
-						type: 'resource',
-						isColumn: false,
-						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
-					},
-					op: '=',
-					value: pod?.meta.k8s_pod_name || '',
-				},
-				{
-					id: uuidv4(),
-					key: {
 						key: QUERY_KEYS.K8S_NAMESPACE_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
+						id: 'k8s_namespace_name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_namespace_name || '',
+					value: namespace?.namespaceName || '',
 				},
 			],
 		}),
-		[pod?.meta.k8s_namespace_name, pod?.meta.k8s_pod_name],
+		[namespace?.namespaceName],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -138,7 +123,7 @@ function PodDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'Pod',
+					value: 'Namespace',
 				},
 				{
 					id: uuidv4(),
@@ -151,11 +136,11 @@ function PodDetails({
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_pod_name || '',
+					value: namespace?.namespaceName || '',
 				},
 			],
 		}),
-		[pod?.meta.k8s_pod_name],
+		[namespace?.namespaceName],
 	);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
@@ -171,8 +156,8 @@ function PodDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
-			pod: pod?.podUID,
+		logEvent('Infra Monitoring: Namespaces list details page visited', {
+			namespace: namespace?.namespaceName,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -190,8 +175,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
 	}, [selectedTime, minTime, maxTime]);
@@ -213,13 +198,13 @@ function PodDetails({
 				const { maxTime, minTime } = GetMinMax(interval);
 
 				setModalTimeRange({
-					startTime: Math.floor(minTime / TimeRangeOffset),
-					endTime: Math.floor(maxTime / TimeRangeOffset),
+					startTime: Math.floor(minTime / 1000000000),
+					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
 
-			logEvent('Infra Monitoring: Pods list details time updated', {
-				pod: pod?.podUID,
+			logEvent('Infra Monitoring: Namespaces list details time updated', {
+				namespace: namespace?.namespaceName,
 				interval,
 			});
 		},
@@ -231,31 +216,27 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[
-						QUERY_KEYS.K8S_POD_NAME,
-						QUERY_KEYS.K8S_CLUSTER_NAME,
-						QUERY_KEYS.K8S_NAMESPACE_NAME,
-					].includes(item.key?.key ?? ''),
+					[QUERY_KEYS.K8S_NAMESPACE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
 					(item) =>
-						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details logs filters applied', {
-					pod: pod?.podUID,
+				logEvent('Infra Monitoring: Namespaces list details logs filters applied', {
+					namespace: namespace?.namespaceName,
 				});
 
 				return {
 					op: 'AND',
-					items: filterDuplicateFilters(
-						[
-							...primaryFilters,
-							...newFilters,
-							...(paginationFilter ? [paginationFilter] : []),
-						].filter((item): item is TagFilterItem => item !== undefined),
-					),
+					items: [
+						...primaryFilters,
+						...newFilters,
+						...(paginationFilter ? [paginationFilter] : []),
+					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
 		},
@@ -267,27 +248,26 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[
-						QUERY_KEYS.K8S_POD_NAME,
-						QUERY_KEYS.K8S_CLUSTER_NAME,
-						QUERY_KEYS.K8S_NAMESPACE_NAME,
-					].includes(item.key?.key ?? ''),
+					[QUERY_KEYS.K8S_NAMESPACE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 
-				logEvent('Infra Monitoring: Pods list details traces filters applied', {
-					pod: pod?.podUID,
-				});
+				logEvent(
+					'Infra Monitoring: Namespaces list details traces filters applied',
+					{
+						namespace: namespace?.namespaceName,
+					},
+				);
 
 				return {
 					op: 'AND',
-					items: filterDuplicateFilters(
-						[
-							...primaryFilters,
-							...value.items.filter(
-								(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
-							),
-						].filter((item): item is TagFilterItem => item !== undefined),
-					),
+					items: [
+						...primaryFilters,
+						...value.items.filter(
+							(item) => item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
+						),
+					].filter((item): item is TagFilterItem => item !== undefined),
 				};
 			});
 		},
@@ -298,22 +278,25 @@ function PodDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setEventsFilters((prevFilters) => {
-				const podKindFilter = prevFilters.items.find(
+				const namespaceKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const podNameFilter = prevFilters.items.find(
+				const namespaceNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details events filters applied', {
-					pod: pod?.podUID,
-				});
+				logEvent(
+					'Infra Monitoring: Namespaces list details events filters applied',
+					{
+						namespace: namespace?.namespaceName,
+					},
+				);
 
 				return {
 					op: 'AND',
 					items: [
-						podKindFilter,
-						podNameFilter,
+						namespaceKindFilter,
+						namespaceNameFilter,
 						...value.items.filter(
 							(item) =>
 								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
@@ -336,8 +319,8 @@ function PodDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Pods list details explore clicked', {
-			pod: pod?.podUID,
+		logEvent('Infra Monitoring: Namespaces list details explore clicked', {
+			namespace: namespace?.namespaceName,
 			view: selectedView,
 		});
 
@@ -400,8 +383,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
 		setSelectedView(VIEW_TYPES.METRICS);
@@ -415,13 +398,13 @@ function PodDetails({
 				<>
 					<Divider type="vertical" />
 					<Typography.Text className="title">
-						{pod?.meta.k8s_pod_name}
+						{namespace?.namespaceName}
 					</Typography.Text>
 				</>
 			}
 			placement="right"
 			onClose={handleClose}
-			open={!!pod}
+			open={!!namespace}
 			style={{
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
@@ -430,7 +413,7 @@ function PodDetails({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			{pod && (
+			{namespace && (
 				<>
 					<div className="entity-detail-drawer__entity">
 						<div className="entity-details-grid">
@@ -439,7 +422,7 @@ function PodDetails({
 									type="secondary"
 									className="entity-details-metadata-label"
 								>
-									NAMESPACE
+									Namespace Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
@@ -447,30 +430,16 @@ function PodDetails({
 								>
 									Cluster Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									Node
-								</Typography.Text>
 							</div>
-
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_namespace_name}>
-										{pod.meta.k8s_namespace_name}
+									<Tooltip title={namespace.namespaceName}>
+										{namespace.namespaceName}
 									</Tooltip>
 								</Typography.Text>
-
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_cluster_name}>
-										{pod.meta.k8s_cluster_name}
-									</Tooltip>
-								</Typography.Text>
-
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_node_name}>
-										{pod.meta.k8s_node_name}
+									<Tooltip title="Cluster name">
+										{namespace.meta.k8s_cluster_name}
 									</Tooltip>
 								</Typography.Text>
 							</div>
@@ -539,59 +508,53 @@ function PodDetails({
 							/>
 						)}
 					</div>
-
 					{selectedView === VIEW_TYPES.METRICS && (
-						<PodMetrics<K8sPodsData>
-							entity={pod}
-							selectedInterval={selectedInterval}
+						<NamespaceMetrics<K8sNamespacesData>
 							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
 							isModalTimeSelection={isModalTimeSelection}
-							entityWidgetInfo={podWidgetInfo}
-							getEntityQueryPayload={getPodMetricsQueryPayload}
-							category={K8sCategory.PODS}
-							queryKey="podMetrics"
+							handleTimeChange={handleTimeChange}
+							selectedInterval={selectedInterval}
+							entity={namespace}
+							entityWidgetInfo={namespaceWidgetInfo}
+							getEntityQueryPayload={getNamespaceMetricsQueryPayload}
+							category={K8sCategory.NAMESPACES}
+							queryKey="namespaceMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
-						<PodLogs
+						<NamespaceLogs
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
-							queryKeyFilters={[
-								QUERY_KEYS.K8S_POD_NAME,
-								QUERY_KEYS.K8S_CLUSTER_NAME,
-								QUERY_KEYS.K8S_NAMESPACE_NAME,
-							]}
-							queryKey="podLogs"
-							category={K8sCategory.PODS}
+							queryKey="namespaceLogs"
+							category={K8sCategory.NAMESPACES}
+							queryKeyFilters={[QUERY_KEYS.K8S_NAMESPACE_NAME]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<PodTraces
+						<NamespaceTraces
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
-							queryKey="podTraces"
+							queryKey="namespaceTraces"
 						/>
 					)}
-
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<PodEvents
+						<NamespaceEvents
 							timeRange={modalTimeRange}
-							isModalTimeSelection={isModalTimeSelection}
-							handleTimeChange={handleTimeChange}
 							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}
+							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							category={K8sCategory.PODS}
-							queryKey="podEvents"
+							category={K8sCategory.NAMESPACES}
+							queryKey="namespaceEvents"
 						/>
 					)}
 				</>
@@ -600,4 +563,4 @@ function PodDetails({
 	);
 }
 
-export default PodDetails;
+export default NamespaceDetails;

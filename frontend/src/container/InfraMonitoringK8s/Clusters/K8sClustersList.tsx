@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import '../InfraMonitoringK8s.styles.scss';
-import './K8sNodesList.styles.scss';
+import './K8sClustersList.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -14,8 +14,8 @@ import {
 } from 'antd';
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
-import { K8sNodesListPayload } from 'api/infraMonitoring/getK8sNodesList';
-import { useGetK8sNodesList } from 'hooks/infraMonitoring/useGetK8sNodesList';
+import { K8sClustersListPayload } from 'api/infraMonitoring/getK8sClustersList';
+import { useGetK8sClustersList } from 'hooks/infraMonitoring/useGetK8sClustersList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -32,17 +32,17 @@ import {
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
-import NodeDetails from './NodeDetails';
+import ClusterDetails from './ClusterDetails';
 import {
 	defaultAddedColumns,
 	formatDataForTable,
-	getK8sNodesListColumns,
-	getK8sNodesListQuery,
-	K8sNodesRowData,
+	getK8sClustersListColumns,
+	getK8sClustersListQuery,
+	K8sClustersRowData,
 } from './utils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function K8sNodesList({
+function K8sClustersList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
 	quickFiltersLastUpdated,
@@ -64,15 +64,18 @@ function K8sNodesList({
 		order: 'asc' | 'desc';
 	} | null>({ columnName: 'cpu', order: 'desc' });
 
-	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
+	const [selectedClusterName, setselectedClusterName] = useState<string | null>(
+		null,
+	);
 
 	const pageSize = 10;
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
-	const [selectedRowData, setSelectedRowData] = useState<K8sNodesRowData | null>(
-		null,
-	);
+	const [
+		selectedRowData,
+		setSelectedRowData,
+	] = useState<K8sClustersRowData | null>(null);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -95,7 +98,7 @@ function K8sNodesList({
 	}, [quickFiltersLastUpdated]);
 
 	const createFiltersForSelectedRowData = (
-		selectedRowData: K8sNodesRowData,
+		selectedRowData: K8sClustersRowData,
 		groupBy: IBuilderQuery['groupBy'],
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
@@ -125,7 +128,7 @@ function K8sNodesList({
 	const fetchGroupedByRowDataQuery = useMemo(() => {
 		if (!selectedRowData) return null;
 
-		const baseQuery = getK8sNodesListQuery();
+		const baseQuery = getK8sClustersListQuery();
 
 		const filters = createFiltersForSelectedRowData(selectedRowData, groupBy);
 
@@ -147,10 +150,13 @@ function K8sNodesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sNodesList(fetchGroupedByRowDataQuery as K8sNodesListPayload, {
-		queryKey: ['nodeList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sClustersList(
+		fetchGroupedByRowDataQuery as K8sClustersListPayload,
+		{
+			queryKey: ['clusterList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -171,7 +177,7 @@ function K8sNodesList({
 	);
 
 	const query = useMemo(() => {
-		const baseQuery = getK8sNodesListQuery();
+		const baseQuery = getK8sClustersListQuery();
 		const queryPayload = {
 			...baseQuery,
 			limit: pageSize,
@@ -187,31 +193,31 @@ function K8sNodesList({
 		return queryPayload;
 	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
 
-	const formattedGroupedByNodesData = useMemo(
+	const formattedGroupedByClustersData = useMemo(
 		() =>
 			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
 		[groupedByRowData, groupBy],
 	);
 
-	const { data, isFetching, isLoading, isError } = useGetK8sNodesList(
-		query as K8sNodesListPayload,
+	const { data, isFetching, isLoading, isError } = useGetK8sClustersList(
+		query as K8sClustersListPayload,
 		{
-			queryKey: ['nodeList', query],
+			queryKey: ['clusterList', query],
 			enabled: !!query,
 		},
 	);
 
-	const nodesData = useMemo(() => data?.payload?.data?.records || [], [data]);
+	const clustersData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
 
-	const formattedNodesData = useMemo(
-		() => formatDataForTable(nodesData, groupBy),
-		[nodesData, groupBy],
+	const formattedClustersData = useMemo(
+		() => formatDataForTable(clustersData, groupBy),
+		[clustersData, groupBy],
 	);
 
-	const columns = useMemo(() => getK8sNodesListColumns(groupBy), [groupBy]);
+	const columns = useMemo(() => getK8sClustersListColumns(groupBy), [groupBy]);
 
-	const handleGroupByRowClick = (record: K8sNodesRowData): void => {
+	const handleGroupByRowClick = (record: K8sClustersRowData): void => {
 		setSelectedRowData(record);
 
 		if (expandedRowKeys.includes(record.key)) {
@@ -227,11 +233,13 @@ function K8sNodesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleTableChange: TableProps<K8sNodesRowData>['onChange'] = useCallback(
+	const handleTableChange: TableProps<K8sClustersRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
 			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter: SorterResult<K8sNodesRowData> | SorterResult<K8sNodesRowData>[],
+			sorter:
+				| SorterResult<K8sClustersRowData>
+				| SorterResult<K8sClustersRowData>[],
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
@@ -271,25 +279,29 @@ function K8sNodesList({
 		logEvent('Infra Monitoring: K8s list page visited', {});
 	}, []);
 
-	const selectedNodeData = useMemo(() => {
-		if (!selectedNodeUID) return null;
-		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
-	}, [selectedNodeUID, nodesData]);
+	const selectedClusterData = useMemo(() => {
+		if (!selectedClusterName) return null;
+		return (
+			clustersData.find(
+				(cluster) => cluster.meta.k8s_cluster_name === selectedClusterName,
+			) || null
+		);
+	}, [selectedClusterName, clustersData]);
 
-	const handleRowClick = (record: K8sNodesRowData): void => {
+	const handleRowClick = (record: K8sClustersRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedNodeUID(record.nodeUID);
+			setselectedClusterName(record.clusterUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s node list item clicked', {
-			nodeUID: record.nodeUID,
+		logEvent('Infra Monitoring: K8s cluster list item clicked', {
+			clusterName: record.clusterName,
 		});
 	};
 
-	const nestedColumns = useMemo(() => getK8sNodesListColumns([]), []);
+	const nestedColumns = useMemo(() => getK8sClustersListColumns([]), []);
 
 	const isGroupedByAttribute = groupBy.length > 0;
 
@@ -316,9 +328,8 @@ function K8sNodesList({
 			) : (
 				<div className="expanded-table">
 					<Table
-						className="expanded-table-view"
-						columns={nestedColumns as ColumnType<K8sNodesRowData>[]}
-						dataSource={formattedGroupedByNodesData}
+						columns={nestedColumns as ColumnType<K8sClustersRowData>[]}
+						dataSource={formattedGroupedByClustersData}
 						pagination={false}
 						scroll={{ x: true }}
 						tableLayout="fixed"
@@ -355,10 +366,10 @@ function K8sNodesList({
 	}: {
 		expanded: boolean;
 		onExpand: (
-			record: K8sNodesRowData,
+			record: K8sClustersRowData,
 			e: React.MouseEvent<HTMLButtonElement>,
 		) => void;
-		record: K8sNodesRowData;
+		record: K8sClustersRowData;
 	}): JSX.Element | null => {
 		if (!isGroupedByAttribute) {
 			return null;
@@ -387,8 +398,8 @@ function K8sNodesList({
 		);
 	};
 
-	const handleCloseNodeDetail = (): void => {
-		setselectedNodeUID(null);
+	const handleCloseClusterDetail = (): void => {
+		setselectedClusterName(null);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -406,6 +417,7 @@ function K8sNodesList({
 					groupBy.push(key);
 				}
 			}
+
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
 			setGroupBy(groupBy);
@@ -441,8 +453,8 @@ function K8sNodesList({
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
-				className="k8s-list-table nodes-list-table"
-				dataSource={isFetching || isLoading ? [] : formattedNodesData}
+				className="k8s-list-table clusters-list-table"
+				dataSource={isFetching || isLoading ? [] : formattedClustersData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -487,13 +499,13 @@ function K8sNodesList({
 				}}
 			/>
 
-			<NodeDetails
-				node={selectedNodeData}
+			<ClusterDetails
+				cluster={selectedClusterData}
 				isModalTimeSelection
-				onClose={handleCloseNodeDetail}
+				onClose={handleCloseClusterDetail}
 			/>
 		</div>
 	);
 }
 
-export default K8sNodesList;
+export default K8sClustersList;

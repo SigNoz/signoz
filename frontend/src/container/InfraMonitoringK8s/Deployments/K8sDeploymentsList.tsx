@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import '../InfraMonitoringK8s.styles.scss';
-import './K8sNodesList.styles.scss';
+import './K8sDeploymentsList.styles.scss';
 
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -14,8 +14,9 @@ import {
 } from 'antd';
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
-import { K8sNodesListPayload } from 'api/infraMonitoring/getK8sNodesList';
-import { useGetK8sNodesList } from 'hooks/infraMonitoring/useGetK8sNodesList';
+import { K8sDeploymentsListPayload } from 'api/infraMonitoring/getK8sDeploymentsList';
+import classNames from 'classnames';
+import { useGetK8sDeploymentsList } from 'hooks/infraMonitoring/useGetK8sDeploymentsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -32,17 +33,17 @@ import {
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
-import NodeDetails from './NodeDetails';
+import DeploymentDetails from './DeploymentDetails';
 import {
 	defaultAddedColumns,
 	formatDataForTable,
-	getK8sNodesListColumns,
-	getK8sNodesListQuery,
-	K8sNodesRowData,
+	getK8sDeploymentsListColumns,
+	getK8sDeploymentsListQuery,
+	K8sDeploymentsRowData,
 } from './utils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function K8sNodesList({
+function K8sDeploymentsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
 	quickFiltersLastUpdated,
@@ -62,17 +63,20 @@ function K8sNodesList({
 	const [orderBy, setOrderBy] = useState<{
 		columnName: string;
 		order: 'asc' | 'desc';
-	} | null>({ columnName: 'cpu', order: 'desc' });
+	} | null>(null);
 
-	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
+	const [selectedDeploymentUID, setselectedDeploymentUID] = useState<
+		string | null
+	>(null);
 
 	const pageSize = 10;
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
-	const [selectedRowData, setSelectedRowData] = useState<K8sNodesRowData | null>(
-		null,
-	);
+	const [
+		selectedRowData,
+		setSelectedRowData,
+	] = useState<K8sDeploymentsRowData | null>(null);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -95,7 +99,7 @@ function K8sNodesList({
 	}, [quickFiltersLastUpdated]);
 
 	const createFiltersForSelectedRowData = (
-		selectedRowData: K8sNodesRowData,
+		selectedRowData: K8sDeploymentsRowData,
 		groupBy: IBuilderQuery['groupBy'],
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
@@ -125,7 +129,7 @@ function K8sNodesList({
 	const fetchGroupedByRowDataQuery = useMemo(() => {
 		if (!selectedRowData) return null;
 
-		const baseQuery = getK8sNodesListQuery();
+		const baseQuery = getK8sDeploymentsListQuery();
 
 		const filters = createFiltersForSelectedRowData(selectedRowData, groupBy);
 
@@ -147,10 +151,13 @@ function K8sNodesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sNodesList(fetchGroupedByRowDataQuery as K8sNodesListPayload, {
-		queryKey: ['nodeList', fetchGroupedByRowDataQuery],
-		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-	});
+	} = useGetK8sDeploymentsList(
+		fetchGroupedByRowDataQuery as K8sDeploymentsListPayload,
+		{
+			queryKey: ['deploymentList', fetchGroupedByRowDataQuery],
+			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+		},
+	);
 
 	const {
 		data: groupByFiltersData,
@@ -171,7 +178,7 @@ function K8sNodesList({
 	);
 
 	const query = useMemo(() => {
-		const baseQuery = getK8sNodesListQuery();
+		const baseQuery = getK8sDeploymentsListQuery();
 		const queryPayload = {
 			...baseQuery,
 			limit: pageSize,
@@ -187,31 +194,35 @@ function K8sNodesList({
 		return queryPayload;
 	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
 
-	const formattedGroupedByNodesData = useMemo(
+	const formattedGroupedByDeploymentsData = useMemo(
 		() =>
 			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
 		[groupedByRowData, groupBy],
 	);
 
-	const { data, isFetching, isLoading, isError } = useGetK8sNodesList(
-		query as K8sNodesListPayload,
+	const { data, isFetching, isLoading, isError } = useGetK8sDeploymentsList(
+		query as K8sDeploymentsListPayload,
 		{
-			queryKey: ['nodeList', query],
+			queryKey: ['deploymentList', query],
 			enabled: !!query,
 		},
 	);
 
-	const nodesData = useMemo(() => data?.payload?.data?.records || [], [data]);
+	const deploymentsData = useMemo(() => data?.payload?.data?.records || [], [
+		data,
+	]);
 	const totalCount = data?.payload?.data?.total || 0;
 
-	const formattedNodesData = useMemo(
-		() => formatDataForTable(nodesData, groupBy),
-		[nodesData, groupBy],
+	const formattedDeploymentsData = useMemo(
+		() => formatDataForTable(deploymentsData, groupBy),
+		[deploymentsData, groupBy],
 	);
 
-	const columns = useMemo(() => getK8sNodesListColumns(groupBy), [groupBy]);
+	const columns = useMemo(() => getK8sDeploymentsListColumns(groupBy), [
+		groupBy,
+	]);
 
-	const handleGroupByRowClick = (record: K8sNodesRowData): void => {
+	const handleGroupByRowClick = (record: K8sDeploymentsRowData): void => {
 		setSelectedRowData(record);
 
 		if (expandedRowKeys.includes(record.key)) {
@@ -227,11 +238,13 @@ function K8sNodesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleTableChange: TableProps<K8sNodesRowData>['onChange'] = useCallback(
+	const handleTableChange: TableProps<K8sDeploymentsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
 			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter: SorterResult<K8sNodesRowData> | SorterResult<K8sNodesRowData>[],
+			sorter:
+				| SorterResult<K8sDeploymentsRowData>
+				| SorterResult<K8sDeploymentsRowData>[],
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
@@ -271,25 +284,29 @@ function K8sNodesList({
 		logEvent('Infra Monitoring: K8s list page visited', {});
 	}, []);
 
-	const selectedNodeData = useMemo(() => {
-		if (!selectedNodeUID) return null;
-		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
-	}, [selectedNodeUID, nodesData]);
+	const selectedDeploymentData = useMemo(() => {
+		if (!selectedDeploymentUID) return null;
+		return (
+			deploymentsData.find(
+				(deployment) => deployment.deploymentName === selectedDeploymentUID,
+			) || null
+		);
+	}, [selectedDeploymentUID, deploymentsData]);
 
-	const handleRowClick = (record: K8sNodesRowData): void => {
+	const handleRowClick = (record: K8sDeploymentsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedNodeUID(record.nodeUID);
+			setselectedDeploymentUID(record.deploymentUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s node list item clicked', {
-			nodeUID: record.nodeUID,
+		logEvent('Infra Monitoring: K8s deployment list item clicked', {
+			deploymentUID: record.deploymentName,
 		});
 	};
 
-	const nestedColumns = useMemo(() => getK8sNodesListColumns([]), []);
+	const nestedColumns = useMemo(() => getK8sDeploymentsListColumns([]), []);
 
 	const isGroupedByAttribute = groupBy.length > 0;
 
@@ -316,9 +333,8 @@ function K8sNodesList({
 			) : (
 				<div className="expanded-table">
 					<Table
-						className="expanded-table-view"
-						columns={nestedColumns as ColumnType<K8sNodesRowData>[]}
-						dataSource={formattedGroupedByNodesData}
+						columns={nestedColumns as ColumnType<K8sDeploymentsRowData>[]}
+						dataSource={formattedGroupedByDeploymentsData}
 						pagination={false}
 						scroll={{ x: true }}
 						tableLayout="fixed"
@@ -355,10 +371,10 @@ function K8sNodesList({
 	}: {
 		expanded: boolean;
 		onExpand: (
-			record: K8sNodesRowData,
+			record: K8sDeploymentsRowData,
 			e: React.MouseEvent<HTMLButtonElement>,
 		) => void;
-		record: K8sNodesRowData;
+		record: K8sDeploymentsRowData;
 	}): JSX.Element | null => {
 		if (!isGroupedByAttribute) {
 			return null;
@@ -387,8 +403,8 @@ function K8sNodesList({
 		);
 	};
 
-	const handleCloseNodeDetail = (): void => {
-		setselectedNodeUID(null);
+	const handleCloseDeploymentDetail = (): void => {
+		setselectedDeploymentUID(null);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -406,6 +422,7 @@ function K8sNodesList({
 					groupBy.push(key);
 				}
 			}
+
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
 			setGroupBy(groupBy);
@@ -441,8 +458,10 @@ function K8sNodesList({
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
-				className="k8s-list-table nodes-list-table"
-				dataSource={isFetching || isLoading ? [] : formattedNodesData}
+				className={classNames('k8s-list-table', 'deployments-list-table', {
+					'expanded-deployments-list-table': isGroupedByAttribute,
+				})}
+				dataSource={isFetching || isLoading ? [] : formattedDeploymentsData}
 				columns={columns}
 				pagination={{
 					current: currentPage,
@@ -487,13 +506,13 @@ function K8sNodesList({
 				}}
 			/>
 
-			<NodeDetails
-				node={selectedNodeData}
+			<DeploymentDetails
+				deployment={selectedDeploymentData}
 				isModalTimeSelection
-				onClose={handleCloseNodeDetail}
+				onClose={handleCloseDeploymentDetail}
 			/>
 		</div>
 	);
 }
 
-export default K8sNodesList;
+export default K8sDeploymentsList;

@@ -1,12 +1,11 @@
 /* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
 import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
+import { K8sDeploymentsData } from 'api/infraMonitoring/getK8sDeploymentsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { QueryParams } from 'constants/query';
 import {
@@ -47,30 +46,30 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import PodEvents from '../../EntityDetailsUtils/EntityEvents';
-import PodLogs from '../../EntityDetailsUtils/EntityLogs';
-import PodMetrics from '../../EntityDetailsUtils/EntityMetrics';
-import PodTraces from '../../EntityDetailsUtils/EntityTraces';
-import { getPodMetricsQueryPayload, podWidgetInfo } from './constants';
-import { PodDetailProps } from './PodDetail.interfaces';
+import DeploymentEvents from '../../EntityDetailsUtils/EntityEvents';
+import DeploymentLogs from '../../EntityDetailsUtils/EntityLogs';
+import DeploymentMetrics from '../../EntityDetailsUtils/EntityMetrics';
+import DeploymentTraces from '../../EntityDetailsUtils/EntityTraces';
+import {
+	deploymentWidgetInfo,
+	getDeploymentMetricsQueryPayload,
+} from './constants';
+import { DeploymentDetailsProps } from './DeploymentDetails.interfaces';
 
-const TimeRangeOffset = 1000000000;
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function PodDetails({
-	pod,
+function DeploymentDetails({
+	deployment,
 	onClose,
 	isModalTimeSelection,
-}: PodDetailProps): JSX.Element {
+}: DeploymentDetailsProps): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
+	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
 	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
+	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
 		maxTime,
 	]);
 
@@ -95,15 +94,15 @@ function PodDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_POD_NAME,
+						key: QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
+						id: 'k8s_deployment_name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_pod_name || '',
+					value: deployment?.meta.k8s_deployment_name || '',
 				},
 				{
 					id: uuidv4(),
@@ -113,14 +112,14 @@ function PodDetails({
 						type: 'resource',
 						isColumn: false,
 						isJSON: false,
-						id: 'k8s_pod_name--string--resource--false',
+						id: 'k8s_deployment_name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_namespace_name || '',
+					value: deployment?.meta.k8s_namespace_name || '',
 				},
 			],
 		}),
-		[pod?.meta.k8s_namespace_name, pod?.meta.k8s_pod_name],
+		[deployment?.meta.k8s_deployment_name, deployment?.meta.k8s_namespace_name],
 	);
 
 	const initialEventsFilters = useMemo(
@@ -138,7 +137,7 @@ function PodDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'Pod',
+					value: 'Deployment',
 				},
 				{
 					id: uuidv4(),
@@ -151,11 +150,11 @@ function PodDetails({
 						id: 'k8s.object.name--string--resource--false',
 					},
 					op: '=',
-					value: pod?.meta.k8s_pod_name || '',
+					value: deployment?.meta.k8s_deployment_name || '',
 				},
 			],
 		}),
-		[pod?.meta.k8s_pod_name],
+		[deployment?.meta.k8s_deployment_name],
 	);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
@@ -171,8 +170,8 @@ function PodDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
-			pod: pod?.podUID,
+		logEvent('Infra Monitoring: Deployments list details page visited', {
+			deployment: deployment?.deploymentName,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -190,8 +189,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
 	}, [selectedTime, minTime, maxTime]);
@@ -213,13 +212,13 @@ function PodDetails({
 				const { maxTime, minTime } = GetMinMax(interval);
 
 				setModalTimeRange({
-					startTime: Math.floor(minTime / TimeRangeOffset),
-					endTime: Math.floor(maxTime / TimeRangeOffset),
+					startTime: Math.floor(minTime / 1000000000),
+					endTime: Math.floor(maxTime / 1000000000),
 				});
 			}
 
-			logEvent('Infra Monitoring: Pods list details time updated', {
-				pod: pod?.podUID,
+			logEvent('Infra Monitoring: Deployments list details time updated', {
+				deployment: deployment?.deploymentName,
 				interval,
 			});
 		},
@@ -231,21 +230,23 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setLogFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[
-						QUERY_KEYS.K8S_POD_NAME,
-						QUERY_KEYS.K8S_CLUSTER_NAME,
-						QUERY_KEYS.K8S_NAMESPACE_NAME,
-					].includes(item.key?.key ?? ''),
+					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
 					(item) =>
-						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
+						item.key?.key !== 'id' &&
+						item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details logs filters applied', {
-					pod: pod?.podUID,
-				});
+				logEvent(
+					'Infra Monitoring: Deployments list details logs filters applied',
+					{
+						deployment: deployment?.deploymentName,
+					},
+				);
 
 				return {
 					op: 'AND',
@@ -267,16 +268,17 @@ function PodDetails({
 		(value: IBuilderQuery['filters']) => {
 			setTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[
-						QUERY_KEYS.K8S_POD_NAME,
-						QUERY_KEYS.K8S_CLUSTER_NAME,
-						QUERY_KEYS.K8S_NAMESPACE_NAME,
-					].includes(item.key?.key ?? ''),
+					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
+						item.key?.key ?? '',
+					),
 				);
 
-				logEvent('Infra Monitoring: Pods list details traces filters applied', {
-					pod: pod?.podUID,
-				});
+				logEvent(
+					'Infra Monitoring: Deployments list details traces filters applied',
+					{
+						deployment: deployment?.deploymentName,
+					},
+				);
 
 				return {
 					op: 'AND',
@@ -284,7 +286,7 @@ function PodDetails({
 						[
 							...primaryFilters,
 							...value.items.filter(
-								(item) => item.key?.key !== QUERY_KEYS.K8S_POD_NAME,
+								(item) => item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 							),
 						].filter((item): item is TagFilterItem => item !== undefined),
 					),
@@ -298,28 +300,33 @@ function PodDetails({
 	const handleChangeEventsFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setEventsFilters((prevFilters) => {
-				const podKindFilter = prevFilters.items.find(
+				const deploymentKindFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
 				);
-				const podNameFilter = prevFilters.items.find(
+				const deploymentNameFilter = prevFilters.items.find(
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details events filters applied', {
-					pod: pod?.podUID,
-				});
+				logEvent(
+					'Infra Monitoring: Deployments list details events filters applied',
+					{
+						deployment: deployment?.deploymentName,
+					},
+				);
 
 				return {
 					op: 'AND',
-					items: [
-						podKindFilter,
-						podNameFilter,
-						...value.items.filter(
-							(item) =>
-								item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
-								item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-						),
-					].filter((item): item is TagFilterItem => item !== undefined),
+					items: filterDuplicateFilters(
+						[
+							deploymentKindFilter,
+							deploymentNameFilter,
+							...value.items.filter(
+								(item) =>
+									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
+									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
+							),
+						].filter((item): item is TagFilterItem => item !== undefined),
+					),
 				};
 			});
 		},
@@ -336,8 +343,8 @@ function PodDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Pods list details explore clicked', {
-			pod: pod?.podUID,
+		logEvent('Infra Monitoring: Deployments list details explore clicked', {
+			deployment: deployment?.deploymentName,
 			view: selectedView,
 		});
 
@@ -400,8 +407,8 @@ function PodDetails({
 			const { maxTime, minTime } = GetMinMax(selectedTime);
 
 			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
+				startTime: Math.floor(minTime / 1000000000),
+				endTime: Math.floor(maxTime / 1000000000),
 			});
 		}
 		setSelectedView(VIEW_TYPES.METRICS);
@@ -415,13 +422,13 @@ function PodDetails({
 				<>
 					<Divider type="vertical" />
 					<Typography.Text className="title">
-						{pod?.meta.k8s_pod_name}
+						{deployment?.meta.k8s_deployment_name}
 					</Typography.Text>
 				</>
 			}
 			placement="right"
 			onClose={handleClose}
-			open={!!pod}
+			open={!!deployment}
 			style={{
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
@@ -430,7 +437,7 @@ function PodDetails({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
-			{pod && (
+			{deployment && (
 				<>
 					<div className="entity-detail-drawer__entity">
 						<div className="entity-details-grid">
@@ -439,7 +446,7 @@ function PodDetails({
 									type="secondary"
 									className="entity-details-metadata-label"
 								>
-									NAMESPACE
+									Deployment Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
@@ -451,26 +458,23 @@ function PodDetails({
 									type="secondary"
 									className="entity-details-metadata-label"
 								>
-									Node
+									Namespace Name
 								</Typography.Text>
 							</div>
-
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_namespace_name}>
-										{pod.meta.k8s_namespace_name}
+									<Tooltip title={deployment.meta.k8s_deployment_name}>
+										{deployment.meta.k8s_deployment_name}
 									</Tooltip>
 								</Typography.Text>
-
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_cluster_name}>
-										{pod.meta.k8s_cluster_name}
+									<Tooltip title={deployment.meta.k8s_cluster_name}>
+										{deployment.meta.k8s_cluster_name}
 									</Tooltip>
 								</Typography.Text>
-
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={pod.meta.k8s_node_name}>
-										{pod.meta.k8s_node_name}
+									<Tooltip title={deployment.meta.k8s_namespace_name}>
+										{deployment.meta.k8s_namespace_name}
 									</Tooltip>
 								</Typography.Text>
 							</div>
@@ -539,22 +543,21 @@ function PodDetails({
 							/>
 						)}
 					</div>
-
 					{selectedView === VIEW_TYPES.METRICS && (
-						<PodMetrics<K8sPodsData>
-							entity={pod}
-							selectedInterval={selectedInterval}
+						<DeploymentMetrics<K8sDeploymentsData>
 							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
 							isModalTimeSelection={isModalTimeSelection}
-							entityWidgetInfo={podWidgetInfo}
-							getEntityQueryPayload={getPodMetricsQueryPayload}
-							category={K8sCategory.PODS}
-							queryKey="podMetrics"
+							handleTimeChange={handleTimeChange}
+							selectedInterval={selectedInterval}
+							entity={deployment}
+							entityWidgetInfo={deploymentWidgetInfo}
+							getEntityQueryPayload={getDeploymentMetricsQueryPayload}
+							category={K8sCategory.DEPLOYMENTS}
+							queryKey="deploymentMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
-						<PodLogs
+						<DeploymentLogs
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
@@ -562,36 +565,34 @@ function PodDetails({
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
 							queryKeyFilters={[
-								QUERY_KEYS.K8S_POD_NAME,
-								QUERY_KEYS.K8S_CLUSTER_NAME,
+								QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 								QUERY_KEYS.K8S_NAMESPACE_NAME,
 							]}
-							queryKey="podLogs"
-							category={K8sCategory.PODS}
+							queryKey="deploymentLogs"
+							category={K8sCategory.DEPLOYMENTS}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<PodTraces
+						<DeploymentTraces
 							timeRange={modalTimeRange}
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
-							queryKey="podTraces"
+							queryKey="deploymentTraces"
 						/>
 					)}
-
 					{selectedView === VIEW_TYPES.EVENTS && (
-						<PodEvents
+						<DeploymentEvents
 							timeRange={modalTimeRange}
-							isModalTimeSelection={isModalTimeSelection}
-							handleTimeChange={handleTimeChange}
 							handleChangeEventFilters={handleChangeEventsFilters}
 							filters={eventsFilters}
+							isModalTimeSelection={isModalTimeSelection}
+							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							category={K8sCategory.PODS}
-							queryKey="podEvents"
+							category={K8sCategory.DEPLOYMENTS}
+							queryKey="deploymentEvents"
 						/>
 					)}
 				</>
@@ -600,4 +601,4 @@ function PodDetails({
 	);
 }
 
-export default PodDetails;
+export default DeploymentDetails;

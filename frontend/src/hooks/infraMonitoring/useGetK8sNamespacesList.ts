@@ -1,26 +1,26 @@
 import {
-	getK8sNodesList,
-	K8sNodesListPayload,
-	K8sNodesListResponse,
-} from 'api/infraMonitoring/getK8sNodesList';
+	getK8sNamespacesList,
+	K8sNamespacesListPayload,
+	K8sNamespacesListResponse,
+} from 'api/infraMonitoring/getK8sNamespacesList';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-type UseGetK8sNodesList = (
-	requestData: K8sNodesListPayload,
+type UseGetK8sNamespacesList = (
+	requestData: K8sNamespacesListPayload,
 	options?: UseQueryOptions<
-		SuccessResponse<K8sNodesListResponse> | ErrorResponse,
+		SuccessResponse<K8sNamespacesListResponse> | ErrorResponse,
 		Error
 	>,
 	headers?: Record<string, string>,
 ) => UseQueryResult<
-	SuccessResponse<K8sNodesListResponse> | ErrorResponse,
+	SuccessResponse<K8sNamespacesListResponse> | ErrorResponse,
 	Error
 >;
 
-export const useGetK8sNodesList: UseGetK8sNodesList = (
+export const useGetK8sNamespacesList: UseGetK8sNamespacesList = (
 	requestData,
 	options,
 	headers,
@@ -34,11 +34,14 @@ export const useGetK8sNodesList: UseGetK8sNodesList = (
 			return options.queryKey;
 		}
 
-		return [REACT_QUERY_KEY.GET_NODE_LIST, requestData];
+		return [REACT_QUERY_KEY.GET_NAMESPACE_LIST, requestData];
 	}, [options?.queryKey, requestData]);
 
-	return useQuery<SuccessResponse<K8sNodesListResponse> | ErrorResponse, Error>({
-		queryFn: ({ signal }) => getK8sNodesList(requestData, signal, headers),
+	return useQuery<
+		SuccessResponse<K8sNamespacesListResponse> | ErrorResponse,
+		Error
+	>({
+		queryFn: ({ signal }) => getK8sNamespacesList(requestData, signal, headers),
 		...options,
 		queryKey,
 	});

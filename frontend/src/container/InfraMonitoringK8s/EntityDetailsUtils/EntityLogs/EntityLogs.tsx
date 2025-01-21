@@ -1,10 +1,11 @@
 /* eslint-disable no-nested-ternary */
-import './HostMetricLogs.styles.scss';
+import './entityLogs.styles.scss';
 
 import { Card } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -22,8 +23,10 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 } from 'uuid';
 
-import { getHostLogsQueryPayload } from './constants';
-import NoLogsContainer from './NoLogsContainer';
+import {
+	EntityDetailsEmptyContainer,
+	getEntityEventsOrLogsQueryPayload,
+} from '../utils';
 
 interface Props {
 	timeRange: {
@@ -32,12 +35,18 @@ interface Props {
 	};
 	handleChangeLogFilters: (filters: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
+	queryKey: string;
+	category: K8sCategory;
+	queryKeyFilters: Array<string>;
 }
 
-function HostMetricsLogs({
+function EntityLogs({
 	timeRange,
 	handleChangeLogFilters,
 	filters,
+	queryKey,
+	category,
+	queryKeyFilters,
 }: Props): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [hasReachedEndOfLogs, setHasReachedEndOfLogs] = useState(false);
@@ -46,7 +55,8 @@ function HostMetricsLogs({
 
 	useEffect(() => {
 		const newRestFilters = filters.items.filter(
-			(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+			(item) =>
+				item.key?.key !== 'id' && !queryKeyFilters.includes(item.key?.key ?? ''),
 		);
 
 		const areFiltersSame = isEqual(restFilters, newRestFilters);
@@ -60,7 +70,7 @@ function HostMetricsLogs({
 	}, [filters]);
 
 	const queryPayload = useMemo(() => {
-		const basePayload = getHostLogsQueryPayload(
+		const basePayload = getEntityEventsOrLogsQueryPayload(
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
@@ -77,12 +87,7 @@ function HostMetricsLogs({
 	const [isPaginating, setIsPaginating] = useState(false);
 
 	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: [
-			'hostMetricsLogs',
-			timeRange.startTime,
-			timeRange.endTime,
-			filters,
-		],
+		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 		keepPreviousData: isPaginating,
@@ -193,11 +198,11 @@ function HostMetricsLogs({
 
 	const renderContent = useMemo(
 		() => (
-			<Card bordered={false} className="host-metrics-logs-list-card">
+			<Card bordered={false} className="entity-logs-list-card">
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
-						className="host-metrics-logs-virtuoso"
-						key="host-metrics-logs-virtuoso"
+						className="entity-logs-virtuoso"
+						key="entity-logs-virtuoso"
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -214,15 +219,17 @@ function HostMetricsLogs({
 	);
 
 	return (
-		<div className="host-metrics-logs">
+		<div className="entity-logs">
 			{isLoading && <LogsLoading />}
-			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
+			{!isLoading && !isError && logs.length === 0 && (
+				<EntityDetailsEmptyContainer category={category} view="logs" />
+			)}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="host-metrics-logs-list-container">{renderContent}</div>
+				<div className="entity-logs-list-container">{renderContent}</div>
 			)}
 		</div>
 	);
 }
 
-export default HostMetricsLogs;
+export default EntityLogs;
