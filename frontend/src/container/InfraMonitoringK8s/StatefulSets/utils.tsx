@@ -273,7 +273,7 @@ export const formatDataForTable = (
 				attribute="CPU Request"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={statefulSet.cpuRequest} />
+					<EntityProgressBar value={statefulSet.cpuRequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -284,7 +284,7 @@ export const formatDataForTable = (
 				attribute="CPU Limit"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={statefulSet.cpuLimit} />
+					<EntityProgressBar value={statefulSet.cpuLimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -300,7 +300,7 @@ export const formatDataForTable = (
 				attribute="Memory Request"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={statefulSet.memoryRequest} />
+					<EntityProgressBar value={statefulSet.memoryRequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -311,7 +311,7 @@ export const formatDataForTable = (
 				attribute="Memory Limit"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={statefulSet.memoryLimit} />
+					<EntityProgressBar value={statefulSet.memoryLimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
