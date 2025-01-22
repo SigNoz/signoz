@@ -64,6 +64,7 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
+	Config            signoz.Config
 	SigNoz            *signoz.SigNoz
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
@@ -324,7 +325,11 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
-	r.Use(setTimeoutMiddleware)
+	r.Use(middleware.NewTimeout(zap.L(),
+		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
+		s.serverOptions.Config.APIServer.Timeout.Default,
+		s.serverOptions.Config.APIServer.Timeout.Max,
+	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
@@ -367,7 +372,11 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
-	r.Use(setTimeoutMiddleware)
+	r.Use(middleware.NewTimeout(zap.L(),
+		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
+		s.serverOptions.Config.APIServer.Timeout.Default,
+		s.serverOptions.Config.APIServer.Timeout.Max,
+	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
@@ -567,23 +576,6 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/timeout.go
-func setTimeoutMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		var cancel context.CancelFunc
-		// check if route is not excluded
-		url := r.URL.Path
-		if _, ok := baseconst.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), baseconst.ContextTimeout)
-			defer cancel()
-		}
-
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
 	})
 }
 

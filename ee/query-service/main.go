@@ -152,6 +152,7 @@ func main() {
 	}
 
 	serverOptions := &app.ServerOptions{
+		Config:                     config,
 		SigNoz:                     signoz,
 		HTTPHostPort:               baseconst.HTTPHostPort,
 		PromConfigPath:             promConfigPath,
