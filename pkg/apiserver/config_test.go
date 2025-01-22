@@ -13,7 +13,6 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_APISERVER_ENABLED", "false")
 	t.Setenv("SIGNOZ_APISERVER_CONTEXT__TIMEOUT__MAX__ALLOWED", "700s")
 
 	conf, err := config.New(

@@ -24,7 +24,6 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		Enabled:                  true,
 		ContextTimeout:           60 * time.Second,
 		ContextTimeoutMaxAllowed: 600 * time.Second,
 		TimeoutExcludedRoutes: []string{
@@ -36,9 +35,4 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	return nil
-}
-
-func (c Config) Provider() string {
-	return "apiserver"
-
 }

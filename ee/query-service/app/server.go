@@ -64,6 +64,7 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
+	Config            signoz.Config
 	SigNoz            *signoz.SigNoz
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
@@ -317,9 +318,9 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	r := baseapp.NewRouter()
 
 	r.Use(middleware.NewTimeout(zap.L(),
-		s.serverOptions.SigNoz.APIServer.GetTimeoutExcludedRoutes(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeout(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeoutMaxAllowed(),
+		s.serverOptions.Config.APIServer.TimeoutExcludedRoutes,
+		s.serverOptions.Config.APIServer.ContextTimeout,
+		s.serverOptions.Config.APIServer.ContextTimeoutMaxAllowed,
 	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
@@ -364,9 +365,9 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	r.Use(middleware.NewTimeout(zap.L(),
-		s.serverOptions.SigNoz.APIServer.GetTimeoutExcludedRoutes(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeout(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeoutMaxAllowed(),
+		s.serverOptions.Config.APIServer.TimeoutExcludedRoutes,
+		s.serverOptions.Config.APIServer.ContextTimeout,
+		s.serverOptions.Config.APIServer.ContextTimeoutMaxAllowed,
 	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)

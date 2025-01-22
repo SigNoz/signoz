@@ -95,6 +95,7 @@ func main() {
 	}
 
 	serverOptions := &app.ServerOptions{
+		Config:            config,
 		HTTPHostPort:      constants.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,

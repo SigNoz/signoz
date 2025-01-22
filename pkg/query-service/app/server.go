@@ -56,6 +56,7 @@ import (
 )
 
 type ServerOptions struct {
+	Config            signoz.Config
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
@@ -263,9 +264,9 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 	r := NewRouter()
 
 	r.Use(middleware.NewTimeout(zap.L(),
-		s.serverOptions.SigNoz.APIServer.GetTimeoutExcludedRoutes(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeout(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeoutMaxAllowed(),
+		s.serverOptions.Config.APIServer.TimeoutExcludedRoutes,
+		s.serverOptions.Config.APIServer.ContextTimeout,
+		s.serverOptions.Config.APIServer.ContextTimeoutMaxAllowed,
 	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
@@ -293,9 +294,9 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r := NewRouter()
 
 	r.Use(middleware.NewTimeout(zap.L(),
-		s.serverOptions.SigNoz.APIServer.GetTimeoutExcludedRoutes(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeout(),
-		s.serverOptions.SigNoz.APIServer.GetContextTimeoutMaxAllowed(),
+		s.serverOptions.Config.APIServer.TimeoutExcludedRoutes,
+		s.serverOptions.Config.APIServer.ContextTimeout,
+		s.serverOptions.Config.APIServer.ContextTimeoutMaxAllowed,
 	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)

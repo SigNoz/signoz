@@ -70,19 +70,9 @@ func New(
 		return nil, err
 	}
 
-	// Initialize apiserver from the available apiserver provider factories
-	apiserver, err := factory.NewProviderFromNamedMap(
-		ctx,
-		providerSettings,
-		config.APIServer,
-		providerConfig.APIServerProviderFactories,
-		config.APIServer.Provider(),
-	)
-
 	return &SigNoz{
-		Cache:     cache,
-		Web:       web,
-		SQLStore:  sqlstore,
-		APIServer: apiserver,
+		Cache:    cache,
+		Web:      web,
+		SQLStore: sqlstore,
 	}, nil
 }

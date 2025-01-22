@@ -1,7 +1,6 @@
 package signoz
 
 import (
-	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/cache/memorycache"
 	"go.signoz.io/signoz/pkg/cache/rediscache"
@@ -26,9 +25,6 @@ type ProviderConfig struct {
 
 	// Map of all sql migration provider factories
 	SQLMigrationProviderFactories factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]]
-
-	// Map of all apiserver provider factories
-	APIServerProviderFactories factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]]
 }
 
 func NewProviderConfig() ProviderConfig {
@@ -53,9 +49,6 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddAgentsFactory(),
 			sqlmigration.NewAddPipelinesFactory(),
 			sqlmigration.NewAddIntegrationsFactory(),
-		),
-		APIServerProviderFactories: factory.MustNewNamedMap(
-			apiserver.NewFactory(),
 		),
 	}
 }
