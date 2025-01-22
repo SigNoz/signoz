@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import './DaemonSetDetails.styles.scss';
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -12,6 +12,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -42,12 +43,16 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS } from './constants';
+import DaemonSetEvents from '../../EntityDetailsUtils/EntityEvents';
+import DaemonSetLogs from '../../EntityDetailsUtils/EntityLogs';
+import DaemonSetMetrics from '../../EntityDetailsUtils/EntityMetrics';
+import DaemonSetTraces from '../../EntityDetailsUtils/EntityTraces';
+import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
+import {
+	daemonSetWidgetInfo,
+	getDaemonSetMetricsQueryPayload,
+} from './constants';
 import { DaemonSetDetailsProps } from './DaemonSetDetails.interfaces';
-import DaemonSetEvents from './Events';
-import DaemonSetLogs from './Logs';
-import DaemonSetMetrics from './Metrics';
-import DaemonSetTraces from './Traces';
 
 function DaemonSetDetails({
 	daemonSet,
@@ -417,46 +422,46 @@ function DaemonSetDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="daemonSet-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{daemonSet && (
 				<>
-					<div className="daemonSet-detail-drawer__daemonSet">
-						<div className="daemonSet-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="daemonSet-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Daemonset Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="daemonSet-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Cluster Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="daemonSet-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Namespace Name
 								</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Typography.Text className="daemonSet-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={daemonSet.meta.k8s_daemonset_name}>
 										{daemonSet.meta.k8s_daemonset_name}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="daemonSet-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={daemonSet.meta.k8s_cluster_name}>
 										{daemonSet.meta.k8s_cluster_name}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="daemonSet-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={daemonSet.meta.k8s_namespace_name}>
 										{daemonSet.meta.k8s_namespace_name}
 									</Tooltip>
@@ -533,7 +538,11 @@ function DaemonSetDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							daemonSet={daemonSet}
+							entity={daemonSet}
+							entityWidgetInfo={daemonSetWidgetInfo}
+							getEntityQueryPayload={getDaemonSetMetricsQueryPayload}
+							category={K8sCategory.DAEMONSETS}
+							queryKey="daemonsetMetrics"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
@@ -544,6 +553,12 @@ function DaemonSetDetails({
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.DAEMONSETS}
+							queryKey="daemonsetLogs"
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_DAEMON_SET_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
@@ -554,6 +569,7 @@ function DaemonSetDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="daemonsetTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
@@ -564,6 +580,8 @@ function DaemonSetDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
+							queryKey="daemonsetEvents"
+							category={K8sCategory.DAEMONSETS}
 						/>
 					)}
 				</>
