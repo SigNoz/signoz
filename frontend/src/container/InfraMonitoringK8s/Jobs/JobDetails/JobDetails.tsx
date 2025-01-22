@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import './JobDetails.styles.scss';
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -12,6 +12,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -42,12 +43,13 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { QUERY_KEYS } from './constants';
-import JobEvents from './Events';
+import JobEvents from '../../EntityDetailsUtils/EntityEvents';
+import JobLogs from '../../EntityDetailsUtils/EntityLogs';
+import JobMetrics from '../../EntityDetailsUtils/EntityMetrics';
+import JobTraces from '../../EntityDetailsUtils/EntityTraces';
+import { QUERY_KEYS } from '../../EntityDetailsUtils/utils';
+import { getJobMetricsQueryPayload, jobWidgetInfo } from './constants';
 import { JobDetailsProps } from './JobDetails.interfaces';
-import JobLogs from './Logs';
-import JobMetrics from './Metrics';
-import JobTraces from './Traces';
 
 function JobDetails({
 	job,
@@ -516,7 +518,11 @@ function JobDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
-							job={job}
+							entity={job}
+							category={K8sCategory.JOBS}
+							queryKey="jobMetrics"
+							entityWidgetInfo={jobWidgetInfo}
+							getEntityQueryPayload={getJobMetricsQueryPayload}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.LOGS && (
@@ -527,6 +533,12 @@ function JobDetails({
 							handleChangeLogFilters={handleChangeLogFilters}
 							logFilters={logFilters}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.JOBS}
+							queryKey="jobLogs"
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_JOB_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
@@ -537,6 +549,7 @@ function JobDetails({
 							handleChangeTracesFilters={handleChangeTracesFilters}
 							tracesFilters={tracesFilters}
 							selectedInterval={selectedInterval}
+							queryKey="jobTraces"
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (
@@ -547,6 +560,8 @@ function JobDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							selectedInterval={selectedInterval}
+							category={K8sCategory.JOBS}
+							queryKey="jobEvents"
 						/>
 					)}
 				</>
