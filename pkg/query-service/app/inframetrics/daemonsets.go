@@ -421,7 +421,7 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonS
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := daemonSetAttrs[record.DaemonSetName]; ok {
+			if _, ok := daemonSetAttrs[record.DaemonSetName]; ok && record.DaemonSetName != "" {
 				record.Meta = daemonSetAttrs[record.DaemonSetName]
 			}
 
@@ -439,6 +439,8 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonS
 	}
 	resp.Total = len(allDaemonSetGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

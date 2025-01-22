@@ -548,6 +548,7 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3)
 			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
 				results, errQueriesByName, err = q.runBuilderListQueries(ctx, params)
 			} else {
+				ctx = context.WithValue(ctx, "enforce_max_result_rows", true)
 				results, errQueriesByName, err = q.runClickHouseQueries(ctx, params)
 			}
 		default:

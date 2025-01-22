@@ -41,11 +41,7 @@ func getMigrationVersion(conn *sqlx.DB, version string) (*DataMigration, error) 
 	return &migration, nil
 }
 
-func Migrate(dsn string) error {
-	conn, err := sqlx.Connect("sqlite3", dsn)
-	if err != nil {
-		return err
-	}
+func Migrate(conn *sqlx.DB) error {
 	if err := initSchema(conn); err != nil {
 		return err
 	}

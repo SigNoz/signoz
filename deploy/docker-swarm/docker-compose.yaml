@@ -84,7 +84,7 @@ services:
       - query-service
   query-service:
     <<: *db-depend
-    image: signoz/query-service:0.68.0
+    image: signoz/query-service:0.69.0
     command:
       - --config=/root/config/prometheus.yml
       - --use-logs-new-schema=true
@@ -117,7 +117,7 @@ services:
       retries: 3
   otel-collector:
     <<: *db-depend
-    image: signoz/signoz-otel-collector:0.111.23
+    image: signoz/signoz-otel-collector:0.111.24
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -139,7 +139,7 @@ services:
       - query-service
   schema-migrator-sync:
     <<: *common
-    image: signoz/signoz-schema-migrator:0.111.23
+    image: signoz/signoz-schema-migrator:0.111.24
     deploy:
       restart_policy:
         condition: on-failure

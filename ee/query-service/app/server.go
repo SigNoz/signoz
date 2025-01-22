@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/rules"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/signoz"
@@ -111,25 +112,22 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
+	modelDao, err := dao.InitDao(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, err
 	}
 
-	baseexplorer.InitWithDSN(baseconst.RELATIONAL_DATASOURCE_PATH)
-
-	if err := preferences.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
 		return nil, err
 	}
 
-	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
-
-	if err != nil {
+	if err := preferences.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
 		return nil, err
 	}
 
-	localDB.SetMaxOpenConns(10)
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+		return nil, err
+	}
 
 	gatewayProxy, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
 	if err != nil {
@@ -137,7 +135,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +149,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		qb := db.NewDataConnector(
-			localDB,
+			serverOptions.SigNoz.SQLStore.SQLxDB(),
 			serverOptions.PromConfigPath,
 			lm,
 			serverOptions.MaxIdleConns,
@@ -187,7 +185,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	rm, err := makeRulesManager(serverOptions.PromConfigPath,
 		baseconst.GetAlertManagerApiPrefix(),
 		serverOptions.RuleRepoURL,
-		localDB,
+		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
 		c,
 		serverOptions.DisableRules,
@@ -201,19 +199,19 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	_, err = opAmpModel.InitDB(localDB)
+	_, err = opAmpModel.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, err
 	}
 
-	integrationsController, err := integrations.NewController(localDB)
+	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create cloud provider integrations controller: %w", err,
@@ -222,7 +220,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore.SQLxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -230,8 +228,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// initiate agent config handler
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:            localDB,
-		DBEngine:      AppDbEngine,
+		DB:            serverOptions.SigNoz.SQLStore.SQLxDB(),
 		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
 	})
 	if err != nil {
@@ -239,7 +236,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New("sqlite", modelDao, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), reader.GetConn())
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +318,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddlewarePrivate)
+	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
 
 	apiHandler.RegisterPrivateRoutes(r)
@@ -364,7 +361,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddleware)
+	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
 
 	apiHandler.RegisterRoutes(r, am)
@@ -395,31 +392,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	return &http.Server{
 		Handler: handler,
 	}, nil
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// loggingMiddleware is used for logging public api calls
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path))
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// loggingMiddlewarePrivate is used for logging private api calls
-// from internal services like alert manager
-func loggingMiddlewarePrivate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		zap.L().Info(path, zap.Duration("timeTaken", time.Since(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
-	})
 }
 
 // TODO(remove): Implemented at pkg/http/middleware/logging.go
