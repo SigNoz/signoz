@@ -21,6 +21,28 @@
 	}
 	.ant-tabs-nav {
 		margin: 0px;
+		padding: 0px !important;
+	}
+	.ant-tabs-nav-list {
+		transform: translate(15px, 0px) !important;
+	}
+
+	.old-switch {
+		display: flex;
+		align-items: center;
+		color: var(--Vanilla-400, #c0c1c3);
+
+		/* Bifrost (Ancient)/Content/sm */
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+
+		.ant-btn-icon {
+			margin-inline-end: 0px;
+		}
 	}
 
 	.trace-layout {
@@ -106,6 +128,7 @@
 
 		.ant-tabs-nav {
 			margin: 0px;
+			padding: 0px !important;
 		}
 	}
 }

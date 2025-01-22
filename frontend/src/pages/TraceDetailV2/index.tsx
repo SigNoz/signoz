@@ -1,13 +1,16 @@
 import './TraceDetailV2.styles.scss';
 
-import { Tabs } from 'antd';
+import { Button, Tabs } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Compass, TowerControl } from 'lucide-react';
+import { Compass, TowerControl, Undo } from 'lucide-react';
+import TraceDetail from 'pages/TraceDetail';
+import { useCallback, useState } from 'react';
 
 import TraceDetailsV2 from './TraceDetailV2';
 
 export default function TraceDetailsPage(): JSX.Element {
+	const [showOldTraceDetails, setShowOldTraceDetails] = useState<boolean>(false);
 	const items = [
 		{
 			label: (
@@ -28,8 +31,13 @@ export default function TraceDetailsPage(): JSX.Element {
 			children: <div />,
 		},
 	];
+	const handleOldTraceDetails = useCallback(() => {
+		setShowOldTraceDetails(true);
+	}, []);
 
-	return (
+	return showOldTraceDetails ? (
+		<TraceDetail />
+	) : (
 		<div className="traces-module-container">
 			<Tabs
 				items={items}
@@ -43,8 +51,17 @@ export default function TraceDetailsPage(): JSX.Element {
 						history.push(ROUTES.TRACES_EXPLORER);
 					}
 				}}
+				tabBarExtraContent={
+					<Button
+						type="text"
+						onClick={handleOldTraceDetails}
+						className="old-switch"
+						icon={<Undo size={14} />}
+					>
+						Old Trace Details
+					</Button>
+				}
 			/>
-			;
 		</div>
 	);
 }
