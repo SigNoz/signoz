@@ -153,132 +153,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				/>
 			),
 		},
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<PackageOpen
-		// 					size={14}
-		// 					className="k8s-quick-filters-category-label-icon"
-		// 				/>
-		// 				<Typography.Text>Containers</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.CONTAINERS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={ContainersQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
-		{
-			label: (
-				<div className="k8s-quick-filters-category-label">
-					<div className="k8s-quick-filters-category-label-container">
-						<HardDrive size={14} className="k8s-quick-filters-category-label-icon" />
-						<Typography.Text>Volumes</Typography.Text>
-					</div>
-				</div>
-			),
-			key: K8sCategories.VOLUMES,
-			showArrow: false,
-			children: (
-				<QuickFilters
-					source="infra-monitoring"
-					config={VolumesQuickFiltersConfig}
-					handleFilterVisibilityChange={handleFilterVisibilityChange}
-					onFilterChange={handleFilterChange}
-				/>
-			),
-		},
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<Computer size={14} className="k8s-quick-filters-category-label-icon" />
-		// 				<Typography.Text>Deployments</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.DEPLOYMENTS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={DeploymentsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<Bolt size={14} className="k8s-quick-filters-category-label-icon" />
-		// 				<Typography.Text>Jobs</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.JOBS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={JobsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<Group size={14} className="k8s-quick-filters-category-label-icon" />
-		// 				<Typography.Text>DaemonSets</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.DAEMONSETS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={DaemonSetsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
-		// {
-		// 	label: (
-		// 		<div className="k8s-quick-filters-category-label">
-		// 			<div className="k8s-quick-filters-category-label-container">
-		// 				<ArrowUpDown
-		// 					size={14}
-		// 					className="k8s-quick-filters-category-label-icon"
-		// 				/>
-		// 				<Typography.Text>StatefulSets</Typography.Text>
-		// 			</div>
-		// 		</div>
-		// 	),
-		// 	key: K8sCategories.STATEFULSETS,
-		// 	showArrow: false,
-		// 	children: (
-		// 		<QuickFilters
-		// 			source="infra-monitoring"
-		// 			config={StatefulsetsQuickFiltersConfig}
-		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-		// 			onFilterChange={handleFilterChange}
-		// 		/>
-		// 	),
-		// },
 		{
 			label: (
 				<div className="k8s-quick-filters-category-label">
@@ -362,6 +236,50 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				/>
 			),
 		},
+		{
+			label: (
+				<div className="k8s-quick-filters-category-label">
+					<div className="k8s-quick-filters-category-label-container">
+						<HardDrive size={14} className="k8s-quick-filters-category-label-icon" />
+						<Typography.Text>Volumes</Typography.Text>
+					</div>
+				</div>
+			),
+			key: K8sCategories.VOLUMES,
+			showArrow: false,
+			children: (
+				<QuickFilters
+					source="infra-monitoring"
+					config={VolumesQuickFiltersConfig}
+					handleFilterVisibilityChange={handleFilterVisibilityChange}
+					onFilterChange={handleFilterChange}
+				/>
+			),
+		},
+		// TODO: Enable once we have implemented containers.
+		// {
+		// 	label: (
+		// 		<div className="k8s-quick-filters-category-label">
+		// 			<div className="k8s-quick-filters-category-label-container">
+		// 				<PackageOpen
+		// 					size={14}
+		// 					className="k8s-quick-filters-category-label-icon"
+		// 				/>
+		// 				<Typography.Text>Containers</Typography.Text>
+		// 			</div>
+		// 		</div>
+		// 	),
+		// 	key: K8sCategories.CONTAINERS,
+		// 	showArrow: false,
+		// 	children: (
+		// 		<QuickFilters
+		// 			source="infra-monitoring"
+		// 			config={ContainersQuickFiltersConfig}
+		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
+		// 			onFilterChange={handleFilterChange}
+		// 		/>
+		// 	),
+		// },
 	];
 
 	const handleCategoryChange = (key: string | string[]): void => {
