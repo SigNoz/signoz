@@ -31,6 +31,7 @@ function DetailsDrawer(props: IDetailsDrawerProps): JSX.Element {
 			width="60%"
 			open={open}
 			afterOpenChange={setOpen}
+			mask={false}
 			title={title}
 			onClose={(): void => setOpen(false)}
 			className="details-drawer"
