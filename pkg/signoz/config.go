@@ -2,6 +2,8 @@ package signoz
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
@@ -49,5 +51,15 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 		return Config{}, err
 	}
 
+	mergeAndEnsureBackwardCompatibility(&config)
+
 	return config, nil
+}
+
+func mergeAndEnsureBackwardCompatibility(config *Config) {
+	// SIGNOZ_LOCAL_DB_PATH
+	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
+		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
+		config.SQLStore.Sqlite.Path = os.Getenv("SIGNOZ_LOCAL_DB_PATH")
+	}
 }

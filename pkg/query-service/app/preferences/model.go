@@ -203,14 +203,8 @@ type UpdatePreference struct {
 
 var db *sqlx.DB
 
-func InitDB(datasourceName string) error {
-	var err error
-	db, err = sqlx.Open("sqlite3", datasourceName)
-
-	if err != nil {
-		return err
-	}
-
+func InitDB(inputDB *sqlx.DB) error {
+	db = inputDB
 	// create the user preference table
 	tableSchema := `
 	PRAGMA foreign_keys = ON;
@@ -225,7 +219,7 @@ func InitDB(datasourceName string) error {
 			ON DELETE CASCADE
 	);`
 
-	_, err = db.Exec(tableSchema)
+	_, err := db.Exec(tableSchema)
 	if err != nil {
 		return fmt.Errorf("error in creating user_preference table: %s", err.Error())
 	}

@@ -19,13 +19,8 @@ type Repo struct {
 	db *sqlx.DB
 }
 
-func (r *Repo) initDB(engine string) error {
-	switch engine {
-	case "sqlite3", "sqlite":
-		return sqlite.InitDB(r.db)
-	default:
-		return fmt.Errorf("unsupported db")
-	}
+func (r *Repo) initDB(inputDB *sqlx.DB) error {
+	return sqlite.InitDB(inputDB)
 }
 
 func (r *Repo) GetConfigHistory(

@@ -99,23 +99,22 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	var err error
+	if err := dao.InitDao(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
 		return nil, err
 	}
 
-	if err := preferences.InitDB(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := preferences.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
 		return nil, err
 	}
 
-	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
-	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
-
-	if err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
 		return nil, err
 	}
 
-	localDB.SetMaxOpenConns(10)
+	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+		return nil, err
+	}
 
 	// initiate feature manager
 	fm := featureManager.StartManager()
@@ -127,7 +126,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if storage == "clickhouse" {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(
-			localDB,
+			serverOptions.SigNoz.SQLStore.SQLxDB(),
 			serverOptions.PromConfigPath,
 			fm,
 			serverOptions.MaxIdleConns,
@@ -163,7 +162,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	rm, err := makeRulesManager(
 		serverOptions.PromConfigPath,
 		constants.GetAlertManagerApiPrefix(),
-		serverOptions.RuleRepoURL, localDB, reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
+		serverOptions.RuleRepoURL, serverOptions.SigNoz.SQLStore.SQLxDB(), reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -173,18 +172,18 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	integrationsController, err := integrations.NewController(localDB)
+	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(localDB)
+	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider integrations controller: %w", err)
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore.SQLxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -236,14 +235,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	_, err = opAmpModel.InitDB(localDB)
+	_, err = opAmpModel.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB())
 	if err != nil {
 		return nil, err
 	}
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       localDB,
-		DBEngine: "sqlite",
+		DB: serverOptions.SigNoz.SQLStore.SQLxDB(),
 		AgentFeatures: []agentConf.AgentFeature{
 			logParsingPipelineController,
 		},
