@@ -132,3 +132,55 @@
 		}
 	}
 }
+
+.lightMode {
+	.traces-module-container {
+		.ant-tabs-tab {
+			.tab-item {
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.ant-tabs-tab-active {
+			.tab-item {
+				color: var(--bg-ink-100);
+			}
+		}
+
+		.old-switch {
+			color: var(--bg-ink-400);
+		}
+
+		.trace-layout {
+			.flamegraph-waterfall-toggle {
+				color: var(--bg-ink-400);
+			}
+
+			.span-list-toggle {
+				color: var(--bg-ink-400);
+			}
+
+			.ant-tabs-tab {
+				background: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-tabs-tab-active {
+				background-color: var(--bg-vanilla-200);
+
+				.ant-btn {
+					color: var(--bg-ink-100) !important;
+				}
+			}
+
+			.ant-tabs-ink-bar {
+				height: 1px !important;
+				background: var(--bg-vanilla-200) !important;
+			}
+
+			.ant-tabs-nav::before {
+				border-bottom: 1px solid var(--bg-vanilla-300);
+			}
+		}
+	}
+}

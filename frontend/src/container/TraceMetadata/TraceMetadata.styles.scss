@@ -170,3 +170,78 @@
 		}
 	}
 }
+
+.lightMode {
+	.trace-metadata {
+		.metadata-info {
+			.first-row {
+				.previous-btn {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-200);
+				}
+
+				.trace-name {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-200);
+					border-right: none;
+
+					.drafting {
+						color: var(--bg-ink-100);
+					}
+
+					.trace-id {
+						color: var(--bg-ink-100);
+					}
+				}
+
+				.trace-id-value {
+					background: var(--bg-vanilla-400);
+					color: var(--bg-ink-400);
+					border: 1px solid var(--bg-vanilla-300);
+				}
+			}
+
+			.second-row {
+				.service-entry-info {
+					color: var(--bg-ink-400);
+
+					.text {
+						color: var(--bg-ink-400);
+					}
+				}
+
+				.trace-duration {
+					color: var(--bg-ink-400);
+
+					.text {
+						color: var(--bg-ink-400);
+					}
+				}
+
+				.start-time-info {
+					color: var(--bg-ink-400);
+
+					.text {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		.datapoints-info {
+			.separator {
+				background: var(--bg-vanilla-300);
+			}
+
+			.data-point {
+				.text {
+					color: var(--bg-ink-400);
+				}
+
+				.value {
+					color: var(--bg-ink-100);
+				}
+			}
+		}
+	}
+}

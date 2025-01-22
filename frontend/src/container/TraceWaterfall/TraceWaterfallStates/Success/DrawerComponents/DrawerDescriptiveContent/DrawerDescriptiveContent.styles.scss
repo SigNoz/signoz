@@ -132,3 +132,46 @@
 		}
 	}
 }
+
+.lightMode {
+	.trace-drawer-descriptive-content {
+		.span-name-duration {
+			.span-name {
+				.info-pill {
+					.text {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-200);
+						color: var(--bg-ink-100);
+					}
+
+					.value {
+						background: var(--bg-vanilla-400);
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+
+			.span-duration {
+				.item {
+					.value {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		.span-metadata {
+			.item {
+				.text {
+					color: var(--bg-ink-400);
+				}
+
+				.value {
+					border: 1px solid var(--bg-vanilla-400);
+					background: var(--bg-vanilla-400);
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
+}

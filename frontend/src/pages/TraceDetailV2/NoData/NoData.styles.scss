@@ -123,3 +123,45 @@
 		}
 	}
 }
+
+.lightMode {
+	.not-found-trace {
+		.description {
+			.not-found-text-1 {
+				color: var(--bg-ink-400);
+				.not-found-text-2 {
+					color: var(--bg-ink-100);
+				}
+			}
+		}
+
+		.reasons {
+			.reason-1 {
+				background: var(--bg-vanilla-300);
+				.text {
+					color: var(--bg-ink-400);
+				}
+			}
+			.reason-2 {
+				background: var(--bg-vanilla-300);
+
+				.text {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+
+		.none-of-above {
+			.text {
+				color: var(--bg-ink-400);
+			}
+
+			.action-btns {
+				.action-btn {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+}

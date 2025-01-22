@@ -31,3 +31,15 @@
 		}
 	}
 }
+
+.lightMode {
+	.old-trace-container {
+		.top-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.new-cta-btn {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

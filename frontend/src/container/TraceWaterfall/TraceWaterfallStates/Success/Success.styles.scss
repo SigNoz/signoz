@@ -306,106 +306,28 @@
 
 .lightMode {
 	.success-content {
-		width: 100%;
-		height: 100%;
-
 		.waterfall-table {
-			// default table overrides css for table v3
-			.div-table {
-				border: none !important;
-			}
-
-			.div-tr {
-				display: flex;
-				width: fit-content;
-				height: 42px;
-			}
-
-			.div-th,
 			.div-td {
-				box-shadow: none;
-				padding: 0px !important;
-			}
-
-			.div-th {
-				padding: 2px 4px;
-				position: relative;
-				font-weight: bold;
-				text-align: center;
-				height: 30px;
-			}
-
-			.div-td {
-				display: flex;
-				height: 42px;
-				overflow: hidden;
-
 				.span-overview {
-					display: flex;
-					align-items: center;
-					flex-shrink: 0;
-					height: 100%;
-					width: 100%;
-
 					.span-overview-content {
-						display: flex;
-						flex-shrink: 0;
-						flex-direction: column;
-						align-items: flex-start;
-						gap: 5px;
-
 						.first-row {
-							display: flex;
-							align-items: center;
-							gap: 6px;
-							height: 20px;
-
 							.collapse-uncollapse-button {
-								display: flex;
-								align-items: center;
-								justify-content: center;
-								padding: 4px 8px;
-								gap: 4px;
-								border-radius: 2px;
-								border: 1px solid var(--bg-slate-400);
-								background: var(--bg-slate-500);
-								box-shadow: none;
+								border: 1px solid var(--bg-vanilla-400);
+								background: var(--bg-vanilla-400);
 
 								.children-count {
-									color: var(--bg-vanilla-400);
-									font-family: 'Space Mono';
-									font-size: 14px;
-									font-style: normal;
-									font-weight: 400;
-									line-height: 20px; /* 142.857% */
-									letter-spacing: 0.28px;
+									color: var(--bg-ink-400);
 								}
 							}
 
 							.span-name {
-								color: var(--bg-vanilla-400);
-								font-family: 'Space Mono';
-								font-size: 14px;
-								font-style: normal;
-								font-weight: 400;
-								line-height: 20px; /* 142.857% */
-								letter-spacing: 0.28px;
+								color: var(--bg-ink-400);
 							}
 						}
 
 						.second-row {
-							display: flex;
-							align-items: center;
-							gap: 8px;
-							height: 18px;
 							.service-name {
-								color: var(--bg-vanilla-400);
-								font-family: Inter;
-								font-size: 14px;
-								font-style: normal;
-								font-weight: 400;
-								line-height: 18px; /* 128.571% */
-								letter-spacing: -0.07px;
+								color: var(--bg-ink-400);
 							}
 						}
 					}
@@ -413,20 +335,12 @@
 
 				.interested-span {
 					border-radius: 4px;
-					background: rgba(171, 189, 255, 0.06);
+					background: var(--bg-vanilla-300);
 				}
 			}
 
 			.resizer {
-				position: absolute;
-				top: 0;
-				height: 100%;
-				right: 0;
-				width: 5px;
-				background: rgba(0, 0, 0, 0.5);
-				cursor: col-resize;
-				user-select: none;
-				touch-action: none;
+				background: var(--bg-vanilla-400);
 			}
 
 			.resizer.isResizing {
@@ -434,15 +348,15 @@
 				opacity: 1;
 			}
 
-			@media (hover: hover) {
-				.resizer {
-					opacity: 0;
-				}
-
-				*:hover > .resizer {
-					opacity: 1;
-				}
+			.div-thead {
+				background-color: var(--bg-vanilla-200) !important;
 			}
+		}
+	}
+	.span-dets {
+		.related-logs {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
 		}
 	}
 }

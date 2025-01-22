@@ -18,3 +18,11 @@
 		letter-spacing: -0.07px;
 	}
 }
+
+.lightMode {
+	.no-data {
+		.no-data-text {
+			color: var(--bg-ink-400);
+		}
+	}
+}
