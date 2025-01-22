@@ -1,7 +1,7 @@
 .infra-monitoring-container {
 	.jobs-list-table {
 		.expanded-table-container {
-			padding-left: 24px;
+			padding-left: 40px;
 		}
 
 		.ant-table-cell.column-progress-bar {
@@ -51,8 +51,8 @@
 
 .expanded-jobs-list-table {
 	.ant-table-cell {
-		min-width: 180px !important;
-		max-width: 180px !important;
+		min-width: 200px !important;
+		max-width: 200px !important;
 	}
 
 	.ant-table-row-expand-icon-cell {
