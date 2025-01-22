@@ -355,7 +355,7 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) 
 			record.VolumeUsage = record.VolumeCapacity - record.VolumeAvailable
 
 			record.Meta = map[string]string{}
-			if _, ok := volumeAttrs[record.PersistentVolumeClaimName]; ok {
+			if _, ok := volumeAttrs[record.PersistentVolumeClaimName]; ok && record.PersistentVolumeClaimName != "" {
 				record.Meta = volumeAttrs[record.PersistentVolumeClaimName]
 			}
 
@@ -373,6 +373,8 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, req model.VolumeListRequest) 
 	}
 	resp.Total = len(allVolumeGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

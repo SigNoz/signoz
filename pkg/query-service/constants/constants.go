@@ -54,6 +54,9 @@ const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
 
+const SpanSearchScopeRoot = "isroot"
+const SpanSearchScopeEntryPoint = "isentrypoint"
+
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
 		return os.Getenv("ALERTMANAGER_API_PREFIX")
@@ -248,6 +251,7 @@ const (
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
+	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME      = "distributed_top_level_operations"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -734,3 +738,5 @@ func init() {
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
+
+const MaxResultRowsForCHQuery = 1_000_000

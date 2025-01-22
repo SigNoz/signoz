@@ -19,7 +19,8 @@ var (
 
 	clusterAttrsToEnrich = []string{"k8s_cluster_name"}
 
-	k8sClusterUIDAttrKey = "k8s_cluster_uid"
+	// TODO(srikanthccv): change this to k8s_cluster_uid after showing the missing data banner
+	k8sClusterUIDAttrKey = "k8s_cluster_name"
 
 	queryNamesForClusters = map[string][]string{
 		"cpu":                {"A"},
@@ -319,7 +320,7 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, req model.ClusterList
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := clusterAttrs[record.ClusterUID]; ok {
+			if _, ok := clusterAttrs[record.ClusterUID]; ok && record.ClusterUID != "" {
 				record.Meta = clusterAttrs[record.ClusterUID]
 			}
 
@@ -337,6 +338,8 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, req model.ClusterList
 	}
 	resp.Total = len(allClusterGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

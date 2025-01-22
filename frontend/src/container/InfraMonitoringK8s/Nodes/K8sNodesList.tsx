@@ -406,7 +406,8 @@ function K8sNodesList({
 					groupBy.push(key);
 				}
 			}
-
+			// Reset pagination on switching to groupBy
+			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 		},

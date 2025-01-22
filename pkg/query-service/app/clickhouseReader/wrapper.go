@@ -17,6 +17,7 @@ type ClickhouseQuerySettings struct {
 	MaxBytesToRead                      string
 	OptimizeReadInOrderRegex            string
 	OptimizeReadInOrderRegexCompiled    *regexp.Regexp
+	MaxResultRowsForCHQuery             int
 }
 
 type clickhouseConnWrapper struct {
@@ -42,6 +43,10 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 	logComment := c.getLogComment(ctx)
 	if logComment != "" {
 		settings["log_comment"] = logComment
+	}
+
+	if ctx.Value("enforce_max_result_rows") != nil {
+		settings["max_result_rows"] = c.settings.MaxResultRowsForCHQuery
 	}
 
 	if c.settings.MaxBytesToRead != "" {
