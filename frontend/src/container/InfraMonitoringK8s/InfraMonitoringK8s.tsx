@@ -128,7 +128,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={NamespaceQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -148,7 +148,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={ClustersQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -168,7 +168,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={DeploymentsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -275,7 +275,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// 	showArrow: false,
 		// 	children: (
 		// 		<QuickFilters
-		// 			source="infra-monitoring"
+		// 			source={QuickFiltersSource.INFRA_MONITORING}
 		// 			config={ContainersQuickFiltersConfig}
 		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
 		// 			onFilterChange={handleFilterChange}
