@@ -41,10 +41,16 @@ export interface IQuickFiltersConfig {
 	defaultOpen: boolean;
 }
 
+export enum QuickFiltersSource {
+	LOGS_EXPLORER = 'logs-explorer',
+	INFRA_MONITORING = 'infra-monitoring',
+	TRACES_EXPLORER = 'traces-explorer',
+}
+
 interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange: () => void;
-	source?: string | null;
+	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 }
 
@@ -95,7 +101,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const lastQueryName =
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
-	const isInfraMonitoring = source === 'infra-monitoring';
+	const isInfraMonitoring = source === QuickFiltersSource.INFRA_MONITORING;
 
 	return (
 		<div className="quick-filters">
@@ -132,7 +138,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					return (
 						<Checkbox
 							key={filter.title}
-							isInfraMonitoring={isInfraMonitoring}
+							source={source}
 							filter={filter}
 							onFilterChange={onFilterChange}
 						/>
@@ -144,6 +150,5 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 }
 
 QuickFilters.defaultProps = {
-	source: null,
 	onFilterChange: null,
 };

@@ -4,7 +4,9 @@ import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
+import QuickFilters, {
+	QuickFiltersSource,
+} from 'components/QuickFilters/QuickFilters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -83,7 +85,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={PodsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -103,7 +105,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={NodesQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
