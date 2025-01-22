@@ -51,13 +51,13 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(dbType string, db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
 
 	repo := NewLicenseRepo(db)
-	err := repo.InitDB(dbType)
+	err := repo.InitDB(db)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate license repo: %v", err)

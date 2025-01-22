@@ -17,15 +17,7 @@ type ModelDaoSqlite struct {
 }
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
-	var err error
-
-	db, err := sqlx.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to Open sqlite3 DB")
-	}
-	db.SetMaxOpenConns(10)
-
+func InitDB(db *sqlx.DB) (*ModelDaoSqlite, error) {
 	table_schema := `
 		PRAGMA foreign_keys = ON;
 
@@ -88,7 +80,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		);
 	`
 
-	_, err = db.Exec(table_schema)
+	_, err := db.Exec(table_schema)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating tables: %v", err.Error())
 	}

@@ -28,11 +28,11 @@ func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
 }
 
 func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
-	testDB, testDBFilePath := NewTestSqliteDB(t)
+	testDB, _ := NewTestSqliteDB(t)
 
 	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao("sqlite", testDBFilePath)
-	dashboards.InitDB(testDBFilePath)
+	dao.InitDao(testDB)
+	dashboards.InitDB(testDB)
 
 	return testDB
 }
