@@ -48,7 +48,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
-			.filter((e) => !['id', 'body', 'timestamp'].includes(e.name))
+			.filter((e) => e.name !== 'id')
 			.map(({ name }) => ({
 				title: name,
 				dataIndex: name,
@@ -91,67 +91,55 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					),
 				}),
 			},
-			...(fields.some((field) => field.name === 'timestamp')
-				? [
-						{
-							title: 'timestamp',
-							dataIndex: 'timestamp',
-							key: 'timestamp',
-							// https://github.com/ant-design/ant-design/discussions/36886
-							render: (
-								field: string | number,
-							): ColumnTypeRender<Record<string, unknown>> => {
-								const date =
-									typeof field === 'string'
-										? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
-										: formatTimezoneAdjustedTimestamp(
-												field / 1e6,
-												'YYYY-MM-DD HH:mm:ss.SSS',
-										  );
-								return {
-									children: (
-										<div className="table-timestamp">
-											<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
-												{date}
-											</Typography.Paragraph>
-										</div>
-									),
-								};
-							},
-						},
-				  ]
-				: []),
+			{
+				title: 'timestamp',
+				dataIndex: 'timestamp',
+				key: 'timestamp',
+				// https://github.com/ant-design/ant-design/discussions/36886
+				render: (field): ColumnTypeRender<Record<string, unknown>> => {
+					const date =
+						typeof field === 'string'
+							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
+							: formatTimezoneAdjustedTimestamp(
+									field / 1e6,
+									'YYYY-MM-DD HH:mm:ss.SSS',
+							  );
+					return {
+						children: (
+							<div className="table-timestamp">
+								<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
+									{date}
+								</Typography.Paragraph>
+							</div>
+						),
+					};
+				},
+			},
 			...(appendTo === 'center' ? fieldColumns : []),
-			...(fields.some((field) => field.name === 'body')
-				? [
-						{
-							title: 'body',
-							dataIndex: 'body',
-							key: 'body',
-							render: (
-								field: string | number,
-							): ColumnTypeRender<Record<string, unknown>> => ({
-								props: {
-									style: defaultTableStyle,
-								},
-								children: (
-									<TableBodyContent
-										dangerouslySetInnerHTML={{
-											__html: convert.toHtml(
-												dompurify.sanitize(unescapeString(field as string), {
-													FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-												}),
-											),
-										}}
-										fontSize={fontSize}
-										linesPerRow={linesPerRow}
-										isDarkMode={isDarkMode}
-									/>
+			{
+				title: 'body',
+				dataIndex: 'body',
+				key: 'body',
+				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
+					props: {
+						style: defaultTableStyle,
+					},
+					children: (
+						<TableBodyContent
+							dangerouslySetInnerHTML={{
+								__html: convert.toHtml(
+									dompurify.sanitize(unescapeString(field), {
+										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+									}),
 								),
-							}),
-						},
-				  ]
-				: []),
+							}}
+							fontSize={fontSize}
+							linesPerRow={linesPerRow}
+							isDarkMode={isDarkMode}
+						/>
+					),
+				}),
+			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
 	}, [

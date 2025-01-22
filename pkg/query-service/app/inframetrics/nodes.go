@@ -335,7 +335,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := nodeAttrs[record.NodeUID]; ok {
+			if _, ok := nodeAttrs[record.NodeUID]; ok && record.NodeUID != "" {
 				record.Meta = nodeAttrs[record.NodeUID]
 			}
 
