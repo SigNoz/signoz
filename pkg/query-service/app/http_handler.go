@@ -546,6 +546,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/traces/flamegraph/{traceId}", am.ViewAccess(aH.GetFlamegraphSpansForTrace)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v2/traces/{traceId}", am.ViewAccess(aH.GetWaterfallSpansForTraceWithMetadata)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -1775,6 +1777,52 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
 	aH.WriteJSON(w, r, result)
 
+}
+
+func (aH *APIHandler) GetWaterfallSpansForTraceWithMetadata(w http.ResponseWriter, r *http.Request) {
+	traceID := mux.Vars(r)["traceId"]
+	if traceID == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("traceID is required")}, nil)
+		return
+	}
+
+	req := new(model.GetWaterfallSpansForTraceWithMetadataParams)
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.reader.GetWaterfallSpansForTraceWithMetadata(r.Context(), traceID, req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) GetFlamegraphSpansForTrace(w http.ResponseWriter, r *http.Request) {
+	traceID := mux.Vars(r)["traceId"]
+	if traceID == "" {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("traceID is required")}, nil)
+		return
+	}
+
+	req := new(model.GetFlamegraphSpansForTraceParams)
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	result, apiErr := aH.reader.GetFlamegraphSpansForTrace(r.Context(), traceID, req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
 }
 
 func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {

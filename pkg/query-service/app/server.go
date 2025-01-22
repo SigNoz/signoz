@@ -62,18 +62,19 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-	SigNoz            *signoz.SigNoz
+	DisableRules               bool
+	RuleRepoURL                string
+	PreferSpanMetrics          bool
+	MaxIdleConns               int
+	MaxOpenConns               int
+	DialTimeout                time.Duration
+	CacheConfigPath            string
+	FluxInterval               string
+	FluxIntervalForTraceDetail string
+	Cluster                    string
+	UseLogsNewSchema           bool
+	UseTraceNewSchema          bool
+	SigNoz                     *signoz.SigNoz
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -123,6 +124,25 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	readerReady := make(chan bool)
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
+
+	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -137,6 +157,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			fluxIntervalForTraceDetail,
+			nil,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -151,25 +173,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			return nil, err
 		}
 	}
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
 
 	<-readerReady
 	rm, err := makeRulesManager(
 		serverOptions.PromConfigPath,
 		constants.GetAlertManagerApiPrefix(),
 		serverOptions.RuleRepoURL, serverOptions.SigNoz.SQLStore.SQLxDB(), reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
-	if err != nil {
-		return nil, err
-	}
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
 		return nil, err
 	}

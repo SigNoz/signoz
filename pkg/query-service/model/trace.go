@@ -20,6 +20,7 @@ type SpanItemV2 struct {
 	StatusMessage     string             `ch:"status_message"`
 	StatusCodeString  string             `ch:"status_code_string"`
 	SpanKind          string             `ch:"kind_string"`
+	ParentSpanId      string             `ch:"parent_span_id"`
 }
 
 type TraceSummary struct {

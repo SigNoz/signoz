@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	cacheV2 "go.signoz.io/signoz/pkg/cache"
 	basechr "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 )
@@ -17,6 +18,7 @@ type ClickhouseReader struct {
 	*basechr.ClickHouseReader
 }
 
+// dummy
 func NewDataConnector(
 	localDB *sqlx.DB,
 	promConfigPath string,
@@ -27,8 +29,10 @@ func NewDataConnector(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
+	fluxIntervalForTraceDetail time.Duration,
+	cacheV2 cacheV2.Cache,
 ) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster, useLogsNewSchema, useTraceNewSchema)
+	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cacheV2)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
 		appdb:            localDB,
