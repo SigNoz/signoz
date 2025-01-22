@@ -284,7 +284,7 @@ export const VolumesQuickFiltersConfig: IQuickFiltersConfig[] = [
 			isJSON: false,
 		},
 		aggregateOperator: 'noop',
-		aggregateAttribute: 'k8s_pod_cpu_utilization',
+		aggregateAttribute: 'k8s_volume_available',
 		dataSource: DataSource.METRICS,
 		defaultOpen: true,
 	},
