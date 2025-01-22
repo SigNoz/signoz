@@ -111,7 +111,7 @@ export interface K8sJobsRowData {
 
 const jobGroupColumnConfig = {
 	title: (
-		<div className="column-header job-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> JOB GROUP
 		</div>
 	),
@@ -121,6 +121,7 @@ const jobGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sJobsListQuery = (): K8sJobsListPayload => ({

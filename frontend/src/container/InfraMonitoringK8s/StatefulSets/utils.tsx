@@ -96,7 +96,7 @@ export interface K8sStatefulSetsRowData {
 
 const statefulSetGroupColumnConfig = {
 	title: (
-		<div className="column-header statefulSet-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> STATEFULSET GROUP
 		</div>
 	),
@@ -106,6 +106,7 @@ const statefulSetGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sStatefulSetsListQuery = (): K8sStatefulSetsListPayload => ({

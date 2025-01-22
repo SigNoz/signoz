@@ -50,7 +50,7 @@ export interface K8sVolumesRowData {
 
 const volumeGroupColumnConfig = {
 	title: (
-		<div className="column-header pod-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> VOLUME GROUP
 		</div>
 	),
@@ -60,6 +60,7 @@ const volumeGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sVolumesListQuery = (): K8sVolumesListPayload => ({

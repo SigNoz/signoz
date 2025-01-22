@@ -367,6 +367,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sStatefulSetsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
@@ -374,6 +375,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sJobsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
@@ -381,6 +383,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sDaemonSetsList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 
@@ -388,6 +391,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							<K8sVolumesList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								quickFiltersLastUpdated={quickFiltersLastUpdated}
 							/>
 						)}
 					</div>

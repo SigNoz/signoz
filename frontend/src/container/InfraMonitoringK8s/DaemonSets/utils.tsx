@@ -96,7 +96,7 @@ export interface K8sDaemonSetsRowData {
 
 const daemonSetGroupColumnConfig = {
 	title: (
-		<div className="column-header daemonSet-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> DAEMONSET GROUP
 		</div>
 	),
@@ -106,6 +106,7 @@ const daemonSetGroupColumnConfig = {
 	width: 150,
 	align: 'left',
 	sorter: false,
+	className: 'column entity-group-header',
 };
 
 export const getK8sDaemonSetsListQuery = (): K8sDaemonSetsListPayload => ({

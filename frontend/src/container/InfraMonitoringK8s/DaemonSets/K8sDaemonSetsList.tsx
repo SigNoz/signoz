@@ -45,9 +45,11 @@ import {
 function K8sDaemonSetsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
+	quickFiltersLastUpdated,
 }: {
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
+	quickFiltersLastUpdated: number;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -79,12 +81,28 @@ function K8sDaemonSetsList({
 		{ value: string; label: string }[]
 	>([]);
 
+	const { currentQuery } = useQueryBuilder();
+
+	const queryFilters = useMemo(
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
+		[currentQuery?.builder?.queryData],
+	);
+
+	// Reset pagination every time quick filters are changed
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [quickFiltersLastUpdated]);
+
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sDaemonSetsRowData,
 		groupBy: IBuilderQuery['groupBy'],
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
-			items: [],
+			items: [...queryFilters.items],
 			op: 'and',
 		};
 
@@ -123,6 +141,7 @@ function K8sDaemonSetsList({
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const {
@@ -138,8 +157,6 @@ function K8sDaemonSetsList({
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
 	);
-
-	const { currentQuery } = useQueryBuilder();
 
 	const {
 		data: groupByFiltersData,
@@ -158,15 +175,6 @@ function K8sDaemonSetsList({
 		},
 		true,
 		K8sCategory.DAEMONSETS,
-	);
-
-	const queryFilters = useMemo(
-		() =>
-			currentQuery?.builder?.queryData[0]?.filters || {
-				items: [],
-				op: 'and',
-			},
-		[currentQuery?.builder?.queryData],
 	);
 
 	const query = useMemo(() => {
