@@ -81,6 +81,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 
 export interface K8sDaemonSetsRowData {
 	key: string;
+	daemonsetUID: string;
 	daemonsetName: React.ReactNode;
 	cpu_request: React.ReactNode;
 	cpu_limit: React.ReactNode;
@@ -252,9 +253,9 @@ export const formatDataForTable = (
 	data: K8sDaemonSetsData[],
 	groupBy: IBuilderQuery['groupBy'],
 ): K8sDaemonSetsRowData[] =>
-	data.map((daemonSet) => ({
-		key: daemonSet.daemonSetName,
-		daemonSetUID: daemonSet.daemonSetName,
+	data.map((daemonSet, index) => ({
+		key: index.toString(),
+		daemonsetUID: daemonSet.daemonSetName,
 		daemonsetName: (
 			<Tooltip title={daemonSet.meta.k8s_daemonset_name}>
 				{daemonSet.meta.k8s_daemonset_name || ''}

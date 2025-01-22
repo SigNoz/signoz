@@ -296,7 +296,7 @@ function K8sStatefulSetsList({
 	const handleRowClick = (record: K8sStatefulSetsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedStatefulSetUID(record.key);
+			setselectedStatefulSetUID(record.statefulsetUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -407,18 +407,6 @@ function K8sStatefulSetsList({
 		setselectedStatefulSetUID(null);
 	};
 
-	const showsStatefulSetsTable =
-		!isError &&
-		!isLoading &&
-		!isFetching &&
-		!(formattedStatefulSetsData.length === 0 && queryFilters.items.length > 0);
-
-	const showNoFilteredStatefulSetsMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedStatefulSetsData.length === 0 &&
-		queryFilters.items.length > 0;
-
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
 			const groupBy = [];
@@ -435,6 +423,7 @@ function K8sStatefulSetsList({
 				}
 			}
 
+			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 		},
@@ -467,54 +456,53 @@ function K8sStatefulSetsList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{showNoFilteredStatefulSetsMessage && (
-				<div className="no-filtered-hosts-message-container">
-					<div className="no-filtered-hosts-message-content">
-						<img
-							src="/Icons/emptyState.svg"
-							alt="thinking-emoji"
-							className="empty-state-svg"
-						/>
+			<Table
+				className="k8s-list-table statefulSets-list-table"
+				dataSource={isFetching || isLoading ? [] : formattedStatefulSetsData}
+				columns={columns}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total: totalCount,
+					showSizeChanger: false,
+					hideOnSinglePage: true,
+				}}
+				scroll={{ x: true }}
+				loading={{
+					spinning: isFetching || isLoading,
+					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+				}}
+				locale={{
+					emptyText:
+						isFetching || isLoading ? null : (
+							<div className="no-filtered-hosts-message-container">
+								<div className="no-filtered-hosts-message-content">
+									<img
+										src="/Icons/emptyState.svg"
+										alt="thinking-emoji"
+										className="empty-state-svg"
+									/>
 
-						<Typography.Text className="no-filtered-hosts-message">
-							This query had no results. Edit your query and try again!
-						</Typography.Text>
-					</div>
-				</div>
-			)}
+									<Typography.Text className="no-filtered-hosts-message">
+										This query had no results. Edit your query and try again!
+									</Typography.Text>
+								</div>
+							</div>
+						),
+				}}
+				tableLayout="fixed"
+				onChange={handleTableChange}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => handleRowClick(record),
+					className: 'clickable-row',
+				})}
+				expandable={{
+					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+					expandIcon: expandRowIconRenderer,
+					expandedRowKeys,
+				}}
+			/>
 
-			{(isFetching || isLoading) && <LoadingContainer />}
-
-			{showsStatefulSetsTable && (
-				<Table
-					className="k8s-list-table statefulSets-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedStatefulSetsData}
-					columns={columns}
-					pagination={{
-						current: currentPage,
-						pageSize,
-						total: totalCount,
-						showSizeChanger: false,
-						hideOnSinglePage: true,
-					}}
-					scroll={{ x: true }}
-					loading={{
-						spinning: isFetching || isLoading,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-					}}
-					tableLayout="fixed"
-					onChange={handleTableChange}
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => handleRowClick(record),
-						className: 'clickable-row',
-					})}
-					expandable={{
-						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-						expandIcon: expandRowIconRenderer,
-						expandedRowKeys,
-					}}
-				/>
-			)}
 			<StatefulSetDetails
 				statefulSet={selectedStatefulSetData}
 				isModalTimeSelection

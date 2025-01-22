@@ -147,8 +147,8 @@ export const formatDataForTable = (
 	data: K8sVolumesData[],
 	groupBy: IBuilderQuery['groupBy'],
 ): K8sVolumesRowData[] =>
-	data.map((volume) => ({
-		key: volume.persistentVolumeClaimName,
+	data.map((volume, index) => ({
+		key: index.toString(),
 		volumeUID: volume.persistentVolumeClaimName,
 		pvcName: volume.persistentVolumeClaimName,
 		available: (

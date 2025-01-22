@@ -294,7 +294,7 @@ function K8sDaemonSetsList({
 	const handleRowClick = (record: K8sDaemonSetsRowData): void => {
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
-			setselectedDaemonSetUID(record.key);
+			setselectedDaemonSetUID(record.daemonsetUID);
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -405,18 +405,6 @@ function K8sDaemonSetsList({
 		setselectedDaemonSetUID(null);
 	};
 
-	const showsDaemonSetsTable =
-		!isError &&
-		!isLoading &&
-		!isFetching &&
-		!(formattedDaemonSetsData.length === 0 && queryFilters.items.length > 0);
-
-	const showNoFilteredDaemonSetsMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedDaemonSetsData.length === 0 &&
-		queryFilters.items.length > 0;
-
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
 			const groupBy = [];
@@ -433,6 +421,7 @@ function K8sDaemonSetsList({
 				}
 			}
 
+			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 		},
@@ -465,54 +454,53 @@ function K8sDaemonSetsList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			{showNoFilteredDaemonSetsMessage && (
-				<div className="no-filtered-hosts-message-container">
-					<div className="no-filtered-hosts-message-content">
-						<img
-							src="/Icons/emptyState.svg"
-							alt="thinking-emoji"
-							className="empty-state-svg"
-						/>
+			<Table
+				className="k8s-list-table daemonSets-list-table"
+				dataSource={isFetching || isLoading ? [] : formattedDaemonSetsData}
+				columns={columns}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total: totalCount,
+					showSizeChanger: false,
+					hideOnSinglePage: true,
+				}}
+				scroll={{ x: true }}
+				loading={{
+					spinning: isFetching || isLoading,
+					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+				}}
+				locale={{
+					emptyText:
+						isFetching || isLoading ? null : (
+							<div className="no-filtered-hosts-message-container">
+								<div className="no-filtered-hosts-message-content">
+									<img
+										src="/Icons/emptyState.svg"
+										alt="thinking-emoji"
+										className="empty-state-svg"
+									/>
 
-						<Typography.Text className="no-filtered-hosts-message">
-							This query had no results. Edit your query and try again!
-						</Typography.Text>
-					</div>
-				</div>
-			)}
+									<Typography.Text className="no-filtered-hosts-message">
+										This query had no results. Edit your query and try again!
+									</Typography.Text>
+								</div>
+							</div>
+						),
+				}}
+				tableLayout="fixed"
+				onChange={handleTableChange}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => handleRowClick(record),
+					className: 'clickable-row',
+				})}
+				expandable={{
+					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+					expandIcon: expandRowIconRenderer,
+					expandedRowKeys,
+				}}
+			/>
 
-			{(isFetching || isLoading) && <LoadingContainer />}
-
-			{showsDaemonSetsTable && (
-				<Table
-					className="k8s-list-table daemonSets-list-table"
-					dataSource={isFetching || isLoading ? [] : formattedDaemonSetsData}
-					columns={columns}
-					pagination={{
-						current: currentPage,
-						pageSize,
-						total: totalCount,
-						showSizeChanger: false,
-						hideOnSinglePage: true,
-					}}
-					scroll={{ x: true }}
-					loading={{
-						spinning: isFetching || isLoading,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-					}}
-					tableLayout="fixed"
-					onChange={handleTableChange}
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => handleRowClick(record),
-						className: 'clickable-row',
-					})}
-					expandable={{
-						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-						expandIcon: expandRowIconRenderer,
-						expandedRowKeys,
-					}}
-				/>
-			)}
 			<DaemonSetDetails
 				daemonSet={selectedDaemonSetData}
 				isModalTimeSelection

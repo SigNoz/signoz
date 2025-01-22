@@ -284,8 +284,8 @@ export const formatDataForTable = (
 	data: K8sJobsData[],
 	groupBy: IBuilderQuery['groupBy'],
 ): K8sJobsRowData[] =>
-	data.map((job) => ({
-		key: job.jobName,
+	data.map((job, index) => ({
+		key: index.toString(),
 		jobUID: job.jobName,
 		jobName: (
 			<Tooltip title={job.meta.k8s_job_name}>
