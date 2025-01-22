@@ -17,8 +17,6 @@ const (
 
 type Logging struct {
 	logger *zap.Logger
-	// staticFields are additional fields that will be included in every log entry
-	staticFields []zap.Field
 }
 
 func NewLogging(logger *zap.Logger, staticFields ...zap.Field) *Logging {
@@ -27,8 +25,7 @@ func NewLogging(logger *zap.Logger, staticFields ...zap.Field) *Logging {
 	}
 
 	return &Logging{
-		logger:       logger.Named(pkgname),
-		staticFields: staticFields,
+		logger: logger.Named(pkgname),
 	}
 }
 
@@ -49,7 +46,6 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			zap.Int64(string(semconv.HTTPRequestSizeKey), req.ContentLength),
 			zap.String(string(semconv.HTTPRouteKey), path),
 		}
-		fields = append(fields, middleware.staticFields...)
 
 		badResponseBuffer := new(bytes.Buffer)
 		writer := newBadResponseLoggingWriter(rw, badResponseBuffer)
