@@ -31,7 +31,6 @@ func NewLogging(logger *zap.Logger) *Logging {
 
 func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
 		start := time.Now()
 		host, port, _ := net.SplitHostPort(req.Host)
 		path, err := mux.CurrentRoute(req).GetPathTemplate()
@@ -40,7 +39,6 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 		}
 
 		fields := []zap.Field{
-			zap.Any("context", ctx),
 			zap.String(string(semconv.ClientAddressKey), req.RemoteAddr),
 			zap.String(string(semconv.UserAgentOriginalKey), req.UserAgent()),
 			zap.String(string(semconv.ServerAddressKey), host),
@@ -49,8 +47,8 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			zap.String(string(semconv.HTTPRouteKey), path),
 		}
 
-		buf := new(bytes.Buffer)
-		writer := newBadResponseLoggingWriter(rw, buf)
+		badResponseBuffer := new(bytes.Buffer)
+		writer := newBadResponseLoggingWriter(rw, badResponseBuffer)
 		next.ServeHTTP(writer, req)
 
 		statusCode, err := writer.StatusCode(), writer.WriteError()
@@ -62,8 +60,9 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			fields = append(fields, zap.Error(err))
 			middleware.logger.Error(logMessage, fields...)
 		} else {
-			if buf.Len() != 0 {
-				fields = append(fields, zap.String("response.body", buf.String()))
+			// when the status code is 400 or >=500, and the response body is not empty.
+			if badResponseBuffer.Len() != 0 {
+				fields = append(fields, zap.String("response.body", badResponseBuffer.String()))
 			}
 
 			middleware.logger.Info(logMessage, fields...)

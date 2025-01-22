@@ -170,7 +170,7 @@ function K8sPodsList({
 		selectedRowData: K8sPodsRowData,
 	): IBuilderQuery['filters'] => {
 		const baseFilters: IBuilderQuery['filters'] = {
-			items: [...query.filters.items],
+			items: [...queryFilters.items],
 			op: 'and',
 		};
 
@@ -298,8 +298,9 @@ function K8sPodsList({
 				}
 			}
 
+			// Reset pagination on switching to groupBy
+			setCurrentPage(1);
 			setGroupBy(groupBy);
-
 			setExpandedRowKeys([]);
 		},
 		[groupByFiltersData],

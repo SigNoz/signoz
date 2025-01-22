@@ -122,7 +122,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := migrate.Migrate(signoz.SQLStore.SQLxDB()); err != nil {
 		zap.L().Error("Failed to migrate", zap.Error(err))
 	} else {
 		zap.L().Info("Migration successful")
