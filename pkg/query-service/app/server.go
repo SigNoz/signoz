@@ -264,7 +264,11 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(middleware.NewTimeout(zap.L(), constants.TimeoutExcludedRoutes, constants.ContextTimeout, constants.ContextTimeoutMaxAllowed).Wrap)
+	r.Use(middleware.NewTimeout(zap.L(),
+		s.serverOptions.SigNoz.APIServer.GetTimeoutExcludedRoutes(),
+		s.serverOptions.SigNoz.APIServer.GetContextTimeout(),
+		s.serverOptions.SigNoz.APIServer.GetContextTimeoutMaxAllowed(),
+	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddlewarePrivate)
 
@@ -290,7 +294,11 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 
 	r := NewRouter()
 
-	r.Use(middleware.NewTimeout(zap.L(), constants.TimeoutExcludedRoutes, constants.ContextTimeout, constants.ContextTimeoutMaxAllowed).Wrap)
+	r.Use(middleware.NewTimeout(zap.L(),
+		s.serverOptions.SigNoz.APIServer.GetTimeoutExcludedRoutes(),
+		s.serverOptions.SigNoz.APIServer.GetContextTimeout(),
+		s.serverOptions.SigNoz.APIServer.GetContextTimeoutMaxAllowed(),
+	).Wrap)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 	r.Use(LogCommentEnricher)

@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 
+	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
@@ -12,8 +13,9 @@ import (
 )
 
 type SigNoz struct {
-	Cache cache.Cache
-	Web   web.Web
+	Cache     cache.Cache
+	Web       web.Web
+	APIServer apiserver.APIServer
 }
 
 func New(
@@ -54,8 +56,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize apiserver from the available apiserver provider factories
+	apiserver, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.APIServer,
+		providerConfig.APIServerProviderFactories,
+		config.APIServer.Provider(),
+	)
+
 	return &SigNoz{
-		Cache: cache,
-		Web:   web,
+		Cache:     cache,
+		Web:       web,
+		APIServer: apiserver,
 	}, nil
 }

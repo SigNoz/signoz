@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 
+	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/factory"
@@ -28,6 +29,9 @@ type Config struct {
 
 	// SQLMigrator config
 	SQLMigrator sqlmigrator.Config `mapstructure:"sqlmigrator"`
+
+	// API Server config
+	APIServer apiserver.Config `mapstructure:"apiserver"`
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Config, error) {
@@ -37,6 +41,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 		cache.NewConfigFactory(),
 		sqlstore.NewConfigFactory(),
 		sqlmigrator.NewConfigFactory(),
+		apiserver.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

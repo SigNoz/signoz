@@ -152,26 +152,6 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	},
 }
 
-func GetContextTimeout() time.Duration {
-	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
-	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
-	if err != nil {
-		return time.Minute
-	}
-	return contextTimeoutDuration
-}
-
-var ContextTimeout = GetContextTimeout()
-
-func GetContextTimeoutMaxAllowed() time.Duration {
-	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT_MAX_ALLOWED", "600")
-	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
-	if err != nil {
-		return time.Minute
-	}
-	return contextTimeoutDuration
-}
-
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
 	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
@@ -180,8 +160,6 @@ func GetEvalDelay() time.Duration {
 	}
 	return evalDelayDuration
 }
-
-var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
 	TraceID                        = "traceID"
@@ -253,11 +231,6 @@ const (
 	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
 	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME      = "distributed_top_level_operations"
 )
-
-var TimeoutExcludedRoutes = map[string]struct{}{
-	"/api/v1/logs/tail":     {},
-	"/api/v3/logs/livetail": {},
-}
 
 // alert related constants
 const (
