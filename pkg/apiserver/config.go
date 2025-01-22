@@ -6,7 +6,7 @@ import (
 	"go.signoz.io/signoz/pkg/factory"
 )
 
-// Config holds the configuration for web.
+// Config holds the configuration for config.
 type Config struct {
 	Timeout Timeout `mapstructure:"timeout"`
 }
