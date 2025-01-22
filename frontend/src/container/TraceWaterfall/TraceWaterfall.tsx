@@ -92,6 +92,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 					<Success
 						spans={spans}
 						traceMetadata={{
+							traceId,
 							startTime: traceData?.payload?.startTimestampMillis || 0,
 							endTime: traceData?.payload?.endTimestampMillis || 0,
 							hasMissingSpans: traceData?.payload?.hasMissingSpans || false,

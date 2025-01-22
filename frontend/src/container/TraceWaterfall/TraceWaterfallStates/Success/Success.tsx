@@ -8,10 +8,15 @@ import { Button, TabsProps, Typography } from 'antd';
 import cx from 'classnames';
 import DetailsDrawer from 'components/DetailsDrawer/DetailsDrawer';
 import { TableV3 } from 'components/TableV3/TableV3';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { themeColors } from 'constants/theme';
+import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/config';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import createQueryParams from 'lib/createQueryParams';
+import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 // import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import {
@@ -44,6 +49,7 @@ const CONNECTOR_WIDTH = 28;
 const VERTICAL_CONNECTOR_WIDTH = 1;
 
 interface ITraceMetadata {
+	traceId: string;
 	startTime: number;
 	endTime: number;
 	hasMissingSpans: boolean;
@@ -394,6 +400,24 @@ function Success(props: ISuccessProps): JSX.Element {
 		}
 	}, [interestedSpanId, spans]);
 
+	const handleGoToRelatedLogs = useCallback(() => {
+		const query = getTraceToLogsQuery(
+			traceMetadata.traceId,
+			traceMetadata.startTime,
+			traceMetadata.endTime,
+		);
+
+		history.push(
+			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
+				[QueryParams.compositeQuery]: JSON.stringify(query),
+				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceMetadata.startTime - 1000,
+				// we add 1000 milliseconds to the end time for nano second duration traces
+				[QueryParams.endTime]: traceMetadata.endTime + 1000,
+			})}`,
+		);
+	}, [traceMetadata.endTime, traceMetadata.startTime, traceMetadata.traceId]);
+
 	return (
 		<div className="success-content">
 			{traceMetadata.hasMissingSpans && (
@@ -427,9 +451,15 @@ function Success(props: ISuccessProps): JSX.Element {
 					open={traceDetailsOpen}
 					setOpen={setTraceDetailsOpen}
 					title="Span Details"
+					detailsDrawerClassName="span-dets"
 					defaultActiveKey="attributes"
 					items={getItems(spanDetails, traceMetadata.startTime)}
 					descriptiveContent={<DrawerDescriptiveContent span={spanDetails} />}
+					tabBarExtraContent={
+						<Button className="related-logs" onClick={handleGoToRelatedLogs}>
+							Go to Related Logs
+						</Button>
+					}
 				/>
 			)}
 		</div>

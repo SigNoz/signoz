@@ -288,6 +288,21 @@
 	}
 }
 
+.span-dets {
+	.related-logs {
+		display: flex;
+		width: 160px;
+		padding: 4px 8px;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+		border-radius: 2px;
+		border: 1px solid var(--Slate-400, #1d212d);
+		background: var(--Slate-500, #161922);
+		box-shadow: none;
+	}
+}
+
 .lightMode {
 	.success-content {
 		width: 100%;

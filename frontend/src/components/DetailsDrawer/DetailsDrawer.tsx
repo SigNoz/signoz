@@ -12,6 +12,7 @@ interface IDetailsDrawerProps {
 	defaultActiveKey: string;
 	items: TabsProps['items'];
 	detailsDrawerClassName?: string;
+	tabBarExtraContent?: JSX.Element;
 }
 
 function DetailsDrawer(props: IDetailsDrawerProps): JSX.Element {
@@ -23,6 +24,7 @@ function DetailsDrawer(props: IDetailsDrawerProps): JSX.Element {
 		defaultActiveKey,
 		detailsDrawerClassName,
 		items,
+		tabBarExtraContent,
 	} = props;
 	return (
 		<Drawer
@@ -36,9 +38,11 @@ function DetailsDrawer(props: IDetailsDrawerProps): JSX.Element {
 			<div>{descriptiveContent}</div>
 			<Tabs
 				items={items}
+				addIcon
 				defaultActiveKey={defaultActiveKey}
 				animated
 				className={cx('details-drawer-tabs', detailsDrawerClassName)}
+				tabBarExtraContent={tabBarExtraContent}
 			/>
 		</Drawer>
 	);
@@ -46,6 +50,7 @@ function DetailsDrawer(props: IDetailsDrawerProps): JSX.Element {
 
 DetailsDrawer.defaultProps = {
 	detailsDrawerClassName: '',
+	tabBarExtraContent: null,
 };
 
 export default DetailsDrawer;
