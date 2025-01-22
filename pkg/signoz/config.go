@@ -84,7 +84,7 @@ func mergeAndEnsureBackwardCompatibility(config *Config) {
 		if err == nil {
 			config.APIServer.Timeout.Max = contextTimeoutDuration
 		} else {
-			fmt.Println("Error parsing SIGNOZ_APISERVER_TIMEOUT_MAX, using default value of 600s")
+			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
 		}
 	}
 }
