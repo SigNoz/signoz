@@ -12,7 +12,7 @@ const useGetTraceV2 = (props: GetTraceV2PayloadProps): UseLicense =>
 		queryFn: () => getTraceV2(props),
 		// if any of the props changes then we need to trigger an API call as the older data will be obsolete
 		queryKey: [
-			REACT_QUERY_KEY.GET_TRACE_V2,
+			REACT_QUERY_KEY.GET_TRACE_V2_WATERFALL,
 			props.traceId,
 			props.selectedSpanId,
 			props.isSelectedSpanIDUnCollapsed,
