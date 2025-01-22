@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
@@ -66,5 +67,24 @@ func mergeAndEnsureBackwardCompatibility(config *Config) {
 	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
 		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
 		config.SQLStore.Sqlite.Path = os.Getenv("SIGNOZ_LOCAL_DB_PATH")
+	}
+	if os.Getenv("CONTEXT_TIMEOUT") != "" {
+		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_CONTEXT_TIMEOUT instead.")
+		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT") + "s")
+		if err == nil {
+			config.APIServer.ContextTimeout = contextTimeoutDuration
+		} else {
+			fmt.Println("Error parsing CONTEXT_TIMEOUT, using default value of 60s")
+		}
+	}
+	if os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") != "" {
+		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT_MAX_ALLOWED is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_CONTEXT_TIMEOUT_MAX_ALLOWED instead.")
+
+		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") + "s")
+		if err == nil {
+			config.APIServer.ContextTimeoutMaxAllowed = contextTimeoutDuration
+		} else {
+			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
+		}
 	}
 }
