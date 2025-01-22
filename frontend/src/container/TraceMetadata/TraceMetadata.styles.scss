@@ -140,6 +140,7 @@
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
+			gap: 4px;
 
 			.text {
 				color: var(--bg-vanilla-400);
@@ -164,6 +165,7 @@
 				line-height: 28px; /* 140% */
 				letter-spacing: -0.1px;
 				text-transform: uppercase;
+				text-align: right;
 			}
 		}
 	}

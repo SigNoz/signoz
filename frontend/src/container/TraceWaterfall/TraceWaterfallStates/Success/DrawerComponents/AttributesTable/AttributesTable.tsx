@@ -8,6 +8,8 @@ import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
+import NoData from '../NoData/NoData';
+
 interface IAttributesTable {
 	span: Span;
 }
@@ -54,29 +56,37 @@ function AttributesTable(props: IAttributesTable): JSX.Element {
 	];
 	return (
 		<div className="attributes-table">
-			<section className="attributes-header">
-				<Typography.Text className="attributes-tag">Attributes</Typography.Text>
-				{searchVisible && (
-					<Input
-						autoFocus
-						placeholder="Search for attribute..."
-						className="search-input"
-						value={fieldSearchInput}
-						onChange={(e): void => setFieldSearchInput(e.target.value)}
-					/>
-				)}
-				<Button
-					className="action-btn"
-					icon={<Search size={12} />}
-					onClick={(e): void => {
-						e.stopPropagation();
-						setSearchVisible((prev) => !prev);
-					}}
-				/>
-			</section>
-			<section className="resize-trace-attribute-table">
-				<ResizeTable columns={columns} dataSource={datasource} />
-			</section>
+			{datasource.length > 0 ? (
+				<>
+					<section className="attributes-header">
+						<Typography.Text className="attributes-tag">Attributes</Typography.Text>
+						{searchVisible && (
+							<Input
+								autoFocus
+								placeholder="Search for attribute..."
+								className="search-input"
+								value={fieldSearchInput}
+								onChange={(e): void => setFieldSearchInput(e.target.value)}
+							/>
+						)}
+						<Button
+							className="action-btn"
+							icon={<Search size={12} />}
+							onClick={(e): void => {
+								e.stopPropagation();
+								setSearchVisible((prev) => !prev);
+							}}
+						/>
+					</section>
+					<section className="resize-trace-attribute-table">
+						<ResizeTable columns={columns} dataSource={datasource} />
+					</section>
+				</>
+			) : (
+				<div className="no-attributes">
+					<NoData name="attributes" />
+				</div>
+			)}
 		</div>
 	);
 }

@@ -6,6 +6,11 @@
 	.flamegraph-chart {
 		width: 80%;
 		padding: 15px;
+
+		.loading-skeleton {
+			justify-content: center;
+			align-items: center;
+		}
 	}
 
 	.flamegraph-stats {

@@ -1,5 +1,6 @@
 import './TraceWaterfall.styles.scss';
 
+import { Skeleton } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -76,7 +77,11 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	const getContent = useMemo(() => {
 		switch (traceWaterfallState) {
 			case TraceWaterfallStates.LOADING:
-				return <Spinner tip="Fetching the trace!" />;
+				return (
+					<div className="loading-skeleton">
+						<Skeleton active paragraph={{ rows: 6 }} />
+					</div>
+				);
 			case TraceWaterfallStates.ERROR:
 				return <Error error={errorFetchingTraceData as AxiosError} />;
 			case TraceWaterfallStates.NO_DATA:

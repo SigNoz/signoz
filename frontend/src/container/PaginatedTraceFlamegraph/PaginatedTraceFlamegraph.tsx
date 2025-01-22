@@ -1,6 +1,6 @@
 import './PaginatedTraceFlamegraph.styles.scss';
 
-import { Progress, Typography } from 'antd';
+import { Progress, Skeleton, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
@@ -73,7 +73,11 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	const getContent = useMemo(() => {
 		switch (traceFlamegraphState) {
 			case TraceFlamegraphStates.LOADING:
-				return <Spinner tip="Fetching the trace!" />;
+				return (
+					<div className="loading-skeleton">
+						<Skeleton active paragraph={{ rows: 3 }} />
+					</div>
+				);
 			case TraceFlamegraphStates.ERROR:
 				return <Error error={error as AxiosError} />;
 			case TraceFlamegraphStates.NO_DATA:

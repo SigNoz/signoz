@@ -84,6 +84,21 @@ function SpanOverview({
 		color = `var(--bg-cherry-500)`;
 	}
 
+	const statusCodeClassName = useMemo(() => {
+		if (span.statusCodeString === 'unset') {
+			return '';
+		}
+		const statusCode = parseFloat(span.statusCodeString);
+		if (statusCode >= 200 && statusCode < 300) {
+			return 'success';
+		}
+		if (statusCode >= 400) {
+			return 'error';
+		}
+
+		return '';
+	}, [span.statusCodeString]);
+
 	return (
 		<div
 			ref={spanRef}
@@ -119,38 +134,52 @@ function SpanOverview({
 			)}
 			<div className="span-overview-content">
 				<section className="first-row">
-					{span.hasChildren ? (
-						<Button
-							onClick={(event): void => {
-								event.stopPropagation();
-								event.preventDefault();
-								handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
-							}}
-							className="collapse-uncollapse-button"
-						>
-							{isSpanCollapsed ? (
-								<ChevronRight size={14} />
-							) : (
-								<ChevronDown size={14} />
-							)}
-							<Typography.Text className="children-count">
-								{span.subTreeNodeCount}
-							</Typography.Text>
-						</Button>
-					) : (
-						<Button className="collapse-uncollapse-button">
-							<Leaf size={14} />
-						</Button>
-					)}
-					<Typography.Text className="span-name">{span.name}</Typography.Text>
+					<div className="span-det">
+						{span.hasChildren ? (
+							<Button
+								onClick={(event): void => {
+									event.stopPropagation();
+									event.preventDefault();
+									handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
+								}}
+								className="collapse-uncollapse-button"
+							>
+								{isSpanCollapsed ? (
+									<ChevronRight size={14} />
+								) : (
+									<ChevronDown size={14} />
+								)}
+								<Typography.Text className="children-count">
+									{span.subTreeNodeCount}
+								</Typography.Text>
+							</Button>
+						) : (
+							<Button className="collapse-uncollapse-button">
+								<Leaf size={14} />
+							</Button>
+						)}
+						<Typography.Text className="span-name">{span.name}</Typography.Text>
+					</div>
+					<div
+						className="status-code-container"
+						style={{
+							marginRight: `${
+								span.level * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
+							}px`,
+						}}
+					>
+						{span.statusCodeString !== 'Unset' && (
+							<div className={cx('status-code', statusCodeClassName)}>
+								{span.statusCodeString}
+							</div>
+						)}
+					</div>
 				</section>
 				<section className="second-row">
 					<div style={{ width: '2px', background: color, height: '100%' }} />
 					<Typography.Text className="service-name">
 						{span.serviceName}
 					</Typography.Text>
-					<Typography.Text>.</Typography.Text>
-					<Typography.Text>XX data</Typography.Text>
 				</section>
 			</div>
 		</div>

@@ -13,6 +13,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
+import NoData from './NoData/NoData';
+
 function TraceDetailsV2(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
 	const urlQuery = useUrlQuery();
@@ -94,8 +96,13 @@ function TraceDetailsV2(): JSX.Element {
 				rootSpanName={traceData?.payload?.rootServiceEntryPoint || ''}
 				totalErrorSpans={traceData?.payload?.totalErrorSpansCount || 0}
 				totalSpans={traceData?.payload?.totalSpansCount || 0}
+				notFound={(traceData?.payload?.spans.length || 0) === 0}
 			/>
-			<Tabs items={items} animated className="settings-tabs" />
+			{(traceData?.payload?.spans.length || 0) > 0 ? (
+				<Tabs items={items} animated className="settings-tabs" />
+			) : (
+				<NoData />
+			)}
 		</div>
 	);
 }

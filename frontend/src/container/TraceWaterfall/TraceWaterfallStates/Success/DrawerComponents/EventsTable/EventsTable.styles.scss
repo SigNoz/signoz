@@ -1,4 +1,12 @@
 .events-table {
+	.no-events {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 40vh;
+		border-radius: 3px;
+		border: 1px solid var(--bg-slate-500);
+	}
 	.events-container {
 		display: flex;
 		flex-direction: column;

@@ -5,6 +5,14 @@
 	border: 1px solid var(--bg-slate-500);
 	background: rgba(171, 189, 255, 0.04);
 
+	.no-attributes {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 40vh;
+		background-color: var(--bg-ink-400);
+	}
+
 	.attributes-header {
 		display: flex;
 		gap: 16px;

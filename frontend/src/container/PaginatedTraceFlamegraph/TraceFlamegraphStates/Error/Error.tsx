@@ -1,4 +1,6 @@
-import { Typography } from 'antd';
+import './Error.styles.scss';
+
+import { Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 
 interface IErrorProps {
@@ -9,10 +11,18 @@ function Error(props: IErrorProps): JSX.Element {
 	const { error } = props;
 
 	return (
-		<>
-			<Typography.Text>Error fetching trace</Typography.Text>
-			<Typography.Text>{error.message}</Typography.Text>
-		</>
+		<div className="error-flamegraph">
+			<img
+				src="/Icons/no-data.svg"
+				alt="error-flamegraph"
+				className="error-flamegraph-img"
+			/>
+			<Tooltip title={error?.message}>
+				<Typography.Text className="no-data-text">
+					{error?.message || 'Something went wrong!'}
+				</Typography.Text>
+			</Tooltip>
+		</div>
 	);
 }
 

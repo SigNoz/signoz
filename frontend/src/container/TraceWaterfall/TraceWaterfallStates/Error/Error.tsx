@@ -1,4 +1,6 @@
-import { Typography } from 'antd';
+import './Error.styles.scss';
+
+import { Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 
 interface IErrorProps {
@@ -9,10 +11,14 @@ function Error(props: IErrorProps): JSX.Element {
 	const { error } = props;
 
 	return (
-		<>
-			<Typography.Text>Error fetching trace</Typography.Text>
-			<Typography.Text>{error.message}</Typography.Text>
-		</>
+		<div className="error-waterfall">
+			<Typography.Text className="text">Something went wrong!</Typography.Text>
+			<Tooltip title={error?.message}>
+				<Typography.Text className="value" ellipsis>
+					{error?.message}
+				</Typography.Text>
+			</Tooltip>
+		</div>
 	);
 }
 
