@@ -19,7 +19,7 @@ type Logging struct {
 	logger *zap.Logger
 }
 
-func NewLogging(logger *zap.Logger, staticFields ...zap.Field) *Logging {
+func NewLogging(logger *zap.Logger) *Logging {
 	if logger == nil {
 		panic("cannot build logging, logger is empty")
 	}
