@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import './StatefulSetDetails.styles.scss';
+import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -428,35 +428,35 @@ function StatefulSetDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="statefulSet-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{statefulSet && (
 				<>
-					<div className="statefulSet-detail-drawer__statefulSet">
-						<div className="statefulSet-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="statefulSet-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Statefulset Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="statefulSet-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Namespace Name
 								</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Typography.Text className="statefulSet-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={statefulSet.meta.k8s_statefulset_name}>
 										{statefulSet.meta.k8s_statefulset_name}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="statefulSet-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={statefulSet.meta.k8s_namespace_name}>
 										{statefulSet.meta.k8s_namespace_name}
 									</Tooltip>

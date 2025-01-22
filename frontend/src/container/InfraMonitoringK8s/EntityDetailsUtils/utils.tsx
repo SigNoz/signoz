@@ -24,6 +24,7 @@ export const QUERY_KEYS = {
 	K8S_NODE_NAME: 'k8s.node.name',
 	K8S_DEPLOYMENT_NAME: 'k8s.deployment.name',
 	K8S_STATEFUL_SET_NAME: 'k8s.statefulset.name',
+	K8S_JOB_NAME: 'k8s.job.name',
 };
 
 /**
