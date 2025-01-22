@@ -256,7 +256,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 	r := NewRouter()
 
 	r.Use(setTimeoutMiddleware)
-	r.Use(middleware.NewAnalyticsMiddleware().Wrap)
+	r.Use(middleware.NewAnalyticsMiddleware(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 
 	api.RegisterPrivateRoutes(r)
@@ -282,7 +282,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r := NewRouter()
 
 	r.Use(setTimeoutMiddleware)
-	r.Use(middleware.NewAnalyticsMiddleware().Wrap)
+	r.Use(middleware.NewAnalyticsMiddleware(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(LogCommentEnricher)
 

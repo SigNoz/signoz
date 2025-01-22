@@ -309,7 +309,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	r := baseapp.NewRouter()
 
 	r.Use(setTimeoutMiddleware)
-	r.Use(middleware.NewAnalyticsMiddleware().Wrap)
+	r.Use(middleware.NewAnalyticsMiddleware(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
 
@@ -352,7 +352,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	r.Use(setTimeoutMiddleware)
-	r.Use(middleware.NewAnalyticsMiddleware().Wrap)
+	r.Use(middleware.NewAnalyticsMiddleware(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 	r.Use(baseapp.LogCommentEnricher)
 

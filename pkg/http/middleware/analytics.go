@@ -18,10 +18,15 @@ import (
 )
 
 type AnalyticsMiddleware struct {
+	logger *zap.Logger
 }
 
-func NewAnalyticsMiddleware() *AnalyticsMiddleware {
-	return &AnalyticsMiddleware{}
+func NewAnalyticsMiddleware(logger *zap.Logger) *AnalyticsMiddleware {
+	if logger == nil {
+		panic("cannot build analytics middleware, logger is empty")
+	}
+
+	return &AnalyticsMiddleware{logger: logger}
 }
 
 func (a *AnalyticsMiddleware) Wrap(next http.Handler) http.Handler {
@@ -31,11 +36,11 @@ func (a *AnalyticsMiddleware) Wrap(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		queryRangeData, metadataExists := extractQueryRangeData(path, r)
-		getActiveLogs(path, r)
-
 		lrw := NewAnalyticsResponseWriter(w)
 		next.ServeHTTP(lrw, r)
+
+		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
+		a.getActiveLogs(path, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 		if metadataExists {
@@ -81,10 +86,8 @@ func (lrw *analyticsResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error
 	return h.Hijack()
 }
 
-func getActiveLogs(path string, r *http.Request) {
-	// if path == "/api/v1/dashboards/{uuid}" {
-	// 	telemetry.GetInstance().AddActiveMetricsUser()
-	// }
+func (a *AnalyticsMiddleware) getActiveLogs(path string, r *http.Request) {
+	// this is for the old logs explorer api.
 	if path == "/api/v1/logs" {
 		hasFilters := len(r.URL.Query().Get("q"))
 		if hasFilters > 0 {
@@ -95,7 +98,7 @@ func getActiveLogs(path string, r *http.Request) {
 
 }
 
-func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
+func (a *AnalyticsMiddleware) extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
 	pathToExtractBodyFromV3 := "/api/v3/query_range"
 	pathToExtractBodyFromV4 := "/api/v4/query_range"
 
@@ -124,19 +127,19 @@ func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}
 
 	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.L().Error("error while matching the referrer", zap.Error(err))
+		a.logger.Error("error while matching the referrer", zap.Error(err))
 	}
 	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.L().Error("error while matching the alert: ", zap.Error(err))
+		a.logger.Error("error while matching the alert: ", zap.Error(err))
 	}
 	logsExplorerMatched, err := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.L().Error("error while matching the logs explorer: ", zap.Error(err))
+		a.logger.Error("error while matching the logs explorer: ", zap.Error(err))
 	}
 	traceExplorerMatched, err := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
+		a.logger.Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
 	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
