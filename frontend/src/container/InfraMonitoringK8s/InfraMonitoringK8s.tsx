@@ -107,7 +107,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				/>
 			),
 		},
-		// NOTE - Enabled these as we release new entities
 		{
 			label: (
 				<div className="k8s-quick-filters-category-label">
@@ -354,14 +353,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 						{selectedCategory === K8sCategories.NAMESPACES && (
 							<K8sNamespacesList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
-						)}
-
-						{selectedCategory === K8sCategories.CLUSTERS && (
-							<K8sClustersList
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
