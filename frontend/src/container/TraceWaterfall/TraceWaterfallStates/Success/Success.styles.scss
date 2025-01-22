@@ -58,7 +58,7 @@
 	}
 
 	.waterfall-table {
-		height: 50vh;
+		height: calc(80vh - 200px);
 		overflow: auto;
 		overflow-x: hidden;
 		padding: 0px 20px;
@@ -263,7 +263,7 @@
 			width: 10px !important;
 			position: absolute;
 			top: 0;
-			height: 50vh;
+			height: calc(80vh - 200px);
 			right: 0;
 			width: 2px;
 			background: var(--bg-slate-400);

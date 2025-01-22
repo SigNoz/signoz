@@ -4,7 +4,7 @@ import './Success.styles.scss';
 
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
-import { Button, TabsProps, Typography } from 'antd';
+import { Button, TabsProps, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import DetailsDrawer from 'components/DetailsDrawer/DetailsDrawer';
 import { TableV3 } from 'components/TableV3/TableV3';
@@ -212,10 +212,13 @@ function SpanDuration({
 					backgroundColor: color,
 				}}
 			/>
-			<Typography.Text
-				className="span-line-text"
-				style={{ left: `${leftOffset}%`, color }}
-			>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
+			<Tooltip title={`${toFixed(time, 2)} ${timeUnitName}`}>
+				<Typography.Text
+					className="span-line-text"
+					ellipsis
+					style={{ left: `${leftOffset}%`, color }}
+				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
+			</Tooltip>
 		</div>
 	);
 }
