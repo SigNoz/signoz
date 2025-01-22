@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -54,7 +54,7 @@ export const getK8sJobsList = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<K8sJobsListResponse> | ErrorResponse> => {
 	try {
-		const response = await ApiBaseInstance.post('/jobs/list', props, {
+		const response = await axios.post('/jobs/list', props, {
 			signal,
 			headers,
 		});

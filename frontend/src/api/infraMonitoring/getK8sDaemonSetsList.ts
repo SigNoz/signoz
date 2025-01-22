@@ -1,4 +1,4 @@
-import { ApiBaseInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -52,7 +52,7 @@ export const getK8sDaemonSetsList = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<K8sDaemonSetsListResponse> | ErrorResponse> => {
 	try {
-		const response = await ApiBaseInstance.post('/daemonsets/list', props, {
+		const response = await axios.post('/daemonsets/list', props, {
 			signal,
 			headers,
 		});
