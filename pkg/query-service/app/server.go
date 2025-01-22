@@ -288,7 +288,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
-	r.Use(middleware.NewLogCommentEnricher().Wrap)
 
 	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
