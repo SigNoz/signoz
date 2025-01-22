@@ -61,7 +61,7 @@
 					display: flex;
 					align-items: center;
 					gap: 8px;
-					flex-shrink: 0;
+					max-width: 80%;
 
 					.service-text {
 						color: var(--bg-vanilla-400);
@@ -70,6 +70,7 @@
 						font-style: normal;
 						font-weight: 400;
 						line-height: normal;
+						max-width: 80%;
 					}
 
 					.square-box {
@@ -84,6 +85,7 @@
 					width: 85px;
 					gap: 8px;
 					justify-content: flex-start;
+					flex-shrink: 0;
 
 					.service-progress-indicator {
 						width: fit-content;

@@ -18,7 +18,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-// import { TraceWaterfallStates } from 'container/TraceWaterfall/constants';
 import {
 	AlertCircle,
 	Anvil,
@@ -90,21 +89,6 @@ function SpanOverview({
 		color = `var(--bg-cherry-500)`;
 	}
 
-	const statusCodeClassName = useMemo(() => {
-		if (span.statusCodeString === 'unset') {
-			return '';
-		}
-		const statusCode = parseFloat(span.statusCodeString);
-		if (statusCode >= 200 && statusCode < 300) {
-			return 'success';
-		}
-		if (statusCode >= 400) {
-			return 'error';
-		}
-
-		return '';
-	}, [span.statusCodeString]);
-
 	return (
 		<div
 			ref={spanRef}
@@ -165,20 +149,6 @@ function SpanOverview({
 							</Button>
 						)}
 						<Typography.Text className="span-name">{span.name}</Typography.Text>
-					</div>
-					<div
-						className="status-code-container"
-						style={{
-							marginRight: `${
-								span.level * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
-							}px`,
-						}}
-					>
-						{span.statusCodeString !== 'Unset' && (
-							<div className={cx('status-code', statusCodeClassName)}>
-								{span.statusCodeString}
-							</div>
-						)}
 					</div>
 				</section>
 				<section className="second-row">

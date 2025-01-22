@@ -159,8 +159,8 @@ type ClickHouseReader struct {
 	traceResourceTableV3 string
 	traceSummaryTable    string
 
-	fluxInterval time.Duration
-	cacheV2      cacheV2.Cache
+	fluxIntervalForTraceDetail time.Duration
+	cacheV2                    cacheV2.Cache
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -174,7 +174,7 @@ func NewReader(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
-	fluxInterval time.Duration,
+	fluxIntervalForTraceDetail time.Duration,
 	cacheV2 cacheV2.Cache,
 ) *ClickHouseReader {
 
@@ -186,7 +186,7 @@ func NewReader(
 		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxInterval, cacheV2)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cacheV2)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -198,7 +198,7 @@ func NewReaderFromClickhouseConnection(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
-	fluxInterval time.Duration,
+	fluxIntervalForTraceDetail time.Duration,
 	cacheV2 cacheV2.Cache,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
@@ -287,8 +287,8 @@ func NewReaderFromClickhouseConnection(
 		traceResourceTableV3: options.primary.TraceResourceTableV3,
 		traceSummaryTable:    options.primary.TraceSummaryTable,
 
-		fluxInterval: fluxInterval,
-		cacheV2:      cacheV2,
+		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		cacheV2:                    cacheV2,
 	}
 }
 
@@ -1529,7 +1529,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 	if err == nil && cacheStatus == cache.RetrieveStatusHit {
 
-		if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxInterval {
+		if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
 			useCache = false
 		}
 
@@ -1779,7 +1779,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 	if err == nil && cacheStatus == cache.RetrieveStatusHit {
 
-		if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxInterval {
+		if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
 			useCache = false
 		}
 

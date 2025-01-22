@@ -8,8 +8,9 @@ import TraceWaterfall, {
 } from 'container/TraceWaterfall/TraceWaterfall';
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { defaultTo } from 'lodash-es';
 import { DraftingCompass } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
@@ -49,6 +50,18 @@ function TraceDetailsV2(): JSX.Element {
 			setUncollapsedNodes(traceData.payload.uncollapsedSpans);
 		}
 	}, [traceData]);
+
+	const noData = useMemo(
+		() =>
+			!isFetchingTraceData &&
+			!errorFetchingTraceData &&
+			defaultTo(traceData?.payload?.spans.length, 0) === 0,
+		[
+			errorFetchingTraceData,
+			isFetchingTraceData,
+			traceData?.payload?.spans.length,
+		],
+	);
 
 	const items = [
 		{
@@ -96,9 +109,9 @@ function TraceDetailsV2(): JSX.Element {
 				rootSpanName={traceData?.payload?.rootServiceEntryPoint || ''}
 				totalErrorSpans={traceData?.payload?.totalErrorSpansCount || 0}
 				totalSpans={traceData?.payload?.totalSpansCount || 0}
-				notFound={(traceData?.payload?.spans.length || 0) === 0}
+				notFound={noData}
 			/>
-			{(traceData?.payload?.spans.length || 0) > 0 ? (
+			{!noData ? (
 				<Tabs items={items} animated className="settings-tabs" />
 			) : (
 				<NoData />

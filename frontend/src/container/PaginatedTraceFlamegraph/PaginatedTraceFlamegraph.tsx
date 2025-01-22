@@ -1,6 +1,6 @@
 import './PaginatedTraceFlamegraph.styles.scss';
 
-import { Progress, Skeleton, Typography } from 'antd';
+import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
@@ -125,7 +125,11 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 							<div key={service} className="value-row">
 								<section className="service-name">
 									<div className="square-box" style={{ backgroundColor: color }} />
-									<Typography.Text className="service-text">{service}</Typography.Text>
+									<Tooltip title={service}>
+										<Typography.Text className="service-text" ellipsis>
+											{service}
+										</Typography.Text>
+									</Tooltip>
 								</section>
 								<section className="progress-service">
 									<Progress

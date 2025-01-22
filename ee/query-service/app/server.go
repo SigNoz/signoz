@@ -70,18 +70,19 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	GatewayUrl        string
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
+	DisableRules               bool
+	RuleRepoURL                string
+	PreferSpanMetrics          bool
+	MaxIdleConns               int
+	MaxOpenConns               int
+	DialTimeout                time.Duration
+	CacheConfigPath            string
+	FluxInterval               string
+	FluxIntervalForTraceDetail string
+	Cluster                    string
+	GatewayUrl                 string
+	UseLogsNewSchema           bool
+	UseTraceNewSchema          bool
 }
 
 // Server runs HTTP api service
@@ -158,6 +159,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.DataConnector
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -172,7 +178,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
-			fluxInterval,
+			fluxIntervalForTraceDetail,
 			serverOptions.SigNoz.Cache,
 		)
 		go qb.Start(readerReady)

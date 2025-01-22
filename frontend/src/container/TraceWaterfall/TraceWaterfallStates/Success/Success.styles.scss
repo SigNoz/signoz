@@ -137,6 +137,7 @@
 						.span-det {
 							display: flex;
 							gap: 6px;
+							flex-shrink: 0;
 
 							.collapse-uncollapse-button {
 								display: flex;
