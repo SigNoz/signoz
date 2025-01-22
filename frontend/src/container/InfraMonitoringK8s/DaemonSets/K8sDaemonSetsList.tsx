@@ -15,6 +15,7 @@ import {
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sDaemonSetsListPayload } from 'api/infraMonitoring/getK8sDaemonSetsList';
+import classNames from 'classnames';
 import { useGetK8sDaemonSetsList } from 'hooks/infraMonitoring/useGetK8sDaemonSetsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -455,7 +456,9 @@ function K8sDaemonSetsList({
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
-				className="k8s-list-table daemonSets-list-table"
+				className={classNames('k8s-list-table', 'daemonSets-list-table', {
+					'expanded-daemonsets-list-table': isGroupedByAttribute,
+				})}
 				dataSource={isFetching || isLoading ? [] : formattedDaemonSetsData}
 				columns={columns}
 				pagination={{

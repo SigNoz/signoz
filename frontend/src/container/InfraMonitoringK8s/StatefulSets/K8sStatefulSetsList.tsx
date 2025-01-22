@@ -15,6 +15,7 @@ import {
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sStatefulSetsListPayload } from 'api/infraMonitoring/getsK8sStatefulSetsList';
+import classNames from 'classnames';
 import { useGetK8sStatefulSetsList } from 'hooks/infraMonitoring/useGetK8sStatefulSetsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -457,7 +458,9 @@ function K8sStatefulSetsList({
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
-				className="k8s-list-table statefulSets-list-table"
+				className={classNames('k8s-list-table', 'statefulSets-list-table', {
+					'expanded-statefulsets-list-table': isGroupedByAttribute,
+				})}
 				dataSource={isFetching || isLoading ? [] : formattedStatefulSetsData}
 				columns={columns}
 				pagination={{

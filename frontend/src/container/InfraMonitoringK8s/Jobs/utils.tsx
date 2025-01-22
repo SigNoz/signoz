@@ -136,7 +136,7 @@ const columnProgressBarClassName = 'column-progress-bar';
 
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">Job Name</div>,
+		title: <div className="column-header-left job-name-header">Job Name</div>,
 		dataIndex: 'jobName',
 		key: 'jobName',
 		ellipsis: true,
@@ -145,7 +145,11 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Namespace Name</div>,
+		title: (
+			<div className="column-header-left namespace-name-header">
+				Namespace Name
+			</div>
+		),
 		dataIndex: 'namespaceName',
 		key: 'namespaceName',
 		ellipsis: true,
@@ -154,7 +158,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header">Successful</div>,
+		title: <div className="column-header small-col">Successful</div>,
 		dataIndex: 'successful',
 		key: 'successful',
 		ellipsis: true,
@@ -163,7 +167,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Failed</div>,
+		title: <div className="column-header small-col">Failed</div>,
 		dataIndex: 'failed',
 		key: 'failed',
 		sorter: true,
@@ -171,7 +175,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Desired Successful</div>,
+		title: <div className="column-header small-col">Desired Successful</div>,
 		dataIndex: 'desired_successful',
 		key: 'desired_successful',
 		ellipsis: true,
@@ -180,7 +184,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Active</div>,
+		title: <div className="column-header small-col">Active</div>,
 		dataIndex: 'active',
 		key: 'active',
 		sorter: true,
@@ -188,7 +192,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">CPU Req Usage (%)</div>,
+		title: <div className="column-header med-col">CPU Req Usage (%)</div>,
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
 		width: 180,
@@ -198,7 +202,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">CPU Limit Usage (%)</div>,
+		title: <div className="column-header med-col">CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
 		width: 120,
@@ -207,7 +211,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">CPU Usage (cores)</div>,
+		title: <div className="column-header small-col">CPU Usage (cores)</div>,
 		dataIndex: 'cpu',
 		key: 'cpu',
 		width: 80,
@@ -216,7 +220,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Req Usage (%)</div>,
+		title: <div className="column-header med-col">Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
 		width: 120,
@@ -225,7 +229,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Limit Usage (%)</div>,
+		title: <div className="column-header med-col">Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
 		width: 120,
@@ -234,7 +238,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Usage</div>,
+		title: <div className="column-header small-col">Mem Usage</div>,
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 80,
