@@ -61,18 +61,19 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-	SigNoz            *signoz.SigNoz
+	DisableRules               bool
+	RuleRepoURL                string
+	PreferSpanMetrics          bool
+	MaxIdleConns               int
+	MaxOpenConns               int
+	DialTimeout                time.Duration
+	CacheConfigPath            string
+	FluxInterval               string
+	FluxIntervalForTraceDetail string
+	Cluster                    string
+	UseLogsNewSchema           bool
+	UseTraceNewSchema          bool
+	SigNoz                     *signoz.SigNoz
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -136,6 +137,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -150,7 +156,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
-			fluxInterval,
+			fluxIntervalForTraceDetail,
 			nil,
 		)
 		go clickhouseReader.Start(readerReady)

@@ -45,7 +45,7 @@ func main() {
 	var useLogsNewSchema bool
 	var useTraceNewSchema bool
 	// the url used to build link in the alert messages in slack and other systems
-	var ruleRepoURL, cacheConfigPath, fluxInterval string
+	var ruleRepoURL, cacheConfigPath, fluxInterval, fluxIntervalForTraceDetail string
 	var cluster string
 
 	var preferSpanMetrics bool
@@ -63,6 +63,7 @@ func main() {
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
+	flag.StringVar(&fluxIntervalForTraceDetail, "flux-interval-trace-detail", "2m", "(the interval to exclude data from being cached to avoid incorrect cache for trace data in motion)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	// Allow using the consistent naming with the signoz collector
 	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
@@ -95,22 +96,23 @@ func main() {
 	}
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:      constants.HTTPHostPort,
-		PromConfigPath:    promConfigPath,
-		SkipTopLvlOpsPath: skipTopLvlOpsPath,
-		PreferSpanMetrics: preferSpanMetrics,
-		PrivateHostPort:   constants.PrivateHostPort,
-		DisableRules:      disableRules,
-		RuleRepoURL:       ruleRepoURL,
-		MaxIdleConns:      maxIdleConns,
-		MaxOpenConns:      maxOpenConns,
-		DialTimeout:       dialTimeout,
-		CacheConfigPath:   cacheConfigPath,
-		FluxInterval:      fluxInterval,
-		Cluster:           cluster,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
-		SigNoz:            signoz,
+		HTTPHostPort:               constants.HTTPHostPort,
+		PromConfigPath:             promConfigPath,
+		SkipTopLvlOpsPath:          skipTopLvlOpsPath,
+		PreferSpanMetrics:          preferSpanMetrics,
+		PrivateHostPort:            constants.PrivateHostPort,
+		DisableRules:               disableRules,
+		RuleRepoURL:                ruleRepoURL,
+		MaxIdleConns:               maxIdleConns,
+		MaxOpenConns:               maxOpenConns,
+		DialTimeout:                dialTimeout,
+		CacheConfigPath:            cacheConfigPath,
+		FluxInterval:               fluxInterval,
+		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		Cluster:                    cluster,
+		UseLogsNewSchema:           useLogsNewSchema,
+		UseTraceNewSchema:          useTraceNewSchema,
+		SigNoz:                     signoz,
 	}
 
 	// Read the jwt secret key
