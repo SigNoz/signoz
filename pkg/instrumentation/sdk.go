@@ -2,16 +2,17 @@ package instrumentation
 
 import (
 	"context"
+	"log/slog"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
-	sdklog "go.opentelemetry.io/otel/log"
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/version"
-	"go.uber.org/zap"
 )
 
 var _ factory.Service = (*SDK)(nil)
@@ -19,8 +20,9 @@ var _ Instrumentation = (*SDK)(nil)
 
 // SDK holds the core components for application instrumentation.
 type SDK struct {
-	sdk    contribsdkconfig.SDK
-	logger *zap.Logger
+	logger             *slog.Logger
+	sdk                contribsdkconfig.SDK
+	prometheusRegistry *prometheus.Registry
 }
 
 // New creates a new Instrumentation instance with configured providers.
@@ -56,15 +58,6 @@ func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
 		SchemaUrl:  &sch,
 	}
 
-	var loggerProvider *contribsdkconfig.LoggerProvider
-	if cfg.Logs.Enabled {
-		loggerProvider = &contribsdkconfig.LoggerProvider{
-			Processors: []contribsdkconfig.LogRecordProcessor{
-				{Batch: &cfg.Logs.Processors.Batch},
-			},
-		}
-	}
-
 	var tracerProvider *contribsdkconfig.TracerProvider
 	if cfg.Traces.Enabled {
 		tracerProvider = &contribsdkconfig.TracerProvider{
@@ -87,7 +80,6 @@ func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
 	sdk, err := contribsdkconfig.NewSDK(
 		contribsdkconfig.WithContext(ctx),
 		contribsdkconfig.WithOpenTelemetryConfiguration(contribsdkconfig.OpenTelemetryConfiguration{
-			LoggerProvider: loggerProvider,
 			TracerProvider: tracerProvider,
 			MeterProvider:  meterProvider,
 			Resource:       &configResource,
@@ -97,9 +89,13 @@ func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
 		return nil, err
 	}
 
+	prometheusRegistry := prometheus.NewRegistry()
+	prometheusRegistry.MustRegister(collectors.NewBuildInfoCollector())
+
 	return &SDK{
-		sdk:    sdk,
-		logger: newLogger(cfg, sdk.LoggerProvider()),
+		sdk:                sdk,
+		prometheusRegistry: prometheusRegistry,
+		logger:             NewLogger(cfg),
 	}, nil
 }
 
@@ -111,11 +107,7 @@ func (i *SDK) Stop(ctx context.Context) error {
 	return i.sdk.Shutdown(ctx)
 }
 
-func (i *SDK) LoggerProvider() sdklog.LoggerProvider {
-	return i.sdk.LoggerProvider()
-}
-
-func (i *SDK) Logger() *zap.Logger {
+func (i *SDK) Logger() *slog.Logger {
 	return i.logger
 }
 
@@ -127,11 +119,15 @@ func (i *SDK) TracerProvider() sdktrace.TracerProvider {
 	return i.sdk.TracerProvider()
 }
 
+func (i *SDK) PrometheusRegisterer() prometheus.Registerer {
+	return i.prometheusRegistry
+}
+
 func (i *SDK) ToProviderSettings() factory.ProviderSettings {
 	return factory.ProviderSettings{
-		LoggerProvider: i.LoggerProvider(),
-		ZapLogger:      i.Logger(),
-		MeterProvider:  i.MeterProvider(),
-		TracerProvider: i.TracerProvider(),
+		Logger:               i.Logger(),
+		MeterProvider:        i.MeterProvider(),
+		TracerProvider:       i.TracerProvider(),
+		PrometheusRegisterer: i.PrometheusRegisterer(),
 	}
 }
