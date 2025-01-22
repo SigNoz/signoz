@@ -1,16 +1,24 @@
+version: "3"
+x-common: &common
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+  deploy:
+    restart_policy:
+      condition: on-failure
 services:
   hotrod:
-    image: jaegertracing/example-hotrod:1.30
+    <<: *common
+    image: jaegertracing/example-hotrod:1.61.0
     container_name: hotrod
-    logging:
-      options:
-        max-size: 50m
-        max-file: "3"
     command: [ "all" ]
     environment:
-      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
-
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318  #
   load-hotrod:
+    <<: *common
     image: "signoz/locust:1.2.3"
     container_name: load-hotrod
     hostname: load-hotrod
@@ -23,4 +31,4 @@ services:
       QUIET_MODE: "${QUIET_MODE:-false}"
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
-      - ../common/locust-scripts:/locust
+      - ../../../common/locust-scripts:/locust

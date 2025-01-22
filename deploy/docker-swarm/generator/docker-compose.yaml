@@ -1,0 +1,69 @@
+version: "3"
+x-common: &common
+  deploy:
+    restart_policy:
+      condition: on-failure
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+  extra_hosts:
+    - host.docker.internal:host-gateway
+services:
+  otel-agent:
+    <<: *common
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command:
+      - "--config=/etc/otel-collector-config.yaml"
+      - "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+    environment:
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      - LOW_CARDINAL_EXCEPTION_GROUPING=false
+    # Before exposing the ports, make sure the ports are not used by other services
+    # ports:
+    #   - "4317:4317" # OTLP gRPC receiver
+    #   - "4318:4318" # OTLP HTTP receiver
+    deploy:
+      mode: global
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /:/hostfs:ro
+  logspout:
+    <<: *common
+    image: "gliderlabs/logspout:v3.2.14"
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: syslog+tcp://otel-collector:2255
+    depends_on:
+      - otel-collector
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+  hotrod:
+    <<: *common
+    image: jaegertracing/example-hotrod:1.61.0
+    command: ["all"]
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    depends_on:
+      - otel-collector
+  load-hotrod:
+    <<: *common
+    image: "signoz/locust:1.2.3"
+    hostname: load-hotrod
+    environment:
+      ATTACKED_HOST: http://hotrod:8080
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
+    depends_on:
+      - hotrod
+    volumes:
+      - ../../common/locust-scripts:/locust

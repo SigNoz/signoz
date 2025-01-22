@@ -1,0 +1,217 @@
+version: "3"
+x-common: &common
+  deploy:
+    restart_policy:
+      condition: on-failure
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+x-clickhouse-defaults: &clickhouse-defaults
+  <<: *common
+  image: clickhouse/clickhouse-server:24.1.2-alpine
+  tty: true
+  labels:
+    signoz.io/scrape: "true"
+    signoz.io/port: "9363"
+    signoz.io/path: "/metrics"
+  depends_on:
+    - zookeeper-1
+    - zookeeper-2
+    - zookeeper-3
+  healthcheck:
+    test:
+      - CMD
+      - wget
+      - --spider
+      - -q
+      - 0.0.0.0:8123/ping
+    interval: 30s
+    timeout: 5s
+    retries: 3
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 262144
+      hard: 262144
+x-zookeeper-defaults: &zookeeper-defaults
+  <<: *common
+  image: bitnami/zookeeper:3.7.1
+  user: root
+  labels:
+    signoz.io/scrape: "true"
+    signoz.io/port: "9141"
+    signoz.io/path: "/metrics"
+x-db-depend: &db-depend
+  <<: *common
+  depends_on:
+    - clickhouse
+    - clickhouse-2
+    - clickhouse-3
+    - schema-migrator-sync
+services:
+  zookeeper-1:
+    <<: *zookeeper-defaults
+    # ports:
+    #   - "2181:2181"
+    #   - "2888:2888"
+    #   - "3888:3888"
+    volumes:
+      - ./clickhouse-setup/data/zookeeper-1:/bitnami/zookeeper
+    environment:
+      - ZOO_SERVER_ID=1
+      - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_AUTOPURGE_INTERVAL=1
+      - ZOO_ENABLE_PROMETHEUS_METRICS=yes
+      - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
+  zookeeper-2:
+    <<: *zookeeper-defaults
+    # ports:
+    #   - "2182:2181"
+    #   - "2889:2888"
+    #   - "3889:3888"
+    volumes:
+      - ./clickhouse-setup/data/zookeeper-2:/bitnami/zookeeper
+    environment:
+      - ZOO_SERVER_ID=2
+      - ZOO_SERVERS=zookeeper-1:2888:3888,0.0.0.0:2888:3888,zookeeper-3:2888:3888
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_AUTOPURGE_INTERVAL=1
+      - ZOO_ENABLE_PROMETHEUS_METRICS=yes
+      - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
+  zookeeper-3:
+    <<: *zookeeper-defaults
+    # ports:
+    #   - "2183:2181"
+    #   - "2890:2888"
+    #   - "3890:3888"
+    volumes:
+      - ./clickhouse-setup/data/zookeeper-3:/bitnami/zookeeper
+    environment:
+      - ZOO_SERVER_ID=3
+      - ZOO_SERVERS=zookeeper-1:2888:3888,zookeeper-2:2888:3888,0.0.0.0:2888:3888
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_AUTOPURGE_INTERVAL=1
+      - ZOO_ENABLE_PROMETHEUS_METRICS=yes
+      - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
+  clickhouse:
+    <<: *clickhouse-defaults
+    # ports:
+    #   - "9000:9000"
+    #   - "8123:8123"
+    #   - "9181:9181"
+    volumes:
+      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
+      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
+      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
+      - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
+      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ./clickhouse-setup/data/clickhouse/:/var/lib/clickhouse/
+      # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  clickhouse-2:
+    <<: *clickhouse-defaults
+    # ports:
+    #   - "9001:9000"
+    #   - "8124:8123"
+    #   - "9182:9181"
+    volumes:
+      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
+      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
+      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
+      - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
+      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ./clickhouse-setup/data/clickhouse-2/:/var/lib/clickhouse/
+      # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  clickhouse-3:
+    <<: *clickhouse-defaults
+    # ports:
+    #   - "9002:9000"
+    #   - "8125:8123"
+    #   - "9183:9181"
+    volumes:
+      - ../common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
+      - ../common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
+      - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
+      - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
+      - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ./clickhouse-setup/data/clickhouse-3/:/var/lib/clickhouse/
+      # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  alertmanager:
+    <<: *common
+    image: signoz/alertmanager:0.23.7
+    command:
+      - --queryService.url=http://query-service:8085
+      - --storage.path=/data
+    volumes:
+      - ./clickhouse-setup/data/alertmanager:/data
+    depends_on:
+      - query-service
+  query-service:
+    <<: *db-depend
+    image: signoz/query-service:0.68.0
+    command:
+      - --config=/root/config/prometheus.yml
+      - --use-logs-new-schema=true
+      - --use-trace-new-schema=true
+    ports:
+      - "3301:8080"     # signoz port
+      # - "6060:6060"     # pprof port
+    volumes:
+      - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
+      - ../common/dashboards:/root/config/dashboards
+      - ./clickhouse-setup/data/signoz/:/var/lib/signoz/
+    environment:
+      - ClickHouseUrl=tcp://clickhouse:9000
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+      - DASHBOARDS_PATH=/root/config/dashboards
+      - STORAGE=clickhouse
+      - GODEBUG=netdns=go
+      - TELEMETRY_ENABLED=true
+      - DEPLOYMENT_TYPE=docker-swarm
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - localhost:8080/api/v1/health
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  otel-collector:
+    <<: *db-depend
+    image: signoz/signoz-otel-collector:0.111.23
+    command:
+      - --config=/etc/otel-collector-config.yaml
+      - --manager-config=/etc/manager-config.yaml
+      - --copy-path=/var/tmp/collector-config.yaml
+      - --feature-gates=-pkg.translator.prometheus.NormalizeName
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ../common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      - LOW_CARDINAL_EXCEPTION_GROUPING=false
+    ports:
+      # - "1777:1777"     # pprof extension
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+    depends_on:
+      - clickhouse
+      - schema-migrator-sync
+      - query-service
+  schema-migrator-sync:
+    <<: *common
+    image: signoz/signoz-schema-migrator:0.111.23
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+    command:
+      - sync
+      - --dsn=tcp://clickhouse:9000
+      - --up=
+    depends_on:
+      - clickhouse

@@ -10,14 +10,14 @@
             <host>zookeeper-1</host>
             <port>2181</port>
         </node>
-        <!-- <node index="2">
+        <node index="2">
             <host>zookeeper-2</host>
             <port>2181</port>
         </node>
         <node index="3">
             <host>zookeeper-3</host>
             <port>2181</port>
-        </node> -->
+        </node>
     </zookeeper>
 
     <!-- Configuration of clusters that could be used in Distributed tables.
@@ -58,7 +58,7 @@
                     <!-- <priority>1</priority> -->
                 </replica>
             </shard>
-            <!-- <shard>
+            <shard>
                 <replica>
                     <host>clickhouse-2</host>
                     <port>9000</port>
@@ -69,7 +69,7 @@
                     <host>clickhouse-3</host>
                     <port>9000</port>
                 </replica>
-            </shard> -->
+            </shard>
         </cluster>
     </remote_servers>
 </clickhouse>
