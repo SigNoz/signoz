@@ -266,7 +266,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(middleware.NewLogging(zap.L(), zap.Bool("privatePort", true)).Wrap)
+	r.Use(middleware.NewLogging(zap.L()).Wrap)
 
 	api.RegisterPrivateRoutes(r)
 
