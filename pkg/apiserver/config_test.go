@@ -13,7 +13,9 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_APISERVER_CONTEXT__TIMEOUT__MAX__ALLOWED", "700s")
+	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_DEFAULT", "70s")
+	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_MAX", "700s")
+	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_EXCLUDED__ROUTES", "/excluded1,/excluded2")
 
 	conf, err := config.New(
 		context.Background(),
@@ -35,12 +37,13 @@ func TestNewWithEnvProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := &Config{
-		Enabled:                  false,
-		ContextTimeout:           60 * time.Second,
-		ContextTimeoutMaxAllowed: 700 * time.Second,
-		TimeoutExcludedRoutes: []string{
-			"/api/v1/logs/tail",
-			"/api/v3/logs/livetail",
+		Timeout: Timeout{
+			Default: 70 * time.Second,
+			Max:     700 * time.Second,
+			ExcludedRoutes: []string{
+				"/excluded1",
+				"/excluded2",
+			},
 		},
 	}
 

@@ -8,14 +8,16 @@ import (
 
 // Config holds the configuration for web.
 type Config struct {
-	// Whether the web package is enabled.
-	Enabled bool `mapstructure:"enabled"`
+	Timeout Timeout `mapstructure:"timeout"`
+}
+
+type Timeout struct {
 	// The default context timeout that can be overridden by the request
-	ContextTimeout time.Duration `mapstructure:"context_timeout"`
+	Default time.Duration `mapstructure:"default"`
 	// The maximum allowed context timeout
-	ContextTimeoutMaxAllowed time.Duration `mapstructure:"context_timeout_max_allowed"`
-	// Timeout Excluded Routes
-	TimeoutExcludedRoutes []string `mapstructure:"timeout_excluded_routes"`
+	Max time.Duration `mapstructure:"max"`
+	// The list of routes that are excluded from the timeout
+	ExcludedRoutes []string `mapstructure:"excluded_routes"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -24,11 +26,13 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		ContextTimeout:           60 * time.Second,
-		ContextTimeoutMaxAllowed: 600 * time.Second,
-		TimeoutExcludedRoutes: []string{
-			"/api/v1/logs/tail",
-			"/api/v3/logs/livetail",
+		Timeout: Timeout{
+			Default: 60 * time.Second,
+			Max:     600 * time.Second,
+			ExcludedRoutes: []string{
+				"/api/v1/logs/tail",
+				"/api/v3/logs/livetail",
+			},
 		},
 	}
 }

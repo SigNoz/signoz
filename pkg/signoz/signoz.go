@@ -3,7 +3,6 @@ package signoz
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
@@ -14,10 +13,9 @@ import (
 )
 
 type SigNoz struct {
-	Cache     cache.Cache
-	Web       web.Web
-	APIServer apiserver.APIServer
-	SQLStore  sqlstore.SQLStore
+	Cache    cache.Cache
+	Web      web.Web
+	SQLStore sqlstore.SQLStore
 }
 
 func New(

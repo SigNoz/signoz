@@ -72,7 +72,7 @@ func mergeAndEnsureBackwardCompatibility(config *Config) {
 		fmt.Println("[Deprecated] env CONTEXT_TIMEOUT is deprecated and scheduled for removal. Please use SIGNOZ_APISERVER_CONTEXT_TIMEOUT instead.")
 		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT") + "s")
 		if err == nil {
-			config.APIServer.ContextTimeout = contextTimeoutDuration
+			config.APIServer.Timeout.Default = contextTimeoutDuration
 		} else {
 			fmt.Println("Error parsing CONTEXT_TIMEOUT, using default value of 60s")
 		}
@@ -82,7 +82,7 @@ func mergeAndEnsureBackwardCompatibility(config *Config) {
 
 		contextTimeoutDuration, err := time.ParseDuration(os.Getenv("CONTEXT_TIMEOUT_MAX_ALLOWED") + "s")
 		if err == nil {
-			config.APIServer.ContextTimeoutMaxAllowed = contextTimeoutDuration
+			config.APIServer.Timeout.Max = contextTimeoutDuration
 		} else {
 			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
 		}
