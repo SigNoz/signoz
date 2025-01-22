@@ -427,7 +427,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() ? { marginRight: 0 } : {}),
+										...(isTraceDetailsView() ? { margin: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

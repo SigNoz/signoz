@@ -1,0 +1,146 @@
+.flamegraph {
+	display: flex;
+	height: 20vh;
+	border-bottom: 1px solid var(--bg-slate-400);
+
+	.flamegraph-chart {
+		width: 80%;
+		padding: 15px;
+
+		.loading-skeleton {
+			justify-content: center;
+			align-items: center;
+		}
+	}
+
+	.flamegraph-stats {
+		width: 20%;
+		display: flex;
+		flex-direction: column;
+		border-left: 1px solid var(--bg-slate-400);
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding: 16px 12px;
+
+		.exec-time-service {
+			display: flex;
+			height: 30px;
+			flex-shrink: 0;
+			justify-content: center;
+			align-items: center;
+			border-radius: 2px 0px 0px 2px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-slate-400);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+			margin-bottom: 16px;
+			color: var(--bg-vanilla-100);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px; /* 150% */
+			letter-spacing: -0.06px;
+		}
+
+		.stats {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			overflow-y: auto;
+			overflow-x: hidden;
+
+			&::-webkit-scrollbar {
+				width: 0rem;
+			}
+
+			.value-row {
+				display: flex;
+				justify-content: space-between;
+
+				.service-name {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					width: 80%;
+
+					.service-text {
+						color: var(--bg-vanilla-400);
+						font-family: 'Space Mono';
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: normal;
+						width: 80%;
+					}
+
+					.square-box {
+						height: 8px;
+						width: 8px;
+					}
+				}
+
+				.progress-service {
+					display: flex;
+					align-items: center;
+					width: 85px;
+					gap: 8px;
+					justify-content: flex-start;
+					flex-shrink: 0;
+
+					.service-progress-indicator {
+						width: fit-content;
+						margin-inline-end: 0px !important;
+						margin-bottom: 0px !important;
+
+						.ant-progress-inner {
+							width: 30px;
+						}
+					}
+
+					.percent-value {
+						color: var(--bg-vanilla-100);
+						text-align: right;
+						font-family: 'Geist Mono';
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: normal;
+						letter-spacing: 0.48px;
+					}
+				}
+			}
+		}
+	}
+}
+
+.lightMode {
+	.flamegraph {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		.flamegraph-stats {
+			border-left: 1px solid var(--bg-vanilla-300);
+
+			.exec-time-service {
+				border: 1px solid var(--bg-vanilla-400);
+				background: var(--bg-vanilla-400);
+				color: var(--bg-ink-100);
+			}
+
+			.stats {
+				.value-row {
+					.service-name {
+						.service-text {
+							color: var(--bg-ink-400);
+						}
+					}
+
+					.progress-service {
+						.percent-value {
+							color: var(--bg-ink-100);
+						}
+					}
+				}
+			}
+		}
+	}
+}
