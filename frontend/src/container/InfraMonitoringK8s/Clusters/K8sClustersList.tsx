@@ -164,7 +164,8 @@ function K8sClustersList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: K8sEntityToAggregateAttributeMapping[K8sCategory.NODES],
+			aggregateAttribute:
+				K8sEntityToAggregateAttributeMapping[K8sCategory.CLUSTERS],
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',

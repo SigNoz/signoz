@@ -322,7 +322,7 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, req model.Namespa
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := namespaceAttrs[record.NamespaceName]; ok {
+			if _, ok := namespaceAttrs[record.NamespaceName]; ok && record.NamespaceName != "" {
 				record.Meta = namespaceAttrs[record.NamespaceName]
 			}
 
