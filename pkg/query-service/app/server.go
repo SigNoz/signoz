@@ -265,7 +265,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 		s.serverOptions.Config.APIServer.Timeout.Default,
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalyticsMiddleware(zap.L()).Wrap)
+	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 
 	api.RegisterPrivateRoutes(r)
@@ -295,7 +295,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		s.serverOptions.Config.APIServer.Timeout.Default,
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewAnalyticsMiddleware(zap.L()).Wrap)
+	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
 	r.Use(middleware.NewLogging(zap.L()).Wrap)
 
 	// add auth middleware

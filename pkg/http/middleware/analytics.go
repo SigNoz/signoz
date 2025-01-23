@@ -16,19 +16,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type AnalyticsMiddleware struct {
+type Analytics struct {
 	logger *zap.Logger
 }
 
-func NewAnalyticsMiddleware(logger *zap.Logger) *AnalyticsMiddleware {
+func NewAnalytics(logger *zap.Logger) *Analytics {
 	if logger == nil {
 		panic("cannot build analytics middleware, logger is empty")
 	}
 
-	return &AnalyticsMiddleware{logger: logger}
+	return &Analytics{logger: logger}
 }
 
-func (a *AnalyticsMiddleware) Wrap(next http.Handler) http.Handler {
+func (a *Analytics) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := auth.AttachJwtToContext(r.Context(), r)
 		r = r.WithContext(ctx)
@@ -60,7 +60,7 @@ func (a *AnalyticsMiddleware) Wrap(next http.Handler) http.Handler {
 
 }
 
-func (a *AnalyticsMiddleware) getActiveLogs(path string, r *http.Request) {
+func (a *Analytics) getActiveLogs(path string, r *http.Request) {
 	// this is for the old logs explorer api.
 	if path == "/api/v1/logs" {
 		hasFilters := len(r.URL.Query().Get("q"))
@@ -71,7 +71,7 @@ func (a *AnalyticsMiddleware) getActiveLogs(path string, r *http.Request) {
 	}
 }
 
-func (a *AnalyticsMiddleware) extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
+func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
 	pathToExtractBodyFromV3 := "/api/v3/query_range"
 	pathToExtractBodyFromV4 := "/api/v4/query_range"
 
