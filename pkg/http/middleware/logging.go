@@ -52,7 +52,7 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			zap.String(string(semconv.HTTPRouteKey), path),
 		}
 
-		logCommentKVs := getLogCommentKVs(req)
+		logCommentKVs := middleware.getLogCommentKVs(req)
 		req = req.WithContext(context.WithValue(req.Context(), common.LogCommentKey, logCommentKVs))
 
 		badResponseBuffer := new(bytes.Buffer)
@@ -78,7 +78,7 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-func getLogCommentKVs(r *http.Request) map[string]string {
+func (middleware *Logging) getLogCommentKVs(r *http.Request) map[string]string {
 	referrer := r.Header.Get("Referer")
 
 	var path, dashboardID, alertID, page, client, viewName, tab string
