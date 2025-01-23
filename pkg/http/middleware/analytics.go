@@ -1,17 +1,16 @@
 package middleware
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
-	"net"
 	"net/http"
 	"regexp"
 
-	"github.com/gorilla/mux"
+	// TODO(remove): Remove auth packages
 	"go.signoz.io/signoz/pkg/query-service/auth"
+
+	"github.com/gorilla/mux"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
@@ -36,13 +35,14 @@ func (a *AnalyticsMiddleware) Wrap(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		lrw := NewAnalyticsResponseWriter(w)
-		next.ServeHTTP(lrw, r)
+		badResponseBuffer := new(bytes.Buffer)
+		writer := newBadResponseLoggingWriter(w, badResponseBuffer)
+		next.ServeHTTP(writer, r)
 
 		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
 		a.getActiveLogs(path, r)
 
-		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
+		data := map[string]interface{}{"path": path, "statusCode": writer.StatusCode()}
 		if metadataExists {
 			for key, value := range queryRangeData {
 				data[key] = value
@@ -60,32 +60,6 @@ func (a *AnalyticsMiddleware) Wrap(next http.Handler) http.Handler {
 
 }
 
-type analyticsResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func NewAnalyticsResponseWriter(w http.ResponseWriter) *analyticsResponseWriter {
-	return &analyticsResponseWriter{w, http.StatusOK}
-}
-
-func (lrw *analyticsResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
-}
-
-func (lrw *analyticsResponseWriter) Flush() {
-	lrw.ResponseWriter.(http.Flusher).Flush()
-}
-
-func (lrw *analyticsResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := lrw.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("hijack not supported")
-	}
-	return h.Hijack()
-}
-
 func (a *AnalyticsMiddleware) getActiveLogs(path string, r *http.Request) {
 	// this is for the old logs explorer api.
 	if path == "/api/v1/logs" {
@@ -95,7 +69,6 @@ func (a *AnalyticsMiddleware) getActiveLogs(path string, r *http.Request) {
 		}
 
 	}
-
 }
 
 func (a *AnalyticsMiddleware) extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
