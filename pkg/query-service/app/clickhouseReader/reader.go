@@ -1454,7 +1454,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	return &searchSpansResult, nil
 }
 
-func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string) ([]model.SpanItemV2, *model.ApiError) {
+func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
 	var traceSummary model.TraceSummary
 	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE trace_id=$1", r.TraceDB, r.traceSummaryTable)
 	err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
@@ -1467,10 +1467,9 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string)
 	}
 
 	var searchScanResponses []model.SpanItemV2
-	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName)
 	queryStartTime := time.Now()
-	err = r.db.Select(ctx, &searchScanResponses, query, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
-	zap.L().Info(query)
+	err = r.db.Select(ctx, &searchScanResponses, traceDetailsQuery, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
+	zap.L().Info(traceDetailsQuery)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, model.ExecutionError(fmt.Errorf("error in processing trace data sql query: %w", err))
@@ -1524,7 +1523,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	if err != nil {
 		zap.L().Info("cache miss for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID)
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
@@ -1720,7 +1719,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 	if err != nil {
 		zap.L().Info("cache miss for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID)
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}
