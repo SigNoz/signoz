@@ -118,6 +118,13 @@ func ForbiddenError(err error) *ApiError {
 	}
 }
 
+func ExecutionError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorExec,
+		Err: err,
+	}
+}
+
 func WrapApiError(err *ApiError, msg string) *ApiError {
 	return &ApiError{
 		Typ: err.Type(),
@@ -267,6 +274,67 @@ type SearchSpanResponseItem struct {
 	StatusMessage    string            `json:"statusMessage"`
 	StatusCodeString string            `json:"statusCodeString"`
 	SpanKind         string            `json:"spanKind"`
+}
+
+type Span struct {
+	TimeUnixNano     uint64            `json:"timestamp"`
+	DurationNano     uint64            `json:"durationNano"`
+	SpanID           string            `json:"spanId"`
+	RootSpanID       string            `json:"rootSpanId"`
+	TraceID          string            `json:"traceId"`
+	HasError         bool              `json:"hasError"`
+	Kind             int32             `json:"kind"`
+	ServiceName      string            `json:"serviceName"`
+	Name             string            `json:"name"`
+	References       []OtelSpanRef     `json:"references,omitempty"`
+	TagMap           map[string]string `json:"tagMap"`
+	Events           []string          `json:"event"`
+	RootName         string            `json:"rootName"`
+	StatusMessage    string            `json:"statusMessage"`
+	StatusCodeString string            `json:"statusCodeString"`
+	SpanKind         string            `json:"spanKind"`
+	Children         []*Span           `json:"children"`
+
+	// the below two fields are for frontend to render the spans
+	SubTreeNodeCount uint64 `json:"subTreeNodeCount"`
+	HasChildren      bool   `json:"hasChildren"`
+	HasSiblings      bool   `json:"hasSiblings"`
+	Level            uint64 `json:"level"`
+}
+
+type FlamegraphSpan struct {
+	TimeUnixNano uint64            `json:"timestamp"`
+	DurationNano uint64            `json:"durationNano"`
+	SpanID       string            `json:"spanId"`
+	TraceID      string            `json:"traceId"`
+	HasError     bool              `json:"hasError"`
+	ServiceName  string            `json:"serviceName"`
+	Name         string            `json:"name"`
+	Level        int64             `json:"level"`
+	References   []OtelSpanRef     `json:"references,omitempty"`
+	Children     []*FlamegraphSpan `json:"children"`
+}
+
+type GetWaterfallSpansForTraceWithMetadataResponse struct {
+	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
+	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
+	DurationNano                  uint64            `json:"durationNano"`
+	RootServiceName               string            `json:"rootServiceName"`
+	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
+	TotalSpansCount               uint64            `json:"totalSpansCount"`
+	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
+	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
+	Spans                         []*Span           `json:"spans"`
+	HasMissingSpans               bool              `json:"hasMissingSpans"`
+	// this is needed for frontend and query service sync
+	UncollapsedSpans []string `json:"uncollapsedSpans"`
+}
+
+type GetFlamegraphSpansForTraceResponse struct {
+	StartTimestampMillis uint64              `json:"startTimestampMillis"`
+	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
+	DurationNano         uint64              `json:"durationNano"`
+	Spans                [][]*FlamegraphSpan `json:"spans"`
 }
 
 type OtelSpanRef struct {
