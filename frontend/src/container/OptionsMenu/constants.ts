@@ -5,30 +5,32 @@ import { FontSize, OptionsQuery } from './types';
 export const URL_OPTIONS = 'options';
 
 export const defaultOptionsQuery: OptionsQuery = {
-	selectColumns: [
-		{
-			key: 'timestamp',
-			dataType: DataTypes.String,
-			type: 'tag',
-			isColumn: true,
-			isJSON: false,
-			id: 'timestamp--string--tag--true',
-			isIndexed: false,
-		},
-		{
-			key: 'body',
-			dataType: DataTypes.String,
-			type: 'tag',
-			isColumn: true,
-			isJSON: false,
-			id: 'body--string--tag--true',
-			isIndexed: false,
-		},
-	],
+	selectColumns: [],
 	maxLines: 2,
 	format: 'raw',
 	fontSize: FontSize.SMALL,
 };
+
+export const defaultLogsSelectedColumns = [
+	{
+		key: 'timestamp',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'timestamp--string--tag--true',
+		isIndexed: false,
+	},
+	{
+		key: 'body',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'body--string--tag--true',
+		isIndexed: false,
+	},
+];
 
 export const defaultTraceSelectedColumns = [
 	{

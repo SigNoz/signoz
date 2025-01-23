@@ -21,6 +21,7 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
 	URL_OPTIONS,
@@ -172,7 +173,7 @@ const useOptionsMenu = ({
 			if (dataSource === DataSource.LOGS) {
 				// add timestamp and body to the list of attributes
 				return [
-					...defaultOptionsQuery.selectColumns,
+					...defaultLogsSelectedColumns,
 					...searchedAttributesData.payload.attributeKeys.filter(
 						(attribute) => attribute.key !== 'body',
 					),
