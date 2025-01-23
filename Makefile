@@ -193,5 +193,14 @@ check-no-ee-references:
 test:
 	go test ./pkg/...
 
+goreleaser-snapshot:
+	@if [[ ${GORELEASER_WORKDIR} ]]; then \
+		cd ${GORELEASER_WORKDIR} && \
+		goreleaser release --clean --snapshot; \
+		cd -; \
+	else \
+		goreleaser release --clean --snapshot; \
+	fi
+
 goreleaser-snapshot-histogram-quantile:
-	goreleaser release --clean --snapshot -f $(CH_HISTOGRAM_QUANTILE_DIRECTORY)/.goreleaser.yaml
+	make GORELEASER_WORKDIR=$(CH_HISTOGRAM_QUANTILE_DIRECTORY) goreleaser-snapshot

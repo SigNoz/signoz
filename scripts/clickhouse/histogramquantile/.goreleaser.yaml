@@ -10,12 +10,17 @@ monorepo:
 before:
   hooks:
     - go mod tidy
+    - cp ../../../LICENSE .
+    - cp ../../../README.md .
+
+after:
+  hooks:
+    - rm LICENSE
+    - rm README.md
 
 builds:
   - env:
       - CGO_ENABLED=0
-    binary: bin/histogram-quantile
-    main: ./scripts/clickhouse/histogramquantile
     goos:
       - linux
       - darwin
