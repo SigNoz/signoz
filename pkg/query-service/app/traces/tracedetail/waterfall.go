@@ -1,6 +1,7 @@
 package tracedetail
 
 import (
+	"slices"
 	"sort"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -14,13 +15,6 @@ type Interval struct {
 	StartTime uint64
 	Duration  uint64
 	Service   string
-}
-
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 func mergeIntervals(intervals []Interval) []Interval {
@@ -45,15 +39,6 @@ func mergeIntervals(intervals []Interval) []Interval {
 	merged = append(merged, current)
 
 	return merged
-}
-
-func contains(slice []string, item string) bool {
-	for _, v := range slice {
-		if v == item {
-			return true
-		}
-	}
-	return false
 }
 
 func ContainsWaterfallSpan(slice []*model.Span, item *model.Span) bool {
@@ -93,7 +78,7 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 		isPresentInThisSubtree, _spansFromRootToNode := getPathFromRootToSelectedSpanId(child, selectedSpanId, uncollapsedSpans, isSelectedSpanIDUnCollapsed)
 		// if the interested node is present in the given subtree then add the span node to uncollapsed node list
 		if isPresentInThisSubtree {
-			if !contains(uncollapsedSpans, node.SpanID) {
+			if !slices.Contains(uncollapsedSpans, node.SpanID) {
 				spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
 			}
 			isPresentInSubtreeForTheNode = true
@@ -142,7 +127,7 @@ func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, is
 	}
 
 	for index, child := range span.Children {
-		_childTraversal := traverseTrace(child, uncollapsedSpans, level+1, isPartOfPreOrder && contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
+		_childTraversal := traverseTrace(child, uncollapsedSpans, level+1, isPartOfPreOrder && slices.Contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
 		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
 		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
 		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
