@@ -124,20 +124,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	readerReady := make(chan bool)
 
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-	if err != nil {
-		return nil, err
-	}
-
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
 		return nil, err
@@ -174,11 +160,25 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		}
 	}
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
 	<-readerReady
 	rm, err := makeRulesManager(
 		serverOptions.PromConfigPath,
 		constants.GetAlertManagerApiPrefix(),
 		serverOptions.RuleRepoURL, serverOptions.SigNoz.SQLStore.SQLxDB(), reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
 		return nil, err
 	}

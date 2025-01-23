@@ -118,6 +118,13 @@ func ForbiddenError(err error) *ApiError {
 	}
 }
 
+func ExecutionError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorExec,
+		Err: err,
+	}
+}
+
 func WrapApiError(err *ApiError, msg string) *ApiError {
 	return &ApiError{
 		Typ: err.Type(),
@@ -274,7 +281,6 @@ type Span struct {
 	DurationNano     uint64            `json:"durationNano"`
 	SpanID           string            `json:"spanId"`
 	RootSpanID       string            `json:"rootSpanId"`
-	ParentSpanId     string            `json:"parentSpanId"`
 	TraceID          string            `json:"traceId"`
 	HasError         bool              `json:"hasError"`
 	Kind             int32             `json:"kind"`
@@ -300,7 +306,6 @@ type FlamegraphSpan struct {
 	TimeUnixNano uint64            `json:"timestamp"`
 	DurationNano uint64            `json:"durationNano"`
 	SpanID       string            `json:"spanId"`
-	ParentSpanId string            `json:"parentSpanId"`
 	TraceID      string            `json:"traceId"`
 	HasError     bool              `json:"hasError"`
 	ServiceName  string            `json:"serviceName"`
@@ -308,39 +313,6 @@ type FlamegraphSpan struct {
 	Level        int64             `json:"level"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
 	Children     []*FlamegraphSpan `json:"children"`
-}
-
-type GetWaterfallSpansForTraceWithMetadataCache struct {
-	StartTime                     uint64            `json:"startTime"`
-	EndTime                       uint64            `json:"endTime"`
-	DurationNano                  uint64            `json:"durationNano"`
-	TotalSpans                    uint64            `json:"totalSpans"`
-	TotalErrorSpans               uint64            `json:"totalErrorSpans"`
-	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
-	SpanIdToSpanNodeMap           map[string]*Span  `json:"spanIdToSpanNodeMap"`
-	TraceRoots                    []*Span           `json:"traceRoots"`
-}
-
-func (c *GetWaterfallSpansForTraceWithMetadataCache) MarshalBinary() (data []byte, err error) {
-	return json.Marshal(c)
-}
-func (c *GetWaterfallSpansForTraceWithMetadataCache) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, c)
-}
-
-type GetFlamegraphSpansForTraceCache struct {
-	StartTime     uint64              `json:"startTime"`
-	EndTime       uint64              `json:"endTime"`
-	DurationNano  uint64              `json:"durationNano"`
-	SelectedSpans [][]*FlamegraphSpan `json:"selectedSpans"`
-	TraceRoots    []*FlamegraphSpan   `json:"traceRoots"`
-}
-
-func (c *GetFlamegraphSpansForTraceCache) MarshalBinary() (data []byte, err error) {
-	return json.Marshal(c)
-}
-func (c *GetFlamegraphSpansForTraceCache) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, c)
 }
 
 type GetWaterfallSpansForTraceWithMetadataResponse struct {

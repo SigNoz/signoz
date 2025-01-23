@@ -142,23 +142,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	var c cache.Cache
-	if serverOptions.CacheConfigPath != "" {
-		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		c = cache.NewCache(cacheOpts)
-	}
-
 	// set license manager as feature flag provider in dao
 	modelDao.SetFlagProvider(lm)
 	readerReady := make(chan bool)
-
-	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-	if err != nil {
-		return nil, err
-	}
 
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
@@ -194,6 +180,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
 	}
 
 	<-readerReady
@@ -262,6 +256,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
