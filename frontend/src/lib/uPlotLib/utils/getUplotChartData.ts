@@ -9,10 +9,12 @@ import { generateColor } from './generateColor';
 function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	const timestamps = new Set();
 
-	seriesList.forEach((series: { values: [number, string][] }) => {
-		series.values.forEach((value) => {
-			timestamps.add(value[0]);
-		});
+	seriesList.forEach((series: { values?: [number, string][] }) => {
+		if (series?.values) {
+			series.values.forEach((value) => {
+				timestamps.add(value[0]);
+			});
+		}
 	});
 
 	const timestampsArr: number[] | unknown[] = Array.from(timestamps) || [];
