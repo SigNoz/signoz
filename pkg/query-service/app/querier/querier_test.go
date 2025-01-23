@@ -1384,6 +1384,8 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				"",
 				true,
 				true,
+				time.Duration(time.Second),
+				nil,
 			)
 
 			q := &querier{
