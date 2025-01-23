@@ -37,6 +37,7 @@ function GridCardGraph({
 	onDragSelect,
 	customTooltipElement,
 	dataAvailable,
+	getGraphData,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -209,6 +210,7 @@ function GridCardGraph({
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
+				getGraphData?.(data?.payload?.data);
 				setDashboardQueryRangeCalled(true);
 			},
 		},

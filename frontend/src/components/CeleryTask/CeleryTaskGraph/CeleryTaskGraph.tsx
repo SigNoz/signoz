@@ -10,16 +10,20 @@ import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
-import { CeleryTaskGraphStates } from './CeleryTaskGraphStates';
 
 function CeleryTaskGraph({
 	widgetData,
 	onClick,
+	getGraphData,
+	queryEnabled,
 }: {
 	widgetData: Widgets;
 	onClick: (task: CeleryTaskData) => void;
+	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;
+	queryEnabled: boolean;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -50,7 +54,6 @@ function CeleryTaskGraph({
 			$panelType={PANEL_TYPES.TIME_SERIES}
 			className="celery-task-graph"
 		>
-			{widgetData.title === 'All' && <CeleryTaskGraphStates />}
 			<GridCard
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
@@ -59,9 +62,15 @@ function CeleryTaskGraph({
 					console.log('clicked', arg); // todo-sagar: add logic to handle click
 					onClick(arg as any);
 				}}
+				getGraphData={getGraphData}
+				isQueryEnabled={queryEnabled}
 			/>
 		</Card>
 	);
 }
+
+CeleryTaskGraph.defaultProps = {
+	getGraphData: undefined,
+};
 
 export default CeleryTaskGraph;

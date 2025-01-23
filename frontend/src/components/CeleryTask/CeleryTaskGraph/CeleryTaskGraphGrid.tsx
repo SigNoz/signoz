@@ -4,26 +4,21 @@ import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {
 	celeryActiveTasksWidgetData,
-	celeryAllStateWidgetData,
 	celeryErrorByWorkerWidgetData,
 	celeryLatencyByWorkerWidgetData,
 	celeryTaskLatencyWidgetData,
 	celeryTasksByWorkerWidgetData,
 	celeryWorkerOnlineWidgetData,
 } from './CeleryTaskGraphUtils';
+import CeleryTaskHistogram from './CeleryTaskHistogram';
 
 export default function CeleryTaskGraphGrid({
 	onClick,
+	queryEnabled,
 }: {
 	onClick: (task: CeleryTaskData) => void;
+	queryEnabled: boolean;
 }): JSX.Element {
-	const widgetData = [
-		celeryActiveTasksWidgetData,
-		celeryWorkerOnlineWidgetData,
-		celeryAllStateWidgetData,
-		celeryTaskLatencyWidgetData,
-	];
-
 	const bottomWidgetData = [
 		celeryTasksByWorkerWidgetData,
 		celeryErrorByWorkerWidgetData,
@@ -33,13 +28,36 @@ export default function CeleryTaskGraphGrid({
 	return (
 		<div className="celery-task-graph-grid-container">
 			<div className="celery-task-graph-grid">
-				{widgetData.map((widget) => (
-					<CeleryTaskGraph key={widget.id} widgetData={widget} onClick={onClick} />
-				))}
+				<CeleryTaskHistogram onClick={onClick} queryEnabled={queryEnabled} />
+				<CeleryTaskGraph
+					key={celeryWorkerOnlineWidgetData.id}
+					widgetData={celeryWorkerOnlineWidgetData}
+					onClick={onClick}
+					queryEnabled={queryEnabled}
+				/>
+			</div>
+			<div className="celery-task-graph-grid">
+				<CeleryTaskGraph
+					key={celeryTaskLatencyWidgetData.id}
+					widgetData={celeryTaskLatencyWidgetData}
+					onClick={onClick}
+					queryEnabled={queryEnabled}
+				/>
+				<CeleryTaskGraph
+					key={celeryActiveTasksWidgetData.id}
+					widgetData={celeryActiveTasksWidgetData}
+					onClick={onClick}
+					queryEnabled={queryEnabled}
+				/>
 			</div>
 			<div className="celery-task-graph-grid-bottom">
-				{bottomWidgetData.map((widget) => (
-					<CeleryTaskGraph key={widget.id} widgetData={widget} onClick={onClick} />
+				{bottomWidgetData.map((widgetData) => (
+					<CeleryTaskGraph
+						key={widgetData.id}
+						widgetData={widgetData}
+						onClick={onClick}
+						queryEnabled={queryEnabled}
+					/>
 				))}
 			</div>
 		</div>

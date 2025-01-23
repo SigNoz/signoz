@@ -8,7 +8,7 @@
 
 	.celery-task-graph-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: 60% 40%;
 		align-items: flex-start;
 		gap: 10px;
 		width: 100%;
@@ -23,8 +23,29 @@
 				height: calc(100% - 24px);
 
 				.widget-graph-container {
-					&.bar {
-						height: calc(100% - 116px);
+					&.histogram {
+						height: calc(100% - 85px);
+					}
+				}
+			}
+		}
+
+		.celery-task-graph-histogram {
+			height: 380px !important;
+			width: 100%;
+			box-sizing: border-box;
+
+			.celery-task-graph-grid-content {
+				padding: 6px;
+				height: 100%;
+			}
+
+			.ant-card-body {
+				height: calc(100% - 18px);
+
+				.widget-graph-container {
+					&.histogram {
+						height: calc(100% - 85px);
 					}
 				}
 			}

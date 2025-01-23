@@ -1,10 +1,14 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
+// import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+// import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+// import { v4 as uuidv4 } from 'uuid';
 
+// State Graphs
 export const celeryAllStateWidgetData = getWidgetQueryBuilder(
 	getWidgetQuery({
 		queryData: [
@@ -64,7 +68,192 @@ export const celeryAllStateWidgetData = getWidgetQueryBuilder(
 		title: 'All',
 		description:
 			'Represents all states of task, including success, failed, and retry.',
-		panelTypes: PANEL_TYPES.BAR, // todo-sagar: ask shivanshu if BAR or Histogram
+		panelTypes: PANEL_TYPES.HISTOGRAM,
+	}),
+);
+
+export const celeryRetryStateWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Retry',
+		description: 'Represents the number of retry tasks.',
+		panelTypes: PANEL_TYPES.HISTOGRAM,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.String,
+					id: '------false',
+					isColumn: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: '6d97eed3',
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'RETRY',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [
+					{
+						dataType: DataTypes.String,
+						id: 'celery.hostname--string--tag--false',
+						isColumn: false,
+						isJSON: false,
+						key: 'celery.hostname',
+						type: 'tag',
+					},
+				],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'count',
+			},
+		],
+	}),
+);
+
+export const celeryFailedStateWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Failed',
+		description: 'Represents the number of failed tasks.',
+		panelTypes: PANEL_TYPES.HISTOGRAM,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.String,
+					id: '------false',
+					isColumn: false,
+					isJSON: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: '5983eae2',
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'FAILURE',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [
+					{
+						dataType: DataTypes.String,
+						id: 'celery.hostname--string--tag--false',
+						isColumn: false,
+						isJSON: false,
+						key: 'celery.hostname',
+						type: 'tag',
+					},
+				],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'rate',
+			},
+		],
+	}),
+);
+
+export const celerySuccessStateWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Success',
+		description: 'Represents the number of successful tasks.',
+		panelTypes: PANEL_TYPES.HISTOGRAM,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.String,
+					id: '------false',
+					isColumn: false,
+					isJSON: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: '000c5a93',
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'SUCCESS',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [
+					{
+						dataType: DataTypes.String,
+						id: 'celery.hostname--string--tag--false',
+						isColumn: false,
+						isJSON: false,
+						key: 'celery.hostname',
+						type: 'tag',
+					},
+				],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'rate',
+			},
+		],
 	}),
 );
 
@@ -408,3 +597,228 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 		],
 	}),
 );
+
+export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Top 10 tasks in retry state',
+		description: 'Represents the top 10 tasks in retry state.',
+		panelTypes: PANEL_TYPES.TABLE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.Float64,
+					id: 'duration_nano--float64----true',
+					isColumn: true,
+					isJSON: false,
+					key: 'duration_nano',
+					type: '',
+				},
+				aggregateOperator: 'avg',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: '9e09c9ed',
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'RETRY',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [
+					{
+						dataType: DataTypes.String,
+						id: 'celery.task_name--string--tag--false',
+						isColumn: false,
+						isJSON: false,
+						key: 'celery.task_name',
+						type: 'tag',
+					},
+				],
+				having: [],
+				legend: '',
+				limit: 10,
+				orderBy: [
+					{
+						columnName: '#SIGNOZ_VALUE',
+						order: 'desc',
+					},
+				],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'avg',
+			},
+		],
+	}),
+);
+
+export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Top 10 tasks in FAILED state',
+		description: 'Represents the top 10 tasks in failed state.',
+		panelTypes: PANEL_TYPES.TABLE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.Float64,
+					id: 'duration_nano--float64----true',
+					isColumn: true,
+					isJSON: false,
+					key: 'duration_nano',
+					type: '',
+				},
+				aggregateOperator: 'avg',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: '2330f906',
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'FAILURE',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [
+					{
+						dataType: DataTypes.String,
+						id: 'celery.task_name--string--tag--false',
+						isColumn: false,
+						isJSON: false,
+						key: 'celery.task_name',
+						type: 'tag',
+					},
+				],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [
+					{
+						columnName: '#SIGNOZ_VALUE',
+						order: 'desc',
+					},
+				],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'avg',
+			},
+		],
+	}),
+);
+
+export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Top 10 tasks in SUCCESS state',
+		description: 'Represents the top 10 tasks in success state.',
+		panelTypes: PANEL_TYPES.TABLE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.Float64,
+					id: 'duration_nano--float64----true',
+					isColumn: true,
+					isJSON: false,
+					key: 'duration_nano',
+					type: '',
+				},
+				aggregateOperator: 'avg',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: 'ec3df7b7',
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'SUCCESS',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [
+					{
+						dataType: DataTypes.String,
+						id: 'celery.task_name--string--tag--false',
+						isColumn: false,
+						isJSON: false,
+						key: 'celery.task_name',
+						type: 'tag',
+					},
+				],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [
+					{
+						columnName: '#SIGNOZ_VALUE',
+						order: 'desc',
+					},
+				],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'avg',
+			},
+		],
+	}),
+);
+
+// export const getCeleryTaskStateQueryPayload = ({
+// 	start,
+// 	end,
+// }: {
+// 	start: number;
+// 	end: number;
+// }): GetQueryResultsProps[] => {
+// 	const widgetData = [
+// 		celeryRetryTasksTableWidgetData,
+// 		celeryFailedTasksTableWidgetData,
+// 		celerySuccessTasksTableWidgetData,
+// 	];
+
+// 	return widgetData.map((widget) => ({
+// 		start,
+// 		end,
+// 		graphType: PANEL_TYPES.TABLE,
+// 		query: widget.query,
+// 		selectedTime: 'GLOBAL_TIME',
+// 		formatForWeb: true,
+// 		variables: {},
+// 	}));
+// };
