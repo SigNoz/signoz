@@ -119,7 +119,7 @@ function SpanScopeSelector({ queryName }: SpanScopeSelectorProps): JSX.Element {
 	return (
 		<Select
 			value={selectedScope}
-			style={{ width: 160 }}
+			className="span-scope-selector"
 			onChange={handleScopeChange}
 			options={SELECT_OPTIONS}
 		/>
