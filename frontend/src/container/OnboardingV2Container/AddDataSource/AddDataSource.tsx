@@ -17,14 +17,12 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { ArrowRight, X } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import React, { useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
-import onboardingConfigWithLinks from '../configs/onboarding-config-with-links.json';
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
+import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links.json';
 
 const { Header } = Layout;
 
@@ -94,7 +92,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		[tag: string]: Entity[];
 	}>({});
 
-	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { org } = useAppContext();
 
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
@@ -172,6 +170,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
+		console.log('dataSource', dataSource);
 		setSelectedDataSource(dataSource);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
