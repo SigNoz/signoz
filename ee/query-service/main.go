@@ -151,6 +151,7 @@ func main() {
 	}
 
 	serverOptions := &app.ServerOptions{
+		Config:            config,
 		SigNoz:            signoz,
 		HTTPHostPort:      baseconst.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
@@ -179,7 +180,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := migrate.Migrate(signoz.SQLStore.SQLxDB()); err != nil {
 		zap.L().Error("Failed to migrate", zap.Error(err))
 	} else {
 		zap.L().Info("Migration successful")

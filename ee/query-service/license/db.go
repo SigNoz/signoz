@@ -28,13 +28,8 @@ func NewLicenseRepo(db *sqlx.DB) Repo {
 	}
 }
 
-func (r *Repo) InitDB(engine string) error {
-	switch engine {
-	case "sqlite3", "sqlite":
-		return sqlite.InitDB(r.db)
-	default:
-		return fmt.Errorf("unsupported db")
-	}
+func (r *Repo) InitDB(inputDB *sqlx.DB) error {
+	return sqlite.InitDB(inputDB)
 }
 
 func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {

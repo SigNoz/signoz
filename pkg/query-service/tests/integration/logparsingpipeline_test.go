@@ -461,7 +461,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	}
 
 	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
-		testDB, "sqlite", ic.GetPipelinesForInstalledIntegrations,
+		testDB, ic.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
@@ -485,8 +485,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:       testDB,
-		DBEngine: "sqlite",
+		DB: testDB,
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})
