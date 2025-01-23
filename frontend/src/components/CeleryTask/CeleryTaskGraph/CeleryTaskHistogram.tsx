@@ -1,3 +1,5 @@
+import './CeleryTaskGraph.style.scss';
+
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
