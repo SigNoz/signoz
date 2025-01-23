@@ -1,5 +1,6 @@
 import './CeleryTaskGraph.style.scss';
 
+import { Col, Row } from 'antd';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -13,18 +14,20 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 
 import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
-import {
-	celeryAllStateWidgetData,
-	celeryFailedStateWidgetData,
-	celeryRetryStateWidgetData,
-	celerySuccessStateWidgetData,
-} from './CeleryTaskGraphUtils';
-import {
-	CeleryTaskState,
-	CeleryTaskStateGraphConfig,
-} from './CeleryTaskStateGraphConfig';
+import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
 
-function CeleryTaskHistogram({
+interface TabData {
+	label: string;
+	key: string;
+}
+
+export enum CeleryTaskGraphState {
+	P99 = 'p99',
+	P95 = 'p95',
+	P90 = 'p90',
+}
+
+function CeleryTaskLatencyGraph({
 	onClick,
 	queryEnabled,
 }: {
@@ -37,6 +40,20 @@ function CeleryTaskHistogram({
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
+
+	const tabs: TabData[] = [
+		{ label: CeleryTaskGraphState.P99, key: CeleryTaskGraphState.P99 },
+		{ label: CeleryTaskGraphState.P95, key: CeleryTaskGraphState.P95 },
+		{ label: CeleryTaskGraphState.P90, key: CeleryTaskGraphState.P90 },
+	];
+
+	const [graphState, setGraphState] = useState<CeleryTaskGraphState>(
+		CeleryTaskGraphState.P99,
+	);
+
+	const handleTabClick = (key: CeleryTaskGraphState): void => {
+		setGraphState(key as CeleryTaskGraphState);
+	};
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
@@ -55,10 +72,6 @@ function CeleryTaskHistogram({
 		[dispatch, history, pathname, urlQuery],
 	);
 
-	const [histogramState, setHistogramState] = useState<CeleryTaskState>(
-		CeleryTaskState.All,
-	);
-
 	const getGraphData = (graphData: any): void => {
 		console.log('graphData', graphData);
 	};
@@ -66,17 +79,34 @@ function CeleryTaskHistogram({
 	return (
 		<Card
 			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.HISTOGRAM}
-			className="celery-task-graph-histogram"
+			$panelType={PANEL_TYPES.TIME_SERIES}
+			className="celery-task-graph-task-latency"
 		>
-			<CeleryTaskStateGraphConfig
-				histogramState={histogramState}
-				setHistogramState={setHistogramState}
-			/>
+			<Row className="celery-task-states">
+				{tabs.map((tab, index) => (
+					<Col
+						key={tab.key}
+						onClick={(): void => handleTabClick(tab.key as CeleryTaskGraphState)}
+						className={`celery-task-states__tab ${
+							tab.key === graphState ? 'celery-task-states__tab--selected' : ''
+						}`}
+						data-last-tab={index === tabs.length - 1}
+					>
+						<div className="celery-task-states__label-wrapper">
+							<div className="celery-task-states__label">
+								{tab.label.toUpperCase()}
+							</div>
+						</div>
+						{tab.key === graphState && (
+							<div className="celery-task-states__indicator" />
+						)}
+					</Col>
+				))}
+			</Row>
 			<div className="celery-task-graph-grid-content">
-				{histogramState === CeleryTaskState.All && (
+				{graphState === CeleryTaskGraphState.P99 && (
 					<GridCard
-						widget={celeryAllStateWidgetData}
+						widget={celeryTaskLatencyWidgetData(graphState)}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						onClickHandler={(arg): void => {
@@ -87,9 +117,10 @@ function CeleryTaskHistogram({
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
-				{histogramState === CeleryTaskState.Failed && (
+
+				{graphState === CeleryTaskGraphState.P95 && (
 					<GridCard
-						widget={celeryFailedStateWidgetData}
+						widget={celeryTaskLatencyWidgetData(graphState)}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						onClickHandler={(arg): void => {
@@ -100,22 +131,9 @@ function CeleryTaskHistogram({
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
-				{histogramState === CeleryTaskState.Retry && (
+				{graphState === CeleryTaskGraphState.P90 && (
 					<GridCard
-						widget={celeryRetryStateWidgetData}
-						headerMenuList={[...ViewMenuAction]}
-						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
-						isQueryEnabled={queryEnabled}
-					/>
-				)}
-				{histogramState === CeleryTaskState.Successful && (
-					<GridCard
-						widget={celerySuccessStateWidgetData}
+						widget={celeryTaskLatencyWidgetData(graphState)}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						onClickHandler={(arg): void => {
@@ -131,4 +149,4 @@ function CeleryTaskHistogram({
 	);
 }
 
-export default CeleryTaskHistogram;
+export default CeleryTaskLatencyGraph;

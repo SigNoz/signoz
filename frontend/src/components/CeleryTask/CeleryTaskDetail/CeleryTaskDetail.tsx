@@ -89,9 +89,9 @@ export default function CeleryTaskDetail({
 				dispatch(UpdateTimeInterval(selectedTime));
 				urlQuery.set(QueryParams.relativeTime, selectedTime);
 			} else {
-				dispatch(UpdateTimeInterval('custom', [minTime, maxTime]));
-				urlQuery.set(QueryParams.startTime, minTime.toString());
-				urlQuery.set(QueryParams.endTime, maxTime.toString());
+				dispatch(UpdateTimeInterval('custom', [minTime / 1e6, maxTime / 1e6]));
+				urlQuery.set(QueryParams.startTime, Math.floor(minTime / 1e6).toString());
+				urlQuery.set(QueryParams.endTime, Math.floor(maxTime / 1e6).toString());
 			}
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;

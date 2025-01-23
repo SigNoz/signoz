@@ -1,12 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-// import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-// import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
-// import { v4 as uuidv4 } from 'uuid';
 
 // State Graphs
 export const celeryAllStateWidgetData = getWidgetQueryBuilder(
@@ -257,58 +255,6 @@ export const celerySuccessStateWidgetData = getWidgetQueryBuilder(
 	}),
 );
 
-export const celeryTaskLatencyWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Task Latency',
-		description: 'Represents the latency of task execution.',
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.Float64,
-					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
-					key: 'duration_nano',
-					type: '',
-				},
-				aggregateOperator: 'p99',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [],
-					op: 'AND',
-				},
-				functions: [],
-				groupBy: [
-					{
-						dataType: DataTypes.String,
-						id: 'celery.task_name--string--tag--false',
-						isColumn: false,
-						isJSON: false,
-						key: 'celery.task_name',
-						type: 'tag',
-					},
-				],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [
-					{
-						columnName: '#SIGNOZ_VALUE',
-						order: 'asc',
-					},
-				],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'p99',
-			},
-		],
-	}),
-);
-
 export const celeryTasksByWorkerWidgetData = getWidgetQueryBuilder(
 	getWidgetQuery({
 		title: 'Tasks/s by worker',
@@ -446,6 +392,7 @@ export const celeryLatencyByWorkerWidgetData = getWidgetQueryBuilder(
 				timeAggregation: 'p99',
 			},
 		],
+		yAxisUnit: 'ns',
 	}),
 );
 
@@ -799,26 +746,57 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 	}),
 );
 
-// export const getCeleryTaskStateQueryPayload = ({
-// 	start,
-// 	end,
-// }: {
-// 	start: number;
-// 	end: number;
-// }): GetQueryResultsProps[] => {
-// 	const widgetData = [
-// 		celeryRetryTasksTableWidgetData,
-// 		celeryFailedTasksTableWidgetData,
-// 		celerySuccessTasksTableWidgetData,
-// 	];
-
-// 	return widgetData.map((widget) => ({
-// 		start,
-// 		end,
-// 		graphType: PANEL_TYPES.TABLE,
-// 		query: widget.query,
-// 		selectedTime: 'GLOBAL_TIME',
-// 		formatForWeb: true,
-// 		variables: {},
-// 	}));
-// };
+// Task Latency
+export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Task Latency',
+			description: 'Represents the latency of task execution.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id: 'duration_nano--float64----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'duration_nano',
+						type: '',
+					},
+					aggregateOperator: type || 'p99',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.task_name--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.task_name',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [
+						{
+							columnName: '#SIGNOZ_VALUE',
+							order: 'asc',
+						},
+					],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'p99',
+				},
+			],
+			yAxisUnit: 'ns',
+		}),
+	);

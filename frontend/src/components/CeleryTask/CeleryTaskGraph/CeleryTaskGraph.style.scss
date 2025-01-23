@@ -20,7 +20,7 @@
 			box-sizing: border-box;
 
 			.ant-card-body {
-				height: calc(100% - 24px);
+				height: calc(100% - 18px);
 
 				.widget-graph-container {
 					&.histogram {
@@ -30,7 +30,8 @@
 			}
 		}
 
-		.celery-task-graph-histogram {
+		.celery-task-graph-histogram,
+		.celery-task-graph-task-latency {
 			height: 380px !important;
 			width: 100%;
 			box-sizing: border-box;
@@ -44,7 +45,8 @@
 				height: calc(100% - 18px);
 
 				.widget-graph-container {
-					&.histogram {
+					&.histogram,
+					&.graph {
 						height: calc(100% - 85px);
 					}
 				}
@@ -64,6 +66,10 @@
 			padding: 10px;
 			width: 100%;
 			box-sizing: border-box;
+
+			.ant-card-body {
+				height: calc(100% - 18px);
+			}
 		}
 	}
 }

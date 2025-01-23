@@ -13,6 +13,7 @@ interface GetWidgetQueryProps {
 	description: string;
 	queryData: IBuilderQuery[];
 	panelTypes?: PANEL_TYPES;
+	yAxisUnit?: string;
 }
 
 interface GetWidgetQueryPropsReturn extends GetWidgetQueryBuilderProps {
@@ -50,10 +51,10 @@ export const getWidgetQueryBuilder = ({
 export function getWidgetQuery(
 	props: GetWidgetQueryProps,
 ): GetWidgetQueryPropsReturn {
-	const { title, description, panelTypes } = props;
+	const { title, description, panelTypes, yAxisUnit } = props;
 	return {
 		title,
-		yAxisUnit: 'none',
+		yAxisUnit: yAxisUnit || 'none',
 		panelTypes: panelTypes || PANEL_TYPES.TIME_SERIES,
 		fillSpans: false,
 		description,

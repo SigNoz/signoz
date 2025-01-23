@@ -6,11 +6,11 @@ import {
 	celeryActiveTasksWidgetData,
 	celeryErrorByWorkerWidgetData,
 	celeryLatencyByWorkerWidgetData,
-	celeryTaskLatencyWidgetData,
 	celeryTasksByWorkerWidgetData,
 	celeryWorkerOnlineWidgetData,
 } from './CeleryTaskGraphUtils';
 import CeleryTaskHistogram from './CeleryTaskHistogram';
+import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
 
 export default function CeleryTaskGraphGrid({
 	onClick,
@@ -37,12 +37,7 @@ export default function CeleryTaskGraphGrid({
 				/>
 			</div>
 			<div className="celery-task-graph-grid">
-				<CeleryTaskGraph
-					key={celeryTaskLatencyWidgetData.id}
-					widgetData={celeryTaskLatencyWidgetData}
-					onClick={onClick}
-					queryEnabled={queryEnabled}
-				/>
+				<CeleryTaskLatencyGraph onClick={onClick} queryEnabled={queryEnabled} />
 				<CeleryTaskGraph
 					key={celeryActiveTasksWidgetData.id}
 					widgetData={celeryActiveTasksWidgetData}
