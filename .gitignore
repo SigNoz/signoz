@@ -70,3 +70,5 @@ vendor/
 
 # git-town
 .git-branches.toml
+# goreleaser
+dist/
