@@ -144,7 +144,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
 			fluxIntervalForTraceDetail,
-			nil,
+			serverOptions.SigNoz.Cache,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader

@@ -89,8 +89,6 @@ func GetSelectedSpansForFlamegraph(traceRoots []*model.FlamegraphSpan, spanIdToS
 }
 
 func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpans [][]*model.FlamegraphSpan) [][]*model.FlamegraphSpan {
-
-	selectedSpansForRequest := [][]*model.FlamegraphSpan{}
 	var selectedIndex = 0
 
 	if selectedSpanID != "" {
@@ -107,12 +105,12 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 
 	if upperLimit > len(selectedSpans) {
 		lowerLimit = lowerLimit - (upperLimit - len(selectedSpans))
-		upperLimit = (len(selectedSpans))
+		upperLimit = len(selectedSpans)
 	}
 
 	if lowerLimit < 0 {
 		lowerLimit = 0
 	}
 
-	return selectedSpansForRequest[lowerLimit:upperLimit]
+	return selectedSpans[lowerLimit:upperLimit]
 }

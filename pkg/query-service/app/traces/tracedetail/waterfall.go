@@ -103,7 +103,7 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
-func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, hasSibling bool, selectedSpanId string) []*model.Span {
+func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreOrder bool, hasSibling bool, selectedSpanId string) []*model.Span {
 	preOrderTraversal := []*model.Span{}
 
 	// sort the children to maintain the order across requests
@@ -137,17 +137,18 @@ func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, ha
 		SubTreeNodeCount: 0,
 	}
 
-	preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
-
-	if contains(uncollapsedSpans, span.SpanID) {
-		for index, child := range span.Children {
-			_childTraversal := traverseTrace(child, uncollapsedSpans, level+1, index != (len(span.Children)-1), selectedSpanId)
-			preOrderTraversal = append(preOrderTraversal, _childTraversal...)
-			nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
-			// span.SubTreeNodeCount += child.SubTreeNodeCount + 1
-		}
+	if isPartOfPreOrder {
+		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 	}
 
+	for index, child := range span.Children {
+		_childTraversal := traverseTrace(child, uncollapsedSpans, level+1, isPartOfPreOrder && contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
+		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
+		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
+		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
+	}
+
+	nodeWithoutChildren.SubTreeNodeCount += 1
 	return preOrderTraversal
 
 }
@@ -182,7 +183,7 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 			_, spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, selectedSpanID, updatedUncollapsedSpans, isSelectedSpanIDUnCollapsed)
 			updatedUncollapsedSpans = append(updatedUncollapsedSpans, spansFromRootToNode...)
 
-			_preOrderTraversal := traverseTrace(rootNode, uncollapsedSpans, 0, false, selectedSpanID)
+			_preOrderTraversal := traverseTrace(rootNode, updatedUncollapsedSpans, 0, true, false, selectedSpanID)
 			_selectedSpanIndex := findIndexForSelectedSpanFromPreOrder(_preOrderTraversal, selectedSpanID)
 
 			if _selectedSpanIndex != -1 {
