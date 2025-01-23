@@ -7,17 +7,22 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	_cache "go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 
 type provider struct {
 	client *redis.Client
-	opts   *_cache.Redis
+	opts   cache.Redis
 }
 
-func New(opts *_cache.Redis) *provider {
-	return &provider{opts: opts}
+func NewFactory() factory.ProviderFactory[cache.Cache, cache.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("redis"), New)
+}
+
+func New(ctx context.Context, settings factory.ProviderSettings, config cache.Config) (cache.Cache, error) {
+	return &provider{opts: config.Redis}, nil
 }
 
 // WithClient creates a new cache with the given client
@@ -36,20 +41,20 @@ func (c *provider) Connect(_ context.Context) error {
 }
 
 // Store stores the data in the cache
-func (c *provider) Store(ctx context.Context, cacheKey string, data _cache.CacheableEntity, ttl time.Duration) error {
+func (c *provider) Store(ctx context.Context, cacheKey string, data cache.CacheableEntity, ttl time.Duration) error {
 	return c.client.Set(ctx, cacheKey, data, ttl).Err()
 }
 
 // Retrieve retrieves the data from the cache
-func (c *provider) Retrieve(ctx context.Context, cacheKey string, dest _cache.CacheableEntity, allowExpired bool) (_cache.RetrieveStatus, error) {
+func (c *provider) Retrieve(ctx context.Context, cacheKey string, dest cache.CacheableEntity, allowExpired bool) (cache.RetrieveStatus, error) {
 	err := c.client.Get(ctx, cacheKey).Scan(dest)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return _cache.RetrieveStatusKeyMiss, nil
+			return cache.RetrieveStatusKeyMiss, nil
 		}
-		return _cache.RetrieveStatusError, err
+		return cache.RetrieveStatusError, err
 	}
-	return _cache.RetrieveStatusHit, nil
+	return cache.RetrieveStatusHit, nil
 }
 
 // SetTTL sets the TTL for the cache entry
@@ -85,11 +90,6 @@ func (c *provider) Ping(ctx context.Context) error {
 // GetClient returns the redis client
 func (c *provider) GetClient() *redis.Client {
 	return c.client
-}
-
-// GetOptions returns the options
-func (c *provider) GetOptions() *_cache.Redis {
-	return c.opts
 }
 
 // GetTTL returns the TTL for the cache entry

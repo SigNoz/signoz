@@ -9,11 +9,15 @@ import (
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
+	"go.signoz.io/signoz/pkg/config"
+	"go.signoz.io/signoz/pkg/config/envprovider"
+	"go.signoz.io/signoz/pkg/config/fileprovider"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/signoz"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -74,7 +78,24 @@ func main() {
 	logger := loggerMgr.Sugar()
 	version.PrintVersion()
 
+	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
+		Uris: []string{"env:"},
+		ProviderFactories: []config.ProviderFactory{
+			envprovider.NewFactory(),
+			fileprovider.NewFactory(),
+		},
+	})
+	if err != nil {
+		zap.L().Fatal("Failed to create config", zap.Error(err))
+	}
+
+	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
+	if err != nil {
+		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
+	}
+
 	serverOptions := &app.ServerOptions{
+		Config:            config,
 		HTTPHostPort:      constants.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
@@ -90,6 +111,7 @@ func main() {
 		Cluster:           cluster,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
+		SigNoz:            signoz,
 	}
 
 	// Read the jwt secret key
@@ -101,7 +123,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := migrate.Migrate(signoz.SQLStore.SQLxDB()); err != nil {
 		zap.L().Error("Failed to migrate", zap.Error(err))
 	} else {
 		zap.L().Info("Migration successful")

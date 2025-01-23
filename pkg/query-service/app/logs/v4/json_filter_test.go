@@ -183,6 +183,71 @@ var testGetJSONFilterData = []struct {
 		},
 		Filter: "lower(body) like lower('%message%') AND JSON_EXISTS(body, '$.\"message\"')",
 	},
+	{
+		Name: "test json in array string",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.name",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "in",
+			Value:    []interface{}{"hello", "world"},
+		},
+		Filter: "lower(body) like lower('%name%') AND JSON_EXISTS(body, '$.\"name\"') AND JSON_VALUE(body, '$.\"name\"') IN ['hello','world']",
+	},
+	{
+		Name: "test json in array number",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.value",
+				DataType: "int64",
+				IsJSON:   true,
+			},
+			Operator: "in",
+			Value:    []interface{}{10, 11},
+		},
+		Filter: "lower(body) like lower('%value%') AND JSON_EXISTS(body, '$.\"value\"') AND JSONExtract(JSON_VALUE(body, '$.\"value\"'), 'Int64') IN [10,11]",
+	},
+	{
+		Name: "test json in array mixed data- allow",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.value",
+				DataType: "int64",
+				IsJSON:   true,
+			},
+			Operator: "in",
+			Value:    []interface{}{11, "11"},
+		},
+		Filter: "lower(body) like lower('%value%') AND JSON_EXISTS(body, '$.\"value\"') AND JSONExtract(JSON_VALUE(body, '$.\"value\"'), 'Int64') IN [11,11]",
+	},
+	{
+		Name: "test json in array mixed data- fail",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.value",
+				DataType: "int64",
+				IsJSON:   true,
+			},
+			Operator: "in",
+			Value:    []interface{}{11, "11", "hello"},
+		},
+		Error: true,
+	},
+	{
+		Name: "test json in array mixed data- allow",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.value",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "in",
+			Value:    []interface{}{"hello", 11},
+		},
+		Filter: "lower(body) like lower('%value%') AND JSON_EXISTS(body, '$.\"value\"') AND JSON_VALUE(body, '$.\"value\"') IN ['hello','11']",
+	},
 }
 
 func TestGetJSONFilter(t *testing.T) {

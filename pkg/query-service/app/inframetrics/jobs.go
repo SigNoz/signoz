@@ -475,7 +475,7 @@ func (d *JobsRepo) GetJobList(ctx context.Context, req model.JobListRequest) (mo
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := jobAttrs[record.JobName]; ok {
+			if _, ok := jobAttrs[record.JobName]; ok && record.JobName != "" {
 				record.Meta = jobAttrs[record.JobName]
 			}
 
@@ -493,6 +493,8 @@ func (d *JobsRepo) GetJobList(ctx context.Context, req model.JobListRequest) (mo
 	}
 	resp.Total = len(allJobGroups)
 	resp.Records = records
+
+	resp.SortBy(req.OrderBy)
 
 	return resp, nil
 }

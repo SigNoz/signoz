@@ -26,16 +26,9 @@ export interface IEntityColumn {
 	canRemove: boolean;
 }
 
-export interface IPodColumn {
-	label: string;
-	value: string;
-	id: string;
-	canRemove: boolean;
-}
-
 const columnProgressBarClassName = 'column-progress-bar';
 
-export const defaultAddedColumns: IPodColumn[] = [
+export const defaultAddedColumns: IEntityColumn[] = [
 	{
 		label: 'Pod name',
 		value: 'podName',
@@ -78,12 +71,13 @@ export const defaultAddedColumns: IPodColumn[] = [
 		id: 'memory',
 		canRemove: false,
 	},
-	{
-		label: 'Restarts',
-		value: 'restarts',
-		id: 'restarts',
-		canRemove: false,
-	},
+	// TODO - Re-enable the column once backend issue is fixed
+	// {
+	// 	label: 'Restarts',
+	// 	value: 'restarts',
+	// 	id: 'restarts',
+	// 	canRemove: false,
+	// },
 ];
 
 export const defaultAvailableColumns = [
@@ -131,7 +125,7 @@ export const getK8sPodsListQuery = (): K8sPodsListPayload => ({
 
 const podGroupColumnConfig = {
 	title: (
-		<div className="column-header pod-group-header">
+		<div className="column-header entity-group-header">
 			<Group size={14} /> POD GROUP
 		</div>
 	),
@@ -140,7 +134,7 @@ const podGroupColumnConfig = {
 	ellipsis: true,
 	width: 180,
 	sorter: false,
-	className: 'column column-pod-group',
+	className: 'column entity-group-header',
 };
 
 export const dummyColumnConfig = {
@@ -160,11 +154,11 @@ const columnsConfig = [
 		key: 'podName',
 		width: 180,
 		ellipsis: true,
-		sorter: true,
+		sorter: false,
 		className: 'column column-pod-name',
 	},
 	{
-		title: <div className="column-header">CPU Req Usage (%)</div>,
+		title: <div className="column-header med-col">CPU Req Usage (%)</div>,
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
 		width: 180,
@@ -174,7 +168,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">CPU Limit Usage (%)</div>,
+		title: <div className="column-header med-col">CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
 		width: 120,
@@ -192,7 +186,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Req Usage (%)</div>,
+		title: <div className="column-heade med-col">Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
 		width: 120,
@@ -201,7 +195,7 @@ const columnsConfig = [
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header">Mem Limit Usage (%)</div>,
+		title: <div className="column-header med-col">Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
 		width: 120,
@@ -219,20 +213,21 @@ const columnsConfig = [
 		align: 'left',
 		className: `column ${columnProgressBarClassName}`,
 	},
-	{
-		title: (
-			<div className="column-header">
-				<Tooltip title="Container Restarts">Restarts</Tooltip>
-			</div>
-		),
-		dataIndex: 'restarts',
-		key: 'restarts',
-		width: 40,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
-		className: `column ${columnProgressBarClassName}`,
-	},
+	// TODO - Re-enable the column once backend issue is fixed
+	// {
+	// 	title: (
+	// 		<div className="column-header">
+	// 			<Tooltip title="Container Restarts">Restarts</Tooltip>
+	// 		</div>
+	// 	),
+	// 	dataIndex: 'restarts',
+	// 	key: 'restarts',
+	// 	width: 40,
+	// 	ellipsis: true,
+	// 	sorter: true,
+	// 	align: 'left',
+	// 	className: `column ${columnProgressBarClassName}`,
+	// },
 ];
 
 export const namespaceColumnConfig = {
@@ -251,7 +246,7 @@ export const nodeColumnConfig = {
 	dataIndex: 'node',
 	key: 'node',
 	width: 100,
-	sorter: true,
+	sorter: false,
 	ellipsis: true,
 	align: 'left',
 	className: 'column column-node',
@@ -262,7 +257,7 @@ export const clusterColumnConfig = {
 	dataIndex: 'cluster',
 	key: 'cluster',
 	width: 100,
-	sorter: true,
+	sorter: false,
 	ellipsis: true,
 	align: 'left',
 	className: 'column column-cluster',
@@ -275,7 +270,7 @@ export const columnConfigMap = {
 };
 
 export const getK8sPodsListColumns = (
-	addedColumns: IPodColumn[],
+	addedColumns: IEntityColumn[],
 	groupBy: IBuilderQuery['groupBy'],
 ): ColumnType<K8sPodsRowData>[] => {
 	const updatedColumnsConfig = [...columnsConfig];
@@ -341,7 +336,7 @@ export const formatDataForTable = (
 				attribute="CPU Request"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podCPURequest} />
+					<EntityProgressBar value={pod.podCPURequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -352,7 +347,7 @@ export const formatDataForTable = (
 				attribute="CPU Limit"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podCPULimit} />
+					<EntityProgressBar value={pod.podCPULimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -368,7 +363,7 @@ export const formatDataForTable = (
 				attribute="Memory Request"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podMemoryRequest} />
+					<EntityProgressBar value={pod.podMemoryRequest} type="request" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),
@@ -379,7 +374,7 @@ export const formatDataForTable = (
 				attribute="Memory Limit"
 			>
 				<div className="progress-container">
-					<EntityProgressBar value={pod.podMemoryLimit} />
+					<EntityProgressBar value={pod.podMemoryLimit} type="limit" />
 				</div>
 			</ValidateColumnValueWrapper>
 		),

@@ -54,6 +54,9 @@ const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
 
+const SpanSearchScopeRoot = "isroot"
+const SpanSearchScopeEntryPoint = "isentrypoint"
+
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
 		return os.Getenv("ALERTMANAGER_API_PREFIX")
@@ -73,6 +76,7 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
 var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
 
+// [Deprecated] SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
@@ -149,26 +153,6 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	},
 }
 
-func GetContextTimeout() time.Duration {
-	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
-	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
-	if err != nil {
-		return time.Minute
-	}
-	return contextTimeoutDuration
-}
-
-var ContextTimeout = GetContextTimeout()
-
-func GetContextTimeoutMaxAllowed() time.Duration {
-	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT_MAX_ALLOWED", "600")
-	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
-	if err != nil {
-		return time.Minute
-	}
-	return contextTimeoutDuration
-}
-
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
 	evalDelayDuration, err := time.ParseDuration(evalDelayStr)
@@ -177,8 +161,6 @@ func GetEvalDelay() time.Duration {
 	}
 	return evalDelayDuration
 }
-
-var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
 	TraceID                        = "traceID"
@@ -248,12 +230,8 @@ const (
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME  = "time_series_v4_1day"
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
+	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME      = "distributed_top_level_operations"
 )
-
-var TimeoutExcludedRoutes = map[string]bool{
-	"/api/v1/logs/tail":     true,
-	"/api/v3/logs/livetail": true,
-}
 
 // alert related constants
 const (
@@ -734,3 +712,5 @@ func init() {
 }
 
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
+
+const MaxResultRowsForCHQuery = 1_000_000

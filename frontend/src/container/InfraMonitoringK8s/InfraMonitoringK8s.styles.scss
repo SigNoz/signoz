@@ -39,10 +39,6 @@
 		.ant-collapse-header {
 			border-bottom: 1px solid var(--bg-slate-400);
 			padding: 12px 8px;
-
-			&[aria-expanded='true'] {
-				background: var(--bg-ink-400);
-			}
 		}
 
 		.ant-collapse-content-box {
@@ -271,8 +267,6 @@
 
 				.group-by-label {
 					min-width: max-content;
-
-					color: var(--bg-vanilla-100, #c0c1c3);
 					font-size: 13px;
 					font-style: normal;
 					font-weight: 400;
@@ -282,7 +276,6 @@
 					border-radius: 2px 0px 0px 2px;
 					border: 1px solid var(--bg-slate-400, #1d212d);
 					border-right: none;
-					background: var(--bg-ink-100, #16181d);
 					border-top-right-radius: 0px;
 					border-bottom-right-radius: 0px;
 
@@ -488,7 +481,7 @@
 		.expanded-table-container {
 			border: 1px solid var(--bg-ink-400);
 			overflow-x: auto;
-			padding-left: 16px;
+			padding-left: 48px;
 
 			&::-webkit-scrollbar {
 				width: 0.1rem;
@@ -710,8 +703,34 @@
 }
 
 .ant-table-cell {
-	min-width: 170px !important;
-	max-width: 170px !important;
+	min-width: 140px !important;
+	max-width: 140px !important;
+}
+
+.ant-table-cell {
+	&:has(.pod-name-header) {
+		min-width: 250px !important;
+		max-width: 250px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.med-col) {
+		min-width: 180px !important;
+		max-width: 180px !important;
+	}
+}
+
+.expanded-k8s-list-table {
+	.ant-table-cell {
+		min-width: 180px !important;
+		max-width: 180px !important;
+	}
+
+	.ant-table-row-expand-icon-cell {
+		min-width: 30px !important;
+		max-width: 30px !important;
+	}
 }
 
 .ant-table-row-expand-icon-cell {
@@ -808,6 +827,24 @@
 }
 
 .lightMode {
+	.infra-monitoring-container {
+		.k8s-list-table {
+			.ant-table-expanded-row {
+				&:hover {
+					background: var(--bg-vanilla-100) !important;
+				}
+
+				.ant-table-cell {
+					background: var(--bg-vanilla-100) !important;
+				}
+
+				.ant-table .ant-table-thead > tr > th {
+					padding: 4px 16px !important;
+				}
+			}
+		}
+	}
+
 	.event-content-container {
 		.ant-table {
 			background: var(--bg-vanilla-100);
@@ -831,4 +868,15 @@
 			}
 		}
 	}
+
+	.entity-group-header {
+		.ant-tag {
+			background-color: var(--bg-vanilla-300) !important;
+			color: var(--bg-slate-400) !important;
+		}
+	}
+}
+
+.entity-group-header {
+	width: 300px !important;
 }

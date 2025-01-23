@@ -65,8 +65,8 @@ func columnExists(db *sqlx.DB, tableName, columnName string) bool {
 }
 
 // InitDB creates and extends base model DB repository
-func InitDB(dataSourceName string) (*modelDao, error) {
-	dao, err := basedsql.InitDB(dataSourceName)
+func InitDB(inputDB *sqlx.DB) (*modelDao, error) {
+	dao, err := basedsql.InitDB(inputDB)
 	if err != nil {
 		return nil, err
 	}
