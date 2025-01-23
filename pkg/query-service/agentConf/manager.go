@@ -39,8 +39,7 @@ type Manager struct {
 }
 
 type ManagerOptions struct {
-	DB       *sqlx.DB
-	DBEngine string
+	DB *sqlx.DB
 
 	// When acting as opamp.AgentConfigProvider, agent conf recommendations are
 	// applied to the base conf in the order the features have been specified here.
@@ -66,7 +65,7 @@ func Initiate(options *ManagerOptions) (*Manager, error) {
 		configSubscribers: map[string]func(){},
 	}
 
-	err := m.initDB(options.DBEngine)
+	err := m.initDB(options.DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not init agentConf db")
 	}

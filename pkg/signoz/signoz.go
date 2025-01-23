@@ -6,14 +6,16 @@ import (
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/version"
 
 	"go.signoz.io/signoz/pkg/web"
 )
 
 type SigNoz struct {
-	Cache cache.Cache
-	Web   web.Web
+	Cache    cache.Cache
+	Web      web.Web
+	SQLStore sqlstore.SQLStore
 }
 
 func New(
@@ -54,8 +56,21 @@ func New(
 		return nil, err
 	}
 
+	// Initialize sqlstore from the available sqlstore provider factories
+	sqlstore, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.SQLStore,
+		providerConfig.SQLStoreProviderFactories,
+		config.SQLStore.Provider,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SigNoz{
-		Cache: cache,
-		Web:   web,
+		Cache:    cache,
+		Web:      web,
+		SQLStore: sqlstore,
 	}, nil
 }

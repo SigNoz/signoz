@@ -16,7 +16,7 @@ func TestTimeout(t *testing.T) {
 	writeTimeout := 6 * time.Second
 	defaultTimeout := 2 * time.Second
 	maxTimeout := 4 * time.Second
-	m := NewTimeout(zap.NewNop(), map[string]struct{}{"/excluded": {}}, defaultTimeout, maxTimeout)
+	m := NewTimeout(zap.NewNop(), []string{"/excluded"}, defaultTimeout, maxTimeout)
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
