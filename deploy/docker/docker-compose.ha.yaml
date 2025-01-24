@@ -1,5 +1,7 @@
 version: "3"
 x-common: &common
+  networks:
+    - signoz-net
   restart: on-failure
   logging:
     options:
@@ -234,3 +236,7 @@ services:
       - async
       - --dsn=tcp://clickhouse:9000
       - --up=
+
+networks:
+  signoz-net:
+    external: true

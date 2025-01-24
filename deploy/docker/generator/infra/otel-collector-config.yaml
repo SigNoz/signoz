@@ -82,7 +82,7 @@ receivers:
       # please remove names from below if you want to collect logs from them
       - type: filter
         id: signoz_logs_filter
-        expr: 'attributes.container_name matches "^signoz-(logspout|alertmanager|query-service|otel-collector|clickhouse|zookeeper)"'
+        expr: 'attributes.container_name matches "^(signoz-(|alertmanager|query-service|otel-collector|clickhouse|zookeeper))|(infra-(logspout|otel-agent)-.*)"'
 processors:
   batch:
     send_batch_size: 10000

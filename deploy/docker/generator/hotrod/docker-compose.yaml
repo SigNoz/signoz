@@ -1,5 +1,7 @@
 version: "3"
 x-common: &common
+  networks:
+    - signoz-net
   extra_hosts:
     - host.docker.internal:host-gateway
   logging:
@@ -31,3 +33,7 @@ services:
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
       - ../../../common/locust-scripts:/locust
+
+networks:
+  signoz-net:
+    external: true

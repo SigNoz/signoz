@@ -1,5 +1,7 @@
 version: "3"
 x-common: &common
+  networks:
+    - signoz-net
   deploy:
     restart_policy:
       condition: on-failure
@@ -154,3 +156,7 @@ services:
       - --up=
     depends_on:
       - clickhouse
+
+networks:
+  signoz-net:
+    external: true

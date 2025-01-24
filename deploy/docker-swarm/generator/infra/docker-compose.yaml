@@ -1,5 +1,7 @@
 version: "3"
 x-common: &common
+  networks:
+    - signoz-net
   extra_hosts:
     - host.docker.internal:host-gateway
   logging:
@@ -60,3 +62,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - otel-agent
+
+networks:
+  signoz-net:
+    name: signoz-net

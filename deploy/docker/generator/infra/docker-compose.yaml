@@ -1,5 +1,7 @@
 version: "3"
 x-common: &common
+  networks:
+    - signoz-net
   extra_hosts:
     - host.docker.internal:host-gateway
   logging:
@@ -11,7 +13,6 @@ services:
   otel-agent:
     <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
-    user: root
     command:
       - --config=/etc/otel-collector-config.yaml
     volumes:
@@ -29,11 +30,13 @@ services:
   logspout:
     <<: *common
     image: "gliderlabs/logspout:v3.2.14"
-    container_name: signoz-logspout
-    user: root
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: syslog+tcp://otel-agent:2255
     depends_on:
       - otel-agent
+
+networks:
+  signoz-net:
+    name: signoz-net
