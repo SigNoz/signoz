@@ -300,6 +300,9 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 	case v3.FunctionNameMedian7:
 		return funcMedian7(result)
 	case v3.FunctionNameTimeShift:
+		if len(fn.Args) == 0 {
+			return result
+		}
 		shift, ok := fn.Args[0].(float64)
 		if !ok {
 			return result
