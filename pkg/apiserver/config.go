@@ -23,7 +23,7 @@ type Timeout struct {
 
 type Logging struct {
 	// The list of routes that are excluded from the logging
-	ExcludedRoutes []string `mapstructure:"excluded_api_routes"`
+	ExcludedRoutes []string `mapstructure:"excluded_routes"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
