@@ -52,6 +52,7 @@ x-db-depend: &db-depend
 services:
   zookeeper-1:
     <<: *zookeeper-defaults
+    hostname: zookeeper-1
     # ports:
     #   - "2181:2181"
     #   - "2888:2888"
@@ -67,6 +68,7 @@ services:
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   zookeeper-2:
     <<: *zookeeper-defaults
+    hostname: zookeeper-2
     # ports:
     #   - "2182:2181"
     #   - "2889:2888"
@@ -82,6 +84,7 @@ services:
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   zookeeper-3:
     <<: *zookeeper-defaults
+    hostname: zookeeper-3
     # ports:
     #   - "2183:2181"
     #   - "2890:2888"
@@ -97,6 +100,7 @@ services:
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   clickhouse:
     <<: *clickhouse-defaults
+    hostname: clickhouse
     # ports:
     #   - "9000:9000"
     #   - "8123:8123"
@@ -111,6 +115,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-2:
     <<: *clickhouse-defaults
+    hostname: clickhouse-2
     # ports:
     #   - "9001:9000"
     #   - "8124:8123"
@@ -125,6 +130,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-3:
     <<: *clickhouse-defaults
+    hostname: clickhouse-3
     # ports:
     #   - "9002:9000"
     #   - "8125:8123"

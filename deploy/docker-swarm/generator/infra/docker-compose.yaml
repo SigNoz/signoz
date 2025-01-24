@@ -14,6 +14,7 @@ services:
   otel-agent:
     <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
+    user: root
     command:
       - --config=/etc/otel-collector-config.yaml
     volumes:
@@ -21,8 +22,9 @@ services:
       - /:/hostfs:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
     # Before exposing the ports, make sure the ports are not used by other services
     # ports:
     #   - "4317:4317"
@@ -30,7 +32,7 @@ services:
   logspout:
     <<: *common
     image: "gliderlabs/logspout:v3.2.14"
-    container_name: signoz-logspout
+    user: root
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock

@@ -11,6 +11,7 @@ services:
   otel-agent:
     <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
+    user: root
     command:
       - --config=/etc/otel-collector-config.yaml
     volumes:
@@ -29,6 +30,7 @@ services:
     <<: *common
     image: "gliderlabs/logspout:v3.2.14"
     container_name: signoz-logspout
+    user: root
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock
