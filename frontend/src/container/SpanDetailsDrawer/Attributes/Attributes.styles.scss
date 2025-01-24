@@ -2,6 +2,12 @@
 	display: flex;
 	flex-direction: column;
 
+	.no-data {
+		height: 400px;
+		justify-content: center;
+		align-items: center;
+	}
+
 	.search-input {
 		margin: 12px;
 		width: auto;

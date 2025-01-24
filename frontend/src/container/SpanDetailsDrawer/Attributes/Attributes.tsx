@@ -6,6 +6,8 @@ import { flattenObject } from 'container/LogDetailedView/utils';
 import { useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 
+import NoData from '../NoData/NoData';
+
 interface IAttributesProps {
 	span: Span;
 	isSearchVisible: boolean;
@@ -25,9 +27,11 @@ function Attributes(props: IAttributesProps): JSX.Element {
 			attribute.toLowerCase().includes(fieldSearchInput.toLowerCase()),
 		)
 		.map((key) => ({ field: key, value: flattenSpanData[key] }));
+
 	return (
 		<div className="attributes-corner">
-			{isSearchVisible && (
+			{datasource.length === 0 && <NoData name="attributes" />}
+			{isSearchVisible && datasource.length > 0 && (
 				<Input
 					autoFocus
 					placeholder="Search for attribute..."

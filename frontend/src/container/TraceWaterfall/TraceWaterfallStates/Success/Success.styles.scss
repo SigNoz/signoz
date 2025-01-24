@@ -58,10 +58,10 @@
 	}
 
 	.waterfall-table {
-		height: calc(70vh - 200px);
+		height: calc(70vh - 220px);
 		overflow: auto;
 		overflow-x: hidden;
-		padding: 0px 20px;
+		padding: 0px 20px 20px 20px;
 
 		&::-webkit-scrollbar {
 			width: 0.1rem;
@@ -286,6 +286,10 @@
 				opacity: 1;
 			}
 		}
+	}
+
+	.missing-spans-waterfall-table {
+		height: calc(70vh - 280px);
 	}
 }
 

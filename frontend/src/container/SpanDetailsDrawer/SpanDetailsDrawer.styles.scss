@@ -100,14 +100,25 @@
 					width: 4px;
 				}
 
-				.service-value {
-					color: var(--bg-vanilla-400);
-					font-family: 'Inter';
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 20px; /* 142.857% */
-					letter-spacing: 0.28px;
+				.value-wrapper {
+					display: flex;
+					padding: 0px;
+					align-items: center;
+					width: fit-content;
+					max-width: 100%;
+					border-radius: 0px;
+					border: none;
+					background: var(--bg-slate-500);
+
+					.service-value {
+						color: var(--bg-vanilla-400);
+						font-family: 'Inter';
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 20px; /* 142.857% */
+						letter-spacing: 0.28px;
+					}
 				}
 			}
 		}

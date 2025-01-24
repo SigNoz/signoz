@@ -25,6 +25,7 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 		}
 		return tempEvents;
 	}, [span.event]);
+
 	return (
 		<div className="events-table">
 			{events.length === 0 && (

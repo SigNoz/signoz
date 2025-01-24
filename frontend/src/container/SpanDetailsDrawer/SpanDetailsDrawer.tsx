@@ -4,7 +4,6 @@ import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { Anvil, Bookmark, PanelRight, Search } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
@@ -30,10 +29,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	} = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
-	const isDarkMode = useIsDarkMode();
 	const color = generateColor(
 		selectedSpan?.serviceName || '',
-		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+		themeColors.traceDetailColors,
 	);
 
 	function getItems(span: Span, startTime: number): TabsProps['items'] {

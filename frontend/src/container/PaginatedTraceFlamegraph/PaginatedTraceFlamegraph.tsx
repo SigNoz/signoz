@@ -8,7 +8,7 @@ import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -24,6 +24,8 @@ interface ITraceFlamegraphProps {
 	endTime: number;
 	traceFlamegraphStatsWidth: number;
 	selectedSpan: Span | undefined;
+	hoveredSpanId: string | undefined;
+	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }
 
 function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
@@ -33,6 +35,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		endTime,
 		traceFlamegraphStatsWidth,
 		selectedSpan,
+		hoveredSpanId,
+		setHoveredSpanId,
 	} = props;
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
@@ -103,6 +107,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 							endTime: data?.payload?.endTimestampMillis || 0,
 						}}
 						selectedSpan={selectedSpan}
+						hoveredSpanId={hoveredSpanId}
+						setHoveredSpanId={setHoveredSpanId}
 					/>
 				);
 			default:
@@ -113,7 +119,9 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		data?.payload?.startTimestampMillis,
 		error,
 		firstSpanAtFetchLevel,
+		hoveredSpanId,
 		selectedSpan,
+		setHoveredSpanId,
 		spans,
 		traceFlamegraphState,
 		traceId,

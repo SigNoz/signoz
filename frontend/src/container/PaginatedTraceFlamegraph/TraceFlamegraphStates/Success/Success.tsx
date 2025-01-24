@@ -31,6 +31,8 @@ interface ISuccessProps {
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
+	hoveredSpanId: string | undefined;
+	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }
 
 function Success(props: ISuccessProps): JSX.Element {
@@ -40,6 +42,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		traceMetadata,
 		firstSpanAtFetchLevel,
 		selectedSpan,
+		hoveredSpanId,
+		setHoveredSpanId,
 	} = props;
 	const { search } = useLocation();
 	const history = useHistory();
@@ -77,8 +81,11 @@ function Success(props: ISuccessProps): JSX.Element {
 									left: `${leftOffset}%`,
 									width: `${width}%`,
 									backgroundColor:
-										selectedSpan?.spanId === span.spanId ? `${selectedSpanColor}` : color,
+										selectedSpan?.spanId === span.spanId || hoveredSpanId === span.spanId
+											? `${selectedSpanColor}`
+											: color,
 								}}
+								onMouseEnter={(): void => setHoveredSpanId(span.spanId)}
 								onClick={(event): void => {
 									event.stopPropagation();
 									event.preventDefault();
@@ -92,7 +99,13 @@ function Success(props: ISuccessProps): JSX.Element {
 			</div>
 		),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[traceMetadata.endTime, traceMetadata.startTime, selectedSpan],
+		[
+			traceMetadata.endTime,
+			traceMetadata.startTime,
+			selectedSpan,
+			hoveredSpanId,
+			setHoveredSpanId,
+		],
 	);
 
 	const handleRangeChanged = useCallback(
@@ -127,7 +140,10 @@ function Success(props: ISuccessProps): JSX.Element {
 
 	return (
 		<>
-			<div className="trace-flamegraph">
+			<div
+				className="trace-flamegraph"
+				onMouseLeave={(): void => setHoveredSpanId(undefined)}
+			>
 				<Virtuoso
 					ref={virtuosoRef}
 					className="trace-flamegraph-virtuoso"
