@@ -3,6 +3,7 @@
 import './Success.styles.scss';
 
 import { Tooltip } from 'antd';
+import Color from 'color';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -17,6 +18,7 @@ import {
 import { useHistory, useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { Span } from 'types/api/trace/getTraceV2';
 
 interface ITraceMetadata {
 	startTime: number;
@@ -28,6 +30,7 @@ interface ISuccessProps {
 	firstSpanAtFetchLevel: string;
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	traceMetadata: ITraceMetadata;
+	selectedSpan: Span | undefined;
 }
 
 function Success(props: ISuccessProps): JSX.Element {
@@ -36,6 +39,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		setFirstSpanAtFetchLevel,
 		traceMetadata,
 		firstSpanAtFetchLevel,
+		selectedSpan,
 	} = props;
 	const { search } = useLocation();
 	const history = useHistory();
@@ -60,9 +64,14 @@ function Success(props: ISuccessProps): JSX.Element {
 						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 					);
 
+					const selectedSpanColor = isDarkMode
+						? Color(color).lighten(0.3)
+						: Color(color).darken(0.3);
+
 					if (span.hasError) {
 						color = `var(--bg-cherry-500)`;
 					}
+
 					return (
 						<Tooltip title={toolTipText} key={span.spanId}>
 							<div
@@ -70,7 +79,8 @@ function Success(props: ISuccessProps): JSX.Element {
 								style={{
 									left: `${leftOffset}%`,
 									width: `${width}%`,
-									backgroundColor: color,
+									backgroundColor:
+										selectedSpan?.spanId === span.spanId ? `${selectedSpanColor}` : color,
 								}}
 								onClick={(event): void => {
 									event.stopPropagation();
@@ -85,7 +95,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			</div>
 		),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[traceMetadata.endTime, traceMetadata.startTime],
+		[traceMetadata.endTime, traceMetadata.startTime, selectedSpan],
 	);
 
 	const handleRangeChanged = useCallback(

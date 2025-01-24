@@ -23,6 +23,11 @@
 		margin: 0px;
 		padding: 0px !important;
 	}
+
+	.ant-tabs-nav::before {
+		border-bottom: 1px solid var(--bg-slate-400) !important;
+	}
+
 	.ant-tabs-nav-list {
 		transform: translate(15px, 0px) !important;
 	}

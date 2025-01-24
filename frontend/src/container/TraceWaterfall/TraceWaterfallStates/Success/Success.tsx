@@ -47,20 +47,21 @@ interface ISuccessProps {
 	uncollapsedNodes: string[];
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
 	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
+	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }
 
 function SpanOverview({
 	span,
 	isSpanCollapsed,
-	interestedSpanId,
 	handleCollapseUncollapse,
 	setSelectedSpan,
+	selectedSpan,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
-	interestedSpanId: string;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
+	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const isRootSpan = span.parentSpanId === '';
@@ -81,7 +82,7 @@ function SpanOverview({
 			ref={spanRef}
 			className={cx(
 				'span-overview',
-				interestedSpanId === span.spanId ? 'interested-span' : '',
+				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
 			)}
 			style={{
 				marginLeft: `${
@@ -150,13 +151,13 @@ function SpanOverview({
 
 function SpanDuration({
 	span,
-	interestedSpanId,
 	traceMetadata,
 	setSelectedSpan,
+	selectedSpan,
 }: {
 	span: Span;
-	interestedSpanId: string;
 	traceMetadata: ITraceMetadata;
+	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
@@ -181,7 +182,7 @@ function SpanDuration({
 		<div
 			className={cx(
 				'span-duration',
-				interestedSpanId === span.spanId ? 'interested-span' : '',
+				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
 			)}
 			onClick={(): void => {
 				setSelectedSpan(span);
@@ -212,14 +213,14 @@ const columnDefHelper = createColumnHelper<Span>();
 function getWaterfallColumns({
 	handleCollapseUncollapse,
 	uncollapsedNodes,
-	interestedSpanId,
 	traceMetadata,
+	selectedSpan,
 	setSelectedSpan,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
-	interestedSpanId: IInterestedSpan;
 	traceMetadata: ITraceMetadata;
+	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
@@ -231,7 +232,7 @@ function getWaterfallColumns({
 					span={props.row.original}
 					handleCollapseUncollapse={handleCollapseUncollapse}
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
-					interestedSpanId={interestedSpanId.spanId}
+					selectedSpan={selectedSpan}
 					setSelectedSpan={setSelectedSpan}
 				/>
 			),
@@ -244,8 +245,8 @@ function getWaterfallColumns({
 			cell: (props): JSX.Element => (
 				<SpanDuration
 					span={props.row.original}
-					interestedSpanId={interestedSpanId.spanId}
 					traceMetadata={traceMetadata}
+					selectedSpan={selectedSpan}
 					setSelectedSpan={setSelectedSpan}
 				/>
 			),
@@ -264,6 +265,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		setInterestedSpanId,
 		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
+		selectedSpan,
 	} = props;
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 
@@ -300,15 +302,15 @@ function Success(props: ISuccessProps): JSX.Element {
 			getWaterfallColumns({
 				handleCollapseUncollapse,
 				uncollapsedNodes,
-				interestedSpanId,
 				traceMetadata,
+				selectedSpan,
 				setSelectedSpan,
 			}),
 		[
 			handleCollapseUncollapse,
 			uncollapsedNodes,
-			interestedSpanId,
 			traceMetadata,
+			selectedSpan,
 			setSelectedSpan,
 		],
 	);
@@ -318,13 +320,19 @@ function Success(props: ISuccessProps): JSX.Element {
 			const idx = spans.findIndex(
 				(span) => span.spanId === interestedSpanId.spanId,
 			);
-			if (idx !== -1)
+			if (idx !== -1) {
 				virtualizerRef.current.scrollToIndex(idx, {
 					align: 'center',
 					behavior: 'auto',
 				});
+				if (!selectedSpan) {
+					setSelectedSpan(spans[idx]);
+				}
+			} else if (!selectedSpan) {
+				setSelectedSpan(spans[0]);
+			}
 		}
-	}, [interestedSpanId, spans]);
+	}, [interestedSpanId, selectedSpan, setSelectedSpan, spans]);
 
 	return (
 		<div className="success-content">

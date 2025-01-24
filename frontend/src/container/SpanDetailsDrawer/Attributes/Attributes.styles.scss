@@ -12,7 +12,6 @@
 		flex-direction: column;
 		gap: 12px;
 		padding: 12px;
-		border-top: 1px solid var(--bg-slate-400);
 
 		.item {
 			display: flex;
@@ -49,5 +48,9 @@
 				letter-spacing: 0.56px;
 			}
 		}
+	}
+
+	.border-top {
+		border-top: 1px solid var(--bg-slate-400);
 	}
 }

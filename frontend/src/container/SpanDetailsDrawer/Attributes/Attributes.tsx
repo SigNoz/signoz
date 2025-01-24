@@ -1,6 +1,7 @@
 import './Attributes.styles.scss';
 
 import { Input, Tooltip, Typography } from 'antd';
+import cx from 'classnames';
 import { flattenObject } from 'container/LogDetailedView/utils';
 import { useMemo, useState } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -35,7 +36,9 @@ function Attributes(props: IAttributesProps): JSX.Element {
 					onChange={(e): void => setFieldSearchInput(e.target.value)}
 				/>
 			)}
-			<section className="attributes-container">
+			<section
+				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}
+			>
 				{datasource.map((item) => (
 					<div className="item" key={`${item.field} + ${item.value}`}>
 						<Typography.Text className="item-key" ellipsis>

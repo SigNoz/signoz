@@ -11,6 +11,7 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
+import { Span } from 'types/api/trace/getTraceV2';
 
 import { TraceFlamegraphStates } from './constants';
 import Error from './TraceFlamegraphStates/Error/Error';
@@ -22,6 +23,7 @@ interface ITraceFlamegraphProps {
 	startTime: number;
 	endTime: number;
 	traceFlamegraphStatsWidth: number;
+	selectedSpan: Span | undefined;
 }
 
 function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
@@ -30,6 +32,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		startTime,
 		endTime,
 		traceFlamegraphStatsWidth,
+		selectedSpan,
 	} = props;
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
@@ -99,6 +102,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 							startTime: data?.payload?.startTimestampMillis || 0,
 							endTime: data?.payload?.endTimestampMillis || 0,
 						}}
+						selectedSpan={selectedSpan}
 					/>
 				);
 			default:
@@ -109,6 +113,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		data?.payload?.startTimestampMillis,
 		error,
 		firstSpanAtFetchLevel,
+		selectedSpan,
 		spans,
 		traceFlamegraphState,
 		traceId,

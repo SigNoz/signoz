@@ -116,6 +116,10 @@
 				}
 			}
 
+			.ant-tabs-nav::before {
+				border-bottom: 1px solid var(--bg-slate-400) !important;
+			}
+
 			.attributes-tab-btn {
 				display: flex;
 				align-items: center;
@@ -138,4 +142,8 @@
 
 .span-details-drawer-docked {
 	width: 48px;
+
+	.header {
+		justify-content: center;
+	}
 }

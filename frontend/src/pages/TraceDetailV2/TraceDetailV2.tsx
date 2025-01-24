@@ -33,6 +33,8 @@ function TraceDetailsV2(): JSX.Element {
 	const [isSpanDetailsDocked, setIsSpanDetailsDocked] = useState<boolean>(false);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
 
+	console.log(selectedSpan);
+
 	useEffect(() => {
 		setInterestedSpanId({
 			spanId: urlQuery.get('spanId') || '',
@@ -89,6 +91,7 @@ function TraceDetailsV2(): JSX.Element {
 						startTime={traceData?.payload?.startTimestampMillis || 0}
 						endTime={traceData?.payload?.endTimestampMillis || 0}
 						traceFlamegraphStatsWidth={traceFlamegraphStatsWidth}
+						selectedSpan={selectedSpan}
 					/>
 					<TraceWaterfall
 						traceData={traceData}
@@ -99,6 +102,7 @@ function TraceDetailsV2(): JSX.Element {
 						setInterestedSpanId={setInterestedSpanId}
 						uncollapsedNodes={uncollapsedNodes}
 						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
+						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
 					/>
 				</>
