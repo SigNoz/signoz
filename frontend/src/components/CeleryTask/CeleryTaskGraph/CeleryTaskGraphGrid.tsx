@@ -1,6 +1,6 @@
 import './CeleryTaskGraph.style.scss';
 
-import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
+import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {
 	celeryActiveTasksWidgetData,
@@ -16,7 +16,7 @@ export default function CeleryTaskGraphGrid({
 	onClick,
 	queryEnabled,
 }: {
-	onClick: (task: CeleryTaskData) => void;
+	onClick: (task: CaptureDataProps) => void;
 	queryEnabled: boolean;
 }): JSX.Element {
 	const bottomWidgetData = [
@@ -25,14 +25,19 @@ export default function CeleryTaskGraphGrid({
 		celeryLatencyByWorkerWidgetData,
 	];
 
+	const rightPanelTitle = [
+		'Tasks/s by worker',
+		'Error% by worker',
+		'Latency by worker',
+	];
+
 	return (
 		<div className="celery-task-graph-grid-container">
 			<div className="celery-task-graph-grid">
-				<CeleryTaskHistogram onClick={onClick} queryEnabled={queryEnabled} />
+				<CeleryTaskHistogram queryEnabled={queryEnabled} />
 				<CeleryTaskGraph
 					key={celeryWorkerOnlineWidgetData.id}
 					widgetData={celeryWorkerOnlineWidgetData}
-					onClick={onClick}
 					queryEnabled={queryEnabled}
 				/>
 			</div>
@@ -41,17 +46,17 @@ export default function CeleryTaskGraphGrid({
 				<CeleryTaskGraph
 					key={celeryActiveTasksWidgetData.id}
 					widgetData={celeryActiveTasksWidgetData}
-					onClick={onClick}
 					queryEnabled={queryEnabled}
 				/>
 			</div>
 			<div className="celery-task-graph-grid-bottom">
-				{bottomWidgetData.map((widgetData) => (
+				{bottomWidgetData.map((widgetData, index) => (
 					<CeleryTaskGraph
 						key={widgetData.id}
 						widgetData={widgetData}
 						onClick={onClick}
 						queryEnabled={queryEnabled}
+						rightPanelTitle={rightPanelTitle[index]}
 					/>
 				))}
 			</div>

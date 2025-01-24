@@ -12,7 +12,7 @@ import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 
-import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
+// import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
 	celeryAllStateWidgetData,
 	celeryFailedStateWidgetData,
@@ -25,10 +25,10 @@ import {
 } from './CeleryTaskStateGraphConfig';
 
 function CeleryTaskHistogram({
-	onClick,
+	// onClick,
 	queryEnabled,
 }: {
-	onClick: (task: CeleryTaskData) => void;
+	// onClick?: (task: CaptureDataProps) => void;
 
 	queryEnabled: boolean;
 }): JSX.Element {
@@ -59,10 +59,6 @@ function CeleryTaskHistogram({
 		CeleryTaskState.All,
 	);
 
-	const getGraphData = (graphData: any): void => {
-		console.log('graphData', graphData);
-	};
-
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -79,11 +75,6 @@ function CeleryTaskHistogram({
 						widget={celeryAllStateWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
@@ -92,11 +83,6 @@ function CeleryTaskHistogram({
 						widget={celeryFailedStateWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
@@ -105,11 +91,6 @@ function CeleryTaskHistogram({
 						widget={celeryRetryStateWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
@@ -118,11 +99,6 @@ function CeleryTaskHistogram({
 						widget={celerySuccessStateWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}

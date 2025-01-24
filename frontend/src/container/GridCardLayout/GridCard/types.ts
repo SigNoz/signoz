@@ -1,5 +1,6 @@
 import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -32,6 +33,8 @@ export interface WidgetGraphComponentProps {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
 }
 
 export interface GridCardGraphProps {
@@ -46,6 +49,8 @@ export interface GridCardGraphProps {
 	customTooltipElement?: HTMLDivElement;
 	dataAvailable?: (isDataAvailable: boolean) => void;
 	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

@@ -14,11 +14,13 @@ interface GetWidgetQueryProps {
 	queryData: IBuilderQuery[];
 	panelTypes?: PANEL_TYPES;
 	yAxisUnit?: string;
+	columnUnits?: Record<string, string>;
 }
 
 interface GetWidgetQueryPropsReturn extends GetWidgetQueryBuilderProps {
 	description?: string;
 	nullZeroValues: string;
+	columnUnits?: Record<string, string>;
 }
 
 export const getWidgetQueryBuilder = ({
@@ -51,7 +53,7 @@ export const getWidgetQueryBuilder = ({
 export function getWidgetQuery(
 	props: GetWidgetQueryProps,
 ): GetWidgetQueryPropsReturn {
-	const { title, description, panelTypes, yAxisUnit } = props;
+	const { title, description, panelTypes, yAxisUnit, columnUnits } = props;
 	return {
 		title,
 		yAxisUnit: yAxisUnit || 'none',
@@ -59,6 +61,7 @@ export function getWidgetQuery(
 		fillSpans: false,
 		description,
 		nullZeroValues: 'zero',
+		columnUnits,
 		query: {
 			queryType: EQueryType.QUERY_BUILDER,
 			promql: [],

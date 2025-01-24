@@ -8,13 +8,17 @@ import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 
-import { CeleryTaskData } from '../CeleryTaskDetail/CeleryTaskDetail';
-import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
+import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import {
+	celeryTaskLatencyWidgetData,
+	celeryTimeSeriesTablesWidgetData,
+} from './CeleryTaskGraphUtils';
 
 interface TabData {
 	label: string;
@@ -31,8 +35,7 @@ function CeleryTaskLatencyGraph({
 	onClick,
 	queryEnabled,
 }: {
-	onClick: (task: CeleryTaskData) => void;
-
+	onClick: (task: CaptureDataProps) => void;
 	queryEnabled: boolean;
 }): JSX.Element {
 	const history = useHistory();
@@ -72,8 +75,30 @@ function CeleryTaskLatencyGraph({
 		[dispatch, history, pathname, urlQuery],
 	);
 
-	const getGraphData = (graphData: any): void => {
-		console.log('graphData', graphData);
+	const onGraphClick = (
+		xValue: number,
+		_yValue: number,
+		_mouseX: number,
+		_mouseY: number,
+		data?: {
+			[key: string]: string;
+		},
+	): void => {
+		const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
+
+		// Extract entity and value from data
+		const [firstDataPoint] = Object.entries(data || {});
+		const [entity, value] = (firstDataPoint || ([] as unknown)) as [
+			string,
+			string,
+		];
+
+		onClick?.({
+			entity,
+			value,
+			timeRange: [start, end],
+			widgetData: celeryTimeSeriesTablesWidgetData(entity, value, 'Task Latency'),
+		});
 	};
 
 	return (
@@ -109,11 +134,7 @@ function CeleryTaskLatencyGraph({
 						widget={celeryTaskLatencyWidgetData(graphState)}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
+						onClickHandler={onGraphClick}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
@@ -123,11 +144,7 @@ function CeleryTaskLatencyGraph({
 						widget={celeryTaskLatencyWidgetData(graphState)}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
+						onClickHandler={onGraphClick}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
@@ -136,11 +153,7 @@ function CeleryTaskLatencyGraph({
 						widget={celeryTaskLatencyWidgetData(graphState)}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
-						onClickHandler={(arg): void => {
-							console.log('clicked', arg);
-							onClick(arg as any);
-						}}
-						getGraphData={getGraphData}
+						onClickHandler={onGraphClick}
 						isQueryEnabled={queryEnabled}
 					/>
 				)}

@@ -25,6 +25,8 @@ export type PanelWrapperProps = {
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 	searchTerm?: string;
 	customTooltipElement?: HTMLDivElement;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
 };
 
 export type TooltipData = {

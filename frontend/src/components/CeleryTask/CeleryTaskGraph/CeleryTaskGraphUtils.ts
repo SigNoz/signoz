@@ -5,6 +5,7 @@ import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/Metri
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
+import { v4 as uuidv4 } from 'uuid';
 
 // State Graphs
 export const celeryAllStateWidgetData = getWidgetQueryBuilder(
@@ -491,6 +492,61 @@ export const celeryWorkerOnlineWidgetData = getWidgetQueryBuilder(
 	}),
 );
 
+// Task Latency
+export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Task Latency',
+			description: 'Represents the latency of task execution.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id: 'duration_nano--float64----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'duration_nano',
+						type: '',
+					},
+					aggregateOperator: type || 'p99',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.task_name--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.task_name',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [
+						{
+							columnName: '#SIGNOZ_VALUE',
+							order: 'asc',
+						},
+					],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'p99',
+				},
+			],
+			yAxisUnit: 'ns',
+		}),
+	);
+
 // Tables
 export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 	getWidgetQuery({
@@ -542,6 +598,7 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 				timeAggregation: 'avg',
 			},
 		],
+		columnUnits: { A: 'ns' },
 	}),
 );
 
@@ -609,6 +666,7 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 				timeAggregation: 'avg',
 			},
 		],
+		columnUnits: { A: 'ns' },
 	}),
 );
 
@@ -617,6 +675,7 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 		title: 'Top 10 tasks in FAILED state',
 		description: 'Represents the top 10 tasks in failed state.',
 		panelTypes: PANEL_TYPES.TABLE,
+		columnUnits: { A: 'ns' },
 		queryData: [
 			{
 				aggregateAttribute: {
@@ -743,15 +802,20 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 				timeAggregation: 'avg',
 			},
 		],
+		columnUnits: { A: 'ns' },
 	}),
 );
 
-// Task Latency
-export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
+export const celeryTimeSeriesTablesWidgetData = (
+	entity: string,
+	value: string | number,
+	rightPanelTitle: string,
+): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Task Latency',
-			description: 'Represents the latency of task execution.',
+			title: rightPanelTitle,
+			description: '',
+			panelTypes: PANEL_TYPES.TABLE,
 			queryData: [
 				{
 					aggregateAttribute: {
@@ -762,12 +826,26 @@ export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
 						key: 'duration_nano',
 						type: '',
 					},
-					aggregateOperator: type || 'p99',
+					aggregateOperator: 'avg',
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [],
+						items: [
+							{
+								id: uuidv4(),
+								key: {
+									dataType: DataTypes.String,
+									id: `${entity}--string--tag--false`,
+									isColumn: false,
+									isJSON: false,
+									key: `${entity}`,
+									type: 'tag',
+								},
+								op: '=',
+								value,
+							},
+						],
 						op: 'AND',
 					},
 					functions: [],
@@ -784,19 +862,14 @@ export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
 					having: [],
 					legend: '',
 					limit: null,
-					orderBy: [
-						{
-							columnName: '#SIGNOZ_VALUE',
-							order: 'asc',
-						},
-					],
+					orderBy: [],
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
 					stepInterval: 60,
-					timeAggregation: 'p99',
+					timeAggregation: 'avg',
 				},
 			],
-			yAxisUnit: 'ns',
+			columnUnits: { A: 'ns' },
 		}),
 	);

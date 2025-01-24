@@ -3,9 +3,12 @@ import './CeleryTaskDetail.style.scss';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Typography } from 'antd';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,16 +27,18 @@ export type CeleryTaskData = {
 	timeRange: [number, number];
 };
 
+export interface CaptureDataProps extends CeleryTaskData {
+	widgetData: Widgets;
+}
+
 export type CeleryTaskDetailProps = {
 	onClose: () => void;
-	mainTitle: string;
 	widgetData: Widgets;
 	taskData: CeleryTaskData;
 	drawerOpen: boolean;
 };
 
 export default function CeleryTaskDetail({
-	mainTitle,
 	widgetData,
 	taskData,
 	onClose,
@@ -50,7 +55,6 @@ export default function CeleryTaskDetail({
 	const [totalTask, setTotalTask] = useState(0);
 
 	const getGraphData = (graphData?: MetricRangePayloadProps['data']): void => {
-		console.log(graphData);
 		setTotalTask((graphData?.result?.[0] as any)?.table?.rows.length);
 	};
 
@@ -100,12 +104,23 @@ export default function CeleryTaskDetail({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const navigateToTrace = (data: RowData): void => {
+		console.log('navigateToTrace', data);
+		const urlParams = new URLSearchParams();
+		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
+		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
+
+		const newTraceExplorerPath = `${ROUTES.TRACES_EXPLORER}`; // todo-sagar - add filters
+
+		history.push(newTraceExplorerPath);
+	};
+
 	return (
 		<Drawer
 			width="45%"
 			title={
 				<div>
-					<Typography.Text className="title">{mainTitle}</Typography.Text>
+					<Typography.Text className="title">{`Details - ${taskData.entity}`}</Typography.Text>
 					<div>
 						<Typography.Text className="subtitle">
 							{`${formatTimestamp(taskData.timeRange[0])} ${
@@ -115,7 +130,7 @@ export default function CeleryTaskDetail({
 							}`}
 						</Typography.Text>
 						<Divider type="vertical" />
-						<Typography.Text className="subtitle">task-details</Typography.Text>
+						<Typography.Text className="subtitle">{taskData.value}</Typography.Text>
 					</div>
 				</div>
 			}
@@ -135,9 +150,11 @@ export default function CeleryTaskDetail({
 		>
 			<CeleryTaskGraph
 				widgetData={widgetData}
-				onClick={(): void => {}}
 				getGraphData={getGraphData}
+				panelType={PANEL_TYPES.TABLE}
 				queryEnabled
+				openTracesButton
+				onOpenTraceBtnClick={navigateToTrace}
 			/>
 		</Drawer>
 	);

@@ -2,19 +2,19 @@ import './CeleryTask.styles.scss';
 
 import CeleryTaskConfigOptions from 'components/CeleryTask/CeleryTaskConfigOptions/CeleryTaskConfigOptions';
 import CeleryTaskDetail, {
-	CeleryTaskData,
+	CaptureDataProps,
 } from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphGrid';
-import { celerySlowestTasksTableWidgetData } from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphUtils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { ListMinus } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CeleryTask(): JSX.Element {
-	const [task, setTask] = useState<CeleryTaskData | null>(null);
+	const [task, setTask] = useState<CaptureDataProps | null>(null);
 
-	const onTaskClick = (task: CeleryTaskData): void => {
-		setTask(task);
+	const onTaskClick = (captureData: CaptureDataProps): void => {
+		setTask(captureData);
+		console.log(captureData);
 	};
 
 	return (
@@ -36,13 +36,8 @@ export default function CeleryTask(): JSX.Element {
 					onClose={(): void => {
 						setTask(null);
 					}}
-					mainTitle="Celery Task"
-					widgetData={celerySlowestTasksTableWidgetData}
-					taskData={{
-						entity: 'task',
-						value: 'task',
-						timeRange: [1737569089000, 1737570889000],
-					}}
+					widgetData={task.widgetData}
+					taskData={task}
 					drawerOpen={!!task}
 				/>
 			)}

@@ -45,6 +45,8 @@ function WidgetGraphComponent({
 	onClickHandler,
 	onDragSelect,
 	customTooltipElement,
+	openTracesButton,
+	onOpenTraceBtnClick,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -333,6 +335,8 @@ function WidgetGraphComponent({
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
 						searchTerm={searchTerm}
+						openTracesButton={openTracesButton}
+						onOpenTraceBtnClick={onOpenTraceBtnClick}
 					/>
 				</div>
 			)}
