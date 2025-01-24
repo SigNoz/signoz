@@ -177,7 +177,23 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	for queryName, builderQuery := range params.CompositeQuery.BuilderQueries {
 		if queryName == builderQuery.Expression {
 			wg.Add(1)
-			go q.runBuilderQuery(ctx, builderQuery, params, cacheKeys, ch, &wg)
+			if builderQuery.MultipleTemporalities == true {
+				go func() {
+
+					temporalitySwitches, err := q.reader.GetTemporalitySwitchPoints(ctx, builderQuery.AggregateAttribute.Key, params.Start, params.End)
+					if err != nil {
+						ch <- channelResult{Err: err, Name: queryName}
+						return
+					}
+					if len(temporalitySwitches) == 0 {
+						q.runBuilderQuery(ctx, builderQuery, params, cacheKeys, ch, &wg)
+					} else {
+						q.handleTemporalitySwitches(ctx, temporalitySwitches, &wg, builderQuery, params, cacheKeys, ch, queryName)
+					}
+				}()
+			} else {
+				go q.runBuilderQuery(ctx, builderQuery, params, cacheKeys, ch, &wg)
+			}
 		}
 	}
 
@@ -207,6 +223,58 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	}
 
 	return results, errQueriesByName, err
+}
+
+func (q *querier) handleTemporalitySwitches(ctx context.Context, temporalitySwitches []v3.TemporalityChangePoint, wg *sync.WaitGroup, builderQuery *v3.BuilderQuery, params *v3.QueryRangeParamsV3, cacheKeys map[string]string, ch chan channelResult, queryName string) {
+	defer wg.Done()
+
+	tempCh := make(chan channelResult, len(temporalitySwitches)+1)
+
+	var tempWg sync.WaitGroup
+	// Handle each segment between switch points
+	for i := 0; i <= len(temporalitySwitches); i++ {
+		tempWg.Add(1)
+		go func(idx int) {
+			queryWithTemporality := *builderQuery
+			queryParams := *params
+			if i == 0 {
+				queryParams.End = temporalitySwitches[idx].Timestamp
+				queryWithTemporality.Temporality = temporalitySwitches[idx].FromTemporality
+			} else if idx < len(temporalitySwitches) {
+				queryParams.Start = temporalitySwitches[idx-1].Timestamp
+				queryParams.End = temporalitySwitches[idx].Timestamp
+				queryWithTemporality.Temporality = temporalitySwitches[idx].FromTemporality
+				queryWithTemporality.ShiftBy = 0
+			} else if idx == len(temporalitySwitches) {
+				queryParams.Start = temporalitySwitches[idx-1].Timestamp
+				queryParams.End = params.End
+				queryWithTemporality.Temporality = temporalitySwitches[idx-1].ToTemporality
+			}
+
+			q.runBuilderQuery(ctx, &queryWithTemporality, &queryParams, cacheKeys, tempCh, &tempWg)
+		}(i)
+	}
+	// Wait for all temporal queries to complete
+	tempWg.Wait()
+	close(tempCh)
+
+	// Combine results from all temporal queries
+	var combinedSeries []*v3.Series
+	var lastErr error
+
+	for result := range tempCh {
+		if result.Err != nil {
+			lastErr = result.Err
+			continue
+		}
+		combinedSeries = append(combinedSeries, result.Series...)
+	}
+
+	ch <- channelResult{
+		Series: combinedSeries,
+		Err:    lastErr,
+		Name:   queryName,
+	}
 }
 
 func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, map[string]error, error) {

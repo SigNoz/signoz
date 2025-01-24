@@ -2950,6 +2950,58 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 	return metricNameToTemporality, nil
 }
 
+func (r *ClickHouseReader) GetTemporalitySwitchPoints(ctx context.Context, metricName string, startTime int64, endTime int64) ([]v3.TemporalityChangePoint, error) {
+	// Initialize slice to store temporality switch points
+	var temporalitySwitches []v3.TemporalityChangePoint
+
+	query := fmt.Sprintf(`
+		SELECT
+			temporality,
+			unix_milli,
+			lag_temporality
+		FROM (
+			SELECT
+				metric_name,
+				temporality,
+				unix_milli,
+				lagInFrame(temporality, 1, '') OVER (
+					PARTITION BY metric_name ORDER BY unix_milli
+				) AS lag_temporality
+			FROM %s.%s
+			WHERE unix_milli >= %d
+			AND unix_milli <= %d
+			AND metric_name = '%s'
+		) AS subquery
+		WHERE lag_temporality != temporality
+		AND lag_temporality != ''
+		ORDER BY unix_milli ASC;
+		`, signozMetricDBName, signozTSLocalTableNameV4, startTime, endTime, metricName)
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var temporality string
+		var timestamp int64
+		var lagTemporality string
+		err := rows.Scan(&temporality, &timestamp, &lagTemporality)
+		if err != nil {
+			return nil, err
+		}
+		// Store each temporality switch point with both temporalities
+		temporalitySwitches = append(temporalitySwitches, v3.TemporalityChangePoint{
+			Timestamp:       timestamp,
+			FromTemporality: v3.Temporality(lagTemporality),
+			ToTemporality:   v3.Temporality(temporality),
+		})
+	}
+
+	return temporalitySwitches, nil
+}
+
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
 	queryStr := fmt.Sprintf("SELECT countDistinct(fingerprint) as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableNameV41Day)
