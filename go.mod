@@ -39,29 +39,28 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.20.4
 	github.com/prometheus/common v0.60.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rs/cors v1.11.1
 	github.com/russellhaering/gosaml2 v0.9.0
 	github.com/russellhaering/goxmldsig v1.2.0
-	github.com/samber/lo v1.38.1
+	github.com/samber/lo v1.47.0
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
 	github.com/srikanthccv/ClickHouse-go-mock v0.9.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/uptrace/bun v1.2.8
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.8
 	go.opentelemetry.io/collector/confmap v1.17.0
 	go.opentelemetry.io/collector/pdata v1.17.0
 	go.opentelemetry.io/collector/processor v0.111.0
-	go.opentelemetry.io/contrib/bridges/otelzap v0.0.0-20240820072021-3fab5f5f20fb
 	go.opentelemetry.io/contrib/config v0.10.0
-	go.opentelemetry.io/otel v1.30.0
-	go.opentelemetry.io/otel/log v0.6.0
-	go.opentelemetry.io/otel/metric v1.30.0
-	go.opentelemetry.io/otel/sdk v1.30.0
-	go.opentelemetry.io/otel/trace v1.30.0
+	go.opentelemetry.io/otel v1.34.0
+	go.opentelemetry.io/otel/metric v1.34.0
+	go.opentelemetry.io/otel/sdk v1.34.0
+	go.opentelemetry.io/otel/trace v1.34.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.31.0
@@ -151,7 +150,6 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
-	github.com/prometheus/client_golang v1.20.4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
@@ -175,6 +173,7 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector v0.111.0 // indirect
 	go.opentelemetry.io/collector/component v0.111.0 // indirect
 	go.opentelemetry.io/collector/component/componentprofiles v0.111.0 // indirect
@@ -216,7 +215,8 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.6.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.30.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.30.0 // indirect
-	go.opentelemetry.io/otel/sdk/log v0.6.0 // indirect
+	go.opentelemetry.io/otel/log v0.10.0 // indirect
+	go.opentelemetry.io/otel/sdk/log v0.10.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.30.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
