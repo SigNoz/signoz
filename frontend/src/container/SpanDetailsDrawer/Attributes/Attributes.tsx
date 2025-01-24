@@ -44,11 +44,13 @@ function Attributes(props: IAttributesProps): JSX.Element {
 						<Typography.Text className="item-key" ellipsis>
 							{item.field}
 						</Typography.Text>
-						<Tooltip title={item.value}>
-							<Typography.Text className="item-value" ellipsis>
-								{item.value}
-							</Typography.Text>
-						</Tooltip>
+						<div className="value-wrapper">
+							<Tooltip title={item.value}>
+								<Typography.Text className="item-value" ellipsis>
+									{item.value}
+								</Typography.Text>
+							</Tooltip>
+						</div>
 					</div>
 				))}
 			</section>

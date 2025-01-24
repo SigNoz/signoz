@@ -1,6 +1,6 @@
 import './SpanDetailsDrawer.styles.scss';
 
-import { Button, Tabs, TabsProps, Typography } from 'antd';
+import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
@@ -94,50 +94,68 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					<section className="description">
 						<div className="item">
 							<Typography.Text className="attribute-key">span name</Typography.Text>
-							<Typography.Text className="attribute-value">
-								{selectedSpan.name}
-							</Typography.Text>
+							<Tooltip title={selectedSpan.name}>
+								<div className="value-wrapper">
+									<Typography.Text className="attribute-value" ellipsis>
+										{selectedSpan.name}
+									</Typography.Text>
+								</div>
+							</Tooltip>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">span id</Typography.Text>
-							<Typography.Text className="attribute-value">
-								{selectedSpan.spanId}
-							</Typography.Text>
+							<div className="value-wrapper">
+								<Typography.Text className="attribute-value">
+									{selectedSpan.spanId}
+								</Typography.Text>
+							</div>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">start time</Typography.Text>
-							<Typography.Text className="attribute-value">
-								{formatEpochTimestamp(selectedSpan.timestamp)}
-							</Typography.Text>
+							<div className="value-wrapper">
+								<Typography.Text className="attribute-value">
+									{formatEpochTimestamp(selectedSpan.timestamp)}
+								</Typography.Text>
+							</div>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">duration</Typography.Text>
-							<Typography.Text className="attribute-value">
-								{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
-							</Typography.Text>
+							<div className="value-wrapper">
+								<Typography.Text className="attribute-value">
+									{getYAxisFormattedValue(`${selectedSpan.durationNano}`, 'ns')}
+								</Typography.Text>
+							</div>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">service</Typography.Text>
 							<div className="service">
 								<div className="dot" style={{ backgroundColor: color }} />
-								<Typography.Text className="service-value">
-									{selectedSpan.serviceName}
-								</Typography.Text>
+								<div className="value-wrapper">
+									<Tooltip title={selectedSpan.serviceName}>
+										<Typography.Text className="service-value" ellipsis>
+											{selectedSpan.serviceName}
+										</Typography.Text>
+									</Tooltip>
+								</div>
 							</div>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">span kind</Typography.Text>
-							<Typography.Text className="attribute-value">
-								{selectedSpan.spanKind}
-							</Typography.Text>
+							<div className="value-wrapper">
+								<Typography.Text className="attribute-value">
+									{selectedSpan.spanKind}
+								</Typography.Text>
+							</div>
 						</div>
 						<div className="item">
 							<Typography.Text className="attribute-key">
 								status code string
 							</Typography.Text>
-							<Typography.Text className="attribute-value">
-								{selectedSpan.statusCodeString}
-							</Typography.Text>
+							<div className="value-wrapper">
+								<Typography.Text className="attribute-value">
+									{selectedSpan.statusCodeString}
+								</Typography.Text>
+							</div>
 						</div>
 					</section>
 

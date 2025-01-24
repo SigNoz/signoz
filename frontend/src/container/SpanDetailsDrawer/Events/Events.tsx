@@ -1,6 +1,6 @@
 import './Events.styles.scss';
 
-import { Collapse, Input, Typography } from 'antd';
+import { Collapse, Input, Tooltip, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -87,12 +87,19 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 												{event.attributeMap &&
 													Object.keys(event.attributeMap).map((attributeKey) => (
 														<div className="attribute-container" key={attributeKey}>
-															<Typography.Text className="attribute-key">
-																{attributeKey}
-															</Typography.Text>
-															<Typography.Text className="attribute-value">
-																{event.attributeMap[attributeKey]}
-															</Typography.Text>
+															<Tooltip title={attributeKey}>
+																<Typography.Text className="attribute-key" ellipsis>
+																	{attributeKey}
+																</Typography.Text>
+															</Tooltip>
+
+															<div className="wrapper">
+																<Tooltip title={event.attributeMap[attributeKey]}>
+																	<Typography.Text className="attribute-value" ellipsis>
+																		{event.attributeMap[attributeKey]}
+																	</Typography.Text>
+																</Tooltip>
+															</div>
 														</div>
 													))}
 											</div>

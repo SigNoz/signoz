@@ -1,6 +1,6 @@
 import './TraceMetadata.styles.scss';
 
-import { Button, Typography } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -53,13 +53,17 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 							<Typography.Text className="text">{rootSpanName}</Typography.Text>
 						</div>
 						<div className="trace-duration">
-							<Timer size={14} />
+							<Tooltip title="Duration of trace">
+								<Timer size={14} />
+							</Tooltip>
 							<Typography.Text className="text">
 								{getYAxisFormattedValue(`${duration}`, 'ms')}
 							</Typography.Text>
 						</div>
 						<div className="start-time-info">
-							<CalendarClock size={14} />
+							<Tooltip title="Start timestamp">
+								<CalendarClock size={14} />
+							</Tooltip>
 							<Typography.Text className="text">
 								{formatEpochTimestamp(startTime * 1000)}
 							</Typography.Text>

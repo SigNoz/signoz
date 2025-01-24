@@ -63,21 +63,26 @@
 				text-transform: uppercase;
 			}
 
-			.attribute-value {
+			.value-wrapper {
 				display: flex;
 				padding: 2px 8px;
 				align-items: center;
-				border-radius: 50px;
 				width: fit-content;
+				max-width: 100%;
+				border-radius: 50px;
 				border: 1px solid var(--bg-slate-400);
 				background: var(--bg-slate-500);
-				color: var(--bg-vanilla-400);
-				font-family: 'Inter';
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: 0.28px;
+
+				.attribute-value {
+					color: var(--bg-vanilla-400);
+					font-family: 'Inter';
+					font-size: 14px;
+					font-style: normal;
+					width: 100%;
+					font-weight: 400;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: 0.28px;
+				}
 			}
 
 			.service {

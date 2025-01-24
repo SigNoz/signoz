@@ -58,6 +58,12 @@ function TraceDetailsV2(): JSX.Element {
 		}
 	}, [traceData]);
 
+	useEffect(() => {
+		if (selectedSpan) {
+			setIsSpanDetailsDocked(false);
+		}
+	}, [selectedSpan]);
+
 	const noData = useMemo(
 		() =>
 			!isFetchingTraceData &&
