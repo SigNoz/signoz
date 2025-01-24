@@ -2,6 +2,7 @@ import './TraceDetailV2.styles.scss';
 
 import { Button, Tabs } from 'antd';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
+import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
 import TraceWaterfall, {
 	IInterestedSpan,
@@ -12,7 +13,7 @@ import { defaultTo } from 'lodash-es';
 import { DraftingCompass } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
+import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 import NoData from './NoData/NoData';
 
@@ -25,6 +26,12 @@ function TraceDetailsV2(): JSX.Element {
 			isUncollapsed: urlQuery.get('spanId') !== '',
 		}),
 	);
+	const [
+		traceFlamegraphStatsWidth,
+		setTraceFlamegraphStatsWidth,
+	] = useState<number>(450);
+	const [isSpanDetailsDocked, setIsSpanDetailsDocked] = useState<boolean>(false);
+	const [selectedSpan, setSelectedSpan] = useState<Span>();
 
 	useEffect(() => {
 		setInterestedSpanId({
@@ -81,6 +88,7 @@ function TraceDetailsV2(): JSX.Element {
 						serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap || {}}
 						startTime={traceData?.payload?.startTimestampMillis || 0}
 						endTime={traceData?.payload?.endTimestampMillis || 0}
+						traceFlamegraphStatsWidth={traceFlamegraphStatsWidth}
 					/>
 					<TraceWaterfall
 						traceData={traceData}
@@ -90,6 +98,8 @@ function TraceDetailsV2(): JSX.Element {
 						interestedSpanId={interestedSpanId}
 						setInterestedSpanId={setInterestedSpanId}
 						uncollapsedNodes={uncollapsedNodes}
+						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
+						setSelectedSpan={setSelectedSpan}
 					/>
 				</>
 			),
@@ -98,24 +108,35 @@ function TraceDetailsV2(): JSX.Element {
 
 	return (
 		<div className="trace-layout">
-			<TraceMetadata
-				traceID={traceId}
-				duration={
-					(traceData?.payload?.endTimestampMillis || 0) -
-					(traceData?.payload?.startTimestampMillis || 0)
-				}
-				startTime={(traceData?.payload?.startTimestampMillis || 0) / 1e3}
-				rootServiceName={traceData?.payload?.rootServiceName || ''}
-				rootSpanName={traceData?.payload?.rootServiceEntryPoint || ''}
-				totalErrorSpans={traceData?.payload?.totalErrorSpansCount || 0}
-				totalSpans={traceData?.payload?.totalSpansCount || 0}
-				notFound={noData}
+			<div
+				className="trace-left-content"
+				style={{ width: `calc(100% - ${isSpanDetailsDocked ? 48 : 330}px)` }}
+			>
+				<TraceMetadata
+					traceID={traceId}
+					duration={
+						(traceData?.payload?.endTimestampMillis || 0) -
+						(traceData?.payload?.startTimestampMillis || 0)
+					}
+					startTime={(traceData?.payload?.startTimestampMillis || 0) / 1e3}
+					rootServiceName={traceData?.payload?.rootServiceName || ''}
+					rootSpanName={traceData?.payload?.rootServiceEntryPoint || ''}
+					totalErrorSpans={traceData?.payload?.totalErrorSpansCount || 0}
+					totalSpans={traceData?.payload?.totalSpansCount || 0}
+					notFound={noData}
+				/>
+				{!noData ? (
+					<Tabs items={items} animated className="settings-tabs" />
+				) : (
+					<NoData />
+				)}
+			</div>
+			<SpanDetailsDrawer
+				isSpanDetailsDocked={isSpanDetailsDocked}
+				setIsSpanDetailsDocked={setIsSpanDetailsDocked}
+				selectedSpan={selectedSpan}
+				traceStartTime={traceData?.payload?.startTimestampMillis || 0}
 			/>
-			{!noData ? (
-				<Tabs items={items} animated className="settings-tabs" />
-			) : (
-				<NoData />
-			)}
 		</div>
 	);
 }

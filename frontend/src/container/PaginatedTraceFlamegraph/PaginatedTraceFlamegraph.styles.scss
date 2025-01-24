@@ -4,7 +4,6 @@
 	border-bottom: 1px solid var(--bg-slate-400);
 
 	.flamegraph-chart {
-		width: 80%;
 		padding: 15px;
 
 		.loading-skeleton {
@@ -14,7 +13,6 @@
 	}
 
 	.flamegraph-stats {
-		width: 20%;
 		display: flex;
 		flex-direction: column;
 		border-left: 1px solid var(--bg-slate-400);

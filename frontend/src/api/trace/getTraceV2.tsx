@@ -23,7 +23,7 @@ const getTraceV2 = async (
 			uncollapsedSpans,
 		};
 		const response = await axios.post<GetTraceV2SuccessResponse>(
-			`/traces/${props.traceId}`,
+			`/traces/waterfall/${props.traceId}`,
 			omit(postData, 'traceId'),
 		);
 

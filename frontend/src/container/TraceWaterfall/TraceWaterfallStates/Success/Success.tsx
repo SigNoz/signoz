@@ -4,25 +4,17 @@ import './Success.styles.scss';
 
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
-import { Button, TabsProps, Tooltip, Typography } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import DetailsDrawer from 'components/DetailsDrawer/DetailsDrawer';
 import { TableV3 } from 'components/TableV3/TableV3';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
 import { themeColors } from 'constants/theme';
-import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/config';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
-	Anvil,
 	ArrowUpRight,
-	Bookmark,
 	ChevronDown,
 	ChevronRight,
 	Leaf,
@@ -34,14 +26,9 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
-	useState,
 } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
-
-import AttributesTable from './DrawerComponents/AttributesTable/AttributesTable';
-import DrawerDescriptiveContent from './DrawerComponents/DrawerDescriptiveContent/DrawerDescriptiveContent';
-import EventsTable from './DrawerComponents/EventsTable/EventsTable';
 
 // css config
 const CONNECTOR_WIDTH = 28;
@@ -59,6 +46,8 @@ interface ISuccessProps {
 	interestedSpanId: IInterestedSpan;
 	uncollapsedNodes: string[];
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
+	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
+	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }
 
 function SpanOverview({
@@ -66,15 +55,13 @@ function SpanOverview({
 	isSpanCollapsed,
 	interestedSpanId,
 	handleCollapseUncollapse,
-	setTraceDetailsOpen,
-	setSpanDetails,
+	setSelectedSpan,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
 	interestedSpanId: string;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
-	setTraceDetailsOpen: Dispatch<SetStateAction<boolean>>;
-	setSpanDetails: Dispatch<SetStateAction<Span | undefined>>;
+	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const isRootSpan = span.parentSpanId === '';
 	const spanRef = useRef<HTMLDivElement>(null);
@@ -105,8 +92,7 @@ function SpanOverview({
 				borderLeft: isRootSpan ? 'none' : `1px solid lightgray`,
 			}}
 			onClick={(): void => {
-				setSpanDetails(span);
-				setTraceDetailsOpen(true);
+				setSelectedSpan(span);
 			}}
 		>
 			{!isRootSpan && (
@@ -166,14 +152,12 @@ function SpanDuration({
 	span,
 	interestedSpanId,
 	traceMetadata,
-	setTraceDetailsOpen,
-	setSpanDetails,
+	setSelectedSpan,
 }: {
 	span: Span;
 	interestedSpanId: string;
 	traceMetadata: ITraceMetadata;
-	setTraceDetailsOpen: Dispatch<SetStateAction<boolean>>;
-	setSpanDetails: Dispatch<SetStateAction<Span | undefined>>;
+	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
 		span.durationNano / 1e6,
@@ -200,8 +184,7 @@ function SpanDuration({
 				interestedSpanId === span.spanId ? 'interested-span' : '',
 			)}
 			onClick={(): void => {
-				setSpanDetails(span);
-				setTraceDetailsOpen(true);
+				setSelectedSpan(span);
 			}}
 		>
 			<div
@@ -231,15 +214,13 @@ function getWaterfallColumns({
 	uncollapsedNodes,
 	interestedSpanId,
 	traceMetadata,
-	setTraceDetailsOpen,
-	setSpanDetails,
+	setSelectedSpan,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	interestedSpanId: IInterestedSpan;
 	traceMetadata: ITraceMetadata;
-	setTraceDetailsOpen: Dispatch<SetStateAction<boolean>>;
-	setSpanDetails: Dispatch<SetStateAction<Span | undefined>>;
+	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -251,8 +232,7 @@ function getWaterfallColumns({
 					handleCollapseUncollapse={handleCollapseUncollapse}
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
 					interestedSpanId={interestedSpanId.spanId}
-					setTraceDetailsOpen={setTraceDetailsOpen}
-					setSpanDetails={setSpanDetails}
+					setSelectedSpan={setSelectedSpan}
 				/>
 			),
 			size: 450,
@@ -266,45 +246,13 @@ function getWaterfallColumns({
 					span={props.row.original}
 					interestedSpanId={interestedSpanId.spanId}
 					traceMetadata={traceMetadata}
-					setTraceDetailsOpen={setTraceDetailsOpen}
-					setSpanDetails={setSpanDetails}
+					setSelectedSpan={setSelectedSpan}
 				/>
 			),
 		}),
 	];
 
 	return waterfallColumns;
-}
-
-function getItems(span: Span, startTime: number): TabsProps['items'] {
-	return [
-		{
-			label: (
-				<Button
-					type="text"
-					icon={<Bookmark size="14" />}
-					className="flamegraph-waterfall-toggle"
-				>
-					Attributes
-				</Button>
-			),
-			key: 'attributes',
-			children: <AttributesTable span={span} />,
-		},
-		{
-			label: (
-				<Button
-					type="text"
-					icon={<Anvil size="14" />}
-					className="flamegraph-waterfall-toggle"
-				>
-					Events
-				</Button>
-			),
-			key: 'events',
-			children: <EventsTable span={span} startTime={startTime} />,
-		},
-	];
 }
 
 function Success(props: ISuccessProps): JSX.Element {
@@ -314,10 +262,10 @@ function Success(props: ISuccessProps): JSX.Element {
 		interestedSpanId,
 		uncollapsedNodes,
 		setInterestedSpanId,
+		setTraceFlamegraphStatsWidth,
+		setSelectedSpan,
 	} = props;
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
-	const [traceDetailsOpen, setTraceDetailsOpen] = useState<boolean>(false);
-	const [spanDetails, setSpanDetails] = useState<Span>();
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -354,10 +302,15 @@ function Success(props: ISuccessProps): JSX.Element {
 				uncollapsedNodes,
 				interestedSpanId,
 				traceMetadata,
-				setTraceDetailsOpen,
-				setSpanDetails,
+				setSelectedSpan,
 			}),
-		[handleCollapseUncollapse, uncollapsedNodes, interestedSpanId, traceMetadata],
+		[
+			handleCollapseUncollapse,
+			uncollapsedNodes,
+			interestedSpanId,
+			traceMetadata,
+			setSelectedSpan,
+		],
 	);
 
 	useEffect(() => {
@@ -372,24 +325,6 @@ function Success(props: ISuccessProps): JSX.Element {
 				});
 		}
 	}, [interestedSpanId, spans]);
-
-	const handleGoToRelatedLogs = useCallback(() => {
-		const query = getTraceToLogsQuery(
-			traceMetadata.traceId,
-			traceMetadata.startTime,
-			traceMetadata.endTime,
-		);
-
-		history.push(
-			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
-				[QueryParams.compositeQuery]: JSON.stringify(query),
-				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
-				[QueryParams.startTime]: traceMetadata.startTime - 1000,
-				// we add 1000 milliseconds to the end time for nano second duration traces
-				[QueryParams.endTime]: traceMetadata.endTime + 1000,
-			})}`,
-		);
-	}, [traceMetadata.endTime, traceMetadata.startTime, traceMetadata.traceId]);
 
 	return (
 		<div className="success-content">
@@ -418,23 +353,8 @@ function Success(props: ISuccessProps): JSX.Element {
 				}}
 				customClassName="waterfall-table"
 				virtualiserRef={virtualizerRef}
+				setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 			/>
-			{spanDetails && (
-				<DetailsDrawer
-					open={traceDetailsOpen}
-					setOpen={setTraceDetailsOpen}
-					title="Span Details"
-					detailsDrawerClassName="span-dets"
-					defaultActiveKey="attributes"
-					items={getItems(spanDetails, traceMetadata.startTime)}
-					descriptiveContent={<DrawerDescriptiveContent span={spanDetails} />}
-					tabBarExtraContent={
-						<Button className="related-logs" onClick={handleGoToRelatedLogs}>
-							Go to Related Logs
-						</Button>
-					}
-				/>
-			)}
 		</div>
 	);
 }

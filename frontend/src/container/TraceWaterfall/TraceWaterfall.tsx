@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { GetTraceV2SuccessResponse } from 'types/api/trace/getTraceV2';
+import { GetTraceV2SuccessResponse, Span } from 'types/api/trace/getTraceV2';
 
 import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
@@ -28,6 +28,8 @@ interface ITraceWaterfallProps {
 	errorFetchingTraceData: unknown;
 	interestedSpanId: IInterestedSpan;
 	setInterestedSpanId: Dispatch<SetStateAction<IInterestedSpan>>;
+	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
+	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }
 
 function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
@@ -39,6 +41,8 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		traceId,
 		uncollapsedNodes,
 		setInterestedSpanId,
+		setTraceFlamegraphStatsWidth,
+		setSelectedSpan,
 	} = props;
 	// get the current state of trace waterfall based on the API lifecycle
 	const traceWaterfallState = useMemo(() => {
@@ -100,6 +104,8 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						interestedSpanId={interestedSpanId || ''}
 						uncollapsedNodes={uncollapsedNodes}
 						setInterestedSpanId={setInterestedSpanId}
+						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
+						setSelectedSpan={setSelectedSpan}
 					/>
 				);
 			default:
@@ -109,6 +115,8 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		errorFetchingTraceData,
 		interestedSpanId,
 		setInterestedSpanId,
+		setSelectedSpan,
+		setTraceFlamegraphStatsWidth,
 		spans,
 		traceData?.payload?.endTimestampMillis,
 		traceData?.payload?.hasMissingSpans,

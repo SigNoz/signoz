@@ -21,10 +21,16 @@ interface ITraceFlamegraphProps {
 	serviceExecTime: Record<string, number>;
 	startTime: number;
 	endTime: number;
+	traceFlamegraphStatsWidth: number;
 }
 
 function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
-	const { serviceExecTime, startTime, endTime } = props;
+	const {
+		serviceExecTime,
+		startTime,
+		endTime,
+		traceFlamegraphStatsWidth,
+	} = props;
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
@@ -110,8 +116,10 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 
 	return (
 		<div className="flamegraph">
-			<div className="flamegraph-chart">{getContent}</div>
-			<div className="flamegraph-stats">
+			<div
+				className="flamegraph-stats"
+				style={{ width: `${traceFlamegraphStatsWidth}px` }}
+			>
 				<div className="exec-time-service">% exec time</div>
 				<div className="stats">
 					{Object.keys(serviceExecTime).map((service) => {
@@ -145,6 +153,12 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 						);
 					})}
 				</div>
+			</div>
+			<div
+				className="flamegraph-chart"
+				style={{ width: `calc(100% - ${traceFlamegraphStatsWidth}px)` }}
+			>
+				{getContent}
 			</div>
 		</div>
 	);

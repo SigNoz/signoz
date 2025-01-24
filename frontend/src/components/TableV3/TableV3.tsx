@@ -9,7 +9,13 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import React, { MutableRefObject, useEffect, useMemo } from 'react';
+import React, {
+	Dispatch,
+	MutableRefObject,
+	SetStateAction,
+	useEffect,
+	useMemo,
+} from 'react';
 
 // here we are manually rendering the table body so that we can memoize the same for performant re-renders
 function TableBody<T>({
@@ -70,13 +76,21 @@ interface ITableV3Props<T> {
 	data: T[];
 	config: ITableConfig;
 	customClassName?: string;
+	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	virtualiserRef?: MutableRefObject<
 		Virtualizer<HTMLDivElement, Element> | undefined
 	>;
 }
 
 export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
-	const { data, columns, config, customClassName = '', virtualiserRef } = props;
+	const {
+		data,
+		columns,
+		config,
+		customClassName = '',
+		virtualiserRef,
+		setTraceFlamegraphStatsWidth,
+	} = props;
 
 	const table = useReactTable({
 		data,
@@ -122,6 +136,12 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 			colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
 		}
 		return colSizes;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [table.getState().columnSizingInfo, table.getState().columnSizing]);
+
+	useEffect(() => {
+		const headers = table.getFlatHeaders();
+		setTraceFlamegraphStatsWidth(headers[0].getSize());
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [table.getState().columnSizingInfo, table.getState().columnSizing]);
 
