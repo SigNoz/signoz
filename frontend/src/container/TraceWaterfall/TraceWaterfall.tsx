@@ -31,8 +31,6 @@ interface ITraceWaterfallProps {
 	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | undefined;
-	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }
 
 function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
@@ -47,8 +45,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
 		selectedSpan,
-		hoveredSpanId,
-		setHoveredSpanId,
 	} = props;
 	// get the current state of trace waterfall based on the API lifecycle
 	const traceWaterfallState = useMemo(() => {
@@ -113,8 +109,6 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
-						hoveredSpanId={hoveredSpanId}
-						setHoveredSpanId={setHoveredSpanId}
 					/>
 				);
 			default:
@@ -122,10 +116,8 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		}
 	}, [
 		errorFetchingTraceData,
-		hoveredSpanId,
 		interestedSpanId,
 		selectedSpan,
-		setHoveredSpanId,
 		setInterestedSpanId,
 		setSelectedSpan,
 		setTraceFlamegraphStatsWidth,

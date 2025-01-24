@@ -49,8 +49,6 @@ interface ISuccessProps {
 	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | undefined;
-	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }
 
 function SpanOverview({
@@ -59,16 +57,12 @@ function SpanOverview({
 	handleCollapseUncollapse,
 	setSelectedSpan,
 	selectedSpan,
-	hoveredSpanId,
-	setHoveredSpanId,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | undefined;
-	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const spanRef = useRef<HTMLDivElement>(null);
@@ -85,9 +79,7 @@ function SpanOverview({
 			ref={spanRef}
 			className={cx(
 				'span-overview',
-				selectedSpan?.spanId === span.spanId || hoveredSpanId === span.spanId
-					? 'interested-span'
-					: '',
+				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
 			)}
 			style={{
 				marginLeft: `${
@@ -104,7 +96,6 @@ function SpanOverview({
 			onClick={(): void => {
 				setSelectedSpan(span);
 			}}
-			onMouseEnter={(): void => setHoveredSpanId(span.spanId)}
 		>
 			{!isRootSpan && (
 				<div
@@ -164,15 +155,11 @@ function SpanDuration({
 	traceMetadata,
 	setSelectedSpan,
 	selectedSpan,
-	hoveredSpanId,
-	setHoveredSpanId,
 }: {
 	span: Span;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | undefined;
-	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }): JSX.Element {
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
 		span.durationNano / 1e6,
@@ -192,14 +179,11 @@ function SpanDuration({
 		<div
 			className={cx(
 				'span-duration',
-				selectedSpan?.spanId === span.spanId || hoveredSpanId === span.spanId
-					? 'interested-span'
-					: '',
+				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
 			)}
 			onClick={(): void => {
 				setSelectedSpan(span);
 			}}
-			onMouseEnter={(): void => setHoveredSpanId(span.spanId)}
 		>
 			<div
 				className="span-line"
@@ -229,16 +213,12 @@ function getWaterfallColumns({
 	traceMetadata,
 	selectedSpan,
 	setSelectedSpan,
-	hoveredSpanId,
-	setHoveredSpanId,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	hoveredSpanId: string | undefined;
-	setHoveredSpanId: Dispatch<SetStateAction<string | undefined>>;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -251,8 +231,6 @@ function getWaterfallColumns({
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
 					selectedSpan={selectedSpan}
 					setSelectedSpan={setSelectedSpan}
-					hoveredSpanId={hoveredSpanId}
-					setHoveredSpanId={setHoveredSpanId}
 				/>
 			),
 			size: 450,
@@ -267,8 +245,6 @@ function getWaterfallColumns({
 					traceMetadata={traceMetadata}
 					selectedSpan={selectedSpan}
 					setSelectedSpan={setSelectedSpan}
-					hoveredSpanId={hoveredSpanId}
-					setHoveredSpanId={setHoveredSpanId}
 				/>
 			),
 		}),
@@ -287,8 +263,6 @@ function Success(props: ISuccessProps): JSX.Element {
 		setTraceFlamegraphStatsWidth,
 		setSelectedSpan,
 		selectedSpan,
-		hoveredSpanId,
-		setHoveredSpanId,
 	} = props;
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
 
@@ -306,7 +280,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		if (spans.length < 500) return;
 
 		if (range?.startIndex === 0 && instance.isScrolling) {
-			if (spans[0].parentSpanId !== '') {
+			if (spans[0].level !== 0) {
 				setInterestedSpanId({ spanId: spans[0].spanId, isUncollapsed: false });
 			}
 			return;
@@ -328,8 +302,6 @@ function Success(props: ISuccessProps): JSX.Element {
 				traceMetadata,
 				selectedSpan,
 				setSelectedSpan,
-				hoveredSpanId,
-				setHoveredSpanId,
 			}),
 		[
 			handleCollapseUncollapse,
@@ -337,8 +309,6 @@ function Success(props: ISuccessProps): JSX.Element {
 			traceMetadata,
 			selectedSpan,
 			setSelectedSpan,
-			hoveredSpanId,
-			setHoveredSpanId,
 		],
 	);
 
@@ -354,22 +324,19 @@ function Success(props: ISuccessProps): JSX.Element {
 				});
 
 				setSelectedSpan(spans[idx]);
-			} else {
-				setSelectedSpan((prev) => {
-					if (!prev) {
-						return spans[0];
-					}
-					return prev;
-				});
 			}
+		} else {
+			setSelectedSpan((prev) => {
+				if (!prev) {
+					return spans[0];
+				}
+				return prev;
+			});
 		}
 	}, [interestedSpanId, setSelectedSpan, spans]);
 
 	return (
-		<div
-			className="success-content"
-			onMouseLeave={(): void => setHoveredSpanId(undefined)}
-		>
+		<div className="success-content">
 			{traceMetadata.hasMissingSpans && (
 				<div className="missing-spans">
 					<section className="left-info">

@@ -32,7 +32,6 @@ function TraceDetailsV2(): JSX.Element {
 	] = useState<number>(450);
 	const [isSpanDetailsDocked, setIsSpanDetailsDocked] = useState<boolean>(false);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
-	const [hoveredSpanId, setHoveredSpanId] = useState<string>();
 
 	useEffect(() => {
 		setInterestedSpanId({
@@ -97,8 +96,6 @@ function TraceDetailsV2(): JSX.Element {
 						endTime={traceData?.payload?.endTimestampMillis || 0}
 						traceFlamegraphStatsWidth={traceFlamegraphStatsWidth}
 						selectedSpan={selectedSpan}
-						hoveredSpanId={hoveredSpanId}
-						setHoveredSpanId={setHoveredSpanId}
 					/>
 					<TraceWaterfall
 						traceData={traceData}
@@ -111,8 +108,6 @@ function TraceDetailsV2(): JSX.Element {
 						setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
 						selectedSpan={selectedSpan}
 						setSelectedSpan={setSelectedSpan}
-						hoveredSpanId={hoveredSpanId}
-						setHoveredSpanId={setHoveredSpanId}
 					/>
 				</>
 			),
