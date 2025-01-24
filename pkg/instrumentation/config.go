@@ -1,9 +1,10 @@
 package instrumentation
 
 import (
+	"log/slog"
+
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.uber.org/zap/zapcore"
 )
 
 // Config holds the configuration for all instrumentation components.
@@ -21,13 +22,7 @@ type Resource struct {
 
 // LogsConfig holds the configuration for the logging component.
 type LogsConfig struct {
-	Enabled    bool           `mapstructure:"enabled"`
-	Level      zapcore.Level  `mapstructure:"level"`
-	Processors LogsProcessors `mapstructure:"processors"`
-}
-
-type LogsProcessors struct {
-	Batch contribsdkconfig.BatchLogRecordProcessor `mapstructure:"batch"`
+	Level slog.Level `mapstructure:"level"`
 }
 
 // TracesConfig holds the configuration for the tracing component.
@@ -61,8 +56,7 @@ func newConfig() factory.Config {
 
 	return Config{
 		Logs: LogsConfig{
-			Enabled: false,
-			Level:   zapcore.DebugLevel,
+			Level: slog.LevelInfo,
 		},
 		Traces: TracesConfig{
 			Enabled: false,

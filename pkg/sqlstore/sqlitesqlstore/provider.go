@@ -10,7 +10,6 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.uber.org/zap"
 )
 
 type provider struct {
@@ -31,7 +30,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	settings.ZapLogger().Info("connected to sqlite", zap.String("path", config.Sqlite.Path))
+	settings.Logger().InfoContext(ctx, "connected to sqlite", "path", config.Sqlite.Path)
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
 
 	return &provider{
