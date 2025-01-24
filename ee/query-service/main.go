@@ -99,7 +99,7 @@ func main() {
 
 	var useLogsNewSchema bool
 	var useTraceNewSchema bool
-	var cacheConfigPath, fluxInterval string
+	var cacheConfigPath, fluxInterval, fluxIntervalForTraceDetail string
 	var enableQueryServiceLogOTLPExport bool
 	var preferSpanMetrics bool
 
@@ -121,6 +121,7 @@ func main() {
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
+	flag.StringVar(&fluxIntervalForTraceDetail, "flux-interval-trace-detail", "2m", "(the interval to exclude data from being cached to avoid incorrect cache for trace data in motion)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
@@ -151,24 +152,25 @@ func main() {
 	}
 
 	serverOptions := &app.ServerOptions{
-		Config:            config,
-		SigNoz:            signoz,
-		HTTPHostPort:      baseconst.HTTPHostPort,
-		PromConfigPath:    promConfigPath,
-		SkipTopLvlOpsPath: skipTopLvlOpsPath,
-		PreferSpanMetrics: preferSpanMetrics,
-		PrivateHostPort:   baseconst.PrivateHostPort,
-		DisableRules:      disableRules,
-		RuleRepoURL:       ruleRepoURL,
-		MaxIdleConns:      maxIdleConns,
-		MaxOpenConns:      maxOpenConns,
-		DialTimeout:       dialTimeout,
-		CacheConfigPath:   cacheConfigPath,
-		FluxInterval:      fluxInterval,
-		Cluster:           cluster,
-		GatewayUrl:        gatewayUrl,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Config:                     config,
+		SigNoz:                     signoz,
+		HTTPHostPort:               baseconst.HTTPHostPort,
+		PromConfigPath:             promConfigPath,
+		SkipTopLvlOpsPath:          skipTopLvlOpsPath,
+		PreferSpanMetrics:          preferSpanMetrics,
+		PrivateHostPort:            baseconst.PrivateHostPort,
+		DisableRules:               disableRules,
+		RuleRepoURL:                ruleRepoURL,
+		MaxIdleConns:               maxIdleConns,
+		MaxOpenConns:               maxOpenConns,
+		DialTimeout:                dialTimeout,
+		CacheConfigPath:            cacheConfigPath,
+		FluxInterval:               fluxInterval,
+		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		Cluster:                    cluster,
+		GatewayUrl:                 gatewayUrl,
+		UseLogsNewSchema:           useLogsNewSchema,
+		UseTraceNewSchema:          useTraceNewSchema,
 	}
 
 	// Read the jwt secret key
