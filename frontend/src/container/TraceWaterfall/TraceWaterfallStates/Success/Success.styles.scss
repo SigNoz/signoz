@@ -91,6 +91,15 @@
 			height: 54px;
 		}
 
+		.div-tr:hover {
+			border-radius: 4px;
+			background: rgba(171, 189, 255, 0.06) !important;
+
+			.span-overview-content {
+				background: rgba(171, 189, 255, 0.06) !important;
+			}
+		}
+
 		.div-th,
 		.div-td {
 			box-shadow: none;
@@ -119,6 +128,10 @@
 				width: 100%;
 				cursor: pointer;
 
+				.connector-lines {
+					display: flex;
+				}
+
 				.span-overview-content {
 					display: flex;
 					flex-shrink: 0;
@@ -126,6 +139,9 @@
 					align-items: flex-start;
 					gap: 5px;
 					width: 100%;
+					background-color: #0b0c0e;
+					height: 100%;
+					justify-content: center;
 
 					.first-row {
 						display: flex;
@@ -226,10 +242,9 @@
 
 				.span-line {
 					position: absolute;
-					border-radius: 5px;
 					height: 12px;
 					top: 35%;
-					border-radius: 2px;
+					border-radius: 6px;
 				}
 
 				.span-line-text {
@@ -249,7 +264,11 @@
 
 			.interested-span {
 				border-radius: 4px;
-				background: rgba(171, 189, 255, 0.06);
+				background: rgba(171, 189, 255, 0.06) !important;
+
+				.span-overview-content {
+					background: unset;
+				}
 			}
 		}
 
@@ -314,6 +333,7 @@
 			.div-td {
 				.span-overview {
 					.span-overview-content {
+						background-color: var(--bg-vanilla-200);
 						.first-row {
 							.collapse-uncollapse-button {
 								border: 1px solid var(--bg-vanilla-400);

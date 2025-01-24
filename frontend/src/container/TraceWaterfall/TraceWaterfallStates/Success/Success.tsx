@@ -10,7 +10,6 @@ import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
@@ -67,8 +66,6 @@ function SpanOverview({
 	const isRootSpan = span.level === 0;
 	const spanRef = useRef<HTMLDivElement>(null);
 
-	const isDarkMode = useIsDarkMode();
-
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
@@ -82,33 +79,33 @@ function SpanOverview({
 				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
 			)}
 			style={{
-				marginLeft: `${
+				paddingLeft: `${
 					isRootSpan
 						? span.level * CONNECTOR_WIDTH
 						: (span.level - 1) * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
 				}px`,
-				borderLeft: isRootSpan
-					? 'none'
-					: `1px solid ${
-							isDarkMode ? 'var(--bg-slate-400)' : 'var(--bg-vanilla-400)'
-					  }`,
+				backgroundImage: `url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="54"><line x1="0" y1="0" x2="0" y2="54" stroke="rgb(29 33 45)" stroke-width="1" /></svg>')`,
+				backgroundRepeat: 'repeat',
+				backgroundSize: `${CONNECTOR_WIDTH + 1}px 54px`,
 			}}
 			onClick={(): void => {
 				setSelectedSpan(span);
 			}}
 		>
 			{!isRootSpan && (
-				<div
-					style={{
-						width: `${CONNECTOR_WIDTH}px`,
-						height: '1px',
-						borderTop: '1px solid var(--bg-slate-400)',
-						display: 'flex',
-						flexShrink: 0,
-						position: 'relative',
-						top: '-8px',
-					}}
-				/>
+				<div className="connector-lines">
+					<div
+						style={{
+							width: `${CONNECTOR_WIDTH}px`,
+							height: '1px',
+							borderTop: '1px solid var(--bg-slate-400)',
+							display: 'flex',
+							flexShrink: 0,
+							position: 'relative',
+							top: '-10px',
+						}}
+					/>
+				</div>
 			)}
 			<div className="span-overview-content">
 				<section className="first-row">
