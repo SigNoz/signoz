@@ -65,3 +65,16 @@ sqlstore:
   sqlite:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
+
+
+##################### APIServer #####################
+apiserver:
+  timeout:
+    default: 60s
+    max: 600s
+    excluded_routes:
+      - /api/v1/logs/tail
+      - /api/v3/logs/livetail
+  logging:
+    excluded_routes:
+      - /api/v1/health

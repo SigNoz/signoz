@@ -11,10 +11,8 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"net/url"
 	"os"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -33,7 +31,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/signoz"
 	"go.signoz.io/signoz/pkg/web"
@@ -56,23 +53,25 @@ import (
 )
 
 type ServerOptions struct {
+	Config            signoz.Config
 	PromConfigPath    string
 	SkipTopLvlOpsPath string
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
-	SigNoz            *signoz.SigNoz
+	DisableRules               bool
+	RuleRepoURL                string
+	PreferSpanMetrics          bool
+	MaxIdleConns               int
+	MaxOpenConns               int
+	DialTimeout                time.Duration
+	CacheConfigPath            string
+	FluxInterval               string
+	FluxIntervalForTraceDetail string
+	Cluster                    string
+	UseLogsNewSchema           bool
+	UseTraceNewSchema          bool
+	SigNoz                     *signoz.SigNoz
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -122,6 +121,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	readerReady := make(chan bool)
 
+	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -136,6 +140,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			fluxIntervalForTraceDetail,
+			serverOptions.SigNoz.Cache,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -150,6 +156,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			return nil, err
 		}
 	}
+
 	var c cache.Cache
 	if serverOptions.CacheConfigPath != "" {
 		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
@@ -262,9 +269,13 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(setTimeoutMiddleware)
-	r.Use(s.analyticsMiddleware)
-	r.Use(middleware.NewLogging(zap.L()).Wrap)
+	r.Use(middleware.NewTimeout(zap.L(),
+		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
+		s.serverOptions.Config.APIServer.Timeout.Default,
+		s.serverOptions.Config.APIServer.Timeout.Max,
+	).Wrap)
+	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
+	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	api.RegisterPrivateRoutes(r)
 
@@ -288,10 +299,13 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 
 	r := NewRouter()
 
-	r.Use(setTimeoutMiddleware)
-	r.Use(s.analyticsMiddleware)
-	r.Use(middleware.NewLogging(zap.L()).Wrap)
-	r.Use(LogCommentEnricher)
+	r.Use(middleware.NewTimeout(zap.L(),
+		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
+		s.serverOptions.Config.APIServer.Timeout.Default,
+		s.serverOptions.Config.APIServer.Timeout.Max,
+	).Wrap)
+	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
+	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
@@ -337,68 +351,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	return &http.Server{
 		Handler: handler,
 	}, nil
-}
-
-func LogCommentEnricher(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		referrer := r.Header.Get("Referer")
-
-		var path, dashboardID, alertID, page, client, viewName, tab string
-
-		if referrer != "" {
-			referrerURL, _ := url.Parse(referrer)
-			client = "browser"
-			path = referrerURL.Path
-
-			if strings.Contains(path, "/dashboard") {
-				// Split the path into segments
-				pathSegments := strings.Split(referrerURL.Path, "/")
-				// The dashboard ID should be the segment after "/dashboard/"
-				// Loop through pathSegments to find "dashboard" and then take the next segment as the ID
-				for i, segment := range pathSegments {
-					if segment == "dashboard" && i < len(pathSegments)-1 {
-						// Return the next segment, which should be the dashboard ID
-						dashboardID = pathSegments[i+1]
-					}
-				}
-				page = "dashboards"
-			} else if strings.Contains(path, "/alerts") {
-				urlParams := referrerURL.Query()
-				alertID = urlParams.Get("ruleId")
-				page = "alerts"
-			} else if strings.Contains(path, "logs") && strings.Contains(path, "explorer") {
-				page = "logs-explorer"
-				viewName = referrerURL.Query().Get("viewName")
-			} else if strings.Contains(path, "/trace") || strings.Contains(path, "traces-explorer") {
-				page = "traces-explorer"
-				viewName = referrerURL.Query().Get("viewName")
-			} else if strings.Contains(path, "/services") {
-				page = "services"
-				tab = referrerURL.Query().Get("tab")
-				if tab == "" {
-					tab = "OVER_METRICS"
-				}
-			}
-		} else {
-			client = "api"
-		}
-
-		email, _ := auth.GetEmailFromJwt(r.Context())
-
-		kvs := map[string]string{
-			"path":        path,
-			"dashboardID": dashboardID,
-			"alertID":     alertID,
-			"source":      page,
-			"client":      client,
-			"viewName":    viewName,
-			"servicesTab": tab,
-			"email":       email,
-		}
-
-		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
-		next.ServeHTTP(w, r)
-	})
 }
 
 // TODO(remove): Implemented at pkg/http/middleware/logging.go
@@ -568,40 +520,6 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		}
 		// }
 
-	})
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/timeout.go
-func getRouteContextTimeout(overrideTimeout string) time.Duration {
-	var timeout time.Duration
-	var err error
-	if overrideTimeout != "" {
-		timeout, err = time.ParseDuration(overrideTimeout + "s")
-		if err != nil {
-			timeout = constants.ContextTimeout
-		}
-		if timeout > constants.ContextTimeoutMaxAllowed {
-			timeout = constants.ContextTimeoutMaxAllowed
-		}
-		return timeout
-	}
-	return constants.ContextTimeout
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/timeout.go
-func setTimeoutMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		var cancel context.CancelFunc
-		// check if route is not excluded
-		url := r.URL.Path
-		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), getRouteContextTimeout(r.Header.Get("timeout")))
-			defer cancel()
-		}
-
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
 	})
 }
 
