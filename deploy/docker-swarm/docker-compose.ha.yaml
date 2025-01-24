@@ -227,4 +227,3 @@ services:
 networks:
   signoz-net:
     name: signoz-net
-    external: true
