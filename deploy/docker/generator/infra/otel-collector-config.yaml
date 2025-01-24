@@ -63,6 +63,9 @@ receivers:
               regex: '/(.*)'
               replacement: '$1'
               target_label: container_name
+            - regex: __meta_docker_container_label_signoz_io_(.+)
+              action: labelmap
+              replacement: $1
   tcplog/docker:
     listen_address: "0.0.0.0:2255"
     operators:
