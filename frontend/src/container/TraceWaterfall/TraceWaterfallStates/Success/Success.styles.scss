@@ -95,8 +95,12 @@
 			border-radius: 4px;
 			background: rgba(171, 189, 255, 0.06) !important;
 
-			.span-overview-content {
-				background: rgba(171, 189, 255, 0.06) !important;
+			.span-overview {
+				background: unset !important;
+
+				.span-overview-content {
+					background: unset !important;
+				}
 			}
 		}
 
