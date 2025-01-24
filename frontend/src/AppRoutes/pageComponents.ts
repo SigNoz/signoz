@@ -254,3 +254,10 @@ export const CeleryTask = Loadable(
 			/* webpackChunkName: "CeleryTask" */ 'pages/Celery/CeleryTask/CeleryTask'
 		),
 );
+
+export const CeleryOverview = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryOverview" */ 'pages/Celery/CeleryOverview/CeleryOverview'
+		),
+);

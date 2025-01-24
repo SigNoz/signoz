@@ -9,6 +9,7 @@ import {
 	AllErrors,
 	APIKeys,
 	BillingPage,
+	CeleryOverview,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	CustomDomainSettings,
@@ -406,6 +407,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MessagingQueues,
 		key: 'MESSAGING_QUEUES_CELERY_TASK',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_CELERY_OVERVIEW,
+		exact: true,
+		component: CeleryOverview,
+		key: 'MESSAGING_QUEUES_CELERY_OVERVIEW',
 		isPrivate: true,
 	},
 	{
