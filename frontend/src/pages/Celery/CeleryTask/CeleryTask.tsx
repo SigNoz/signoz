@@ -5,7 +5,6 @@ import CeleryTaskDetail, {
 	CaptureDataProps,
 } from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphGrid';
-import { celerySlowestTasksTableWidgetData } from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphUtils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useState } from 'react';
 
