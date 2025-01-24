@@ -62,3 +62,28 @@
 		border-top: 1px solid var(--bg-slate-400);
 	}
 }
+
+.lightMode {
+	.attributes-corner {
+		.attributes-container {
+			.item {
+				.item-key {
+					color: var(--bg-ink-100);
+				}
+
+				.value-wrapper {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+
+					.item-value {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		.border-top {
+			border-top: 1px solid var(--bg-vanilla-300);
+		}
+	}
+}

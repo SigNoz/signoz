@@ -139,7 +139,7 @@ function TraceDetailsV2(): JSX.Element {
 					notFound={noData}
 				/>
 				{!noData ? (
-					<Tabs items={items} animated className="settings-tabs" />
+					<Tabs items={items} animated className="trace-visualisation-tabs" />
 				) : (
 					<NoData />
 				)}

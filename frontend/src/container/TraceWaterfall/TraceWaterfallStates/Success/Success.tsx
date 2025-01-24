@@ -10,6 +10,7 @@ import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
@@ -72,8 +73,9 @@ function SpanOverview({
 	const isRootSpan = span.level === 0;
 	const spanRef = useRef<HTMLDivElement>(null);
 
-	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
+	const isDarkMode = useIsDarkMode();
 
+	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
 	}
@@ -93,10 +95,11 @@ function SpanOverview({
 						? span.level * CONNECTOR_WIDTH
 						: (span.level - 1) * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
 				}px`,
-				borderLeft: isRootSpan ? 'none' : `1px solid var(--bg-slate-400)`,
-				// borderImage: !span.hasSibling
-				// 	? `linear-gradient(to bottom, var(--bg-slate-400) 20px, transparent 10px) 1`
-				// 	: '',
+				borderLeft: isRootSpan
+					? 'none'
+					: `1px solid ${
+							isDarkMode ? 'var(--bg-slate-400)' : 'var(--bg-vanilla-400)'
+					  }`,
 			}}
 			onClick={(): void => {
 				setSelectedSpan(span);

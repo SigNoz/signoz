@@ -143,9 +143,6 @@
 
 .lightMode {
 	.events-table {
-		.no-events {
-			border: 1px solid var(--bg-vanilla-300);
-		}
 		.events-container {
 			.event {
 				.ant-collapse-content-box {
@@ -153,8 +150,9 @@
 				}
 				.ant-collapse-header {
 					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-200);
+					background: var(--bg-vanilla-300);
 					color: var(--bg-ink-100);
+					border-bottom: none;
 				}
 				.event-details {
 					.attribute-container {
@@ -170,12 +168,17 @@
 							.attribute-value {
 								border: 1px solid var(--bg-vanilla-300);
 								background: var(--bg-vanilla-300);
+
+								color: var(--bg-ink-100);
 							}
 						}
 
-						.attribute-value {
+						.wrapper {
 							border: 1px solid var(--bg-vanilla-300);
 							background: var(--bg-vanilla-300);
+							.attribute-value {
+								color: var(--bg-ink-100);
+							}
 						}
 					}
 				}
