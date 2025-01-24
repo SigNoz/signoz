@@ -164,7 +164,7 @@
 
 							.span-name {
 								color: #fff;
-								font-family: 'Space Mono';
+								font-family: 'Inter';
 								font-size: 14px;
 								font-style: normal;
 								font-weight: 400;
@@ -266,14 +266,14 @@
 			height: calc(80vh - 200px);
 			right: 0;
 			width: 2px;
-			background: var(--bg-slate-400);
+			background: rgba(35, 196, 248, 0.2);
 			cursor: col-resize;
 			user-select: none;
 			touch-action: none;
 		}
 
 		.resizer.isResizing {
-			background: var(--bg-slate-300);
+			background: rgba(35, 196, 248, 0.2);
 			opacity: 1;
 		}
 

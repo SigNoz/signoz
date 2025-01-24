@@ -10,7 +10,6 @@ import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
@@ -64,14 +63,10 @@ function SpanOverview({
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
-	const isRootSpan = span.parentSpanId === '';
+	const isRootSpan = span.level === 0;
 	const spanRef = useRef<HTMLDivElement>(null);
-	const isDarkMode = useIsDarkMode();
 
-	let color = generateColor(
-		span.serviceName,
-		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-	);
+	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
@@ -90,7 +85,10 @@ function SpanOverview({
 						? span.level * CONNECTOR_WIDTH
 						: (span.level - 1) * (CONNECTOR_WIDTH + VERTICAL_CONNECTOR_WIDTH)
 				}px`,
-				borderLeft: isRootSpan ? 'none' : `1px solid lightgray`,
+				borderLeft: isRootSpan ? 'none' : `1px solid var(--bg-slate-400)`,
+				// borderImage: !span.hasSibling
+				// 	? `linear-gradient(to bottom, var(--bg-slate-400) 20px, transparent 10px) 1`
+				// 	: '',
 			}}
 			onClick={(): void => {
 				setSelectedSpan(span);
@@ -101,11 +99,11 @@ function SpanOverview({
 					style={{
 						width: `${CONNECTOR_WIDTH}px`,
 						height: '1px',
-						border: '1px solid lightgray',
+						borderTop: '1px solid var(--bg-slate-400)',
 						display: 'flex',
 						flexShrink: 0,
 						position: 'relative',
-						top: '-10px',
+						top: '-8px',
 					}}
 				/>
 			)}
@@ -167,12 +165,8 @@ function SpanDuration({
 	const spread = traceMetadata.endTime - traceMetadata.startTime;
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
-	const isDarkMode = useIsDarkMode();
 
-	let color = generateColor(
-		span.serviceName,
-		isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-	);
+	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
@@ -325,14 +319,18 @@ function Success(props: ISuccessProps): JSX.Element {
 					align: 'center',
 					behavior: 'auto',
 				});
-				if (!selectedSpan) {
-					setSelectedSpan(spans[idx]);
-				}
-			} else if (!selectedSpan) {
-				setSelectedSpan(spans[0]);
+
+				setSelectedSpan(spans[idx]);
+			} else {
+				setSelectedSpan((prev) => {
+					if (!prev) {
+						return spans[0];
+					}
+					return prev;
+				});
 			}
 		}
-	}, [interestedSpanId, selectedSpan, setSelectedSpan, spans]);
+	}, [interestedSpanId, setSelectedSpan, spans]);
 
 	return (
 		<div className="success-content">

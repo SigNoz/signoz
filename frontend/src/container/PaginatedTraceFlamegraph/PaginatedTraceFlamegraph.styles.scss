@@ -63,7 +63,7 @@
 
 					.service-text {
 						color: var(--bg-vanilla-400);
-						font-family: 'Space Mono';
+						font-family: 'Inter';
 						font-size: 14px;
 						font-style: normal;
 						font-weight: 400;
@@ -80,7 +80,7 @@
 				.progress-service {
 					display: flex;
 					align-items: center;
-					width: 85px;
+					width: 100px;
 					gap: 8px;
 					justify-content: flex-start;
 					flex-shrink: 0;
@@ -98,12 +98,13 @@
 					.percent-value {
 						color: var(--bg-vanilla-100);
 						text-align: right;
-						font-family: 'Geist Mono';
+						font-family: 'Inter';
 						font-size: 12px;
 						font-style: normal;
 						font-weight: 400;
 						line-height: normal;
 						letter-spacing: 0.48px;
+						font-variant-numeric: lining-nums tabular-nums slashed-zero;
 					}
 				}
 			}

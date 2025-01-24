@@ -59,14 +59,11 @@ function Success(props: ISuccessProps): JSX.Element {
 					const toolTipText = `${span.name}`;
 					const searchParams = new URLSearchParams(search);
 
-					let color = generateColor(
-						span.serviceName,
-						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-					);
+					let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 					const selectedSpanColor = isDarkMode
-						? Color(color).lighten(0.3)
-						: Color(color).darken(0.3);
+						? Color(color).lighten(0.7)
+						: Color(color).darken(0.7);
 
 					if (span.hasError) {
 						color = `var(--bg-cherry-500)`;
