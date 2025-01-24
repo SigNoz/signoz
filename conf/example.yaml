@@ -78,3 +78,6 @@ apiserver:
     excluded_routes:
       - /api/v1/logs/tail
       - /api/v3/logs/livetail
+  logging:
+    excluded_routes:
+      - /api/v1/health
