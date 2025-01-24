@@ -14,12 +14,27 @@ services:
   otel-agent:
     <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
-    user: root
     command:
       - --config=/etc/otel-collector-config.yaml
     volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./otel-agent-config.yaml:/etc/otel-collector-config.yaml
       - /:/hostfs:ro
+    environment:
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
+    # Before exposing the ports, make sure the ports are not used by other services
+    # ports:
+    #   - "4317:4317"
+    #   - "4318:4318"
+  otel-metrics:
+    <<: *common
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    user: 0:0   #  If you have security concerns, you can replace this with your `UID:GID` that has necessary permissions to docker.sock
+    command:
+      - --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./otel-metrics-config.yaml:/etc/otel-collector-config.yaml
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
@@ -29,13 +44,19 @@ services:
     # ports:
     #   - "4317:4317"
     #   - "4318:4318"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement: 
+        constraints:
+          - node.role == manager
   logspout:
     <<: *common
     image: "gliderlabs/logspout:v3.2.14"
+    command: syslog+tcp://otel-agent:2255
     user: root
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    command: syslog+tcp://otel-agent:2255
     depends_on:
       - otel-agent
