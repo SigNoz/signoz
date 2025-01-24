@@ -3,7 +3,11 @@
 	flex-direction: column;
 	width: 330px;
 	border-left: 1px solid var(--bg-slate-400);
-	overflow: hidden;
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
+		width: 0.1rem;
+	}
 
 	.header {
 		display: flex;

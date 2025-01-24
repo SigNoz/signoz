@@ -33,8 +33,6 @@ function TraceDetailsV2(): JSX.Element {
 	const [isSpanDetailsDocked, setIsSpanDetailsDocked] = useState<boolean>(false);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
 
-	console.log(selectedSpan);
-
 	useEffect(() => {
 		setInterestedSpanId({
 			spanId: urlQuery.get('spanId') || '',

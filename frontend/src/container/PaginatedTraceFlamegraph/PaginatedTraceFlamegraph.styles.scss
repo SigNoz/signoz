@@ -1,6 +1,6 @@
 .flamegraph {
 	display: flex;
-	height: 20vh;
+	height: 30vh;
 	border-bottom: 1px solid var(--bg-slate-400);
 
 	.flamegraph-chart {
@@ -15,7 +15,7 @@
 	.flamegraph-stats {
 		display: flex;
 		flex-direction: column;
-		border-left: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--bg-slate-400);
 		overflow-y: auto;
 		overflow-x: hidden;
 		padding: 16px 12px;

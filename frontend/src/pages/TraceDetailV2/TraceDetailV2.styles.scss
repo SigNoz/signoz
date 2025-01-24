@@ -52,6 +52,7 @@
 
 	.trace-layout {
 		display: flex;
+		height: calc(100vh - 44px);
 
 		.trace-left-content {
 			display: flex;
