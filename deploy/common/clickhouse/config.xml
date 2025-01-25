@@ -370,7 +370,7 @@
 
     <!-- Path to temporary data for processing hard queries. -->
     <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
-    
+
     <!-- Disable AuthType plaintext_password and no_password for ACL. -->
     <!-- <allow_plaintext_password>0</allow_plaintext_password> -->
     <!-- <allow_no_password>0</allow_no_password> -->`
@@ -652,12 +652,12 @@
 
          See https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replication/#creating-replicated-tables
       -->
-    
+
     <macros>
         <shard>01</shard>
         <replica>example01-01-1</replica>
     </macros>
-   
+
 
 
     <!-- Reloading interval for embedded dictionaries, in seconds. Default: 3600. -->

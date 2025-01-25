@@ -13,10 +13,11 @@ x-clickhouse-defaults: &clickhouse-defaults
   <<: *common
   image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
-  labels:
-    signoz.io/scrape: "true"
-    signoz.io/port: "9363"
-    signoz.io/path: "/metrics"
+  deploy:
+    labels:
+      signoz.io/scrape: "true"
+      signoz.io/port: "9363"
+      signoz.io/path: "/metrics"
   depends_on:
     - zookeeper-1
   healthcheck:
@@ -38,10 +39,11 @@ x-zookeeper-defaults: &zookeeper-defaults
   <<: *common
   image: bitnami/zookeeper:3.7.1
   user: root
-  labels:
-    signoz.io/scrape: "true"
-    signoz.io/port: "9141"
-    signoz.io/path: "/metrics"
+  deploy:
+    labels:
+      signoz.io/scrape: "true"
+      signoz.io/port: "9141"
+      signoz.io/path: "/metrics"
 x-db-depend: &db-depend
   <<: *common
   depends_on:

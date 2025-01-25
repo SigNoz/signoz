@@ -40,28 +40,25 @@ receivers:
           relabel_configs:
             - action: keep
               regex: true
-              source_labels: [__meta_docker_container_label_signoz_io_scrape]
-            - source_labels:
-                [__meta_docker_container_label_signoz_io_path]
-              action: replace
-              regex: true
+              source_labels:
+                - __meta_docker_container_label_signoz_io_scrape
+            - regex: true
+              source_labels:
+                - __meta_docker_container_label_signoz_io_path
               target_label: __metrics_path__
-            - source_labels:
-                [__meta_docker_container_label_signoz_io_path]
-              action: replace
-              regex: (.+)
+            - regex: (.+)
+              source_labels:
+                - __meta_docker_container_label_signoz_io_path
               target_label: __metrics_path__
-            - source_labels:
-                [
-                  __meta_docker_network_ip,
-                  __meta_docker_container_label_signoz_io_port,
-                ]
-              action: replace
-              separator: ":"
+            - separator: ":"
+              source_labels:
+                - __meta_docker_network_ip
+                - __meta_docker_container_label_signoz_io_port
               target_label: __address__
-            - source_labels: [__meta_docker_container_name]
-              regex: '/(.*)'
+            - regex: '/(.*)'
               replacement: '$1'
+              source_labels:
+                - __meta_docker_container_name
               target_label: container_name
             - regex: __meta_docker_container_label_signoz_io_(.+)
               action: labelmap

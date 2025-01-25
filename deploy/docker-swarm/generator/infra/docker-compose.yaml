@@ -49,7 +49,7 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-      placement: 
+      placement:
         constraints:
           - node.role == manager
   logspout:
