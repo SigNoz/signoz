@@ -52,7 +52,6 @@ x-db-depend: &db-depend
 services:
   zookeeper-1:
     <<: *zookeeper-defaults
-    hostname: zookeeper-1
     # ports:
     #   - "2181:2181"
     #   - "2888:2888"
@@ -67,7 +66,6 @@ services:
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   clickhouse:
     <<: *clickhouse-defaults
-    hostname: clickhouse
     # ports:
     #   - "9000:9000"
     #   - "8123:8123"

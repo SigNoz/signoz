@@ -67,7 +67,6 @@ services:
   clickhouse:
     <<: *clickhouse-defaults
     container_name: signoz-clickhouse
-    hostname: clickhouse
     ports:
       - "9000:9000"
       - "8123:8123"
