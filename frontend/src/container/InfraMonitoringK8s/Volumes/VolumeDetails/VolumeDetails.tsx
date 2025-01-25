@@ -155,12 +155,6 @@ function VolumeDetails({
 								>
 									Namespace Name
 								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									Node Name
-								</Typography.Text>
 							</div>
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
@@ -176,11 +170,6 @@ function VolumeDetails({
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={volume.meta.k8s_namespace_name}>
 										{volume.meta.k8s_namespace_name}
-									</Tooltip>
-								</Typography.Text>
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={volume.meta.k8s_node_name}>
-										{volume.meta.k8s_node_name}
 									</Tooltip>
 								</Typography.Text>
 							</div>

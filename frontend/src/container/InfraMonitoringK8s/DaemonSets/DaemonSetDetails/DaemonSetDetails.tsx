@@ -135,7 +135,7 @@ function DaemonSetDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'Daemonset',
+					value: 'DaemonSet',
 				},
 				{
 					id: uuidv4(),

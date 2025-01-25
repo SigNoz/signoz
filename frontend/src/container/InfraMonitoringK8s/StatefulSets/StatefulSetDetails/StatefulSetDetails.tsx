@@ -138,7 +138,7 @@ function StatefulSetDetails({
 						id: 'k8s.object.kind--string--resource--false',
 					},
 					op: '=',
-					value: 'Statefulset',
+					value: 'StatefulSet',
 				},
 				{
 					id: uuidv4(),

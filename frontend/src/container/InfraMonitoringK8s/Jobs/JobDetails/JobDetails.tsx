@@ -89,7 +89,7 @@ function JobDetails({
 				{
 					id: uuidv4(),
 					key: {
-						key: QUERY_KEYS.K8S_STATEFUL_SET_NAME,
+						key: QUERY_KEYS.K8S_JOB_NAME,
 						dataType: DataTypes.String,
 						type: 'resource',
 						isColumn: false,
@@ -413,35 +413,35 @@ function JobDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="job-detail-drawer"
+			className="entity-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{job && (
 				<>
-					<div className="job-detail-drawer__job">
-						<div className="job-details-grid">
+					<div className="entity-detail-drawer__entity">
+						<div className="entity-details-grid">
 							<div className="labels-row">
 								<Typography.Text
 									type="secondary"
-									className="job-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Job Name
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
-									className="job-details-metadata-label"
+									className="entity-details-metadata-label"
 								>
 									Namespace Name
 								</Typography.Text>
 							</div>
 							<div className="values-row">
-								<Typography.Text className="job-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={job.meta.k8s_job_name}>
 										{job.meta.k8s_job_name}
 									</Tooltip>
 								</Typography.Text>
-								<Typography.Text className="job-details-metadata-value">
+								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={job.meta.k8s_namespace_name}>
 										{job.meta.k8s_namespace_name}
 									</Tooltip>

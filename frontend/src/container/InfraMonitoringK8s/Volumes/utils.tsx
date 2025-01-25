@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	K8sVolumesData,
@@ -16,6 +16,12 @@ export const defaultAddedColumns: IEntityColumn[] = [
 		label: 'PVC Name',
 		value: 'pvcName',
 		id: 'pvcName',
+		canRemove: false,
+	},
+	{
+		label: 'Namespace Name',
+		value: 'namespaceName',
+		id: 'namespaceName',
 		canRemove: false,
 	},
 	{
@@ -42,6 +48,7 @@ export interface K8sVolumesRowData {
 	key: string;
 	volumeUID: string;
 	pvcName: React.ReactNode;
+	namespaceName: React.ReactNode;
 	capacity: React.ReactNode;
 	usage: React.ReactNode;
 	available: React.ReactNode;
@@ -73,7 +80,7 @@ export const getK8sVolumesListQuery = (): K8sVolumesListPayload => ({
 
 const columnsConfig = [
 	{
-		title: <div className="column-header-left">PVC Name</div>,
+		title: <div className="column-header-left pvc-name-header">PVC Name</div>,
 		dataIndex: 'pvcName',
 		key: 'pvcName',
 		ellipsis: true,
@@ -82,7 +89,20 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Volume Capacity</div>,
+		title: (
+			<div className="column-header-left namespace-name-header">
+				Namespace Name
+			</div>
+		),
+		dataIndex: 'namespaceName',
+		key: 'namespaceName',
+		ellipsis: true,
+		width: 120,
+		sorter: false,
+		align: 'left',
+	},
+	{
+		title: <div className="column-header-left small-col">Volume Capacity</div>,
 		dataIndex: 'capacity',
 		key: 'capacity',
 		ellipsis: true,
@@ -91,7 +111,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Volume Utilization</div>,
+		title: <div className="column-header-left small-col">Volume Utilization</div>,
 		dataIndex: 'usage',
 		key: 'usage',
 		width: 100,
@@ -99,7 +119,7 @@ const columnsConfig = [
 		align: 'left',
 	},
 	{
-		title: <div className="column-header-left">Volume Available</div>,
+		title: <div className="column-header-left small-col">Volume Available</div>,
 		dataIndex: 'available',
 		key: 'available',
 		width: 80,
@@ -150,7 +170,16 @@ export const formatDataForTable = (
 	data.map((volume, index) => ({
 		key: index.toString(),
 		volumeUID: volume.persistentVolumeClaimName,
-		pvcName: volume.persistentVolumeClaimName,
+		pvcName: (
+			<Tooltip title={volume.persistentVolumeClaimName}>
+				{volume.persistentVolumeClaimName || ''}
+			</Tooltip>
+		),
+		namespaceName: (
+			<Tooltip title={volume.meta.k8s_namespace_name}>
+				{volume.meta.k8s_namespace_name || ''}
+			</Tooltip>
+		),
 		available: (
 			<ValidateColumnValueWrapper value={volume.volumeAvailable}>
 				{formatBytes(volume.volumeAvailable)}

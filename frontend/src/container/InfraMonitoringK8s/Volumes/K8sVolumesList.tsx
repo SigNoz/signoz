@@ -15,6 +15,7 @@ import {
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sVolumesListPayload } from 'api/infraMonitoring/getK8sVolumesList';
+import classNames from 'classnames';
 import { useGetK8sVolumesList } from 'hooks/infraMonitoring/useGetK8sVolumesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -447,7 +448,9 @@ function K8sVolumesList({
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
 			<Table
-				className="k8s-list-table volumes-list-table"
+				className={classNames('k8s-list-table', 'volumes-list-table', {
+					'expanded-volumes-list-table': isGroupedByAttribute,
+				})}
 				dataSource={isFetching || isLoading ? [] : formattedVolumesData}
 				columns={columns}
 				pagination={{
