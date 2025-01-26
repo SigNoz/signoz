@@ -117,13 +117,11 @@ function Filters({
 		}
 	}, [data?.payload.data.newResult.data.result]);
 
-	useEffect(() => {
-		if (filteredSpanIds.length === 0) return;
-
+	const handlePrevNext = (id: number): void => {
 		const searchParams = new URLSearchParams(search);
-		searchParams.set('spanId', filteredSpanIds[currentSearchedIndex]);
+		searchParams.set('spanId', filteredSpanIds[id]);
 		history.replace({ search: searchParams.toString() });
-	}, [currentSearchedIndex, filteredSpanIds, history, search]);
+	};
 
 	return (
 		<div className="filter-row">
@@ -141,6 +139,7 @@ function Filters({
 						disabled={currentSearchedIndex === 0}
 						type="text"
 						onClick={(): void => {
+							handlePrevNext(currentSearchedIndex - 1);
 							setCurrentSearchedIndex((prev) => prev - 1);
 						}}
 					/>
@@ -149,6 +148,7 @@ function Filters({
 						type="text"
 						disabled={currentSearchedIndex === filteredSpanIds.length - 1}
 						onClick={(): void => {
+							handlePrevNext(currentSearchedIndex + 1);
 							setCurrentSearchedIndex((prev) => prev + 1);
 						}}
 					/>
