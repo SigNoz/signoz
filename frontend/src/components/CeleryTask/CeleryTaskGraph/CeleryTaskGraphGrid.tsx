@@ -68,7 +68,7 @@ export default function CeleryTaskGraphGrid({
 	return (
 		<div className="celery-task-graph-grid-container">
 			<div className="celery-task-graph-grid">
-				<CeleryTaskBar queryEnabled={queryEnabled} />
+				<CeleryTaskBar queryEnabled={queryEnabled} onClick={onClick} />
 				<CeleryTaskGraph
 					key={celeryWorkerOnlineData.id}
 					widgetData={celeryWorkerOnlineData}

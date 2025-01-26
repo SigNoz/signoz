@@ -57,6 +57,7 @@ export interface GetUPlotChartOptions {
 	verticalLineTimestamp?: number;
 	tzDate?: (timestamp: number) => Date;
 	timezone?: string;
+	customSeries?: uPlot.Series[];
 }
 
 /** the function converts series A , series B , series C to
@@ -162,6 +163,7 @@ export const getUPlotChartOptions = ({
 	verticalLineTimestamp,
 	tzDate,
 	timezone,
+	customSeries,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -173,6 +175,22 @@ export const getUPlotChartOptions = ({
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 
 	const bands = stackBarChart ? getBands(series) : null;
+
+	console.log(
+		getSeries({
+			series:
+				stackBarChart && isUndefined(hiddenGraph)
+					? series
+					: apiResponse?.data?.result,
+			widgetMetaData: apiResponse?.data.result,
+			graphsVisibilityStates,
+			panelType,
+			currentQuery,
+			stackBarChart,
+			hiddenGraph,
+			isDarkMode,
+		}),
+	);
 
 	return {
 		id,
@@ -370,19 +388,21 @@ export const getUPlotChartOptions = ({
 				},
 			],
 		},
-		series: getSeries({
-			series:
-				stackBarChart && isUndefined(hiddenGraph)
-					? series
-					: apiResponse?.data?.result,
-			widgetMetaData: apiResponse?.data.result,
-			graphsVisibilityStates,
-			panelType,
-			currentQuery,
-			stackBarChart,
-			hiddenGraph,
-			isDarkMode,
-		}),
+		series: Array.isArray(customSeries)
+			? customSeries
+			: getSeries({
+					series:
+						stackBarChart && isUndefined(hiddenGraph)
+							? series || []
+							: apiResponse?.data?.result || [],
+					widgetMetaData: apiResponse?.data?.result || [],
+					graphsVisibilityStates,
+					panelType,
+					currentQuery,
+					stackBarChart,
+					hiddenGraph,
+					isDarkMode,
+			  }),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 };

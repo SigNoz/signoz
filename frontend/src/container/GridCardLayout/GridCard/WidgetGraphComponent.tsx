@@ -47,6 +47,7 @@ function WidgetGraphComponent({
 	customTooltipElement,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	customSeries,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -337,6 +338,7 @@ function WidgetGraphComponent({
 						searchTerm={searchTerm}
 						openTracesButton={openTracesButton}
 						onOpenTraceBtnClick={onOpenTraceBtnClick}
+						customSeries={customSeries}
 					/>
 				</div>
 			)}

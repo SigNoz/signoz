@@ -35,6 +35,7 @@ export interface WidgetGraphComponentProps {
 	customTooltipElement?: HTMLDivElement;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
+	customSeries?: uPlot.Series[];
 }
 
 export interface GridCardGraphProps {
@@ -51,6 +52,7 @@ export interface GridCardGraphProps {
 	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
+	customSeries?: uPlot.Series[];
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

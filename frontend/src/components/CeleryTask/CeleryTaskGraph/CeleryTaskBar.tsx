@@ -7,19 +7,25 @@ import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-// import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
 	celeryAllStateWidgetData,
 	celeryFailedStateWidgetData,
+	celeryFailedTasksTableWidgetData,
 	celeryRetryStateWidgetData,
+	celeryRetryTasksTableWidgetData,
+	celerySlowestTasksTableWidgetData,
 	celerySuccessStateWidgetData,
+	celerySuccessTasksTableWidgetData,
 } from './CeleryTaskGraphUtils';
 import {
 	CeleryTaskState,
@@ -27,10 +33,10 @@ import {
 } from './CeleryTaskStateGraphConfig';
 
 function CeleryTaskBar({
-	// onClick,
+	onClick,
 	queryEnabled,
 }: {
-	// onClick?: (task: CaptureDataProps) => void;
+	onClick?: (task: CaptureDataProps) => void;
 
 	queryEnabled: boolean;
 }): JSX.Element {
@@ -83,6 +89,33 @@ function CeleryTaskBar({
 		[minTime, maxTime],
 	);
 
+	const onGraphClick = (
+		widgetData: Widgets,
+		xValue: number,
+		_yValue: number,
+		_mouseX: number,
+		_mouseY: number,
+		data?: {
+			[key: string]: string;
+		},
+	): void => {
+		const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
+
+		// Extract entity and value from data
+		const [firstDataPoint] = Object.entries(data || {});
+		const [entity, value] = (firstDataPoint || ([] as unknown)) as [
+			string,
+			string,
+		];
+
+		onClick?.({
+			entity,
+			value,
+			timeRange: [start, end],
+			widgetData,
+		});
+	};
+
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -97,6 +130,9 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
+						onClickHandler={(...args): void =>
+							onGraphClick(celerySlowestTasksTableWidgetData, ...args)
+						}
 					/>
 				)}
 				{barState === CeleryTaskState.Failed && (
@@ -105,6 +141,9 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
+						onClickHandler={(...args): void =>
+							onGraphClick(celeryFailedTasksTableWidgetData, ...args)
+						}
 					/>
 				)}
 				{barState === CeleryTaskState.Retry && (
@@ -113,6 +152,9 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
+						onClickHandler={(...args): void =>
+							onGraphClick(celeryRetryTasksTableWidgetData, ...args)
+						}
 					/>
 				)}
 				{barState === CeleryTaskState.Successful && (
@@ -121,11 +163,18 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
+						onClickHandler={(...args): void =>
+							onGraphClick(celerySuccessTasksTableWidgetData, ...args)
+						}
 					/>
 				)}
 			</div>
 		</Card>
 	);
 }
+
+CeleryTaskBar.defaultProps = {
+	onClick: (): void => {},
+};
 
 export default CeleryTaskBar;

@@ -40,6 +40,7 @@ function GridCardGraph({
 	getGraphData,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	customSeries,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -254,6 +255,7 @@ function GridCardGraph({
 					customTooltipElement={customTooltipElement}
 					openTracesButton={openTracesButton}
 					onOpenTraceBtnClick={onOpenTraceBtnClick}
+					customSeries={customSeries}
 				/>
 			)}
 		</div>
