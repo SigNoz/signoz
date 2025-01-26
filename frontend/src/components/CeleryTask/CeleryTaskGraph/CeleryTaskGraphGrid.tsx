@@ -57,6 +57,7 @@ export default function CeleryTaskGraphGrid({
 						onClick={onClick}
 						queryEnabled={queryEnabled}
 						rightPanelTitle={rightPanelTitle[index]}
+						applyCeleryTaskFilter
 					/>
 				))}
 			</div>

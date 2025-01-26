@@ -1,7 +1,7 @@
 import './CeleryTaskConfigOptions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Spin, Tooltip } from 'antd';
+import { Button, Select, Spin, Tooltip, Typography } from 'antd';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -31,6 +31,9 @@ function CeleryTaskConfigOptions(): JSX.Element {
 	return (
 		<div className="celery-task-filters">
 			<div className="celery-filters">
+				<Typography.Text style={{ whiteSpace: 'nowrap' }}>
+					Task Name
+				</Typography.Text>
 				<Select
 					placeholder="Task Name"
 					showSearch

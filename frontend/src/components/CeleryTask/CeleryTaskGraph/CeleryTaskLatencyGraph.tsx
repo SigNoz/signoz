@@ -9,12 +9,16 @@ import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import {
+	applyCeleryFilterOnWidgetData,
+	getFiltersFromQueryParams,
+} from '../CeleryUtils';
 import {
 	celeryTaskLatencyWidgetData,
 	celeryTimeSeriesTablesWidgetData,
@@ -75,6 +79,25 @@ function CeleryTaskLatencyGraph({
 		[dispatch, history, pathname, urlQuery],
 	);
 
+	const selectedFilters = useMemo(
+		() =>
+			getFiltersFromQueryParams(
+				QueryParams.taskName,
+				urlQuery,
+				'celery.task_name',
+			),
+		[urlQuery],
+	);
+
+	const updatedWidgetData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(
+				selectedFilters || [],
+				celeryTaskLatencyWidgetData(graphState),
+			),
+		[graphState, selectedFilters],
+	);
+
 	const onGraphClick = (
 		xValue: number,
 		_yValue: number,
@@ -131,7 +154,7 @@ function CeleryTaskLatencyGraph({
 			<div className="celery-task-graph-grid-content">
 				{graphState === CeleryTaskGraphState.P99 && (
 					<GridCard
-						widget={celeryTaskLatencyWidgetData(graphState)}
+						widget={updatedWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						onClickHandler={onGraphClick}
@@ -141,7 +164,7 @@ function CeleryTaskLatencyGraph({
 
 				{graphState === CeleryTaskGraphState.P95 && (
 					<GridCard
-						widget={celeryTaskLatencyWidgetData(graphState)}
+						widget={updatedWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						onClickHandler={onGraphClick}
@@ -150,7 +173,7 @@ function CeleryTaskLatencyGraph({
 				)}
 				{graphState === CeleryTaskGraphState.P90 && (
 					<GridCard
-						widget={celeryTaskLatencyWidgetData(graphState)}
+						widget={updatedWidgetData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						onClickHandler={onGraphClick}

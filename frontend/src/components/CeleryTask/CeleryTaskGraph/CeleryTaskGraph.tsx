@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -7,7 +8,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -15,6 +16,10 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import {
+	applyCeleryFilterOnWidgetData,
+	getFiltersFromQueryParams,
+} from '../CeleryUtils';
 import { celeryTimeSeriesTablesWidgetData } from './CeleryTaskGraphUtils';
 
 function CeleryTaskGraph({
@@ -26,6 +31,7 @@ function CeleryTaskGraph({
 	panelType,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	applyCeleryTaskFilter,
 }: {
 	widgetData: Widgets;
 	onClick?: (task: CaptureDataProps) => void;
@@ -35,12 +41,28 @@ function CeleryTaskGraph({
 	panelType?: PANEL_TYPES;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
+	applyCeleryTaskFilter?: boolean;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
+
+	const selectedFilters = useMemo(
+		() =>
+			getFiltersFromQueryParams(
+				QueryParams.taskName,
+				urlQuery,
+				'celery.task_name',
+			),
+		[urlQuery],
+	);
+
+	const updatedWidgetData = useMemo(
+		() => applyCeleryFilterOnWidgetData(selectedFilters || [], widgetData),
+		[selectedFilters, widgetData],
+	);
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
@@ -66,7 +88,7 @@ function CeleryTaskGraph({
 			className="celery-task-graph"
 		>
 			<GridCard
-				widget={widgetData}
+				widget={applyCeleryTaskFilter ? updatedWidgetData : widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onDragSelect={onDragSelect}
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
@@ -93,6 +115,7 @@ function CeleryTaskGraph({
 				isQueryEnabled={queryEnabled}
 				openTracesButton={openTracesButton}
 				onOpenTraceBtnClick={onOpenTraceBtnClick}
+				version={ENTITY_VERSION_V4}
 			/>
 		</Card>
 	);
@@ -105,6 +128,7 @@ CeleryTaskGraph.defaultProps = {
 	panelType: PANEL_TYPES.TIME_SERIES,
 	openTracesButton: false,
 	onOpenTraceBtnClick: undefined,
+	applyCeleryTaskFilter: false,
 };
 
 export default CeleryTaskGraph;
