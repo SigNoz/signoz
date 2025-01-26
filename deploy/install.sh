@@ -301,7 +301,7 @@ request_sudo() {
             echo -e "Got it! Thanks!! 🙏\n"
             echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
         fi
-	fi
+    fi
 }
 
 echo ""
@@ -309,7 +309,7 @@ echo -e "👋 Thank you for trying out SigNoz! "
 echo ""
 
 sudo_cmd=""
-docker_compose_cmd=""
+docker_compose_cmd="docker compose"
 
 # Check sudo permissions
 if (( $EUID != 0 )); then
@@ -317,7 +317,13 @@ if (( $EUID != 0 )); then
     echo "   In case of any failure or prompt, please consider running the script with sudo privileges."
     echo ""
 else
-    sudo_cmd="sudo"
+    if hash sudo 2>/dev/null; then
+        sudo_cmd="sudo"
+    else
+        echo "🟡 Running installer with root permissions but sudo command not found, running without sudo"
+        echo "   In case of any failure or prompt, please consider installing sudo and running the script again."
+        echo ""
+    fi
 fi
 
 # Checking OS and assigning package manager
@@ -458,11 +464,10 @@ if ! is_command_present docker; then
 fi
 
 if has_docker_compose_plugin; then
-    echo "docker compose plugin is present, using it"
-    docker_compose_cmd="docker compose"
-# Install docker-compose
+    echo "docker compose plugin found, using it"
 else
     docker_compose_cmd="docker-compose"
+    echo "docker compose plugin not found, using docker-compose instead"
     if ! is_command_present docker-compose; then
         request_sudo
         install_docker_compose
