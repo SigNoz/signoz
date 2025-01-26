@@ -357,6 +357,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			<Filters
 				startTime={traceMetadata.startTime / 1e3}
 				endTime={traceMetadata.endTime / 1e3}
+				traceID={traceMetadata.traceId}
 			/>
 			<TableV3
 				columns={columns}

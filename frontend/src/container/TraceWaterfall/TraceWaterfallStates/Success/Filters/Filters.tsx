@@ -16,7 +16,7 @@ import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { BASE_FILTER_QUERY } from './constants';
 
-function prepareQuery(filters: TagFilter): Query {
+function prepareQuery(filters: TagFilter, traceID: string): Query {
 	return {
 		...initialQueriesMap.traces,
 		builder: {
@@ -41,7 +41,7 @@ function prepareQuery(filters: TagFilter): Query {
 									id: 'trace_id--string----true',
 								},
 								op: '=',
-								value: '00000000000000003f3a1f74f0b67f9f',
+								value: traceID,
 							},
 						],
 					},
@@ -54,9 +54,11 @@ function prepareQuery(filters: TagFilter): Query {
 function Filters({
 	startTime,
 	endTime,
+	traceID,
 }: {
 	startTime: number;
 	endTime: number;
+	traceID: string;
 }): JSX.Element {
 	const [filters, setFilters] = useState<TagFilter>(BASE_FILTER_QUERY.filters);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
@@ -69,11 +71,11 @@ function Filters({
 
 	const { data, isFetching, error } = useGetQueryRange(
 		{
-			query: prepareQuery(filters),
+			query: prepareQuery(filters, traceID),
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
-			start: startTime - 1000,
-			end: endTime + 1000,
+			start: startTime,
+			end: endTime,
 			params: {
 				dataSource: 'traces',
 			},
