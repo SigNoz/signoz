@@ -7,485 +7,540 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
+// dynamic step interval
+export const getStepInterval = (startTime: number, endTime: number): number => {
+	const diffInMinutes = (endTime - startTime) / 1000000 / (60 * 1000); // Convert to minutes
+
+	console.log('startTime', startTime);
+	console.log('diffInMinutes', diffInMinutes);
+
+	if (diffInMinutes <= 15) return 60; // 15 min or less
+	if (diffInMinutes <= 30) return 60; // 30 min or less
+	if (diffInMinutes <= 60) return 120; // 1 hour or less
+	if (diffInMinutes <= 360) return 520; // 6 hours or less
+	if (diffInMinutes <= 1440) return 2440; // 1 day or less
+	if (diffInMinutes <= 10080) return 10080; // 1 week or less
+	return 54000; // More than a week (use monthly interval)
+};
+
 // State Graphs
-export const celeryAllStateWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.String,
-					id: '------false',
-					isColumn: false,
-					isJSON: false,
-					key: '',
-					type: '',
-				},
-				aggregateOperator: 'count',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [
-						{
-							id: 'a163d71c',
-							key: {
-								dataType: DataTypes.String,
-								id: 'celery.task_name--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'celery.task_name',
-								type: 'tag',
+export const celeryAllStateWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: '------false',
+						isColumn: false,
+						isJSON: false,
+						key: '',
+						type: '',
+					},
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: uuidv4(),
+								key: {
+									dataType: DataTypes.String,
+									id: 'celery.task_name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'celery.task_name',
+									type: 'tag',
+								},
+								op: '=',
+								value: 'tasks.tasks.divide',
 							},
-							op: '=',
-							value: 'tasks.tasks.divide',
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.state--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.state',
+							type: 'tag',
 						},
 					],
-					op: 'AND',
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'rate',
 				},
-				functions: [],
-				groupBy: [
-					{
-						dataType: DataTypes.String,
-						id: 'celery.state--string--tag--false',
-						isColumn: false,
-						isJSON: false,
-						key: 'celery.state',
-						type: 'tag',
-					},
-				],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'rate',
-			},
-		],
-		title: 'All',
-		description:
-			'Represents all states of task, including success, failed, and retry.',
-		panelTypes: PANEL_TYPES.BAR,
-	}),
-);
+			],
+			title: 'All',
+			description:
+				'Represents all states of task, including success, failed, and retry.',
+			panelTypes: PANEL_TYPES.BAR,
+		}),
+	);
 
-export const celeryRetryStateWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Retry',
-		description: 'Represents the number of retry tasks.',
-		panelTypes: PANEL_TYPES.BAR,
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.String,
-					id: '------false',
-					isColumn: false,
-					key: '',
-					type: '',
-				},
-				aggregateOperator: 'count',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [
-						{
-							id: '6d97eed3',
-							key: {
-								dataType: DataTypes.String,
-								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'celery.state',
-								type: 'tag',
+export const celeryRetryStateWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Retry',
+			description: 'Represents the number of retry tasks.',
+			panelTypes: PANEL_TYPES.BAR,
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: '------false',
+						isColumn: false,
+						key: '',
+						type: '',
+					},
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: '6d97eed3',
+								key: {
+									dataType: DataTypes.String,
+									id: 'celery.state--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'celery.state',
+									type: 'tag',
+								},
+								op: '=',
+								value: 'RETRY',
 							},
-							op: '=',
-							value: 'RETRY',
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.hostname--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
 						},
 					],
-					op: 'AND',
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'count',
 				},
-				functions: [],
-				groupBy: [
-					{
+			],
+		}),
+	);
+
+export const celeryFailedStateWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Failed',
+			description: 'Represents the number of failed tasks.',
+			panelTypes: PANEL_TYPES.BAR,
+			queryData: [
+				{
+					aggregateAttribute: {
 						dataType: DataTypes.String,
-						id: 'celery.hostname--string--tag--false',
+						id: '------false',
 						isColumn: false,
 						isJSON: false,
-						key: 'celery.hostname',
-						type: 'tag',
+						key: '',
+						type: '',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'count',
-			},
-		],
-	}),
-);
-
-export const celeryFailedStateWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Failed',
-		description: 'Represents the number of failed tasks.',
-		panelTypes: PANEL_TYPES.BAR,
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.String,
-					id: '------false',
-					isColumn: false,
-					isJSON: false,
-					key: '',
-					type: '',
-				},
-				aggregateOperator: 'count',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [
-						{
-							id: '5983eae2',
-							key: {
-								dataType: DataTypes.String,
-								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'celery.state',
-								type: 'tag',
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: '5983eae2',
+								key: {
+									dataType: DataTypes.String,
+									id: 'celery.state--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'celery.state',
+									type: 'tag',
+								},
+								op: '=',
+								value: 'FAILURE',
 							},
-							op: '=',
-							value: 'FAILURE',
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.hostname--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
 						},
 					],
-					op: 'AND',
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'rate',
 				},
-				functions: [],
-				groupBy: [
-					{
+			],
+		}),
+	);
+
+export const celerySuccessStateWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Success',
+			description: 'Represents the number of successful tasks.',
+			panelTypes: PANEL_TYPES.BAR,
+			queryData: [
+				{
+					aggregateAttribute: {
 						dataType: DataTypes.String,
-						id: 'celery.hostname--string--tag--false',
+						id: '------false',
 						isColumn: false,
 						isJSON: false,
-						key: 'celery.hostname',
-						type: 'tag',
+						key: '',
+						type: '',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'rate',
-			},
-		],
-	}),
-);
-
-export const celerySuccessStateWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Success',
-		description: 'Represents the number of successful tasks.',
-		panelTypes: PANEL_TYPES.BAR,
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.String,
-					id: '------false',
-					isColumn: false,
-					isJSON: false,
-					key: '',
-					type: '',
-				},
-				aggregateOperator: 'count',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [
-						{
-							id: '000c5a93',
-							key: {
-								dataType: DataTypes.String,
-								id: 'celery.state--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'celery.state',
-								type: 'tag',
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: '000c5a93',
+								key: {
+									dataType: DataTypes.String,
+									id: 'celery.state--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'celery.state',
+									type: 'tag',
+								},
+								op: '=',
+								value: 'SUCCESS',
 							},
-							op: '=',
-							value: 'SUCCESS',
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.hostname--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
 						},
 					],
-					op: 'AND',
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'rate',
 				},
-				functions: [],
-				groupBy: [
-					{
+			],
+		}),
+	);
+
+export const celeryTasksByWorkerWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Tasks/s by worker',
+			description: 'Represents the number of tasks executed by each worker.',
+			queryData: [
+				{
+					aggregateAttribute: {
 						dataType: DataTypes.String,
-						id: 'celery.hostname--string--tag--false',
+						id: '------false',
+						isColumn: false,
+						key: '',
+						type: '',
+					},
+					aggregateOperator: 'rate',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.hostname--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend: '',
+					limit: 10,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'rate',
+				},
+			],
+		}),
+	);
+
+export const celeryErrorByWorkerWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Error% by worker',
+			description: 'Represents the number of errors by each worker.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: '------false',
 						isColumn: false,
 						isJSON: false,
-						key: 'celery.hostname',
-						type: 'tag',
+						key: '',
+						type: '',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'rate',
-			},
-		],
-	}),
-);
+					aggregateOperator: 'rate',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.hostname--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend: '',
+					limit: 10,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'rate',
+				},
+			],
+		}),
+	);
 
-export const celeryTasksByWorkerWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Tasks/s by worker',
-		description: 'Represents the number of tasks executed by each worker.',
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.String,
-					id: '------false',
-					isColumn: false,
-					key: '',
-					type: '',
-				},
-				aggregateOperator: 'rate',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [],
-					op: 'AND',
-				},
-				functions: [],
-				groupBy: [
-					{
-						dataType: DataTypes.String,
-						id: 'celery.hostname--string--tag--false',
-						isColumn: false,
+export const celeryLatencyByWorkerWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Latency by Worker',
+			description: 'Represents the latency of tasks by each worker.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id: 'duration_nano--float64----true',
+						isColumn: true,
 						isJSON: false,
-						key: 'celery.hostname',
-						type: 'tag',
+						key: 'duration_nano',
+						type: '',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: 10,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'rate',
-			},
-		],
-	}),
-);
+					aggregateOperator: 'p99',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'celery.hostname--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend: '',
+					limit: 10,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'p99',
+				},
+			],
+			yAxisUnit: 'ns',
+		}),
+	);
 
-export const celeryErrorByWorkerWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Error% by worker',
-		description: 'Represents the number of errors by each worker.',
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.String,
-					id: '------false',
-					isColumn: false,
-					isJSON: false,
-					key: '',
-					type: '',
-				},
-				aggregateOperator: 'rate',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [],
-					op: 'AND',
-				},
-				functions: [],
-				groupBy: [
-					{
-						dataType: DataTypes.String,
-						id: 'celery.hostname--string--tag--false',
-						isColumn: false,
+export const celeryActiveTasksWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Tasks/ worker (Active tasks)',
+			description: 'Represents the number of active tasks.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id:
+							'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
+						isColumn: true,
 						isJSON: false,
-						key: 'celery.hostname',
-						type: 'tag',
+						key: 'flower_worker_number_of_currently_executing_tasks',
+						type: 'Gauge',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: 10,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'rate',
-			},
-		],
-	}),
-);
+					aggregateOperator: 'latest',
+					dataSource: DataSource.METRICS,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'worker--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'worker',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'avg',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'latest',
+				},
+			],
+		}),
+	);
 
-export const celeryLatencyByWorkerWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Latency by Worker',
-		description: 'Represents the latency of tasks by each worker.',
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.Float64,
-					id: 'duration_nano--float64----true',
-					isColumn: true,
-					isJSON: false,
-					key: 'duration_nano',
-					type: '',
-				},
-				aggregateOperator: 'p99',
-				dataSource: DataSource.TRACES,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [],
-					op: 'AND',
-				},
-				functions: [],
-				groupBy: [
-					{
-						dataType: DataTypes.String,
-						id: 'celery.hostname--string--tag--false',
-						isColumn: false,
+export const celeryWorkerOnlineWidgetData = (
+	startTime: number,
+	endTime: number,
+): Widgets =>
+	getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Worker Online',
+			description: 'Represents the number of workers online.',
+			panelTypes: PANEL_TYPES.VALUE,
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id: 'flower_task_runtime_seconds_sum--float64--Sum--true',
+						isColumn: true,
 						isJSON: false,
-						key: 'celery.hostname',
-						type: 'tag',
+						key: 'flower_task_runtime_seconds_sum',
+						type: 'Sum',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: 10,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'p99',
-			},
-		],
-		yAxisUnit: 'ns',
-	}),
-);
-
-export const celeryActiveTasksWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Tasks/ worker (Active tasks)',
-		description: 'Represents the number of active tasks.',
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.Float64,
-					id:
-						'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
-					isColumn: true,
-					isJSON: false,
-					key: 'flower_worker_number_of_currently_executing_tasks',
-					type: 'Gauge',
-				},
-				aggregateOperator: 'latest',
-				dataSource: DataSource.METRICS,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [],
-					op: 'AND',
-				},
-				functions: [],
-				groupBy: [
-					{
-						dataType: DataTypes.String,
-						id: 'worker--string--tag--false',
-						isColumn: false,
-						isJSON: false,
-						key: 'worker',
-						type: 'tag',
+					aggregateOperator: 'rate',
+					dataSource: DataSource.METRICS,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [],
+						op: 'AND',
 					},
-				],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'avg',
-				stepInterval: 60,
-				timeAggregation: 'latest',
-			},
-		],
-	}),
-);
-
-export const celeryWorkerOnlineWidgetData = getWidgetQueryBuilder(
-	getWidgetQuery({
-		title: 'Worker Online',
-		description: 'Represents the number of workers online.',
-		panelTypes: PANEL_TYPES.VALUE,
-		queryData: [
-			{
-				aggregateAttribute: {
-					dataType: DataTypes.Float64,
-					id: 'flower_task_runtime_seconds_sum--float64--Sum--true',
-					isColumn: true,
-					isJSON: false,
-					key: 'flower_task_runtime_seconds_sum',
-					type: 'Sum',
+					functions: [],
+					groupBy: [],
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: getStepInterval(startTime, endTime),
+					timeAggregation: 'rate',
 				},
-				aggregateOperator: 'rate',
-				dataSource: DataSource.METRICS,
-				disabled: false,
-				expression: 'A',
-				filters: {
-					items: [],
-					op: 'AND',
-				},
-				functions: [],
-				groupBy: [],
-				having: [],
-				legend: '',
-				limit: null,
-				orderBy: [],
-				queryName: 'A',
-				reduceTo: 'avg',
-				spaceAggregation: 'sum',
-				stepInterval: 60,
-				timeAggregation: 'rate',
-			},
-		],
-	}),
-);
+			],
+		}),
+	);
 
-// Task Latency
-export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
+export const celeryTaskLatencyWidgetData = (
+	type: string,
+	startTime: number,
+	endTime: number,
+): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			title: 'Task Latency',
@@ -531,7 +586,7 @@ export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
-					stepInterval: 60,
+					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p99',
 				},
 			],

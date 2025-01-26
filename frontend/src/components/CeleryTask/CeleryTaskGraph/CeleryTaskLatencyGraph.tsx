@@ -10,9 +10,11 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
@@ -89,13 +91,19 @@ function CeleryTaskLatencyGraph({
 		[urlQuery],
 	);
 
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const celeryTaskLatencyData = useMemo(
+		() => celeryTaskLatencyWidgetData(graphState, minTime, maxTime),
+		[graphState, minTime, maxTime],
+	);
+
 	const updatedWidgetData = useMemo(
 		() =>
-			applyCeleryFilterOnWidgetData(
-				selectedFilters || [],
-				celeryTaskLatencyWidgetData(graphState),
-			),
-		[graphState, selectedFilters],
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryTaskLatencyData),
+		[celeryTaskLatencyData, selectedFilters],
 	);
 
 	const onGraphClick = (

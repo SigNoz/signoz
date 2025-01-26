@@ -1,5 +1,10 @@
 import './CeleryTaskGraph.style.scss';
 
+import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
+
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {
@@ -19,10 +24,39 @@ export default function CeleryTaskGraphGrid({
 	onClick: (task: CaptureDataProps) => void;
 	queryEnabled: boolean;
 }): JSX.Element {
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const celeryWorkerOnlineData = useMemo(
+		() => celeryWorkerOnlineWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celeryActiveTasksData = useMemo(
+		() => celeryActiveTasksWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celeryErrorByWorkerData = useMemo(
+		() => celeryErrorByWorkerWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celeryLatencyByWorkerData = useMemo(
+		() => celeryLatencyByWorkerWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celeryTasksByWorkerData = useMemo(
+		() => celeryTasksByWorkerWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
 	const bottomWidgetData = [
-		celeryTasksByWorkerWidgetData,
-		celeryErrorByWorkerWidgetData,
-		celeryLatencyByWorkerWidgetData,
+		celeryTasksByWorkerData,
+		celeryErrorByWorkerData,
+		celeryLatencyByWorkerData,
 	];
 
 	const rightPanelTitle = [
@@ -36,16 +70,16 @@ export default function CeleryTaskGraphGrid({
 			<div className="celery-task-graph-grid">
 				<CeleryTaskHistogram queryEnabled={queryEnabled} />
 				<CeleryTaskGraph
-					key={celeryWorkerOnlineWidgetData.id}
-					widgetData={celeryWorkerOnlineWidgetData}
+					key={celeryWorkerOnlineData.id}
+					widgetData={celeryWorkerOnlineData}
 					queryEnabled={queryEnabled}
 				/>
 			</div>
 			<div className="celery-task-graph-grid">
 				<CeleryTaskLatencyGraph onClick={onClick} queryEnabled={queryEnabled} />
 				<CeleryTaskGraph
-					key={celeryActiveTasksWidgetData.id}
-					widgetData={celeryActiveTasksWidgetData}
+					key={celeryActiveTasksData.id}
+					widgetData={celeryActiveTasksData}
 					queryEnabled={queryEnabled}
 				/>
 			</div>
