@@ -26,6 +26,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			Username: config.Clickhouse.Username,
 			Password: config.Clickhouse.Password,
 		},
+		MaxIdleConns: config.Connection.MaxIdleConns,
+		MaxOpenConns: config.Connection.MaxOpenConns,
+		DialTimeout:  config.Connection.DialTimeout,
+		Debug:        config.Clickhouse.Debug,
 	})
 	if err != nil {
 		return nil, err

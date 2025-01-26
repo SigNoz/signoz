@@ -17,21 +17,15 @@ type Config struct {
 
 type ConnectionConfig struct {
 	// MaxOpenConns is the maximum number of open connections to the database.
-	MaxOpenConns int `mapstructure:"max_open_conns"`
+	MaxOpenConns int           `mapstructure:"max_open_conns"`
+	MaxIdleConns int           `mapstructure:"max_idle_conns"`
+	DialTimeout  time.Duration `mapstructure:"dial_timeout"`
 }
 
 type ClickhouseConfig struct {
 	Address  string `mapstructure:"address"`
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
-
-	MaxIdleConns int           `mapstructure:"max_idle_conns"`
-	MaxOpenConns int           `mapstructure:"max_open_conns"`
-	DialTimeout  time.Duration `mapstructure:"dial_timeout"`
-
-	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
-	WriteTimeout time.Duration `mapstructure:"write_timeout"`
-	AltHosts     []string      `mapstructure:"alt_hosts"`
 
 	Debug bool `mapstructure:"debug"`
 }
@@ -46,6 +40,8 @@ func newConfig() factory.Config {
 		Provider: "clickhouse",
 		Connection: ConnectionConfig{
 			MaxOpenConns: 100,
+			MaxIdleConns: 50,
+			DialTimeout:  5 * time.Second,
 		},
 		Clickhouse: ClickhouseConfig{
 			Address: "localhost:9000",
