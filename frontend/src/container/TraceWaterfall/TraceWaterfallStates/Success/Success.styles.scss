@@ -115,7 +115,6 @@
 			position: relative;
 			font-weight: bold;
 			text-align: center;
-			height: 0px;
 		}
 
 		.div-td {
@@ -274,6 +273,14 @@
 					background: unset;
 				}
 			}
+		}
+
+		.div-td + .div-td {
+			border-left: 1px solid var(--bg-slate-400);
+		}
+
+		.div-th + .div-th {
+			border-left: 1px solid var(--bg-slate-400);
 		}
 
 		.div-tr .div-th:nth-child(2) {

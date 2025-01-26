@@ -123,7 +123,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		<div className="flamegraph">
 			<div
 				className="flamegraph-stats"
-				style={{ width: `${traceFlamegraphStatsWidth}px` }}
+				style={{ width: `${traceFlamegraphStatsWidth + 22}px` }}
 			>
 				<div className="exec-time-service">% exec time</div>
 				<div className="stats">
@@ -161,7 +161,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 			</div>
 			<div
 				className="flamegraph-chart"
-				style={{ width: `calc(100% - ${traceFlamegraphStatsWidth}px)` }}
+				style={{ width: `calc(100% - ${traceFlamegraphStatsWidth + 22}px)` }}
 			>
 				{getContent}
 			</div>

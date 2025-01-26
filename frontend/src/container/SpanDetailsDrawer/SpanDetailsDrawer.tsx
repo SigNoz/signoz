@@ -77,7 +77,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			<section className="header">
 				{!isSpanDetailsDocked && (
 					<div className="heading">
-						<div className="dot" />
+						<div className="dot" style={{ background: color }} />
 						<Typography.Text className="text">Span Details</Typography.Text>
 					</div>
 				)}
