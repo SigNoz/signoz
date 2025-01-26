@@ -17,6 +17,7 @@ QUERY_SERVICE_DIRECTORY ?= pkg/query-service
 EE_QUERY_SERVICE_DIRECTORY ?= ee/query-service
 STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
 SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
+CH_HISTOGRAM_QUANTILE_DIRECTORY ?= scripts/clickhouse/histogramquantile
 
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
@@ -191,3 +192,15 @@ check-no-ee-references:
 
 test:
 	go test ./pkg/...
+
+goreleaser-snapshot:
+	@if [[ ${GORELEASER_WORKDIR} ]]; then \
+		cd ${GORELEASER_WORKDIR} && \
+		goreleaser release --clean --snapshot; \
+		cd -; \
+	else \
+		goreleaser release --clean --snapshot; \
+	fi
+
+goreleaser-snapshot-histogram-quantile:
+	make GORELEASER_WORKDIR=$(CH_HISTOGRAM_QUANTILE_DIRECTORY) goreleaser-snapshot
