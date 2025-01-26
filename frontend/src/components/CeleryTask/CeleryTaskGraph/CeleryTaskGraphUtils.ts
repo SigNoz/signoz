@@ -67,7 +67,7 @@ export const celeryAllStateWidgetData = getWidgetQueryBuilder(
 		title: 'All',
 		description:
 			'Represents all states of task, including success, failed, and retry.',
-		panelTypes: PANEL_TYPES.HISTOGRAM,
+		panelTypes: PANEL_TYPES.BAR,
 	}),
 );
 
@@ -75,7 +75,7 @@ export const celeryRetryStateWidgetData = getWidgetQueryBuilder(
 	getWidgetQuery({
 		title: 'Retry',
 		description: 'Represents the number of retry tasks.',
-		panelTypes: PANEL_TYPES.HISTOGRAM,
+		panelTypes: PANEL_TYPES.BAR,
 		queryData: [
 			{
 				aggregateAttribute: {
@@ -136,7 +136,7 @@ export const celeryFailedStateWidgetData = getWidgetQueryBuilder(
 	getWidgetQuery({
 		title: 'Failed',
 		description: 'Represents the number of failed tasks.',
-		panelTypes: PANEL_TYPES.HISTOGRAM,
+		panelTypes: PANEL_TYPES.BAR,
 		queryData: [
 			{
 				aggregateAttribute: {
@@ -198,7 +198,7 @@ export const celerySuccessStateWidgetData = getWidgetQueryBuilder(
 	getWidgetQuery({
 		title: 'Success',
 		description: 'Represents the number of successful tasks.',
-		panelTypes: PANEL_TYPES.HISTOGRAM,
+		panelTypes: PANEL_TYPES.BAR,
 		queryData: [
 			{
 				aggregateAttribute: {

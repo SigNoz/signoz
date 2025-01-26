@@ -6,18 +6,23 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as uuidv4 } from 'uuid';
 
 import CeleryTaskGraph from '../CeleryTaskGraph/CeleryTaskGraph';
 
@@ -36,6 +41,40 @@ export type CeleryTaskDetailProps = {
 	widgetData: Widgets;
 	taskData: CeleryTaskData;
 	drawerOpen: boolean;
+};
+
+const createFiltersFromData = (
+	data: Record<string, any>,
+): Array<{
+	id: string;
+	key: {
+		key: string;
+		dataType: DataTypes;
+		type: string;
+		isColumn: boolean;
+		isJSON: boolean;
+		id: string;
+	};
+	op: string;
+	value: string;
+}> => {
+	const excludeKeys = ['A', 'A_without_unit'];
+
+	return Object.entries(data)
+		.filter(([key]) => !excludeKeys.includes(key))
+		.map(([key, value]) => ({
+			id: uuidv4(),
+			key: {
+				key,
+				dataType: DataTypes.String,
+				type: 'tag',
+				isColumn: false,
+				isJSON: false,
+				id: `${key}--string--tag--false`,
+			},
+			op: '=',
+			value: value.toString(),
+		}));
 };
 
 export default function CeleryTaskDetail({
@@ -104,15 +143,45 @@ export default function CeleryTaskDetail({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const { currentQuery } = useQueryBuilder();
+
+	const prepareQuery = useCallback(
+		(selectedFilters: TagFilterItem[]): Query => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item) => ({
+					...item,
+					dataSource: DataSource.TRACES,
+					aggregateOperator: MetricAggregateOperator.NOOP,
+					filters: {
+						...item.filters,
+						items: selectedFilters,
+					},
+				})),
+			},
+		}),
+		[currentQuery],
+	);
+
 	const navigateToTrace = (data: RowData): void => {
-		console.log('navigateToTrace', data);
+		const { entity, value } = taskData;
+		const selectedFilters = createFiltersFromData({ ...data, [entity]: value });
 		const urlParams = new URLSearchParams();
 		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
 		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 
-		const newTraceExplorerPath = `${ROUTES.TRACES_EXPLORER}`; // todo-sagar - add filters
+		const JSONCompositeQuery = encodeURIComponent(
+			JSON.stringify(prepareQuery(selectedFilters)),
+		);
 
-		history.push(newTraceExplorerPath);
+		const newTraceExplorerPath = `${
+			ROUTES.TRACES_EXPLORER
+		}?${urlParams.toString()}&${
+			QueryParams.compositeQuery
+		}=${JSONCompositeQuery}`;
+
+		window.open(newTraceExplorerPath, '_blank');
 	};
 
 	return (

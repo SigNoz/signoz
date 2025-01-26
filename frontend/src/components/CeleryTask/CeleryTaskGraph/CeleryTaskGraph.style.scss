@@ -23,7 +23,7 @@
 				height: calc(100% - 18px);
 
 				.widget-graph-container {
-					&.histogram {
+					&.bar {
 						height: calc(100% - 85px);
 					}
 				}
@@ -45,7 +45,7 @@
 				height: calc(100% - 18px);
 
 				.widget-graph-container {
-					&.histogram,
+					&.bar,
 					&.graph {
 						height: calc(100% - 85px);
 					}
