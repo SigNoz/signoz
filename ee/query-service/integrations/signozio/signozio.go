@@ -47,7 +47,7 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 
 	req, err := http.NewRequest("GET", C.GatewayUrl+"/v2/licenses/me", nil)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to create request"))
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to create request: %v", err)))
 	}
 
 	// Setting the custom header
@@ -55,12 +55,12 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 
 	response, err := client.Do(req)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to make post request"))
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to make post request: %v", err)))
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to read validation response"))
+		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to read validation response from %v", C.GatewayUrl)))
 	}
 
 	defer response.Body.Close()
