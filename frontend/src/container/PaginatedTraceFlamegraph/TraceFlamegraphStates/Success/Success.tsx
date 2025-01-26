@@ -14,6 +14,7 @@ import {
 	useCallback,
 	useEffect,
 	useRef,
+	useState,
 } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -45,6 +46,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	const history = useHistory();
 	const isDarkMode = useIsDarkMode();
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
+	const [hoveredSpanId, setHoveredSpanId] = useState<string>('');
 	const renderSpanLevel = useCallback(
 		(_: number, spans: FlamegraphSpan[]): JSX.Element => (
 			<div className="flamegraph-row">
@@ -77,8 +79,12 @@ function Success(props: ISuccessProps): JSX.Element {
 									left: `${leftOffset}%`,
 									width: `${width}%`,
 									backgroundColor:
-										selectedSpan?.spanId === span.spanId ? `${selectedSpanColor}` : color,
+										selectedSpan?.spanId === span.spanId || hoveredSpanId === span.spanId
+											? `${selectedSpanColor}`
+											: color,
 								}}
+								onMouseEnter={(): void => setHoveredSpanId(span.spanId)}
+								onMouseLeave={(): void => setHoveredSpanId('')}
 								onClick={(event): void => {
 									event.stopPropagation();
 									event.preventDefault();
@@ -92,7 +98,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			</div>
 		),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[traceMetadata.endTime, traceMetadata.startTime, selectedSpan],
+		[traceMetadata.endTime, traceMetadata.startTime, selectedSpan, hoveredSpanId],
 	);
 
 	const handleRangeChanged = useCallback(

@@ -1,6 +1,8 @@
 import './Filters.styles.scss';
 
-import { Button, Typography } from 'antd';
+import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Button, Spin, Tooltip, Typography } from 'antd';
+import { AxiosError } from 'axios';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
@@ -65,13 +67,13 @@ function Filters({
 	const { search } = useLocation();
 	const history = useHistory();
 
-	const { data } = useGetQueryRange(
+	const { data, isFetching, error } = useGetQueryRange(
 		{
 			query: prepareQuery(filters),
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
-			start: startTime,
-			end: endTime,
+			start: startTime - 1000,
+			end: endTime + 1000,
 			params: {
 				dataSource: 'traces',
 			},
@@ -149,6 +151,12 @@ function Filters({
 						}}
 					/>
 				</div>
+			)}
+			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
+			{error && (
+				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
+					<InfoCircleOutlined size={14} />
+				</Tooltip>
 			)}
 		</div>
 	);
