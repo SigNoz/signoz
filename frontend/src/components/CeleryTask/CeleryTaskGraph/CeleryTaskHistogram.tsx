@@ -7,10 +7,12 @@ import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useCallback, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 // import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
@@ -38,6 +40,10 @@ function CeleryTaskHistogram({
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
 
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
 			const startTimestamp = Math.trunc(start);
@@ -59,6 +65,26 @@ function CeleryTaskHistogram({
 		CeleryTaskState.All,
 	);
 
+	const celeryAllStateData = useMemo(
+		() => celeryAllStateWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celeryFailedStateData = useMemo(
+		() => celeryFailedStateWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celeryRetryStateData = useMemo(
+		() => celeryRetryStateWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
+	const celerySuccessStateData = useMemo(
+		() => celerySuccessStateWidgetData(minTime, maxTime),
+		[minTime, maxTime],
+	);
+
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -72,7 +98,7 @@ function CeleryTaskHistogram({
 			<div className="celery-task-graph-grid-content">
 				{histogramState === CeleryTaskState.All && (
 					<GridCard
-						widget={celeryAllStateWidgetData}
+						widget={celeryAllStateData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -80,7 +106,7 @@ function CeleryTaskHistogram({
 				)}
 				{histogramState === CeleryTaskState.Failed && (
 					<GridCard
-						widget={celeryFailedStateWidgetData}
+						widget={celeryFailedStateData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -88,7 +114,7 @@ function CeleryTaskHistogram({
 				)}
 				{histogramState === CeleryTaskState.Retry && (
 					<GridCard
-						widget={celeryRetryStateWidgetData}
+						widget={celeryRetryStateData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -96,7 +122,7 @@ function CeleryTaskHistogram({
 				)}
 				{histogramState === CeleryTaskState.Successful && (
 					<GridCard
-						widget={celerySuccessStateWidgetData}
+						widget={celerySuccessStateData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}

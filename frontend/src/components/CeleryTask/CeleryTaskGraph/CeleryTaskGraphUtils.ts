@@ -591,8 +591,11 @@ export const celeryTaskLatencyWidgetData = (
 		}),
 	);
 
-// Task Latency
-export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
+export const celeryTaskLatencyWidgetData = (
+	type: string,
+	startTime: number,
+	endTime: number,
+): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			title: 'Task Latency',
@@ -638,7 +641,7 @@ export const celeryTaskLatencyWidgetData = (type: string): Widgets =>
 					queryName: 'A',
 					reduceTo: 'avg',
 					spaceAggregation: 'sum',
-					stepInterval: 60,
+					stepInterval: getStepInterval(startTime, endTime),
 					timeAggregation: 'p99',
 				},
 			],
