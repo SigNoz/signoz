@@ -176,22 +176,6 @@ export const getUPlotChartOptions = ({
 
 	const bands = stackBarChart ? getBands(series) : null;
 
-	console.log(
-		getSeries({
-			series:
-				stackBarChart && isUndefined(hiddenGraph)
-					? series
-					: apiResponse?.data?.result,
-			widgetMetaData: apiResponse?.data.result,
-			graphsVisibilityStates,
-			panelType,
-			currentQuery,
-			stackBarChart,
-			hiddenGraph,
-			isDarkMode,
-		}),
-	);
-
 	return {
 		id,
 		width: dimensions.width,
