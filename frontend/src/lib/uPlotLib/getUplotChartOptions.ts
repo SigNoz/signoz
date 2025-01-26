@@ -57,7 +57,7 @@ export interface GetUPlotChartOptions {
 	verticalLineTimestamp?: number;
 	tzDate?: (timestamp: number) => Date;
 	timezone?: string;
-	customSeries?: uPlot.Series[];
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
 }
 
 /** the function converts series A , series B , series C to
@@ -175,22 +175,6 @@ export const getUPlotChartOptions = ({
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 
 	const bands = stackBarChart ? getBands(series) : null;
-
-	console.log(
-		getSeries({
-			series:
-				stackBarChart && isUndefined(hiddenGraph)
-					? series
-					: apiResponse?.data?.result,
-			widgetMetaData: apiResponse?.data.result,
-			graphsVisibilityStates,
-			panelType,
-			currentQuery,
-			stackBarChart,
-			hiddenGraph,
-			isDarkMode,
-		}),
-	);
 
 	return {
 		id,
@@ -388,8 +372,8 @@ export const getUPlotChartOptions = ({
 				},
 			],
 		},
-		series: Array.isArray(customSeries)
-			? customSeries
+		series: customSeries
+			? customSeries(apiResponse?.data?.result || [])
 			: getSeries({
 					series:
 						stackBarChart && isUndefined(hiddenGraph)

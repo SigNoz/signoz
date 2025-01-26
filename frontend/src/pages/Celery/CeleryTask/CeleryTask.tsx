@@ -6,7 +6,6 @@ import CeleryTaskDetail, {
 } from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphGrid';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { ListMinus } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CeleryTask(): JSX.Element {
@@ -14,15 +13,10 @@ export default function CeleryTask(): JSX.Element {
 
 	const onTaskClick = (captureData: CaptureDataProps): void => {
 		setTask(captureData);
-		console.log(captureData);
 	};
 
 	return (
 		<div className="celery-task-container">
-			<div className="celery-task-breadcrumb">
-				<ListMinus size={16} />
-				Messaging Queues / Celery Task
-			</div>
 			<div className="celery-content">
 				<div className="celery-content-header">
 					<p className="celery-content-header-title">Celery Task</p>

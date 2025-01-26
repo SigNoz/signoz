@@ -1,12 +1,16 @@
 import './CeleryTaskGraph.style.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import getLabelName from 'lib/getLabelName';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,9 +18,11 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { QueryData } from 'types/api/widgets/getQuery';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import { paths } from '../CeleryUtils';
 import {
 	celeryAllStateWidgetData,
 	celeryFailedStateWidgetData,
@@ -116,6 +122,51 @@ function CeleryTaskBar({
 		});
 	};
 
+	const getGraphSeries = (color: string, label: string): any => ({
+		drawStyle: 'bars',
+		paths,
+		lineInterpolation: 'spline',
+		show: true,
+		label,
+		fill: `${color}90`,
+		stroke: color,
+		width: 2,
+		spanGaps: true,
+		points: {
+			size: 5,
+			show: false,
+			stroke: color,
+		},
+	});
+
+	const customSeries = (data: QueryData[]): uPlot.Series[] => {
+		console.log(data);
+		const configurations: uPlot.Series[] = [
+			{ label: 'Timestamp', stroke: 'purple' },
+		];
+		for (let i = 0; i < data.length; i += 1) {
+			const { metric = {}, queryName = '', legend = '' } = data[i] || {};
+			const label = getLabelName(metric, queryName || '', legend || '');
+			let color = generateColor(
+				label,
+				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			);
+			if (label === 'SUCCESS') {
+				color = Color.BG_FOREST_500;
+			}
+			if (label === 'FAILURE') {
+				color = Color.BG_CHERRY_500;
+			}
+
+			if (label === 'RETRY') {
+				color = Color.BG_AMBER_400;
+			}
+			const series = getGraphSeries(color, label);
+			configurations.push(series);
+		}
+		return configurations;
+	};
+
 	return (
 		<Card
 			isDarkMode={isDarkMode}
@@ -133,6 +184,7 @@ function CeleryTaskBar({
 						onClickHandler={(...args): void =>
 							onGraphClick(celerySlowestTasksTableWidgetData, ...args)
 						}
+						customSeries={customSeries}
 					/>
 				)}
 				{barState === CeleryTaskState.Failed && (
@@ -144,6 +196,7 @@ function CeleryTaskBar({
 						onClickHandler={(...args): void =>
 							onGraphClick(celeryFailedTasksTableWidgetData, ...args)
 						}
+						customSeries={customSeries}
 					/>
 				)}
 				{barState === CeleryTaskState.Retry && (
@@ -155,6 +208,7 @@ function CeleryTaskBar({
 						onClickHandler={(...args): void =>
 							onGraphClick(celeryRetryTasksTableWidgetData, ...args)
 						}
+						customSeries={customSeries}
 					/>
 				)}
 				{barState === CeleryTaskState.Successful && (
@@ -166,6 +220,7 @@ function CeleryTaskBar({
 						onClickHandler={(...args): void =>
 							onGraphClick(celerySuccessTasksTableWidgetData, ...args)
 						}
+						customSeries={customSeries}
 					/>
 				)}
 			</div>

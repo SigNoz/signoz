@@ -7,6 +7,7 @@ import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
 import { MenuItemKeys } from '../WidgetHeader/contants';
@@ -35,7 +36,7 @@ export interface WidgetGraphComponentProps {
 	customTooltipElement?: HTMLDivElement;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
-	customSeries?: uPlot.Series[];
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
 }
 
 export interface GridCardGraphProps {
@@ -52,7 +53,7 @@ export interface GridCardGraphProps {
 	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
-	customSeries?: uPlot.Series[];
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

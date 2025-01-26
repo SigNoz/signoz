@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
+import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -51,7 +52,6 @@ export function applyCeleryFilterOnWidgetData(
 	filters: TagFilterItem[],
 	widgetData: Widgets,
 ): Widgets {
-	console.log(filters, widgetData);
 	return {
 		...widgetData,
 		query: {
@@ -73,3 +73,20 @@ export function applyCeleryFilterOnWidgetData(
 		},
 	};
 }
+
+export const paths = (
+	u: any,
+	seriesIdx: number,
+	idx0: number,
+	idx1: number,
+	extendGap: boolean,
+	buildClip: boolean,
+): uPlot.Series.PathBuilder => {
+	const s = u.series[seriesIdx];
+	const style = s.drawStyle;
+	const interp = s.lineInterpolation;
+
+	const renderer = getRenderer(style, interp);
+
+	return renderer(u, seriesIdx, idx0, idx1, extendGap, buildClip);
+};

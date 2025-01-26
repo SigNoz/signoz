@@ -4,7 +4,7 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Inbox } from 'lucide-react';
+import { ListMinus, Rows3 } from 'lucide-react';
 import { useLocation } from 'react-use';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';
@@ -14,7 +14,7 @@ export const Kafka: TabRoutes = {
 	Component: MessagingQueues,
 	name: (
 		<div className="tab-item">
-			<Inbox size={16} /> Kafka
+			<ListMinus size={16} /> Kafka
 		</div>
 	),
 	route: ROUTES.MESSAGING_QUEUES,
@@ -25,7 +25,7 @@ export const Celery: TabRoutes = {
 	Component: CeleryTask,
 	name: (
 		<div className="tab-item">
-			<Inbox size={16} /> Celery Task
+			<Rows3 size={16} /> Celery Task
 		</div>
 	),
 	route: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
