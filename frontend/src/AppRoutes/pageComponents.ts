@@ -229,7 +229,7 @@ export const InstalledIntegrations = Loadable(
 		),
 );
 
-export const MessagingQueues = Loadable(
+export const MessagingQueuesMainPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
 );
