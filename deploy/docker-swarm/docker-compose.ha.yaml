@@ -72,10 +72,11 @@ services:
           echo "histogram-quantile is already present, skipping init-clickhouse"
           exit 0
         fi
-        arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
-        echo "Fetching histogram-binary for ${arch} architecture"
-        wget "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2Fv0.0.1/histogram-quantile_linux_amd64.tar.gz"
-        tar -xvzf histogram-quantile_linux_amd64.tar.gz
+        node_os=$$(uname -s | tr '[:upper:]' '[:lower:]')
+        node_arch=$$(uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+        echo "Fetching histogram-binary for $${node_os}/$${node_arch}"
+        wget "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2Fv0.0.1/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
+        tar -xvzf histogram-quantile_$${node_os}_$${node_arch}.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
