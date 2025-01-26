@@ -65,7 +65,7 @@ function Filters({
 	const { search } = useLocation();
 	const history = useHistory();
 
-	const { data, isFetching, isError } = useGetQueryRange(
+	const { data } = useGetQueryRange(
 		{
 			query: prepareQuery(filters),
 			graphType: PANEL_TYPES.LIST,
@@ -108,6 +108,9 @@ function Filters({
 					return val.data.spanID;
 				}),
 			);
+		} else {
+			setFilteredSpanIds([]);
+			setCurrentSearchedIndex(0);
 		}
 	}, [data?.payload.data.newResult.data.result]);
 
@@ -119,7 +122,6 @@ function Filters({
 		history.replace({ search: searchParams.toString() });
 	}, [currentSearchedIndex, filteredSpanIds, history, search]);
 
-	console.log(data, isFetching, isError, filteredSpanIds);
 	return (
 		<div className="filter-row">
 			<QueryBuilderSearchV2

@@ -31,3 +31,13 @@
 		}
 	}
 }
+
+.lightMode {
+	.filter-row {
+		.pre-next-toggle {
+			.ant-typography {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

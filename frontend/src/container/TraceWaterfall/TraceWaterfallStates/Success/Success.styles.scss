@@ -374,13 +374,12 @@
 				}
 			}
 
-			.resizer {
-				background: var(--bg-vanilla-400);
+			.div-td + .div-td {
+				border-left: 1px solid var(--bg-vanilla-300);
 			}
 
-			.resizer.isResizing {
-				background: blue;
-				opacity: 1;
+			.div-th + .div-th {
+				border-left: 1px solid var(--bg-vanilla-300);
 			}
 
 			.div-thead {
