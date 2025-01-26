@@ -224,7 +224,7 @@ function QueryBuilderSearchV2(
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			searchText: searchValue,
+			searchText: searchValue?.split(' ')[0],
 			dataSource: query.dataSource,
 			aggregateOperator: query.aggregateOperator,
 			aggregateAttribute: query.aggregateAttribute.key,

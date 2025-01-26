@@ -29,6 +29,8 @@ import {
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
+import Filters from './Filters/Filters';
+
 // css config
 const CONNECTOR_WIDTH = 28;
 const VERTICAL_CONNECTOR_WIDTH = 1;
@@ -352,6 +354,10 @@ function Success(props: ISuccessProps): JSX.Element {
 					</Button>
 				</div>
 			)}
+			<Filters
+				startTime={traceMetadata.startTime / 1e3}
+				endTime={traceMetadata.endTime / 1e3}
+			/>
 			<TableV3
 				columns={columns}
 				data={spans}
