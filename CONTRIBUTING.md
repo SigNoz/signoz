@@ -258,7 +258,7 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 - run `cd pkg/query-service/` to move to `query-service` directory,
 - Then, you need to create a `.env` file with the following environment variable 
     ```
-    SIGNOZ_LOCAL_DB_PATH="./signoz.db"
+    SIGNOZ_SQLSTORE_SQLITE_PATH="./signoz.db"
     ```
 to set your local environment with the right `RELATIONAL_DATASOURCE_PATH` as mentioned in [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go#L38)
 

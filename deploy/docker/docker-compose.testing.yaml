@@ -17,7 +17,10 @@ x-clickhouse-defaults: &clickhouse-defaults
     signoz.io/port: "9363"
     signoz.io/path: "/metrics"
   depends_on:
-    - zookeeper-1
+    init-clickhouse:
+      condition: service_completed_successfully
+    zookeeper-1:
+      condition: service_healthy
   healthcheck:
     test:
       - CMD
@@ -41,6 +44,13 @@ x-zookeeper-defaults: &zookeeper-defaults
     signoz.io/scrape: "true"
     signoz.io/port: "9141"
     signoz.io/path: "/metrics"
+  healthcheck:
+    test:
+      - CMD-SHELL
+      - curl -s -m 2 http://localhost:8080/commands/ruok | grep error | grep null
+    interval: 30s
+    timeout: 5s
+    retries: 3
 x-db-depend: &db-depend
   <<: *common
   depends_on:
@@ -49,6 +59,25 @@ x-db-depend: &db-depend
     schema-migrator-sync:
       condition: service_completed_successfully
 services:
+  init-clickhouse:
+    <<: *common
+    image: clickhouse/clickhouse-server:24.1.2-alpine
+    container_name: signoz-init-clickhouse
+    command:
+      - bash
+      - -c
+      - |
+        if [ -f /var/lib/clickhouse/user_scripts/histogram-quantile ]; then
+          echo "histogram-quantile is already present, skipping init-clickhouse"
+          exit 0
+        fi
+        arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+        echo "Fetching histogram-binary for ${arch} architecture"
+        wget "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2Fv0.0.1/histogram-quantile_linux_amd64.tar.gz"
+        tar -xvzf histogram-quantile_linux_amd64.tar.gz
+        mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    volumes:
+      - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
     <<: *zookeeper-defaults
     container_name: signoz-zookeeper-1
@@ -110,7 +139,7 @@ services:
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
-      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+      - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
       - DASHBOARDS_PATH=/root/config/dashboards
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
