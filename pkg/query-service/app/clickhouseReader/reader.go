@@ -166,6 +166,7 @@ type ClickHouseReader struct {
 // NewTraceReader returns a TraceReader for the database
 func NewReader(
 	localDB *sqlx.DB,
+	db driver.Conn,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
 	maxIdleConns int,
@@ -180,12 +181,6 @@ func NewReader(
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
-	db, err := initialize(options)
-
-	if err != nil {
-		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
-	}
-
 	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
@@ -436,28 +431,6 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 	}
 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
 	return conf, nil
-}
-
-func initialize(options *Options) (clickhouse.Conn, error) {
-
-	db, err := connect(options.getPrimary())
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to primary db: %v", err)
-	}
-
-	return db, nil
-}
-
-func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
-	if cfg.Encoding != EncodingJSON && cfg.Encoding != EncodingProto {
-		return nil, fmt.Errorf("unknown encoding %q, supported: %q, %q", cfg.Encoding, EncodingJSON, EncodingProto)
-	}
-
-	return cfg.Connector(cfg)
-}
-
-func (r *ClickHouseReader) GetConn() clickhouse.Conn {
-	return r.db
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {

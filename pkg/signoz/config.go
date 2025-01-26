@@ -13,6 +13,7 @@ import (
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlmigrator"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/web"
 )
 
@@ -35,6 +36,9 @@ type Config struct {
 
 	// API Server config
 	APIServer apiserver.Config `mapstructure:"apiserver"`
+
+	// TelemetryStore config
+	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Config, error) {
@@ -45,6 +49,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 		sqlstore.NewConfigFactory(),
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
+		telemetrystore.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

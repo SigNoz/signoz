@@ -132,6 +132,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(
 			serverOptions.SigNoz.SQLStore.SQLxDB(),
+			serverOptions.SigNoz.TelemetryStore.Clickhouse(),
 			serverOptions.PromConfigPath,
 			fm,
 			serverOptions.MaxIdleConns,

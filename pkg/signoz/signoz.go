@@ -7,15 +7,17 @@ import (
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/version"
 
 	"go.signoz.io/signoz/pkg/web"
 )
 
 type SigNoz struct {
-	Cache    cache.Cache
-	Web      web.Web
-	SQLStore sqlstore.SQLStore
+	Cache          cache.Cache
+	Web            web.Web
+	SQLStore       sqlstore.SQLStore
+	TelemetryStore telemetrystore.TelemetryStore
 }
 
 func New(
@@ -68,9 +70,18 @@ func New(
 		return nil, err
 	}
 
+	telemetrystore, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.TelemetryStore,
+		providerConfig.TelemetryStoreProviderFactories,
+		config.TelemetryStore.Provider,
+	)
+
 	return &SigNoz{
-		Cache:    cache,
-		Web:      web,
-		SQLStore: sqlstore,
+		Cache:          cache,
+		Web:            web,
+		SQLStore:       sqlstore,
+		TelemetryStore: telemetrystore,
 	}, nil
 }

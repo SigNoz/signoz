@@ -8,6 +8,8 @@ import (
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
+	"go.signoz.io/signoz/pkg/telemetrystore"
+	"go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"go.signoz.io/signoz/pkg/web"
 	"go.signoz.io/signoz/pkg/web/noopweb"
 	"go.signoz.io/signoz/pkg/web/routerweb"
@@ -25,6 +27,9 @@ type ProviderConfig struct {
 
 	// Map of all sql migration provider factories
 	SQLMigrationProviderFactories factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]]
+
+	// Map of all telemetrystore provider factories
+	TelemetryStoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]]
 }
 
 func NewProviderConfig() ProviderConfig {
@@ -49,6 +54,9 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddAgentsFactory(),
 			sqlmigration.NewAddPipelinesFactory(),
 			sqlmigration.NewAddIntegrationsFactory(),
+		),
+		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
+			clickhousetelemetrystore.NewFactory(),
 		),
 	}
 }

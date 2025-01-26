@@ -1,11 +1,9 @@
 package clickhouseReader
 
 import (
-	"context"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.uber.org/zap"
 )
 
 type Encoding string
@@ -99,37 +97,6 @@ type namespaceConfig struct {
 // Connecto defines how to connect to the database
 type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
-func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
-	ctx := context.Background()
-	options, err := clickhouse.ParseDSN(cfg.Datasource)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the DSN contained any of the following options, if not set from configuration
-	if options.MaxIdleConns == 0 {
-		options.MaxIdleConns = cfg.MaxIdleConns
-	}
-	if options.MaxOpenConns == 0 {
-		options.MaxOpenConns = cfg.MaxOpenConns
-	}
-	if options.DialTimeout == 0 {
-		options.DialTimeout = cfg.DialTimeout
-	}
-
-	zap.L().Info("Connecting to Clickhouse", zap.String("at", options.Addr[0]), zap.Int("MaxIdleConns", options.MaxIdleConns), zap.Int("MaxOpenConns", options.MaxOpenConns), zap.Duration("DialTimeout", options.DialTimeout))
-	db, err := clickhouse.Open(options)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := db.Ping(ctx); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
 // Options store storage plugin related configs
 type Options struct {
 	primary *namespaceConfig
@@ -181,7 +148,6 @@ func NewOptions(
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
 			Encoding:                defaultEncoding,
-			Connector:               defaultConnector,
 
 			LogsTableV2:              defaultLogsTableV2,
 			LogsLocalTableV2:         defaultLogsLocalTableV2,
@@ -214,7 +180,6 @@ func NewOptions(
 				WriteBatchDelay:        defaultWriteBatchDelay,
 				WriteBatchSize:         defaultWriteBatchSize,
 				Encoding:               defaultEncoding,
-				Connector:              defaultConnector,
 			}
 		} else {
 			options.others[namespace] = &namespaceConfig{namespace: namespace}
