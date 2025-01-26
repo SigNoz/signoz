@@ -52,7 +52,7 @@ ee/query-service/tests/test-deploy/data/
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
 bin/
-
+.local/
 */query-service/queries.active
 
 # e2e
@@ -70,6 +70,7 @@ vendor/
 
 # git-town
 .git-branches.toml
+
 # goreleaser
 dist/
 
