@@ -103,10 +103,9 @@ function Filters({
 	useEffect(() => {
 		if (data?.payload.data.newResult.data.result[0].list) {
 			setFilteredSpanIds(
-				data?.payload.data.newResult.data.result[0].list.map((val) => {
-					console.log(val);
-					return val.data.spanID;
-				}),
+				data?.payload.data.newResult.data.result[0].list.map(
+					(val) => val.data.spanID,
+				),
 			);
 		} else {
 			setFilteredSpanIds([]);
