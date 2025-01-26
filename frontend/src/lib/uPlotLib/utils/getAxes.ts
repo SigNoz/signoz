@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { Axis } from 'uplot';
 
 import { uPlotXAxisValuesFormat } from './constants';
 import getGridColor from './getGridColor';
