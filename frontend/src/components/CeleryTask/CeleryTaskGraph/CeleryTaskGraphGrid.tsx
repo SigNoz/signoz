@@ -6,6 +6,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import CeleryTaskBar from './CeleryTaskBar';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {
 	celeryActiveTasksWidgetData,
@@ -14,7 +15,6 @@ import {
 	celeryTasksByWorkerWidgetData,
 	celeryWorkerOnlineWidgetData,
 } from './CeleryTaskGraphUtils';
-import CeleryTaskHistogram from './CeleryTaskHistogram';
 import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
 
 export default function CeleryTaskGraphGrid({
@@ -68,7 +68,7 @@ export default function CeleryTaskGraphGrid({
 	return (
 		<div className="celery-task-graph-grid-container">
 			<div className="celery-task-graph-grid">
-				<CeleryTaskHistogram queryEnabled={queryEnabled} />
+				<CeleryTaskBar queryEnabled={queryEnabled} />
 				<CeleryTaskGraph
 					key={celeryWorkerOnlineData.id}
 					widgetData={celeryWorkerOnlineData}

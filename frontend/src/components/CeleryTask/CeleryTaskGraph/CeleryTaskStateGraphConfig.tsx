@@ -16,11 +16,11 @@ export enum CeleryTaskState {
 }
 
 function CeleryTaskStateGraphConfig({
-	histogramState,
-	setHistogramState,
+	barState,
+	setBarState,
 }: {
-	setHistogramState: Dispatch<SetStateAction<CeleryTaskState>>;
-	histogramState: CeleryTaskState;
+	setBarState: Dispatch<SetStateAction<CeleryTaskState>>;
+	barState: CeleryTaskState;
 }): JSX.Element {
 	const tabs: TabData[] = [
 		{ label: 'All Tasks', key: CeleryTaskState.All },
@@ -30,7 +30,7 @@ function CeleryTaskStateGraphConfig({
 	];
 
 	const handleTabClick = (key: CeleryTaskState): void => {
-		setHistogramState(key as CeleryTaskState);
+		setBarState(key as CeleryTaskState);
 	};
 
 	return (
@@ -40,16 +40,14 @@ function CeleryTaskStateGraphConfig({
 					key={tab.key}
 					onClick={(): void => handleTabClick(tab.key as CeleryTaskState)}
 					className={`celery-task-states__tab ${
-						tab.key === histogramState ? 'celery-task-states__tab--selected' : ''
+						tab.key === barState ? 'celery-task-states__tab--selected' : ''
 					}`}
 					data-last-tab={index === tabs.length - 1}
 				>
 					<div className="celery-task-states__label-wrapper">
 						<div className="celery-task-states__label">{tab.label}</div>
 					</div>
-					{tab.key === histogramState && (
-						<div className="celery-task-states__indicator" />
-					)}
+					{tab.key === barState && <div className="celery-task-states__indicator" />}
 				</Col>
 			))}
 		</Row>

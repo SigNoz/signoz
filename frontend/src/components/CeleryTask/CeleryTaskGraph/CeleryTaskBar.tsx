@@ -26,7 +26,7 @@ import {
 	CeleryTaskStateGraphConfig,
 } from './CeleryTaskStateGraphConfig';
 
-function CeleryTaskHistogram({
+function CeleryTaskBar({
 	// onClick,
 	queryEnabled,
 }: {
@@ -61,9 +61,7 @@ function CeleryTaskHistogram({
 		[dispatch, history, pathname, urlQuery],
 	);
 
-	const [histogramState, setHistogramState] = useState<CeleryTaskState>(
-		CeleryTaskState.All,
-	);
+	const [barState, setBarState] = useState<CeleryTaskState>(CeleryTaskState.All);
 
 	const celeryAllStateData = useMemo(
 		() => celeryAllStateWidgetData(minTime, maxTime),
@@ -88,15 +86,12 @@ function CeleryTaskHistogram({
 	return (
 		<Card
 			isDarkMode={isDarkMode}
-			$panelType={PANEL_TYPES.HISTOGRAM}
-			className="celery-task-graph-histogram"
+			$panelType={PANEL_TYPES.BAR}
+			className="celery-task-graph-bar"
 		>
-			<CeleryTaskStateGraphConfig
-				histogramState={histogramState}
-				setHistogramState={setHistogramState}
-			/>
+			<CeleryTaskStateGraphConfig barState={barState} setBarState={setBarState} />
 			<div className="celery-task-graph-grid-content">
-				{histogramState === CeleryTaskState.All && (
+				{barState === CeleryTaskState.All && (
 					<GridCard
 						widget={celeryAllStateData}
 						headerMenuList={[...ViewMenuAction]}
@@ -104,7 +99,7 @@ function CeleryTaskHistogram({
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
-				{histogramState === CeleryTaskState.Failed && (
+				{barState === CeleryTaskState.Failed && (
 					<GridCard
 						widget={celeryFailedStateData}
 						headerMenuList={[...ViewMenuAction]}
@@ -112,7 +107,7 @@ function CeleryTaskHistogram({
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
-				{histogramState === CeleryTaskState.Retry && (
+				{barState === CeleryTaskState.Retry && (
 					<GridCard
 						widget={celeryRetryStateData}
 						headerMenuList={[...ViewMenuAction]}
@@ -120,7 +115,7 @@ function CeleryTaskHistogram({
 						isQueryEnabled={queryEnabled}
 					/>
 				)}
-				{histogramState === CeleryTaskState.Successful && (
+				{barState === CeleryTaskState.Successful && (
 					<GridCard
 						widget={celerySuccessStateData}
 						headerMenuList={[...ViewMenuAction]}
@@ -133,4 +128,4 @@ function CeleryTaskHistogram({
 	);
 }
 
-export default CeleryTaskHistogram;
+export default CeleryTaskBar;
