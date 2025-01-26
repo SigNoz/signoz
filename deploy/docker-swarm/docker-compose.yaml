@@ -65,7 +65,7 @@ services:
       - bash
       - -c
       - |
-        if [ -f /var/lib/clickhouse/user_scripts/histogram-quantile ]; then
+        if [ -f /var/lib/clickhouse/user_scripts/histogramQuantile ]; then
           echo "histogram-quantile is already present, skipping init-clickhouse"
           exit 0
         fi
