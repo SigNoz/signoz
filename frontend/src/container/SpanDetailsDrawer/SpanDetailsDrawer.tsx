@@ -3,7 +3,12 @@ import './SpanDetailsDrawer.styles.scss';
 import { Button, Tabs, TabsProps, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { themeColors } from 'constants/theme';
+import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/config';
+import createQueryParams from 'lib/createQueryParams';
+import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { Anvil, Bookmark, PanelRight, Search } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
@@ -17,7 +22,9 @@ interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
 	setIsSpanDetailsDocked: Dispatch<SetStateAction<boolean>>;
 	selectedSpan: Span | undefined;
+	traceID: string;
 	traceStartTime: number;
+	traceEndTime: number;
 }
 
 function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
@@ -26,6 +33,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		setIsSpanDetailsDocked,
 		selectedSpan,
 		traceStartTime,
+		traceID,
+		traceEndTime,
 	} = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -66,6 +75,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 		];
 	}
+	const onLogsHandler = (): void => {
+		const query = getTraceToLogsQuery(traceID, traceStartTime, traceEndTime);
+
+		history.push(
+			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
+				[QueryParams.compositeQuery]: JSON.stringify(query),
+				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceStartTime - 1000,
+				// we add 1000 milliseconds to the end time for nano second duration traces
+				[QueryParams.endTime]: traceEndTime + 1000,
+			})}`,
+		);
+	};
 
 	return (
 		<div
@@ -156,6 +178,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 							</div>
 						</div>
 					</section>
+
+					<Button onClick={onLogsHandler} className="related-logs">
+						Go to related logs
+					</Button>
 
 					<section className="attributes-events">
 						<Tabs

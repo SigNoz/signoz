@@ -124,6 +124,24 @@
 		}
 	}
 
+	.related-logs {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: fit-content;
+		padding: 5px 12px;
+		margin: 10px 12px;
+		box-shadow: none;
+
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+	}
+
 	.attributes-events {
 		.details-drawer-tabs {
 			.ant-tabs-extra-content {
@@ -211,6 +229,10 @@
 					}
 				}
 			}
+		}
+
+		.related-logs {
+			color: var(--bg-ink-400);
 		}
 
 		.attributes-events {
