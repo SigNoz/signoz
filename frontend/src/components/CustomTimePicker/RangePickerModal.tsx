@@ -71,6 +71,7 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 				showTime={{
 					use12Hours: true,
 					format: 'hh:mm A',
+					defaultValue: [dayjs().tz(timezone.value), dayjs().tz(timezone.value)],
 				}}
 				format={(date: Dayjs): string =>
 					date.tz(timezone.value).format('YYYY-MM-DD hh:mm A')
