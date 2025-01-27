@@ -72,7 +72,7 @@ exporters:
     dsn: tcp://clickhouse:9000/signoz_logs
     timeout: 10s
     use_new_schema: true
-  debug: {}
+  # debug: {}
 service:
   telemetry:
     logs:
