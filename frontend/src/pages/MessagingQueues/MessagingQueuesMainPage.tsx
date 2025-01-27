@@ -5,6 +5,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ListMinus, Rows3 } from 'lucide-react';
+import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 import { useLocation } from 'react-use';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';
@@ -32,10 +33,21 @@ export const Celery: TabRoutes = {
 	key: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 };
 
+export const Overview: TabRoutes = {
+	Component: CeleryOverview,
+	name: (
+		<div className="tab-item">
+			<Rows3 size={16} /> Celery Overview
+		</div>
+	),
+	route: ROUTES.MESSAGING_QUEUES_CELERY_OVERVIEW,
+	key: ROUTES.MESSAGING_QUEUES_CELERY_OVERVIEW,
+};
+
 export default function MessagingQueuesMainPage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	const routes: TabRoutes[] = [Kafka, Celery];
+	const routes: TabRoutes[] = [Kafka, Celery, Overview];
 
 	return (
 		<div className="messaging-queues-module-container">

@@ -409,6 +409,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.MESSAGING_QUEUES_CELERY_OVERVIEW,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_CELERY_OVERVIEW',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.MESSAGING_QUEUES_DETAIL,
 		exact: true,
 		component: MQDetailPage,

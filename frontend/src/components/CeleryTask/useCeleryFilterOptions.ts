@@ -2,13 +2,10 @@ import { DefaultOptionType } from 'antd/es/select';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useState } from 'react';
 
-import {
-	FilterOptionType,
-	useGetAllFilters,
-} from './CeleryTaskConfigOptions/useGetCeleryFilters';
+import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters';
 
 export const useCeleryFilterOptions = (
-	type: FilterOptionType,
+	type: string,
 ): {
 	searchText: string;
 	handleSearch: (value: string) => void;
