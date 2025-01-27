@@ -8,7 +8,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -117,11 +117,20 @@ function Filters({
 		}
 	}, [data?.payload.data.newResult.data.result]);
 
-	const handlePrevNext = (id: number): void => {
-		const searchParams = new URLSearchParams(search);
-		searchParams.set('spanId', filteredSpanIds[id]);
-		history.replace({ search: searchParams.toString() });
-	};
+	const handlePrevNext = useCallback(
+		(id: number): void => {
+			const searchParams = new URLSearchParams(search);
+			searchParams.set('spanId', filteredSpanIds[id]);
+			history.replace({ search: searchParams.toString() });
+		},
+		[filteredSpanIds, history, search],
+	);
+
+	useEffect(() => {
+		if (filteredSpanIds.length > 0) {
+			handlePrevNext(0);
+		}
+	}, [filteredSpanIds, handlePrevNext]);
 
 	return (
 		<div className="filter-row">

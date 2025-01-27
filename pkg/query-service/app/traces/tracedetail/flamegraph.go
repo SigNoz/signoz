@@ -8,6 +8,8 @@ import (
 
 var (
 	SPAN_LIMIT_PER_REQUEST_FOR_FLAMEGRAPH float64 = 50
+	SPAN_LIMIT_PER_LEVEL                  int     = 100
+	TIMESTAMP_SAMPLING_BUCKET_COUNT       int     = 50
 )
 
 func ContainsFlamegraphSpan(slice []*model.FlamegraphSpan, item *model.FlamegraphSpan) bool {
@@ -115,7 +117,7 @@ func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selected
 		}
 	}
 
-	bucketSize := (endTime - startTime) / 50
+	bucketSize := (endTime - startTime) / uint64(TIMESTAMP_SAMPLING_BUCKET_COUNT)
 	if bucketSize == 0 {
 		bucketSize = 1
 	}
@@ -172,7 +174,7 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 	}
 
 	for i := lowerLimit; i < upperLimit; i++ {
-		if len(selectedSpans[i]) > 100 {
+		if len(selectedSpans[i]) > SPAN_LIMIT_PER_LEVEL {
 			_spans := getLatencyAndTimestampBucketedSpans(selectedSpans[i], selectedSpanID, i == selectedIndex, startTime, endTime)
 			selectedSpansForRequest = append(selectedSpansForRequest, _spans)
 		} else {
