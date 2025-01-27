@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import MessagingQueues from 'pages/MessagingQueues';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -27,7 +28,6 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
-	MessagingQueues,
 	MQDetailPage,
 	MySettings,
 	NewDashboardPage,
@@ -399,6 +399,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MessagingQueues,
 		key: 'MESSAGING_QUEUES',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_CELERY_TASK',
 		isPrivate: true,
 	},
 	{

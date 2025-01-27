@@ -17,6 +17,9 @@ function PanelWrapper({
 	tableProcessedDataRef,
 	customTooltipElement,
 	searchTerm,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -41,6 +44,9 @@ function PanelWrapper({
 			tableProcessedDataRef={tableProcessedDataRef}
 			customTooltipElement={customTooltipElement}
 			searchTerm={searchTerm}
+			openTracesButton={openTracesButton}
+			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			customSeries={customSeries}
 		/>
 	);
 }
