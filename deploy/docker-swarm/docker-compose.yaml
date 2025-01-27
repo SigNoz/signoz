@@ -151,7 +151,6 @@ services:
   frontend:
     <<: *common
     image: signoz/frontend:0.69.0
-    container_name: signoz-frontend
     depends_on:
       - alertmanager
       - query-service
