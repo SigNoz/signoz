@@ -37,6 +37,10 @@ function GridCardGraph({
 	onDragSelect,
 	customTooltipElement,
 	dataAvailable,
+	getGraphData,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -209,6 +213,7 @@ function GridCardGraph({
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
+				getGraphData?.(data?.payload?.data);
 				setDashboardQueryRangeCalled(true);
 			},
 		},
@@ -248,6 +253,9 @@ function GridCardGraph({
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
 					customTooltipElement={customTooltipElement}
+					openTracesButton={openTracesButton}
+					onOpenTraceBtnClick={onOpenTraceBtnClick}
+					customSeries={customSeries}
 				/>
 			)}
 		</div>

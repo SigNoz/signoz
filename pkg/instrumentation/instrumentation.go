@@ -1,28 +1,25 @@
 package instrumentation
 
 import (
-	"os"
+	"log/slog"
 
-	"go.opentelemetry.io/contrib/bridges/otelzap"
-	sdklog "go.opentelemetry.io/otel/log"
+	"github.com/prometheus/client_golang/prometheus"
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/trace"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 // Instrumentation provides the core components for application instrumentation.
 type Instrumentation interface {
-	// LoggerProvider returns the OpenTelemetry logger provider.
-	LoggerProvider() sdklog.LoggerProvider
-	// Logger returns the Zap logger.
-	Logger() *zap.Logger
+	// Logger returns the Slog logger.
+	Logger() *slog.Logger
 	// MeterProvider returns the OpenTelemetry meter provider.
 	MeterProvider() sdkmetric.MeterProvider
 	// TracerProvider returns the OpenTelemetry tracer provider.
 	TracerProvider() sdktrace.TracerProvider
+	// PrometheusRegisterer returns the Prometheus registerer.
+	PrometheusRegisterer() prometheus.Registerer
 	// ToProviderSettings converts instrumentation to provider settings.
 	ToProviderSettings() factory.ProviderSettings
 }
@@ -41,15 +38,4 @@ func mergeAttributes(input map[string]any, resource *sdkresource.Resource) map[s
 	}
 
 	return output
-}
-
-// newLogger creates a new Zap logger with the configured level and output.
-// It combines a JSON encoder for stdout and an OpenTelemetry bridge.
-func newLogger(cfg Config, provider sdklog.LoggerProvider) *zap.Logger {
-	core := zapcore.NewTee(
-		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapcore.AddSync(os.Stdout), cfg.Logs.Level),
-		otelzap.NewCore("go.signoz.io/pkg/instrumentation", otelzap.WithLoggerProvider(provider)),
-	)
-
-	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 }
