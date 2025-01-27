@@ -230,7 +230,7 @@ start_docker() {
     echo -e "🐳 Starting Docker ...\n"
     if [[ $os == "Mac" ]]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
-    else 
+    else
         if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
             $sudo_cmd systemctl start docker.service
@@ -535,7 +535,7 @@ else
     echo ""
     echo -e "🟢 Your frontend is running on http://localhost:3301"
     echo ""
-    echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics." 
+    echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics."
     echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"
 
     echo "ℹ️  To bring down SigNoz and clean volumes:"
@@ -556,7 +556,7 @@ else
     do
         read -rp 'Email: ' email
     done
-    
+
     send_event "identify_successful_installation"
 fi
 
