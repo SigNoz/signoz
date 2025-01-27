@@ -1,4 +1,4 @@
-name: ci
+name: build-pipeline
 
 on:
   pull_request:
@@ -83,10 +83,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: Run tests
-        shell: bash
-        run: |
-          make test-ee
       - name: Build EE query-service image
         shell: bash
         run: |

@@ -3,7 +3,7 @@
 .vscode
 README.md
 deploy
+sample-apps
 
 # frontend
-.env
 node_modules
