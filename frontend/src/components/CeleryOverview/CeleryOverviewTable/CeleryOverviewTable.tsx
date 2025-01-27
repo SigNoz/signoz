@@ -260,7 +260,11 @@ function makeFilters(urlQuery: URLSearchParams): Filter[] {
 		.filter((filter): filter is Filter => filter !== null);
 }
 
-export default function CeleryOverviewTable(): JSX.Element {
+export default function CeleryOverviewTable({
+	onRowClick,
+}: {
+	onRowClick: (record: RowData) => void;
+}): JSX.Element {
 	const [tableData, setTableData] = useState<RowData[]>([]);
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -316,7 +320,7 @@ export default function CeleryOverviewTable(): JSX.Element {
 	);
 
 	const handleRowClick = (record: RowData): void => {
-		console.log(record);
+		onRowClick(record);
 	};
 
 	return (

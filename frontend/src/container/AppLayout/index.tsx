@@ -290,7 +290,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'MESSAGING_QUEUES' ||
 		routeKey === 'MESSAGING_QUEUES_DETAIL' ||
 		routeKey === 'MESSAGING_QUEUES_CELERY_TASK' ||
-		routeKey === 'MESSAGING_QUEUES_CELERY_OVERVIEW';
+		routeKey === 'MESSAGING_QUEUES_OVERVIEW';
 
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
