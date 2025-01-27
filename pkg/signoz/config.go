@@ -41,7 +41,15 @@ type Config struct {
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
 }
 
-func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Config, error) {
+// DepricatedFlags are the flags that are deprecated and scheduled for removal.
+// These flags are used to ensure backward compatibility with the old flags.
+type DepricatedFlags struct {
+	MaxIdleConns int
+	MaxOpenConns int
+	DialTimeout  time.Duration
+}
+
+func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, depricatedFlags DepricatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
 		instrumentation.NewConfigFactory(),
 		web.NewConfigFactory(),
@@ -62,12 +70,12 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 		return Config{}, err
 	}
 
-	mergeAndEnsureBackwardCompatibility(&config)
+	mergeAndEnsureBackwardCompatibility(&config, depricatedFlags)
 
 	return config, nil
 }
 
-func mergeAndEnsureBackwardCompatibility(config *Config) {
+func mergeAndEnsureBackwardCompatibility(config *Config, depricatedFlags DepricatedFlags) {
 	// SIGNOZ_LOCAL_DB_PATH
 	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
 		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
@@ -91,5 +99,18 @@ func mergeAndEnsureBackwardCompatibility(config *Config) {
 		} else {
 			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
 		}
+	}
+
+	if depricatedFlags.MaxIdleConns != 50 {
+		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS env variable instead.")
+		config.TelemetryStore.Connection.MaxIdleConns = depricatedFlags.MaxIdleConns
+	}
+	if depricatedFlags.MaxOpenConns != 100 {
+		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS env variable instead.")
+		config.TelemetryStore.Connection.MaxOpenConns = depricatedFlags.MaxOpenConns
+	}
+	if depricatedFlags.DialTimeout != 5*time.Second {
+		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT environment variable instead.")
+		config.TelemetryStore.Connection.DialTimeout = depricatedFlags.DialTimeout
 	}
 }

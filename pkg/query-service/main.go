@@ -85,6 +85,10 @@ func main() {
 			envprovider.NewFactory(),
 			fileprovider.NewFactory(),
 		},
+	}, signoz.DepricatedFlags{
+		MaxIdleConns: maxIdleConns,
+		MaxOpenConns: maxOpenConns,
+		DialTimeout:  dialTimeout,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))

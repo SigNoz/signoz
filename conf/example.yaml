@@ -78,3 +78,22 @@ apiserver:
   logging:
     excluded_routes:
       - /api/v1/health
+
+
+##################### TelemetryStore #####################
+telemetrystore:
+  # specifies the telemetrystore provider to use.
+  provider: clickhouse
+  clickhouse:
+    # The address of the ClickHouse server.
+    address: localhost:9000
+    # The username to use for authentication.
+    username: default
+    # The password to use for authentication.
+    password: 
+  # Maximum number of idle connections in the connection pool.
+  max_idle_conns: 50
+  # Maximum number of open connections to the database.
+  max_open_conns: 100
+  # Maximum time to wait for a connection to be established.
+  dial_timeout: 5s
