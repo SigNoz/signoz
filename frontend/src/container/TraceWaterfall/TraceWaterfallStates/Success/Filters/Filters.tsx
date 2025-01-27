@@ -61,6 +61,7 @@ function Filters({
 	traceID: string;
 }): JSX.Element {
 	const [filters, setFilters] = useState<TagFilter>(BASE_FILTER_QUERY.filters);
+	const [noData, setNoData] = useState<boolean>(false);
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const handleFilterChange = (value: TagFilter): void => {
 		setFilters(value);
@@ -69,7 +70,7 @@ function Filters({
 	const { search } = useLocation();
 	const history = useHistory();
 
-	const { data, isFetching, error } = useGetQueryRange(
+	const { isFetching, error } = useGetQueryRange(
 		{
 			query: prepareQuery(filters, traceID),
 			graphType: PANEL_TYPES.LIST,
@@ -101,21 +102,22 @@ function Filters({
 		{
 			queryKey: [filters],
 			enabled: filters.items.length > 0,
+			onSuccess: (data) => {
+				if (data?.payload.data.newResult.data.result[0].list) {
+					setFilteredSpanIds(
+						data?.payload.data.newResult.data.result[0].list.map(
+							(val) => val.data.spanID,
+						),
+					);
+					setNoData(false);
+				} else {
+					setNoData(true);
+					setFilteredSpanIds([]);
+					setCurrentSearchedIndex(0);
+				}
+			},
 		},
 	);
-
-	useEffect(() => {
-		if (data?.payload.data.newResult.data.result[0].list) {
-			setFilteredSpanIds(
-				data?.payload.data.newResult.data.result[0].list.map(
-					(val) => val.data.spanID,
-				),
-			);
-		} else {
-			setFilteredSpanIds([]);
-			setCurrentSearchedIndex(0);
-		}
-	}, [data?.payload.data.newResult.data.result]);
 
 	const handlePrevNext = useCallback(
 		(id: number): void => {
@@ -168,6 +170,9 @@ function Filters({
 				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
 					<InfoCircleOutlined size={14} />
 				</Tooltip>
+			)}
+			{noData && (
+				<Typography.Text className="no-results">No results found</Typography.Text>
 			)}
 		</div>
 	);

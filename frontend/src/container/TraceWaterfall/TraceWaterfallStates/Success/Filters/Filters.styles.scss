@@ -31,6 +31,18 @@
 			box-shadow: none;
 		}
 	}
+
+	.no-results {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+		color: var(--bg-vanilla-400);
+		font-family: 'Geist Mono';
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 150% */
+	}
 }
 
 .lightMode {
@@ -39,6 +51,10 @@
 			.ant-typography {
 				color: var(--bg-ink-400);
 			}
+		}
+
+		.no-results {
+			color: var(--bg-ink-400);
 		}
 	}
 }

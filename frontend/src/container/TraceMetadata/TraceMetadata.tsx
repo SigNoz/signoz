@@ -4,7 +4,13 @@ import { Button, Tooltip, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ArrowLeft, CalendarClock, DraftingCompass, Timer } from 'lucide-react';
+import {
+	ArrowLeft,
+	BetweenHorizonalStart,
+	CalendarClock,
+	DraftingCompass,
+	Timer,
+} from 'lucide-react';
 import { formatEpochTimestamp } from 'utils/timeUtils';
 
 export interface ITraceMetadataProps {
@@ -48,9 +54,12 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 				{!notFound && (
 					<div className="second-row">
 						<div className="service-entry-info">
+							<BetweenHorizonalStart size={14} />
 							<Typography.Text className="text">{rootServiceName}</Typography.Text>
 							&#8212;
-							<Typography.Text className="text">{rootSpanName}</Typography.Text>
+							<Typography.Text className="text root-span-name">
+								{rootSpanName}
+							</Typography.Text>
 						</div>
 						<div className="trace-duration">
 							<Tooltip title="Duration of trace">

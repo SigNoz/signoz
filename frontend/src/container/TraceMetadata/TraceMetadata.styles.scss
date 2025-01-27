@@ -89,6 +89,16 @@
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
 				}
+
+				.root-span-name {
+					display: flex;
+					padding: 2px 8px;
+					align-items: center;
+					gap: 8px;
+					border-radius: 50px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-slate-500);
+				}
 			}
 
 			.trace-duration {
@@ -195,7 +205,7 @@
 				}
 
 				.trace-id-value {
-					background: var(--bg-vanilla-400);
+					background: var(--bg-vanilla-300);
 					color: var(--bg-ink-400);
 					border: 1px solid var(--bg-vanilla-300);
 				}
@@ -207,6 +217,11 @@
 
 					.text {
 						color: var(--bg-ink-400);
+					}
+
+					.root-span-name {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-300);
 					}
 				}
 

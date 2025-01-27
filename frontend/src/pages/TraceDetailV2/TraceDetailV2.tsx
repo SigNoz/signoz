@@ -1,6 +1,7 @@
 import './TraceDetailV2.styles.scss';
 
 import { Button, Tabs } from 'antd';
+import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
 import SpanDetailsDrawer from 'container/SpanDetailsDrawer/SpanDetailsDrawer';
 import TraceMetadata from 'container/TraceMetadata/TraceMetadata';
@@ -10,7 +11,6 @@ import TraceWaterfall, {
 import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
-import { DraftingCompass } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
@@ -81,7 +81,7 @@ function TraceDetailsV2(): JSX.Element {
 			label: (
 				<Button
 					type="text"
-					icon={<DraftingCompass size="14" />}
+					icon={<FlamegraphImg />}
 					className="flamegraph-waterfall-toggle"
 				>
 					Flamegraph
