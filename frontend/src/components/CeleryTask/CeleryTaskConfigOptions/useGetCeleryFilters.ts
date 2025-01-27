@@ -5,11 +5,9 @@ import { useQuery } from 'react-query';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-export type FilterOptionType = 'celery.task_name';
-
 export interface Filters {
 	searchText: string;
-	attributeKey: FilterOptionType;
+	attributeKey: string;
 }
 
 export interface GetAllFiltersResponse {
