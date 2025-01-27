@@ -26,6 +26,7 @@ import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
 import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
@@ -361,7 +362,7 @@ function DashboardsList(): JSX.Element {
 	function getFormattedTime(dashboard: Dashboard, option: string): string {
 		return formatTimezoneAdjustedTimestamp(
 			get(dashboard, option, ''),
-			'MMM D, YYYY ⎯ hh:mm:ss A (UTC Z)',
+			DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 		);
 	}
 
@@ -407,7 +408,7 @@ function DashboardsList(): JSX.Element {
 			render: (dashboard: Data, _, index): JSX.Element => {
 				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
 					dashboard.createdAt,
-					'MMM D, YYYY ⎯ hh:mm:ss A (UTC Z)',
+					DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 				);
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;

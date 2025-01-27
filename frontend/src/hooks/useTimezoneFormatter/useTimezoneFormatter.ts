@@ -1,4 +1,5 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -69,7 +70,10 @@ function useTimezoneFormatter({
 	 * formatTimezoneAdjustedTimestamp('2024-03-14T19:30:00Z')
 	 */
 	const formatTimezoneAdjustedTimestamp = useCallback(
-		(input: TimestampInput, format = 'YYYY-MM-DD HH:mm:ss'): string => {
+		(
+			input: TimestampInput,
+			format = DATE_TIME_FORMATS.ISO_DATETIME_SECONDS as string,
+		): string => {
 			const timestamp = dayjs(input).valueOf();
 			const cacheKey = `${timestamp}_${userTimezone.value}`;
 

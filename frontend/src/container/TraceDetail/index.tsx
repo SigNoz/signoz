@@ -12,6 +12,7 @@ import {
 	StyledTypography,
 } from 'components/Styled';
 import { Flex, Spacing } from 'components/Styled/styles';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -200,7 +201,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							<Typography>
 								{dayjs(traceMetaData.globalStart)
 									.tz(timezone.value)
-									.format('hh:mm:ss a (UTC Z) MM/DD')}
+									.format(DATE_TIME_FORMATS.UTC_TIME_DATE)}
 							</Typography>
 						</styles.TimeStampContainer>
 					)}

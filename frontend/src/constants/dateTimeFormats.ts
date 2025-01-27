@@ -6,6 +6,7 @@ export const DATE_TIME_FORMATS = {
 	ISO_DATETIME_UTC: 'YYYY-MM-DD HH:mm:ss (UTC Z)',
 
 	// Standard regional formats
+	US_DATE: 'MM/DD/YYYY',
 	UK_DATETIME: 'DD/MM/YYYY HH:mm',
 	UK_DATETIME_SECONDS: 'DD/MM/YYYY HH:mm:ss',
 
@@ -14,7 +15,8 @@ export const DATE_TIME_FORMATS = {
 	US_DATETIME_SECONDS: 'MM/DD/YYYY, HH:mm:ss',
 
 	// Slash formats
-	// SLASH_DATETIME_SECONDS: 'YYYY/MM/DD HH:mm:ss',
+	SLASH_DATETIME: 'YYYY/MM/DD HH:mm',
+	SLASH_DATETIME_SECONDS: 'YYYY/MM/DD HH:mm:ss',
 	SLASH_SHORT: 'MM/DD HH:mm',
 
 	// Time only formats
@@ -36,6 +38,7 @@ export const DATE_TIME_FORMATS = {
 	MONTH_DATETIME: 'MMM DD, YYYY, HH:mm',
 	MONTH_DATETIME_SECONDS: 'MMM DD YYYY HH:mm:ss',
 	MONTH_DATETIME_FULL: 'MMMM DD, YYYY HH:mm',
+	MONTH_DATETIME_FULL_SECONDS: 'MMM DD, YYYY, HH:mm:ss',
 
 	// Ordinal formats (1st, 2nd, 3rd, etc)
 	ORDINAL_DATE: 'Do MMM YYYY',
@@ -49,7 +52,7 @@ export const DATE_TIME_FORMATS = {
 	UTC_MONTH_FULL: 'MMMM DD, YYYY HH:mm (UTC Z)',
 	UTC_MONTH_SHORT: 'MMM DD HH:mm:ss.SSS (UTC Z)',
 	UTC_MONTH_COMPACT: 'MMM DD,YYYY, HH:mm (UTC Z)',
-	// UTC_TIME_DATE: 'HH:mm:ss (UTC Z) MM/DD',
+	UTC_TIME_DATE: 'HH:mm:ss (UTC Z) MM/DD',
 
 	// Formats with dash separator
 	DASH_DATETIME: 'MMM D, YYYY ⎯ HH:mm:ss',

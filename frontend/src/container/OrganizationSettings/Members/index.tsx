@@ -5,6 +5,7 @@ import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
@@ -280,7 +281,7 @@ function Members(): JSX.Element {
 				const { joinedOn } = record;
 				return (
 					<Typography>
-						{dayjs.unix(Number(joinedOn)).format('MMMM DD,YYYY')}
+						{dayjs.unix(Number(joinedOn)).format(DATE_TIME_FORMATS.MONTH_DATE_FULL)}
 					</Typography>
 				);
 			},
