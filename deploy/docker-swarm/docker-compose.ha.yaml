@@ -59,7 +59,7 @@ x-db-depend: &db-depend
     - clickhouse
     - clickhouse-2
     - clickhouse-3
-    - schema-migrator-sync
+    - schema-migrator
 services:
   init-clickhouse:
     <<: *common
@@ -232,19 +232,19 @@ services:
       - "4318:4318" # OTLP HTTP receiver
     depends_on:
       - clickhouse
-      - schema-migrator-sync
+      - schema-migrator
       - query-service
-  schema-migrator-sync:
+  schema-migrator:
     <<: *common
     image: signoz/signoz-schema-migrator:0.111.24
     deploy:
       restart_policy:
         condition: on-failure
         delay: 5s
+    entrypoint: sh
     command:
-      - sync
-      - --dsn=tcp://clickhouse:9000
-      - --up=
+      - -c
+      - "/signoz-schema-migrator sync --dsn=tcp://clickhouse:9000 --up= && /signoz-schema-migrator async --dsn=tcp://clickhouse:9000 --up="
     depends_on:
       - clickhouse
 

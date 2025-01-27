@@ -177,10 +177,10 @@ services:
       restart_policy:
         condition: on-failure
         delay: 5s
-    entrypoint: bash
+    entrypoint: sh
     command:
       - -c
-      - "/signoz-schema-migrator sync --dsn=tcp://clickhouse:9000 --up= && /signoz-schema-migrator aysnc --dsn=tcp://clickhouse:9000 --up="
+      - "/signoz-schema-migrator sync --dsn=tcp://clickhouse:9000 --up= && /signoz-schema-migrator async --dsn=tcp://clickhouse:9000 --up="
     depends_on:
       - clickhouse
 
