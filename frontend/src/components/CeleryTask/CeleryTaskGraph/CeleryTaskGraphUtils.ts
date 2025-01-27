@@ -572,64 +572,6 @@ export const celeryTaskLatencyWidgetData = (
 						},
 					],
 					having: [],
-					legend: '{{celery.task_name}}',
-					limit: null,
-					orderBy: [
-						{
-							columnName: '#SIGNOZ_VALUE',
-							order: 'asc',
-						},
-					],
-					queryName: 'A',
-					reduceTo: 'avg',
-					spaceAggregation: 'sum',
-					stepInterval: getStepInterval(startTime, endTime),
-					timeAggregation: 'p99',
-				},
-			],
-			yAxisUnit: 'ns',
-		}),
-	);
-
-export const celeryTaskLatencyWidgetData = (
-	type: string,
-	startTime: number,
-	endTime: number,
-): Widgets =>
-	getWidgetQueryBuilder(
-		getWidgetQuery({
-			title: 'Task Latency',
-			description: 'Represents the latency of task execution.',
-			queryData: [
-				{
-					aggregateAttribute: {
-						dataType: DataTypes.Float64,
-						id: 'duration_nano--float64----true',
-						isColumn: true,
-						isJSON: false,
-						key: 'duration_nano',
-						type: '',
-					},
-					aggregateOperator: type || 'p99',
-					dataSource: DataSource.TRACES,
-					disabled: false,
-					expression: 'A',
-					filters: {
-						items: [],
-						op: 'AND',
-					},
-					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'celery.task_name--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'celery.task_name',
-							type: 'tag',
-						},
-					],
-					having: [],
 					legend: '',
 					limit: null,
 					orderBy: [

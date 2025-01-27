@@ -65,12 +65,6 @@ export default function CeleryTaskGraphGrid({
 		'Latency by worker',
 	];
 
-	const rightPanelTitle = [
-		'Tasks/s by worker',
-		'Error% by worker',
-		'Latency by worker',
-	];
-
 	return (
 		<div className="celery-task-graph-grid-container">
 			<div className="celery-task-graph-grid">
