@@ -44,8 +44,8 @@ export const K8sEntityToAggregateAttributeMapping = {
 	[K8sCategory.STATEFULSETS]: 'k8s_pod_cpu_utilization',
 	[K8sCategory.DAEMONSETS]: 'k8s_pod_cpu_utilization',
 	[K8sCategory.CONTAINERS]: 'k8s_pod_cpu_utilization',
-	[K8sCategory.JOBS]: 'k8s_pod_cpu_utilization',
-	[K8sCategory.VOLUMES]: 'k8s_pod_cpu_utilization',
+	[K8sCategory.JOBS]: 'k8s_job_desired_successful_pods',
+	[K8sCategory.VOLUMES]: 'k8s_volume_capacity',
 };
 
 export const PodsQuickFiltersConfig: IQuickFiltersConfig[] = [

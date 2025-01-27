@@ -31,14 +31,14 @@ export const defaultAddedColumns: IEntityColumn[] = [
 	},
 	{
 		label: 'Available',
-		value: 'available',
-		id: 'available',
+		value: 'available_nodes',
+		id: 'available_nodes',
 		canRemove: false,
 	},
 	{
 		label: 'Desired',
-		value: 'desired',
-		id: 'desired',
+		value: 'desired_nodes',
+		id: 'desired_nodes',
 		canRemove: false,
 	},
 	{
@@ -89,8 +89,8 @@ export interface K8sDaemonSetsRowData {
 	memory_request: React.ReactNode;
 	memory_limit: React.ReactNode;
 	memory: React.ReactNode;
-	desired: React.ReactNode;
-	available: React.ReactNode;
+	desired_nodes: React.ReactNode;
+	available_nodes: React.ReactNode;
 	namespaceName: React.ReactNode;
 	groupedByMeta?: any;
 }
@@ -149,8 +149,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Available</div>,
-		dataIndex: 'available',
-		key: 'available',
+		dataIndex: 'available_nodes',
+		key: 'available_nodes',
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
@@ -158,8 +158,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Desired</div>,
-		dataIndex: 'desired',
-		key: 'desired',
+		dataIndex: 'desired_nodes',
+		key: 'desired_nodes',
 		sorter: true,
 		align: 'left',
 		className: `column ${columnProgressBarClassName}`,
@@ -328,12 +328,12 @@ export const formatDataForTable = (
 				{formatBytes(daemonSet.memoryUsage)}
 			</ValidateColumnValueWrapper>
 		),
-		available: (
+		available_nodes: (
 			<ValidateColumnValueWrapper value={daemonSet.availableNodes}>
 				{daemonSet.availableNodes}
 			</ValidateColumnValueWrapper>
 		),
-		desired: (
+		desired_nodes: (
 			<ValidateColumnValueWrapper value={daemonSet.desiredNodes}>
 				{daemonSet.desiredNodes}
 			</ValidateColumnValueWrapper>

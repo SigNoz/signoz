@@ -31,26 +31,26 @@ export const defaultAddedColumns: IEntityColumn[] = [
 	},
 	{
 		label: 'Successful',
-		value: 'successful',
-		id: 'successful',
+		value: 'successful_pods',
+		id: 'successful_pods',
 		canRemove: false,
 	},
 	{
 		label: 'Failed',
-		value: 'failed',
-		id: 'failed',
+		value: 'failed_pods',
+		id: 'failed_pods',
 		canRemove: false,
 	},
 	{
 		label: 'Desired Successful',
-		value: 'desired_successful',
-		id: 'desired_successful',
+		value: 'desired_successful_pods',
+		id: 'desired_successful_pods',
 		canRemove: false,
 	},
 	{
 		label: 'Active',
-		value: 'active',
-		id: 'active',
+		value: 'active_pods',
+		id: 'active_pods',
 		canRemove: false,
 	},
 	{
@@ -96,10 +96,10 @@ export interface K8sJobsRowData {
 	jobUID: string;
 	jobName: React.ReactNode;
 	namespaceName: React.ReactNode;
-	successful: React.ReactNode;
-	failed: React.ReactNode;
-	active: React.ReactNode;
-	desired_successful: React.ReactNode;
+	successful_pods: React.ReactNode;
+	failed_pods: React.ReactNode;
+	active_pods: React.ReactNode;
+	desired_successful_pods: React.ReactNode;
 	cpu_request: React.ReactNode;
 	cpu_limit: React.ReactNode;
 	cpu: React.ReactNode;
@@ -159,8 +159,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Successful</div>,
-		dataIndex: 'successful',
-		key: 'successful',
+		dataIndex: 'successful_pods',
+		key: 'successful_pods',
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
@@ -168,16 +168,16 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Failed</div>,
-		dataIndex: 'failed',
-		key: 'failed',
+		dataIndex: 'failed_pods',
+		key: 'failed_pods',
 		sorter: true,
 		align: 'left',
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
 		title: <div className="column-header small-col">Desired Successful</div>,
-		dataIndex: 'desired_successful',
-		key: 'desired_successful',
+		dataIndex: 'desired_successful_pods',
+		key: 'desired_successful_pods',
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
@@ -185,8 +185,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Active</div>,
-		dataIndex: 'active',
-		key: 'active',
+		dataIndex: 'active_pods',
+		key: 'active_pods',
 		sorter: true,
 		align: 'left',
 		className: `column ${columnProgressBarClassName}`,
@@ -355,22 +355,22 @@ export const formatDataForTable = (
 				{formatBytes(job.memoryUsage)}
 			</ValidateColumnValueWrapper>
 		),
-		successful: (
+		successful_pods: (
 			<ValidateColumnValueWrapper value={job.successfulPods}>
 				{job.successfulPods}
 			</ValidateColumnValueWrapper>
 		),
-		desired_successful: (
+		desired_successful_pods: (
 			<ValidateColumnValueWrapper value={job.desiredSuccessfulPods}>
 				{job.desiredSuccessfulPods}
 			</ValidateColumnValueWrapper>
 		),
-		failed: (
+		failed_pods: (
 			<ValidateColumnValueWrapper value={job.failedPods}>
 				{job.failedPods}
 			</ValidateColumnValueWrapper>
 		),
-		active: (
+		active_pods: (
 			<ValidateColumnValueWrapper value={job.activePods}>
 				{job.activePods}
 			</ValidateColumnValueWrapper>

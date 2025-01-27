@@ -31,14 +31,14 @@ export const defaultAddedColumns: IEntityColumn[] = [
 	},
 	{
 		label: 'Available',
-		value: 'available',
-		id: 'available',
+		value: 'available_pods',
+		id: 'available_pods',
 		canRemove: false,
 	},
 	{
 		label: 'Desired',
-		value: 'desired',
-		id: 'desired',
+		value: 'desired_pods',
+		id: 'desired_pods',
 		canRemove: false,
 	},
 	{
@@ -89,8 +89,8 @@ export interface K8sStatefulSetsRowData {
 	memory_request: React.ReactNode;
 	memory_limit: React.ReactNode;
 	memory: React.ReactNode;
-	desired: React.ReactNode;
-	available: React.ReactNode;
+	desired_pods: React.ReactNode;
+	available_pods: React.ReactNode;
 	namespaceName: React.ReactNode;
 	groupedByMeta?: any;
 }
@@ -149,8 +149,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Available</div>,
-		dataIndex: 'available',
-		key: 'available',
+		dataIndex: 'available_pods',
+		key: 'available_pods',
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
@@ -158,8 +158,8 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header small-col">Desired</div>,
-		dataIndex: 'desired',
-		key: 'desired',
+		dataIndex: 'desired_pods',
+		key: 'desired_pods',
 		sorter: true,
 		align: 'left',
 		className: `column small-col`,
@@ -330,12 +330,12 @@ export const formatDataForTable = (
 				{formatBytes(statefulSet.memoryUsage)}
 			</ValidateColumnValueWrapper>
 		),
-		available: (
+		available_pods: (
 			<ValidateColumnValueWrapper value={statefulSet.availablePods}>
 				{statefulSet.availablePods}
 			</ValidateColumnValueWrapper>
 		),
-		desired: (
+		desired_pods: (
 			<ValidateColumnValueWrapper value={statefulSet.desiredPods}>
 				{statefulSet.desiredPods}
 			</ValidateColumnValueWrapper>
