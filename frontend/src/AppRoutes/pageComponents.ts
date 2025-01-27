@@ -232,7 +232,7 @@ export const InstalledIntegrations = Loadable(
 		),
 );
 
-export const MessagingQueues = Loadable(
+export const MessagingQueuesMainPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
 );
@@ -248,5 +248,19 @@ export const InfrastructureMonitoring = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
+		),
+);
+
+export const CeleryTask = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryTask" */ 'pages/Celery/CeleryTask/CeleryTask'
+		),
+);
+
+export const CeleryOverview = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryOverview" */ 'pages/Celery/CeleryOverview/CeleryOverview'
 		),
 );

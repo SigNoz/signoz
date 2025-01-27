@@ -15,6 +15,8 @@ export type GridTableComponentProps = {
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

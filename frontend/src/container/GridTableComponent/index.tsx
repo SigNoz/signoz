@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import './GridTableComponent.styles.scss';
 
 import { ExclamationCircleFilled } from '@ant-design/icons';
@@ -7,9 +8,11 @@ import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
+import { Compass } from 'lucide-react';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import styled from 'styled-components';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import { WrapperStyled } from './styles';
@@ -20,6 +23,23 @@ import {
 	TableData,
 } from './utils';
 
+export const HoverButtonWrapper = styled.div`
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	opacity: 0;
+	transition: opacity 0.2s;
+`;
+
+const RelativeWrapper = styled.div`
+	position: relative;
+
+	&:hover ${HoverButtonWrapper} {
+		opacity: 1;
+	}
+`;
+
 function GridTableComponent({
 	data,
 	query,
@@ -27,6 +47,8 @@ function GridTableComponent({
 	columnUnits,
 	tableProcessedDataRef,
 	sticky,
+	openTracesButton,
+	onOpenTraceBtnClick,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -161,6 +183,42 @@ function GridTableComponent({
 		},
 	}));
 
+	const columnDataWithOpenTracesButton = useMemo(
+		() =>
+			newColumnData.map((column, index) => ({
+				...column,
+				render: (text: string): JSX.Element => {
+					const LineClampedTextComponent = (
+						<LineClampedText
+							text={text}
+							lines={3}
+							tooltipProps={{
+								placement: 'right',
+								autoAdjustOverflow: true,
+								overlayClassName: 'long-text-tooltip',
+							}}
+						/>
+					);
+					if (index !== 0) {
+						return <div>{LineClampedTextComponent}</div>;
+					}
+
+					return (
+						<RelativeWrapper>
+							{LineClampedTextComponent}
+							<HoverButtonWrapper className="hover-button">
+								<button type="button" className="open-traces-button">
+									<Compass size={12} />
+									Open Trace
+								</button>
+							</HoverButtonWrapper>
+						</RelativeWrapper>
+					);
+				},
+			})),
+		[newColumnData],
+	);
+
 	useEffect(() => {
 		eventEmitter.emit(Events.TABLE_COLUMNS_DATA, {
 			columns: newColumnData,
@@ -174,9 +232,18 @@ function GridTableComponent({
 				query={query}
 				queryTableData={data}
 				loading={false}
-				columns={newColumnData}
+				columns={openTracesButton ? columnDataWithOpenTracesButton : newColumnData}
 				dataSource={dataSource}
 				sticky={sticky}
+				onRow={
+					openTracesButton
+						? (record): React.HTMLAttributes<HTMLElement> => ({
+								onClick: (): void => {
+									onOpenTraceBtnClick?.(record);
+								},
+						  })
+						: undefined
+				}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
