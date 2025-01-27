@@ -8,7 +8,7 @@ import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -39,6 +39,11 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',
 	);
+
+	useEffect(() => {
+		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
+	}, [urlQuery]);
+
 	const { data, isFetching, error } = useGetTraceFlamegraph({
 		traceId,
 		selectedSpanId: firstSpanAtFetchLevel,
