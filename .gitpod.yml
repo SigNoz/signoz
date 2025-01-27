@@ -3,16 +3,10 @@
 
 
 tasks:
-  - name: Run Script to Comment ut required lines
-    init: |
-      cd ./.scripts
-      sh commentLinesForSetup.sh
-
   - name: Run Docker Images
     init: |
-      cd ./deploy
-      sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
-    # command:
+      cd ./deploy/docker
+      sudo docker compose up -d
 
   - name: Run Frontend
     init: |
