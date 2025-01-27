@@ -12,6 +12,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -217,6 +218,48 @@ function getTableData(data: QueueOverviewResponse['data']): RowData[] {
 	return tableData;
 }
 
+type Filter = {
+	key: {
+		key: string;
+		dataType: string;
+	};
+	op: string;
+	value: string[];
+};
+
+type FilterConfig = {
+	paramName: string;
+	operator: string;
+	key: string;
+};
+
+function makeFilters(urlQuery: URLSearchParams): Filter[] {
+	const filterConfigs: FilterConfig[] = [
+		{ paramName: 'destination', key: 'destination', operator: 'in' },
+		{ paramName: 'queue', key: 'queue', operator: 'in' },
+		{ paramName: 'kind_string', key: 'kind_string', operator: 'in' },
+		{ paramName: 'service', key: 'service.name', operator: 'in' },
+		{ paramName: 'span_name', key: 'span_name', operator: 'in' },
+		{ paramName: 'messaging_system', key: 'messaging_system', operator: 'in' },
+	];
+
+	return filterConfigs
+		.map(({ paramName, operator, key }) => {
+			const value = urlQuery.get(paramName);
+			if (!value) return null;
+
+			return {
+				key: {
+					key,
+					dataType: 'string',
+				},
+				op: operator,
+				value: value.split(','),
+			};
+		})
+		.filter((filter): filter is Filter => filter !== null);
+}
+
 export default function CeleryOverviewTable(): JSX.Element {
 	const [tableData, setTableData] = useState<RowData[]>([]);
 
@@ -231,16 +274,20 @@ export default function CeleryOverviewTable(): JSX.Element {
 			}
 		},
 	});
+
+	const urlQuery = useUrlQuery();
+	const filters = useMemo(() => makeFilters(urlQuery), [urlQuery]);
+
 	useEffect(() => {
 		getOverviewData({
 			start: minTime,
 			end: maxTime,
 			filters: {
-				items: [],
+				items: filters,
 				op: 'AND',
 			},
 		});
-	}, [getOverviewData, minTime, maxTime]);
+	}, [getOverviewData, minTime, maxTime, filters]);
 
 	const { draggedColumns, onDragColumns } = useDragColumns<RowData>(
 		LOCALSTORAGE.CELERY_OVERVIEW_COLUMNS,
