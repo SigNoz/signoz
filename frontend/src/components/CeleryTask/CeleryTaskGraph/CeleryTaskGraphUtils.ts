@@ -572,7 +572,7 @@ export const celeryTaskLatencyWidgetData = (
 						},
 					],
 					having: [],
-					legend: '',
+					legend: '{{celery.task_name}}',
 					limit: null,
 					orderBy: [
 						{
