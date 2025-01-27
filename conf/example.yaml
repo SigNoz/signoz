@@ -85,14 +85,8 @@ telemetrystore:
   # specifies the telemetrystore provider to use.
   provider: clickhouse
   clickhouse:
-    # The address of the ClickHouse server.
-    address: localhost:9000
-    # The username to use for authentication.
-    username: default
-    # The password to use for authentication.
-    password: 
-    # Whether to enable debug mode.
-    debug: true
+    # The DSN to use for ClickHouse.
+    dsn: http://localhost:9000
   # Maximum number of idle connections in the connection pool.
   max_idle_conns: 50
   # Maximum number of open connections to the database.
