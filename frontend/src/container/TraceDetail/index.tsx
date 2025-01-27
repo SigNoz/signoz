@@ -1,7 +1,7 @@
 import './TraceDetails.styles.scss';
 
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Col, Layout, Typography } from 'antd';
+import { Button, Col, Empty, Input, Layout, Typography } from 'antd';
 import cx from 'classnames';
 import {
 	StyledCol,
@@ -12,12 +12,14 @@ import {
 	StyledTypography,
 } from 'components/Styled';
 import { Flex, Spacing } from 'components/Styled/styles';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
@@ -26,7 +28,11 @@ import { PanelRight } from 'lucide-react';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useState } from 'react';
-import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
+import {
+	ITraceForest,
+	ITraceTree,
+	PayloadProps,
+} from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
@@ -36,7 +42,9 @@ import * as styles from './styles';
 import { FlameGraphMissingSpansContainer, GanttChartWrapper } from './styles';
 import SubTreeMessage from './SubTree';
 import {
+	DEFAULT_FILTER_KEYS,
 	formUrlParams,
+	getFilteredData,
 	getSortedData,
 	getTreeLevelsCount,
 	IIntervalUnit,
@@ -59,6 +67,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const urlQuery = useUrlQuery();
 	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
+	const [searchText, setSearchText] = useState<string>('');
 
 	const [intervalUnit, setIntervalUnit] = useState<IIntervalUnit>(
 		INTERVAL_UNITS[0],
@@ -78,10 +87,19 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	);
 
 	const { treesData: tree, ...traceMetaData } = useMemo(() => {
+		const filteredTreesData: ITraceForest = {
+			spanTree: map(treesData.spanTree, (tree) =>
+				getFilteredData(tree, searchText, DEFAULT_FILTER_KEYS),
+			).filter(Boolean) as ITraceTree[],
+			missingSpanTree: map(treesData.missingSpanTree, (tree) =>
+				getFilteredData(tree, searchText, DEFAULT_FILTER_KEYS),
+			).filter(Boolean) as ITraceTree[],
+		};
+
 		const sortedTreesData: ITraceForest = {
-			spanTree: map(treesData.spanTree, (tree) => getSortedData(tree)),
+			spanTree: map(filteredTreesData.spanTree, (tree) => getSortedData(tree)),
 			missingSpanTree: map(
-				treesData.missingSpanTree,
+				filteredTreesData.missingSpanTree,
 				(tree) => getSortedData(tree) || [],
 			),
 		};
@@ -89,7 +107,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		/*eslint-disable */
 		return getSpanTreeMetadata(sortedTreesData, spanServiceColors);
 		/* eslint-enable */
-	}, [treesData, spanServiceColors]);
+	}, [treesData, spanServiceColors, searchText]);
 
 	const firstSpanStartTime = tree.spanTree[0]?.startTime;
 
@@ -126,6 +144,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const onResetHandler = (): void => {
 		setTreesData(spanToTreeUtil(response[0].events));
 	};
+
+	const setSearchTextDebounced = useDebouncedFn((...args) => {
+		setSearchText(args[0] as string);
+	}, DEBOUNCE_DELAY);
 
 	const hasMissingSpans = useMemo(
 		(): boolean =>
@@ -225,6 +247,11 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`} />
 					<Col flex="auto">
 						<StyledSpace styledclass={[styles.floatRight]}>
+							<Input.Search
+								placeholder="Filter spans"
+								allowClear
+								onChange={(e): void => setSearchTextDebounced(e.target.value)}
+							/>
 							<Button
 								onClick={onFocusSelectedSpanHandler}
 								icon={<FilterOutlined />}
@@ -243,21 +270,25 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					</Col>
 				</StyledRow>
 				<StyledDiv styledclass={[styles.ganttChartContainer]}>
-					<GanttChartWrapper>
-						{map([...tree.spanTree, ...tree.missingSpanTree], (tree) => (
-							<GanttChart
-								key={tree as never}
-								traceMetaData={traceMetaData}
-								data={tree}
-								activeSelectedId={activeSelectedId}
-								activeHoverId={activeHoverId}
-								setActiveHoverId={setActiveHoverId}
-								setActiveSelectedId={setActiveSelectedId}
-								spanId={spanId || ''}
-								intervalUnit={intervalUnit}
-							/>
-						))}
-					</GanttChartWrapper>
+					{[...tree.spanTree, ...tree.missingSpanTree].length === 0 ? (
+						<Empty />
+					) : (
+						<GanttChartWrapper>
+							{map([...tree.spanTree, ...tree.missingSpanTree], (tree) => (
+								<GanttChart
+									key={tree as never}
+									traceMetaData={traceMetaData}
+									data={tree}
+									activeSelectedId={activeSelectedId}
+									activeHoverId={activeHoverId}
+									setActiveHoverId={setActiveHoverId}
+									setActiveSelectedId={setActiveSelectedId}
+									spanId={spanId || ''}
+									intervalUnit={intervalUnit}
+								/>
+							))}
+						</GanttChartWrapper>
+					)}
 				</StyledDiv>
 			</StyledCol>
 
