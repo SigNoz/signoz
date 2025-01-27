@@ -34,7 +34,7 @@ func (c clickHouseWrapper) Stats() driver.Stats {
 	return c.conn.Stats()
 }
 
-func (c clickHouseWrapper) addClickHouseSettings(ctx context.Context, query string) context.Context {
+func (c clickHouseWrapper) addClickHouseSettings(ctx context.Context) context.Context {
 	settings := clickhouse.Settings{}
 
 	logComment := c.getLogComment(ctx)
@@ -84,27 +84,27 @@ func (c clickHouseWrapper) getLogComment(ctx context.Context) string {
 }
 
 func (c clickHouseWrapper) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
-	return c.conn.Query(c.addClickHouseSettings(ctx, query), query, args...)
+	return c.conn.Query(c.addClickHouseSettings(ctx), query, args...)
 }
 
 func (c clickHouseWrapper) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
-	return c.conn.QueryRow(c.addClickHouseSettings(ctx, query), query, args...)
+	return c.conn.QueryRow(c.addClickHouseSettings(ctx), query, args...)
 }
 
 func (c clickHouseWrapper) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	return c.conn.Select(c.addClickHouseSettings(ctx, query), dest, query, args...)
+	return c.conn.Select(c.addClickHouseSettings(ctx), dest, query, args...)
 }
 
 func (c clickHouseWrapper) Exec(ctx context.Context, query string, args ...interface{}) error {
-	return c.conn.Exec(c.addClickHouseSettings(ctx, query), query, args...)
+	return c.conn.Exec(c.addClickHouseSettings(ctx), query, args...)
 }
 
 func (c clickHouseWrapper) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
-	return c.conn.AsyncInsert(c.addClickHouseSettings(ctx, query), query, wait, args...)
+	return c.conn.AsyncInsert(c.addClickHouseSettings(ctx), query, wait, args...)
 }
 
 func (c clickHouseWrapper) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
-	return c.conn.PrepareBatch(c.addClickHouseSettings(ctx, query), query, opts...)
+	return c.conn.PrepareBatch(c.addClickHouseSettings(ctx), query, opts...)
 }
 
 func (c clickHouseWrapper) ServerVersion() (*driver.ServerVersion, error) {
