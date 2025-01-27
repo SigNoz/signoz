@@ -113,16 +113,17 @@ function CustomTimePicker({
 		selectedTimeValue: string,
 	): string => {
 		if (selectedTime === 'custom') {
-			// Convert the date range string to 12-hour format
-			const dates = selectedTimeValue.split(' - ');
-			if (dates.length === 2) {
-				const startDate = dayjs(dates[0], 'DD/MM/YYYY HH:mm');
-				const endDate = dayjs(dates[1], 'DD/MM/YYYY HH:mm');
+			// TODO(shaheer): if the user preference is 12 hour format, then convert the date range string to 12-hour format (pick this up while working on 12/24 hour preference feature)
+			// // Convert the date range string to 12-hour format
+			// const dates = selectedTimeValue.split(' - ');
+			// if (dates.length === 2) {
+			// 	const startDate = dayjs(dates[0], DATE_TIME_FORMATS.UK_DATETIME);
+			// 	const endDate = dayjs(dates[1], DATE_TIME_FORMATS.UK_DATETIME);
 
-				return `${startDate.format('DD/MM/YYYY hh:mm A')} - ${endDate.format(
-					'DD/MM/YYYY hh:mm A',
-				)}`;
-			}
+			// 	return `${startDate.format(DATE_TIME_FORMATS.UK_DATETIME)} - ${endDate.format(
+			// 		DATE_TIME_FORMATS.UK_DATETIME,
+			// 	)}`;
+			// }
 			return selectedTimeValue;
 		}
 

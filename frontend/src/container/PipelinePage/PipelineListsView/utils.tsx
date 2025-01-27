@@ -1,4 +1,5 @@
 import { ColumnType } from 'antd/lib/table/interface';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import update from 'react-addons-update';
 import { ProcessorData } from 'types/api/pipeline/def';
@@ -69,7 +70,7 @@ export function getDataOnSearch(
 		key === 'createdAt'
 			? dayjs(data[key])
 					.locale('en')
-					.format('MMMM DD, YYYY hh:mm A')
+					.format(DATE_TIME_FORMATS.MONTH_DATETIME_FULL)
 					.includes(searchValue)
 			: String(data[key]).toLowerCase().includes(searchValue.toLowerCase()),
 	);

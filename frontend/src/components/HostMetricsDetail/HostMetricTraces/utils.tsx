@@ -1,5 +1,6 @@
 import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import {
 	BlockLink,
@@ -33,8 +34,8 @@ export const getListColumns = (
 				if (key === 'timestamp') {
 					const date =
 						typeof value === 'string'
-							? dayjs(value).format('YYYY-MM-DD HH:mm:ss.SSS')
-							: dayjs(value / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+							? dayjs(value).format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
+							: dayjs(value / 1e6).format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
 
 					return (
 						<BlockLink to={getTraceLink(item)} openInNewTab>

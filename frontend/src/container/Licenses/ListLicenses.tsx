@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 import { useTranslation } from 'react-i18next';
 import { License } from 'types/api/licenses/def';
@@ -10,7 +11,7 @@ function ValidityColumn({ value }: { value: string }): JSX.Element {
 
 	return (
 		<Typography>
-			{formatTimezoneAdjustedTimestamp(value, 'YYYY-MM-DD HH:mm:ss (UTC Z)')}
+			{formatTimezoneAdjustedTimestamp(value, DATE_TIME_FORMATS.ISO_DATETIME_UTC)}
 		</Typography>
 	);
 }

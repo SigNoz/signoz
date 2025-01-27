@@ -7,6 +7,7 @@ import installIntegration from 'api/Integrations/installIntegration';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
@@ -249,19 +250,25 @@ function IntegrationDetailHeader(
 									title={
 										latestData.last_received_ts_ms
 											? // eslint-disable-next-line sonarjs/no-duplicate-string
-											  dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											  dayjs(latestData.last_received_ts_ms).format(
+													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
+											  )
 											: ''
 									}
 									key={
 										latestData.last_received_ts_ms
-											? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											? dayjs(latestData.last_received_ts_ms).format(
+													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
+											  )
 											: ''
 									}
 									placement="right"
 								>
 									<Typography.Text className="last-value" ellipsis>
 										{latestData.last_received_ts_ms
-											? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											? dayjs(latestData.last_received_ts_ms).format(
+													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
+											  )
 											: ''}
 									</Typography.Text>
 								</Tooltip>

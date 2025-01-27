@@ -5,6 +5,7 @@ import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
@@ -148,7 +149,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					<Typography>
 						{formatTimezoneAdjustedTimestamp(
 							errorDetail.timestamp,
-							'DD/MM/YYYY hh:mm:ss A (UTC Z)',
+							DATE_TIME_FORMATS.UTC_FULL,
 						)}
 					</Typography>
 				</div>

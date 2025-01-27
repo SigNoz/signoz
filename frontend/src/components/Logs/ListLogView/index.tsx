@@ -6,6 +6,7 @@ import { Typography } from 'antd';
 import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { unescapeString } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import dompurify from 'dompurify';
@@ -181,11 +182,11 @@ function ListLogView({
 			typeof flattenLogData.timestamp === 'string'
 				? formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp,
-						'YYYY-MM-DD HH:mm:ss.SSS',
+						DATE_TIME_FORMATS.ISO_DATETIME_MS,
 				  )
 				: formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp / 1e6,
-						'YYYY-MM-DD HH:mm:ss.SSS',
+						DATE_TIME_FORMATS.ISO_DATETIME_MS,
 				  ),
 		[flattenLogData.timestamp, formatTimezoneAdjustedTimestamp],
 	);
