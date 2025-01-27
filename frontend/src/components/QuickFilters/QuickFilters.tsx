@@ -101,11 +101,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const lastQueryName =
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
-	const isInfraMonitoring = source === QuickFiltersSource.INFRA_MONITORING;
-
 	return (
 		<div className="quick-filters">
-			{!isInfraMonitoring && (
+			{source !== QuickFiltersSource.INFRA_MONITORING && (
 				<section className="header">
 					<section className="left-actions">
 						<FilterOutlined />
@@ -132,17 +130,27 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 			<section className="filters">
 				{config.map((filter) => {
-					if (filter.type === FiltersType.SLIDER) {
-						return <Slider key={filter.title} filter={filter} />;
+					switch (filter.type) {
+						case FiltersType.CHECKBOX:
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
+						case FiltersType.SLIDER:
+							return <Slider filter={filter} />;
+						// eslint-disable-next-line sonarjs/no-duplicated-branches
+						default:
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 					}
-					return (
-						<Checkbox
-							key={filter.title}
-							source={source}
-							filter={filter}
-							onFilterChange={onFilterChange}
-						/>
-					);
 				})}
 			</section>
 		</div>

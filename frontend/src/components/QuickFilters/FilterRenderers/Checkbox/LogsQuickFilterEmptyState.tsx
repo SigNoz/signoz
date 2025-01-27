@@ -14,7 +14,7 @@ const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
 	'k8s.pod.name': 'k8s-pod-name',
 };
 
-function QuickFilterEmptyState({
+function LogsQuickFilterEmptyState({
 	attributeKey,
 }: {
 	attributeKey: string;
@@ -50,4 +50,4 @@ function QuickFilterEmptyState({
 	);
 }
 
-export default QuickFilterEmptyState;
+export default LogsQuickFilterEmptyState;

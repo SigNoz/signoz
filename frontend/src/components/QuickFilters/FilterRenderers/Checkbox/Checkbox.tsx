@@ -24,10 +24,12 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
-import QuickFilterEmptyState from './QuickFilterEmptyState';
+import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
 
 const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'nin'];
+
+const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 function setDefaultValues(
 	values: string[],
@@ -418,7 +420,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	};
 
 	const isEmptyStateWithDocsEnabled =
-		[QuickFiltersSource.LOGS_EXPLORER].includes(source) &&
+		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(source) &&
 		!searchText &&
 		!attributeValues.length;
 
@@ -522,7 +524,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							))}
 						</section>
 					) : isEmptyStateWithDocsEnabled ? (
-						<QuickFilterEmptyState attributeKey={filter.attributeKey.key} />
+						<LogsQuickFilterEmptyState attributeKey={filter.attributeKey.key} />
 					) : (
 						<section className="no-data">
 							<Typography.Text>No values found</Typography.Text>{' '}
