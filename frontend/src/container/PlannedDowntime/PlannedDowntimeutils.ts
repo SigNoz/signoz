@@ -11,6 +11,7 @@ import updateDowntimeSchedule, {
 	PayloadProps,
 } from 'api/plannedDowntime/updateDowntimeSchedule';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { isEmpty, isEqual } from 'lodash-es';
 import { UseMutateAsyncFunction } from 'react-query';
@@ -44,7 +45,9 @@ export const formatDateTime = (dateTimeString?: string | null): string => {
 		return 'N/A';
 	}
 
-	return dayjs(dateTimeString.slice(0, 19)).format('MMM DD, YYYY h:mm A');
+	return dayjs(dateTimeString.slice(0, 19)).format(
+		DATE_TIME_FORMATS.MONTH_DATETIME,
+	);
 };
 
 export const getAlertOptionsFromIds = (

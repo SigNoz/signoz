@@ -31,6 +31,7 @@ import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -437,7 +438,7 @@ function MultiIngestionSettings(): JSX.Element {
 		date: string,
 		formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
 	): string =>
-		formatTimezoneAdjustedTimestamp(date, 'MMM DD,YYYY, hh:mm a (UTC Z)');
+		formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.UTC_MONTH_COMPACT);
 
 	const showDeleteLimitModal = (
 		APIKey: IngestionKeyProps,

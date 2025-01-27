@@ -2,8 +2,10 @@
 // @ts-nocheck
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 
+import { uPlotXAxisValuesFormat } from './constants';
 import getGridColor from './getGridColor';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
@@ -17,6 +19,7 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 			width: 0.3, // Width of the tick lines,
 			show: true,
 		},
+		values: uPlotXAxisValuesFormat,
 		gap: 5,
 	},
 	{
