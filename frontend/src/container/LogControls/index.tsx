@@ -1,5 +1,6 @@
 import { FastBackwardOutlined } from '@ant-design/icons';
 import { Button, Divider } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import Controls from 'container/Controls';
 import Download from 'container/Download/Download';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
@@ -85,8 +86,8 @@ function LogControls(): JSX.Element | null {
 			logs.map((log) => {
 				const timestamp =
 					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
-						: dayjs(log.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+						? dayjs(log.timestamp).format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
+						: dayjs(log.timestamp / 1e6).format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
 
 				return FlatLogData({
 					...log,

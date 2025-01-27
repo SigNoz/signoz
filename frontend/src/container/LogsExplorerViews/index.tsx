@@ -7,6 +7,7 @@ import logEvent from 'api/common/logEvent';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -679,10 +680,10 @@ function LogsExplorerViews({
 					typeof log.timestamp === 'string'
 						? dayjs(log.timestamp)
 								.tz(timezone.value)
-								.format('YYYY-MM-DD HH:mm:ss.SSS')
+								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
 						: dayjs(log.timestamp / 1e6)
 								.tz(timezone.value)
-								.format('YYYY-MM-DD HH:mm:ss.SSS');
+								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
 
 				return FlatLogData({
 					timestamp,

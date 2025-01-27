@@ -1,6 +1,7 @@
 import './RangePickerModal.styles.scss';
 
 import { DatePicker } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { LexicalContext } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
@@ -68,12 +69,9 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 			<RangePicker
 				disabledDate={disabledDate}
 				allowClear
-				showTime={{
-					use12Hours: true,
-					format: 'hh:mm A',
-				}}
+				showTime
 				format={(date: Dayjs): string =>
-					date.tz(timezone.value).format('YYYY-MM-DD hh:mm A')
+					date.tz(timezone.value).format(DATE_TIME_FORMATS.ISO_DATETIME)
 				}
 				onOk={onModalOkHandler}
 				// eslint-disable-next-line react/jsx-props-no-spreading

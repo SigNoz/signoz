@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { unescapeString } from 'container/LogDetailedView/utils';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -99,10 +100,13 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				render: (field): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
-							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
+							? formatTimezoneAdjustedTimestamp(
+									field,
+									DATE_TIME_FORMATS.ISO_DATETIME_MS,
+							  )
 							: formatTimezoneAdjustedTimestamp(
 									field / 1e6,
-									'YYYY-MM-DD HH:mm:ss.SSS',
+									DATE_TIME_FORMATS.ISO_DATETIME_MS,
 							  );
 					return {
 						children: (

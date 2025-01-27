@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { unescapeString } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dompurify from 'dompurify';
@@ -94,10 +95,13 @@ function RawLogView({
 	const text = useMemo(() => {
 		const date =
 			typeof data.timestamp === 'string'
-				? formatTimezoneAdjustedTimestamp(data.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
+				? formatTimezoneAdjustedTimestamp(
+						data.timestamp,
+						DATE_TIME_FORMATS.ISO_DATETIME_MS,
+				  )
 				: formatTimezoneAdjustedTimestamp(
 						data.timestamp / 1e6,
-						'YYYY-MM-DD HH:mm:ss.SSS',
+						DATE_TIME_FORMATS.ISO_DATETIME_MS,
 				  );
 
 		return `${date} | ${attributesText} ${data.body}`;
