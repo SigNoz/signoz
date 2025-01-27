@@ -268,6 +268,10 @@ export default function CeleryOverviewTable(): JSX.Element {
 		[tableData],
 	);
 
+	const handleRowClick = (record: RowData): void => {
+		console.log(record);
+	};
+
 	return (
 		<div style={{ width: '100%' }}>
 			<ResizeTable
@@ -287,6 +291,11 @@ export default function CeleryOverviewTable(): JSX.Element {
 				scroll={{ x: true }}
 				showSorterTooltip
 				onDragColumn={handleDragColumn}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => handleRowClick(record),
+					className: 'clickable-row',
+				})}
+				tableLayout="fixed"
 			/>
 		</div>
 	);
