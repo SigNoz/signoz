@@ -318,10 +318,12 @@ function Success(props: ISuccessProps): JSX.Element {
 				(span) => span.spanId === interestedSpanId.spanId,
 			);
 			if (idx !== -1) {
-				virtualizerRef.current.scrollToIndex(idx, {
-					align: 'center',
-					behavior: 'auto',
-				});
+				setTimeout(() => {
+					virtualizerRef.current?.scrollToIndex(idx, {
+						align: 'center',
+						behavior: 'auto',
+					});
+				}, 400);
 
 				setSelectedSpan(spans[idx]);
 			}
