@@ -4,12 +4,14 @@ import { themeColors } from 'constants/theme';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
+import _noop from 'lodash-es/noop';
 import { Dispatch, SetStateAction } from 'react';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
+import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import { drawStyles } from './utils/constants';
 import { generateColor } from './utils/generateColor';
@@ -27,6 +29,7 @@ type GetUplotHistogramChartOptionsProps = {
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: Dispatch<SetStateAction<boolean[]>>;
 	mergeAllQueries?: boolean;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 };
 
 type GetHistogramSeriesProps = {
@@ -119,6 +122,7 @@ export const getUplotHistogramChartOptions = ({
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
 	mergeAllQueries,
+	onClickHandler = _noop,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
@@ -139,6 +143,10 @@ export const getUplotHistogramChartOptions = ({
 				isHistogramGraphs: true,
 				isMergedSeries: mergeAllQueries,
 				isDarkMode,
+			}),
+			onClickPlugin({
+				onClick: onClickHandler,
+				apiResponse,
 			}),
 		],
 		scales: {
