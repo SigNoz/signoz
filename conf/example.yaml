@@ -91,6 +91,8 @@ telemetrystore:
     username: default
     # The password to use for authentication.
     password: 
+    # Whether to enable debug mode.
+    debug: true
   # Maximum number of idle connections in the connection pool.
   max_idle_conns: 50
   # Maximum number of open connections to the database.

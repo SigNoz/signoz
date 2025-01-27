@@ -56,9 +56,6 @@ type namespaceConfig struct {
 	namespace               string
 	Enabled                 bool
 	Datasource              string
-	MaxIdleConns            int
-	MaxOpenConns            int
-	DialTimeout             time.Duration
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
@@ -107,9 +104,6 @@ type Options struct {
 // NewOptions creates a new Options struct.
 func NewOptions(
 	datasource string,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	primaryNamespace string,
 	otherNamespaces ...string,
 ) *Options {
@@ -123,9 +117,6 @@ func NewOptions(
 			namespace:               primaryNamespace,
 			Enabled:                 true,
 			Datasource:              datasource,
-			MaxIdleConns:            maxIdleConns,
-			MaxOpenConns:            maxOpenConns,
-			DialTimeout:             dialTimeout,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,

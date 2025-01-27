@@ -157,7 +157,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		qb := db.NewDataConnector(
 			serverOptions.SigNoz.SQLStore.SQLxDB(),
-			serverOptions.SigNoz.TelemetryStore.Clickhouse(),
+			serverOptions.SigNoz.TelemetryStore.ClickHouse(),
 			serverOptions.PromConfigPath,
 			lm,
 			serverOptions.MaxIdleConns,
@@ -246,7 +246,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.Clickhouse())
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickHouse())
 	if err != nil {
 		return nil, err
 	}

@@ -10,7 +10,7 @@ import (
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
-	clickhouseConn clickhouse.Conn
+	clickHouseConn clickHouseWrapper
 }
 
 func NewFactory() factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
@@ -21,26 +21,34 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
 	chConn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{config.Clickhouse.Address},
+		Addr: []string{config.ClickHouse.Address},
 		Auth: clickhouse.Auth{
-			Username: config.Clickhouse.Username,
-			Password: config.Clickhouse.Password,
+			Username: config.ClickHouse.Username,
+			Password: config.ClickHouse.Password,
 		},
 		MaxIdleConns: config.Connection.MaxIdleConns,
 		MaxOpenConns: config.Connection.MaxOpenConns,
 		DialTimeout:  config.Connection.DialTimeout,
-		Debug:        config.Clickhouse.Debug,
+		Debug:        config.ClickHouse.Debug,
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	wrappedConn := wrapClickhouseConn(chConn, config.ClickHouse.QuerySettings)
+
 	return &provider{
 		settings:       settings,
-		clickhouseConn: chConn,
+		clickHouseConn: wrappedConn,
 	}, nil
 }
 
-func (p *provider) Clickhouse() clickhouse.Conn {
-	return p.clickhouseConn
+// returns  connection with wrapper
+func (p *provider) ClickHouse() clickhouse.Conn {
+	return p.clickHouseConn
+}
+
+// return the underlying connection without wrapper
+func (p *provider) ClickHouseConn() clickhouse.Conn {
+	return p.clickHouseConn.conn
 }

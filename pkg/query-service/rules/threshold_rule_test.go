@@ -1240,7 +1240,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
@@ -1339,7 +1339,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
@@ -1447,7 +1447,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
@@ -1572,7 +1572,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)

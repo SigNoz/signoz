@@ -12,7 +12,7 @@ type Config struct {
 	// Connection is the connection configuration
 	Connection ConnectionConfig `mapstructure:",squash"`
 	// Clickhouse is the clickhouse configuration
-	Clickhouse ClickhouseConfig `mapstructure:"clickhouse"`
+	ClickHouse ClickHouseConfig `mapstructure:"clickhouse"`
 }
 
 type ConnectionConfig struct {
@@ -22,12 +22,22 @@ type ConnectionConfig struct {
 	DialTimeout  time.Duration `mapstructure:"dial_timeout"`
 }
 
-type ClickhouseConfig struct {
+type ClickHouseQuerySettings struct {
+	MaxExecutionTime                    int `mapstructure:"max_execution_time"`
+	MaxExecutionTimeLeaf                int `mapstructure:"max_execution_time_leaf"`
+	TimeoutBeforeCheckingExecutionSpeed int `mapstructure:"timeout_before_checking_execution_speed"`
+	MaxBytesToRead                      int `mapstructure:"max_bytes_to_read"`
+	MaxResultRowsForCHQuery             int `mapstructure:"max_result_rows_for_ch_query"`
+}
+
+type ClickHouseConfig struct {
 	Address  string `mapstructure:"address"`
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
 
 	Debug bool `mapstructure:"debug"`
+
+	QuerySettings ClickHouseQuerySettings `mapstructure:"query_settings"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -43,8 +53,10 @@ func newConfig() factory.Config {
 			MaxIdleConns: 50,
 			DialTimeout:  5 * time.Second,
 		},
-		Clickhouse: ClickhouseConfig{
+		ClickHouse: ClickHouseConfig{
 			Address: "localhost:9000",
+
+			// No default query settings, as default's are set in ch config
 		},
 	}
 }

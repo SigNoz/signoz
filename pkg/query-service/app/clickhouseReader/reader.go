@@ -180,7 +180,7 @@ func NewReader(
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
+	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
 	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
@@ -203,29 +203,6 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
-	regex := os.Getenv("ClickHouseOptimizeReadInOrderRegex")
-	var regexCompiled *regexp.Regexp
-	if regex != "" {
-		regexCompiled, err = regexp.Compile(regex)
-		if err != nil {
-			zap.L().Error("Incorrect regex for ClickHouseOptimizeReadInOrderRegex")
-			os.Exit(1)
-		}
-	}
-
-	wrap := clickhouseConnWrapper{
-		conn: db,
-		settings: ClickhouseQuerySettings{
-			MaxExecutionTime:                    os.Getenv("ClickHouseMaxExecutionTime"),
-			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
-			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
-			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
-			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
-			OptimizeReadInOrderRegexCompiled:    regexCompiled,
-			MaxResultRowsForCHQuery:             constants.MaxResultRowsForCHQuery,
-		},
-	}
-
 	logsTableName := options.primary.LogsTable
 	logsLocalTableName := options.primary.LogsLocalTable
 	if useLogsNewSchema {
@@ -241,7 +218,7 @@ func NewReaderFromClickhouseConnection(
 	}
 
 	return &ClickHouseReader{
-		db:                      wrap,
+		db:                      db,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
 		alertManager:            alertManager,
