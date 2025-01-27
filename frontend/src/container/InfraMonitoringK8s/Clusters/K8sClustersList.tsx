@@ -32,6 +32,7 @@ import {
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
+import { usePageSize } from '../utils';
 import ClusterDetails from './ClusterDetails';
 import {
 	defaultAddedColumns,
@@ -68,7 +69,7 @@ function K8sClustersList({
 		null,
 	);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize(K8sCategory.CLUSTERS);
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
@@ -192,7 +193,7 @@ function K8sClustersList({
 			queryPayload.groupBy = groupBy;
 		}
 		return queryPayload;
-	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
+	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
 	const formattedGroupedByClustersData = useMemo(
 		() =>
@@ -461,8 +462,12 @@ function K8sClustersList({
 					current: currentPage,
 					pageSize,
 					total: totalCount,
-					showSizeChanger: false,
+					showSizeChanger: true,
 					hideOnSinglePage: true,
+					onChange: (page, pageSize): void => {
+						setCurrentPage(page);
+						setPageSize(pageSize);
+					},
 				}}
 				scroll={{ x: true }}
 				loading={{

@@ -13,6 +13,7 @@ import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
+import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -48,7 +49,7 @@ function HostsList(): JSX.Element {
 
 	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize('hosts');
 
 	const query = useMemo(() => {
 		const baseQuery = getHostListsQuery();
@@ -61,7 +62,7 @@ function HostsList(): JSX.Element {
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
-	}, [currentPage, filters, minTime, maxTime, orderBy]);
+	}, [pageSize, currentPage, filters, minTime, maxTime, orderBy]);
 
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
@@ -231,8 +232,12 @@ function HostsList(): JSX.Element {
 						current: currentPage,
 						pageSize,
 						total: totalCount,
-						showSizeChanger: false,
+						showSizeChanger: true,
 						hideOnSinglePage: true,
+						onChange: (page, pageSize): void => {
+							setCurrentPage(page);
+							setPageSize(pageSize);
+						},
 					}}
 					scroll={{ x: true }}
 					loading={{
