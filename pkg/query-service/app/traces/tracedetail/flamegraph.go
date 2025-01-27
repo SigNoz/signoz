@@ -39,9 +39,11 @@ func FindIndexForSelectedSpan(spans [][]*model.FlamegraphSpan, selectedSpanId st
 	var selectedSpanLevel int = 0
 
 	for index, _spans := range spans {
-		if len(_spans) > 0 && _spans[0].SpanID == selectedSpanId {
-			selectedSpanLevel = index
-			break
+		for _, span := range _spans {
+			if span.SpanID == selectedSpanId {
+				selectedSpanLevel = index
+				break
+			}
 		}
 	}
 
@@ -88,7 +90,64 @@ func GetSelectedSpansForFlamegraph(traceRoots []*model.FlamegraphSpan, spanIdToS
 	return selectedSpans
 }
 
-func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpans [][]*model.FlamegraphSpan) [][]*model.FlamegraphSpan {
+func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selectedSpanID string, isSelectedSpanIDPresent bool, startTime uint64, endTime uint64) []*model.FlamegraphSpan {
+	var sampledSpans []*model.FlamegraphSpan
+	// sort the spans by latency for latency filtering
+	sort.Slice(spans, func(i, j int) bool {
+		return spans[i].DurationNano > spans[j].DurationNano
+	})
+
+	// pick the top 5 latency spans
+	for idx := range 5 {
+		sampledSpans = append(sampledSpans, spans[idx])
+	}
+
+	// always add the selectedSpan
+	if isSelectedSpanIDPresent {
+		idx := -1
+		for _idx, span := range spans {
+			if span.SpanID == selectedSpanID {
+				idx = _idx
+			}
+		}
+		if idx != -1 {
+			sampledSpans = append(sampledSpans, spans[idx])
+		}
+	}
+
+	bucketSize := (endTime - startTime) / 50
+	if bucketSize == 0 {
+		bucketSize = 1
+	}
+
+	bucketedSpans := make([][]*model.FlamegraphSpan, 50)
+
+	for _, span := range spans {
+		if span.TimeUnixNano >= startTime && span.TimeUnixNano <= endTime {
+			bucketIndex := int((span.TimeUnixNano - startTime) / bucketSize)
+			if bucketIndex >= 0 && bucketIndex < 50 {
+				bucketedSpans[bucketIndex] = append(bucketedSpans[bucketIndex], span)
+			}
+		}
+	}
+
+	for i := range bucketedSpans {
+		if len(bucketedSpans[i]) > 2 {
+			// Keep only the first 2 spans
+			bucketedSpans[i] = bucketedSpans[i][:2]
+		}
+	}
+
+	// Flatten the bucketed spans into a single slice
+	for _, bucket := range bucketedSpans {
+		sampledSpans = append(sampledSpans, bucket...)
+	}
+
+	return sampledSpans
+}
+
+func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpans [][]*model.FlamegraphSpan, startTime uint64, endTime uint64) [][]*model.FlamegraphSpan {
+	var selectedSpansForRequest [][]*model.FlamegraphSpan
 	var selectedIndex = 0
 
 	if selectedSpanID != "" {
@@ -112,5 +171,14 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 		lowerLimit = 0
 	}
 
-	return selectedSpans[lowerLimit:upperLimit]
+	for i := lowerLimit; i < upperLimit; i++ {
+		if len(selectedSpans[i]) > 100 {
+			_spans := getLatencyAndTimestampBucketedSpans(selectedSpans[i], selectedSpanID, i == selectedIndex, startTime, endTime)
+			selectedSpansForRequest = append(selectedSpansForRequest, _spans)
+		} else {
+			selectedSpansForRequest = append(selectedSpansForRequest, selectedSpans[i])
+		}
+	}
+
+	return selectedSpansForRequest
 }
