@@ -13,9 +13,7 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_ADDRESS", "localhost:9000")
-	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME", "default")
-	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD", "password")
+	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN", "http://localhost:9000")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS", "60")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS", "150")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT", "5s")
@@ -48,10 +46,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 			DialTimeout:  5 * time.Second,
 		},
 		ClickHouse: ClickHouseConfig{
-			Address:  "localhost:9000",
-			Username: "default",
-			Password: "password",
-			Debug:    true,
+			DSN: "http://localhost:9000",
 		},
 	}
 

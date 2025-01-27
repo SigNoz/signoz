@@ -31,11 +31,7 @@ type ClickHouseQuerySettings struct {
 }
 
 type ClickHouseConfig struct {
-	Address  string `mapstructure:"address"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-
-	Debug bool `mapstructure:"debug"`
+	DSN string `mapstructure:"dsn"`
 
 	QuerySettings ClickHouseQuerySettings `mapstructure:"query_settings"`
 }
@@ -54,7 +50,7 @@ func newConfig() factory.Config {
 			DialTimeout:  5 * time.Second,
 		},
 		ClickHouse: ClickHouseConfig{
-			Address: "localhost:9000",
+			DSN: "http://localhost:9000",
 
 			// No default query settings, as default's are set in ch config
 		},

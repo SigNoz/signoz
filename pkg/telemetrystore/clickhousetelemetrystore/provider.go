@@ -2,6 +2,8 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.signoz.io/signoz/pkg/factory"
@@ -20,17 +22,21 @@ func NewFactory() factory.ProviderFactory[telemetrystore.TelemetryStore, telemet
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
-	chConn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{config.ClickHouse.Address},
-		Auth: clickhouse.Auth{
-			Username: config.ClickHouse.Username,
-			Password: config.ClickHouse.Password,
-		},
-		MaxIdleConns: config.Connection.MaxIdleConns,
-		MaxOpenConns: config.Connection.MaxOpenConns,
-		DialTimeout:  config.Connection.DialTimeout,
-		Debug:        config.ClickHouse.Debug,
-	})
+	// TODO(remove): Remove this once we have a proper way to set the DSN
+	if os.Getenv("ClickHouseUrl") != "" {
+		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_ADDRESS instead.")
+		config.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
+	}
+
+	options, err := clickhouse.ParseDSN(config.ClickHouse.DSN)
+	if err != nil {
+		return nil, err
+	}
+	options.MaxIdleConns = config.Connection.MaxIdleConns
+	options.MaxOpenConns = config.Connection.MaxOpenConns
+	options.DialTimeout = config.Connection.DialTimeout
+
+	chConn, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
 	}

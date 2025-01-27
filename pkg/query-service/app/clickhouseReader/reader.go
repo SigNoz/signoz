@@ -175,9 +175,7 @@ func NewReader(
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickHouseReader {
-
-	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
+	options := NewOptions(primaryNamespace, archiveNamespace)
 	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 

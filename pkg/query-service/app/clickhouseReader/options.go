@@ -16,7 +16,6 @@ const (
 )
 
 const (
-	defaultDatasource              string        = "tcp://localhost:9000"
 	defaultTraceDB                 string        = "signoz_traces"
 	defaultOperationsTable         string        = "distributed_signoz_operations"
 	defaultIndexTable              string        = "distributed_signoz_index_v2"
@@ -103,20 +102,13 @@ type Options struct {
 
 // NewOptions creates a new Options struct.
 func NewOptions(
-	datasource string,
 	primaryNamespace string,
 	otherNamespaces ...string,
 ) *Options {
-
-	if datasource == "" {
-		datasource = defaultDatasource
-	}
-
 	options := &Options{
 		primary: &namespaceConfig{
 			namespace:               primaryNamespace,
 			Enabled:                 true,
-			Datasource:              datasource,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,
@@ -157,7 +149,6 @@ func NewOptions(
 		if namespace == archiveNamespace {
 			options.others[namespace] = &namespaceConfig{
 				namespace:              namespace,
-				Datasource:             datasource,
 				TraceDB:                "",
 				OperationsTable:        "",
 				IndexTable:             "",
