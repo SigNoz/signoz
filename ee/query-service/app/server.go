@@ -74,9 +74,6 @@ type ServerOptions struct {
 	DisableRules               bool
 	RuleRepoURL                string
 	PreferSpanMetrics          bool
-	MaxIdleConns               int
-	MaxOpenConns               int
-	DialTimeout                time.Duration
 	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
@@ -160,9 +157,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.SigNoz.TelemetryStore.ClickHouse(),
 			serverOptions.PromConfigPath,
 			lm,
-			serverOptions.MaxIdleConns,
-			serverOptions.MaxOpenConns,
-			serverOptions.DialTimeout,
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
@@ -267,9 +261,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		MaxIdleConns:                  serverOptions.MaxIdleConns,
-		MaxOpenConns:                  serverOptions.MaxOpenConns,
-		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        modelDao,
 		RulesManager:                  rm,
 		UsageManager:                  usageManager,
