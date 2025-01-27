@@ -32,6 +32,7 @@ jobs:
         shell: bash
         run: |
           make build-frontend-amd64
+
   build-frontend-ee:
     runs-on: ubuntu-latest
     steps:
