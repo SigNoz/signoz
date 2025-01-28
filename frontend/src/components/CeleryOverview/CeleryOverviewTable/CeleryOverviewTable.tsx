@@ -1,8 +1,20 @@
 import './CeleryOverviewTable.styles.scss';
 
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Spin, TableColumnsType, Tooltip, Typography } from 'antd';
+import {
+	Button,
+	Input,
+	InputRef,
+	Progress,
+	Space,
+	Spin,
+	TableColumnsType,
+	TableColumnType,
+	Tooltip,
+	Typography,
+} from 'antd';
+import { FilterDropdownProps } from 'antd/lib/table/interface';
 import {
 	getQueueOverview,
 	QueueOverviewResponse,
@@ -13,7 +25,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -54,6 +66,72 @@ function ProgressRender(item: string | number): JSX.Element {
 		</div>
 	);
 }
+
+const getColumnSearchProps = (
+	searchInput: React.RefObject<InputRef>,
+	handleReset: (
+		clearFilters: () => void,
+		confirm: FilterDropdownProps['confirm'],
+	) => void,
+	handleSearch: (selectedKeys: string[], confirm: () => void) => void,
+	dataIndex?: string,
+): TableColumnType<RowData> => ({
+	filterDropdown: ({
+		setSelectedKeys,
+		selectedKeys,
+		confirm,
+		clearFilters,
+		close,
+	}): JSX.Element => (
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
+		<div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
+			<Input
+				ref={searchInput}
+				placeholder={`Search ${dataIndex}`}
+				value={selectedKeys[0]}
+				onChange={(e): void =>
+					setSelectedKeys(e.target.value ? [e.target.value] : [])
+				}
+				onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm)}
+				style={{ marginBottom: 8, display: 'block' }}
+			/>
+			<Space>
+				<Button
+					type="primary"
+					size="small"
+					onClick={(): void => handleSearch(selectedKeys as string[], confirm)}
+					icon={<SearchOutlined />}
+				>
+					Search
+				</Button>
+				<Button
+					onClick={(): void => clearFilters && handleReset(clearFilters, confirm)}
+					size="small"
+					style={{ width: 90 }}
+				>
+					Reset
+				</Button>
+				<Button
+					type="link"
+					size="small"
+					onClick={(): void => {
+						close();
+					}}
+				>
+					close
+				</Button>
+			</Space>
+		</div>
+	),
+	filterIcon: (filtered: boolean): JSX.Element => (
+		<SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+	),
+	onFilter: (value, record): boolean =>
+		record[dataIndex || '']
+			.toString()
+			.toLowerCase()
+			.includes((value as string).toLowerCase()),
+});
 
 function getColumns(data: RowData[]): TableColumnsType<RowData> {
 	if (data?.length === 0) {
@@ -297,11 +375,42 @@ export default function CeleryOverviewTable({
 		LOCALSTORAGE.CELERY_OVERVIEW_COLUMNS,
 	);
 
+	const [searchText, setSearchText] = useState('');
+	const searchInput = useRef<InputRef>(null);
+
+	const handleSearch = (
+		selectedKeys: string[],
+		confirm: FilterDropdownProps['confirm'],
+	): void => {
+		confirm();
+		setSearchText(selectedKeys[0]);
+	};
+
+	const handleReset = (
+		clearFilters: () => void,
+		confirm: FilterDropdownProps['confirm'],
+	): void => {
+		clearFilters();
+		setSearchText('');
+		confirm();
+	};
+
 	const columns = useMemo(
-		() => getDraggedColumns<RowData>(getColumns(tableData), draggedColumns),
+		() =>
+			getDraggedColumns<RowData>(
+				getColumns(tableData).map((item) => ({
+					...item,
+					...getColumnSearchProps(
+						searchInput,
+						handleReset,
+						handleSearch,
+						item.key?.toString(),
+					),
+				})),
+				draggedColumns,
+			),
 		[tableData, draggedColumns],
 	);
-
 	const handleDragColumn = useCallback(
 		(fromIndex: number, toIndex: number) =>
 			onDragColumns(columns, fromIndex, toIndex),
@@ -323,14 +432,41 @@ export default function CeleryOverviewTable({
 		onRowClick(record);
 	};
 
+	const getFilteredData = useCallback(
+		(data: RowData[]): RowData[] => {
+			if (!searchText) return data;
+
+			const searchLower = searchText.toLowerCase();
+			return data.filter((record) =>
+				Object.values(record).some(
+					(value) =>
+						value !== undefined &&
+						value.toString().toLowerCase().includes(searchLower),
+				),
+			);
+		},
+		[searchText],
+	);
+
+	const filteredData = useMemo(() => getFilteredData(tableData), [
+		getFilteredData,
+		tableData,
+	]);
+
 	return (
 		<div style={{ width: '100%' }}>
+			<Input.Search
+				placeholder="Search across all columns"
+				onChange={(e): void => setSearchText(e.target.value)}
+				value={searchText}
+				allowClear
+			/>
 			<ResizeTable
 				className="celery-overview-table"
 				pagination={paginationConfig}
 				size="middle"
 				columns={columns}
-				dataSource={tableData}
+				dataSource={filteredData}
 				bordered={false}
 				loading={{
 					spinning: isLoading,
