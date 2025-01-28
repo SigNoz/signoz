@@ -42,6 +42,8 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 		return <div />;
 	}
 
+	const strokeColor = isDarkMode ? ' rgb(192,193,195,0.8)' : 'black';
+
 	return (
 		<div ref={ref as never} className="timeline-v2-container">
 			<svg
@@ -55,7 +57,7 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 					y1={timelineHeight}
 					x2={width}
 					y2={timelineHeight}
-					stroke={isDarkMode ? 'white' : 'black'}
+					stroke={strokeColor}
 					strokeWidth="1"
 				/>
 				{intervals &&
@@ -70,14 +72,14 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 							<text
 								x={index === intervals.length - 1 ? -10 : 0}
 								y={2 * Math.floor(timelineHeight / 4)}
-								fill={isDarkMode ? 'white' : 'black'}
+								fill={strokeColor}
 							>
 								{interval.label}
 							</text>
 							<line
 								y1={3 * Math.floor(timelineHeight / 4)}
 								y2={timelineHeight + 0.5}
-								stroke={isDarkMode ? 'white' : 'black'}
+								stroke={strokeColor}
 								strokeWidth="1"
 							/>
 						</g>
