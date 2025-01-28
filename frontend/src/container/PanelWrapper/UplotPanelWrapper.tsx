@@ -33,6 +33,7 @@ function UplotPanelWrapper({
 	onDragSelect,
 	selectedGraph,
 	customTooltipElement,
+	customSeries,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -135,6 +136,7 @@ function UplotPanelWrapper({
 				tzDate: (timestamp: number) =>
 					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 				timezone: timezone.value,
+				customSeries,
 			}),
 		[
 			widget?.id,
@@ -158,6 +160,7 @@ function UplotPanelWrapper({
 			hiddenGraph,
 			customTooltipElement,
 			timezone.value,
+			customSeries,
 		],
 	);
 

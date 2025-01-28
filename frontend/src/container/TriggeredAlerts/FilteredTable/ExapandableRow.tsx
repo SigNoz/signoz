@@ -1,4 +1,5 @@
 import { Tag, Typography } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
@@ -42,7 +43,7 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						<TableCell>
 							<Typography>{`${formatTimezoneAdjustedTimestamp(
 								formatedDate,
-								'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+								DATE_TIME_FORMATS.UTC_US,
 							)}`}</Typography>
 						</TableCell>
 

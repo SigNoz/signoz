@@ -1439,6 +1439,8 @@ func Test_querier_Traces_runWindowBasedListQuery(t *testing.T) {
 				"",
 				true,
 				true,
+				time.Duration(time.Second),
+				nil,
 			)
 
 			q := &querier{

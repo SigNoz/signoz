@@ -15,8 +15,9 @@ DEV_BUILD ?= "" # set to any non-empty value to enable dev build
 FRONTEND_DIRECTORY ?= frontend
 QUERY_SERVICE_DIRECTORY ?= pkg/query-service
 EE_QUERY_SERVICE_DIRECTORY ?= ee/query-service
-STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
-SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
+STANDALONE_DIRECTORY ?= deploy/docker
+SWARM_DIRECTORY ?= deploy/docker-swarm
+CH_HISTOGRAM_QUANTILE_DIRECTORY ?= scripts/clickhouse/histogramquantile
 
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
@@ -142,16 +143,6 @@ dev-setup:
 	@echo "--> Local Setup completed"
 	@echo "------------------"
 
-run-local:
-	@docker-compose -f \
-	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
-	up --build -d
-
-down-local:
-	@docker-compose -f \
-	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
-	down -v
-
 pull-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml pull
 
@@ -191,3 +182,15 @@ check-no-ee-references:
 
 test:
 	go test ./pkg/...
+
+goreleaser-snapshot:
+	@if [[ ${GORELEASER_WORKDIR} ]]; then \
+		cd ${GORELEASER_WORKDIR} && \
+		goreleaser release --clean --snapshot; \
+		cd -; \
+	else \
+		goreleaser release --clean --snapshot; \
+	fi
+
+goreleaser-snapshot-histogram-quantile:
+	make GORELEASER_WORKDIR=$(CH_HISTOGRAM_QUANTILE_DIRECTORY) goreleaser-snapshot

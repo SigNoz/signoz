@@ -63,6 +63,8 @@ const ROUTES = {
 	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
 	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
 	INFRASTRUCTURE_MONITORING_KUBERNETES: '/infrastructure-monitoring/kubernetes',
+	MESSAGING_QUEUES_CELERY_TASK: '/messaging-queues/celery-task',
+	MESSAGING_QUEUES_OVERVIEW: '/messaging-queues/overview',
 } as const;
 
 export default ROUTES;

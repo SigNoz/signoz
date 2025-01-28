@@ -1,0 +1,128 @@
+.celery-task-graph-grid-container {
+	width: 100%;
+	display: grid;
+	grid-template-rows: 1fr;
+	gap: 10px;
+	padding-bottom: 16px;
+	margin-bottom: 16px;
+
+	.celery-task-graph-grid {
+		display: grid;
+		grid-template-columns: 60% 40%;
+		align-items: flex-start;
+		gap: 10px;
+		width: 100%;
+
+		.celery-task-graph {
+			height: 380px !important;
+			padding: 6px;
+			width: 100%;
+			box-sizing: border-box;
+
+			.ant-card-body {
+				height: calc(100% - 18px);
+
+				.widget-graph-container {
+					&.bar {
+						height: calc(100% - 105px);
+					}
+				}
+			}
+		}
+
+		.celery-task-graph-bar,
+		.celery-task-graph-task-latency {
+			height: 380px !important;
+			width: 100%;
+			box-sizing: border-box;
+
+			.celery-task-graph-grid-content {
+				padding: 6px;
+				height: 100%;
+			}
+
+			.ant-card-body {
+				height: calc(100% - 18px);
+
+				.widget-graph-container {
+					&.bar {
+						height: calc(100% - 105px);
+					}
+
+					&.graph {
+						height: calc(100% - 80px);
+					}
+				}
+			}
+		}
+	}
+
+	.celery-task-graph-grid-bottom {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		align-items: flex-start;
+		gap: 10px;
+		width: 100%;
+
+		.celery-task-graph {
+			height: 380px !important;
+			padding: 10px;
+			width: 100%;
+			box-sizing: border-box;
+
+			.ant-card-body {
+				height: calc(100% - 18px);
+			}
+		}
+	}
+}
+
+.celery-task-states {
+	border-bottom: 1px solid var(--bg-ink-200);
+
+	&__tab {
+		min-width: 140px;
+		padding: 12px 13px 12px 12px;
+		cursor: pointer;
+		position: relative;
+
+		&:not([data-last-tab='true']) {
+			border-right: 1px solid var(--bg-ink-200);
+		}
+
+		&--selected {
+			background-color: rgba(38, 38, 38, 0.5);
+		}
+	}
+
+	&__label-wrapper {
+		margin-bottom: 4px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__label {
+		font-family: 'Inter';
+		font-size: 14px;
+		color: var(--bg-vanilla-400);
+		line-height: 20px;
+		font-weight: 500;
+	}
+
+	&__value {
+		font-family: 'Geist Mono';
+		font-size: 24px;
+		color: var(--bg-vanilla-100);
+		line-height: 32px;
+	}
+
+	&__indicator {
+		position: absolute;
+		width: 100%;
+		height: 2px;
+		bottom: 0;
+		left: 0;
+		background-color: var(--bg-vanilla-100);
+	}
+}

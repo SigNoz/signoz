@@ -296,7 +296,7 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, req model.Sta
 
 	// add additional queries for stateful sets
 	for _, statefulSetQuery := range builderQueriesForStatefulSets {
-		query.CompositeQuery.BuilderQueries[statefulSetQuery.QueryName] = statefulSetQuery
+		query.CompositeQuery.BuilderQueries[statefulSetQuery.QueryName] = statefulSetQuery.Clone()
 	}
 
 	for _, query := range query.CompositeQuery.BuilderQueries {

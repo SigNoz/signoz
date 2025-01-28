@@ -623,7 +623,7 @@ func (r *JobListResponse) SortBy(orderBy *v3.OrderBy) {
 		sort.Slice(r.Records, func(i, j int) bool {
 			return r.Records[i].Restarts > r.Records[j].Restarts
 		})
-	case "desired_pods":
+	case "desired_successful_pods":
 		sort.Slice(r.Records, func(i, j int) bool {
 			return r.Records[i].DesiredSuccessfulPods > r.Records[j].DesiredSuccessfulPods
 		})

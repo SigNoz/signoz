@@ -71,18 +71,19 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules      bool
-	RuleRepoURL       string
-	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
-	CacheConfigPath   string
-	FluxInterval      string
-	Cluster           string
-	GatewayUrl        string
-	UseLogsNewSchema  bool
-	UseTraceNewSchema bool
+	DisableRules               bool
+	RuleRepoURL                string
+	PreferSpanMetrics          bool
+	MaxIdleConns               int
+	MaxOpenConns               int
+	DialTimeout                time.Duration
+	CacheConfigPath            string
+	FluxInterval               string
+	FluxIntervalForTraceDetail string
+	Cluster                    string
+	GatewayUrl                 string
+	UseLogsNewSchema           bool
+	UseTraceNewSchema          bool
 }
 
 // Server runs HTTP api service
@@ -145,6 +146,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	modelDao.SetFlagProvider(lm)
 	readerReady := make(chan bool)
 
+	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
+	if err != nil {
+		return nil, err
+	}
+
 	var reader interfaces.DataConnector
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
@@ -159,6 +165,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
+			fluxIntervalForTraceDetail,
+			serverOptions.SigNoz.Cache,
 		)
 		go qb.Start(readerReady)
 		reader = qb
@@ -250,7 +258,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
-
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +330,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
 	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
-	r.Use(middleware.NewLogging(zap.L()).Wrap)
+	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterPrivateRoutes(r)
 
@@ -369,7 +376,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		s.serverOptions.Config.APIServer.Timeout.Max,
 	).Wrap)
 	r.Use(middleware.NewAnalytics(zap.L()).Wrap)
-	r.Use(middleware.NewLogging(zap.L()).Wrap)
+	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)

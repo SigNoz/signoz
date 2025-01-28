@@ -6,14 +6,10 @@
 ##################### Instrumentation #####################
 instrumentation:
   logs:
+    # The log level to use.
     level: info
-    enabled: false
-    processors:
-      batch:
-        exporter:
-          otlp:
-            endpoint: localhost:4317
   traces:
+    # Whether to enable tracing.
     enabled: false
     processors:
       batch:
@@ -21,6 +17,7 @@ instrumentation:
           otlp:
             endpoint: localhost:4317
   metrics:
+    # Whether to enable metrics.
     enabled: true
     readers:
       pull:
@@ -78,3 +75,6 @@ apiserver:
     excluded_routes:
       - /api/v1/logs/tail
       - /api/v3/logs/livetail
+  logging:
+    excluded_routes:
+      - /api/v1/health
