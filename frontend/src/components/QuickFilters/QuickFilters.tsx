@@ -8,51 +8,11 @@ import {
 import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
-
-export enum FiltersType {
-	SLIDER = 'SLIDER',
-	CHECKBOX = 'CHECKBOX',
-}
-
-export enum MinMax {
-	MIN = 'MIN',
-	MAX = 'MAX',
-}
-
-export enum SpecficFilterOperations {
-	ALL = 'ALL',
-	ONLY = 'ONLY',
-}
-
-export interface IQuickFiltersConfig {
-	type: FiltersType;
-	title: string;
-	attributeKey: BaseAutocompleteData;
-	aggregateOperator?: string;
-	aggregateAttribute?: string;
-	dataSource?: DataSource;
-	customRendererForValue?: (value: string) => JSX.Element;
-	defaultOpen: boolean;
-}
-
-export enum QuickFiltersSource {
-	LOGS_EXPLORER = 'logs-explorer',
-	INFRA_MONITORING = 'infra-monitoring',
-	TRACES_EXPLORER = 'traces-explorer',
-}
-
-interface IQuickFiltersProps {
-	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
-	source: QuickFiltersSource;
-	onFilterChange?: (query: Query) => void;
-}
+import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;

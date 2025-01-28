@@ -9,7 +9,7 @@ import cx from 'classnames';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
-} from 'components/QuickFilters/QuickFilters';
+} from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
