@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters';
 
 export const useCeleryFilterOptions = (
-	type: string,
+	type: string | string[],
 ): {
 	searchText: string;
 	handleSearch: (value: string) => void;

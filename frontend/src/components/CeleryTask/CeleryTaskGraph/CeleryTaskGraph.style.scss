@@ -24,7 +24,7 @@
 
 				.widget-graph-container {
 					&.bar {
-						height: calc(100% - 85px);
+						height: calc(100% - 105px);
 					}
 				}
 			}
@@ -45,9 +45,12 @@
 				height: calc(100% - 18px);
 
 				.widget-graph-container {
-					&.bar,
+					&.bar {
+						height: calc(100% - 105px);
+					}
+
 					&.graph {
-						height: calc(100% - 85px);
+						height: calc(100% - 80px);
 					}
 				}
 			}
@@ -93,7 +96,10 @@
 	}
 
 	&__label-wrapper {
-		margin-bottom: 8px;
+		margin-bottom: 4px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 	}
 
 	&__label {

@@ -7,7 +7,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export interface Filters {
 	searchText: string;
-	attributeKey: string;
+	attributeKey: string | string[];
 }
 
 export interface GetAllFiltersResponse {
@@ -19,27 +19,36 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 	const { searchText, attributeKey } = props;
 
 	const { data, isLoading } = useQuery(
-		['attributesValues', searchText],
+		['attributesValues', attributeKey, searchText],
 		async () => {
-			const { payload } = await getAttributesValues({
-				aggregateOperator: 'noop',
-				dataSource: DataSource.TRACES,
-				aggregateAttribute: '',
-				attributeKey,
-				searchText: searchText ?? '',
-				filterAttributeKeyDataType: DataTypes.String,
-				tagType: 'tag',
-			});
+			const keys = Array.isArray(attributeKey) ? attributeKey : [attributeKey];
 
-			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
-				const options: DefaultOptionType[] = values.map((val: string) => ({
-					label: val,
-					value: val,
-				}));
-				return options;
-			}
-			return [];
+			const responses = await Promise.all(
+				keys.map((key) =>
+					getAttributesValues({
+						aggregateOperator: 'noop',
+						dataSource: DataSource.TRACES,
+						aggregateAttribute: '',
+						attributeKey: key,
+						searchText: searchText ?? '',
+						filterAttributeKeyDataType: DataTypes.String,
+						tagType: 'tag',
+					}),
+				),
+			);
+
+			const uniqueValues = [
+				...new Set(
+					responses.flatMap(
+						({ payload }) => Object.values(payload || {}).find((el) => !!el) || [],
+					),
+				),
+			];
+
+			return uniqueValues.map((val: string) => ({
+				label: val,
+				value: val,
+			}));
 		},
 	);
 

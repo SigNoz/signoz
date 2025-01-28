@@ -1,7 +1,16 @@
+/* eslint-disable no-nested-ternary */
 import './CeleryTaskGraph.style.scss';
 
 import { Col, Row } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
+
+import {
+	celeryAllStateCountWidgetData,
+	celeryFailedStateCountWidgetData,
+	celeryRetryStateCountWidgetData,
+	celerySuccessStateCountWidgetData,
+} from './CeleryTaskGraphUtils';
+import { useGetValueFromWidget } from './useGetValueFromWidget';
 
 interface TabData {
 	label: string;
@@ -33,6 +42,16 @@ function CeleryTaskStateGraphConfig({
 		setBarState(key as CeleryTaskState);
 	};
 
+	const { values, isLoading, isError } = useGetValueFromWidget(
+		[
+			celeryAllStateCountWidgetData,
+			celeryFailedStateCountWidgetData,
+			celeryRetryStateCountWidgetData,
+			celerySuccessStateCountWidgetData,
+		],
+		['celery-task-states'],
+	);
+
 	return (
 		<Row className="celery-task-states">
 			{tabs.map((tab, index) => (
@@ -46,6 +65,9 @@ function CeleryTaskStateGraphConfig({
 				>
 					<div className="celery-task-states__label-wrapper">
 						<div className="celery-task-states__label">{tab.label}</div>
+						<div className="celery-task-states__value">
+							{isLoading ? '-' : isError ? '-' : values[index]}
+						</div>
 					</div>
 					{tab.key === barState && <div className="celery-task-states__indicator" />}
 				</Col>
