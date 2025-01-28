@@ -24,7 +24,7 @@
 
 				.widget-graph-container {
 					&.bar {
-						height: calc(100% - 105px);
+						height: calc(100% - 110px);
 					}
 				}
 			}
@@ -43,6 +43,32 @@
 					rgba(171, 189, 255, 0) 100%
 				),
 				#0b0c0e;
+
+			.ant-card-body {
+				height: 100%;
+				width: 100%;
+			}
+
+			.worker-count-text-container {
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				.celery-task-graph-worker-count-text {
+					font-size: 2.5vw;
+					text-align: center;
+				}
+			}
+
+			.worker-count-header {
+				display: flex;
+				justify-content: start;
+				align-items: start;
+				position: absolute;
+				height: 100%;
+				width: 100%;
+			}
 		}
 
 		.celery-task-graph-bar,
@@ -61,7 +87,7 @@
 
 				.widget-graph-container {
 					&.bar {
-						height: calc(100% - 105px);
+						height: calc(100% - 110px);
 					}
 
 					&.graph {

@@ -51,14 +51,6 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 				),
 			);
 
-			// 			aggregateOperator: rate
-			// dataSource: metrics
-			// aggregateAttribute: flower_task_runtime_seconds_sum
-			// attributeKey: worker
-			// searchText:
-			// filterAttributeKeyDataType: string
-			// tagType: tag
-
 			const uniqueValues = [
 				...new Set(
 					responses.flatMap(

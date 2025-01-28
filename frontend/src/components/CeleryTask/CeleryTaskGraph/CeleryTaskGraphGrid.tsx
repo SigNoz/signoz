@@ -77,9 +77,16 @@ export default function CeleryTaskGraphGrid({
 			<div className="celery-task-graph-grid">
 				<CeleryTaskBar queryEnabled={queryEnabled} onClick={onClick} />
 				<Card className="celery-task-graph-worker-count">
-					<Typography.Text>
-						{options.filter((option) => option.value).length}
-					</Typography.Text>
+					<div className="worker-count-header">
+						<Typography.Text className="worker-count-header-text">
+							Worker Count
+						</Typography.Text>
+					</div>
+					<div className="worker-count-text-container">
+						<Typography.Text className="celery-task-graph-worker-count-text">
+							{options.filter((option) => option.value).length}
+						</Typography.Text>
+					</div>
 				</Card>
 			</div>
 			<div className="celery-task-graph-grid">
