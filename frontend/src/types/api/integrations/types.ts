@@ -1,4 +1,4 @@
-interface IntegrationsProps {
+export interface IntegrationsProps {
 	author: {
 		email: string;
 		homepage: string;

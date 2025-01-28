@@ -7,6 +7,7 @@ import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
+import { IntegrationsProps } from 'types/api/integrations/types';
 import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
@@ -38,12 +39,12 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 	} = useGetAllIntegrations();
 
 	const filteredDataList = useMemo(() => {
-		let integrationsList = [];
+		let integrationsList: IntegrationsProps[] = [];
 
-		// Add AWS integration if it matches search term
-		if (AWS_INTEGRATION.title.toLowerCase().includes(searchTerm.toLowerCase())) {
-			integrationsList.push(AWS_INTEGRATION);
-		}
+		// Temporarily hide AWS Integration from the list, uncomment when the BE changes are finalized
+		// if (AWS_INTEGRATION.title.toLowerCase().includes(searchTerm.toLowerCase())) {
+		// 	integrationsList.push(AWS_INTEGRATION);
+		// }
 
 		// Add other integrations
 		if (data?.data.data.integrations) {
