@@ -27,7 +27,7 @@ function ServicesList({ accountId, filter }: ServicesListProps): JSX.Element {
 
 		return services.filter((service) => {
 			const isEnabled =
-				service.config.logs.enabled || service.config.metrics.enabled;
+				service?.config?.logs?.enabled || service?.config?.metrics?.enabled;
 			return filter === 'enabled' ? isEnabled : !isEnabled;
 		});
 	}, [services, filter]);

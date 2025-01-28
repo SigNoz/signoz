@@ -3,14 +3,14 @@ import './ServicesTabs.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import type { SelectProps, TabsProps } from 'antd';
 import { Select, Tabs } from 'antd';
+import { getAwsServices } from 'api/integrations/aws';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQuery } from 'react-query';
 
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
-import { Service } from './types';
 
 interface ServicesFilterProps {
 	accountId: string;
@@ -21,11 +21,10 @@ function ServicesFilter({
 	accountId,
 	onFilterChange,
 }: ServicesFilterProps): JSX.Element | null {
-	const queryClient = useQueryClient();
-	const services = queryClient.getQueryData<Service[]>([
-		REACT_QUERY_KEY.AWS_SERVICES,
-		accountId,
-	]);
+	const { data: services, isLoading } = useQuery(
+		[REACT_QUERY_KEY.AWS_SERVICES, accountId],
+		() => getAwsServices(accountId),
+	);
 
 	const { enabledCount, availableCount } = useMemo(() => {
 		if (!services) return { enabledCount: 0, availableCount: 0 };
@@ -33,7 +32,7 @@ function ServicesFilter({
 		return services.reduce(
 			(acc, service) => {
 				const isEnabled =
-					service.config.logs.enabled || service.config.metrics.enabled;
+					service?.config?.logs?.enabled || service?.config?.metrics?.enabled;
 				return {
 					enabledCount: acc.enabledCount + (isEnabled ? 1 : 0),
 					availableCount: acc.availableCount + (isEnabled ? 0 : 1),
@@ -43,13 +42,17 @@ function ServicesFilter({
 		);
 	}, [services]);
 
-	const selectOptions: SelectProps['options'] = [
-		{ value: 'all_services', label: `All Services (${services?.length || 0})` },
-		{ value: 'enabled', label: `Enabled (${enabledCount})` },
-		{ value: 'available', label: `Available (${availableCount})` },
-	];
+	const selectOptions: SelectProps['options'] = useMemo(
+		() => [
+			{ value: 'all_services', label: `All Services (${services?.length || 0})` },
+			{ value: 'enabled', label: `Enabled (${enabledCount})` },
+			{ value: 'available', label: `Available (${availableCount})` },
+		],
+		[services, enabledCount, availableCount],
+	);
 
-	if (services?.length === 0) return null;
+	if (isLoading) return null;
+	if (!services?.length) return null;
 
 	return (
 		<div className="services-filter">

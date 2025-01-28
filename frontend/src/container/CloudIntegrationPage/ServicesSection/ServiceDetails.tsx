@@ -99,13 +99,15 @@ function ServiceDetails(): JSX.Element | null {
 					{serviceDetailsData?.status && (
 						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
-					<Button
-						className="configure-button"
-						onClick={(): void => setIsConfigureServiceModalOpen(true)}
-					>
-						<Wrench size={12} color={Color.BG_VANILLA_400} />
-						Configure
-					</Button>
+					{!!accountId && (
+						<Button
+							className="configure-button"
+							onClick={(): void => setIsConfigureServiceModalOpen(true)}
+						>
+							<Wrench size={12} color={Color.BG_VANILLA_400} />
+							Configure
+						</Button>
+					)}
 				</div>
 			</div>
 			<div className="service-details__overview">
