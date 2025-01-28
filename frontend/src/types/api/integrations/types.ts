@@ -8,6 +8,7 @@ interface IntegrationsProps {
 	id: string;
 	icon: string;
 	is_installed: boolean;
+	is_new?: boolean;
 	title: string;
 }
 

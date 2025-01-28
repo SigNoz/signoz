@@ -9,7 +9,15 @@ import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { isCloudUser } from 'utils/app';
 
-import { handleContactSupport } from './utils';
+import { handleContactSupport, INTEGRATION_TYPES } from './utils';
+
+export const AWS_INTEGRATION = {
+	id: INTEGRATION_TYPES.AWS_INTEGRATION,
+	title: 'AWS Web Services',
+	description: 'One-click setup for AWS monitoring with SigNoz',
+	icon: `Logos/aws-dark.svg`,
+	is_new: true,
+};
 
 interface IntegrationsListProps {
 	setSelectedIntegration: (id: string) => void;
@@ -30,12 +38,24 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 	} = useGetAllIntegrations();
 
 	const filteredDataList = useMemo(() => {
-		if (data?.data.data.integrations) {
-			return data?.data.data.integrations.filter((item) =>
-				item.title.toLowerCase().includes(searchTerm.toLowerCase()),
-			);
+		let integrationsList = [];
+
+		// Add AWS integration if it matches search term
+		if (AWS_INTEGRATION.title.toLowerCase().includes(searchTerm.toLowerCase())) {
+			integrationsList.push(AWS_INTEGRATION);
 		}
-		return [];
+
+		// Add other integrations
+		if (data?.data.data.integrations) {
+			integrationsList = [
+				...integrationsList,
+				...data.data.data.integrations.filter((item) =>
+					item.title.toLowerCase().includes(searchTerm.toLowerCase()),
+				),
+			];
+		}
+
+		return integrationsList;
 	}, [data?.data.data.integrations, searchTerm]);
 
 	const loading = isLoading || isFetching || isRefetching;
@@ -93,7 +113,10 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 									<img src={item.icon} alt={item.title} className="list-item-image" />
 								</div>
 								<div className="list-item-details">
-									<Typography.Text className="heading">{item.title}</Typography.Text>
+									<Typography.Text className="heading">
+										{item.title}
+										{item.is_new && <div className="heading__new-tag">NEW</div>}
+									</Typography.Text>
 									<Typography.Text className="description">
 										{item.description}
 									</Typography.Text>
