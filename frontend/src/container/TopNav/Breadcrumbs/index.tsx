@@ -29,7 +29,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 	[ROUTES.WORKSPACE_SUSPENDED]: 'Workspace Suspended',
-	[ROUTES.MESSAGING_QUEUES]: 'Messaging Queues',
+	[ROUTES.MESSAGING_QUEUES_OVERVIEW]: 'Messaging Queues',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
