@@ -459,7 +459,7 @@ function K8sVolumesList({
 					pageSize,
 					total: totalCount,
 					showSizeChanger: true,
-					hideOnSinglePage: true,
+					hideOnSinglePage: false,
 					onChange: (page, pageSize): void => {
 						setCurrentPage(page);
 						setPageSize(pageSize);

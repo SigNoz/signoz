@@ -467,7 +467,7 @@ function K8sDaemonSetsList({
 					pageSize,
 					total: totalCount,
 					showSizeChanger: true,
-					hideOnSinglePage: true,
+					hideOnSinglePage: false,
 					onChange: (page, pageSize): void => {
 						setCurrentPage(page);
 						setPageSize(pageSize);
