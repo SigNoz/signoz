@@ -18,6 +18,7 @@ import { formatEpochTimestamp } from 'utils/timeUtils';
 import Attributes from './Attributes/Attributes';
 import Events from './Events/Events';
 
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
 	setIsSpanDetailsDocked: Dispatch<SetStateAction<boolean>>;
@@ -81,10 +82,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
-				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
-				[QueryParams.startTime]: traceStartTime - 1000,
-				// we add 1000 milliseconds to the end time for nano second duration traces
-				[QueryParams.endTime]: traceEndTime + 1000,
+				// we subtract 5 minutes from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceStartTime - FIVE_MINUTES_IN_MS,
+				// we add 5 minutes to the end time for nano second duration traces
+				[QueryParams.endTime]: traceEndTime + FIVE_MINUTES_IN_MS,
 			})}`,
 		);
 	};
