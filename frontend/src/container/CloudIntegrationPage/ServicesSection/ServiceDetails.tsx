@@ -1,13 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import Spinner from 'components/Spinner';
+import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDashboards';
+import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
+import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/types';
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Wrench } from 'lucide-react';
+import { useState } from 'react';
 
-import CloudServiceDashboards from './CloudServiceDashboards';
-import CloudServiceDataCollected from './CloudServiceDataCollected';
-import { IServiceStatus } from './types';
+import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
 	logsLastReceivedTimestamp: number | undefined,
@@ -52,6 +56,9 @@ function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const accountId = urlQuery.get('accountId');
 	const serviceId = urlQuery.get('service');
+	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
+		false,
+	);
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
@@ -59,7 +66,7 @@ function ServiceDetails(): JSX.Element | null {
 	);
 
 	if (isLoading) {
-		return <div>Loading...</div>;
+		return <Spinner size="large" height="50vh" />;
 	}
 
 	if (!serviceDetailsData) {
@@ -92,18 +99,35 @@ function ServiceDetails(): JSX.Element | null {
 					{serviceDetailsData?.status && (
 						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
-					<Button className="configure-button">
-						<Wrench size={12} color={Color.BG_VANILLA_400} />
-						Configure
-					</Button>
+					{!!accountId && (
+						<Button
+							className="configure-button"
+							onClick={(): void => setIsConfigureServiceModalOpen(true)}
+						>
+							<Wrench size={12} color={Color.BG_VANILLA_400} />
+							Configure
+						</Button>
+					)}
 				</div>
 			</div>
 			<div className="service-details__overview">
-				{serviceDetailsData?.overview}
+				<MarkdownRenderer
+					variables={{}}
+					markdownContent={serviceDetailsData?.overview}
+				/>
 			</div>
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />
 			</div>
+			<ConfigureServiceModal
+				isOpen={isConfigureServiceModalOpen}
+				onClose={(): void => setIsConfigureServiceModalOpen(false)}
+				serviceName={serviceDetailsData.title}
+				serviceId={serviceId || ''}
+				cloudAccountId={accountId || ''}
+				initialConfig={serviceDetailsData.config}
+				supportedSignals={serviceDetailsData.supported_signals || {}}
+			/>
 		</div>
 	);
 }

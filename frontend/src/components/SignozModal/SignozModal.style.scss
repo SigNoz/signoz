@@ -68,3 +68,50 @@
 		}
 	}
 }
+
+.lightMode {
+	.signoz-modal {
+		.ant-modal-content {
+			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.ant-modal-header {
+			background: var(--bg-vanilla-100);
+			border-bottom-color: var(--bg-vanilla-300);
+		}
+
+		.ant-modal-title {
+			color: var(--bg-ink-500);
+		}
+
+		.ant-typography {
+			color: var(--bg-ink-500);
+		}
+
+		.ant-select {
+			&-selector {
+				background: var(--bg-vanilla-100) !important;
+				border-color: var(--bg-vanilla-300) !important;
+			}
+		}
+
+		.ant-select-dropdown {
+			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.ant-select-item {
+			color: var(--bg-ink-400);
+
+			&-option-selected {
+				background: var(--bg-vanilla-300);
+				color: var(--bg-ink-500);
+			}
+
+			&-option-active {
+				background: var(--bg-vanilla-200);
+			}
+		}
+	}
+}

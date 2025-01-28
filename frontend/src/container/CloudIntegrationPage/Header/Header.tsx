@@ -1,3 +1,5 @@
+import './Header.styles.scss';
+
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
 import { Blocks, LifeBuoy } from 'lucide-react';
