@@ -401,12 +401,12 @@ export const formatDataForTable = (
 	}));
 
 /**
- * Custom hook to manage the page size for a given entity category table.
+ * Custom hook to manage the page size for a table.
  * The page size is stored in local storage and is retrieved on initialization.
  * It also provides a function to update the page size and save it to local storage.
  */
 export const usePageSize = (
-	key: K8sCategory | 'hosts',
+	key: string,
 ): { pageSize: number; setPageSize: (pageSize: number) => void } => {
 	const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
