@@ -100,6 +100,11 @@ func mergeAndEnsureBackwardCompatibility(config *Config, depricatedFlags Deprica
 			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
 		}
 	}
+	if os.Getenv("ClickHouseUrl") != "" {
+		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
+		config.TelemetryStore.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
+	}
+
 	if depricatedFlags.MaxIdleConns != 50 {
 		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS env variable instead.")
 		config.TelemetryStore.Connection.MaxIdleConns = depricatedFlags.MaxIdleConns
