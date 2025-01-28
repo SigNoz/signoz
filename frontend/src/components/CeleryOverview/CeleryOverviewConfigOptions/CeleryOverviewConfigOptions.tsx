@@ -45,6 +45,7 @@ function FilterSelect({
 			className="config-select-option"
 			onSearch={handleSearch}
 			maxTagCount={4}
+			allowClear
 			maxTagPlaceholder={SelectMaxTagPlaceholder}
 			value={getValuesFromQueryParams(queryParam, urlQuery) || []}
 			notFoundContent={
