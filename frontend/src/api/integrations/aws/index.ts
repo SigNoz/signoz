@@ -3,6 +3,8 @@ import {
 	CloudAccount,
 	Service,
 	ServiceData,
+	UpdateServiceConfigPayload,
+	UpdateServiceConfigResponse,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
 import {
 	AccountConfigPayload,
@@ -11,9 +13,7 @@ import {
 } from 'types/api/integrations/aws';
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
-	const response = await axios.get(
-		'http://localhost:3000/api/v1/cloud-integrations/aws/accounts',
-	);
+	const response = await axios.get('/cloud-integrations/aws/accounts');
 
 	return response.data.data;
 };
@@ -22,12 +22,10 @@ export const getAwsServices = async (
 	accountId?: string,
 ): Promise<Service[]> => {
 	const params = accountId ? { account_id: accountId } : undefined;
-	const response = await axios.get(
-		'http://localhost:3000/api/v1/cloud-integrations/aws/services',
-		{
-			params,
-		},
-	);
+	const response = await axios.get('/cloud-integrations/aws/services', {
+		params,
+	});
+
 	return response.data.data.services;
 };
 
@@ -37,7 +35,7 @@ export const getServiceDetails = async (
 ): Promise<ServiceData> => {
 	const params = accountId ? { account_id: accountId } : undefined;
 	const response = await axios.get(
-		`http://localhost:3000/api/v1/cloud-integrations/aws/services/${serviceId}`,
+		`/cloud-integrations/aws/services/${serviceId}`,
 		{ params },
 	);
 	return response.data.data;
@@ -49,7 +47,7 @@ export const generateConnectionUrl = async (params: {
 	account_id?: string;
 }): Promise<ConnectionUrlResponse> => {
 	const response = await axios.post(
-		'http://localhost:3000/api/v1/cloud-integrations/aws/accounts/generate-connection-url',
+		'/cloud-integrations/aws/accounts/generate-connection-url',
 		params,
 	);
 	return response.data.data;
@@ -59,9 +57,21 @@ export const updateAccountConfig = async (
 	accountId: string,
 	payload: AccountConfigPayload,
 ): Promise<AccountConfigResponse> => {
-	const response = await axios.put<AccountConfigResponse>(
-		`http://localhost:3000/api/v1/cloud-integrations/aws/accounts/${accountId}/config`,
+	const response = await axios.post<AccountConfigResponse>(
+		`/cloud-integrations/aws/accounts/${accountId}/config`,
 		payload,
 	);
+	return response.data;
+};
+
+export const updateServiceConfig = async (
+	serviceId: string,
+	payload: UpdateServiceConfigPayload,
+): Promise<UpdateServiceConfigResponse> => {
+	const response = await axios.post<UpdateServiceConfigResponse>(
+		`/cloud-integrations/aws/services/${serviceId}/config`,
+		payload,
+	);
+	console.log({ serviceId });
 	return response.data;
 };

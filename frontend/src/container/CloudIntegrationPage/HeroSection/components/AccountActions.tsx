@@ -74,7 +74,10 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
+			urlQuery.set('accountId', initialAccount.cloud_account_id);
+			navigate({ search: urlQuery.toString() });
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
@@ -82,10 +85,16 @@ function AccountActions(): JSX.Element {
 		false,
 	);
 
-	const selectOptions: SelectProps['options'] = accounts?.map((account) => ({
-		value: account.cloud_account_id,
-		label: account.cloud_account_id,
-	}));
+	const selectOptions: SelectProps['options'] = useMemo(
+		() =>
+			accounts?.length
+				? accounts.map((account) => ({
+						value: account.cloud_account_id,
+						label: account.cloud_account_id,
+				  }))
+				: [],
+		[accounts],
+	);
 
 	return (
 		<div className="hero-section__actions">

@@ -1,12 +1,21 @@
 import './HeroSection.style.scss';
 
+import { useIsDarkMode } from 'hooks/useDarkMode';
+
 import AccountActions from './components/AccountActions';
 
 function HeroSection(): JSX.Element {
+	const isDarkMode = useIsDarkMode();
 	return (
 		<div
 			className="hero-section"
-			style={{ backgroundImage: `url('/Images/integrations-hero-bg.png')` }}
+			style={
+				isDarkMode
+					? {
+							backgroundImage: `url('/Images/integrations-hero-bg.png')`,
+					  }
+					: {}
+			}
 		>
 			<div className="hero-section__icon">
 				<img src="/Logos/aws-dark.svg" alt="aws-logo" />

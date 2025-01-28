@@ -1,11 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import Spinner from 'components/Spinner';
+import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDashboards';
+import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
+import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/types';
 import dayjs from 'dayjs';
+import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Wrench } from 'lucide-react';
+import { useState } from 'react';
 
-import CloudServiceDashboards from './CloudServiceDashboards';
-import CloudServiceDataCollected from './CloudServiceDataCollected';
-import { IServiceStatus, ServiceData } from './types';
+import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
 	logsLastReceivedTimestamp: number | undefined,
@@ -46,20 +52,40 @@ function ServiceStatus({
 	return <div className={`service-status ${className}`}>{text}</div>;
 }
 
-function ServiceDetails({ service }: { service: ServiceData }): JSX.Element {
+function ServiceDetails(): JSX.Element | null {
+	const urlQuery = useUrlQuery();
+	const accountId = urlQuery.get('accountId');
+	const serviceId = urlQuery.get('service');
+	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
+		false,
+	);
+
+	const { data: serviceDetailsData, isLoading } = useServiceDetails(
+		serviceId || '',
+		accountId || undefined,
+	);
+
+	if (isLoading) {
+		return <Spinner size="large" height="50vh" />;
+	}
+
+	if (!serviceDetailsData) {
+		return null;
+	}
+
 	const tabItems: TabsProps['items'] = [
 		{
 			key: 'dashboards',
-			label: `Dashboards (${service.assets.dashboards.length})`,
-			children: <CloudServiceDashboards service={service} />,
+			label: `Dashboards (${serviceDetailsData?.assets.dashboards.length})`,
+			children: <CloudServiceDashboards service={serviceDetailsData} />,
 		},
 		{
 			key: 'data-collected',
 			label: 'Data Collected',
 			children: (
 				<CloudServiceDataCollected
-					logsData={service.data_collected.logs || []}
-					metricsData={service.data_collected.metrics || []}
+					logsData={serviceDetailsData?.data_collected.logs || []}
+					metricsData={serviceDetailsData?.data_collected.metrics || []}
 				/>
 			),
 		},
@@ -70,17 +96,38 @@ function ServiceDetails({ service }: { service: ServiceData }): JSX.Element {
 			<div className="service-details__title-bar">
 				<div className="service-details__details-title">Details</div>
 				<div className="service-details__right-actions">
-					{service.status && <ServiceStatus serviceStatus={service.status} />}
-					<Button className="configure-button">
-						<Wrench size={12} color={Color.BG_VANILLA_400} />
-						Configure
-					</Button>
+					{serviceDetailsData?.status && (
+						<ServiceStatus serviceStatus={serviceDetailsData.status} />
+					)}
+					{!!accountId && (
+						<Button
+							className="configure-button"
+							onClick={(): void => setIsConfigureServiceModalOpen(true)}
+						>
+							<Wrench size={12} color={Color.BG_VANILLA_400} />
+							Configure
+						</Button>
+					)}
 				</div>
 			</div>
-			<div className="service-details__overview">{service.overview}</div>
+			<div className="service-details__overview">
+				<MarkdownRenderer
+					variables={{}}
+					markdownContent={serviceDetailsData?.overview}
+				/>
+			</div>
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />
 			</div>
+			<ConfigureServiceModal
+				isOpen={isConfigureServiceModalOpen}
+				onClose={(): void => setIsConfigureServiceModalOpen(false)}
+				serviceName={serviceDetailsData.title}
+				serviceId={serviceId || ''}
+				cloudAccountId={accountId || ''}
+				initialConfig={serviceDetailsData.config}
+				supportedSignals={serviceDetailsData.supported_signals || {}}
+			/>
 		</div>
 	);
 }
