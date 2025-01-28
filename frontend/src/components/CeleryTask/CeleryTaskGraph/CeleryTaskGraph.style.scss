@@ -167,3 +167,40 @@
 		background-color: var(--bg-vanilla-100);
 	}
 }
+
+.lightMode {
+	.celery-task-graph-grid-container {
+		.celery-task-graph-grid {
+			.celery-task-graph-worker-count {
+				border: 1px solid var(--bg-vanilla-300);
+				background: unset;
+			}
+		}
+	}
+
+	.celery-task-states {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		&__tab {
+			&:not([data-last-tab='true']) {
+				border-right: 1px solid var(--bg-vanilla-300);
+			}
+
+			&--selected {
+				background-color: var(--bg-vanilla-200);
+			}
+		}
+
+		&__label {
+			color: var(--bg-ink-500);
+		}
+
+		&__value {
+			color: var(--bg-slate-100);
+		}
+
+		&__indicator {
+			background-color: var(--bg-ink-400);
+		}
+	}
+}
