@@ -275,9 +275,12 @@ function Success(props: ISuccessProps): JSX.Element {
 		instance: Virtualizer<HTMLDivElement, Element>,
 	): void => {
 		const { range } = instance;
+		// when there are less than 500 elements in the API call that means there is nothing to fetch on top and bottom so
+		// do not trigger the API call
 		if (spans.length < 500) return;
 
 		if (range?.startIndex === 0 && instance.isScrolling) {
+			// do not trigger for trace root as nothing to fetch above
 			if (spans[0].level !== 0) {
 				setInterestedSpanId({ spanId: spans[0].spanId, isUncollapsed: false });
 			}
