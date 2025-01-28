@@ -22,6 +22,7 @@ import {
 import { isNumber } from 'chart.js/helpers';
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -313,12 +314,11 @@ type FilterConfig = {
 
 function makeFilters(urlQuery: URLSearchParams): Filter[] {
 	const filterConfigs: FilterConfig[] = [
-		{ paramName: 'destination', key: 'destination', operator: 'in' },
-		{ paramName: 'queue', key: 'queue', operator: 'in' },
-		{ paramName: 'kind_string', key: 'kind_string', operator: 'in' },
-		{ paramName: 'service', key: 'service.name', operator: 'in' },
-		{ paramName: 'span_name', key: 'span_name', operator: 'in' },
-		{ paramName: 'messaging_system', key: 'messaging_system', operator: 'in' },
+		{ paramName: QueryParams.destination, key: 'destination', operator: 'in' },
+		{ paramName: QueryParams.msgSystem, key: 'queue', operator: 'in' },
+		{ paramName: QueryParams.kindString, key: 'kind_string', operator: 'in' },
+		{ paramName: QueryParams.service, key: 'service.name', operator: 'in' },
+		{ paramName: QueryParams.spanName, key: 'name', operator: 'in' },
 	];
 
 	return filterConfigs

@@ -1,7 +1,7 @@
 import './CeleryOverviewConfigOptions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Spin, Tooltip } from 'antd';
+import { Button, Row, Select, Spin, Tooltip } from 'antd';
 import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
@@ -18,7 +18,7 @@ import { useCopyToClipboard } from 'react-use';
 interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
-	filterType: 'serviceName' | 'spanName' | 'msgSystem';
+	filterType: string | string[];
 }
 
 function FilterSelect({
@@ -29,13 +29,14 @@ function FilterSelect({
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		filterType,
 	);
+
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
 
 	return (
 		<Select
-			key={filterType}
+			key={filterType.toString()}
 			placeholder={placeholder}
 			showSearch
 			mode="multiple"
@@ -74,16 +75,26 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 			queryParam: QueryParams.service,
 			filterType: 'serviceName',
 		},
-		// {
-		// 	placeholder: 'Span Name',
-		// 	queryParam: QueryParams.spanName,
-		// 	filterType: 'spanName',
-		// },
-		// {
-		// 	placeholder: 'Msg System',
-		// 	queryParam: QueryParams.msgSystem,
-		// 	filterType: 'msgSystem',
-		// },
+		{
+			placeholder: 'Span Name',
+			queryParam: QueryParams.spanName,
+			filterType: 'name',
+		},
+		{
+			placeholder: 'Msg System',
+			queryParam: QueryParams.msgSystem,
+			filterType: 'messaging.system',
+		},
+		{
+			placeholder: 'Destination',
+			queryParam: QueryParams.destination,
+			filterType: ['messaging.destination.name', 'messaging.destination'],
+		},
+		{
+			placeholder: 'Kind',
+			queryParam: QueryParams.kindString,
+			filterType: 'kind_string',
+		},
 	];
 
 	const handleShareURL = (): void => {
@@ -96,16 +107,16 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 
 	return (
 		<div className="celery-overview-filters">
-			<div className="celery-filters">
+			<Row className="celery-filters">
 				{selectConfigs.map((config) => (
 					<FilterSelect
-						key={config.filterType}
+						key={config.filterType.toString()}
 						placeholder={config.placeholder}
 						queryParam={config.queryParam}
 						filterType={config.filterType}
 					/>
 				))}
-			</div>
+			</Row>
 			<Tooltip title="Share this" arrow={false}>
 				<Button
 					className="periscope-btn copy-url-btn"
