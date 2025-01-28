@@ -11,11 +11,9 @@ export function useAccountStatus(
 	return useQuery<AccountStatusResponse, AxiosError>({
 		queryKey: [REACT_QUERY_KEY.AWS_ACCOUNT_STATUS, accountId],
 		queryFn: async () => {
-			console.log('fetching account status');
 			const response = await axios.get<AccountStatusResponse>(
 				`/cloud-integrations/aws/accounts/${accountId}/status`,
 			);
-			console.log('fetched account status', response.data);
 			return response.data;
 		},
 		...options,
