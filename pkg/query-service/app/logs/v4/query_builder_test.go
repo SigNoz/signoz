@@ -1018,7 +1018,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 			},
 			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"order by timestamp desc LIMIT 1",
+				"order by timestamp desc LIMIT 1 OFFSET 0",
 		},
 		{
 			name: "Test limit greater than pageSize - order by ts",
@@ -1043,7 +1043,7 @@ func TestPrepareLogsQuery(t *testing.T) {
 			},
 			want: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string from " +
 				"signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) " +
-				"AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by timestamp desc LIMIT 10",
+				"AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by timestamp desc LIMIT 10 OFFSET 10",
 		},
 		{
 			name: "Test limit less than pageSize  - order by custom",

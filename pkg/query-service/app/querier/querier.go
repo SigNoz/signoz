@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -324,12 +325,21 @@ func (q *querier) runWindowBasedListQuery(ctx context.Context, params *v3.QueryR
 	limit := uint64(0)
 	offset := uint64(0)
 
-	// se we are considering only one query
+	// Get query details and check order direction
 	for name, v := range params.CompositeQuery.BuilderQueries {
 		qName = name
 		pageSize = v.PageSize
 		limit = v.Limit
 		offset = v.Offset
+
+	}
+
+	// Check if order is ascending
+	if strings.ToLower(string(params.CompositeQuery.BuilderQueries[qName].OrderBy[0].Order)) == "asc" {
+		// Reverse the time ranges for ascending order
+		for i, j := 0, len(tsRanges)-1; i < j; i, j = i+1, j-1 {
+			tsRanges[i], tsRanges[j] = tsRanges[j], tsRanges[i]
+		}
 	}
 
 	// check if it is a logs query
@@ -438,20 +448,17 @@ func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRan
 				break
 			}
 
-			// for traces: allow only with timestamp ordering desc
-			// for logs: allow only with timestamp ordering desc and id ordering desc
+			// for logs: allow only when order of timestamp and id is same
 			if v.DataSource == v3.DataSourceTraces &&
 				len(v.OrderBy) == 1 &&
-				v.OrderBy[0].ColumnName == "timestamp" &&
-				v.OrderBy[0].Order == "desc" {
+				v.OrderBy[0].ColumnName == "timestamp" {
 				startEndArr := utils.GetListTsRanges(params.Start, params.End)
 				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			} else if v.DataSource == v3.DataSourceLogs &&
 				len(v.OrderBy) == 2 &&
 				v.OrderBy[0].ColumnName == "timestamp" &&
-				v.OrderBy[0].Order == "desc" &&
 				v.OrderBy[1].ColumnName == "id" &&
-				v.OrderBy[1].Order == "desc" {
+				v.OrderBy[1].Order == v.OrderBy[0].Order {
 				startEndArr := utils.GetListTsRanges(params.Start, params.End)
 				return q.runWindowBasedListQuery(ctx, params, startEndArr)
 			}
