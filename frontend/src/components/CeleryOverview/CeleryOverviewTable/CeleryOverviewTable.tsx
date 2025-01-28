@@ -126,7 +126,9 @@ const getColumnSearchProps = (
 		</div>
 	),
 	filterIcon: (filtered: boolean): JSX.Element => (
-		<SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+		<SearchOutlined
+			style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }}
+		/>
 	),
 	onFilter: (value, record): boolean =>
 		record[dataIndex || '']
