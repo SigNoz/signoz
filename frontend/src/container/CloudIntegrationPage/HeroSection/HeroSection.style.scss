@@ -34,7 +34,7 @@
 			color: var(--bg-vanilla-100);
 			font-size: 24px;
 			font-weight: 500;
-			line-height: 20px; /* 83.333% */
+			line-height: 20px;
 			letter-spacing: -0.12px;
 		}
 
@@ -42,24 +42,28 @@
 			color: var(--bg-vanilla-400);
 			font-size: 12px;
 			font-weight: 400;
-			line-height: 18px; /* 150% */
+			line-height: 18px;
+		}
+	}
+}
+
+.lightMode {
+	.hero-section {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		&__icon {
+			background-color: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
 		}
 
-		.hero-section__buttons {
-			margin-top: 12px;
-		}
+		&__details {
+			.title {
+				color: var(--bg-ink-500);
+			}
 
-		.hero-section__button {
-			font-family: 'Inter';
-			background: var(--bg-robin-500);
-			border: none;
-			padding: 8px 17px;
-			color: var(--bg-vanilla-100);
-			border-radius: 2px;
-			cursor: pointer;
-			font-size: 12px;
-			font-weight: 500;
-			line-height: 16px;
+			.description {
+				color: var(--bg-ink-400);
+			}
 		}
 	}
 }

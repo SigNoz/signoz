@@ -3,22 +3,57 @@ import './ServicesTabs.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import type { SelectProps, TabsProps } from 'antd';
 import { Select, Tabs } from 'antd';
-import useUrlQuery from 'hooks/useUrlQuery';
+import { getAwsServices } from 'api/integrations/aws';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 
-import { serviceDetails, services } from './data';
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
 
-const selectOptions: SelectProps['options'] = [
-	{ value: 'all_services', label: 'All Services (24)' },
-	{ value: 'enabled', label: 'Enabled (12)' },
-	{ value: 'available', label: 'Available (12)' },
-];
+interface ServicesFilterProps {
+	accountId: string;
+	onFilterChange: (value: 'all_services' | 'enabled' | 'available') => void;
+}
 
-function ServicesFilter(): JSX.Element {
+function ServicesFilter({
+	accountId,
+	onFilterChange,
+}: ServicesFilterProps): JSX.Element | null {
+	const { data: services, isLoading } = useQuery(
+		[REACT_QUERY_KEY.AWS_SERVICES, accountId],
+		() => getAwsServices(accountId),
+	);
+
+	const { enabledCount, availableCount } = useMemo(() => {
+		if (!services) return { enabledCount: 0, availableCount: 0 };
+
+		return services.reduce(
+			(acc, service) => {
+				const isEnabled =
+					service?.config?.logs?.enabled || service?.config?.metrics?.enabled;
+				return {
+					enabledCount: acc.enabledCount + (isEnabled ? 1 : 0),
+					availableCount: acc.availableCount + (isEnabled ? 0 : 1),
+				};
+			},
+			{ enabledCount: 0, availableCount: 0 },
+		);
+	}, [services]);
+
+	const selectOptions: SelectProps['options'] = useMemo(
+		() => [
+			{ value: 'all_services', label: `All Services (${services?.length || 0})` },
+			{ value: 'enabled', label: `Enabled (${enabledCount})` },
+			{ value: 'available', label: `Available (${availableCount})` },
+		],
+		[services, enabledCount, availableCount],
+	);
+
+	if (isLoading) return null;
+	if (!services?.length) return null;
+
 	return (
 		<div className="services-filter">
 			<Select
@@ -27,54 +62,44 @@ function ServicesFilter(): JSX.Element {
 				options={selectOptions}
 				className="services-sidebar__select"
 				suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
-				onChange={(value): void => {
-					console.log('selected region:', value);
-				}}
+				onChange={onFilterChange}
 			/>
 		</div>
 	);
 }
 
-function ServicesSection(): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
-	const [activeService, setActiveService] = useState<string | null>(
-		urlQuery.get('service') || serviceDetails[0].id,
-	);
+interface ServicesSectionProps {
+	accountId: string;
+}
 
-	const handleServiceClick = (serviceId: string): void => {
-		setActiveService(serviceId);
-		urlQuery.set('service', serviceId);
-		navigate({ search: urlQuery.toString() });
-	};
-
-	const activeServiceDetails = serviceDetails.find(
-		(service) => service.id === activeService,
-	);
+function ServicesSection({ accountId }: ServicesSectionProps): JSX.Element {
+	const [activeFilter, setActiveFilter] = useState<
+		'all_services' | 'enabled' | 'available'
+	>('all_services');
 
 	return (
 		<div className="services-section">
 			<div className="services-section__sidebar">
-				<ServicesFilter />
-				<ServicesList
-					services={services}
-					onClick={handleServiceClick}
-					activeService={activeService}
-				/>
+				<ServicesFilter accountId={accountId} onFilterChange={setActiveFilter} />
+				<ServicesList accountId={accountId} filter={activeFilter} />
 			</div>
 			<div className="services-section__content">
-				{activeServiceDetails && <ServiceDetails service={activeServiceDetails} />}
+				<ServiceDetails />
 			</div>
 		</div>
 	);
 }
 
-function ServicesTabs(): JSX.Element {
+interface ServicesTabsProps {
+	accountId: string;
+}
+
+function ServicesTabs({ accountId }: ServicesTabsProps): JSX.Element {
 	const tabItems: TabsProps['items'] = [
 		{
 			key: 'services',
 			label: 'Services For Integration',
-			children: <ServicesSection />,
+			children: <ServicesSection accountId={accountId} />,
 		},
 	];
 
