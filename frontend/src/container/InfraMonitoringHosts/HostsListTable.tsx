@@ -31,6 +31,7 @@ export default function HostsListTable({
 	setCurrentPage,
 	pageSize,
 	setOrderBy,
+	setPageSize,
 }: HostsListTableProps): JSX.Element {
 	const columns = useMemo(() => getHostsListColumns(), []);
 
@@ -158,8 +159,12 @@ export default function HostsListTable({
 				current: currentPage,
 				pageSize,
 				total: totalCount,
-				showSizeChanger: false,
-				hideOnSinglePage: true,
+				showSizeChanger: true,
+				hideOnSinglePage: false,
+				onChange: (page, pageSize): void => {
+					setCurrentPage(page);
+					setPageSize(pageSize);
+				},
 			}}
 			scroll={{ x: true }}
 			loading={{

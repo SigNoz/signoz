@@ -51,6 +51,7 @@ export interface HostsListTableProps {
 			order: 'asc' | 'desc';
 		} | null>
 	>;
+	setPageSize: (pageSize: number) => void;
 }
 
 export const getHostListsQuery = (): HostListPayload => ({

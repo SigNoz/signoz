@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -39,7 +40,7 @@ function HostsList(): JSX.Element {
 
 	const [selectedHostName, setSelectedHostName] = useState<string | null>(null);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize('hosts');
 
 	const baseQuery = getHostListsQuery();
 	const query = useMemo(
@@ -52,7 +53,7 @@ function HostsList(): JSX.Element {
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		}),
-		[baseQuery, currentPage, filters, minTime, maxTime, orderBy],
+		[baseQuery, pageSize, currentPage, filters, minTime, maxTime, orderBy],
 	);
 
 	const { data, isFetching, isLoading, isError } = useGetHostList(
@@ -151,6 +152,7 @@ function HostsList(): JSX.Element {
 						setCurrentPage={setCurrentPage}
 						setSelectedHostName={setSelectedHostName}
 						pageSize={pageSize}
+						setPageSize={setPageSize}
 						setOrderBy={setOrderBy}
 					/>
 				</div>
