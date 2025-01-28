@@ -4,10 +4,17 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { v4 as uuidv4 } from 'uuid';
 
-export const celeryOverviewRequestRateWidgetData = (): Widgets =>
+export const celeryOverviewRequestRateWidgetData = (
+	filters?: TagFilterItem[],
+): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			title: 'Request Rate',
@@ -27,73 +34,7 @@ export const celeryOverviewRequestRateWidgetData = (): Widgets =>
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [
-							{
-								id: '66b09400',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '7c62322c',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: 'f428d54a',
-								key: {
-									dataType: DataTypes.String,
-									id: 'messaging.destination.name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: 'tag',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: '15202376',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: 'ba4fdb16',
-								key: {
-									dataType: DataTypes.String,
-									id: 'messaging.system--string--tag--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'messaging.system',
-									type: 'tag',
-								},
-								op: '=',
-								value: 'kafka',
-							},
-						],
+						items: filters ?? [],
 						op: 'AND',
 					},
 					functions: [],
@@ -113,11 +54,13 @@ export const celeryOverviewRequestRateWidgetData = (): Widgets =>
 		}),
 	);
 
-export const celeryOverviewErrorRateWidgetData = (): Widgets =>
+export const celeryOverviewErrorRateWidgetData = (
+	filters?: TagFilterItem[],
+): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Error Rate',
-			description: 'Represents Error rate of the service',
+			title: 'Error',
+			description: 'Represents Error in the service',
 			queryData: [
 				{
 					aggregateAttribute: {
@@ -134,60 +77,9 @@ export const celeryOverviewErrorRateWidgetData = (): Widgets =>
 					expression: 'A',
 					filters: {
 						items: [
+							...(filters ?? []),
 							{
-								id: '0a44dbf3',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'worker1',
-							},
-							{
-								id: '31b32f97',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'run/tasks.tasks.add',
-							},
-							{
-								id: '7f20ee62',
-								key: {
-									dataType: DataTypes.String,
-									id: 'messaging.destination--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination',
-									type: 'tag',
-								},
-								op: '=',
-								value: 'queue1',
-							},
-							{
-								id: '76b02773',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: 'a2dc0a85',
+								id: uuidv4(),
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
@@ -219,7 +111,9 @@ export const celeryOverviewErrorRateWidgetData = (): Widgets =>
 		}),
 	);
 
-export const celeryOverviewAvgLatencyWidgetData = (): Widgets =>
+export const celeryOverviewAvgLatencyWidgetData = (
+	filters?: TagFilterItem[],
+): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			title: 'Avg Latency',
@@ -239,66 +133,13 @@ export const celeryOverviewAvgLatencyWidgetData = (): Widgets =>
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [
-							{
-								id: 'a2c0bfe2',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'worker1',
-							},
-							{
-								id: '02e70326',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'run/tasks.tasks.add',
-							},
-							{
-								id: 'ac15cbac',
-								key: {
-									dataType: DataTypes.String,
-									id: 'messaging.destination--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination',
-									type: 'tag',
-								},
-								op: '=',
-								value: 'queue1',
-							},
-							{
-								id: '59a7727a',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-						],
+						items: filters ?? [],
 						op: 'AND',
 					},
 					functions: [],
 					groupBy: [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'p95',
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
@@ -315,6 +156,8 @@ export const celeryOverviewAvgLatencyWidgetData = (): Widgets =>
 export const celeryOverviewRequestRateGraphData = (
 	startTime: number,
 	endTime: number,
+	filters?: TagFilterItem[],
+	groupByFilter?: BaseAutocompleteData,
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
@@ -335,75 +178,13 @@ export const celeryOverviewRequestRateGraphData = (
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [
-							{
-								id: 'bfe7f9f6',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '0ae75c5b',
-								key: {
-									dataType: DataTypes.String,
-									id: 'messaging.destination.name--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: 'tag',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: 'e694f23e',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: '21fffed6',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-						],
+						items: filters ?? [],
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'messaging.destination.partition.id--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'messaging.destination.partition.id',
-							type: 'tag',
-						},
-					],
+					groupBy: groupByFilter ? [groupByFilter] : [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'Request Rate',
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
@@ -420,11 +201,13 @@ export const celeryOverviewRequestRateGraphData = (
 export const celeryOverviewErrorRateGraphData = (
 	startTime: number,
 	endTime: number,
+	filters?: TagFilterItem[],
+	groupByFilter?: BaseAutocompleteData,
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Error Rate',
-			description: 'Represents Error rate of the service',
+			title: 'Error',
+			description: 'Represents Error in the service',
 			queryData: [
 				{
 					aggregateAttribute: {
@@ -441,71 +224,9 @@ export const celeryOverviewErrorRateGraphData = (
 					expression: 'A',
 					filters: {
 						items: [
+							...(filters ?? []),
 							{
-								id: '1a77c475',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '70630e97',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: 'f41ad482',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: '00637dde',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: 'afa5fc10',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.system',
-									type: '',
-								},
-								op: '=',
-								value: 'kafka',
-							},
-							{
-								id: '9fdeebea',
+								id: uuidv4(),
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
@@ -521,18 +242,9 @@ export const celeryOverviewErrorRateGraphData = (
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'messaging.destination.partition.id--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'messaging.destination.partition.id',
-							type: 'tag',
-						},
-					],
+					groupBy: groupByFilter ? [groupByFilter] : [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'True',
 					limit: null,
 					orderBy: [],
 					queryName: 'A',
@@ -556,71 +268,9 @@ export const celeryOverviewErrorRateGraphData = (
 					expression: 'B',
 					filters: {
 						items: [
+							...(filters ?? []),
 							{
-								id: '93d85de1',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '57632b3f',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: '8d7f5e93',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: '64636499',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: '22d01c6b',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.system',
-									type: '',
-								},
-								op: '=',
-								value: 'kafka',
-							},
-							{
-								id: 'd13a99c4',
+								id: uuidv4(),
 								key: {
 									dataType: DataTypes.bool,
 									id: 'has_error--bool----true',
@@ -636,18 +286,9 @@ export const celeryOverviewErrorRateGraphData = (
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'messaging.destination.partition.id--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'messaging.destination.partition.id',
-							type: 'tag',
-						},
-					],
+					groupBy: groupByFilter ? [groupByFilter] : [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'False',
 					limit: null,
 					orderBy: [],
 					queryName: 'B',
@@ -664,6 +305,8 @@ export const celeryOverviewErrorRateGraphData = (
 export const celeryOverviewAvgLatencyGraphData = (
 	startTime: number,
 	endTime: number,
+	filters?: TagFilterItem[],
+	groupByFilter?: BaseAutocompleteData,
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
@@ -684,86 +327,13 @@ export const celeryOverviewAvgLatencyGraphData = (
 					disabled: false,
 					expression: 'C',
 					filters: {
-						items: [
-							{
-								id: 'fec96858',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '36330bd8',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: '061f3047',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: '9fd15439',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: '0f1af7b9',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.system',
-									type: '',
-								},
-								op: '=',
-								value: 'kafka',
-							},
-						],
+						items: filters ?? [],
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'messaging.destination.partition.id--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'messaging.destination.partition.id',
-							type: 'tag',
-						},
-					],
+					groupBy: groupByFilter ? [groupByFilter] : [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'p90',
 					limit: null,
 					orderBy: [],
 					queryName: 'C',
@@ -786,86 +356,13 @@ export const celeryOverviewAvgLatencyGraphData = (
 					disabled: false,
 					expression: 'D',
 					filters: {
-						items: [
-							{
-								id: 'f0143e91',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '0764eb8e',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: 'e6b592ec',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: '4ca3b0b4',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: 'd81770c9',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.system',
-									type: '',
-								},
-								op: '=',
-								value: 'kafka',
-							},
-						],
+						items: filters ?? [],
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'messaging.destination.partition.id--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'messaging.destination.partition.id',
-							type: 'tag',
-						},
-					],
+					groupBy: groupByFilter ? [groupByFilter] : [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'p95',
 					limit: null,
 					orderBy: [],
 					queryName: 'D',
@@ -888,86 +385,13 @@ export const celeryOverviewAvgLatencyGraphData = (
 					disabled: false,
 					expression: 'E',
 					filters: {
-						items: [
-							{
-								id: 'a8f0c5e5',
-								key: {
-									dataType: DataTypes.String,
-									id: 'service.name--string--resource--true',
-									isColumn: true,
-									isJSON: false,
-									key: 'service.name',
-									type: 'resource',
-								},
-								op: '=',
-								value: 'consumer-svc-2',
-							},
-							{
-								id: '60c81993',
-								key: {
-									dataType: DataTypes.String,
-									id: 'name--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1 process',
-							},
-							{
-								id: '7f054fb2',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.destination.name',
-									type: '',
-								},
-								op: '=',
-								value: 'topic1',
-							},
-							{
-								id: 'e825e894',
-								key: {
-									dataType: DataTypes.String,
-									id: 'kind_string--string----true',
-									isColumn: true,
-									isJSON: false,
-									key: 'kind_string',
-									type: '',
-								},
-								op: '=',
-								value: 'Consumer',
-							},
-							{
-								id: '9ba10a06',
-								key: {
-									dataType: DataTypes.EMPTY,
-									isColumn: false,
-									isJSON: false,
-									key: 'messaging.system',
-									type: '',
-								},
-								op: '=',
-								value: 'kafka',
-							},
-						],
+						items: filters ?? [],
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'messaging.destination.partition.id--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'messaging.destination.partition.id',
-							type: 'tag',
-						},
-					],
+					groupBy: groupByFilter ? [groupByFilter] : [],
 					having: [],
-					legend: '{{messaging.destination.partition.id}}',
+					legend: 'p99',
 					limit: null,
 					orderBy: [],
 					queryName: 'E',
@@ -978,5 +402,6 @@ export const celeryOverviewAvgLatencyGraphData = (
 				},
 			],
 			panelTypes: PANEL_TYPES.TIME_SERIES,
+			yAxisUnit: 'ns',
 		}),
 	);

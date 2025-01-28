@@ -1,13 +1,20 @@
 import { Card } from 'antd';
+import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
+import { Button } from 'container/MetricsApplication/Tabs/styles';
+import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useMemo } from 'react';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { Widgets } from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -16,7 +23,13 @@ import {
 	celeryOverviewRequestRateGraphData,
 } from '../CeleryOverviewGraphUtils';
 
-export default function OverviewRightPanelGraph(): JSX.Element {
+export default function OverviewRightPanelGraph({
+	groupByFilter,
+	filters,
+}: {
+	groupByFilter?: BaseAutocompleteData;
+	filters?: TagFilterItem[];
+}): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
@@ -44,45 +57,113 @@ export default function OverviewRightPanelGraph(): JSX.Element {
 	);
 
 	const requestRateWidget = useMemo(
-		() => celeryOverviewRequestRateGraphData(minTime, maxTime),
-		[minTime, maxTime],
+		() =>
+			celeryOverviewRequestRateGraphData(minTime, maxTime, filters, groupByFilter),
+		[minTime, maxTime, filters, groupByFilter],
 	);
 
 	const errorRateWidget = useMemo(
-		() => celeryOverviewErrorRateGraphData(minTime, maxTime),
-		[minTime, maxTime],
+		() =>
+			celeryOverviewErrorRateGraphData(minTime, maxTime, filters, groupByFilter),
+		[minTime, maxTime, filters, groupByFilter],
 	);
 
 	const avgLatencyWidget = useMemo(
-		() => celeryOverviewAvgLatencyGraphData(minTime, maxTime),
-		[minTime, maxTime],
+		() =>
+			celeryOverviewAvgLatencyGraphData(minTime, maxTime, filters, groupByFilter),
+		[minTime, maxTime, filters, groupByFilter],
+	);
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
+
+	const handleSetTimeStamp = useCallback((selectTime: number) => {
+		setSelectedTimeStamp(selectTime);
+	}, []);
+
+	const navigateToTraces = useNavigateToTraces();
+
+	const handleGraphClick = useCallback(
+		(type: string): OnClickPluginOpts['onClick'] => (
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+		): Promise<void> =>
+			onGraphClickHandler(handleSetTimeStamp)(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				type,
+			),
+		[handleSetTimeStamp],
+	);
+
+	const goToTraces = useCallback(
+		(widget: Widgets) => {
+			const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
+			navigateToTraces(
+				filters ?? [],
+				selectedTimeStamp,
+				selectedTimeStamp + (stepInterval ?? 60),
+			);
+		},
+		[navigateToTraces, filters, selectedTimeStamp],
 	);
 	return (
 		<Card className="overview-right-panel-graph-card">
 			<div className="request-rate-card">
+				<Button
+					type="default"
+					size="small"
+					id="Celery_request_rate_button"
+					onClick={(): void => goToTraces(requestRateWidget)}
+				>
+					View Traces
+				</Button>
 				<GridCard
 					widget={requestRateWidget}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
-					onClickHandler={(...args): void => console.log(...args)}
+					onClickHandler={handleGraphClick('Celery_request_rate')}
 				/>
 			</div>
 			<div className="error-rate-card">
+				<Button
+					type="default"
+					size="small"
+					id="Celery_error_rate_button"
+					onClick={(): void => goToTraces(errorRateWidget)}
+				>
+					View Traces
+				</Button>
 				<GridCard
 					widget={errorRateWidget}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
-					onClickHandler={(...args): void => console.log(...args)}
+					onClickHandler={handleGraphClick('Celery_error_rate')}
 				/>
 			</div>
 			<div className="avg-latency-card">
+				<Button
+					type="default"
+					size="small"
+					id="Celery_avg_latency_button"
+					onClick={(): void => goToTraces(avgLatencyWidget)}
+				>
+					View Traces
+				</Button>
 				<GridCard
 					widget={avgLatencyWidget}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
-					onClickHandler={(...args): void => console.log(...args)}
+					onClickHandler={handleGraphClick('Celery_avg_latency')}
 				/>
 			</div>
 		</Card>
 	);
 }
+
+OverviewRightPanelGraph.defaultProps = {
+	groupByFilter: undefined,
+	filters: undefined,
+};

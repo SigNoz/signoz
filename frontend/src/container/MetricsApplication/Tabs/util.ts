@@ -104,6 +104,8 @@ export function onGraphClickHandler(
 	): Promise<void> => {
 		const id = `${type}_button`;
 
+		console.log(xValue, yValue, mouseX, mouseY, type);
+
 		const buttonElement = document.getElementById(id);
 
 		if (xValue) {
