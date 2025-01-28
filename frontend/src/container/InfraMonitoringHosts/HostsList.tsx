@@ -42,9 +42,9 @@ function HostsList(): JSX.Element {
 
 	const { pageSize, setPageSize } = usePageSize('hosts');
 
-	const baseQuery = getHostListsQuery();
-	const query = useMemo(
-		() => ({
+	const query = useMemo(() => {
+		const baseQuery = getHostListsQuery();
+		return {
 			...baseQuery,
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
@@ -52,9 +52,8 @@ function HostsList(): JSX.Element {
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
-		}),
-		[baseQuery, pageSize, currentPage, filters, minTime, maxTime, orderBy],
-	);
+		};
+	}, [pageSize, currentPage, filters, minTime, maxTime, orderBy]);
 
 	const { data, isFetching, isLoading, isError } = useGetHostList(
 		query as HostListPayload,
