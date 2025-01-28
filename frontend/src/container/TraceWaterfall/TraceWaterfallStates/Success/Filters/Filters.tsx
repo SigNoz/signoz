@@ -8,7 +8,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -70,6 +70,20 @@ function Filters({
 	const { search } = useLocation();
 	const history = useHistory();
 
+	const handlePrevNext = useCallback(
+		(index: number, spanId?: string): void => {
+			const searchParams = new URLSearchParams(search);
+			if (spanId) {
+				searchParams.set('spanId', spanId);
+			} else {
+				searchParams.set('spanId', filteredSpanIds[index]);
+			}
+
+			history.replace({ search: searchParams.toString() });
+		},
+		[filteredSpanIds, history, search],
+	);
+
 	const { isFetching, error } = useGetQueryRange(
 		{
 			query: prepareQuery(filters, traceID),
@@ -104,11 +118,11 @@ function Filters({
 			enabled: filters.items.length > 0,
 			onSuccess: (data) => {
 				if (data?.payload.data.newResult.data.result[0].list) {
-					setFilteredSpanIds(
-						data?.payload.data.newResult.data.result[0].list.map(
-							(val) => val.data.spanID,
-						),
+					const spanIds = data?.payload.data.newResult.data.result[0].list.map(
+						(val) => val.data.spanID,
 					);
+					setFilteredSpanIds(spanIds);
+					handlePrevNext(0, spanIds[0]);
 					setNoData(false);
 				} else {
 					setNoData(true);
@@ -118,21 +132,6 @@ function Filters({
 			},
 		},
 	);
-
-	const handlePrevNext = useCallback(
-		(id: number): void => {
-			const searchParams = new URLSearchParams(search);
-			searchParams.set('spanId', filteredSpanIds[id]);
-			history.replace({ search: searchParams.toString() });
-		},
-		[filteredSpanIds, history, search],
-	);
-
-	useEffect(() => {
-		if (filteredSpanIds.length > 0) {
-			handlePrevNext(0);
-		}
-	}, [filteredSpanIds, handlePrevNext]);
 
 	return (
 		<div className="filter-row">

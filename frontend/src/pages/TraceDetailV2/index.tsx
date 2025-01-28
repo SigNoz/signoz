@@ -9,6 +9,46 @@ import { useCallback, useState } from 'react';
 
 import TraceDetailsV2 from './TraceDetailV2';
 
+interface INewTraceDetailProps {
+	items: {
+		label: JSX.Element;
+		key: string;
+		children: JSX.Element;
+	}[];
+	handleOldTraceDetails: () => void;
+}
+
+function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
+	const { items, handleOldTraceDetails } = props;
+	return (
+		<div className="traces-module-container">
+			<Tabs
+				items={items}
+				animated
+				className="trace-module"
+				onTabClick={(activeKey): void => {
+					if (activeKey === 'saved-views') {
+						history.push(ROUTES.TRACES_SAVE_VIEWS);
+					}
+					if (activeKey === 'trace-details') {
+						history.push(ROUTES.TRACES_EXPLORER);
+					}
+				}}
+				tabBarExtraContent={
+					<Button
+						type="text"
+						onClick={handleOldTraceDetails}
+						className="old-switch"
+						icon={<Undo size={14} />}
+					>
+						Old Trace Details
+					</Button>
+				}
+			/>
+		</div>
+	);
+}
+
 export default function TraceDetailsPage(): JSX.Element {
 	const [showOldTraceDetails, setShowOldTraceDetails] = useState<boolean>(false);
 	const items = [
@@ -38,30 +78,6 @@ export default function TraceDetailsPage(): JSX.Element {
 	return showOldTraceDetails ? (
 		<TraceDetail />
 	) : (
-		<div className="traces-module-container">
-			<Tabs
-				items={items}
-				animated
-				className="trace-module"
-				onTabClick={(activeKey): void => {
-					if (activeKey === 'saved-views') {
-						history.push(ROUTES.TRACES_SAVE_VIEWS);
-					}
-					if (activeKey === 'trace-details') {
-						history.push(ROUTES.TRACES_EXPLORER);
-					}
-				}}
-				tabBarExtraContent={
-					<Button
-						type="text"
-						onClick={handleOldTraceDetails}
-						className="old-switch"
-						icon={<Undo size={14} />}
-					>
-						Old Trace Details
-					</Button>
-				}
-			/>
-		</div>
+		<NewTraceDetail items={items} handleOldTraceDetails={handleOldTraceDetails} />
 	);
 }

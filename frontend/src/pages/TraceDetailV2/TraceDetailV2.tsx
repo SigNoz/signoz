@@ -76,6 +76,12 @@ function TraceDetailsV2(): JSX.Element {
 		],
 	);
 
+	useEffect(() => {
+		if (noData) {
+			setIsSpanDetailsDocked(true);
+		}
+	}, [noData]);
+
 	const items = [
 		{
 			label: (

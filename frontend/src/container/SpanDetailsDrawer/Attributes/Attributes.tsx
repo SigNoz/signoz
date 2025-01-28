@@ -30,15 +30,18 @@ function Attributes(props: IAttributesProps): JSX.Element {
 
 	return (
 		<div className="attributes-corner">
-			{datasource.length === 0 && <NoData name="attributes" />}
-			{isSearchVisible && datasource.length > 0 && (
-				<Input
-					autoFocus
-					placeholder="Search for attribute..."
-					className="search-input"
-					value={fieldSearchInput}
-					onChange={(e): void => setFieldSearchInput(e.target.value)}
-				/>
+			{isSearchVisible &&
+				(datasource.length > 0 || fieldSearchInput.length > 0) && (
+					<Input
+						autoFocus
+						placeholder="Search for attribute..."
+						className="search-input"
+						value={fieldSearchInput}
+						onChange={(e): void => setFieldSearchInput(e.target.value)}
+					/>
+				)}
+			{datasource.length === 0 && fieldSearchInput.length === 0 && (
+				<NoData name="attributes" />
 			)}
 			<section
 				className={cx('attributes-container', isSearchVisible ? 'border-top' : '')}

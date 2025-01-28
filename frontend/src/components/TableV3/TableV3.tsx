@@ -76,7 +76,7 @@ interface ITableV3Props<T> {
 	data: T[];
 	config: ITableConfig;
 	customClassName?: string;
-	setTraceFlamegraphStatsWidth: Dispatch<SetStateAction<number>>;
+	setColumnWidths: Dispatch<SetStateAction<number>>;
 	virtualiserRef?: MutableRefObject<
 		Virtualizer<HTMLDivElement, Element> | undefined
 	>;
@@ -89,7 +89,7 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		config,
 		customClassName = '',
 		virtualiserRef,
-		setTraceFlamegraphStatsWidth,
+		setColumnWidths,
 	} = props;
 
 	const table = useReactTable({
@@ -141,7 +141,7 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 
 	useEffect(() => {
 		const headers = table.getFlatHeaders();
-		setTraceFlamegraphStatsWidth(headers[0].getSize());
+		setColumnWidths(headers[0].getSize());
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [table.getState().columnSizingInfo, table.getState().columnSizing]);
 

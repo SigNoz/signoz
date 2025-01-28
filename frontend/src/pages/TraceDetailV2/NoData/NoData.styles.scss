@@ -19,7 +19,7 @@
 		}
 
 		.not-found-text-1 {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -27,7 +27,7 @@
 			line-height: 20px; /* 142.857% */
 			letter-spacing: -0.07px;
 			.not-found-text-2 {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100);
 			}
 		}
 	}
@@ -51,7 +51,7 @@
 			}
 
 			.text {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -74,7 +74,7 @@
 			}
 
 			.text {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -91,7 +91,7 @@
 		gap: 12px;
 
 		.text {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -112,8 +112,8 @@
 				align-items: center;
 				gap: 8px;
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Slate-500, #161922);
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-slate-500);
 				box-shadow: none;
 
 				.ant-btn-icon {

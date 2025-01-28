@@ -66,7 +66,6 @@ function SpanOverview({
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
-	const spanRef = useRef<HTMLDivElement>(null);
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 	if (span.hasError) {
@@ -75,7 +74,6 @@ function SpanOverview({
 
 	return (
 		<div
-			ref={spanRef}
 			className={cx(
 				'span-overview',
 				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
@@ -351,6 +349,12 @@ function Success(props: ISuccessProps): JSX.Element {
 						icon={<ArrowUpRight size={14} />}
 						className="right-info"
 						type="text"
+						onClick={(): WindowProxy | null =>
+							window.open(
+								'https://signoz.io/docs/userguide/traces/#missing-spans',
+								'_blank',
+							)
+						}
 					>
 						Learn More
 					</Button>
@@ -372,7 +376,7 @@ function Success(props: ISuccessProps): JSX.Element {
 					traceMetadata.hasMissingSpans ? 'missing-spans-waterfall-table' : '',
 				)}
 				virtualiserRef={virtualizerRef}
-				setTraceFlamegraphStatsWidth={setTraceFlamegraphStatsWidth}
+				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
 		</div>
 	);
