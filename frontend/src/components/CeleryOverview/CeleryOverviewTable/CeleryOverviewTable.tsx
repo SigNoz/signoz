@@ -400,6 +400,15 @@ export default function CeleryOverviewTable({
 		confirm();
 	};
 
+	// Add defaultSorting state
+	const [sortedInfo, setSortedInfo] = useState<{
+		columnKey: string;
+		order: 'ascend' | 'descend';
+	}>({
+		columnKey: 'error_percentage',
+		order: 'descend',
+	});
+
 	const columns = useMemo(
 		() =>
 			getDraggedColumns<RowData>(
@@ -411,10 +420,15 @@ export default function CeleryOverviewTable({
 						handleSearch,
 						item.key?.toString(),
 					),
+					// Only set defaultSortOrder for error_percentage, but allow sorting for all columns
+					...(item.key === 'error_percentage' && {
+						defaultSortOrder: 'descend',
+					}),
+					sortOrder: sortedInfo.columnKey === item.key ? sortedInfo.order : null,
 				})),
 				draggedColumns,
 			),
-		[tableData, draggedColumns],
+		[tableData, draggedColumns, sortedInfo],
 	);
 	const handleDragColumn = useCallback(
 		(fromIndex: number, toIndex: number) =>
@@ -488,6 +502,12 @@ export default function CeleryOverviewTable({
 					className: 'clickable-row',
 				})}
 				tableLayout="fixed"
+				onChange={(_pagination, _filters, sorter): void => {
+					setSortedInfo({
+						columnKey: (sorter as { columnKey: string }).columnKey,
+						order: (sorter as { order: 'ascend' | 'descend' }).order,
+					});
+				}}
 			/>
 		</div>
 	);

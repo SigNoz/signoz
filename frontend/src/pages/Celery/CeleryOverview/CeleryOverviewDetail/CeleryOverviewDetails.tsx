@@ -29,7 +29,9 @@ export default function CeleryOverviewDetails({
 				case 'span_name':
 					return getFiltersFromKeyValue('name', value, '');
 				case 'messaging_system':
-					return getFiltersFromKeyValue('messaging.system', value, 'tag');
+					return value === 'celery'
+						? undefined
+						: getFiltersFromKeyValue('messaging.system', value, 'tag');
 				case 'destination':
 					return getFiltersFromKeyValue(
 						details.messaging_system === 'celery'
@@ -47,12 +49,6 @@ export default function CeleryOverviewDetails({
 
 		return keyValues.filter((item) => item !== undefined) as TagFilterItem[];
 	}, [details]);
-
-	const groupByFilter = useMemo(
-		() =>
-			getFiltersFromKeyValue('messaging.destination.partition.id', '', 'tag').key,
-		[],
-	);
 
 	return (
 		<Drawer
@@ -92,7 +88,7 @@ export default function CeleryOverviewDetails({
 		>
 			<div className="celery-overview-detail-container">
 				<ValueInfo filters={filters} />
-				<OverviewRightPanelGraph filters={filters} groupByFilter={groupByFilter} />
+				<OverviewRightPanelGraph filters={filters} />
 			</div>
 		</Drawer>
 	);
