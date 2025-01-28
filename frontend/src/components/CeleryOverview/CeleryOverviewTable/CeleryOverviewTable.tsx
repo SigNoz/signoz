@@ -26,6 +26,7 @@ import { QueryParams } from 'constants/query';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -353,6 +354,8 @@ export default function CeleryOverviewTable({
 		onSuccess: (data) => {
 			if (data?.payload) {
 				setTableData(getTableData(data?.payload));
+			} else if (isEmpty(data?.payload)) {
+				setTableData([]);
 			}
 		},
 	});
