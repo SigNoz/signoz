@@ -2,6 +2,7 @@ interface Service {
 	id: string;
 	title: string;
 	icon: string;
+	config: ServiceConfig;
 }
 
 interface Dashboard {
@@ -38,9 +39,14 @@ interface ServiceConfig {
 	metrics: ConfigStatus;
 }
 
-interface ServiceStatus {
+interface IServiceStatus {
 	logs: DataStatus | null;
 	metrics: DataStatus | null;
+}
+
+interface SupportedSignals {
+	metrics: boolean;
+	logs: boolean;
 }
 
 interface ServiceData {
@@ -48,6 +54,7 @@ interface ServiceData {
 	title: string;
 	icon: string;
 	overview: string;
+	supported_signals: SupportedSignals;
 	assets: {
 		dashboards: Dashboard[];
 	};
@@ -55,8 +62,13 @@ interface ServiceData {
 		logs?: LogField[];
 		metrics: Metric[];
 	};
-	config?: ServiceConfig; // Optional - included only with account_id
-	status?: ServiceStatus; // Optional - included only with account_id
+	config?: ServiceConfig;
+	status?: IServiceStatus;
+}
+
+interface ServiceDetailsResponse {
+	status: 'success';
+	data: ServiceData;
 }
 
 interface CloudAccountConfig {
@@ -82,4 +94,42 @@ interface CloudAccountsData {
 	accounts: CloudAccount[];
 }
 
-export type { CloudAccount, CloudAccountsData, Service, ServiceData };
+interface UpdateServiceConfigPayload {
+	cloud_account_id: string;
+	config: {
+		logs: {
+			enabled: boolean;
+		};
+		metrics: {
+			enabled: boolean;
+		};
+	};
+}
+
+interface UpdateServiceConfigResponse {
+	status: string;
+	data: {
+		id: string;
+		config: {
+			logs: {
+				enabled: boolean;
+			};
+			metrics: {
+				enabled: boolean;
+			};
+		};
+	};
+}
+
+export type {
+	CloudAccount,
+	CloudAccountsData,
+	IServiceStatus,
+	Service,
+	ServiceConfig,
+	ServiceData,
+	ServiceDetailsResponse,
+	SupportedSignals,
+	UpdateServiceConfigPayload,
+	UpdateServiceConfigResponse,
+};
