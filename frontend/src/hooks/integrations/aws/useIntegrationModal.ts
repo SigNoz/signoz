@@ -3,8 +3,8 @@ import { FormInstance } from 'antd/lib';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
-} from 'pages/Integrations/CloudIntegrationPage/HeroSection/types';
-import { regions } from 'pages/Integrations/CloudIntegrationPage/ServicesSection/data';
+} from 'container/CloudIntegrationPage/HeroSection/types';
+import { regions } from 'container/CloudIntegrationPage/ServicesSection/data';
 import {
 	Dispatch,
 	SetStateAction,

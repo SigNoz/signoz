@@ -46,3 +46,24 @@
 		}
 	}
 }
+
+.lightMode {
+	.hero-section {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		&__icon {
+			background-color: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&__details {
+			.title {
+				color: var(--bg-ink-500);
+			}
+
+			.description {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

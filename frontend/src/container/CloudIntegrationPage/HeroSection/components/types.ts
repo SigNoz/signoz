@@ -19,6 +19,8 @@ export interface RegionFormProps {
 	setModalState: Dispatch<SetStateAction<ModalStateEnum>>;
 	selectedRegions: string[];
 	includeAllRegions: boolean;
+	isLoading: boolean;
+	isGeneratingUrl: boolean;
 	onIncludeAllRegionsChange: (checked: boolean) => void;
 	onRegionSelect: () => void;
 	onSubmit: () => Promise<void>;

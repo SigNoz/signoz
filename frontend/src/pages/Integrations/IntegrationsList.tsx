@@ -11,7 +11,7 @@ import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
 
-const AWS_INTEGRATION = {
+export const AWS_INTEGRATION = {
 	id: INTEGRATION_TYPES.AWS_INTEGRATION,
 	title: 'AWS Web Services',
 	description: 'One-click setup for AWS monitoring with SigNoz',
