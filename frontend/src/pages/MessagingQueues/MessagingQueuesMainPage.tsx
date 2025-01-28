@@ -47,7 +47,7 @@ export const Overview: TabRoutes = {
 export default function MessagingQueuesMainPage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	const routes: TabRoutes[] = [Kafka, Celery, Overview];
+	const routes: TabRoutes[] = [Overview, Kafka, Celery];
 
 	return (
 		<div className="messaging-queues-module-container">

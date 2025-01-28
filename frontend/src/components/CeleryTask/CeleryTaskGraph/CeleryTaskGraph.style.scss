@@ -30,6 +30,21 @@
 			}
 		}
 
+		.celery-task-graph-worker-count {
+			height: 100%;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			border: 1px solid var(--bg-slate-500);
+			background: linear-gradient(
+					0deg,
+					rgba(171, 189, 255, 0) 0%,
+					rgba(171, 189, 255, 0) 100%
+				),
+				#0b0c0e;
+		}
+
 		.celery-task-graph-bar,
 		.celery-task-graph-task-latency {
 			height: 380px !important;

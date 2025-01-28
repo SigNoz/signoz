@@ -459,7 +459,7 @@ export default function CeleryOverviewTable({
 	]);
 
 	return (
-		<div style={{ width: '100%' }}>
+		<div className="celery-overview-table-container">
 			<Input.Search
 				placeholder="Search across all columns"
 				onChange={(e): void => setSearchText(e.target.value)}
