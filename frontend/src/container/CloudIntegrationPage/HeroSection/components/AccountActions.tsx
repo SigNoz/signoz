@@ -85,10 +85,16 @@ function AccountActions(): JSX.Element {
 		false,
 	);
 
-	const selectOptions: SelectProps['options'] = accounts?.map((account) => ({
-		value: account.cloud_account_id,
-		label: account.cloud_account_id,
-	}));
+	const selectOptions: SelectProps['options'] = useMemo(
+		() =>
+			accounts?.length
+				? accounts.map((account) => ({
+						value: account.cloud_account_id,
+						label: account.cloud_account_id,
+				  }))
+				: [],
+		[accounts],
+	);
 
 	return (
 		<div className="hero-section__actions">

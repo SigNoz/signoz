@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
 import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDashboards';
 import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
@@ -98,17 +99,22 @@ function ServiceDetails(): JSX.Element | null {
 					{serviceDetailsData?.status && (
 						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
-					<Button
-						className="configure-button"
-						onClick={(): void => setIsConfigureServiceModalOpen(true)}
-					>
-						<Wrench size={12} color={Color.BG_VANILLA_400} />
-						Configure
-					</Button>
+					{!!accountId && (
+						<Button
+							className="configure-button"
+							onClick={(): void => setIsConfigureServiceModalOpen(true)}
+						>
+							<Wrench size={12} color={Color.BG_VANILLA_400} />
+							Configure
+						</Button>
+					)}
 				</div>
 			</div>
 			<div className="service-details__overview">
-				{serviceDetailsData?.overview}
+				<MarkdownRenderer
+					variables={{}}
+					markdownContent={serviceDetailsData?.overview}
+				/>
 			</div>
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />

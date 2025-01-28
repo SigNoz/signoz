@@ -101,3 +101,56 @@
 	left: -36px;
 	z-index: 1;
 }
+
+.lightMode {
+	.cloud-account-setup-success-view {
+		&__content {
+			.cloud-account-setup-success-view {
+				&__title {
+					h3 {
+						color: var(--bg-ink-500);
+					}
+				}
+
+				&__description {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+
+		&__what-next {
+			&-title {
+				color: var(--bg-ink-500);
+			}
+
+			.what-next-items-wrapper {
+				&__item {
+					&.ant-alert-info {
+						border: 1px solid rgba(63, 94, 204, 0.2);
+						background: rgba(78, 116, 248, 0.1);
+						color: var(--bg-robin-500);
+					}
+
+					.what-next-item {
+						color: var(--bg-robin-500);
+
+						&-text {
+							color: var(--bg-robin-500);
+						}
+					}
+				}
+			}
+		}
+
+		&__footer {
+			.ant-btn {
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+
+				&:hover {
+					background: var(--bg-robin-400);
+				}
+			}
+		}
+	}
+}

@@ -2,11 +2,11 @@ import './ConfigureServiceModal.styles.scss';
 
 import { Form, Switch } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	ServiceConfig,
 	SupportedSignals,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { SERVICE_DETAILS_QUERY_KEY } from 'hooks/integrations/aws/useServiceDetails';
 import { useUpdateServiceConfig } from 'hooks/integrations/aws/useUpdateServiceConfig';
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
@@ -68,7 +68,10 @@ function ConfigureServiceModal({
 				},
 				{
 					onSuccess: () => {
-						queryClient.invalidateQueries([...SERVICE_DETAILS_QUERY_KEY, serviceId]);
+						queryClient.invalidateQueries([
+							REACT_QUERY_KEY.AWS_SERVICE_DETAILS,
+							serviceId,
+						]);
 						onClose();
 					},
 					onError: (error) => {

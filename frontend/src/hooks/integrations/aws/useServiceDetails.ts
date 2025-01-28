@@ -1,15 +1,14 @@
 import { getServiceDetails } from 'api/integrations/aws';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ServiceData } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useQuery, UseQueryResult } from 'react-query';
-
-export const SERVICE_DETAILS_QUERY_KEY = ['aws-service-details'];
 
 export function useServiceDetails(
 	serviceId: string,
 	accountId?: string,
 ): UseQueryResult<ServiceData> {
 	return useQuery(
-		[...SERVICE_DETAILS_QUERY_KEY, serviceId, accountId],
+		[REACT_QUERY_KEY.AWS_SERVICE_DETAILS, serviceId, accountId],
 		() => getServiceDetails(serviceId, accountId),
 		{
 			enabled: !!serviceId,

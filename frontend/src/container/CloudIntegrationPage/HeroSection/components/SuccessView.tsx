@@ -1,14 +1,11 @@
 import './SuccessView.style.scss';
 
-import { Alert, Button } from 'antd';
+import { Alert } from 'antd';
 import integrationsSuccess from 'assets/Lotties/integrations-success.json';
-import ROUTES from 'constants/routes';
 import { useState } from 'react';
 import Lottie from 'react-lottie';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 export function SuccessView(): JSX.Element {
-	const navigate = useNavigate();
 	const [isAnimationComplete, setIsAnimationComplete] = useState(false);
 
 	const defaultOptions = {
@@ -18,10 +15,6 @@ export function SuccessView(): JSX.Element {
 		rendererSettings: {
 			preserveAspectRatio: 'xMidYMid slice',
 		},
-	};
-
-	const handleGoToDashboards = (): void => {
-		navigate(ROUTES.ALL_DASHBOARD);
 	};
 
 	return (
@@ -78,11 +71,6 @@ export function SuccessView(): JSX.Element {
 							/>
 						))}
 					</div>
-				</div>
-				<div className="cloud-account-setup-success-view__footer">
-					<Button type="primary" block onClick={handleGoToDashboards}>
-						Go to Dashboards
-					</Button>
 				</div>
 			</div>
 		</>
