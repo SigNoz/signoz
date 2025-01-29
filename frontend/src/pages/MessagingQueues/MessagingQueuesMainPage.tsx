@@ -37,11 +37,11 @@ export const Overview: TabRoutes = {
 	Component: CeleryOverview,
 	name: (
 		<div className="tab-item">
-			<Rows3 size={16} /> Celery Overview
+			<Rows3 size={16} /> Overview
 		</div>
 	),
-	route: ROUTES.MESSAGING_QUEUES_CELERY_OVERVIEW,
-	key: ROUTES.MESSAGING_QUEUES_CELERY_OVERVIEW,
+	route: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+	key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 };
 
 export default function MessagingQueuesMainPage(): JSX.Element {

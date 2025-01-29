@@ -917,3 +917,215 @@ export const celeryTimeSeriesTablesWidgetData = (
 			columnUnits: { A: 'ns' },
 		}),
 	);
+
+// State Count Widget
+export const celeryAllStateCountWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'All State Count',
+		description: 'Represents the all state count.',
+		panelTypes: PANEL_TYPES.VALUE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.EMPTY,
+					id: '------false',
+					isColumn: false,
+					isJSON: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: uuidv4(),
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.task_name--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.task_name',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'tasks.tasks.divide',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'rate',
+			},
+		],
+	}),
+);
+
+export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Successful State Count',
+		description: 'Represents the successful state count.',
+		panelTypes: PANEL_TYPES.VALUE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.EMPTY,
+					id: '------false',
+					isColumn: false,
+					isJSON: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: uuidv4(),
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'SUCCESS',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'rate',
+			},
+		],
+	}),
+);
+
+export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Failed State Count',
+		description: 'Represents the failed state count.',
+		panelTypes: PANEL_TYPES.VALUE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.EMPTY,
+					id: '------false',
+					isColumn: false,
+					isJSON: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: uuidv4(),
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'FAILURE',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'rate',
+			},
+		],
+	}),
+);
+
+export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
+	getWidgetQuery({
+		title: 'Retry State Count',
+		description: 'Represents the retry state count.',
+		panelTypes: PANEL_TYPES.VALUE,
+		queryData: [
+			{
+				aggregateAttribute: {
+					dataType: DataTypes.EMPTY,
+					id: '------false',
+					isColumn: false,
+					key: '',
+					type: '',
+				},
+				aggregateOperator: 'count',
+				dataSource: DataSource.TRACES,
+				disabled: false,
+				expression: 'A',
+				filters: {
+					items: [
+						{
+							id: uuidv4(),
+							key: {
+								dataType: DataTypes.String,
+								id: 'celery.state--string--tag--false',
+								isColumn: false,
+								isJSON: false,
+								key: 'celery.state',
+								type: 'tag',
+							},
+							op: '=',
+							value: 'RETRY',
+						},
+					],
+					op: 'AND',
+				},
+				functions: [],
+				groupBy: [],
+				having: [],
+				legend: '',
+				limit: null,
+				orderBy: [],
+				queryName: 'A',
+				reduceTo: 'avg',
+				spaceAggregation: 'sum',
+				stepInterval: 60,
+				timeAggregation: 'rate',
+			},
+		],
+	}),
+);

@@ -41,6 +41,7 @@ import {
 	getK8sPodsListQuery,
 	IEntityColumn,
 	K8sPodsRowData,
+	usePageSize,
 } from '../utils';
 import PodDetails from './PodDetails/PodDetails';
 
@@ -136,7 +137,7 @@ function K8sPodsList({
 
 	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(null);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize(K8sCategory.PODS);
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sPodsListQuery();
@@ -156,7 +157,7 @@ function K8sPodsList({
 		}
 
 		return queryPayload;
-	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
+	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
 	const { data, isFetching, isLoading, isError } = useGetK8sPodsList(
 		query as K8sPodsListPayload,
@@ -513,8 +514,12 @@ function K8sPodsList({
 					current: currentPage,
 					pageSize,
 					total: totalCount,
-					showSizeChanger: false,
-					hideOnSinglePage: true,
+					showSizeChanger: true,
+					hideOnSinglePage: false,
+					onChange: (page, pageSize): void => {
+						setCurrentPage(page);
+						setPageSize(pageSize);
+					},
 				}}
 				loading={{
 					spinning: isFetching || isLoading,

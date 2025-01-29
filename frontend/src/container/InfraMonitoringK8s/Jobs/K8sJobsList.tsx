@@ -33,6 +33,7 @@ import {
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
+import { usePageSize } from '../utils';
 import JobDetails from './JobDetails';
 import {
 	defaultAddedColumns,
@@ -67,7 +68,7 @@ function K8sJobsList({
 
 	const [selectedJobUID, setselectedJobUID] = useState<string | null>(null);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize(K8sCategory.JOBS);
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
@@ -186,7 +187,7 @@ function K8sJobsList({
 			queryPayload.groupBy = groupBy;
 		}
 		return queryPayload;
-	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
+	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
 	const formattedGroupedByJobsData = useMemo(
 		() =>
@@ -450,8 +451,12 @@ function K8sJobsList({
 					current: currentPage,
 					pageSize,
 					total: totalCount,
-					showSizeChanger: false,
-					hideOnSinglePage: true,
+					showSizeChanger: true,
+					hideOnSinglePage: false,
+					onChange: (page, pageSize): void => {
+						setCurrentPage(page);
+						setPageSize(pageSize);
+					},
 				}}
 				scroll={{ x: true }}
 				loading={{

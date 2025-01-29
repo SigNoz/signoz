@@ -10,6 +10,9 @@
 
 		.config-select-option {
 			width: 100%;
+			min-width: 160px;
+			max-width: fit-content;
+
 			.ant-select-selector {
 				display: flex;
 				min-height: 32px;
@@ -22,6 +25,10 @@
 				background: var(--bg-ink-300);
 			}
 		}
+	}
+
+	.copy-url-btn {
+		flex-shrink: 0;
 	}
 }
 
