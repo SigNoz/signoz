@@ -111,13 +111,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.listLicenses)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.applyLicense)).
-		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/featureFlags",
 		am.OpenAccess(ah.getFeatureFlags)).
@@ -171,11 +164,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
-
-	// v2
-	router.HandleFunc("/api/v2/licenses",
-		am.ViewAccess(ah.listLicensesV2)).
-		Methods(http.MethodGet)
 
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(ah.listLicensesV3)).Methods(http.MethodGet)

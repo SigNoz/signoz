@@ -2,6 +2,11 @@
 
 set -o errexit
 
+# Variables
+BASE_DIR="$(dirname "$(readlink -f "$0")")"
+DOCKER_STANDALONE_DIR="docker"
+DOCKER_SWARM_DIR="docker-swarm" # TODO: Add docker swarm support
+
 # Regular Colors
 Black='\033[0;30m'        # Black
 Red='\[\e[0;31m\]'        # Red
@@ -225,7 +230,7 @@ start_docker() {
     echo -e "🐳 Starting Docker ...\n"
     if [[ $os == "Mac" ]]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
-    else 
+    else
         if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
             $sudo_cmd systemctl start docker.service
@@ -257,12 +262,15 @@ wait_for_containers_start() {
 }
 
 bye() {  # Prints a friendly good bye message and exits the script.
+    # Switch back to the original directory
+    popd > /dev/null 2>&1
     if [[ "$?" -ne 0 ]]; then
         set +o errexit
 
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
         echo ""
-        echo -e "$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+        echo -e "cd ${DOCKER_STANDALONE_DIR}"
+        echo -e "$sudo_cmd $docker_compose_cmd ps -a"
 
         echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
@@ -471,9 +479,12 @@ fi
 
 start_docker
 
+# Switch to the Docker Standalone directory
+pushd "${BASE_DIR}/${DOCKER_STANDALONE_DIR}" > /dev/null 2>&1
+
 # check for open ports, if signoz is not installed
 if is_command_present docker-compose; then
-    if $sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml ps | grep "signoz-query-service" | grep -q "healthy" > /dev/null 2>&1; then
+    if $sudo_cmd $docker_compose_cmd ps | grep "signoz-query-service" | grep -q "healthy" > /dev/null 2>&1; then
         echo "SigNoz already installed, skipping the occupied ports check"
     else
         check_ports_occupied
@@ -482,14 +493,14 @@ fi
 
 echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz.\n"
-$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml pull
+$sudo_cmd $docker_compose_cmd pull
 
 echo ""
 echo "🟡 Starting the SigNoz containers. It may take a few minutes ..."
 echo
 # The $docker_compose_cmd command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
-$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+$sudo_cmd $docker_compose_cmd up --detach --remove-orphans || true
 
 wait_for_containers_start 60
 echo ""
@@ -499,7 +510,14 @@ if [[ $status_code -ne 200 ]]; then
     echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
 
-    echo -e "$sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+    echo "cd ${DOCKER_STANDALONE_DIR}"
+    echo "$sudo_cmd $docker_compose_cmd ps -a"
+    echo ""
+
+    echo "Try bringing down the containers and retrying the installation"
+    echo "cd ${DOCKER_STANDALONE_DIR}"
+    echo "$sudo_cmd $docker_compose_cmd down -v"
+    echo ""
 
     echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
@@ -517,10 +535,13 @@ else
     echo ""
     echo -e "🟢 Your frontend is running on http://localhost:3301"
     echo ""
-    echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics." 
+    echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics."
     echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"
 
-    echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd $docker_compose_cmd -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
+    echo "ℹ️  To bring down SigNoz and clean volumes:"
+    echo ""
+    echo "cd ${DOCKER_STANDALONE_DIR}"
+    echo "$sudo_cmd $docker_compose_cmd down -v"
 
     echo ""
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -535,7 +556,7 @@ else
     do
         read -rp 'Email: ' email
     done
-    
+
     send_event "identify_successful_installation"
 fi
 

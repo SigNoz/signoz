@@ -121,23 +121,25 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		const tableHeader = useCallback(
 			() => (
 				<tr>
-					{tableColumns.map((column) => {
-						const isDragColumn = column.key !== 'expand';
+					{tableColumns
+						.filter((column) => column.key)
+						.map((column) => {
+							const isDragColumn = column.key !== 'expand';
 
-						return (
-							<TableHeaderCellStyled
-								$isLogIndicator={column.key === 'state-indicator'}
-								$isDarkMode={isDarkMode}
-								$isDragColumn={isDragColumn}
-								key={column.key}
-								fontSize={tableViewProps?.fontSize}
-								// eslint-disable-next-line react/jsx-props-no-spreading
-								{...(isDragColumn && { className: 'dragHandler' })}
-							>
-								{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
-							</TableHeaderCellStyled>
-						);
-					})}
+							return (
+								<TableHeaderCellStyled
+									$isLogIndicator={column.key === 'state-indicator'}
+									$isDarkMode={isDarkMode}
+									$isDragColumn={isDragColumn}
+									key={column.key}
+									fontSize={tableViewProps?.fontSize}
+									// eslint-disable-next-line react/jsx-props-no-spreading
+									{...(isDragColumn && { className: 'dragHandler' })}
+								>
+									{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
+								</TableHeaderCellStyled>
+							);
+						})}
 				</tr>
 			),
 			[tableColumns, isDarkMode, tableViewProps?.fontSize],

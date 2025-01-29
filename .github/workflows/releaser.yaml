@@ -7,6 +7,7 @@ on:
 
 jobs:
   detect:
+    if: ${{ !startsWith(github.event.release.tag_name, 'histogram-quantile/') }}
     runs-on: ubuntu-latest
     outputs:
       release_type: ${{ steps.find.outputs.release_type }}
@@ -22,6 +23,7 @@ jobs:
           fi
           echo "release_type=${release_type}" >> "$GITHUB_OUTPUT"
   charts:
+    if: ${{ !startsWith(github.event.release.tag_name, 'histogram-quantile/') }}
     uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@main
     secrets: inherit
     needs: [detect]

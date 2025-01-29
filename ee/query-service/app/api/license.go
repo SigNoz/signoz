@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -64,55 +63,8 @@ type ApplyLicenseRequest struct {
 	LicenseKey string `json:"key"`
 }
 
-type ListLicenseResponse map[string]interface{}
-
-func convertLicenseV3ToListLicenseResponse(licensesV3 []*model.LicenseV3) []ListLicenseResponse {
-	listLicenses := []ListLicenseResponse{}
-
-	for _, license := range licensesV3 {
-		listLicenses = append(listLicenses, license.Data)
-	}
-	return listLicenses
-}
-
-func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
-	licenses, apiError := ah.LM().GetLicenses(context.Background())
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-	}
-	ah.Respond(w, licenses)
-}
-
-func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
-	var l model.License
-
-	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	if l.Key == "" {
-		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
-		return
-	}
-	license, apiError := ah.LM().ActivateV3(r.Context(), l.Key)
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	ah.Respond(w, license)
-}
-
 func (ah *APIHandler) listLicensesV3(w http.ResponseWriter, r *http.Request) {
-	licenses, apiError := ah.LM().GetLicensesV3(r.Context())
-
-	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	ah.Respond(w, convertLicenseV3ToListLicenseResponse(licenses))
+	ah.listLicensesV2(w, r)
 }
 
 func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request) {
@@ -121,6 +73,7 @@ func (ah *APIHandler) getActiveLicenseV3(w http.ResponseWriter, r *http.Request)
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
 	// return 404 not found if there is no active license
 	if activeLicense == nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no active license found")}, nil)

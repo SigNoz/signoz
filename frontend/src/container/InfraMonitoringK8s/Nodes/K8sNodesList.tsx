@@ -32,6 +32,7 @@ import {
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
+import { usePageSize } from '../utils';
 import NodeDetails from './NodeDetails';
 import {
 	defaultAddedColumns,
@@ -66,7 +67,7 @@ function K8sNodesList({
 
 	const [selectedNodeUID, setselectedNodeUID] = useState<string | null>(null);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize(K8sCategory.NODES);
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
@@ -185,7 +186,7 @@ function K8sNodesList({
 			queryPayload.groupBy = groupBy;
 		}
 		return queryPayload;
-	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
+	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
 	const formattedGroupedByNodesData = useMemo(
 		() =>
@@ -448,8 +449,12 @@ function K8sNodesList({
 					current: currentPage,
 					pageSize,
 					total: totalCount,
-					showSizeChanger: false,
-					hideOnSinglePage: true,
+					showSizeChanger: true,
+					hideOnSinglePage: false,
+					onChange: (page, pageSize): void => {
+						setCurrentPage(page);
+						setPageSize(pageSize);
+					},
 				}}
 				scroll={{ x: true }}
 				loading={{

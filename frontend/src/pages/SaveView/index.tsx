@@ -15,6 +15,7 @@ import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
 } from 'components/ExplorerCard/utils';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -221,7 +222,7 @@ function SaveView(): JSX.Element {
 
 				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
 					view.createdAt,
-					'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
+					DATE_TIME_FORMATS.DASH_TIME_DATE,
 				);
 
 				const isEditDeleteSupported = allowedRoles.includes(user.role as string);

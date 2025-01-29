@@ -16,6 +16,7 @@ import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -164,7 +165,10 @@ function AllErrors(): JSX.Element {
 		) => string,
 	): JSX.Element => (
 		<Typography>
-			{formatTimezoneAdjustedTimestamp(value, 'DD/MM/YYYY hh:mm:ss A')}
+			{formatTimezoneAdjustedTimestamp(
+				value,
+				DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
+			)}
 		</Typography>
 	);
 

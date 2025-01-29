@@ -94,7 +94,7 @@ const menuItems: SidebarItem[] = [
 		icon: <LayoutGrid size={16} />,
 	},
 	{
-		key: ROUTES.MESSAGING_QUEUES,
+		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
 	},

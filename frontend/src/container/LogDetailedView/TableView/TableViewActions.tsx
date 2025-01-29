@@ -6,6 +6,7 @@ import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import dompurify from 'dompurify';
@@ -124,7 +125,7 @@ export function TableViewActions(
 					<span style={commonStyles}>
 						{formatTimezoneAdjustedTimestamp(
 							cleanTimestamp,
-							'MM/DD/YYYY, HH:mm:ss.SSS (UTC Z)',
+							DATE_TIME_FORMATS.UTC_US_MS,
 						)}
 					</span>
 				);

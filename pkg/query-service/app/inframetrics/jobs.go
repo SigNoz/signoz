@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	metricToUseForJobs = "k8s_pod_cpu_utilization"
+	metricToUseForJobs = "k8s_job_desired_successful_pods"
 	k8sJobNameAttrKey  = "k8s_job_name"
 
 	metricNamesForJobs = map[string]string{
@@ -32,17 +32,17 @@ var (
 	}
 
 	queryNamesForJobs = map[string][]string{
-		"cpu":             {"A"},
-		"cpu_request":     {"B", "A"},
-		"cpu_limit":       {"C", "A"},
-		"memory":          {"D"},
-		"memory_request":  {"E", "D"},
-		"memory_limit":    {"F", "D"},
-		"restarts":        {"G", "A"},
-		"desired_pods":    {"H"},
-		"active_pods":     {"I"},
-		"failed_pods":     {"J"},
-		"successful_pods": {"K"},
+		"cpu":                     {"A"},
+		"cpu_request":             {"B", "A"},
+		"cpu_limit":               {"C", "A"},
+		"memory":                  {"D"},
+		"memory_request":          {"E", "D"},
+		"memory_limit":            {"F", "D"},
+		"restarts":                {"G", "A"},
+		"desired_successful_pods": {"H"},
+		"active_pods":             {"I"},
+		"failed_pods":             {"J"},
+		"successful_pods":         {"K"},
 	}
 
 	builderQueriesForJobs = map[string]*v3.BuilderQuery{
@@ -340,7 +340,7 @@ func (d *JobsRepo) GetJobList(ctx context.Context, req model.JobListRequest) (mo
 
 	// add additional queries for jobs
 	for _, jobQuery := range builderQueriesForJobs {
-		query.CompositeQuery.BuilderQueries[jobQuery.QueryName] = jobQuery
+		query.CompositeQuery.BuilderQueries[jobQuery.QueryName] = jobQuery.Clone()
 	}
 
 	for _, query := range query.CompositeQuery.BuilderQueries {
