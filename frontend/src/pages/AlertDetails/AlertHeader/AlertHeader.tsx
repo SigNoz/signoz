@@ -43,7 +43,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 					</div>
 				</div>
 				<div className="bottom-section">
-					<AlertSeverity severity="warning" />
+					{labels.severity && <AlertSeverity severity={labels.severity} />}
 
 					{/* // TODO(shaheer): Get actual data when we are able to get alert firing from state from API */}
 					{/* <AlertStatus
