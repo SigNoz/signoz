@@ -513,13 +513,13 @@ parse_args() {
         exit 0
         ;;
       ?)
-        err "Invalid option: -${OPTARG}"
+        err "Invalid option."
         err "For help, run: $0 -h"
-        return 1
+        exit 1
         ;;
       *)
         err "Unknown error while processing options"
-        return 1
+        exit 1
         ;;
     esac
   done
