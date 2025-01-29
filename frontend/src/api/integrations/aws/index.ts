@@ -72,6 +72,5 @@ export const updateServiceConfig = async (
 		`/cloud-integrations/aws/services/${serviceId}/config`,
 		payload,
 	);
-	console.log({ serviceId });
 	return response.data;
 };
