@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -131,7 +132,7 @@ function HostsList(): JSX.Element {
 							</Tooltip>
 						</div>
 						<QuickFilters
-							source="infra-monitoring"
+							source={QuickFiltersSource.INFRA_MONITORING}
 							config={HostsQuickFiltersConfig}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 							onFilterChange={handleQuickFiltersChange}

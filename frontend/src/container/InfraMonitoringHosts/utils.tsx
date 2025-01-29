@@ -11,7 +11,7 @@ import {
 import {
 	FiltersType,
 	IQuickFiltersConfig,
-} from 'components/QuickFilters/QuickFilters';
+} from 'components/QuickFilters/types';
 import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Dispatch, SetStateAction } from 'react';
