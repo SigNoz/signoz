@@ -216,7 +216,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 				if err != nil {
 					zap.L().Error("Couldn't initialize features", zap.Error(err))
 				}
-				zap.L().Info("License validation completed with error for three consecutive times, defaulting to basic plan")
+				zap.L().Error("License validation completed with error for three consecutive times, defaulting to basic plan", zap.String("license_id", lm.activeLicenseV3.ID), zap.Bool("license_validation", false))
 			}
 
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
