@@ -387,6 +387,6 @@ export const getUPlotChartOptions = ({
 					hiddenGraph,
 					isDarkMode,
 			  }),
-		axes: getAxes(isDarkMode, yAxisUnit),
+		axes: getAxes({ isDarkMode, yAxisUnit, panelType }),
 	};
 };
