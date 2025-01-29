@@ -287,8 +287,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
 	const isMessagingQueues = (): boolean =>
-		routeKey === 'MESSAGING_QUEUES' ||
-		routeKey === 'MESSAGING_QUEUES_DETAIL' ||
+		routeKey === 'MESSAGING_QUEUES_KAFKA' ||
+		routeKey === 'MESSAGING_QUEUES_KAFKA_DETAIL' ||
 		routeKey === 'MESSAGING_QUEUES_CELERY_TASK' ||
 		routeKey === 'MESSAGING_QUEUES_OVERVIEW';
 

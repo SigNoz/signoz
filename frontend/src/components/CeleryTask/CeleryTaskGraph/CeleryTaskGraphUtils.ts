@@ -490,49 +490,6 @@ export const celeryActiveTasksWidgetData = (
 		}),
 	);
 
-export const celeryWorkerOnlineWidgetData = (
-	startTime: number,
-	endTime: number,
-): Widgets =>
-	getWidgetQueryBuilder(
-		getWidgetQuery({
-			title: 'Worker Online',
-			description: 'Represents the number of workers online.',
-			panelTypes: PANEL_TYPES.VALUE,
-			queryData: [
-				{
-					aggregateAttribute: {
-						dataType: DataTypes.Float64,
-						id: 'flower_task_runtime_seconds_sum--float64--Sum--true',
-						isColumn: true,
-						isJSON: false,
-						key: 'flower_task_runtime_seconds_sum',
-						type: 'Sum',
-					},
-					aggregateOperator: 'rate',
-					dataSource: DataSource.METRICS,
-					disabled: false,
-					expression: 'A',
-					filters: {
-						items: [],
-						op: 'AND',
-					},
-					functions: [],
-					groupBy: [],
-					having: [],
-					legend: '',
-					limit: null,
-					orderBy: [],
-					queryName: 'A',
-					reduceTo: 'avg',
-					spaceAggregation: 'sum',
-					stepInterval: getStepInterval(startTime, endTime),
-					timeAggregation: 'rate',
-				},
-			],
-		}),
-	);
-
 export const celeryTaskLatencyWidgetData = (
 	type: string,
 	startTime: number,

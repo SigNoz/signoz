@@ -1,22 +1,4 @@
 .celery-overview-container {
-	.celery-overview-breadcrumb {
-		display: flex;
-		padding: 0px 16px;
-		align-items: center;
-		gap: 8px;
-		padding-top: 10px;
-		padding-bottom: 8px;
-		color: var(--bg-vanilla-400);
-		font-family: Inter;
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 20px;
-		letter-spacing: -0.07px;
-
-		border-bottom: 1px solid var(--bg-slate-400);
-	}
-
 	.celery-overview-content {
 		display: flex;
 		flex-direction: column;
@@ -38,6 +20,18 @@
 				font-weight: 700;
 				line-height: 32px;
 				margin: 0;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.celery-overview-container {
+		.celery-overview-content {
+			.celery-overview-content-header {
+				.celery-overview-content-header-title {
+					color: var(--bg-slate-200);
+				}
 			}
 		}
 	}
