@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -83,7 +84,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={PodsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -103,7 +104,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={NodesQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -126,7 +127,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={NamespaceQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -146,7 +147,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={ClustersQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -166,7 +167,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={DeploymentsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -186,7 +187,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={JobsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -206,7 +207,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={DaemonSetsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -229,7 +230,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={StatefulsetsQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -249,7 +250,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			showArrow: false,
 			children: (
 				<QuickFilters
-					source="infra-monitoring"
+					source={QuickFiltersSource.INFRA_MONITORING}
 					config={VolumesQuickFiltersConfig}
 					handleFilterVisibilityChange={handleFilterVisibilityChange}
 					onFilterChange={handleFilterChange}
@@ -273,7 +274,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// 	showArrow: false,
 		// 	children: (
 		// 		<QuickFilters
-		// 			source="infra-monitoring"
+		// 			source={QuickFiltersSource.INFRA_MONITORING}
 		// 			config={ContainersQuickFiltersConfig}
 		// 			handleFilterVisibilityChange={handleFilterVisibilityChange}
 		// 			onFilterChange={handleFilterChange}
