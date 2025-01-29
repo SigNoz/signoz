@@ -2,7 +2,7 @@
 import {
 	FiltersType,
 	IQuickFiltersConfig,
-} from 'components/QuickFilters/QuickFilters';
+} from 'components/QuickFilters/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
