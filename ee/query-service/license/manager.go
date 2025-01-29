@@ -222,6 +222,8 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
 				map[string]interface{}{"err": reterr.Error()}, "", true, false)
 		} else {
+			// reset the failed attempts counter
+			atomic.StoreUint64(&lm.failedAttempts, 0)
 			zap.L().Info("License validation completed with no errors")
 		}
 
