@@ -8,45 +8,11 @@ import {
 import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
-
-export enum FiltersType {
-	SLIDER = 'SLIDER',
-	CHECKBOX = 'CHECKBOX',
-}
-
-export enum MinMax {
-	MIN = 'MIN',
-	MAX = 'MAX',
-}
-
-export enum SpecficFilterOperations {
-	ALL = 'ALL',
-	ONLY = 'ONLY',
-}
-
-export interface IQuickFiltersConfig {
-	type: FiltersType;
-	title: string;
-	attributeKey: BaseAutocompleteData;
-	aggregateOperator?: string;
-	aggregateAttribute?: string;
-	dataSource?: DataSource;
-	customRendererForValue?: (value: string) => JSX.Element;
-	defaultOpen: boolean;
-}
-
-interface IQuickFiltersProps {
-	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
-	source?: string | null;
-	onFilterChange?: (query: Query) => void;
-}
+import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
@@ -95,11 +61,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const lastQueryName =
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
-	const isInfraMonitoring = source === 'infra-monitoring';
-
 	return (
 		<div className="quick-filters">
-			{!isInfraMonitoring && (
+			{source !== QuickFiltersSource.INFRA_MONITORING && (
 				<section className="header">
 					<section className="left-actions">
 						<FilterOutlined />
@@ -128,11 +92,24 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{config.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 						case FiltersType.SLIDER:
 							return <Slider filter={filter} />;
+						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
-							return <Checkbox filter={filter} onFilterChange={onFilterChange} />;
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 					}
 				})}
 			</section>
@@ -141,6 +118,5 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 }
 
 QuickFilters.defaultProps = {
-	source: null,
 	onFilterChange: null,
 };

@@ -6,6 +6,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
@@ -157,6 +158,7 @@ function LogsExplorer(): JSX.Element {
 				{showFilters && (
 					<section className={cx('log-quick-filter-left-section')}>
 						<QuickFilters
+							source={QuickFiltersSource.LOGS_EXPLORER}
 							config={LogsQuickFiltersConfig}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 						/>
