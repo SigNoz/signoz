@@ -5,6 +5,7 @@ import type { SelectProps, TabsProps } from 'antd';
 import { Select, Tabs } from 'antd';
 import { getAwsServices } from 'api/integrations/aws';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -74,11 +75,10 @@ function ServicesFilter({
 	);
 }
 
-interface ServicesSectionProps {
-	accountId: string;
-}
+function ServicesSection(): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const accountId = urlQuery.get('accountId') || '';
 
-function ServicesSection({ accountId }: ServicesSectionProps): JSX.Element {
 	const [activeFilter, setActiveFilter] = useState<
 		'all_services' | 'enabled' | 'available'
 	>('all_services');
@@ -96,16 +96,12 @@ function ServicesSection({ accountId }: ServicesSectionProps): JSX.Element {
 	);
 }
 
-interface ServicesTabsProps {
-	accountId: string;
-}
-
-function ServicesTabs({ accountId }: ServicesTabsProps): JSX.Element {
+function ServicesTabs(): JSX.Element {
 	const tabItems: TabsProps['items'] = [
 		{
 			key: 'services',
 			label: 'Services For Integration',
-			children: <ServicesSection accountId={accountId} />,
+			children: <ServicesSection />,
 		},
 	];
 
