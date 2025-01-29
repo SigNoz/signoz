@@ -3,8 +3,7 @@ import './RegionSelector.style.scss';
 import { Checkbox } from 'antd';
 import { useRegionSelection } from 'hooks/integrations/aws/useRegionSelection';
 import { Dispatch, SetStateAction } from 'react';
-
-import { regions } from '../../ServicesSection/data';
+import { regions } from 'utils/regions';
 
 export function RegionSelector({
 	selectedRegions,

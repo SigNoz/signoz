@@ -4,7 +4,6 @@ import {
 	ActiveViewEnum,
 	ModalStateEnum,
 } from 'container/CloudIntegrationPage/HeroSection/types';
-import { regions } from 'container/CloudIntegrationPage/ServicesSection/data';
 import {
 	Dispatch,
 	SetStateAction,
@@ -17,6 +16,7 @@ import {
 	ConnectionUrlResponse,
 	GenerateConnectionUrlPayload,
 } from 'types/api/integrations/aws';
+import { regions } from 'utils/regions';
 
 import { useGenerateConnectionUrl } from './useGenerateConnectionUrl';
 

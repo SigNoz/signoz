@@ -5,8 +5,8 @@ import { useAccountStatus } from 'hooks/integrations/aws/useAccountStatus';
 import { ChevronDown } from 'lucide-react';
 import { useRef } from 'react';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
+import { regions } from 'utils/regions';
 
-import { regions } from '../../ServicesSection/data';
 import { ModalStateEnum, RegionFormProps } from '../types';
 import AlertMessage from './AlertMessage';
 

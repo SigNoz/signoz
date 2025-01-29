@@ -1,5 +1,13 @@
-import { Region } from 'types/regions';
-
+interface Region {
+	id: string;
+	name: string;
+	subRegions: SubRegion[];
+}
+interface SubRegion {
+	id: string;
+	name: string;
+	displayName: string;
+}
 const regions: Region[] = [
 	{
 		id: 'north-america',

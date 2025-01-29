@@ -1,6 +1,5 @@
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
-import { regions } from 'container/CloudIntegrationPage/ServicesSection/data';
 import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useUpdateAccountConfig } from 'hooks/integrations/aws/useUpdateAccountConfig';
 import { isEqual } from 'lodash-es';
@@ -13,6 +12,7 @@ import {
 	useState,
 } from 'react';
 import { AccountConfigPayload } from 'types/api/integrations/aws';
+import { regions } from 'utils/regions';
 
 interface UseAccountSettingsModalProps {
 	onClose: () => void;
