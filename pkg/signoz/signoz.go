@@ -77,6 +77,9 @@ func New(
 		providerConfig.TelemetryStoreProviderFactories,
 		config.TelemetryStore.Provider,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &SigNoz{
 		Cache:          cache,

@@ -33,7 +33,7 @@ type ClickHouseQuerySettings struct {
 type ClickHouseConfig struct {
 	DSN string `mapstructure:"dsn"`
 
-	QuerySettings ClickHouseQuerySettings `mapstructure:"query_settings"`
+	QuerySettings ClickHouseQuerySettings `mapstructure:"settings"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {

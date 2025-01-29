@@ -10,6 +10,7 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
 	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore"
+	"go.signoz.io/signoz/pkg/telemetrystore/telemetrystorehook"
 	"go.signoz.io/signoz/pkg/web"
 	"go.signoz.io/signoz/pkg/web/noopweb"
 	"go.signoz.io/signoz/pkg/web/routerweb"
@@ -33,6 +34,7 @@ type ProviderConfig struct {
 }
 
 func NewProviderConfig() ProviderConfig {
+	hook := telemetrystorehook.NewFactory()
 	return ProviderConfig{
 		CacheProviderFactories: factory.MustNewNamedMap(
 			memorycache.NewFactory(),
@@ -56,7 +58,7 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddIntegrationsFactory(),
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
-			clickhousetelemetrystore.NewFactory(),
+			clickhousetelemetrystore.NewFactory(hook),
 		),
 	}
 }
