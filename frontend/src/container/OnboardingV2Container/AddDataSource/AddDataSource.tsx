@@ -170,7 +170,6 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		console.log('dataSource', dataSource);
 		setSelectedDataSource(dataSource);
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
@@ -656,14 +655,20 @@ function OnboardingAddDataSource(): JSX.Element {
 									<Button
 										type="default"
 										shape="round"
-										onClick={(): void => handleUpdateCurrentStep(1)}
+										onClick={(): void => {
+											handleFilterByCategory('All');
+											handleUpdateCurrentStep(1);
+										}}
 									>
 										Back
 									</Button>
 									<Button
 										type="primary"
 										shape="round"
-										onClick={(): void => handleUpdateCurrentStep(3)}
+										onClick={(): void => {
+											handleFilterByCategory('All');
+											handleUpdateCurrentStep(3);
+										}}
 									>
 										Continue
 									</Button>
