@@ -3,9 +3,22 @@ import './InfraMonitoring.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
-import { HostData, HostListPayload } from 'api/infraMonitoring/getHostLists';
+import {
+	HostData,
+	HostListPayload,
+	HostListResponse,
+} from 'api/infraMonitoring/getHostLists';
+import {
+	FiltersType,
+	IQuickFiltersConfig,
+} from 'components/QuickFilters/types';
 import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Dispatch, SetStateAction } from 'react';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import HostsList from './HostsList';
 
@@ -16,6 +29,29 @@ export interface HostRowData {
 	wait: string;
 	load15: number;
 	active: React.ReactNode;
+}
+
+export interface HostsListTableProps {
+	isLoading: boolean;
+	isError: boolean;
+	isFetching: boolean;
+	tableData:
+		| SuccessResponse<HostListResponse, unknown>
+		| ErrorResponse
+		| undefined;
+	hostMetricsData: HostData[];
+	filters: TagFilter;
+	setSelectedHostName: Dispatch<SetStateAction<string | null>>;
+	currentPage: number;
+	setCurrentPage: Dispatch<SetStateAction<number>>;
+	pageSize: number;
+	setOrderBy: Dispatch<
+		SetStateAction<{
+			columnName: string;
+			order: 'asc' | 'desc';
+		} | null>
+	>;
+	setPageSize: (pageSize: number) => void;
 }
 
 export const getHostListsQuery = (): HostListPayload => ({
@@ -132,3 +168,36 @@ export const formatDataForTable = (data: HostData[]): HostRowData[] =>
 		wait: `${Number((host.wait * 100).toFixed(1))}%`,
 		load15: host.load15,
 	}));
+
+export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'Host Name',
+		attributeKey: {
+			key: 'host_name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'system_cpu_load_average_15m',
+		dataSource: DataSource.METRICS,
+		defaultOpen: true,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'OS Type',
+		attributeKey: {
+			key: 'os_type',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		aggregateOperator: 'noop',
+		aggregateAttribute: 'system_cpu_load_average_15m',
+		dataSource: DataSource.METRICS,
+		defaultOpen: true,
+	},
+];
