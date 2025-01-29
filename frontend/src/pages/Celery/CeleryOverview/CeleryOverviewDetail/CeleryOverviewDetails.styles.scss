@@ -28,3 +28,16 @@
 		}
 	}
 }
+
+.lightMode {
+	.overview-right-panel-graph-card {
+		border: 1px solid var(--bg-vanilla-300) !important;
+		background: var(--bg-vanilla-100);
+
+		.request-rate-card,
+		.error-rate-card,
+		.avg-latency-card {
+			border-bottom: 0.75px solid var(--bg-vanilla-300);
+		}
+	}
+}

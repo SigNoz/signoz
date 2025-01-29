@@ -49,6 +49,8 @@
 			margin-top: 8px;
 			background: #262626;
 			border: none;
+			box-shadow: none;
+			border-radius: 4px;
 
 			&:hover {
 				background: #404040;
@@ -57,6 +59,35 @@
 			&:disabled {
 				opacity: 0.5;
 				cursor: not-allowed;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.value-info-card {
+		border: 1px solid var(--bg-vanilla-300) !important;
+		background: var(--bg-vanilla-100);
+
+		.metric-column {
+			.metric-title {
+				color: var(--bg-slate-100);
+			}
+
+			.metric-unit {
+				color: var(--bg-ink-500);
+			}
+
+			.metric-reference {
+				color: var(--bg-ink-500);
+			}
+
+			.trace-button {
+				background: var(--bg-slate-200);
+
+				&:hover {
+					background: var(--bg-slate-100);
+				}
 			}
 		}
 	}
