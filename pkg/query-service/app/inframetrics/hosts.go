@@ -404,7 +404,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 
 	// don't fail the request if we can't get these values
 	if clusterNames, nodeNames, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
-		resp.IsSendingK8SAgentMetrics = true
+		resp.IsSendingK8SAgentMetrics = len(clusterNames) > 0 || len(nodeNames) > 0
 		resp.ClusterNames = clusterNames
 		resp.NodeNames = nodeNames
 	}
