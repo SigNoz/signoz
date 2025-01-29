@@ -459,6 +459,7 @@ export default function BillingContainer(): JSX.Element {
 							Download CSV
 						</Button>
 						<Button
+							data-testid="header-billing-button"
 							type="primary"
 							size="middle"
 							loading={isLoadingBilling || isLoadingManageBilling}
@@ -577,6 +578,7 @@ export default function BillingContainer(): JSX.Element {
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<Button
+								data-testid="upgrade-plan-button"
 								type="primary"
 								size="middle"
 								loading={isLoadingBilling || isLoadingManageBilling}
