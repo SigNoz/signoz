@@ -113,13 +113,7 @@ func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
 	}
 
 	if active != nil {
-		license, apiError := validate.ValidateLicenseV3(active.Key)
-		if apiError != nil {
-			zap.L().Error("failed to validate the license, defaulting to basic plan", zap.Error(apiError.Err))
-			return apiError
-		}
-
-		lm.SetActiveV3(license, features...)
+		lm.SetActiveV3(active, features...)
 	} else {
 		zap.L().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
@@ -165,6 +159,7 @@ func (lm *Manager) ValidatorV3(ctx context.Context) {
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
 
+	lm.ValidateV3(ctx)
 	for {
 		select {
 		case <-lm.done:
