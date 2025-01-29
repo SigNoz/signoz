@@ -1,11 +1,18 @@
 import { DefaultOptionType } from 'antd/es/select';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useState } from 'react';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters';
 
 export const useCeleryFilterOptions = (
 	type: string | string[],
+	aggregateOperator?: string,
+	dataSource?: DataSource,
+	aggregateAttribute?: string,
+	filterAttributeKeyDataType?: DataTypes,
+	tagType?: string,
 ): {
 	searchText: string;
 	handleSearch: (value: string) => void;
@@ -16,6 +23,11 @@ export const useCeleryFilterOptions = (
 	const { isFetching, options } = useGetAllFilters({
 		attributeKey: type,
 		searchText,
+		aggregateOperator,
+		dataSource,
+		aggregateAttribute,
+		filterAttributeKeyDataType,
+		tagType,
 	});
 	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
 		setSearchText(searchText as string);

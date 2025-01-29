@@ -30,7 +30,7 @@ function MessagingQueues(): JSX.Element {
 		});
 
 		history.push(
-			`${ROUTES.MESSAGING_QUEUES_DETAIL}?${QueryParams.mqServiceView}=${callerView}`,
+			`${ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL}?${QueryParams.mqServiceView}=${callerView}`,
 		);
 	};
 
