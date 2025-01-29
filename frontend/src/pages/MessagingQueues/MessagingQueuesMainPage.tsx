@@ -59,8 +59,6 @@ export const Overview: TabRoutes = {
 export default function MessagingQueuesMainPage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	console.log('pathname-main', pathname);
-
 	const isKafkaDetail = pathname === ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL;
 
 	const routes: TabRoutes[] = [
