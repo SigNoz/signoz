@@ -1,7 +1,7 @@
 import {
 	FiltersType,
 	IQuickFiltersConfig,
-} from 'components/QuickFilters/QuickFilters';
+} from 'components/QuickFilters/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
