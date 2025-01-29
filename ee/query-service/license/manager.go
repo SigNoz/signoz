@@ -217,6 +217,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 				if err != nil {
 					zap.L().Error("Couldn't initialize features", zap.Error(err))
 				}
+				lm.done <- struct{}{}
 			}
 
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
