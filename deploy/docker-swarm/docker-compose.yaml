@@ -82,7 +82,7 @@ services:
     #   - "2888:2888"
     #   - "3888:3888"
     volumes:
-      - ./clickhouse-setup/data/zookeeper-1:/bitnami/zookeeper
+      - zookeeper-1:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       - ALLOW_ANONYMOUS_LOGIN=yes
@@ -103,7 +103,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
-      - ./clickhouse-setup/data/clickhouse/:/var/lib/clickhouse/
+      - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   alertmanager:
     !!merge <<: *common
@@ -112,7 +112,7 @@ services:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
     volumes:
-      - ./clickhouse-setup/data/alertmanager:/data
+      - alertmanager:/data
     depends_on:
       - query-service
   query-service:
@@ -128,7 +128,7 @@ services:
     volumes:
       - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
       - ../common/dashboards:/root/config/dashboards
-      - ./clickhouse-setup/data/signoz/:/var/lib/signoz/
+      - sqlite:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -198,3 +198,13 @@ services:
 networks:
   signoz-net:
     name: signoz-net
+
+volumes:
+  alertmanager:
+    name: signoz-alertmanager
+  clickhouse:
+    name: signoz-clickhouse
+  sqlite:
+    name: signoz-sqlite
+  zookeeper-1:
+    name: signoz-zookeeper-1

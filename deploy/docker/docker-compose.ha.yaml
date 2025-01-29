@@ -89,7 +89,7 @@ services:
     #   - "2888:2888"
     #   - "3888:3888"
     volumes:
-      - ./clickhouse-setup/data/zookeeper-1:/bitnami/zookeeper
+      - zookeeper-1:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
@@ -105,7 +105,7 @@ services:
     #   - "2889:2888"
     #   - "3889:3888"
     volumes:
-      - ./clickhouse-setup/data/zookeeper-2:/bitnami/zookeeper
+      - zookeeper-2:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=2
       - ZOO_SERVERS=zookeeper-1:2888:3888,0.0.0.0:2888:3888,zookeeper-3:2888:3888
@@ -121,7 +121,7 @@ services:
     #   - "2890:2888"
     #   - "3890:3888"
     volumes:
-      - ./clickhouse-setup/data/zookeeper-3:/bitnami/zookeeper
+      - zookeeper-3:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=3
       - ZOO_SERVERS=zookeeper-1:2888:3888,zookeeper-2:2888:3888,0.0.0.0:2888:3888
@@ -142,7 +142,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
-      - ./clickhouse-setup/data/clickhouse/:/var/lib/clickhouse/
+      - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-2:
     !!merge <<: *clickhouse-defaults
@@ -157,7 +157,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
-      - ./clickhouse-setup/data/clickhouse-2/:/var/lib/clickhouse/
+      - clickhouse-2:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-3:
     !!merge <<: *clickhouse-defaults
@@ -172,7 +172,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
-      - ./clickhouse-setup/data/clickhouse-3/:/var/lib/clickhouse/
+      - clickhouse-3:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   alertmanager:
     !!merge <<: *common
@@ -182,7 +182,7 @@ services:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
     volumes:
-      - ./clickhouse-setup/data/alertmanager:/data
+      - alertmanager:/data
     depends_on:
       query-service:
         condition: service_healthy
@@ -200,7 +200,7 @@ services:
     volumes:
       - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
       - ../common/dashboards:/root/config/dashboards
-      - ./clickhouse-setup/data/signoz/:/var/lib/signoz/
+      - sqlite:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -280,3 +280,21 @@ services:
 networks:
   signoz-net:
     name: signoz-net
+
+volumes:
+  alertmanager:
+    name: signoz-alertmanager
+  clickhouse:
+    name: signoz-clickhouse
+  clickhouse-2:
+    name: signoz-clickhouse-2
+  clickhouse-3:
+    name: signoz-clickhouse-3
+  sqlite:
+    name: signoz-sqlite
+  zookeeper-1:
+    name: signoz-zookeeper-1
+  zookeeper-2:
+    name: signoz-zookeeper-2
+  zookeeper-3:
+    name: signoz-zookeeper-3
