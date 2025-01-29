@@ -263,3 +263,21 @@ services:
 networks:
   signoz-net:
     name: signoz-net
+
+volumes:
+  alertmanager:
+    name: signoz-alertmanager
+  clickhouse:
+    name: signoz-clickhouse
+  clickhouse-2:
+    name: signoz-clickhouse-2
+  clickhouse-3:
+    name: signoz-clickhouse-3
+  sqlite:
+    name: signoz-sqlite
+  zookeeper-1:
+    name: signoz-zookeeper-1
+  zookeeper-2:
+    name: signoz-zookeeper-2
+  zookeeper-3:
+    name: signoz-zookeeper-3
