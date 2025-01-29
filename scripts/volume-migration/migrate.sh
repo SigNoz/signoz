@@ -296,35 +296,35 @@ migrate_alertmanager() {
 post_migrate_clickhouse() {
   local data_dir=$1
 
-  post_migrate "${data_dir}/clickhouse"
+  post_migrate "clickhouse" "${data_dir}/clickhouse"
   if [[ -d "${data_dir}/clickhouse-2" ]]; then
-    post_migrate "${data_dir}/clickhouse-2"
+    post_migrate "clickhouse-2" "${data_dir}/clickhouse-2"
   fi
   if [[ -d "${data_dir}/clickhouse-3" ]]; then
-    post_migrate "${data_dir}/clickhouse-3"
+    post_migrate "clickhouse-3" "${data_dir}/clickhouse-3"
   fi
 }
 
 post_migrate_zookeeper() {
   local data_dir=$1
 
-  post_migrate "${data_dir}/zookeeper-1"
+  post_migrate "zookeeper" "${data_dir}/zookeeper-1"
   if [[ -d "${data_dir}/zookeeper-2" ]]; then
-    post_migrate "${data_dir}/zookeeper-2"
+    post_migrate "zookeeper-2" "${data_dir}/zookeeper-2"
   fi
   if [[ -d "${data_dir}/zookeeper-3" ]]; then
-    post_migrate "${data_dir}/zookeeper-3"
+    post_migrate "zookeeper-3" "${data_dir}/zookeeper-3"
   fi
 }
 
 post_migrate_signoz() {
   local data_dir=$1
-  post_migrate "${data_dir}/signoz"
+  post_migrate "signoz" "${data_dir}/signoz"
 }
 
 post_migrate_alertmanager() {
   local data_dir=$1
-  post_migrate "${data_dir}/alertmanager"
+  post_migrate "alertmanager" "${data_dir}/alertmanager"
 }
 
 ################################################################################
@@ -351,28 +351,43 @@ migrate() {
   docker volume create "${new_volume}" --label "com.docker.compose.project=signoz" >/dev/null 2>&1
 
   echo "Migrating ${migration_component} from bind mounts to the new volume ${new_volume}"
-  echo "Please be patient, this may take a while..."
-  echo ""
+  if [[ "${migration_component}" == "clickhouse" ]]; then
+    echo "Please be patient, this may take a while for clickhouse migration..."
+  fi
   if [[ -n "${owner_uidgid}" ]]; then
     commands="cp -rp /data/* /volume; chown -R ${owner_uidgid} /volume"
   else
     commands="cp -rp /data/* /volume"
   fi
-  docker run --rm -v "${bind_mounts}":/data -v "${new_volume}":/volume alpine sh -c "${commands}" >/dev/null 2>&1
+  if docker run --rm -v "${bind_mounts}":/data -v "${new_volume}":/volume alpine sh -c "${commands}" 2>&1; then
+    echo "Migration of ${migration_component} from bind mounts to the new volume ${new_volume} completed successfully"
+  else
+    echo "Migration of ${migration_component} from bind mounts to the new volume ${new_volume} failed"
+    exit 1
+  fi
 }
 
 ##############################################################################
 # Post-migration cleanup
 # Arguments:
+#   migration_component component name: clickhouse, zookeeper, signoz, alertmanager
 #   data_dir path to the directory of the data
 # Returns:
 #   None
 ##############################################################################
 post_migrate() {
-  local data_dir=$1
-  echo "Running post-migration cleanup for ${data_dir}"
-  docker run --rm -v "${data_dir}":/data alpine sh -c "rm -rf /data/*" >/dev/null 2>&1
-  rmdir "${data_dir}" >/dev/null 2>&1
+  local migration_component=$1
+  local data_dir=$2
+  echo "Running post-migration cleanup for ${migration_component}"
+  if [[ "${migration_component}" == "clickhouse" ]]; then
+    echo "Please be patient, this may take a while for clickhouse post-migration cleanup..."
+  fi
+  if docker run --rm -v "${data_dir}":/data alpine sh -c "rm -rf /data/*" 2>&1; then
+    echo "Post-migration cleanup for ${migration_component} completed successfully"
+  else
+    echo "Post-migration cleanup for ${migration_component} failed"
+    exit 1
+  fi
 }
 
 ##############################################################################
@@ -380,7 +395,6 @@ post_migrate() {
 # Arguments:
 #   deployment_type deployment type (standalone, swarm)
 #   migration_component migration component (all, clickhouse, zookeeper, signoz, alertmanager)
-#   operation operation (migrate, post-migrate)
 #   signoz_root_dir signoz root directory (default: ~/signoz)
 # Returns:
 #   None
@@ -441,22 +455,22 @@ run_post_migration() {
 
   case "${migration_component}" in
     "all")
-      post_migrate_clickhouse "${data_dir}/clickhouse"
-      post_migrate_zookeeper "${data_dir}/zookeeper-1"
-      post_migrate_signoz "${data_dir}/signoz"
-      post_migrate_alertmanager "${data_dir}/alertmanager"
+      post_migrate_clickhouse "${data_dir}"
+      post_migrate_zookeeper "${data_dir}"
+      post_migrate_signoz "${data_dir}"
+      post_migrate_alertmanager "${data_dir}"
       ;;
     "clickhouse")
-      post_migrate_clickhouse "${data_dir}/clickhouse"
+      post_migrate_clickhouse "${data_dir}"
       ;;
     "zookeeper")
-      post_migrate_zookeeper "${data_dir}/zookeeper-1"
+      post_migrate_zookeeper "${data_dir}"
       ;;
     "signoz")
-      post_migrate_signoz "${data_dir}/signoz"
+      post_migrate_signoz "${data_dir}"
       ;;
     "alertmanager")
-      post_migrate_alertmanager "${data_dir}/alertmanager"
+      post_migrate_alertmanager "${data_dir}"
       ;;
     *)
       help
