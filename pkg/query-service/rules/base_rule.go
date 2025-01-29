@@ -107,8 +107,11 @@ func WithLogger(logger *zap.Logger) RuleOption {
 }
 
 func NewBaseRule(id string, p *PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
-	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
-		return nil, fmt.Errorf("invalid rule condition")
+	if p.RuleCondition == nil {
+		return nil, ErrRuleConditionRequired
+	}
+	if err := p.RuleCondition.Validate(); err != nil {
+		return nil, err
 	}
 
 	baseRule := &BaseRule{

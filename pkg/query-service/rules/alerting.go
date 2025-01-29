@@ -94,6 +94,44 @@ const (
 	ValueOutsideBounds CompareOp = "7"
 )
 
+var (
+	supportedCompareOps = []CompareOp{CompareOpNone, ValueIsAbove, ValueIsBelow, ValueIsEq, ValueIsNotEq, ValueAboveOrEq, ValueBelowOrEq, ValueOutsideBounds}
+)
+
+func (co CompareOp) String() string {
+	switch co {
+	case CompareOpNone:
+		return "None: Enum value 0"
+	case ValueIsAbove:
+		return "ValueIsAbove: Enum value 1"
+	case ValueIsBelow:
+		return "ValueIsBelow: Enum value 2"
+	case ValueIsEq:
+		return "ValueIsEq: Enum value 3"
+	case ValueIsNotEq:
+		return "ValueIsNotEq: Enum value 4"
+	case ValueAboveOrEq:
+		return "ValueAboveOrEq: Enum value 5"
+	case ValueBelowOrEq:
+		return "ValueBelowOrEq: Enum value 6"
+	case ValueOutsideBounds:
+		return "ValueOutsideBounds: Enum value 7"
+	}
+	return "Unknown: Enum value"
+}
+
+func (co CompareOp) Validate() error {
+	var msg string
+	for _, op := range supportedCompareOps {
+		msg += op.String() + ", "
+	}
+	switch co {
+	case ValueIsAbove, ValueIsBelow, ValueIsEq, ValueIsNotEq, ValueAboveOrEq, ValueBelowOrEq, ValueOutsideBounds:
+		return nil
+	}
+	return fmt.Errorf("invalid compare op: %s supported ops are %s", co, msg)
+}
+
 type MatchType string
 
 const (
@@ -104,6 +142,40 @@ const (
 	InTotal       MatchType = "4"
 	Last          MatchType = "5"
 )
+
+var (
+	supportedMatchTypes = []MatchType{MatchTypeNone, AtleastOnce, AllTheTimes, OnAverage, InTotal, Last}
+)
+
+func (mt MatchType) String() string {
+	switch mt {
+	case MatchTypeNone:
+		return "None: Enum value 0"
+	case AtleastOnce:
+		return "AtleastOnce: Enum value 1"
+	case AllTheTimes:
+		return "AllTheTimes: Enum value 2"
+	case OnAverage:
+		return "OnAverage: Enum value 3"
+	case InTotal:
+		return "InTotal: Enum value 4"
+	case Last:
+		return "Last: Enum value 5"
+	}
+	return "Unknown: Enum value"
+}
+
+func (mt MatchType) Validate() error {
+	var msg string
+	for _, op := range supportedMatchTypes {
+		msg += op.String() + ", "
+	}
+	switch mt {
+	case MatchTypeNone, AtleastOnce, AllTheTimes, OnAverage, InTotal, Last:
+		return nil
+	}
+	return fmt.Errorf("invalid match type: %s supported ops are %s", mt, msg)
+}
 
 type RuleCondition struct {
 	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
@@ -161,27 +233,34 @@ func (rc *RuleCondition) GetSelectedQueryName() string {
 	return ""
 }
 
-func (rc *RuleCondition) IsValid() bool {
+func (rc *RuleCondition) Validate() error {
 
 	if rc.CompositeQuery == nil {
-		return false
+		return ErrCompositeQueryRequired
 	}
 
 	if rc.QueryType() == v3.QueryTypeBuilder {
 		if rc.Target == nil {
-			return false
+			return ErrTargetRequired
 		}
 		if rc.CompareOp == "" {
-			return false
+			return ErrCompareOpRequired
+		}
+		if err := rc.CompareOp.Validate(); err != nil {
+			return err
+		}
+		if rc.MatchType == "" {
+			return ErrMatchTypeRequired
+		}
+		if err := rc.MatchType.Validate(); err != nil {
+			return err
 		}
 	}
-	if rc.QueryType() == v3.QueryTypePromQL {
 
-		if len(rc.CompositeQuery.PromQueries) == 0 {
-			return false
-		}
+	if err := rc.CompositeQuery.Validate(); err != nil {
+		return err
 	}
-	return true
+	return nil
 }
 
 // QueryType is a short hand method to get query type
