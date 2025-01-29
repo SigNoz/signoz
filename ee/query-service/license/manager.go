@@ -209,6 +209,7 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 			atomic.AddUint64(&lm.failedAttempts, 1)
 			// default to basic plan if validation fails for three consecutive times
 			if atomic.LoadUint64(&lm.failedAttempts) > 3 {
+				zap.L().Error("License validation completed with error for three consecutive times, defaulting to basic plan", zap.String("license_id", lm.activeLicenseV3.ID), zap.Bool("license_validation", false))
 				lm.activeLicenseV3 = nil
 				lm.activeFeatures = model.BasicPlan
 				setDefaultFeatures(lm)
@@ -216,7 +217,6 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 				if err != nil {
 					zap.L().Error("Couldn't initialize features", zap.Error(err))
 				}
-				zap.L().Error("License validation completed with error for three consecutive times, defaulting to basic plan", zap.String("license_id", lm.activeLicenseV3.ID), zap.Bool("license_validation", false))
 			}
 
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
