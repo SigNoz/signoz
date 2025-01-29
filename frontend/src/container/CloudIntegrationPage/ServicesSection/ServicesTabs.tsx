@@ -12,9 +12,15 @@ import { useQuery } from 'react-query';
 import ServiceDetails from './ServiceDetails';
 import ServicesList from './ServicesList';
 
+export enum ServiceFilterType {
+	ALL_SERVICES = 'all_services',
+	ENABLED = 'enabled',
+	AVAILABLE = 'available',
+}
+
 interface ServicesFilterProps {
 	accountId: string;
-	onFilterChange: (value: 'all_services' | 'enabled' | 'available') => void;
+	onFilterChange: (value: ServiceFilterType) => void;
 }
 
 function ServicesFilter({
@@ -58,7 +64,7 @@ function ServicesFilter({
 		<div className="services-filter">
 			<Select
 				style={{ width: '100%' }}
-				defaultValue="all_services"
+				defaultValue={ServiceFilterType.ALL_SERVICES}
 				options={selectOptions}
 				className="services-sidebar__select"
 				suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
