@@ -27,26 +27,19 @@ var LM *Manager
 var validationFrequency = 24 * 60 * time.Minute
 
 type Manager struct {
-	repo  *Repo
-	mutex sync.Mutex
-
+	repo             *Repo
+	mutex            sync.Mutex
 	validatorRunning bool
-
 	// end the license validation, this is important to gracefully
 	// stopping validation and protect in-consistent updates
 	done chan struct{}
-
 	// terminated waits for the validate go routine to end
 	terminated chan struct{}
-
 	// last time the license was validated
 	lastValidated int64
-
 	// keep track of validation failure attempts
 	failedAttempts uint64
-
 	// keep track of active license and features
-	activeLicense   *model.License
 	activeLicenseV3 *model.LicenseV3
 	activeFeatures  basemodel.FeatureSet
 }
@@ -58,7 +51,6 @@ func StartManager(db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) 
 
 	repo := NewLicenseRepo(db)
 	err := repo.InitDB(db)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate license repo: %v", err)
 	}
@@ -66,10 +58,10 @@ func StartManager(db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) 
 	m := &Manager{
 		repo: &repo,
 	}
-
 	if err := m.start(features...); err != nil {
 		return m, err
 	}
+
 	LM = m
 	return m, nil
 }
@@ -119,8 +111,15 @@ func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
 	if err != nil {
 		return err
 	}
+
 	if active != nil {
-		lm.SetActiveV3(active, features...)
+		license, apiError := validate.ValidateLicenseV3(active.Key)
+		if apiError != nil {
+			zap.L().Error("failed to validate the license, defaulting to basic plan", zap.Error(apiError.Err))
+			return apiError
+		}
+
+		lm.SetActiveV3(license, features...)
 	} else {
 		zap.L().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
@@ -134,32 +133,6 @@ func (lm *Manager) LoadActiveLicenseV3(features ...basemodel.Feature) error {
 	}
 
 	return nil
-}
-
-func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, apiError *model.ApiError) {
-
-	licenses, err := lm.repo.GetLicenses(ctx)
-	if err != nil {
-		return nil, model.InternalError(err)
-	}
-
-	for _, l := range licenses {
-		l.ParsePlan()
-
-		if lm.activeLicense != nil && l.Key == lm.activeLicense.Key {
-			l.IsCurrent = true
-		}
-
-		if l.ValidUntil == -1 {
-			// for subscriptions, there is no end-date as such
-			// but for showing user some validity we default one year timespan
-			l.ValidUntil = l.ValidFrom + 31556926
-		}
-
-		response = append(response, l)
-	}
-
-	return
 }
 
 func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.LicenseV3, apiError *model.ApiError) {
@@ -188,10 +161,9 @@ func (lm *Manager) GetLicensesV3(ctx context.Context) (response []*model.License
 func (lm *Manager) ValidatorV3(ctx context.Context) {
 	zap.L().Info("ValidatorV3 started!")
 	defer close(lm.terminated)
+
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
-
-	lm.ValidateV3(ctx)
 
 	for {
 		select {
@@ -238,7 +210,20 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 		lm.lastValidated = time.Now().Unix()
 		if reterr != nil {
 			zap.L().Error("License validation completed with error", zap.Error(reterr))
+
 			atomic.AddUint64(&lm.failedAttempts, 1)
+			// default to basic plan if validation fails for three consecutive times
+			if atomic.LoadUint64(&lm.failedAttempts) > 3 {
+				lm.activeLicenseV3 = nil
+				lm.activeFeatures = model.BasicPlan
+				setDefaultFeatures(lm)
+				err := lm.InitFeatures(lm.activeFeatures)
+				if err != nil {
+					zap.L().Error("Couldn't initialize features", zap.Error(err))
+				}
+				zap.L().Info("License validation completed with error for three consecutive times, defaulting to basic plan")
+			}
+
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
 				map[string]interface{}{"err": reterr.Error()}, "", true, false)
 		} else {

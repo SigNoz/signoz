@@ -12,17 +12,7 @@ func InitDB(db *sqlx.DB) error {
 		return fmt.Errorf("invalid db connection")
 	}
 
-	table_schema := `CREATE TABLE IF NOT EXISTS licenses(
-		key TEXT PRIMARY KEY,
-		createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-		updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-		planDetails TEXT,
-		activationId TEXT,
-		validationMessage TEXT,
-		lastValidated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
-	
-	CREATE TABLE IF NOT EXISTS sites(
+	table_schema := `CREATE TABLE IF NOT EXISTS sites(
 		uuid TEXT PRIMARY KEY,
 		alias VARCHAR(180) DEFAULT 'PROD',
 		url VARCHAR(300),
