@@ -53,8 +53,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}, nil
 }
 
-// returns  connection with wrapper
-func (p *provider) ClickHouse() clickhouse.Conn {
+func (p *provider) ClickHouseDB() clickhouse.Conn {
 	return p
 }
 

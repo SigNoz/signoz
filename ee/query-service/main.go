@@ -141,7 +141,7 @@ func main() {
 			envprovider.NewFactory(),
 			fileprovider.NewFactory(),
 		},
-	}, signoz.DepricatedFlags{
+	}, signoz.DeprecatedFlags{
 		MaxIdleConns: maxIdleConns,
 		MaxOpenConns: maxOpenConns,
 		DialTimeout:  dialTimeout,
