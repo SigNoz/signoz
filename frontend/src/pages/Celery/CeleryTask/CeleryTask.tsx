@@ -27,7 +27,7 @@ export default function CeleryTask(): JSX.Element {
 		<div className="celery-task-container">
 			<div className="celery-content">
 				<div className="celery-content-header">
-					<p className="celery-content-header-title">Celery Task</p>
+					<p className="celery-content-header-title">Celery</p>
 					<div className="celery-content-header-right">
 						<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 						<Tooltip title="Share this" arrow={false}>

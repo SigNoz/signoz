@@ -99,7 +99,7 @@ export default function CeleryTaskGraphGrid({
 					<div className="row-panel">
 						<div className="row-panel-section">
 							<Typography.Text className="section-title">
-								Metric Based Graphs
+								Flower Metrics
 							</Typography.Text>
 							{collapsedSections.metricBasedGraphs ? (
 								<ChevronDown
@@ -145,7 +145,7 @@ export default function CeleryTaskGraphGrid({
 						<div className="row-panel">
 							<div className="row-panel-section">
 								<Typography.Text className="section-title">
-									Trace Based Graphs
+									Span Based Stats
 								</Typography.Text>
 								{collapsedSections.traceBasedGraphs ? (
 									<ChevronDown

@@ -446,7 +446,7 @@ export const celeryActiveTasksWidgetData = (
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Active tasks',
+			title: 'Active tasks by Worker',
 			description: 'Represents the number of active tasks.',
 			queryData: [
 				{
