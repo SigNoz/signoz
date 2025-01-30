@@ -39,7 +39,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	}
 
 	if license == nil {
-		// nothing to return if no license found.
+		zap.L().Info("no cloud connection params can be deduced since no license was found")
 		ah.Respond(w, CloudIntegrationConnectionParamsResponse{})
 		return
 	}
@@ -71,103 +71,17 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		}
 
 		result.IngestionKey = ingestionKey
+
+	} else {
+		zap.L().Info("ingestion key can't be deduced since no gateway url has been configured")
 	}
 
 	ah.Respond(w, result)
 }
 
-type ingestionKey struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-type ingestionKeysSearchResponse struct {
-	Status string         `json:"status"`
-	Data   []ingestionKey `json:"data"`
-	Error  string         `json:"error"`
-}
-
-type createIngestionKeyResponse struct {
-	Status string       `json:"status"`
-	Data   ingestionKey `json:"data"`
-	Error  string       `json:"error"`
-}
-
-func getOrCreateCloudProviderIngestionKey(gatewayUrl string, licenseKey string, cloudProvider string) (string, *basemodel.ApiError) {
-	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
-
-	// see if the key already exists
-	searchResult, apiErr := requestGateway[ingestionKeysSearchResponse](
-		gatewayUrl,
-		licenseKey,
-		fmt.Sprintf("/v1/workspaces/me/keys/search?name=%s", cloudProviderKeyName),
-		nil,
-	)
-
-	if apiErr != nil {
-		return "", basemodel.WrapApiError(
-			apiErr, "couldn't search for cloudprovider ingestion key",
-		)
-	}
-
-	if searchResult.Status != "success" {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't search for cloudprovider ingestion key: status: %s, error: %s",
-			searchResult.Status, searchResult.Error,
-		))
-	}
-
-	for _, k := range searchResult.Data {
-		if k.Name == cloudProviderKeyName {
-			return k.Value, nil
-		}
-	}
-
-	// create a key and return it if one doesn't already exist
-	zap.L().Info(
-		"no existing ingestion key found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider),
-	)
-	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
-		gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
-		map[string]any{
-			"name": cloudProviderKeyName,
-			"tags": []string{"integration", cloudProvider},
-		},
-	)
-	if apiErr != nil {
-		return "", basemodel.WrapApiError(
-			apiErr, "couldn't create cloudprovider ingestion key",
-		)
-	}
-
-	if createKeyResult.Status != "success" {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't create cloudprovider ingestion key: status: %s, error: %s",
-			createKeyResult.Status, createKeyResult.Error,
-		))
-	}
-
-	return createKeyResult.Data.Value, nil
-}
-
-func requestGateway[ResponseType any](
-	gatewayUrl string, licenseKey string, path string, payload any,
-) (*ResponseType, *basemodel.ApiError) {
-
-	baseUrl := strings.TrimSuffix(gatewayUrl, "/")
-	reqUrl := fmt.Sprintf("%s%s", baseUrl, path)
-
-	headers := map[string]string{
-		"X-Signoz-Cloud-Api-Key": licenseKey,
-		"X-Consumer-Username":    "lid:00000000-0000-0000-0000-000000000000",
-		"X-Consumer-Groups":      "ns:default",
-	}
-
-	return requestAndParseResponse[ResponseType](reqUrl, headers, payload)
-}
-
-func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (string, string, *basemodel.ApiError) {
+func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (
+	string, string, *basemodel.ApiError,
+) {
 	url := fmt.Sprintf(
 		"%s%s",
 		strings.TrimSuffix(constants.ZeusURL, "/"),
@@ -178,7 +92,8 @@ func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (string, string, *basemod
 		Status string `json:"status"`
 		Error  string `json:"error"`
 		Data   struct {
-			Name        string `json:"name"`
+			Name string `json:"name"`
+
 			ClusterInfo struct {
 				Region struct {
 					DNS string `json:"dns"`
@@ -205,27 +120,143 @@ func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (string, string, *basemod
 	}
 
 	regionDns := resp.Data.ClusterInfo.Region.DNS
+	deploymentName := resp.Data.Name
+
+	if len(regionDns) < 1 || len(deploymentName) < 1 {
+		// Fail early if actual response structure and expectation here ever diverge
+		return "", "", basemodel.InternalError(fmt.Errorf(
+			"deployment info response not in expected shape. couldn't determine region dns and deployment name",
+		))
+	}
+
 	ingestionUrl := fmt.Sprintf("https://ingest.%s", regionDns)
 
-	deploymentName := resp.Data.Name
 	signozApiUrl := fmt.Sprintf("https://%s.%s", deploymentName, regionDns)
 
 	return ingestionUrl, signozApiUrl, nil
 }
 
+type ingestionKey struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+	// other attributes from gateway response not included here since they are not being used.
+}
+
+type ingestionKeysSearchResponse struct {
+	Status string         `json:"status"`
+	Data   []ingestionKey `json:"data"`
+	Error  string         `json:"error"`
+}
+
+type createIngestionKeyResponse struct {
+	Status string       `json:"status"`
+	Data   ingestionKey `json:"data"`
+	Error  string       `json:"error"`
+}
+
+func getOrCreateCloudProviderIngestionKey(
+	gatewayUrl string, licenseKey string, cloudProvider string,
+) (string, *basemodel.ApiError) {
+	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
+
+	// see if the key already exists
+	searchResult, apiErr := requestGateway[ingestionKeysSearchResponse](
+		gatewayUrl,
+		licenseKey,
+		fmt.Sprintf("/v1/workspaces/me/keys/search?name=%s", cloudProviderKeyName),
+		nil,
+	)
+
+	if apiErr != nil {
+		return "", basemodel.WrapApiError(
+			apiErr, "couldn't search for cloudprovider ingestion key",
+		)
+	}
+
+	if searchResult.Status != "success" {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't search for cloudprovider ingestion key: status: %s, error: %s",
+			searchResult.Status, searchResult.Error,
+		))
+	}
+
+	for _, k := range searchResult.Data {
+		if k.Name == cloudProviderKeyName {
+			if len(k.Value) < 1 {
+				// Fail early if actual response structure and expectation here ever diverge
+				return "", basemodel.InternalError(fmt.Errorf(
+					"ingestion keys search response not as expected",
+				))
+			}
+
+			return k.Value, nil
+		}
+	}
+
+	zap.L().Info(
+		"no existing ingestion key found for cloud integration, creating a new one",
+		zap.String("cloudProvider", cloudProvider),
+	)
+	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
+		gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
+		map[string]any{
+			"name": cloudProviderKeyName,
+			"tags": []string{"integration", cloudProvider},
+		},
+	)
+	if apiErr != nil {
+		return "", basemodel.WrapApiError(
+			apiErr, "couldn't create cloudprovider ingestion key",
+		)
+	}
+
+	if createKeyResult.Status != "success" {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't create cloudprovider ingestion key: status: %s, error: %s",
+			createKeyResult.Status, createKeyResult.Error,
+		))
+	}
+
+	ingestionKey := createKeyResult.Data.Value
+	if len(ingestionKey) < 1 {
+		// Fail early if actual response structure and expectation here ever diverge
+		return "", basemodel.InternalError(fmt.Errorf(
+			"ingestion key creation response not as expected",
+		))
+	}
+
+	return ingestionKey, nil
+}
+
+func requestGateway[ResponseType any](
+	gatewayUrl string, licenseKey string, path string, payload any,
+) (*ResponseType, *basemodel.ApiError) {
+
+	baseUrl := strings.TrimSuffix(gatewayUrl, "/")
+	reqUrl := fmt.Sprintf("%s%s", baseUrl, path)
+
+	headers := map[string]string{
+		"X-Signoz-Cloud-Api-Key": licenseKey,
+		"X-Consumer-Username":    "lid:00000000-0000-0000-0000-000000000000",
+		"X-Consumer-Groups":      "ns:default",
+	}
+
+	return requestAndParseResponse[ResponseType](reqUrl, headers, payload)
+}
+
 func requestAndParseResponse[ResponseType any](
 	url string, headers map[string]string, payload any,
 ) (*ResponseType, *basemodel.ApiError) {
+
 	reqMethod := http.MethodGet
 	var reqBody io.Reader
-
 	if payload != nil {
 		reqMethod = http.MethodPost
 
 		bodyJson, err := json.Marshal(payload)
 		if err != nil {
 			return nil, basemodel.InternalError(fmt.Errorf(
-				"couldn't serialize payload to JSON: %w", err,
+				"couldn't serialize request payload to JSON: %w", err,
 			))
 		}
 		reqBody = bytes.NewBuffer([]byte(bodyJson))
@@ -248,14 +279,14 @@ func requestAndParseResponse[ResponseType any](
 
 	response, err := client.Do(req)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't request gateway: %w", err))
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't make request: %w", err))
 	}
 
 	defer response.Body.Close()
 
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't read gateway response: %w", err))
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't read response: %w", err))
 	}
 
 	var resp ResponseType
