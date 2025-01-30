@@ -184,13 +184,18 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	// Gateway
 	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.EditAccess(ah.ServeGatewayHTTP))
 
-	// Cloud integrations
+	ah.APIHandler.RegisterRoutes(router, am)
+
+}
+
+func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+
+	ah.APIHandler.RegisterCloudIntegrationsRoutes(router, am)
+
 	router.HandleFunc(
 		"/api/v1/cloud-integrations/{cloudProvider}/accounts/generate-connection-params",
 		am.EditAccess(ah.CloudIntegrationsGenerateConnectionParams),
-	).Methods(http.MethodPost)
-
-	ah.APIHandler.RegisterRoutes(router, am)
+	).Methods(http.MethodGet)
 
 }
 

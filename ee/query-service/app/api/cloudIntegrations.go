@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type CloudIntegrationConnectionParamsResponse struct {
@@ -123,6 +124,10 @@ func getOrCreateCloudProviderIngestionKey(gatewayUrl string, licenseKey string, 
 	}
 
 	// create a key and return it if one doesn't already exist
+	zap.L().Info(
+		"no existing ingestion key found for cloud integration, creating a new one",
+		zap.String("cloudProvider", cloudProvider),
+	)
 	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
 		gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
 		map[string]any{
