@@ -14,19 +14,16 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
-type CloudAccountConnectionParamsResponse struct {
+type CloudIntegrationConnectionParamsResponse struct {
 	IngestionUrl string `json:"ingestion_url,omitempty"`
 	IngestionKey string `json:"ingestion_key,omitempty"`
+	SigNozAPIUrl string `json:"signoz_api_url,omitempty"`
 }
 
-// Get or create credentials and params needed for connecting an AWS account
-// for SigNoz AWS integration.
-//
-// Returns all params that could be deduced or generated.
 func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseWriter, r *http.Request) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	if cloudProvider != "aws" {
-		RespondError(w, basemodel.InternalError(fmt.Errorf(
+		RespondError(w, basemodel.BadRequest(fmt.Errorf(
 			"cloud provider not supported: %s", cloudProvider,
 		)), nil)
 		return
@@ -42,32 +39,38 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 
 	if license == nil {
 		// nothing to return if no license found.
-		ah.Respond(w, CloudAccountConnectionParamsResponse{})
+		ah.Respond(w, CloudIntegrationConnectionParamsResponse{})
 		return
 	}
 
-	gatewayUrl := ah.opts.GatewayUrl
-	if len(gatewayUrl) < 1 {
-		// nothing to return if no gateway has been configured.
-		ah.Respond(w, CloudAccountConnectionParamsResponse{})
-		return
-	}
-
-	ingestionKey, err := getOrCreateCloudProviderIngestionKey(
-		gatewayUrl, license.Key, cloudProvider,
-	)
+	ingestionUrl, signozApiUrl, err := getIngestionUrlAndSigNozAPIUrl(license.Key)
 	if err != nil {
 		RespondError(w, basemodel.InternalError(fmt.Errorf(
-			"couldn't get or create ingestion key: %w", err,
+			"couldn't deduce ingestion url and signoz api url: %w", err,
 		)), nil)
 		return
 	}
 
-	result := CloudAccountConnectionParamsResponse{
-		IngestionKey: ingestionKey,
+	result := CloudIntegrationConnectionParamsResponse{
+		IngestionUrl: ingestionUrl,
+		SigNozAPIUrl: signozApiUrl,
 	}
 
-	// construct ingestion URL
+	gatewayUrl := ah.opts.GatewayUrl
+	if len(gatewayUrl) > 0 {
+
+		ingestionKey, err := getOrCreateCloudProviderIngestionKey(
+			gatewayUrl, license.Key, cloudProvider,
+		)
+		if err != nil {
+			RespondError(w, basemodel.InternalError(fmt.Errorf(
+				"couldn't get or create ingestion key: %w", err,
+			)), nil)
+			return
+		}
+
+		result.IngestionKey = ingestionKey
+	}
 
 	ah.Respond(w, result)
 }
@@ -159,7 +162,7 @@ func requestGateway[ResponseType any](
 	return requestAndParseResponse[ResponseType](reqUrl, headers, payload)
 }
 
-func getIngestionUrl(licenseKey string) (string, *basemodel.ApiError) {
+func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (string, string, *basemodel.ApiError) {
 	url := fmt.Sprintf(
 		"%s%s",
 		strings.TrimSuffix(constants.ZeusURL, "/"),
@@ -170,6 +173,7 @@ func getIngestionUrl(licenseKey string) (string, *basemodel.ApiError) {
 		Status string `json:"status"`
 		Error  string `json:"error"`
 		Data   struct {
+			Name        string `json:"name"`
 			ClusterInfo struct {
 				Region struct {
 					DNS string `json:"dns"`
@@ -183,25 +187,25 @@ func getIngestionUrl(licenseKey string) (string, *basemodel.ApiError) {
 	)
 
 	if apiErr != nil {
-		return "", basemodel.WrapApiError(
+		return "", "", basemodel.WrapApiError(
 			apiErr, "couldn't query for deployment info",
 		)
 	}
 
 	if resp.Status != "success" {
-		return "", basemodel.InternalError(fmt.Errorf(
+		return "", "", basemodel.InternalError(fmt.Errorf(
 			"couldn't query for deployment info: status: %s, error: %s",
 			resp.Status, resp.Error,
 		))
 	}
 
 	regionDns := resp.Data.ClusterInfo.Region.DNS
-	if len(regionDns) < 1 {
-		return "", nil
-	} else {
-		return fmt.Sprintf("https://ingest.%s", regionDns), nil
-	}
+	ingestionUrl := fmt.Sprintf("https://ingest.%s", regionDns)
 
+	deploymentName := resp.Data.Name
+	signozApiUrl := fmt.Sprintf("https://%s.%s", deploymentName, regionDns)
+
+	return ingestionUrl, signozApiUrl, nil
 }
 
 func requestAndParseResponse[ResponseType any](
