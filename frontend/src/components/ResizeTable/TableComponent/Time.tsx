@@ -1,4 +1,5 @@
 import { Typography } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 
 function Time({ CreatedOrUpdateTime }: DateProps): JSX.Element {
@@ -6,7 +7,7 @@ function Time({ CreatedOrUpdateTime }: DateProps): JSX.Element {
 	const time = new Date(CreatedOrUpdateTime);
 	const timeString = formatTimezoneAdjustedTimestamp(
 		time,
-		'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+		DATE_TIME_FORMATS.UTC_US,
 	);
 	return <Typography>{timeString}</Typography>;
 }

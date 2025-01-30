@@ -42,6 +42,8 @@ type HostListResponse struct {
 	Total                    int              `json:"total"`
 	SentAnyHostMetricsData   bool             `json:"sentAnyHostMetricsData"`
 	IsSendingK8SAgentMetrics bool             `json:"isSendingK8SAgentMetrics"`
+	ClusterNames             []string         `json:"clusterNames"`
+	NodeNames                []string         `json:"nodeNames"`
 }
 
 func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -623,7 +625,7 @@ func (r *JobListResponse) SortBy(orderBy *v3.OrderBy) {
 		sort.Slice(r.Records, func(i, j int) bool {
 			return r.Records[i].Restarts > r.Records[j].Restarts
 		})
-	case "desired_pods":
+	case "desired_successful_pods":
 		sort.Slice(r.Records, func(i, j int) bool {
 			return r.Records[i].DesiredSuccessfulPods > r.Records[j].DesiredSuccessfulPods
 		})

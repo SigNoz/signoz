@@ -7,28 +7,53 @@ import {
 	Table,
 	useReactTable,
 } from '@tanstack/react-table';
-import React, { useMemo } from 'react';
+import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
+import cx from 'classnames';
+import React, {
+	Dispatch,
+	MutableRefObject,
+	SetStateAction,
+	useEffect,
+	useMemo,
+} from 'react';
 
 // here we are manually rendering the table body so that we can memoize the same for performant re-renders
-function TableBody<T>({ table }: { table: Table<T> }): JSX.Element {
+function TableBody<T>({
+	table,
+	virtualizer,
+}: {
+	table: Table<T>;
+	virtualizer: Virtualizer<HTMLDivElement, Element>;
+}): JSX.Element {
+	const { rows } = table.getRowModel();
 	return (
 		<div className="div-tbody">
-			{table.getRowModel().rows.map((row) => (
-				<div key={row.id} className="div-tr">
-					{row.getVisibleCells().map((cell) => (
-						<div
-							key={cell.id}
-							className="div-td"
-							// we are manually setting the column width here based on the calculated column vars
-							style={{
-								width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
-							}}
-						>
-							{cell.renderValue<any>()}
-						</div>
-					))}
-				</div>
-			))}
+			{virtualizer.getVirtualItems().map((virtualRow, index) => {
+				const row = rows[virtualRow.index];
+				return (
+					<div
+						key={virtualRow.index}
+						className="div-tr"
+						style={{
+							height: `${virtualRow.size}px`,
+							transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
+						}}
+					>
+						{row.getVisibleCells().map((cell) => (
+							<div
+								key={cell.id}
+								className="div-td"
+								// we are manually setting the column width here based on the calculated column vars
+								style={{
+									width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+								}}
+							>
+								{flexRender(cell.column.columnDef.cell, cell.getContext())}
+							</div>
+						))}
+					</div>
+				);
+			})}
 		</div>
 	);
 }
@@ -40,17 +65,32 @@ const MemoizedTableBody = React.memo(
 ) as typeof TableBody;
 
 interface ITableConfig {
-	defaultColumnMinSize: number;
-	defaultColumnMaxSize: number;
+	defaultColumnMinSize?: number;
+	defaultColumnMaxSize?: number;
+	handleVirtualizerInstanceChanged?: (
+		instance: Virtualizer<HTMLDivElement, Element>,
+	) => void;
 }
 interface ITableV3Props<T> {
 	columns: ColumnDef<T, any>[];
 	data: T[];
 	config: ITableConfig;
+	customClassName?: string;
+	setColumnWidths: Dispatch<SetStateAction<number>>;
+	virtualiserRef?: MutableRefObject<
+		Virtualizer<HTMLDivElement, Element> | undefined
+	>;
 }
 
 export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
-	const { data, columns, config } = props;
+	const {
+		data,
+		columns,
+		config,
+		customClassName = '',
+		virtualiserRef,
+		setColumnWidths,
+	} = props;
 
 	const table = useReactTable({
 		data,
@@ -61,10 +101,25 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		},
 		columnResizeMode: 'onChange',
 		getCoreRowModel: getCoreRowModel(),
-		debugTable: true,
-		debugHeaders: true,
-		debugColumns: true,
+		// turn on debug flags to get debug logs from these instances
+		debugAll: false,
 	});
+
+	const tableRef = React.useRef<HTMLDivElement>(null);
+	const { rows } = table.getRowModel();
+	const virtualizer = useVirtualizer({
+		count: rows.length,
+		getScrollElement: () => tableRef.current,
+		estimateSize: () => 54,
+		overscan: 20,
+		onChange: config.handleVirtualizerInstanceChanged,
+	});
+
+	useEffect(() => {
+		if (virtualiserRef) {
+			virtualiserRef.current = virtualizer;
+		}
+	}, [virtualiserRef, virtualizer]);
 
 	/**
 	 * Instead of calling `column.getSize()` on every render for every header
@@ -84,14 +139,21 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [table.getState().columnSizingInfo, table.getState().columnSizing]);
 
+	useEffect(() => {
+		const headers = table.getFlatHeaders();
+		setColumnWidths(headers[0].getSize());
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [table.getState().columnSizingInfo, table.getState().columnSizing]);
+
 	return (
-		<div className="p-2">
+		<div className={cx('p-2', customClassName)} ref={tableRef}>
 			{/* Here in the <table> equivalent element (surrounds all table head and data cells), we will define our CSS variables for column sizes */}
 			<div
 				className="div-table"
 				style={{
 					...columnSizeVars, // Define column sizes on the <table> element
 					width: table.getTotalSize(),
+					height: `${virtualizer.getTotalSize()}px`,
 				}}
 			>
 				<div className="div-thead">
@@ -113,6 +175,9 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 											onDoubleClick: (): void => header.column.resetSize(),
 											onMouseDown: header.getResizeHandler(),
 											onTouchStart: header.getResizeHandler(),
+											style: {
+												display: !header.column.getCanResize() ? 'none' : '',
+											},
 											className: `resizer ${
 												header.column.getIsResizing() ? 'isResizing' : ''
 											}`,
@@ -125,11 +190,16 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 				</div>
 				{/* When resizing any column we will render this special memoized version of our table body */}
 				{table.getState().columnSizingInfo.isResizingColumn ? (
-					<MemoizedTableBody table={table} />
+					<MemoizedTableBody table={table} virtualizer={virtualizer} />
 				) : (
-					<TableBody table={table} />
+					<TableBody table={table} virtualizer={virtualizer} />
 				)}
 			</div>
 		</div>
 	);
 }
+
+TableV3.defaultProps = {
+	customClassName: '',
+	virtualiserRef: null,
+};

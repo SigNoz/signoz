@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import MessagingQueues from 'pages/MessagingQueues';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -27,8 +28,6 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
-	MessagingQueues,
-	MQDetailPage,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -395,17 +394,31 @@ const routes: AppRoutes[] = [
 		key: 'INTEGRATIONS',
 	},
 	{
-		path: ROUTES.MESSAGING_QUEUES,
+		path: ROUTES.MESSAGING_QUEUES_KAFKA,
 		exact: true,
 		component: MessagingQueues,
-		key: 'MESSAGING_QUEUES',
+		key: 'MESSAGING_QUEUES_KAFKA',
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.MESSAGING_QUEUES_DETAIL,
+		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 		exact: true,
-		component: MQDetailPage,
-		key: 'MESSAGING_QUEUES_DETAIL',
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_CELERY_TASK',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_OVERVIEW',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_KAFKA_DETAIL',
 		isPrivate: true,
 	},
 	{
@@ -447,6 +460,7 @@ export const oldRoutes = [
 	'/logs-save-views',
 	'/traces-save-views',
 	'/settings/access-tokens',
+	'/messaging-queues',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
@@ -456,6 +470,7 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
 	'/settings/access-tokens': '/settings/api-keys',
+	'/messaging-queues': '/messaging-queues/overview',
 };
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [

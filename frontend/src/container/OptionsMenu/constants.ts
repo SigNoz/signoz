@@ -11,6 +11,27 @@ export const defaultOptionsQuery: OptionsQuery = {
 	fontSize: FontSize.SMALL,
 };
 
+export const defaultLogsSelectedColumns = [
+	{
+		key: 'timestamp',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'timestamp--string--tag--true',
+		isIndexed: false,
+	},
+	{
+		key: 'body',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'body--string--tag--true',
+		isIndexed: false,
+	},
+];
+
 export const defaultTraceSelectedColumns = [
 	{
 		key: 'serviceName',

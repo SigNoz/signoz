@@ -16,6 +16,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_DEFAULT", "70s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_MAX", "700s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_EXCLUDED__ROUTES", "/excluded1,/excluded2")
+	t.Setenv("SIGNOZ_APISERVER_LOGGING_EXCLUDED__ROUTES", "/api/v1/health1")
 
 	conf, err := config.New(
 		context.Background(),
@@ -43,6 +44,11 @@ func TestNewWithEnvProvider(t *testing.T) {
 			ExcludedRoutes: []string{
 				"/excluded1",
 				"/excluded2",
+			},
+		},
+		Logging: Logging{
+			ExcludedRoutes: []string{
+				"/api/v1/health1",
 			},
 		},
 	}

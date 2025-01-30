@@ -616,7 +616,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			}
 		}
 		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
-		if rule.PostableRule.Disabled == false {
+		if !rule.PostableRule.Disabled {
 			alertsInfo.TotalActiveAlerts = alertsInfo.TotalActiveAlerts + 1
 		}
 	}

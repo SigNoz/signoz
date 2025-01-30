@@ -59,10 +59,12 @@ const ROUTES = {
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
-	MESSAGING_QUEUES: '/messaging-queues',
-	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
+	MESSAGING_QUEUES_KAFKA: '/messaging-queues/kafka',
+	MESSAGING_QUEUES_KAFKA_DETAIL: '/messaging-queues/kafka/detail',
 	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
 	INFRASTRUCTURE_MONITORING_KUBERNETES: '/infrastructure-monitoring/kubernetes',
+	MESSAGING_QUEUES_CELERY_TASK: '/messaging-queues/celery-task',
+	MESSAGING_QUEUES_OVERVIEW: '/messaging-queues/overview',
 } as const;
 
 export default ROUTES;

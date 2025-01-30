@@ -1,0 +1,43 @@
+.celery-overview-detail-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px 8px;
+}
+
+.overview-right-panel-graph-card {
+	border-radius: 8px;
+	border: 1px solid #262626 !important;
+	background: #0a0a0a;
+	box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+		0px 1px 2px -1px rgba(0, 0, 0, 0.1);
+
+	.request-rate-card,
+	.error-rate-card,
+	.avg-latency-card {
+		height: 320px !important;
+		padding: 10px;
+		width: 100%;
+		box-sizing: border-box;
+		border-bottom: 0.75px solid #262626;
+		margin-bottom: 12px;
+		position: relative;
+
+		.widget-graph-container {
+			height: 260px;
+		}
+	}
+}
+
+.lightMode {
+	.overview-right-panel-graph-card {
+		border: 1px solid var(--bg-vanilla-300) !important;
+		background: var(--bg-vanilla-100);
+
+		.request-rate-card,
+		.error-rate-card,
+		.avg-latency-card {
+			border-bottom: 0.75px solid var(--bg-vanilla-300);
+		}
+	}
+}

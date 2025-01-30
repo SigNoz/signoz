@@ -29,7 +29,7 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 		props.$isDarkMode ? 'inherit' : themeColors.whiteCream};
 
 	${({ $isLogIndicator }): string =>
-		$isLogIndicator ? 'padding: 0 0 0 8px;' : ''}
+		$isLogIndicator ? 'padding: 0 0 0 8px;width: 15px;' : ''}
 	color: ${(props): string =>
 		props.$isDarkMode ? themeColors.white : themeColors.bckgGrey};
 `;

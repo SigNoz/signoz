@@ -21,16 +21,23 @@ const (
 )
 
 type Logging struct {
-	logger *zap.Logger
+	logger         *zap.Logger
+	excludedRoutes map[string]struct{}
 }
 
-func NewLogging(logger *zap.Logger) *Logging {
+func NewLogging(logger *zap.Logger, excludedRoutes []string) *Logging {
 	if logger == nil {
 		panic("cannot build logging, logger is empty")
 	}
 
+	excludedRoutesMap := make(map[string]struct{})
+	for _, route := range excludedRoutes {
+		excludedRoutesMap[route] = struct{}{}
+	}
+
 	return &Logging{
-		logger: logger.Named(pkgname),
+		logger:         logger.Named(pkgname),
+		excludedRoutes: excludedRoutesMap,
 	}
 }
 
@@ -58,6 +65,11 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 		badResponseBuffer := new(bytes.Buffer)
 		writer := newBadResponseLoggingWriter(rw, badResponseBuffer)
 		next.ServeHTTP(writer, req)
+
+		// if the path is in the excludedRoutes map, don't log
+		if _, ok := middleware.excludedRoutes[path]; ok {
+			return
+		}
 
 		statusCode, err := writer.StatusCode(), writer.WriteError()
 		fields = append(fields,

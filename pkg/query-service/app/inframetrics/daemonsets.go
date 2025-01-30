@@ -296,7 +296,7 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, req model.DaemonS
 
 	// add additional queries for daemon sets
 	for _, daemonSetQuery := range builderQueriesForDaemonSets {
-		query.CompositeQuery.BuilderQueries[daemonSetQuery.QueryName] = daemonSetQuery
+		query.CompositeQuery.BuilderQueries[daemonSetQuery.QueryName] = daemonSetQuery.Clone()
 	}
 
 	for _, query := range query.CompositeQuery.BuilderQueries {

@@ -1,4 +1,5 @@
 import { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty, isNull } from 'lodash-es';
@@ -98,7 +99,7 @@ export function fillMissingValuesForQuantities(
 }
 
 const formatDate = (timestamp: number): string =>
-	dayjs.unix(timestamp).format('MM/DD/YYYY');
+	dayjs.unix(timestamp).format(DATE_TIME_FORMATS.US_DATE);
 
 export function csvFileName(csvData: QuantityData[]): string {
 	if (!csvData.length) {
