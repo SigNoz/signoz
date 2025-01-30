@@ -6,14 +6,22 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
+import {
+	defaultLogsSelectedColumns,
+	defaultOptionsQuery,
+	URL_OPTIONS,
+} from 'container/OptionsMenu/constants';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isNull } from 'lodash-es';
+import useUrlQueryData from 'hooks/useUrlQueryData';
+import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -73,6 +81,39 @@ function LogsExplorer(): JSX.Element {
 		}
 	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
+	const {
+		queryData: optionsQueryData,
+		redirectWithQuery: redirectWithOptionsData,
+	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+
+	const migrateOptionsQuery = (query: OptionsQuery): OptionsQuery => {
+		// If version is missing AND timestamp/body are not in selectColumns, this is an old URL
+		if (
+			!query.version &&
+			!query.selectColumns.some((col) => col.key === 'timestamp') &&
+			!query.selectColumns.some((col) => col.key === 'body')
+		) {
+			return {
+				...query,
+				version: 1,
+				selectColumns: [
+					// Add default timestamp and body columns
+					...defaultLogsSelectedColumns,
+					...query.selectColumns,
+				],
+			};
+		}
+		return query;
+	};
+
+	useEffect(() => {
+		const migratedQuery = migrateOptionsQuery(optionsQueryData);
+		// Only redirect if the query was actually modified
+		if (!isEqual(migratedQuery, optionsQueryData)) {
+			redirectWithOptionsData(migratedQuery);
+		}
+	}, [optionsQueryData, redirectWithOptionsData]);
+
 	const isMultipleQueries = useMemo(
 		() =>
 			currentQuery.builder.queryData?.length > 1 ||
@@ -117,6 +158,7 @@ function LogsExplorer(): JSX.Element {
 				{showFilters && (
 					<section className={cx('log-quick-filter-left-section')}>
 						<QuickFilters
+							source={QuickFiltersSource.LOGS_EXPLORER}
 							config={LogsQuickFiltersConfig}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 						/>

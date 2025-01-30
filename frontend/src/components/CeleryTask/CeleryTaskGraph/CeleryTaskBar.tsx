@@ -140,7 +140,6 @@ function CeleryTaskBar({
 	});
 
 	const customSeries = (data: QueryData[]): uPlot.Series[] => {
-		console.log(data);
 		const configurations: uPlot.Series[] = [
 			{ label: 'Timestamp', stroke: 'purple' },
 		];

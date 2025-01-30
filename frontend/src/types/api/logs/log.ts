@@ -3,7 +3,7 @@ export interface ILog {
 	timestamp: number | string;
 	id: string;
 	traceId: string;
-	spanId: string;
+	spanID: string;
 	traceFlags: number;
 	severityText: string;
 	severityNumber: number;

@@ -1,13 +1,12 @@
 /* eslint-disable no-nested-ternary */
 import '../MessagingQueues.styles.scss';
 
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ListMinus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
@@ -65,20 +64,27 @@ function MQDetailPage(): JSX.Element {
 		selectedView !== MessagingQueuesViewType.dropRate.value &&
 		selectedView !== MessagingQueuesViewType.metricPage.value;
 
+	const handleBackClick = (): void => {
+		history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+	};
+
 	return (
 		<div className="messaging-queue-container">
-			<div className="messaging-breadcrumb">
-				<ListMinus size={16} />
-				<Typography.Text
-					onClick={(): void => history.push(ROUTES.MESSAGING_QUEUES)}
-					className="message-queue-text"
-				>
-					Messaging Queues
-				</Typography.Text>
-			</div>
 			<div className="messaging-header">
 				<div className="header-config">
-					Kafka / views /
+					<div
+						onClick={handleBackClick}
+						className="message-queue-text"
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								handleBackClick();
+							}
+						}}
+						role="button"
+						tabIndex={0}
+					>
+						Kafka / views /
+					</div>
 					<Select
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}

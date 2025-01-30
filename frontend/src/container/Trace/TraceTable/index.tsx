@@ -1,6 +1,7 @@
 import { TableProps, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
@@ -78,7 +79,11 @@ function TraceTable(): JSX.Element {
 			sorter: true,
 			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
-				return <Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>;
+				return (
+					<Typography>
+						{day.format(DATE_TIME_FORMATS.SLASH_DATETIME_SECONDS)}
+					</Typography>
+				);
 			},
 		},
 		{

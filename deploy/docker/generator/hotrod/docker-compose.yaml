@@ -1,0 +1,39 @@
+version: "3"
+x-common: &common
+  networks:
+    - signoz-net
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+  restart: on-failure
+services:
+  hotrod:
+    <<: *common
+    image: jaegertracing/example-hotrod:1.61.0
+    container_name: hotrod
+    command: [ "all" ]
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318  # In case of external SigNoz or cloud, update the endpoint and access token
+      # - OTEL_OTLP_HEADERS=signoz-access-token=<your-access-token>
+  load-hotrod:
+    <<: *common
+    image: "signoz/locust:1.2.3"
+    container_name: load-hotrod
+    environment:
+      ATTACKED_HOST: http://hotrod:8080
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
+    volumes:
+      - ../../../common/locust-scripts:/locust
+
+networks:
+  signoz-net:
+    name: signoz-net
+    external: true

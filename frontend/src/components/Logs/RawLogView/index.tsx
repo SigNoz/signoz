@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { unescapeString } from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dompurify from 'dompurify';
@@ -73,6 +74,7 @@ function RawLogView({
 	);
 
 	const attributesValues = updatedSelecedFields
+		.filter((field) => !['timestamp', 'body'].includes(field.name))
 		.map((field) => flattenLogData[field.name])
 		.filter((attribute) => {
 			// loadash isEmpty doesnot work with numbers
@@ -92,19 +94,40 @@ function RawLogView({
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const text = useMemo(() => {
-		const date =
-			typeof data.timestamp === 'string'
-				? formatTimezoneAdjustedTimestamp(data.timestamp, 'YYYY-MM-DD HH:mm:ss.SSS')
-				: formatTimezoneAdjustedTimestamp(
-						data.timestamp / 1e6,
-						'YYYY-MM-DD HH:mm:ss.SSS',
-				  );
+		const parts = [];
 
-		return `${date} | ${attributesText} ${data.body}`;
+		// Check if timestamp is selected
+		const showTimestamp = selectedFields.some(
+			(field) => field.name === 'timestamp',
+		);
+		if (showTimestamp) {
+			const date =
+				typeof data.timestamp === 'string'
+					? formatTimezoneAdjustedTimestamp(
+							data.timestamp,
+							DATE_TIME_FORMATS.ISO_DATETIME_MS,
+					  )
+					: formatTimezoneAdjustedTimestamp(
+							data.timestamp / 1e6,
+							DATE_TIME_FORMATS.ISO_DATETIME_MS,
+					  );
+			parts.push(date);
+		}
+
+		// Check if body is selected
+		const showBody = selectedFields.some((field) => field.name === 'body');
+		if (showBody) {
+			parts.push(`${attributesText} ${data.body}`);
+		} else {
+			parts.push(attributesText);
+		}
+
+		return parts.join(' | ');
 	}, [
+		selectedFields,
+		attributesText,
 		data.timestamp,
 		data.body,
-		attributesText,
 		formatTimezoneAdjustedTimestamp,
 	]);
 

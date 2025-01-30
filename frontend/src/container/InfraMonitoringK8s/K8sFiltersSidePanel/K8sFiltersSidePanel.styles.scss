@@ -112,3 +112,15 @@
 		}
 	}
 }
+
+.lightMode {
+	.k8s-filters-side-panel {
+		background-color: var(--bg-vanilla-100) !important;
+		color: var(--text-slate-400) !important;
+
+		.added-column-item,
+		.available-column-item {
+			color: var(--text-slate-400) !important;
+		}
+	}
+}

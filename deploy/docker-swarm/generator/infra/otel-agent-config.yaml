@@ -1,0 +1,102 @@
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    root_path: /hostfs
+    scrapers:
+      cpu: {}
+      load: {}
+      memory: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        - job_name: otel-agent
+          static_configs:
+          - targets:
+              - localhost:8888
+            labels:
+              job_name: otel-agent
+  tcplog/docker:
+    listen_address: "0.0.0.0:2255"
+    operators:
+      - type: regex_parser
+        regex: '^<([0-9]+)>[0-9]+ (?P<timestamp>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?) (?P<container_id>\S+) (?P<container_name>\S+) [0-9]+ - -( (?P<body>.*))?'
+        timestamp:
+          parse_from: attributes.timestamp
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+      - type: move
+        from: attributes["body"]
+        to: body
+      - type: remove
+        field: attributes.timestamp
+      # please remove names from below if you want to collect logs from them
+      - type: filter
+        id: signoz_logs_filter
+        expr: 'attributes.container_name matches "^(signoz_(logspout|alertmanager|query-service|otel-collector|clickhouse|zookeeper))|(infra_(logspout|otel-agent|otel-metrics)).*"'
+processors:
+  batch:
+    send_batch_size: 10000
+    send_batch_max_size: 11000
+    timeout: 10s
+  resourcedetection:
+    # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
+    detectors:
+      # - ec2
+      # - gcp
+      # - azure
+      - env
+      - system
+    timeout: 2s
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+exporters:
+  otlp:
+    endpoint: ${env:SIGNOZ_COLLECTOR_ENDPOINT}
+    tls:
+      insecure: true
+    headers:
+      signoz-access-token: ${env:SIGNOZ_ACCESS_TOKEN}
+  # debug: {}
+service:
+  telemetry:
+    logs:
+      encoding: json
+    metrics:
+      address: 0.0.0.0:8888
+  extensions:
+    - health_check
+    - pprof
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [otlp]
+    metrics:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [otlp]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection, batch]
+      exporters: [otlp]
+    metrics/prometheus:
+      receivers: [prometheus]
+      processors: [resourcedetection, batch]
+      exporters: [otlp]
+    logs:
+      receivers: [otlp, tcplog/docker]
+      processors: [resourcedetection, batch]
+      exporters: [otlp]

@@ -44,4 +44,6 @@ export enum QueryParams {
 	taskName = 'taskName',
 	spanName = 'spanName',
 	msgSystem = 'msgSystem',
+	destination = 'destination',
+	kindString = 'kindString',
 }

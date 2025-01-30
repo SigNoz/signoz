@@ -18,65 +18,64 @@ Now run the following command to install:
 
 ### Using Docker Compose
 
-If you don't have docker-compose set up, please follow [this guide](https://docs.docker.com/compose/install/)
+If you don't have docker compose set up, please follow [this guide](https://docs.docker.com/compose/install/)
 to set up docker compose before proceeding with the next steps.
 
-For x86 chip (amd):
-
 ```sh
-docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
+cd deploy/docker
+docker compose up -d
 ```
 
-Open http://localhost:3301 in your favourite browser. In couple of minutes, you should see
-the data generated from hotrod in SigNoz UI.
+Open http://localhost:3301 in your favourite browser.
 
-## Kubernetes
-
-### Using Helm
-
-#### Bring up SigNoz cluster
+To start collecting logs and metrics from your infrastructure, run the following command:
 
 ```sh
-helm repo add signoz https://charts.signoz.io
-
-kubectl create ns platform
-
-helm -n platform install my-release signoz/signoz
+cd generator/infra
+docker compose up -d
 ```
 
-To access the UI, you can `port-forward` the frontend service:
+To start generating sample traces, run the following command:
 
 ```sh
-kubectl -n platform port-forward svc/my-release-frontend 3301:3301
+cd generator/hotrod
+docker compose up -d
 ```
 
-Open http://localhost:3301 in your favourite browser. Few minutes after you generate load
-from the HotROD application, you should see the data generated from hotrod in SigNoz UI.
+In a couple of minutes, you should see the data generated from hotrod in SigNoz UI.
 
-#### Test HotROD application with SigNoz
+For more details, please refer to the [SigNoz documentation](https://signoz.io/docs/install/docker/).
+
+## Docker Swarm
+
+To install SigNoz using Docker Swarm, run the following command:
 
 ```sh
-kubectl create ns sample-application
-
-kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
+cd deploy/docker-swarm
+docker stack deploy -c docker-compose.yaml signoz
 ```
 
-To generate load:
+Open http://localhost:3301 in your favourite browser.
+
+To start collecting logs and metrics from your infrastructure, run the following command:
 
 ```sh
-kubectl -n sample-application run strzal --image=djbingham/curl \
---restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
-'user_count=6' -F 'spawn_rate=2' http://locust-master:8089/swarm
+cd generator/infra
+docker stack deploy -c docker-compose.yaml infra
 ```
 
-To stop load:
+To start generating sample traces, run the following command:
 
 ```sh
-kubectl -n sample-application run strzal --image=djbingham/curl \
- --restart='OnFailure' -i --tty --rm --command -- curl \
- http://locust-master:8089/stop
+cd generator/hotrod
+docker stack deploy -c docker-compose.yaml hotrod
 ```
+
+In a couple of minutes, you should see the data generated from hotrod in SigNoz UI.
+
+For more details, please refer to the [SigNoz documentation](https://signoz.io/docs/install/docker-swarm/).
 
 ## Uninstall/Troubleshoot?
 
 Go to our official documentation site [signoz.io/docs](https://signoz.io/docs) for more.
+

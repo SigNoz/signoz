@@ -296,7 +296,7 @@ func (d *DeploymentsRepo) GetDeploymentList(ctx context.Context, req model.Deplo
 
 	// add additional queries for deployments
 	for _, deploymentQuery := range builderQueriesForDeployments {
-		query.CompositeQuery.BuilderQueries[deploymentQuery.QueryName] = deploymentQuery
+		query.CompositeQuery.BuilderQueries[deploymentQuery.QueryName] = deploymentQuery.Clone()
 	}
 
 	for _, query := range query.CompositeQuery.BuilderQueries {

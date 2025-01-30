@@ -24,9 +24,50 @@
 
 				.widget-graph-container {
 					&.bar {
-						height: calc(100% - 85px);
+						height: calc(100% - 110px);
 					}
 				}
+			}
+		}
+
+		.celery-task-graph-worker-count {
+			height: 100%;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			border: 1px solid var(--bg-slate-500);
+			background: linear-gradient(
+					0deg,
+					rgba(171, 189, 255, 0) 0%,
+					rgba(171, 189, 255, 0) 100%
+				),
+				#0b0c0e;
+
+			.ant-card-body {
+				height: 100%;
+				width: 100%;
+			}
+
+			.worker-count-text-container {
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				.celery-task-graph-worker-count-text {
+					font-size: 2.5vw;
+					text-align: center;
+				}
+			}
+
+			.worker-count-header {
+				display: flex;
+				justify-content: start;
+				align-items: start;
+				position: absolute;
+				height: 100%;
+				width: 100%;
 			}
 		}
 
@@ -45,9 +86,12 @@
 				height: calc(100% - 18px);
 
 				.widget-graph-container {
-					&.bar,
+					&.bar {
+						height: calc(100% - 110px);
+					}
+
 					&.graph {
-						height: calc(100% - 85px);
+						height: calc(100% - 80px);
 					}
 				}
 			}
@@ -93,7 +137,10 @@
 	}
 
 	&__label-wrapper {
-		margin-bottom: 8px;
+		margin-bottom: 4px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 	}
 
 	&__label {
@@ -118,5 +165,42 @@
 		bottom: 0;
 		left: 0;
 		background-color: var(--bg-vanilla-100);
+	}
+}
+
+.lightMode {
+	.celery-task-graph-grid-container {
+		.celery-task-graph-grid {
+			.celery-task-graph-worker-count {
+				border: 1px solid var(--bg-vanilla-300);
+				background: unset;
+			}
+		}
+	}
+
+	.celery-task-states {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		&__tab {
+			&:not([data-last-tab='true']) {
+				border-right: 1px solid var(--bg-vanilla-300);
+			}
+
+			&--selected {
+				background-color: var(--bg-vanilla-200);
+			}
+		}
+
+		&__label {
+			color: var(--bg-ink-500);
+		}
+
+		&__value {
+			color: var(--bg-slate-100);
+		}
+
+		&__indicator {
+			background-color: var(--bg-ink-400);
+		}
 	}
 }

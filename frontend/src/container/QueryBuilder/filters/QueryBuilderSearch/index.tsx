@@ -56,6 +56,7 @@ import { PLACEHOLDER } from './constant';
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
 import OptionRenderer from './OptionRenderer';
 import OptionRendererForLogs from './OptionRendererForLogs';
+import SpanScopeSelector from './SpanScopeSelector';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	convertExampleQueriesToOptions,
@@ -81,6 +82,13 @@ function QueryBuilderSearch({
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
 	]);
+
+	const isTracesExplorerPage = useMemo(
+		() => pathname === ROUTES.TRACES_EXPLORER,
+		[pathname],
+	);
+
+	const [isEditingTag, setIsEditingTag] = useState(false);
 
 	const {
 		updateTag,
@@ -127,6 +135,16 @@ function QueryBuilderSearch({
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
+	const toggleEditMode = useCallback(
+		(value: boolean) => {
+			// Editing mode is required only in infra monitoring mode
+			if (isInfraMonitoring) {
+				setIsEditingTag(value);
+			}
+		},
+		[isInfraMonitoring],
+	);
+
 	const onTagRender = ({
 		value,
 		closable,
@@ -140,12 +158,16 @@ function QueryBuilderSearch({
 
 		const onCloseHandler = (): void => {
 			onClose();
+			// Editing is done after closing a tag
+			toggleEditMode(false);
 			handleSearch('');
 			setSearchKey('');
 		};
 
 		const tagEditHandler = (value: string): void => {
 			updateTag(value);
+			// Editing starts
+			toggleEditMode(true);
 			if (isInfraMonitoring) {
 				setSearchValue(value);
 			} else {
@@ -181,6 +203,11 @@ function QueryBuilderSearch({
 	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
+
+		// Editing is done after enter key press
+		if (event.key === 'Enter') {
+			toggleEditMode(false);
+		}
 
 		if (
 			!disableNavigationShortcuts &&
@@ -264,7 +291,14 @@ function QueryBuilderSearch({
 			};
 		});
 
-		onChange(initialTagFilters);
+		// If in infra monitoring, only run the onChange query when editing is finsished.
+		if (isInfraMonitoring) {
+			if (!isEditingTag) {
+				onChange(initialTagFilters);
+			}
+		} else {
+			onChange(initialTagFilters);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sourceKeys]);
 
@@ -319,11 +353,7 @@ function QueryBuilderSearch({
 	));
 
 	return (
-		<div
-			style={{
-				position: 'relative',
-			}}
-		>
+		<div className="query-builder-search-container">
 			<Select
 				ref={selectRef}
 				getPopupContainer={popupContainer}
@@ -365,7 +395,11 @@ function QueryBuilderSearch({
 					)
 				}
 				showAction={['focus']}
-				onBlur={handleOnBlur}
+				onBlur={(e: React.FocusEvent<HTMLInputElement>): void => {
+					handleOnBlur(e);
+					// Editing is done after tapping out of the input
+					toggleEditMode(false);
+				}}
 				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
 				dropdownRender={(menu): ReactElement => (
 					<div>
@@ -449,6 +483,7 @@ function QueryBuilderSearch({
 							</Select.Option>
 					  ))}
 			</Select>
+			{isTracesExplorerPage && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }

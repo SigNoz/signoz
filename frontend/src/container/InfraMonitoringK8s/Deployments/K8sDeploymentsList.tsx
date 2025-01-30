@@ -33,6 +33,7 @@ import {
 } from '../constants';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
+import { usePageSize } from '../utils';
 import DeploymentDetails from './DeploymentDetails';
 import {
 	defaultAddedColumns,
@@ -69,7 +70,7 @@ function K8sDeploymentsList({
 		string | null
 	>(null);
 
-	const pageSize = 10;
+	const { pageSize, setPageSize } = usePageSize(K8sCategory.DEPLOYMENTS);
 
 	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 
@@ -193,7 +194,7 @@ function K8sDeploymentsList({
 			queryPayload.groupBy = groupBy;
 		}
 		return queryPayload;
-	}, [currentPage, minTime, maxTime, orderBy, groupBy, queryFilters]);
+	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
 	const formattedGroupedByDeploymentsData = useMemo(
 		() =>
@@ -468,8 +469,12 @@ function K8sDeploymentsList({
 					current: currentPage,
 					pageSize,
 					total: totalCount,
-					showSizeChanger: false,
-					hideOnSinglePage: true,
+					showSizeChanger: true,
+					hideOnSinglePage: false,
+					onChange: (page, pageSize): void => {
+						setCurrentPage(page);
+						setPageSize(pageSize);
+					},
 				}}
 				scroll={{ x: true }}
 				loading={{

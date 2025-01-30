@@ -26,9 +26,6 @@ type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
-	MaxIdleConns                  int
-	MaxOpenConns                  int
-	DialTimeout                   time.Duration
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
@@ -57,9 +54,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
-		MaxIdleConns:                  opts.MaxIdleConns,
-		MaxOpenConns:                  opts.MaxOpenConns,
-		DialTimeout:                   opts.DialTimeout,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
@@ -117,13 +111,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.listLicenses)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.applyLicense)).
-		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/featureFlags",
 		am.OpenAccess(ah.getFeatureFlags)).
@@ -177,11 +164,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
-
-	// v2
-	router.HandleFunc("/api/v2/licenses",
-		am.ViewAccess(ah.listLicensesV2)).
-		Methods(http.MethodGet)
 
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(ah.listLicensesV3)).Methods(http.MethodGet)

@@ -65,7 +65,7 @@ export default function QueryBuilderSearchDropdown(
 					</div>
 				)}
 				{menu}
-				{!searchValue && tags.length === 0 && (
+				{!searchValue && tags.length === 0 && exampleQueries.length > 0 && (
 					<div className="example-queries">
 						<div className="heading"> Example Queries </div>
 						<div className="query-container">

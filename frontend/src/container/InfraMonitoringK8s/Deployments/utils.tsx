@@ -30,14 +30,14 @@ export const defaultAddedColumns: IEntityColumn[] = [
 	},
 	{
 		label: 'Available',
-		value: 'available',
-		id: 'available',
+		value: 'available_pods',
+		id: 'available_pods',
 		canRemove: false,
 	},
 	{
 		label: 'Desired',
-		value: 'desired',
-		id: 'desired',
+		value: 'desired_pods',
+		id: 'desired_pods',
 		canRemove: false,
 	},
 	{
@@ -82,8 +82,8 @@ export interface K8sDeploymentsRowData {
 	key: string;
 	deploymentUID: string;
 	deploymentName: React.ReactNode;
-	availableReplicas: React.ReactNode;
-	desiredReplicas: React.ReactNode;
+	available_pods: React.ReactNode;
+	desired_pods: React.ReactNode;
 	cpu_request: React.ReactNode;
 	cpu_limit: React.ReactNode;
 	cpu: React.ReactNode;
@@ -148,16 +148,16 @@ const columnsConfig = [
 	},
 	{
 		title: <div className="column-header-left small-col">Available</div>,
-		dataIndex: 'availableReplicas',
-		key: 'availableReplicas',
+		dataIndex: 'available_pods',
+		key: 'available_pods',
 		width: 100,
 		sorter: false,
 		align: 'left',
 	},
 	{
 		title: <div className="column-header-left small-col">Desired</div>,
-		dataIndex: 'desiredReplicas',
-		key: 'desiredReplicas',
+		dataIndex: 'desired_pods',
+		key: 'desired_pods',
 		width: 80,
 		sorter: false,
 		align: 'left',
@@ -261,12 +261,12 @@ export const formatDataForTable = (
 				{deployment.meta.k8s_deployment_name}
 			</Tooltip>
 		),
-		availableReplicas: (
+		available_pods: (
 			<ValidateColumnValueWrapper value={deployment.availablePods}>
 				{deployment.availablePods}
 			</ValidateColumnValueWrapper>
 		),
-		desiredReplicas: (
+		desired_pods: (
 			<ValidateColumnValueWrapper value={deployment.desiredPods}>
 				{deployment.desiredPods}
 			</ValidateColumnValueWrapper>
