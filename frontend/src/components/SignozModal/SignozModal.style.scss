@@ -1,0 +1,117 @@
+.signoz-modal {
+	.ant-modal-content {
+		padding: 0;
+		background: var(--bg-ink-400);
+		border: 1px solid var(--bg-slate-500);
+	}
+
+	.ant-modal-header {
+		background: var(--bg-ink-400);
+		border-bottom: none;
+		padding: 12px 24px 8px;
+		border-bottom: 1px solid var(--bg-slate-500);
+		margin-bottom: 0;
+	}
+
+	.ant-modal-close {
+		top: 15px;
+		height: 14px;
+		width: 14px;
+		.ant-modal-close-x {
+			font-size: 12px;
+		}
+	}
+
+	.ant-modal-title {
+		color: var(--bg-vanilla-100);
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 20px;
+	}
+
+	.ant-modal-body {
+		padding: 16px 24px 24px;
+	}
+
+	.ant-modal-footer {
+		padding: 24px;
+		display: flex;
+		justify-content: end;
+		gap: 12px;
+	}
+
+	.ant-typography {
+		color: var(--bg-vanilla-100);
+	}
+
+	.ant-select {
+		border-radius: 2px !important;
+		&-selector {
+			background: var(--bg-ink-300) !important;
+			border: 1px solid var(--bg-slate-400) !important;
+			border-radius: 2px !important;
+		}
+	}
+
+	.ant-select-dropdown {
+		background: var(--bg-ink-400);
+		border: 1px solid var(--bg-ink-300);
+		-webkit-backdrop-filter: blur(20px);
+		backdrop-filter: blur(20px);
+	}
+
+	.ant-select-item {
+		color: var(--bg-vanilla-100);
+
+		&-option-selected {
+			background: var(--bg-ink-300);
+		}
+	}
+}
+
+.lightMode {
+	.signoz-modal {
+		.ant-modal-content {
+			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.ant-modal-header {
+			background: var(--bg-vanilla-100);
+			border-bottom-color: var(--bg-vanilla-300);
+		}
+
+		.ant-modal-title {
+			color: var(--bg-ink-500);
+		}
+
+		.ant-typography {
+			color: var(--bg-ink-500);
+		}
+
+		.ant-select {
+			&-selector {
+				background: var(--bg-vanilla-100) !important;
+				border-color: var(--bg-vanilla-300) !important;
+			}
+		}
+
+		.ant-select-dropdown {
+			background: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		.ant-select-item {
+			color: var(--bg-ink-400);
+
+			&-option-selected {
+				background: var(--bg-vanilla-300);
+				color: var(--bg-ink-500);
+			}
+
+			&-option-active {
+				background: var(--bg-vanilla-200);
+			}
+		}
+	}
+}
