@@ -39,7 +39,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	}
 
 	if license == nil {
-		RespondError(w, basemodel.UnauthorizedError(fmt.Errorf(
+		RespondError(w, basemodel.ForbiddenError(fmt.Errorf(
 			"no active license found",
 		)), nil)
 		return
