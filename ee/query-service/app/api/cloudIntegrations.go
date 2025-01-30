@@ -40,9 +40,9 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	}
 
 	if license == nil {
-		RespondError(w, basemodel.ForbiddenError(fmt.Errorf(
-			"no active license found",
-		)), nil)
+		// Will always be returning a PAT/API key - coming in a future change
+		zap.L().Info("ingestion params and signoz api url can not be deduced since no license was found")
+		ah.Respond(w, CloudIntegrationConnectionParamsResponse{})
 		return
 	}
 
