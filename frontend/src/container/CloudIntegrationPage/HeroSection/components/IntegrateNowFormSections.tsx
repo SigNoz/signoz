@@ -31,8 +31,7 @@ function RegionDeploymentSection({
 				<Select
 					placeholder="e.g. US East (N. Virginia)"
 					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
-					style={{ height: '44px' }}
-					className="cloud-account-setup-form__select"
+					className="cloud-account-setup-form__select integrations-select"
 					onChange={handleRegionChange}
 					value={selectedDeploymentRegion}
 					disabled={isFormDisabled}
@@ -111,7 +110,7 @@ function MonitoringRegionsSection({
 				<Select
 					suffixIcon={null}
 					placeholder="Select Region(s)"
-					className="cloud-account-setup-form__select monitor-regions"
+					className="cloud-account-setup-form__select integrations-select"
 					onClick={!isFormDisabled ? onRegionSelect : undefined}
 					mode="multiple"
 					maxTagCount={3}

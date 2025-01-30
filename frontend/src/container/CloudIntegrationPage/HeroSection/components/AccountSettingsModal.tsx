@@ -69,10 +69,9 @@ function AccountSettingsModal({
 					</button>
 				</div>
 				<Select
-					style={{ height: '44px' }}
 					suffixIcon={null}
 					placeholder="Select Region(s)"
-					className="cloud-account-setup-form__select account-settings-modal__body-regions-select"
+					className="cloud-account-setup-form__select account-settings-modal__body-regions-select integrations-select"
 					onClick={(): void => setIsRegionSelectOpen(true)}
 					mode="multiple"
 					maxTagCount={3}
