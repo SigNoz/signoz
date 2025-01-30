@@ -141,6 +141,10 @@ func main() {
 			envprovider.NewFactory(),
 			fileprovider.NewFactory(),
 		},
+	}, signoz.DeprecatedFlags{
+		MaxIdleConns: maxIdleConns,
+		MaxOpenConns: maxOpenConns,
+		DialTimeout:  dialTimeout,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -161,9 +165,6 @@ func main() {
 		PrivateHostPort:            baseconst.PrivateHostPort,
 		DisableRules:               disableRules,
 		RuleRepoURL:                ruleRepoURL,
-		MaxIdleConns:               maxIdleConns,
-		MaxOpenConns:               maxOpenConns,
-		DialTimeout:                dialTimeout,
 		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,

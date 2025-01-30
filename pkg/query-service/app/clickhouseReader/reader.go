@@ -166,26 +166,16 @@ type ClickHouseReader struct {
 // NewTraceReader returns a TraceReader for the database
 func NewReader(
 	localDB *sqlx.DB,
+	db driver.Conn,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickHouseReader {
-
-	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
-	db, err := initialize(options)
-
-	if err != nil {
-		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
-	}
-
+	options := NewOptions(primaryNamespace, archiveNamespace)
 	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
@@ -208,29 +198,6 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
-	regex := os.Getenv("ClickHouseOptimizeReadInOrderRegex")
-	var regexCompiled *regexp.Regexp
-	if regex != "" {
-		regexCompiled, err = regexp.Compile(regex)
-		if err != nil {
-			zap.L().Error("Incorrect regex for ClickHouseOptimizeReadInOrderRegex")
-			os.Exit(1)
-		}
-	}
-
-	wrap := clickhouseConnWrapper{
-		conn: db,
-		settings: ClickhouseQuerySettings{
-			MaxExecutionTime:                    os.Getenv("ClickHouseMaxExecutionTime"),
-			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
-			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
-			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
-			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
-			OptimizeReadInOrderRegexCompiled:    regexCompiled,
-			MaxResultRowsForCHQuery:             constants.MaxResultRowsForCHQuery,
-		},
-	}
-
 	logsTableName := options.primary.LogsTable
 	logsLocalTableName := options.primary.LogsLocalTable
 	if useLogsNewSchema {
@@ -246,7 +213,7 @@ func NewReaderFromClickhouseConnection(
 	}
 
 	return &ClickHouseReader{
-		db:                      wrap,
+		db:                      db,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
 		alertManager:            alertManager,
@@ -436,28 +403,6 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 	}
 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
 	return conf, nil
-}
-
-func initialize(options *Options) (clickhouse.Conn, error) {
-
-	db, err := connect(options.getPrimary())
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to primary db: %v", err)
-	}
-
-	return db, nil
-}
-
-func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
-	if cfg.Encoding != EncodingJSON && cfg.Encoding != EncodingProto {
-		return nil, fmt.Errorf("unknown encoding %q, supported: %q, %q", cfg.Encoding, EncodingJSON, EncodingProto)
-	}
-
-	return cfg.Connector(cfg)
-}
-
-func (r *ClickHouseReader) GetConn() clickhouse.Conn {
-	return r.db
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {

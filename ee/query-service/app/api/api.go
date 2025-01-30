@@ -26,9 +26,6 @@ type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
-	MaxIdleConns                  int
-	MaxOpenConns                  int
-	DialTimeout                   time.Duration
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
@@ -57,9 +54,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
-		MaxIdleConns:                  opts.MaxIdleConns,
-		MaxOpenConns:                  opts.MaxOpenConns,
-		DialTimeout:                   opts.DialTimeout,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
