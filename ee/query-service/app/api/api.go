@@ -39,6 +39,7 @@ type APIHandlerOptions struct {
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
+	GatewayUrl                    string
 	// Querier Influx Interval
 	FluxInterval      time.Duration
 	UseLogsNewSchema  bool
@@ -182,6 +183,12 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 	// Gateway
 	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.EditAccess(ah.ServeGatewayHTTP))
+
+	// Cloud integrations
+	router.HandleFunc(
+		"/api/v1/cloud-integrations/{cloudProvider}/accounts/generate-connection-params",
+		am.EditAccess(ah.CloudIntegrationsGenerateConnectionParams),
+	).Methods(http.MethodPost)
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

@@ -280,6 +280,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
+		GatewayUrl:                    serverOptions.GatewayUrl,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 	}
