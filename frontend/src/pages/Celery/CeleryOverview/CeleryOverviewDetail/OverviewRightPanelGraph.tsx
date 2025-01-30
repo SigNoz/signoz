@@ -1,4 +1,6 @@
+import { Color } from '@signozhq/design-tokens';
 import { Card } from 'antd';
+import { useGetGraphCustomerSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
 import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -109,6 +111,18 @@ export default function OverviewRightPanelGraph({
 		},
 		[navigateToTraces, filters, selectedTimeStamp],
 	);
+
+	const { getCustomSeries } = useGetGraphCustomerSeries({
+		isDarkMode: false,
+		drawStyle: 'bars',
+		colorMapping: {
+			False: Color.BG_CHERRY_500,
+			True: Color.BG_FOREST_400,
+			None: Color.BG_SLATE_200,
+			'Request Rate': Color.BG_ROBIN_500,
+		},
+	});
+
 	return (
 		<Card className="overview-right-panel-graph-card">
 			<div className="request-rate-card">
@@ -125,6 +139,7 @@ export default function OverviewRightPanelGraph({
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_request_rate')}
+					customSeries={getCustomSeries}
 				/>
 			</div>
 			<div className="error-rate-card">
@@ -141,6 +156,7 @@ export default function OverviewRightPanelGraph({
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_error_rate')}
+					customSeries={getCustomSeries}
 				/>
 			</div>
 			<div className="avg-latency-card">

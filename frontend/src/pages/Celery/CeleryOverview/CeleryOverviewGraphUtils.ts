@@ -195,6 +195,7 @@ export const celeryOverviewRequestRateGraphData = (
 				},
 			],
 			panelTypes: PANEL_TYPES.BAR,
+			yAxisUnit: 'reqps',
 		}),
 	);
 
@@ -299,6 +300,7 @@ export const celeryOverviewErrorRateGraphData = (
 				},
 			],
 			panelTypes: PANEL_TYPES.BAR,
+			yAxisUnit: 'percent',
 		}),
 	);
 

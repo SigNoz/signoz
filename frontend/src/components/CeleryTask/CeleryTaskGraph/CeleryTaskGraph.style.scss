@@ -121,6 +121,10 @@
 			align-items: flex-start;
 			gap: 10px;
 			width: 100%;
+
+			.celery-task-graph {
+				height: 280px !important;
+			}
 		}
 	}
 

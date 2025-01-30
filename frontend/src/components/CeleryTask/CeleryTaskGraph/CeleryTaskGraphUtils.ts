@@ -332,6 +332,7 @@ export const celeryTasksByWorkerWidgetData = (
 					timeAggregation: 'rate',
 				},
 			],
+			yAxisUnit: 'cps',
 		}),
 	);
 
@@ -383,6 +384,7 @@ export const celeryErrorByWorkerWidgetData = (
 					timeAggregation: 'rate',
 				},
 			],
+			yAxisUnit: 'percent',
 		}),
 	);
 
@@ -444,7 +446,7 @@ export const celeryActiveTasksWidgetData = (
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Tasks/ worker (Active tasks)',
+			title: 'Active tasks',
 			description: 'Represents the number of active tasks.',
 			queryData: [
 				{
@@ -487,6 +489,7 @@ export const celeryActiveTasksWidgetData = (
 					timeAggregation: 'latest',
 				},
 			],
+			yAxisUnit: 'cps',
 		}),
 	);
 
