@@ -6,6 +6,7 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ShowButton from 'container/LogsContextList/ShowButton';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { defaultLogsSelectedFields } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -109,6 +110,7 @@ function ContextLogRenderer({
 				data={logTorender}
 				linesPerRow={1}
 				fontSize={options.fontSize}
+				selectedFields={defaultLogsSelectedFields}
 			/>
 		),
 		[log.id, options.fontSize],
