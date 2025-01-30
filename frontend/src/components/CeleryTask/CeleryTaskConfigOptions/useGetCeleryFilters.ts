@@ -1,9 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { DefaultOptionType } from 'antd/es/select';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 export interface Filters {
 	searchText: string;
@@ -31,8 +35,18 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 		tagType,
 	} = props;
 
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const { data, isLoading } = useQuery(
-		['attributesValues', attributeKey, searchText],
+		[
+			REACT_QUERY_KEY.GET_ATTRIBUTE_VALUES,
+			attributeKey,
+			searchText,
+			minTime,
+			maxTime,
+		],
 		async () => {
 			const keys = Array.isArray(attributeKey) ? attributeKey : [attributeKey];
 
