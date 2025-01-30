@@ -202,6 +202,11 @@ function K8sStatefulSetsList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedStatefulSetsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sStatefulSetsList(
 		query as K8sStatefulSetsListPayload,
 		{
@@ -288,12 +293,24 @@ function K8sStatefulSetsList({
 
 	const selectedStatefulSetData = useMemo(() => {
 		if (!selectedStatefulSetUID) return null;
+		if (groupBy.length > 0) {
+			return (
+				nestedStatefulSetsData.find(
+					(statefulSet) => statefulSet.statefulSetName === selectedStatefulSetUID,
+				) || null
+			);
+		}
 		return (
 			statefulSetsData.find(
 				(statefulSet) => statefulSet.statefulSetName === selectedStatefulSetUID,
 			) || null
 		);
-	}, [selectedStatefulSetUID, statefulSetsData]);
+	}, [
+		selectedStatefulSetUID,
+		groupBy.length,
+		statefulSetsData,
+		nestedStatefulSetsData,
+	]);
 
 	const handleRowClick = (record: K8sStatefulSetsRowData): void => {
 		if (groupBy.length === 0) {
@@ -346,6 +363,10 @@ function K8sStatefulSetsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedStatefulSetUID(record.statefulsetUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
