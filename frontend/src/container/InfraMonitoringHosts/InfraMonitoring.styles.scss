@@ -11,6 +11,7 @@
 	}
 
 	.hosts-list-controls {
+		flex: 1;
 		padding: 8px;
 
 		display: flex;
@@ -73,6 +74,16 @@
 
 	.hosts-list-table-container {
 		flex: 1;
+
+		.hosts-list-table-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			.quick-filters-toggle-container {
+				padding: 0 8px;
+			}
+		}
 	}
 
 	.hosts-list-table {
