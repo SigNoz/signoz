@@ -1,7 +1,7 @@
 import './InfraMonitoring.styles.scss';
 
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
@@ -11,6 +11,7 @@ import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { Filter } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -140,7 +141,21 @@ function HostsList(): JSX.Element {
 					</div>
 				)}
 				<div className="hosts-list-table-container">
-					<HostsListControls handleFiltersChange={handleFiltersChange} />
+					<div className="hosts-list-table-header">
+						{!showFilters && (
+							<div className="quick-filters-toggle-container">
+								<Button
+									className="periscope-btn ghost"
+									type="text"
+									size="small"
+									onClick={handleFilterVisibilityChange}
+								>
+									<Filter size={14} />
+								</Button>
+							</div>
+						)}
+						<HostsListControls handleFiltersChange={handleFiltersChange} />
+					</div>
 					<HostsListTable
 						isLoading={isLoading}
 						isFetching={isFetching}
