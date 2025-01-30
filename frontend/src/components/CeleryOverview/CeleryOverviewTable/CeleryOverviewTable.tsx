@@ -322,6 +322,11 @@ function makeFilters(urlQuery: URLSearchParams): Filter[] {
 		{ paramName: QueryParams.kindString, key: 'kind_string', operator: 'in' },
 		{ paramName: QueryParams.service, key: 'service.name', operator: 'in' },
 		{ paramName: QueryParams.spanName, key: 'name', operator: 'in' },
+		{
+			paramName: QueryParams.environment,
+			key: 'deployment.environment',
+			operator: 'in',
+		},
 	];
 
 	return filterConfigs

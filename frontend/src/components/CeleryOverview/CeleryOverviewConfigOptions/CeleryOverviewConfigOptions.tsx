@@ -6,7 +6,10 @@ import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
 } from 'components/CeleryTask/CeleryUtils';
-import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOptions';
+import {
+	FilterCofigs,
+	useCeleryFilterOptions,
+} from 'components/CeleryTask/useCeleryFilterOptions';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -14,20 +17,24 @@ import { Check, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { DataSource } from 'types/common/queryBuilder';
 
 interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
 	filterType: string | string[];
+	filterConfigs?: FilterCofigs;
 }
 
 function FilterSelect({
 	placeholder,
 	queryParam,
 	filterType,
+	filterConfigs,
 }: SelectOptionConfig): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		filterType,
+		filterConfigs,
 	);
 
 	const urlQuery = useUrlQuery();
@@ -65,12 +72,26 @@ function FilterSelect({
 	);
 }
 
+FilterSelect.defaultProps = {
+	filterConfigs: undefined,
+};
+
 function CeleryOverviewConfigOptions(): JSX.Element {
 	const [isURLCopied, setIsURLCopied] = useState(false);
 
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
 	const selectConfigs: SelectOptionConfig[] = [
+		{
+			placeholder: 'Environment',
+			queryParam: QueryParams.environment,
+			filterType: 'resource_deployment_environment',
+			filterConfigs: {
+				aggregateOperator: 'rate',
+				dataSource: DataSource.METRICS,
+				aggregateAttribute: 'signoz_calls_total',
+			},
+		},
 		{
 			placeholder: 'Service Name',
 			queryParam: QueryParams.service,
@@ -115,6 +136,7 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 						placeholder={config.placeholder}
 						queryParam={config.queryParam}
 						filterType={config.filterType}
+						filterConfigs={config.filterConfigs}
 					/>
 				))}
 			</Row>

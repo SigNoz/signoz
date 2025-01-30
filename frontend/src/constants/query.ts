@@ -46,4 +46,5 @@ export enum QueryParams {
 	msgSystem = 'msgSystem',
 	destination = 'destination',
 	kindString = 'kindString',
+	environment = 'environment',
 }
