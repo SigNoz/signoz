@@ -1,4 +1,3 @@
-import { IField } from 'types/api/logs/fields';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { FontSize, OptionsQuery } from './types';
@@ -32,14 +31,6 @@ export const defaultLogsSelectedColumns = [
 		isIndexed: false,
 	},
 ];
-
-export const defaultLogsSelectedFields: IField[] = defaultLogsSelectedColumns.map(
-	(item) => ({
-		name: item.key,
-		type: item.type,
-		dataType: item.dataType,
-	}),
-);
 
 export const defaultTraceSelectedColumns = [
 	{
