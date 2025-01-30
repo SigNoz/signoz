@@ -19,7 +19,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
-import { useGetGraphCustomerSeries } from '../useGetGraphCustomSeries';
+import { useGetGraphCustomSeries } from '../useGetGraphCustomSeries';
 import {
 	celeryAllStateWidgetData,
 	celeryFailedStateWidgetData,
@@ -123,7 +123,7 @@ function CeleryTaskBar({
 		}
 	};
 
-	const { getCustomSeries } = useGetGraphCustomerSeries({
+	const { getCustomSeries } = useGetGraphCustomSeries({
 		isDarkMode,
 		drawStyle: 'bars',
 		colorMapping: {

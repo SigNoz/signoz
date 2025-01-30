@@ -6,7 +6,7 @@ import { QueryData } from 'types/api/widgets/getQuery';
 
 import { paths } from './CeleryUtils';
 
-interface UseGetGraphCustomerSeriesProps {
+interface UseGetGraphCustomSeriesProps {
 	isDarkMode: boolean;
 	drawStyle?: 'bars' | 'line' | 'points';
 	colorMapping?: Record<string, string>;
@@ -18,11 +18,11 @@ const defaultColorMapping = {
 	RETRY: Color.BG_AMBER_400,
 };
 
-export const useGetGraphCustomerSeries = ({
+export const useGetGraphCustomSeries = ({
 	isDarkMode,
 	drawStyle = 'bars',
 	colorMapping = defaultColorMapping,
-}: UseGetGraphCustomerSeriesProps): {
+}: UseGetGraphCustomSeriesProps): {
 	getCustomSeries: (data: QueryData[]) => uPlot.Series[];
 } => {
 	const getGraphSeries = (color: string, label: string): any => ({

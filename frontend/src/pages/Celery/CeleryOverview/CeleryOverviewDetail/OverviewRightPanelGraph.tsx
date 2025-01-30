@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Card } from 'antd';
-import { useGetGraphCustomerSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
+import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
 import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -112,7 +112,7 @@ export default function OverviewRightPanelGraph({
 		[navigateToTraces, filters, selectedTimeStamp],
 	);
 
-	const { getCustomSeries } = useGetGraphCustomerSeries({
+	const { getCustomSeries } = useGetGraphCustomSeries({
 		isDarkMode: false,
 		drawStyle: 'bars',
 		colorMapping: {
