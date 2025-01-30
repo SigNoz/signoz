@@ -6,8 +6,14 @@ import { Region } from 'utils/regions';
 // Form section components
 function RegionDeploymentSection({
 	regions,
+	selectedDeploymentRegion,
+	handleRegionChange,
+	isFormDisabled,
 }: {
 	regions: Region[];
+	selectedDeploymentRegion: string | undefined;
+	handleRegionChange: (value: string) => void;
+	isFormDisabled: boolean;
 }): JSX.Element {
 	return (
 		<div className="cloud-account-setup-form__form-group">
@@ -23,10 +29,13 @@ function RegionDeploymentSection({
 				className="cloud-account-setup-form__form-item"
 			>
 				<Select
-					placeholder="US East (N. Virginia)"
+					placeholder="e.g. US East (N. Virginia)"
 					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 					style={{ height: '44px' }}
 					className="cloud-account-setup-form__select"
+					onChange={handleRegionChange}
+					value={selectedDeploymentRegion}
+					disabled={isFormDisabled}
 				>
 					{regions.flatMap((region) =>
 						region.subRegions.map((subRegion) => (
@@ -47,12 +56,14 @@ function MonitoringRegionsSection({
 	onIncludeAllRegionsChange,
 	getRegionPreviewText,
 	onRegionSelect,
+	isFormDisabled,
 }: {
 	includeAllRegions: boolean;
 	selectedRegions: string[];
 	onIncludeAllRegionsChange: (checked: boolean) => void;
 	getRegionPreviewText: (regions: string[]) => string[];
 	onRegionSelect: () => void;
+	isFormDisabled: boolean;
 }): JSX.Element {
 	return (
 		<div className="cloud-account-setup-form__form-group">
@@ -83,11 +94,16 @@ function MonitoringRegionsSection({
 						size="small"
 						checked={includeAllRegions}
 						onChange={onIncludeAllRegionsChange}
+						disabled={isFormDisabled}
 					/>
 					<button
 						className="cloud-account-setup-form__include-all-regions-switch-label"
 						type="button"
-						onClick={(): void => onIncludeAllRegionsChange(!includeAllRegions)}
+						onClick={(): void =>
+							!isFormDisabled
+								? onIncludeAllRegionsChange(!includeAllRegions)
+								: undefined
+						}
 					>
 						Include all regions
 					</button>
@@ -96,11 +112,11 @@ function MonitoringRegionsSection({
 					suffixIcon={null}
 					placeholder="Select Region(s)"
 					className="cloud-account-setup-form__select monitor-regions"
-					onClick={onRegionSelect}
+					onClick={!isFormDisabled ? onRegionSelect : undefined}
 					mode="multiple"
 					maxTagCount={3}
 					value={getRegionPreviewText(selectedRegions)}
-					disabled
+					open={false}
 				/>
 			</Form.Item>
 		</div>
