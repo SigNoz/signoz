@@ -21,6 +21,12 @@
 				line-height: 32px;
 				margin: 0;
 			}
+
+			.celery-content-header-right {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
 		}
 	}
 }
