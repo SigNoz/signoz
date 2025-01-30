@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"go.signoz.io/signoz/ee/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -76,13 +77,13 @@ type ingestionKey struct {
 	Value string `json:"value"`
 }
 
-type ingestionKeysSearchResult struct {
+type ingestionKeysSearchResponse struct {
 	Status string         `json:"status"`
 	Data   []ingestionKey `json:"data"`
 	Error  string         `json:"error"`
 }
 
-type createIngestionKeyResult struct {
+type createIngestionKeyResponse struct {
 	Status string       `json:"status"`
 	Data   ingestionKey `json:"data"`
 	Error  string       `json:"error"`
@@ -92,7 +93,7 @@ func getOrCreateCloudProviderIngestionKey(gatewayUrl string, licenseKey string, 
 	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
 
 	// see if the key already exists
-	searchResult, apiErr := requestGateway[ingestionKeysSearchResult](
+	searchResult, apiErr := requestGateway[ingestionKeysSearchResponse](
 		gatewayUrl,
 		licenseKey,
 		fmt.Sprintf("/v1/workspaces/me/keys/search?name=%s", cloudProviderKeyName),
@@ -119,7 +120,7 @@ func getOrCreateCloudProviderIngestionKey(gatewayUrl string, licenseKey string, 
 	}
 
 	// create a key and return it if one doesn't already exist
-	createKeyResult, apiErr := requestGateway[createIngestionKeyResult](
+	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
 		gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
 		map[string]any{
 			"name": cloudProviderKeyName,
@@ -145,6 +146,67 @@ func getOrCreateCloudProviderIngestionKey(gatewayUrl string, licenseKey string, 
 func requestGateway[ResponseType any](
 	gatewayUrl string, licenseKey string, path string, payload any,
 ) (*ResponseType, *basemodel.ApiError) {
+
+	baseUrl := strings.TrimSuffix(gatewayUrl, "/")
+	reqUrl := fmt.Sprintf("%s%s", baseUrl, path)
+
+	headers := map[string]string{
+		"X-Signoz-Cloud-Api-Key": licenseKey,
+		"X-Consumer-Username":    "lid:00000000-0000-0000-0000-000000000000",
+		"X-Consumer-Groups":      "ns:default",
+	}
+
+	return requestAndParseResponse[ResponseType](reqUrl, headers, payload)
+}
+
+func getIngestionUrl(licenseKey string) (string, *basemodel.ApiError) {
+	url := fmt.Sprintf(
+		"%s%s",
+		strings.TrimSuffix(constants.ZeusURL, "/"),
+		"/v2/deployments/me",
+	)
+
+	type deploymentResponse struct {
+		Status string `json:"status"`
+		Error  string `json:"error"`
+		Data   struct {
+			ClusterInfo struct {
+				Region struct {
+					DNS string `json:"dns"`
+				} `json:"region"`
+			} `json:"cluster"`
+		} `json:"data"`
+	}
+
+	resp, apiErr := requestAndParseResponse[deploymentResponse](
+		url, map[string]string{"X-Signoz-Cloud-Api-Key": licenseKey}, nil,
+	)
+
+	if apiErr != nil {
+		return "", basemodel.WrapApiError(
+			apiErr, "couldn't query for deployment info",
+		)
+	}
+
+	if resp.Status != "success" {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't query for deployment info: status: %s, error: %s",
+			resp.Status, resp.Error,
+		))
+	}
+
+	regionDns := resp.Data.ClusterInfo.Region.DNS
+	if len(regionDns) < 1 {
+		return "", nil
+	} else {
+		return fmt.Sprintf("https://ingest.%s", regionDns), nil
+	}
+
+}
+
+func requestAndParseResponse[ResponseType any](
+	url string, headers map[string]string, payload any,
+) (*ResponseType, *basemodel.ApiError) {
 	reqMethod := http.MethodGet
 	var reqBody io.Reader
 
@@ -160,19 +222,16 @@ func requestGateway[ResponseType any](
 		reqBody = bytes.NewBuffer([]byte(bodyJson))
 	}
 
-	baseUrl := strings.TrimSuffix(gatewayUrl, "/")
-	reqUrl := fmt.Sprintf("%s%s", baseUrl, path)
-
-	req, err := http.NewRequest(reqMethod, reqUrl, reqBody)
+	req, err := http.NewRequest(reqMethod, url, reqBody)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf(
 			"couldn't prepare request: %w", err,
 		))
 	}
 
-	req.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
-	req.Header.Set("X-Consumer-Username", "lid:00000000-0000-0000-0000-000000000000")
-	req.Header.Set("X-Consumer-Groups", "ns:default")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 
 	client := &http.Client{
 		Timeout: 10 * time.Second,
