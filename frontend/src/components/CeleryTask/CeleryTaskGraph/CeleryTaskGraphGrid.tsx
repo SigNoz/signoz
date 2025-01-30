@@ -163,9 +163,9 @@ export default function CeleryTaskGraphGrid({
 							</div>
 						</div>
 					</CardContainer>
-					<div className="configureOptionAndInfo">
+					<div className="configure-option-Info">
 						{configureOptionComponent}
-						<Typography.Text className="configureOptionAndInfo-text">
+						<Typography.Text className="configure-option-Info-text">
 							Click on a graph co-ordinate to see more details
 						</Typography.Text>
 					</div>

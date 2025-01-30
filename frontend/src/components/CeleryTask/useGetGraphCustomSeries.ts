@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
+import { drawStyles } from 'lib/uPlotLib/utils/constants';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { QueryData } from 'types/api/widgets/getQuery';
 
@@ -8,7 +9,7 @@ import { paths } from './CeleryUtils';
 
 interface UseGetGraphCustomSeriesProps {
 	isDarkMode: boolean;
-	drawStyle?: 'bars' | 'line' | 'points';
+	drawStyle?: typeof drawStyles[keyof typeof drawStyles];
 	colorMapping?: Record<string, string>;
 }
 

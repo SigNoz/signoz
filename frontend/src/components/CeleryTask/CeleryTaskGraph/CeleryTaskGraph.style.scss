@@ -138,13 +138,13 @@
 		}
 	}
 
-	.configureOptionAndInfo {
+	.configure-option-Info {
 		display: grid;
 		grid-template-columns: max-content 1fr;
 		gap: 16px;
 		align-items: center;
 
-		.configureOptionAndInfo-text {
+		.configure-option-Info-text {
 			color: var(--bg-vanilla-400);
 			font-size: 12px;
 			font-weight: 400;

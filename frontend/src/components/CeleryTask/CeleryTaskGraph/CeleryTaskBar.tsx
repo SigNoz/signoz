@@ -111,8 +111,6 @@ function CeleryTaskBar({
 			string,
 		];
 
-		console.log('entity', entity, value);
-
 		if (!isEmpty(entity) || !isEmpty(value)) {
 			onClick?.({
 				entity,
