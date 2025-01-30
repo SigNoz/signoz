@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -45,7 +46,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	ingestionUrl, signozApiUrl, err := getIngestionUrlAndSigNozAPIUrl(license.Key)
+	ingestionUrl, signozApiUrl, err := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
 	if err != nil {
 		RespondError(w, basemodel.InternalError(fmt.Errorf(
 			"couldn't deduce ingestion url and signoz api url: %w", err,
@@ -62,7 +63,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	if len(gatewayUrl) > 0 {
 
 		ingestionKey, err := getOrCreateCloudProviderIngestionKey(
-			gatewayUrl, license.Key, cloudProvider,
+			r.Context(), gatewayUrl, license.Key, cloudProvider,
 		)
 		if err != nil {
 			RespondError(w, basemodel.InternalError(fmt.Errorf(
@@ -80,7 +81,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	ah.Respond(w, result)
 }
 
-func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (
+func getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
 	string, string, *basemodel.ApiError,
 ) {
 	url := fmt.Sprintf(
@@ -104,7 +105,7 @@ func getIngestionUrlAndSigNozAPIUrl(licenseKey string) (
 	}
 
 	resp, apiErr := requestAndParseResponse[deploymentResponse](
-		url, map[string]string{"X-Signoz-Cloud-Api-Key": licenseKey}, nil,
+		ctx, url, map[string]string{"X-Signoz-Cloud-Api-Key": licenseKey}, nil,
 	)
 
 	if apiErr != nil {
@@ -156,12 +157,13 @@ type createIngestionKeyResponse struct {
 }
 
 func getOrCreateCloudProviderIngestionKey(
-	gatewayUrl string, licenseKey string, cloudProvider string,
+	ctx context.Context, gatewayUrl string, licenseKey string, cloudProvider string,
 ) (string, *basemodel.ApiError) {
 	cloudProviderKeyName := fmt.Sprintf("%s-integration", cloudProvider)
 
 	// see if the key already exists
 	searchResult, apiErr := requestGateway[ingestionKeysSearchResponse](
+		ctx,
 		gatewayUrl,
 		licenseKey,
 		fmt.Sprintf("/v1/workspaces/me/keys/search?name=%s", cloudProviderKeyName),
@@ -199,7 +201,7 @@ func getOrCreateCloudProviderIngestionKey(
 		zap.String("cloudProvider", cloudProvider),
 	)
 	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
-		gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
+		ctx, gatewayUrl, licenseKey, "/v1/workspaces/me/keys",
 		map[string]any{
 			"name": cloudProviderKeyName,
 			"tags": []string{"integration", cloudProvider},
@@ -230,7 +232,7 @@ func getOrCreateCloudProviderIngestionKey(
 }
 
 func requestGateway[ResponseType any](
-	gatewayUrl string, licenseKey string, path string, payload any,
+	ctx context.Context, gatewayUrl string, licenseKey string, path string, payload any,
 ) (*ResponseType, *basemodel.ApiError) {
 
 	baseUrl := strings.TrimSuffix(gatewayUrl, "/")
@@ -242,11 +244,11 @@ func requestGateway[ResponseType any](
 		"X-Consumer-Groups":      "ns:default",
 	}
 
-	return requestAndParseResponse[ResponseType](reqUrl, headers, payload)
+	return requestAndParseResponse[ResponseType](ctx, reqUrl, headers, payload)
 }
 
 func requestAndParseResponse[ResponseType any](
-	url string, headers map[string]string, payload any,
+	ctx context.Context, url string, headers map[string]string, payload any,
 ) (*ResponseType, *basemodel.ApiError) {
 
 	reqMethod := http.MethodGet
@@ -263,7 +265,7 @@ func requestAndParseResponse[ResponseType any](
 		reqBody = bytes.NewBuffer([]byte(bodyJson))
 	}
 
-	req, err := http.NewRequest(reqMethod, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, reqMethod, url, reqBody)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf(
 			"couldn't prepare request: %w", err,
