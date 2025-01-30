@@ -39,8 +39,9 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	}
 
 	if license == nil {
-		zap.L().Info("no cloud connection params can be deduced since no license was found")
-		ah.Respond(w, CloudIntegrationConnectionParamsResponse{})
+		RespondError(w, basemodel.UnauthorizedError(fmt.Errorf(
+			"no active license found",
+		)), nil)
 		return
 	}
 
