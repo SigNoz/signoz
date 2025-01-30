@@ -1,9 +1,9 @@
-interface Region {
+export interface Region {
 	id: string;
 	name: string;
 	subRegions: SubRegion[];
 }
-interface SubRegion {
+export interface SubRegion {
 	id: string;
 	name: string;
 	displayName: string;

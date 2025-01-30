@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Form, Select, Switch } from 'antd';
 import { ChevronDown } from 'lucide-react';
-import { Region } from 'types/regions';
+import { Region } from 'utils/regions';
 
 // Form section components
 function RegionDeploymentSection({
@@ -69,8 +69,9 @@ function MonitoringRegionsSection({
 					{
 						validator: async (): Promise<void> => {
 							if (selectedRegions.length === 0) {
-								throw new Error('Please select at least one region to monitor');
+								return Promise.reject();
 							}
+							return Promise.resolve();
 						},
 						message: 'Please select at least one region to monitor',
 					},
@@ -92,7 +93,6 @@ function MonitoringRegionsSection({
 					</button>
 				</div>
 				<Select
-					style={{ height: '44px' }}
 					suffixIcon={null}
 					placeholder="Select Region(s)"
 					className="cloud-account-setup-form__select monitor-regions"
