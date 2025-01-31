@@ -188,14 +188,13 @@ function SpanDuration({
 					left: `${leftOffset}%`,
 					width: `${width}%`,
 					backgroundColor: color,
-					marginLeft: '15px',
 				}}
 			/>
 			<Tooltip title={`${toFixed(time, 2)} ${timeUnitName}`}>
 				<Typography.Text
 					className="span-line-text"
 					ellipsis
-					style={{ left: `${leftOffset}%`, color, marginLeft: '15px' }}
+					style={{ left: `${leftOffset}%`, color }}
 				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</Tooltip>
 		</div>
