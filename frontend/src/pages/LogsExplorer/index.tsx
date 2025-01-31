@@ -23,7 +23,8 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
@@ -86,25 +87,80 @@ function LogsExplorer(): JSX.Element {
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
-	const migrateOptionsQuery = (query: OptionsQuery): OptionsQuery => {
-		// If version is missing AND timestamp/body are not in selectColumns, this is an old URL
-		if (
-			!query.version &&
-			!query.selectColumns.some((col) => col.key === 'timestamp') &&
-			!query.selectColumns.some((col) => col.key === 'body')
-		) {
+	// Get and parse stored columns from localStorage
+	const logListOptionsFromLocalStorage = useMemo(() => {
+		const data = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
+
+		if (!data) return null;
+
+		try {
+			const parsed = JSON.parse(data);
+			const hasValidColumns = Array.isArray(parsed?.selectColumns);
+
+			return hasValidColumns ? parsed.selectColumns : null;
+		} catch {
+			return null;
+		}
+	}, []);
+
+	// Check if the columns have the required columns (timestamp, body)
+	const hasRequiredColumns = useCallback(
+		(columns?: Array<{ key: string }> | null): boolean => {
+			if (!columns?.length) return false;
+
+			const hasTimestamp = columns.some((col) => col.key === 'timestamp');
+			const hasBody = columns.some((col) => col.key === 'body');
+
+			return hasTimestamp && hasBody;
+		},
+		[],
+	);
+
+	// Merge the columns with the required columns (timestamp, body) if missing
+	const mergeWithRequiredColumns = useCallback(
+		(columns: BaseAutocompleteData[]): BaseAutocompleteData[] => [
+			// Add required columns (timestamp, body) if missing
+			...(!hasRequiredColumns(columns) ? defaultLogsSelectedColumns : []),
+			...columns,
+		],
+		[hasRequiredColumns],
+	);
+
+	// Migrate the options query to the new format
+	const migrateOptionsQuery = useCallback(
+		(query: OptionsQuery): OptionsQuery => {
+			// Skip if already migrated
+			if (query.version) return query;
+
+			// Case 1: query has columns
+			if (query.selectColumns.length > 0) {
+				return {
+					...query,
+					version: 1,
+					selectColumns: mergeWithRequiredColumns(query.selectColumns),
+				};
+			}
+
+			// Case 2: No query columns in but we have localStorage columns
+			if (logListOptionsFromLocalStorage?.selectColumns?.length > 0) {
+				return {
+					...query,
+					version: 1,
+					selectColumns: mergeWithRequiredColumns(
+						logListOptionsFromLocalStorage.selectColumns,
+					),
+				};
+			}
+
+			// Case 3: No columns anywhere, use defaults
 			return {
 				...query,
 				version: 1,
-				selectColumns: [
-					// Add default timestamp and body columns
-					...defaultLogsSelectedColumns,
-					...query.selectColumns,
-				],
+				selectColumns: defaultLogsSelectedColumns,
 			};
-		}
-		return query;
-	};
+		},
+		[mergeWithRequiredColumns, logListOptionsFromLocalStorage?.selectColumns],
+	);
 
 	useEffect(() => {
 		const migratedQuery = migrateOptionsQuery(optionsQueryData);
@@ -112,7 +168,7 @@ function LogsExplorer(): JSX.Element {
 		if (!isEqual(migratedQuery, optionsQueryData)) {
 			redirectWithOptionsData(migratedQuery);
 		}
-	}, [optionsQueryData, redirectWithOptionsData]);
+	}, [migrateOptionsQuery, optionsQueryData, redirectWithOptionsData]);
 
 	const isMultipleQueries = useMemo(
 		() =>

@@ -13,6 +13,7 @@ import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useEventSource } from 'providers/EventSource';
@@ -53,7 +54,10 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		[logs, activeLogId],
 	);
 
-	const selectedFields = convertKeysToColumnFields(options.selectColumns);
+	const selectedFields = convertKeysToColumnFields([
+		...defaultLogsSelectedColumns,
+		...options.selectColumns,
+	]);
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {

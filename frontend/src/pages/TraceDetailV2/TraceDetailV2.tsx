@@ -68,11 +68,11 @@ function TraceDetailsV2(): JSX.Element {
 		() =>
 			!isFetchingTraceData &&
 			!errorFetchingTraceData &&
-			defaultTo(traceData?.payload?.spans.length, 0) === 0,
+			defaultTo(traceData?.payload?.spans?.length, 0) === 0,
 		[
 			errorFetchingTraceData,
 			isFetchingTraceData,
-			traceData?.payload?.spans.length,
+			traceData?.payload?.spans?.length,
 		],
 	);
 

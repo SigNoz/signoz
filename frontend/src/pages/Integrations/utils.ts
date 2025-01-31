@@ -20,3 +20,7 @@ export const INTEGRATION_TELEMETRY_EVENTS = {
 	INTEGRATIONS_DETAIL_CONFIGURE_INSTRUCTION:
 		'Integrations Detail Page: Navigated to configure an integration',
 };
+
+export const INTEGRATION_TYPES = {
+	AWS_INTEGRATION: 'aws-integration',
+};

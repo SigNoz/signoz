@@ -300,13 +300,13 @@
 
 		.uninstall-integration-btn {
 			border-radius: 2px;
-			background: var(--Accent---Secondary-Cherry, #da5565);
-			border-color: unset !important;
+			background: var(--bg-cherry-500);
+			border: none !important;
 			padding: 9px 13px;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			color: var(--bg-ink-300);
+			color: var(--bg-vanilla-100);
 			text-align: center;
 			font-family: Inter;
 			font-size: 12px;
@@ -317,7 +317,7 @@
 
 		.uninstall-integration-btn:hover {
 			&.ant-btn-default {
-				color: var(--bg-ink-300) !important;
+				color: var(--bg-vanilla-100) !important;
 			}
 		}
 	}

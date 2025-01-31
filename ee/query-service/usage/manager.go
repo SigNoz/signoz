@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"sync/atomic"
@@ -46,9 +45,9 @@ type Manager struct {
 	tenantID string
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string) (*Manager, error) {
 	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
-	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(os.Getenv("ClickHouseUrl"))
+	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(chUrl)
 
 	tenantID := ""
 	if len(hostNameRegexMatches) == 2 {

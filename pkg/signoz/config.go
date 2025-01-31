@@ -13,6 +13,7 @@ import (
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlmigrator"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/web"
 )
 
@@ -35,9 +36,20 @@ type Config struct {
 
 	// API Server config
 	APIServer apiserver.Config `mapstructure:"apiserver"`
+
+	// TelemetryStore config
+	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
 }
 
-func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Config, error) {
+// DeprecatedFlags are the flags that are deprecated and scheduled for removal.
+// These flags are used to ensure backward compatibility with the old flags.
+type DeprecatedFlags struct {
+	MaxIdleConns int
+	MaxOpenConns int
+	DialTimeout  time.Duration
+}
+
+func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
 		instrumentation.NewConfigFactory(),
 		web.NewConfigFactory(),
@@ -45,6 +57,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 		sqlstore.NewConfigFactory(),
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
+		telemetrystore.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -57,12 +70,12 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig) (Confi
 		return Config{}, err
 	}
 
-	mergeAndEnsureBackwardCompatibility(&config)
+	mergeAndEnsureBackwardCompatibility(&config, deprecatedFlags)
 
 	return config, nil
 }
 
-func mergeAndEnsureBackwardCompatibility(config *Config) {
+func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags DeprecatedFlags) {
 	// SIGNOZ_LOCAL_DB_PATH
 	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
 		fmt.Println("[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
@@ -86,5 +99,22 @@ func mergeAndEnsureBackwardCompatibility(config *Config) {
 		} else {
 			fmt.Println("Error parsing CONTEXT_TIMEOUT_MAX_ALLOWED, using default value of 600s")
 		}
+	}
+	if os.Getenv("ClickHouseUrl") != "" {
+		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
+		config.TelemetryStore.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
+	}
+
+	if deprecatedFlags.MaxIdleConns != 50 {
+		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS env variable instead.")
+		config.TelemetryStore.Connection.MaxIdleConns = deprecatedFlags.MaxIdleConns
+	}
+	if deprecatedFlags.MaxOpenConns != 100 {
+		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS env variable instead.")
+		config.TelemetryStore.Connection.MaxOpenConns = deprecatedFlags.MaxOpenConns
+	}
+	if deprecatedFlags.DialTimeout != 5*time.Second {
+		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT environment variable instead.")
+		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
 	}
 }

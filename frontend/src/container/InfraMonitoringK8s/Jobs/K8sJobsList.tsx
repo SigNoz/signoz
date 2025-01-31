@@ -195,6 +195,11 @@ function K8sJobsList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedJobsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sJobsList(
 		query as K8sJobsListPayload,
 		{
@@ -274,9 +279,13 @@ function K8sJobsList({
 	}, []);
 
 	const selectedJobData = useMemo(() => {
-		if (!selectedJobUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the job from the formatted grouped by data
+			return nestedJobsData.find((job) => job.jobName === selectedJobUID) || null;
+		}
+		// If not grouped by, return the job from the jobs data
 		return jobsData.find((job) => job.jobName === selectedJobUID) || null;
-	}, [selectedJobUID, jobsData]);
+	}, [selectedJobUID, groupBy.length, jobsData, nestedJobsData]);
 
 	const handleRowClick = (record: K8sJobsRowData): void => {
 		if (groupBy.length === 0) {
@@ -329,6 +338,10 @@ function K8sJobsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedJobUID(record.jobUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&

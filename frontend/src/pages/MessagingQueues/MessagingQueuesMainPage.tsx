@@ -38,7 +38,7 @@ export const Celery: TabRoutes = {
 	Component: CeleryTask,
 	name: (
 		<div className="tab-item">
-			<Rows3 size={16} /> Celery Task
+			<Rows3 size={16} /> Celery
 		</div>
 	),
 	route: ROUTES.MESSAGING_QUEUES_CELERY_TASK,

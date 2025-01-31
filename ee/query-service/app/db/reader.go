@@ -20,22 +20,20 @@ type ClickhouseReader struct {
 
 func NewDataConnector(
 	localDB *sqlx.DB,
+	ch clickhouse.Conn,
 	promConfigPath string,
 	lm interfaces.FeatureLookup,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	chReader := basechr.NewReader(localDB, ch, promConfigPath, lm, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 	return &ClickhouseReader{
-		conn:             ch.GetConn(),
+		conn:             ch,
 		appdb:            localDB,
-		ClickHouseReader: ch,
+		ClickHouseReader: chReader,
 	}
 }
 

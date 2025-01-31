@@ -97,10 +97,6 @@ type APIHandler struct {
 	temporalityMap map[string]map[v3.Temporality]bool
 	temporalityMux sync.Mutex
 
-	maxIdleConns int
-	maxOpenConns int
-	dialTimeout  time.Duration
-
 	IntegrationsController *integrations.Controller
 
 	CloudIntegrationsController *cloudintegrations.Controller
@@ -141,10 +137,6 @@ type APIHandlerOpts struct {
 	SkipConfig *model.SkipConfig
 
 	PreferSpanMetrics bool
-
-	MaxIdleConns int
-	MaxOpenConns int
-	DialTimeout  time.Duration
 
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
@@ -225,9 +217,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
-		maxIdleConns:                  opts.MaxIdleConns,
-		maxOpenConns:                  opts.MaxOpenConns,
-		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
