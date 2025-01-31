@@ -5,6 +5,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/featureflag"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/telemetrystore"
@@ -14,10 +15,11 @@ import (
 )
 
 type SigNoz struct {
-	Cache          cache.Cache
-	Web            web.Web
-	SQLStore       sqlstore.SQLStore
-	TelemetryStore telemetrystore.TelemetryStore
+	Cache              cache.Cache
+	Web                web.Web
+	SQLStore           sqlstore.SQLStore
+	TelemetryStore     telemetrystore.TelemetryStore
+	FeatureFlagManager *featureflag.FeatureFlagManager
 }
 
 func New(
@@ -81,10 +83,19 @@ func New(
 		return nil, err
 	}
 
+	featureFlagProviders, err := factory.NewFromNamedMap(ctx, providerSettings, config.FeatureFlag, providerConfig.FeatureFlagProviderFactories)
+	if err != nil {
+		return nil, err
+	}
+
+	featureFlagManager := featureflag.NewFeatureFlagManager(ctx, *featureflag.NewFeatureStorage(sqlstore.SQLDB()), featureFlagProviders...)
+	featureFlagManager.Start(ctx)
+
 	return &SigNoz{
-		Cache:          cache,
-		Web:            web,
-		SQLStore:       sqlstore,
-		TelemetryStore: telemetrystore,
+		Cache:              cache,
+		Web:                web,
+		SQLStore:           sqlstore,
+		TelemetryStore:     telemetrystore,
+		FeatureFlagManager: featureFlagManager,
 	}, nil
 }

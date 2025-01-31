@@ -5,6 +5,8 @@ import (
 	"go.signoz.io/signoz/pkg/cache/memorycache"
 	"go.signoz.io/signoz/pkg/cache/rediscache"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/featureflag"
+	"go.signoz.io/signoz/pkg/featureflag/base"
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
@@ -31,6 +33,9 @@ type ProviderConfig struct {
 
 	// Map of all telemetrystore provider factories
 	TelemetryStoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]]
+
+	// Map of all featureflag provider factories
+	FeatureFlagProviderFactories factory.NamedMap[factory.ProviderFactory[featureflag.FeatureFlag, featureflag.Config]]
 }
 
 func NewProviderConfig() ProviderConfig {
@@ -59,6 +64,10 @@ func NewProviderConfig() ProviderConfig {
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
 			clickhousetelemetrystore.NewFactory(hook),
+		),
+		// we need to make a decision here how to disable zeus for OSS
+		FeatureFlagProviderFactories: factory.MustNewNamedMap(
+			base.NewFactory(),
 		),
 	}
 }

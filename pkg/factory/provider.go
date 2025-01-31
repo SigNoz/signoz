@@ -56,3 +56,15 @@ func NewProviderFromNamedMap[P Provider, C Config](ctx context.Context, settings
 	p = provider
 	return
 }
+
+func NewFromNamedMap[P Provider, C Config](ctx context.Context, settings ProviderSettings, config C, factories NamedMap[ProviderFactory[P, C]]) (ps []P, err error) {
+	for _, factory := range factories.factoriesInOrder {
+		var provider P
+		provider, err = factory.New(ctx, settings, config)
+		if err != nil {
+			return
+		}
+		ps = append(ps, provider)
+	}
+	return
+}

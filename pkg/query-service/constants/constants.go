@@ -50,8 +50,6 @@ const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 const LogsTTL = "logs"
 
-const DurationSort = "DurationSort"
-const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
 
 const SpanSearchScopeRoot = "isroot"
@@ -79,12 +77,6 @@ var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512
 // [Deprecated] SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
-var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
-
-var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
-
-var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
-
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
 	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
@@ -96,62 +88,7 @@ func EnableHostsInfraMonitoring() bool {
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
-func IsDurationSortFeatureEnabled() bool {
-	isDurationSortFeatureEnabledStr := DurationSortFeature
-	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isDurationSortFeatureEnabledBool
-}
-
-func IsTimestampSortFeatureEnabled() bool {
-	isTimestampSortFeatureEnabledStr := TimestampSortFeature
-	isTimestampSortFeatureEnabledBool, err := strconv.ParseBool(isTimestampSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isTimestampSortFeatureEnabledBool
-}
-
-func IsPreferRPMFeatureEnabled() bool {
-	preferRPMFeatureEnabledStr := PreferRPMFeature
-	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return preferRPMFeatureEnabledBool
-}
-
-var DEFAULT_FEATURE_SET = model.FeatureSet{
-	model.Feature{
-		Name:       DurationSort,
-		Active:     IsDurationSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}, model.Feature{
-		Name:       TimestampSort,
-		Active:     IsTimestampSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       model.UseSpanMetrics,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       PreferRPM,
-		Active:     IsPreferRPMFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-}
+var DEFAULT_FEATURE_SET = model.FeatureSet{}
 
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
