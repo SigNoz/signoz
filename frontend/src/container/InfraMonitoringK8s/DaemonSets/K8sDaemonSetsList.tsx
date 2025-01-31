@@ -220,6 +220,11 @@ function K8sDaemonSetsList({
 		[daemonSetsData, groupBy],
 	);
 
+	const nestedDaemonSetsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const columns = useMemo(() => getK8sDaemonSetsListColumns(groupBy), [groupBy]);
 
 	const handleGroupByRowClick = (record: K8sDaemonSetsRowData): void => {
@@ -285,13 +290,26 @@ function K8sDaemonSetsList({
 	}, []);
 
 	const selectedDaemonSetData = useMemo(() => {
-		if (!selectedDaemonSetUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the daemonset from the formatted grouped by data
+			return (
+				nestedDaemonSetsData.find(
+					(daemonSet) => daemonSet.daemonSetName === selectedDaemonSetUID,
+				) || null
+			);
+		}
+		// If not grouped by, return the daemonset from the daemonsets data
 		return (
 			daemonSetsData.find(
 				(daemonSet) => daemonSet.daemonSetName === selectedDaemonSetUID,
 			) || null
 		);
-	}, [selectedDaemonSetUID, daemonSetsData]);
+	}, [
+		selectedDaemonSetUID,
+		groupBy.length,
+		daemonSetsData,
+		nestedDaemonSetsData,
+	]);
 
 	const handleRowClick = (record: K8sDaemonSetsRowData): void => {
 		if (groupBy.length === 0) {
@@ -344,6 +362,10 @@ function K8sDaemonSetsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedDaemonSetUID(record.daemonsetUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&

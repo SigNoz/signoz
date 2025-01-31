@@ -149,7 +149,7 @@ func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selected
 }
 
 func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpans [][]*model.FlamegraphSpan, startTime uint64, endTime uint64) [][]*model.FlamegraphSpan {
-	var selectedSpansForRequest [][]*model.FlamegraphSpan
+	var selectedSpansForRequest = make([][]*model.FlamegraphSpan, 0)
 	var selectedIndex = 0
 
 	if selectedSpanID != "" {

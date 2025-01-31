@@ -62,9 +62,6 @@ type ServerOptions struct {
 	DisableRules               bool
 	RuleRepoURL                string
 	PreferSpanMetrics          bool
-	MaxIdleConns               int
-	MaxOpenConns               int
-	DialTimeout                time.Duration
 	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
@@ -132,11 +129,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(
 			serverOptions.SigNoz.SQLStore.SQLxDB(),
+			serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
 			serverOptions.PromConfigPath,
 			fm,
-			serverOptions.MaxIdleConns,
-			serverOptions.MaxOpenConns,
-			serverOptions.DialTimeout,
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
@@ -202,9 +197,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		MaxIdleConns:                  serverOptions.MaxIdleConns,
-		MaxOpenConns:                  serverOptions.MaxOpenConns,
-		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,

@@ -25,7 +25,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -407,6 +410,14 @@ function ExplorerOptions({
 
 	const handleClearSelect = (): void => {
 		removeCurrentViewFromLocalStorage();
+
+		handleOptionsChange({
+			...options,
+			selectColumns:
+				sourcepage === DataSource.TRACES
+					? defaultTraceSelectedColumns
+					: defaultLogsSelectedColumns,
+		});
 
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};

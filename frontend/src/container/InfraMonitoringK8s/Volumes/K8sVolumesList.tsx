@@ -198,6 +198,11 @@ function K8sVolumesList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedVolumesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sVolumesList(
 		query as K8sVolumesListPayload,
 		{
@@ -278,12 +283,19 @@ function K8sVolumesList({
 
 	const selectedVolumeData = useMemo(() => {
 		if (!selectedVolumeUID) return null;
+		if (groupBy.length > 0) {
+			return (
+				nestedVolumesData.find(
+					(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
+				) || null
+			);
+		}
 		return (
 			volumesData.find(
 				(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
 			) || null
 		);
-	}, [selectedVolumeUID, volumesData]);
+	}, [selectedVolumeUID, volumesData, groupBy.length, nestedVolumesData]);
 
 	const handleRowClick = (record: K8sVolumesRowData): void => {
 		if (groupBy.length === 0) {
@@ -336,6 +348,10 @@ function K8sVolumesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedVolumeUID(record.volumeUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&

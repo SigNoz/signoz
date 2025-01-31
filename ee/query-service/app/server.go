@@ -74,9 +74,6 @@ type ServerOptions struct {
 	DisableRules               bool
 	RuleRepoURL                string
 	PreferSpanMetrics          bool
-	MaxIdleConns               int
-	MaxOpenConns               int
-	DialTimeout                time.Duration
 	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
@@ -157,11 +154,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		zap.L().Info("Using ClickHouse as datastore ...")
 		qb := db.NewDataConnector(
 			serverOptions.SigNoz.SQLStore.SQLxDB(),
+			serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
 			serverOptions.PromConfigPath,
 			lm,
-			serverOptions.MaxIdleConns,
-			serverOptions.MaxOpenConns,
-			serverOptions.DialTimeout,
 			serverOptions.Cluster,
 			serverOptions.UseLogsNewSchema,
 			serverOptions.UseTraceNewSchema,
@@ -245,7 +240,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickHouseDB(), serverOptions.Config.TelemetryStore.ClickHouse.DSN)
 	if err != nil {
 		return nil, err
 	}
@@ -266,9 +261,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		MaxIdleConns:                  serverOptions.MaxIdleConns,
-		MaxOpenConns:                  serverOptions.MaxOpenConns,
-		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        modelDao,
 		RulesManager:                  rm,
 		UsageManager:                  usageManager,
@@ -280,6 +272,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
+		GatewayUrl:                    serverOptions.GatewayUrl,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 	}
