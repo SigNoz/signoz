@@ -22,19 +22,26 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 		...convertKeysToColumnFields(selectedColumns || []),
 	];
 
+	const { maxY } = dashboard?.data?.layout?.reduce(
+		(acc, curr) => ({
+			maxY: Math.max(acc.maxY, curr.y + curr.h),
+		}),
+		{ maxY: 0 },
+	) ?? { maxY: 0 };
+
 	return {
 		...dashboard,
 		data: {
 			...dashboard.data,
 			layout: [
+				...(dashboard?.data?.layout || []),
 				{
 					i: widgetId,
 					w: 6,
 					x: 0,
 					h: 6,
-					y: 0,
+					y: maxY,
 				},
-				...(dashboard?.data?.layout || []),
 			],
 			widgets: [
 				...(dashboard?.data?.widgets || []),

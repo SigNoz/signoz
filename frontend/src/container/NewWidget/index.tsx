@@ -366,15 +366,21 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		const widgetId = query.get('widgetId');
 		let updatedLayout = selectedDashboard.data.layout || [];
 		if (isNewDashboard) {
+			const { maxY } = updatedLayout.reduce(
+				(acc, curr) => ({
+					maxY: Math.max(acc.maxY, curr.y + curr.h),
+				}),
+				{ maxY: 0 },
+			);
 			updatedLayout = [
+				...updatedLayout,
 				{
 					i: widgetId || '',
 					w: 6,
 					x: 0,
 					h: 6,
-					y: 0,
+					y: maxY,
 				},
-				...updatedLayout,
 			];
 		}
 		const dashboard: Dashboard = {
