@@ -195,6 +195,10 @@ function DaemonSetDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: DaemonSets list details tab changed', {
+			daemonSet: daemonSet?.daemonSetName,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -218,6 +222,7 @@ function DaemonSetDetails({
 			logEvent('Infra Monitoring: DaemonSets list details time updated', {
 				daemonSet: daemonSet?.daemonSetName,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

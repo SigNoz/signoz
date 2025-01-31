@@ -248,6 +248,11 @@ function K8sPodsList({
 		groupBy,
 	]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -256,6 +261,11 @@ function K8sPodsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s pods list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -267,7 +277,7 @@ function K8sPodsList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -281,9 +291,7 @@ function K8sPodsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s pods list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
@@ -308,12 +316,14 @@ function K8sPodsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s pods list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s pods list page visited', {});
 	}, []);
 
 	const selectedPodData = useMemo(() => {
@@ -350,7 +360,7 @@ function K8sPodsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s list item clicked', {
+		logEvent('Infra Monitoring: K8s pods list item clicked', {
 			podUID: record.podUID,
 		});
 	};
@@ -499,6 +509,16 @@ function K8sPodsList({
 		);
 	};
 
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s pods list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -530,10 +550,7 @@ function K8sPodsList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				loading={{
 					spinning: isFetching || isLoading,
