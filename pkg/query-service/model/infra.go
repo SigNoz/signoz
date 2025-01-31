@@ -731,3 +731,26 @@ type VolumeListRecord struct {
 	VolumeUsage               float64           `json:"volumeUsage"`
 	Meta                      map[string]string `json:"meta"`
 }
+
+type PodOnboardingStatus struct {
+	ClusterName        string `json:"clusterName"`
+	NodeName           string `json:"nodeName"`
+	NamespaceName      string `json:"namespaceName"`
+	PodName            string `json:"podName"`
+	HasClusterName     bool   `json:"hasClusterName"`
+	HasNodeName        bool   `json:"hasNodeName"`
+	HasNamespaceName   bool   `json:"hasNamespaceName"`
+	HasDeploymentName  bool   `json:"hasDeploymentName"`
+	HasStatefulsetName bool   `json:"hasStatefulsetName"`
+	HasDaemonsetName   bool   `json:"hasDaemonsetName"`
+	HasCronjobName     bool   `json:"hasCronjobName"`
+	HasJobName         bool   `json:"hasJobName"`
+}
+
+type OnboardingStatus struct {
+	DidSendPodMetrics           bool                  `json:"didSendPodMetrics"`
+	DidSendNodeMetrics          bool                  `json:"didSendNodeMetrics"`
+	DidSendClusterMetrics       bool                  `json:"didSendClusterMetrics"`
+	IsSendingOptionalPodMetrics bool                  `json:"isSendingOptionalPodMetrics"`
+	IsSendingRequiredMetadata   []PodOnboardingStatus `json:"isSendingRequiredMetadata"`
+}
