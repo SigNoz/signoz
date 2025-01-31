@@ -40,7 +40,7 @@ func NewMockClickhouseReader(
 	require.Nil(t, err, "could not init mock clickhouse")
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
 		mockDB,
-		clickhouseReader.NewOptions("", 10, 10, 10*time.Second, ""),
+		clickhouseReader.NewOptions("", ""),
 		testDB,
 		"",
 		featureFlags,

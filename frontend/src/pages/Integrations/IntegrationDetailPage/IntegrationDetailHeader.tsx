@@ -23,7 +23,7 @@ interface IntegrationDetailHeaderProps {
 	title: string;
 	description: string;
 	icon: string;
-	refetchIntegrationDetails: () => void;
+	onUnInstallSuccess: () => void;
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
 	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
@@ -39,7 +39,7 @@ function IntegrationDetailHeader(
 		description,
 		connectionState,
 		connectionData,
-		refetchIntegrationDetails,
+		onUnInstallSuccess,
 		setActiveDetailTab,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +62,7 @@ function IntegrationDetailHeader(
 		installIntegration,
 		{
 			onSuccess: () => {
-				refetchIntegrationDetails();
+				onUnInstallSuccess();
 			},
 			onError: () => {
 				notifications.error({
