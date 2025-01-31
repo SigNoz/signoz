@@ -1,5 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
+import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -22,27 +23,16 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 		...convertKeysToColumnFields(selectedColumns || []),
 	];
 
-	const { maxY } = dashboard?.data?.layout?.reduce(
-		(acc, curr) => ({
-			maxY: Math.max(acc.maxY, curr.y + curr.h),
-		}),
-		{ maxY: 0 },
-	) ?? { maxY: 0 };
+	const newLayoutItem = placeWidgetAtBottom(
+		widgetId,
+		dashboard?.data?.layout || [],
+	);
 
 	return {
 		...dashboard,
 		data: {
 			...dashboard.data,
-			layout: [
-				...(dashboard?.data?.layout || []),
-				{
-					i: widgetId,
-					w: 6,
-					x: 0,
-					h: 6,
-					y: maxY,
-				},
-			],
+			layout: [...(dashboard?.data?.layout || []), newLayoutItem],
 			widgets: [
 				...(dashboard?.data?.widgets || []),
 				{
