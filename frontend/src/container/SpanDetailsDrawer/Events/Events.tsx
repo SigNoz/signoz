@@ -45,7 +45,7 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 				)}
 				{events
 					.filter((eve) =>
-						eve.name.toLowerCase().includes(fieldSearchInput.toLowerCase()),
+						eve.name?.toLowerCase().includes(fieldSearchInput.toLowerCase()),
 					)
 					.map((event) => (
 						<div
@@ -76,7 +76,7 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 													<div className="timestamp-container">
 														<Typography.Text className="attribute-value">
 															{getYAxisFormattedValue(
-																`${event.timeUnixNano / 1e6 - startTime}`,
+																`${(event.timeUnixNano || 0) / 1e6 - startTime}`,
 																'ms',
 															)}
 														</Typography.Text>
