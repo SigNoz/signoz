@@ -7,6 +7,7 @@ import { Collapse, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { useGetK8sEntityStatus } from 'hooks/infraMonitoring/useGetK8sEntityStatus';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -53,6 +54,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
 
 	const { currentQuery } = useQueryBuilder();
+
+	const { data: k8sEntityStatus } = useGetK8sEntityStatus();
+
+	console.log(k8sEntityStatus);
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
