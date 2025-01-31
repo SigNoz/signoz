@@ -6,6 +6,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -133,23 +134,14 @@ function WidgetGraphComponent({
 			(l) => l.i === widget.id,
 		);
 
-		const { maxY } = selectedDashboard.data.layout?.reduce(
-			(acc, curr) => ({
-				maxY: Math.max(acc.maxY, curr.y + curr.h),
-			}),
-			{ maxY: 0 },
-		) ?? { maxY: 0 };
+		const newLayoutItem = placeWidgetAtBottom(
+			uuid,
+			selectedDashboard?.data.layout || [],
+			originalPanelLayout?.w || 6,
+			originalPanelLayout?.h || 6,
+		);
 
-		const layout = [
-			...(selectedDashboard.data.layout || []),
-			{
-				i: uuid,
-				w: originalPanelLayout?.w || 6,
-				x: 0,
-				h: originalPanelLayout?.h || 6,
-				y: maxY,
-			},
-		];
+		const layout = [...(selectedDashboard.data.layout || []), newLayoutItem];
 
 		updateDashboardMutation.mutateAsync(
 			{

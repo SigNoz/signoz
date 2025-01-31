@@ -58,6 +58,7 @@ import {
 	getDefaultWidgetData,
 	getIsQueryModified,
 	handleQueryChange,
+	placeWidgetAtBottom,
 } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
@@ -363,26 +364,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			return;
 		}
 
-		const widgetId = query.get('widgetId');
+		const widgetId = query.get('widgetId') || '';
 		let updatedLayout = selectedDashboard.data.layout || [];
+
 		if (isNewDashboard) {
-			const { maxY } = updatedLayout.reduce(
-				(acc, curr) => ({
-					maxY: Math.max(acc.maxY, curr.y + curr.h),
-				}),
-				{ maxY: 0 },
-			);
-			updatedLayout = [
-				...updatedLayout,
-				{
-					i: widgetId || '',
-					w: 6,
-					x: 0,
-					h: 6,
-					y: maxY,
-				},
-			];
+			const newLayoutItem = placeWidgetAtBottom(widgetId, updatedLayout);
+			updatedLayout = [...updatedLayout, newLayoutItem];
 		}
+
 		const dashboard: Dashboard = {
 			...selectedDashboard,
 			uuid: selectedDashboard.uuid,
