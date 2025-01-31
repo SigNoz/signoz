@@ -1454,6 +1454,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
 	var hasMissingSpans bool
 
+	userEmail , emailErr := auth.GetEmailFromJwt(ctx)
 	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
 	if err == nil {
 		startTime = cachedTraceData.StartTime
@@ -1465,6 +1466,10 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		totalSpans = cachedTraceData.TotalSpans
 		totalErrorSpans = cachedTraceData.TotalErrorSpans
 		hasMissingSpans = cachedTraceData.HasMissingSpans
+
+		if emailErr == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, userEmail, true, false)
+		}
 	}
 
 	if err != nil {
@@ -1478,6 +1483,10 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			return response, nil
 		}
 		totalSpans = uint64(len(searchScanResponses))
+
+		if emailErr == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, userEmail, true, false)
+		}
 
 		processingBeforeCache := time.Now()
 		for _, item := range searchScanResponses {
