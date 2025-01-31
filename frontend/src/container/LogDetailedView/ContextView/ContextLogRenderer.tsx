@@ -5,6 +5,7 @@ import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ShowButton from 'container/LogsContextList/ShowButton';
+import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -12,20 +13,11 @@ import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/co
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { useContextLogData } from './useContextLogData';
-
-const defaultLogsSelectedFields: IField[] = defaultLogsSelectedColumns.map(
-	(item) => ({
-		name: item.key,
-		type: item.type,
-		dataType: item.dataType,
-	}),
-);
 
 function ContextLogRenderer({
 	isEdit,
@@ -119,7 +111,7 @@ function ContextLogRenderer({
 				data={logTorender}
 				linesPerRow={1}
 				fontSize={options.fontSize}
-				selectedFields={defaultLogsSelectedFields}
+				selectedFields={convertKeysToColumnFields(defaultLogsSelectedColumns)}
 			/>
 		),
 		[log.id, options.fontSize],
