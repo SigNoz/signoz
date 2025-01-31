@@ -45,11 +45,11 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	apiKey, err := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgId, cloudProvider)
-	if err != nil {
-		RespondError(w, basemodel.InternalError(fmt.Errorf(
-			"couldn't provision PAT for cloud integration: %w", err,
-		)), nil)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgId, cloudProvider)
+	if apiErr != nil {
+		RespondError(w, basemodel.WrapApiError(
+			apiErr, "couldn't provision PAT for cloud integration:",
+		), nil)
 		return
 	}
 
@@ -57,26 +57,28 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		SigNozAPIKey: apiKey,
 	}
 
-	license, err := ah.LM().GetRepo().GetActiveLicense(r.Context())
-	if err != nil {
-		RespondError(w, basemodel.InternalError(fmt.Errorf(
-			"couldn't look for active license: %w", err,
-		)), nil)
+	license, apiErr := ah.LM().GetRepo().GetActiveLicense(r.Context())
+	if apiErr != nil {
+		RespondError(w, basemodel.WrapApiError(
+			apiErr, "couldn't look for active license",
+		), nil)
 		return
 	}
 
 	if license == nil {
-		// Will always be returning a PAT/API key - coming in a future change
+		// Return the API Key (PAT) even if the rest of the params can not be deduced.
+		// Params not returned from here will be requested from the user via form inputs.
+		// This enables gracefully degraded but working experience even for non-cloud deployments.
 		zap.L().Info("ingestion params and signoz api url can not be deduced since no license was found")
 		ah.Respond(w, result)
 		return
 	}
 
-	ingestionUrl, signozApiUrl, err := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
-	if err != nil {
-		RespondError(w, basemodel.InternalError(fmt.Errorf(
-			"couldn't deduce ingestion url and signoz api url: %w", err,
-		)), nil)
+	ingestionUrl, signozApiUrl, apiErr := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
+	if apiErr != nil {
+		RespondError(w, basemodel.WrapApiError(
+			apiErr, "couldn't deduce ingestion url and signoz api url",
+		), nil)
 		return
 	}
 
@@ -86,13 +88,13 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	gatewayUrl := ah.opts.GatewayUrl
 	if len(gatewayUrl) > 0 {
 
-		ingestionKey, err := getOrCreateCloudProviderIngestionKey(
+		ingestionKey, apiErr := getOrCreateCloudProviderIngestionKey(
 			r.Context(), gatewayUrl, license.Key, cloudProvider,
 		)
-		if err != nil {
-			RespondError(w, basemodel.InternalError(fmt.Errorf(
-				"couldn't get or create ingestion key: %w", err,
-			)), nil)
+		if apiErr != nil {
+			RespondError(w, basemodel.WrapApiError(
+				apiErr, "couldn't get or create ingestion key",
+			), nil)
 			return
 		}
 
@@ -117,7 +119,9 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	allPats, err := ah.AppDao().ListPATs(ctx)
 	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf("couldn't list PATs: %w", err.Error()))
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't list PATs: %w", err.Error(),
+		))
 	}
 	for _, p := range allPats {
 		if p.UserID == integrationUser.Id && p.Name == integrationPATName {

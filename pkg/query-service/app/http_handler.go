@@ -3936,7 +3936,7 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
-		"/{cloudProvider}/agent-check-in", am.EditAccess(aH.CloudIntegrationsAgentCheckIn),
+		"/{cloudProvider}/agent-check-in", am.ViewAccess(aH.CloudIntegrationsAgentCheckIn),
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
