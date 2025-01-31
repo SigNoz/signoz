@@ -1452,6 +1452,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var traceRoots []*model.Span
 	var serviceNameToTotalDurationMap = map[string]uint64{}
 	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
+	var hasMissingSpans bool
 
 	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
 	if err == nil {
@@ -1463,6 +1464,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		traceRoots = cachedTraceData.TraceRoots
 		totalSpans = cachedTraceData.TotalSpans
 		totalErrorSpans = cachedTraceData.TotalErrorSpans
+		hasMissingSpans = cachedTraceData.HasMissingSpans
 	}
 
 	if err != nil {
@@ -1528,8 +1530,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			if startTime == 0 || jsonItem.TimeUnixNano < startTime {
 				startTime = jsonItem.TimeUnixNano
 			}
-			if endTime == 0 || (jsonItem.TimeUnixNano+(jsonItem.DurationNano/1000000)) > endTime {
-				endTime = jsonItem.TimeUnixNano + (jsonItem.DurationNano / 1000000)
+			if endTime == 0 || ( (jsonItem.TimeUnixNano * 1000000 ) + jsonItem.DurationNano ) /1000000  > endTime {
+				endTime = ((jsonItem.TimeUnixNano * 1000000) + jsonItem.DurationNano ) / 1000000
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1568,6 +1570,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 						missingSpan.Children = append(missingSpan.Children, spanNode)
 						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
 						traceRoots = append(traceRoots, &missingSpan)
+						hasMissingSpans = true
 					}
 				}
 			}
@@ -1595,6 +1598,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			SpanIdToSpanNodeMap:           spanIdToSpanNodeMap,
 			ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
 			TraceRoots:                    traceRoots,
+			HasMissingSpans:               hasMissingSpans,
 		}
 
 		zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
@@ -1617,7 +1621,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	response.RootServiceName = rootServiceName
 	response.RootServiceEntryPoint = rootServiceEntryPoint
 	response.ServiceNameToTotalDurationMap = serviceNameToTotalDurationMap
-	response.HasMissingSpans = len(traceRoots) > 1
+	response.HasMissingSpans = hasMissingSpans
 	return response, nil
 }
 
@@ -1699,8 +1703,8 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			if startTime == 0 || jsonItem.TimeUnixNano < startTime {
 				startTime = jsonItem.TimeUnixNano
 			}
-			if endTime == 0 || (jsonItem.TimeUnixNano+(jsonItem.DurationNano/1000000)) > endTime {
-				endTime = jsonItem.TimeUnixNano + (jsonItem.DurationNano / 1000000)
+			if endTime == 0 || ( (jsonItem.TimeUnixNano * 1000000 ) + jsonItem.DurationNano ) /1000000  > endTime {
+				endTime = ((jsonItem.TimeUnixNano * 1000000) + jsonItem.DurationNano ) / 1000000
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
