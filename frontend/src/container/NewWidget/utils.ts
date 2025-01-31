@@ -631,3 +631,43 @@ export const placeWidgetAtBottom = (
 		h: widgetHeight || 6,
 	};
 };
+
+export const placeWidgetBetweenRows = (
+	widgetId: string,
+	layout: Layout[],
+	_currentRowId: string,
+	nextRowId?: string | null,
+	widgetWidth?: number,
+	widgetHeight?: number,
+): Layout[] => {
+	if (layout.length === 0) {
+		return [
+			{
+				i: widgetId,
+				x: 0,
+				y: 0,
+				w: widgetWidth || 6,
+				h: widgetHeight || 6,
+			},
+		];
+	}
+
+	const nextRowIndex = nextRowId
+		? layout.findIndex((item) => item.i === nextRowId)
+		: -1;
+
+	// slice the layout from current row to next row
+	const sectionWidgets =
+		nextRowIndex === -1 ? layout : layout.slice(0, nextRowIndex);
+	console.log('sectionWidgets', sectionWidgets, nextRowIndex);
+
+	const newWidgetLayout = placeWidgetAtBottom(
+		widgetId,
+		sectionWidgets,
+		widgetWidth,
+		widgetHeight,
+	);
+
+	// add new layout in between the sectionWidgets and the rest of the layout
+	return [...sectionWidgets, newWidgetLayout, ...layout.slice(nextRowIndex)];
+};
