@@ -220,6 +220,11 @@ function K8sDeploymentsList({
 		[deploymentsData, groupBy],
 	);
 
+	const nestedDeploymentsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const columns = useMemo(() => getK8sDeploymentsListColumns(groupBy), [
 		groupBy,
 	]);
@@ -288,12 +293,26 @@ function K8sDeploymentsList({
 
 	const selectedDeploymentData = useMemo(() => {
 		if (!selectedDeploymentUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the deployment from the formatted grouped by deployments data
+			return (
+				nestedDeploymentsData.find(
+					(deployment) => deployment.deploymentName === selectedDeploymentUID,
+				) || null
+			);
+		}
+		// If not grouped by, return the deployment from the deployments data
 		return (
 			deploymentsData.find(
 				(deployment) => deployment.deploymentName === selectedDeploymentUID,
 			) || null
 		);
-	}, [selectedDeploymentUID, deploymentsData]);
+	}, [
+		selectedDeploymentUID,
+		groupBy.length,
+		deploymentsData,
+		nestedDeploymentsData,
+	]);
 
 	const handleRowClick = (record: K8sDeploymentsRowData): void => {
 		if (groupBy.length === 0) {
@@ -346,6 +365,10 @@ function K8sDeploymentsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedDeploymentUID(record.deploymentUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&

@@ -227,6 +227,11 @@ function K8sPodsList({
 	const podsData = useMemo(() => data?.payload?.data?.records || [], [data]);
 	const totalCount = data?.payload?.data?.total || 0;
 
+	const nestedPodsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const formattedPodsData = useMemo(
 		() => formatDataForTable(podsData, groupBy),
 		[podsData, groupBy],
@@ -313,8 +318,13 @@ function K8sPodsList({
 
 	const selectedPodData = useMemo(() => {
 		if (!selectedPodUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the pod from the formatted grouped by pods data
+			return nestedPodsData.find((pod) => pod.podUID === selectedPodUID) || null;
+		}
+		// If not grouped by, return the node from the nodes data
 		return podsData.find((pod) => pod.podUID === selectedPodUID) || null;
-	}, [selectedPodUID, podsData]);
+	}, [selectedPodUID, groupBy.length, podsData, nestedPodsData]);
 
 	const handleGroupByRowClick = (record: K8sPodsRowData): void => {
 		setSelectedRowData(record);
@@ -425,6 +435,10 @@ function K8sPodsList({
 							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setSelectedPodUID(record.podUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
