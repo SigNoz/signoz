@@ -50,6 +50,8 @@ export interface HostListResponse {
 		total: number;
 		sentAnyHostMetricsData: boolean;
 		isSendingK8SAgentMetrics: boolean;
+		clusterNames: string[];
+		nodeNames: string[];
 	};
 }
 
