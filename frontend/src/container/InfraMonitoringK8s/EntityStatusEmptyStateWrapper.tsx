@@ -55,16 +55,26 @@ function EntityStatusEmptyStateWrapper({
 			Partial metrics detected. The following metrics from the kubelet metrics are
 			not received. They help monitor the resource utilisation to their
 			requests/limits. Learn more{' '}
-			<Typography.Link href="placeholder">here</Typography.Link> about how to send
-			them. Reach out to support if you need further assistance.
+			<Typography.Link
+				// TODO: Add link to docs
+				href="placeholder"
+			>
+				here
+			</Typography.Link>{' '}
+			about how to send them. Reach out to support if you need further assistance.
 		</Typography.Text>
 	);
 
 	const noMetadata = (
 		<Typography>
 			The following shows the sample pods without required metadata. Learn more{' '}
-			<Typography.Link href="placeholder">here</Typography.Link> on how to send
-			enriched data for k8s metrics
+			<Typography.Link
+				// TODO: Add link to docs
+				href="placeholder"
+			>
+				here
+			</Typography.Link>{' '}
+			on how to send enriched data for k8s metrics
 			<ul>
 				{!metaData?.hasClusterName && <li>No cluster name found</li>}
 				{!metaData?.hasNodeName && <li>No node name found</li>}
@@ -94,8 +104,13 @@ function EntityStatusEmptyStateWrapper({
 			No node metrics were detected. This is likely due to not adding
 			&quot;node&quot; to the metric groups of kubelet receiver. Please update the
 			config and check back. Learn more{' '}
-			<Typography.Link href="placeholder">here</Typography.Link>. Reach out to
-			support if you need further assistance.
+			<Typography.Link
+				// TODO: Add link to docs
+				href="placeholder"
+			>
+				here
+			</Typography.Link>
+			. Reach out to support if you need further assistance.
 		</Typography.Text>
 	);
 
@@ -103,8 +118,13 @@ function EntityStatusEmptyStateWrapper({
 		<Typography.Text>
 			We are receiving kubelet metrics but not k8scluster receiver metrics. Follow
 			the cluster metrics setup{' '}
-			<Typography.Link href="placeholder">here</Typography.Link>. Reach out to
-			support if you need further assistance.
+			<Typography.Link
+				// TODO: Add link to docs
+				href="placeholder"
+			>
+				here
+			</Typography.Link>
+			. Reach out to support if you need further assistance.
 		</Typography.Text>
 	);
 
