@@ -14,6 +14,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import { K8sEntityStatusResponse } from 'api/infraMonitoring/getK8sEntityStatus';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import classNames from 'classnames';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
@@ -31,6 +32,7 @@ import {
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
+import EntityStatusEmptyStateWrapper from '../EntityStatusEmptyStateWrapper';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import {
@@ -50,10 +52,12 @@ function K8sPodsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
 	quickFiltersLastUpdated,
+	entityStatus,
 }: {
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
 	quickFiltersLastUpdated: number;
+	entityStatus: K8sEntityStatusResponse | null | undefined;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -538,55 +542,60 @@ function K8sPodsList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			<Table
-				className={classNames('k8s-list-table', {
-					'expanded-k8s-list-table': isGroupedByAttribute,
-				})}
-				dataSource={isFetching || isLoading ? [] : formattedPodsData}
-				columns={columns}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					total: totalCount,
-					showSizeChanger: true,
-					hideOnSinglePage: false,
-					onChange: onPaginationChange,
-				}}
-				loading={{
-					spinning: isFetching || isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+			<EntityStatusEmptyStateWrapper
+				category={K8sCategory.PODS}
+				data={entityStatus}
+			>
+				<Table
+					className={classNames('k8s-list-table', {
+						'expanded-k8s-list-table': isGroupedByAttribute,
+					})}
+					dataSource={isFetching || isLoading ? [] : formattedPodsData}
+					columns={columns}
+					pagination={{
+						current: currentPage,
+						pageSize,
+						total: totalCount,
+						showSizeChanger: true,
+						hideOnSinglePage: false,
+						onChange: onPaginationChange,
+					}}
+					loading={{
+						spinning: isFetching || isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					locale={{
+						emptyText:
+							isFetching || isLoading ? null : (
+								<div className="no-filtered-hosts-message-container">
+									<div className="no-filtered-hosts-message-content">
+										<img
+											src="/Icons/emptyState.svg"
+											alt="thinking-emoji"
+											className="empty-state-svg"
+										/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
+										<Typography.Text className="no-filtered-hosts-message">
+											This query had no results. Edit your query and try again!
+										</Typography.Text>
+									</div>
 								</div>
-							</div>
-						),
-				}}
-				scroll={{ x: true }}
-				tableLayout="fixed"
-				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
-				})}
-				expandable={{
-					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-					expandIcon: expandRowIconRenderer,
-					expandedRowKeys,
-				}}
-			/>
+							),
+					}}
+					scroll={{ x: true }}
+					tableLayout="fixed"
+					onChange={handleTableChange}
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => handleRowClick(record),
+						className: 'clickable-row',
+					})}
+					expandable={{
+						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
+					}}
+				/>
+			</EntityStatusEmptyStateWrapper>
 
 			{selectedPodData && (
 				<PodDetails

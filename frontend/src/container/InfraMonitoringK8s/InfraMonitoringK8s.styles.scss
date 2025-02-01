@@ -888,3 +888,16 @@
 .expanded-clickable-row {
 	cursor: pointer;
 }
+
+.entity-status-empty-state-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	padding: 48px 120px;
+
+	.entity-status-empty-state-message {
+		text-align: center;
+	}
+}

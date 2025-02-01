@@ -55,9 +55,8 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const { currentQuery } = useQueryBuilder();
 
-	const { data: k8sEntityStatus } = useGetK8sEntityStatus();
-
-	console.log(k8sEntityStatus);
+	const { data: k8sEntityStatusData } = useGetK8sEntityStatus();
+	const k8sEntityStatus = k8sEntityStatusData?.payload;
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -340,6 +339,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -348,6 +348,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -356,6 +357,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -364,6 +366,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -372,6 +375,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -380,6 +384,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -388,6 +393,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -396,6 +402,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -404,6 +411,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 					</div>
