@@ -10,8 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/constants"
+	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -20,6 +25,7 @@ type CloudIntegrationConnectionParamsResponse struct {
 	IngestionUrl string `json:"ingestion_url,omitempty"`
 	IngestionKey string `json:"ingestion_key,omitempty"`
 	SigNozAPIUrl string `json:"signoz_api_url,omitempty"`
+	SigNozAPIKey string `json:"signoz_api_key,omitempty"`
 }
 
 func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseWriter, r *http.Request) {
@@ -31,44 +37,64 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	license, err := ah.LM().GetRepo().GetActiveLicense(r.Context())
+	currentUser, err := auth.GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, basemodel.InternalError(fmt.Errorf(
-			"couldn't look for active license: %w", err,
+		RespondError(w, basemodel.UnauthorizedError(fmt.Errorf(
+			"couldn't deduce current user: %w", err,
 		)), nil)
 		return
 	}
 
-	if license == nil {
-		RespondError(w, basemodel.ForbiddenError(fmt.Errorf(
-			"no active license found",
-		)), nil)
-		return
-	}
-
-	ingestionUrl, signozApiUrl, err := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
-	if err != nil {
-		RespondError(w, basemodel.InternalError(fmt.Errorf(
-			"couldn't deduce ingestion url and signoz api url: %w", err,
-		)), nil)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgId, cloudProvider)
+	if apiErr != nil {
+		RespondError(w, basemodel.WrapApiError(
+			apiErr, "couldn't provision PAT for cloud integration:",
+		), nil)
 		return
 	}
 
 	result := CloudIntegrationConnectionParamsResponse{
-		IngestionUrl: ingestionUrl,
-		SigNozAPIUrl: signozApiUrl,
+		SigNozAPIKey: apiKey,
 	}
+
+	license, apiErr := ah.LM().GetRepo().GetActiveLicense(r.Context())
+	if apiErr != nil {
+		RespondError(w, basemodel.WrapApiError(
+			apiErr, "couldn't look for active license",
+		), nil)
+		return
+	}
+
+	if license == nil {
+		// Return the API Key (PAT) even if the rest of the params can not be deduced.
+		// Params not returned from here will be requested from the user via form inputs.
+		// This enables gracefully degraded but working experience even for non-cloud deployments.
+		zap.L().Info("ingestion params and signoz api url can not be deduced since no license was found")
+		ah.Respond(w, result)
+		return
+	}
+
+	ingestionUrl, signozApiUrl, apiErr := getIngestionUrlAndSigNozAPIUrl(r.Context(), license.Key)
+	if apiErr != nil {
+		RespondError(w, basemodel.WrapApiError(
+			apiErr, "couldn't deduce ingestion url and signoz api url",
+		), nil)
+		return
+	}
+
+	result.IngestionUrl = ingestionUrl
+	result.SigNozAPIUrl = signozApiUrl
 
 	gatewayUrl := ah.opts.GatewayUrl
 	if len(gatewayUrl) > 0 {
 
-		ingestionKey, err := getOrCreateCloudProviderIngestionKey(
+		ingestionKey, apiErr := getOrCreateCloudProviderIngestionKey(
 			r.Context(), gatewayUrl, license.Key, cloudProvider,
 		)
-		if err != nil {
-			RespondError(w, basemodel.InternalError(fmt.Errorf(
-				"couldn't get or create ingestion key: %w", err,
-			)), nil)
+		if apiErr != nil {
+			RespondError(w, basemodel.WrapApiError(
+				apiErr, "couldn't get or create ingestion key",
+			), nil)
 			return
 		}
 
@@ -79,6 +105,100 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	}
 
 	ah.Respond(w, result)
+}
+
+func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider string) (
+	string, *basemodel.ApiError,
+) {
+	integrationPATName := fmt.Sprintf("%s integration", cloudProvider)
+
+	integrationUser, apiErr := ah.getOrCreateCloudIntegrationUser(ctx, orgId, cloudProvider)
+	if apiErr != nil {
+		return "", apiErr
+	}
+
+	allPats, err := ah.AppDao().ListPATs(ctx)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't list PATs: %w", err.Error(),
+		))
+	}
+	for _, p := range allPats {
+		if p.UserID == integrationUser.Id && p.Name == integrationPATName {
+			return p.Token, nil
+		}
+	}
+
+	zap.L().Info(
+		"no PAT found for cloud integration, creating a new one",
+		zap.String("cloudProvider", cloudProvider),
+	)
+
+	newPAT := model.PAT{
+		Token:     generatePATToken(),
+		UserID:    integrationUser.Id,
+		Name:      integrationPATName,
+		Role:      baseconstants.ViewerGroup,
+		ExpiresAt: 0,
+		CreatedAt: time.Now().Unix(),
+		UpdatedAt: time.Now().Unix(),
+	}
+	integrationPAT, err := ah.AppDao().CreatePAT(ctx, newPAT)
+	if err != nil {
+		return "", basemodel.InternalError(fmt.Errorf(
+			"couldn't create cloud integration PAT: %w", err.Error(),
+		))
+	}
+	return integrationPAT.Token, nil
+}
+
+func (ah *APIHandler) getOrCreateCloudIntegrationUser(
+	ctx context.Context, orgId string, cloudProvider string,
+) (*basemodel.User, *basemodel.ApiError) {
+	cloudIntegrationUserId := fmt.Sprintf("%s-integration", cloudProvider)
+
+	integrationUserResult, apiErr := ah.AppDao().GetUser(ctx, cloudIntegrationUserId)
+	if apiErr != nil {
+		return nil, basemodel.WrapApiError(apiErr, "couldn't look for integration user")
+	}
+
+	if integrationUserResult != nil {
+		return &integrationUserResult.User, nil
+	}
+
+	zap.L().Info(
+		"cloud integration user not found. Attempting to create the user",
+		zap.String("cloudProvider", cloudProvider),
+	)
+
+	newUser := &basemodel.User{
+		Id:        cloudIntegrationUserId,
+		Name:      fmt.Sprintf("%s integration", cloudProvider),
+		Email:     fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
+		CreatedAt: time.Now().Unix(),
+		OrgId:     orgId,
+	}
+
+	viewerGroup, apiErr := dao.DB().GetGroupByName(ctx, baseconstants.ViewerGroup)
+	if apiErr != nil {
+		return nil, basemodel.WrapApiError(apiErr, "couldn't get viewer group for creating integration user")
+	}
+	newUser.GroupId = viewerGroup.Id
+
+	passwordHash, err := auth.PasswordHash(uuid.NewString())
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf(
+			"couldn't hash random password for cloud integration user: %w", err,
+		))
+	}
+	newUser.Password = passwordHash
+
+	integrationUser, apiErr := ah.AppDao().CreateUser(ctx, newUser, false)
+	if apiErr != nil {
+		return nil, basemodel.WrapApiError(apiErr, "couldn't create cloud integration user")
+	}
+
+	return integrationUser, nil
 }
 
 func getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (
