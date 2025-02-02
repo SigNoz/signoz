@@ -204,7 +204,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
 		"aws", cloudintegrations.GenerateConnectionUrlRequest{
 			AgentConfig: cloudintegrations.SigNozAgentConfig{
-				Region: "us-east-1",
+				Region:       "us-east-1",
+				SigNozAPIKey: "test-api-key",
 			},
 			AccountConfig: testAccountConfig,
 		})

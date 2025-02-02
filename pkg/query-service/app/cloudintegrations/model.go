@@ -1,12 +1,12 @@
 package cloudintegrations
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 )
 
@@ -142,7 +142,17 @@ type CloudServiceDetails struct {
 
 	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
 
-	TelemetryCollectionStrategy CloudTelemetryCollectionStrategy `json:"telemetry_collection_strategy"`
+	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry_collection_strategy"`
+}
+
+func (csd *CloudServiceDetails) MarshalJSON() ([]byte, error) {
+	// Prevent marshalling of TelemetryCollectionStrategy since it contains interface fields
+
+	// use temp type, since json.Marshal can't be called on CloudServiceDetails here
+	type svcDetails CloudServiceDetails
+	sd := svcDetails(*csd)
+	sd.TelemetryCollectionStrategy = nil
+	return json.Marshal(sd)
 }
 
 type CloudServiceConfig struct {
@@ -270,32 +280,24 @@ func ParseCloudTelemetryCollectionStrategyFromMap(
 		return &result, nil
 	}
 
-	return nil, fmt.Errorf("unsupported cloud provider: %w", cloudProvider)
+	return nil, fmt.Errorf("unsupported cloud provider: %s", cloudProvider)
 }
 
 func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
 	*StructType, error,
 ) {
+	mapJson, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't marshal map to json: %w", err)
+	}
+
 	var res StructType
-
-	mapDecoder, err := mapstructure.NewDecoder(
-		&mapstructure.DecoderConfig{
-			Metadata:             nil,
-			Result:               &res,
-			TagName:              "json",
-			ErrorUnused:          true, // extra map keys not allowed
-			IgnoreUntaggedFields: true,
-		},
-	)
+	decoder := json.NewDecoder(bytes.NewReader(mapJson))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&res)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't prepare map structure decoder: %w", err)
+		return nil, fmt.Errorf("couldn't unmarshal json back to struct: %w", err)
 	}
-
-	err = mapDecoder.Decode(data)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't decode map: %w", err)
-	}
-
 	return &res, nil
 }
 

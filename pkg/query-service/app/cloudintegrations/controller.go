@@ -93,6 +93,11 @@ type GenerateConnectionUrlRequest struct {
 type SigNozAgentConfig struct {
 	// The region in which SigNoz agent should be installed.
 	Region string `json:"region"`
+
+	IngestionUrl string `json:"ingestion_url"`
+	IngestionKey string `json:"ingestion_key"`
+	SigNozAPIUrl string `json:"signoz_api_url"`
+	SigNozAPIKey string `json:"signoz_api_key"`
 }
 
 type GenerateConnectionUrlResponse struct {
@@ -117,7 +122,7 @@ func (c *Controller) GenerateConnectionUrl(
 
 	// TODO(Raj): Add actual cloudformation template for AWS integration after it has been shipped.
 	connectionUrl := fmt.Sprintf(
-		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration/",
+		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration",
 		req.AgentConfig.Region, req.AgentConfig.Region,
 	)
 

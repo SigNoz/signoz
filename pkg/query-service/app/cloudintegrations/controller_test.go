@@ -265,7 +265,7 @@ func makeTestConnectedAccount(t *testing.T, controller *Controller, cloudAccount
 	require.Equal(testAccountId, resp.AccountId)
 	require.Equal(cloudAccountId, resp.CloudAccountId)
 
-	acc, err := controller.accountsRepo.get(context.TODO(), "aws", resp.CloudAccountId)
-	require.NoError(err)
+	acc, err := controller.accountsRepo.get(context.TODO(), "aws", resp.AccountId)
+	require.Nil(err)
 	return acc
 }

@@ -1,9 +1,7 @@
 package cloudintegrations
 
 import (
-	"bytes"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path"
@@ -174,18 +172,14 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 	}
 	delete(hydratedSpec, "telemetry_collection_strategy")
 
-	hydratedSpecJson, err := koanfJson.Parser().Marshal(hydratedSpec)
+	telemetryCollectionStrategy, err := ParseCloudTelemetryCollectionStrategyFromMap(
+		cloudProvider, telemetryCollectionStrategyMap,
+	)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't serialize hydrated integration spec back to JSON %s: %w",
-			integrationJsonPath, err,
-		)
+		return nil, fmt.Errorf("couldn't parse telemetry_collection_strategy: %w", err)
 	}
 
-	var serviceDef CloudServiceDetails
-	decoder := json.NewDecoder(bytes.NewReader(hydratedSpecJson))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&serviceDef)
+	serviceDef, err := ParseStructWithJsonTagsFromMap[CloudServiceDetails](hydratedSpec)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't parse hydrated JSON spec read from %s: %w",
@@ -193,24 +187,18 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 		)
 	}
 
-	telemetryCollectionStrategy, err := ParseCloudTelemetryCollectionStrategyFromMap(
-		cloudProvider, telemetryCollectionStrategyMap,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't parse telemetry_collection_strategy: %w", err)
-	}
-	serviceDef.TelemetryCollectionStrategy = *telemetryCollectionStrategy
+	serviceDef.TelemetryCollectionStrategy = telemetryCollectionStrategy
 
 	err = validateServiceDefinition(serviceDef)
 	if err != nil {
 		return nil, fmt.Errorf("invalid service definition %s: %w", serviceDef.Id, err)
 	}
 
-	return &serviceDef, nil
+	return serviceDef, nil
 
 }
 
-func validateServiceDefinition(s CloudServiceDetails) error {
+func validateServiceDefinition(s *CloudServiceDetails) error {
 	// Validate dashboard data
 	seenDashboardIds := map[string]interface{}{}
 	for _, dd := range s.Assets.Dashboards {
