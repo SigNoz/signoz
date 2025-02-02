@@ -230,14 +230,19 @@ type SignalConnectionStatus struct {
 	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
 }
 
-type CloudTelemetryCollectionStrategy struct {
-	// The exact shape of sub configs will depend on the cloud provider
-	MetricsCollectionConfig CloudSignalCollectionConfig `json:"metrics"`
-
-	LogsCollectionConfig CloudSignalCollectionConfig `json:"logs"`
+// The exact shape of signal collection strategy will vary by cloud provider.
+type CloudSignalCollectionStrategy interface {
+	// Should be able to accumulate signal collection strategy incrementally when needed
+	UpdateWithServiceStrategy(CloudSignalCollectionStrategy) error
 }
 
-func NewCloudTelemetryCollectionConfig(cloudProvider string) (
+type CloudTelemetryCollectionStrategy struct {
+	MetricsCollectionConfig CloudSignalCollectionStrategy `json:"metrics"`
+
+	LogsCollectionConfig CloudSignalCollectionStrategy `json:"logs"`
+}
+
+func NewCloudTelemetryCollectionStrategy(cloudProvider string) (
 	*CloudTelemetryCollectionStrategy, error,
 ) {
 	return ParseCloudTelemetryCollectionStrategyFromMap(
@@ -262,15 +267,21 @@ func ParseCloudTelemetryCollectionStrategyFromMap(
 		}
 
 		if metricsConfMap, ok := data["metrics"].(map[string]any); ok {
-			metricsConf, err := ParseStructWithJsonTagsFromMap[AWSMetricsCollectionConfig](metricsConfMap)
+			metricsConf, err := ParseStructWithJsonTagsFromMap[AWSMetricsCollectionConfig](
+				metricsConfMap,
+			)
 			if err != nil {
-				return nil, fmt.Errorf("couldn't decode metrics collection strategy: %w", err)
+				return nil, fmt.Errorf(
+					"couldn't decode metrics collection strategy: %w", err,
+				)
 			}
 			result.MetricsCollectionConfig = metricsConf
 		}
 
 		if logsConfMap, ok := data["logs"].(map[string]any); ok {
-			logsConf, err := ParseStructWithJsonTagsFromMap[AWSLogsCollectionConfig](logsConfMap)
+			logsConf, err := ParseStructWithJsonTagsFromMap[AWSLogsCollectionConfig](
+				logsConfMap,
+			)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't decode logs collection strategy: %w", err)
 			}
@@ -301,25 +312,20 @@ func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
 	return &res, nil
 }
 
-type CloudSignalCollectionConfig interface {
-	// Should be able to accumulate signal collection config
-	UpdateWithServiceConfig(CloudSignalCollectionConfig) error
-}
-
 type AWSMetricsCollectionConfig struct {
-	// to be used for https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
+	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	CloudwatchMetricsStreamFilters []CloudwatchMetricStreamFilter `json:"cloudwatch_metric_stream_filters"`
 }
 
 type CloudwatchMetricStreamFilter struct {
+	// json tags here are in the shape expected by AWS API as detailed at
 	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
-	// json tags here are in the shape expected by AWS API linked above
 	Namespace   string   `json:"Namespace"`
 	MetricNames []string `json:"MetricNames,omitempty"`
 }
 
-func (amc *AWSMetricsCollectionConfig) UpdateWithServiceConfig(
-	svcConfig CloudSignalCollectionConfig,
+func (amc *AWSMetricsCollectionConfig) UpdateWithServiceStrategy(
+	svcConfig CloudSignalCollectionStrategy,
 ) error {
 	if svcConfig == nil {
 		return nil
@@ -352,8 +358,8 @@ type CloudwatchLogsSubscriptionConfig struct {
 	FilterPattern string `json:"filter_pattern"`
 }
 
-func (alc *AWSLogsCollectionConfig) UpdateWithServiceConfig(
-	svcConfig CloudSignalCollectionConfig,
+func (alc *AWSLogsCollectionConfig) UpdateWithServiceStrategy(
+	svcConfig CloudSignalCollectionStrategy,
 ) error {
 	if svcConfig == nil {
 		return nil

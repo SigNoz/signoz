@@ -165,7 +165,8 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 	}
 	hydratedSpec := hydrated.(map[string]any)
 
-	// telemetry collection strategy can't be parsed directly
+	// telemetry collection strategy can't be JSON parsed directly
+	// since it contains interface fields.
 	telemetryCollectionStrategyMap, ok := hydratedSpec["telemetry_collection_strategy"].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("couldn't find telemetry_collection_strategy")

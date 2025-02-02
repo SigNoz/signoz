@@ -208,7 +208,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 				SigNozAPIKey: "test-api-key",
 			},
 			AccountConfig: testAccountConfig,
-		})
+		},
+	)
 	testAccountId := connectionUrlResp.AccountId
 	require.NotEmpty(testAccountId)
 	require.NotEmpty(connectionUrlResp.ConnectionUrl)
@@ -226,10 +227,10 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Nil(checkinResp.RemovedAt)
 	require.Equal(testAccountConfig.EnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
 
-	metricsConfig := checkinResp.IntegrationConfig.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	metricsConfig := checkinResp.IntegrationConfig.TelemetryCollectionStrategy.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
 	require.Empty(metricsConfig.CloudwatchMetricsStreamFilters)
 
-	logsConfig := checkinResp.IntegrationConfig.TelemetryConfig.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	logsConfig := checkinResp.IntegrationConfig.TelemetryCollectionStrategy.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
 	require.Empty(logsConfig.CloudwatchLogsSubscriptions)
 
 	// helper
@@ -270,14 +271,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	integrationConf := checkinResp.IntegrationConfig
 	require.Equal(testAccountConfig.EnabledRegions, integrationConf.EnabledRegions)
 
-	metricsConfig = integrationConf.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	metricsConfig = integrationConf.TelemetryCollectionStrategy.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
 	metricStreamNamespaces := []string{}
 	for _, f := range metricsConfig.CloudwatchMetricsStreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/EC2", "AWS/RDS"}, metricStreamNamespaces)
 
-	logsConfig = integrationConf.TelemetryConfig.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	logsConfig = integrationConf.TelemetryCollectionStrategy.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
 	logGroupPrefixes := []string{}
 	for _, f := range logsConfig.CloudwatchLogsSubscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
@@ -312,14 +313,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	integrationConf = checkinResp.IntegrationConfig
 	require.Equal(testAccountConfig2.EnabledRegions, integrationConf.EnabledRegions)
 
-	metricsConfig = integrationConf.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	metricsConfig = integrationConf.TelemetryCollectionStrategy.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
 	metricStreamNamespaces = []string{}
 	for _, f := range metricsConfig.CloudwatchMetricsStreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/RDS"}, metricStreamNamespaces)
 
-	logsConfig = integrationConf.TelemetryConfig.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	logsConfig = integrationConf.TelemetryCollectionStrategy.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
 	logGroupPrefixes = []string{}
 	for _, f := range logsConfig.CloudwatchLogsSubscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
@@ -437,7 +438,7 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 
 	integrationConfMap := respMap["integration_config"].(map[string]any)
 
-	telemetryCollectionConf := integrationConfMap["telemetry"]
+	telemetryCollectionStrategy := integrationConfMap["telemetry"]
 	delete(integrationConfMap, "telemetry")
 
 	resp, err := cloudintegrations.ParseStructWithJsonTagsFromMap[cloudintegrations.AgentCheckInResponse](respMap)
@@ -447,10 +448,9 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 		)
 	}
 
-	if telemetryCollectionConfMap, ok := telemetryCollectionConf.(map[string]any); ok {
-
+	if telemetryCollectionStrategyMap, ok := telemetryCollectionStrategy.(map[string]any); ok {
 		tc, err := cloudintegrations.ParseCloudTelemetryCollectionStrategyFromMap(
-			cloudProvider, telemetryCollectionConfMap,
+			cloudProvider, telemetryCollectionStrategyMap,
 		)
 		if err != nil {
 			tb.t.Fatalf(
@@ -458,7 +458,7 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 			)
 		}
 
-		resp.IntegrationConfig.TelemetryConfig = tc
+		resp.IntegrationConfig.TelemetryCollectionStrategy = tc
 	}
 
 	return resp

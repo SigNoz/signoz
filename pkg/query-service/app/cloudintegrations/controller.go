@@ -122,7 +122,7 @@ func (c *Controller) GenerateConnectionUrl(
 
 	// TODO(Raj): Add actual cloudformation template for AWS integration after it has been shipped.
 	connectionUrl := fmt.Sprintf(
-		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration",
+		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration/",
 		req.AgentConfig.Region, req.AgentConfig.Region,
 	)
 
@@ -179,7 +179,7 @@ type AgentCheckInResponse struct {
 type IntegrationConfigForAgent struct {
 	EnabledRegions []string `json:"enabled_regions"`
 
-	TelemetryConfig *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
+	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -218,16 +218,16 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// prepare and return integration config to be consumed by agent
-	telemetryConfig, err := NewCloudTelemetryCollectionConfig(cloudProvider)
+	telemetryCollectionStrategy, err := NewCloudTelemetryCollectionStrategy(cloudProvider)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
-			"couldn't init cloud telemetry config: %w", err,
+			"couldn't init telemetry collection strategy: %w", err,
 		))
 	}
 
 	agentConfig := IntegrationConfigForAgent{
-		EnabledRegions:  []string{},
-		TelemetryConfig: telemetryConfig,
+		EnabledRegions:              []string{},
+		TelemetryCollectionStrategy: telemetryCollectionStrategy,
 	}
 
 	if account.Config != nil && account.Config.EnabledRegions != nil {
@@ -243,10 +243,8 @@ func (c *Controller) CheckInAsAgent(
 		svcDetailsById[svcDetails.Id] = &svcDetails
 	}
 
-	cloudAccountId := *account.CloudAccountId
-
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
-		ctx, cloudProvider, cloudAccountId,
+		ctx, cloudProvider, *account.CloudAccountId,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -254,7 +252,7 @@ func (c *Controller) CheckInAsAgent(
 		)
 	}
 
-	// accumulated config in a fixed order to ensure same config generated across runs
+	// accumulate config in a fixed order to ensure same config generated across runs
 	configuredSvcIds := maps.Keys(svcConfigs)
 	slices.Sort(configuredSvcIds)
 
@@ -264,7 +262,7 @@ func (c *Controller) CheckInAsAgent(
 
 		if svcDetails != nil {
 			if svcConfig.Metrics != nil && svcConfig.Metrics.Enabled {
-				err := agentConfig.TelemetryConfig.MetricsCollectionConfig.UpdateWithServiceConfig(
+				err := agentConfig.TelemetryCollectionStrategy.MetricsCollectionConfig.UpdateWithServiceStrategy(
 					svcDetails.TelemetryCollectionStrategy.MetricsCollectionConfig,
 				)
 				if err != nil {
@@ -275,7 +273,7 @@ func (c *Controller) CheckInAsAgent(
 			}
 
 			if svcConfig.Logs != nil && svcConfig.Logs.Enabled {
-				err := agentConfig.TelemetryConfig.LogsCollectionConfig.UpdateWithServiceConfig(
+				err := agentConfig.TelemetryCollectionStrategy.LogsCollectionConfig.UpdateWithServiceStrategy(
 					svcDetails.TelemetryCollectionStrategy.LogsCollectionConfig,
 				)
 				if err != nil {
@@ -289,7 +287,7 @@ func (c *Controller) CheckInAsAgent(
 
 	return &AgentCheckInResponse{
 		AccountId:         account.Id,
-		CloudAccountId:    cloudAccountId,
+		CloudAccountId:    *account.CloudAccountId,
 		RemovedAt:         account.RemovedAt,
 		IntegrationConfig: agentConfig,
 	}, nil
