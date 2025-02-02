@@ -198,9 +198,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
 	// configure a connected account
-	testEnabledRegions := []string{"us-east-1", "us-east-2"}
 	testAccountConfig := cloudintegrations.AccountConfig{
-		EnabledRegions: testEnabledRegions,
+		EnabledRegions: []string{"us-east-1", "us-east-2"},
 	}
 	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
 		"aws", cloudintegrations.GenerateConnectionUrlRequest{
@@ -224,7 +223,7 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal(testAccountId, checkinResp.AccountId)
 	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
 	require.Nil(checkinResp.RemovedAt)
-	require.Equal(testEnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
+	require.Equal(testAccountConfig.EnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
 
 	metricsConfig := checkinResp.IntegrationConfig.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
 	require.Empty(metricsConfig.CloudwatchMetricsStreamFilters)
@@ -256,6 +255,7 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	setServiceConfig("ec2", true, false)
 	setServiceConfig("rds", true, true)
+
 	checkinResp = testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
 			AccountId:      testAccountId,
@@ -267,7 +267,7 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
 	require.Nil(checkinResp.RemovedAt)
 	integrationConf := checkinResp.IntegrationConfig
-	require.Equal(testEnabledRegions, integrationConf.EnabledRegions)
+	require.Equal(testAccountConfig.EnabledRegions, integrationConf.EnabledRegions)
 
 	metricsConfig = integrationConf.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
 	metricStreamNamespaces := []string{}
@@ -284,10 +284,46 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal(1, len(logGroupPrefixes))
 	require.True(strings.HasPrefix(logGroupPrefixes[0], "/aws/rds"))
 
-	// change regions
+	// change regions and update service configs and validate config changes for agent
+	testAccountConfig2 := cloudintegrations.AccountConfig{
+		EnabledRegions: []string{"us-east-2", "us-west-1"},
+	}
+	latestAccount := testbed.UpdateAccountConfigWithQS(
+		"aws", testAccountId, testAccountConfig2,
+	)
+	require.Equal(testAccountId, latestAccount.Id)
+	require.Equal(testAccountConfig2, *latestAccount.Config)
+
 	// disable metrics for one and logs for the other.
 	// config should be as expected.
-	require.Equal(1, 2)
+	setServiceConfig("ec2", false, false)
+	setServiceConfig("rds", true, false)
+
+	checkinResp = testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+	require.Equal(testAccountId, checkinResp.AccountId)
+	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
+	require.Nil(checkinResp.RemovedAt)
+	integrationConf = checkinResp.IntegrationConfig
+	require.Equal(testAccountConfig2.EnabledRegions, integrationConf.EnabledRegions)
+
+	metricsConfig = integrationConf.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	metricStreamNamespaces = []string{}
+	for _, f := range metricsConfig.CloudwatchMetricsStreamFilters {
+		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
+	}
+	require.Equal([]string{"AWS/RDS"}, metricStreamNamespaces)
+
+	logsConfig = integrationConf.TelemetryConfig.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	logGroupPrefixes = []string{}
+	for _, f := range logsConfig.CloudwatchLogsSubscriptions {
+		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
+	}
+	require.Equal(0, len(logGroupPrefixes))
 }
 
 type CloudIntegrationsTestBed struct {

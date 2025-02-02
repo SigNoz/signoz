@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"golang.org/x/exp/maps"
 )
 
 var SupportedCloudProviders = []string{
@@ -248,10 +249,16 @@ func (c *Controller) CheckInAsAgent(
 		)
 	}
 
-	for svcId, config := range svcConfigs {
+	// accumulated config in a fixed order to ensure same config generated across runs
+	configuredSvcIds := maps.Keys(svcConfigs)
+	slices.Sort(configuredSvcIds)
+
+	for _, svcId := range configuredSvcIds {
 		svcDetails := svcDetailsById[svcId]
+		svcConfig := svcConfigs[svcId]
+
 		if svcDetails != nil {
-			if config.Metrics != nil && config.Metrics.Enabled {
+			if svcConfig.Metrics != nil && svcConfig.Metrics.Enabled {
 				err := agentConfig.TelemetryConfig.MetricsCollectionConfig.UpdateWithServiceConfig(
 					svcDetails.TelemetryCollectionStrategy.MetricsCollectionConfig,
 				)
@@ -262,7 +269,7 @@ func (c *Controller) CheckInAsAgent(
 				}
 			}
 
-			if config.Logs != nil && config.Logs.Enabled {
+			if svcConfig.Logs != nil && svcConfig.Logs.Enabled {
 				err := agentConfig.TelemetryConfig.LogsCollectionConfig.UpdateWithServiceConfig(
 					svcDetails.TelemetryCollectionStrategy.LogsCollectionConfig,
 				)
