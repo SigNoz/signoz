@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -196,15 +197,34 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
 	// configure a connected account
-	testAccountId := uuid.NewString()
+	testEnabledRegions := []string{"us-east-1", "us-east-2"}
+	testAccountConfig := cloudintegrations.AccountConfig{
+		EnabledRegions: testEnabledRegions,
+	}
+	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
+		"aws", cloudintegrations.GenerateConnectionUrlRequest{
+			AgentConfig: cloudintegrations.SigNozAgentConfig{
+				Region: "us-east-1",
+			},
+			AccountConfig: testAccountConfig,
+		})
+	testAccountId := connectionUrlResp.AccountId
+	require.NotEmpty(testAccountId)
+	require.NotEmpty(connectionUrlResp.ConnectionUrl)
+
 	testAWSAccountId := "389389489489"
-	// checkinResp1 :=
-	testbed.CheckInAsAgentWithQS(
+	checkinResp := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
 			AccountId:      testAccountId,
 			CloudAccountId: testAWSAccountId,
 		},
 	)
+
+	require.Equal(testAccountId, checkinResp.AccountId)
+	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
+	require.Nil(checkinResp.RemovedAt)
+	require.Equal(testEnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
+	require.Empty(checkinResp.IntegrationConfig.TelemetryConfig.MetricsCollectionConfig.CloudwatchMetricsStreamFilters)
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
@@ -230,13 +250,31 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	setServiceConfig("ec2", true, false)
 	setServiceConfig("rds", true, true)
+	checkinResp = testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
 
-	// func setServiceConfig(map[string])
+	require.Equal(testAccountId, checkinResp.AccountId)
+	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
+	require.Nil(checkinResp.RemovedAt)
+	integrationConf := checkinResp.IntegrationConfig
+	require.Equal(testEnabledRegions, integrationConf.EnabledRegions)
 
-	// setup config
-	// some regions
-	// both services with logs and metrics enabled.
-	// config should be as expected.
+	metricStreamNamespaces := []string{}
+	for _, f := range integrationConf.TelemetryConfig.MetricsCollectionConfig.CloudwatchMetricsStreamFilters {
+		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
+	}
+	require.Equal([]string{"AWS/EC2", "AWS/RDS"}, metricStreamNamespaces)
+
+	logGroupPrefixes := []string{}
+	for _, f := range integrationConf.TelemetryConfig.LogsCollectionConfig.CloudwatchLogsSubscriptions {
+		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
+	}
+	require.Equal(1, len(logGroupPrefixes))
+	require.True(strings.HasPrefix(logGroupPrefixes[0], "/aws/rds"))
 
 	// change regions
 	// disable metrics for one and logs for the other.

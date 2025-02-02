@@ -244,10 +244,21 @@ func (c *Controller) CheckInAsAgent(
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
-	fmt.Println("account", account)
+
+	enabledRegions := []string{}
+	if account.Config != nil && account.Config.EnabledRegions != nil {
+		enabledRegions = account.Config.EnabledRegions
+	}
+
+	agentConfig := AgentConfig{
+		EnabledRegions: enabledRegions,
+	}
 
 	return &AgentCheckInResponse{
-		// Account: *account,
+		AccountId:         account.Id,
+		CloudAccountId:    *account.CloudAccountId,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: agentConfig,
 	}, nil
 }
 
