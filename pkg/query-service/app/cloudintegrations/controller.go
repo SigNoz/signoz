@@ -163,7 +163,51 @@ type AgentCheckInRequest struct {
 }
 
 type AgentCheckInResponse struct {
-	Account AccountRecord `json:"account"`
+	AccountId      string     `json:"account_id"`
+	CloudAccountId string     `json:"cloud_account_id"`
+	RemovedAt      *time.Time `json:"removed_at"`
+
+	IntegrationConfig AgentConfig `json:"integration_config"`
+}
+
+type AgentConfig struct {
+	EnabledRegions []string `json:"enabled_regions"`
+
+	TelemetryConfig IntegrationTelemetryConfig `json:"telemetry"`
+}
+
+type IntegrationTelemetryConfig struct {
+	MetricsCollectionConfig MetricsCollectionConfig `json:"metrics"`
+
+	LogsCollectionConfig LogsCollectionConfig `json:"logs"`
+}
+
+type MetricsCollectionConfig struct {
+	// to be used for https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
+	CloudwatchMetricsStreamFilters []MetricStreamFilter `json:"cloudwatch_metric_stream_filters"`
+}
+
+type MetricStreamFilter struct {
+	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
+	// json tags here are in the shape expected by AWS API linked above
+	Namespace   string   `json:"Namespace"`
+	MetricNames []string `json:"MetricNames,omitempty"`
+}
+
+type LogsCollectionConfig struct {
+	CloudwatchLogsSubscriptions []CloudwatchLogsSubscriptionConfig `json:"cloudwatch_logs_subscriptions"`
+}
+
+type CloudwatchLogsSubscriptionConfig struct {
+	// must be a unique alphanumeric value across all CW logs subscriptions
+	Id string `json:"id"`
+
+	// subscribe to all logs groups with specified prefix.
+	// eg: `/aws/rds/`
+	LogGroupNamePrefix string `json:"log_group_name_prefix"`
+
+	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
+	FilterPattern string `json:"filter_pattern,omitempty"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -200,9 +244,10 @@ func (c *Controller) CheckInAsAgent(
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
+	fmt.Println("account", account)
 
 	return &AgentCheckInResponse{
-		Account: *account,
+		// Account: *account,
 	}, nil
 }
 

@@ -23,7 +23,6 @@ import (
 func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// Test for happy path of connecting and managing AWS integration accounts
 
-	t0 := time.Now()
 	require := require.New(t)
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
@@ -67,11 +66,9 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 			CloudAccountId: testAWSAccountId,
 		},
 	)
-	require.Equal(testAccountId, agentCheckInResp.Account.Id)
-	require.Equal(testAccountConfig, *agentCheckInResp.Account.Config)
-	require.Equal(testAWSAccountId, *agentCheckInResp.Account.CloudAccountId)
-	require.LessOrEqual(t0.Unix(), agentCheckInResp.Account.CreatedAt.Unix())
-	require.Nil(agentCheckInResp.Account.RemovedAt)
+	require.Equal(testAccountId, agentCheckInResp.AccountId)
+	require.Equal(testAWSAccountId, agentCheckInResp.CloudAccountId)
+	require.Nil(agentCheckInResp.RemovedAt)
 
 	// Polling for connection status from UI should now return latest status
 	accountStatusResp1 := testbed.GetAccountStatusFromQS("aws", testAccountId)
@@ -107,10 +104,9 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 			CloudAccountId: testAWSAccountId,
 		},
 	)
-	require.Equal(testAccountId, agentCheckInResp1.Account.Id)
-	require.Equal(testAccountConfig2, *agentCheckInResp1.Account.Config)
-	require.Equal(testAWSAccountId, *agentCheckInResp1.Account.CloudAccountId)
-	require.Nil(agentCheckInResp1.Account.RemovedAt)
+	require.Equal(testAccountId, agentCheckInResp1.AccountId)
+	require.Equal(testAWSAccountId, agentCheckInResp1.CloudAccountId)
+	require.Nil(agentCheckInResp1.RemovedAt)
 
 	// Should be able to disconnect/remove account from UI.
 	tsBeforeDisconnect := time.Now()
@@ -125,9 +121,9 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 			CloudAccountId: testAWSAccountId,
 		},
 	)
-	require.Equal(testAccountId, agentCheckInResp2.Account.Id)
-	require.Equal(testAWSAccountId, *agentCheckInResp2.Account.CloudAccountId)
-	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.Account.RemovedAt)
+	require.Equal(testAccountId, agentCheckInResp2.AccountId)
+	require.Equal(testAWSAccountId, agentCheckInResp2.CloudAccountId)
+	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.RemovedAt)
 }
 
 func TestAWSIntegrationServices(t *testing.T) {
@@ -192,6 +188,60 @@ func TestAWSIntegrationServices(t *testing.T) {
 	require.NotNil(svcDetailResp.Config)
 	require.Equal(testSvcConfig, *svcDetailResp.Config)
 
+}
+
+func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
+	require := require.New(t)
+
+	testbed := NewCloudIntegrationsTestBed(t, nil)
+
+	// configure a connected account
+	testAccountId := uuid.NewString()
+	testAWSAccountId := "389389489489"
+	// checkinResp1 :=
+	testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+
+	// helper
+	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
+		testSvcConfig := cloudintegrations.CloudServiceConfig{}
+		if metricsEnabled {
+			testSvcConfig.Metrics = &cloudintegrations.CloudServiceMetricsConfig{
+				Enabled: metricsEnabled,
+			}
+		}
+		if logsEnabled {
+			testSvcConfig.Logs = &cloudintegrations.CloudServiceLogsConfig{
+				Enabled: logsEnabled,
+			}
+		}
+
+		updateSvcConfigResp := testbed.UpdateServiceConfigWithQS("aws", svcId, cloudintegrations.UpdateServiceConfigRequest{
+			CloudAccountId: testAWSAccountId,
+			Config:         testSvcConfig,
+		})
+		require.Equal(svcId, updateSvcConfigResp.Id)
+		require.Equal(testSvcConfig, updateSvcConfigResp.Config)
+	}
+
+	setServiceConfig("ec2", true, false)
+	setServiceConfig("rds", true, true)
+
+	// func setServiceConfig(map[string])
+
+	// setup config
+	// some regions
+	// both services with logs and metrics enabled.
+	// config should be as expected.
+
+	// change regions
+	// disable metrics for one and logs for the other.
+	// config should be as expected.
+	require.Equal(1, 2)
 }
 
 type CloudIntegrationsTestBed struct {
