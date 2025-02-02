@@ -398,82 +398,33 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 		)
 	}
 
-	resp := cloudintegrations.AgentCheckInResponse{}
+	integrationConfMap := respMap["integration_config"].(map[string]any)
 
-	if accountId, ok := respMap["account_id"].(string); ok {
-		resp.AccountId = accountId
+	telemetryCollectionConf := integrationConfMap["telemetry"]
+	delete(integrationConfMap, "telemetry")
+
+	resp, err := cloudintegrations.ParseStructWithJsonTagsFromMap[cloudintegrations.AgentCheckInResponse](respMap)
+	if err != nil {
+		tb.t.Fatalf(
+			"could not parse response map to AgentCheckInResponse: %v", err,
+		)
 	}
 
-	if cloudAccountId, ok := respMap["cloud_account_id"].(string); ok {
-		resp.CloudAccountId = cloudAccountId
-	}
+	if telemetryCollectionConfMap, ok := telemetryCollectionConf.(map[string]any); ok {
 
-	if removedAtStr, ok := respMap["removed_at"].(string); ok {
-		var removedAt time.Time
-		err := json.Unmarshal([]byte(removedAtStr), &removedAt)
-		if err != nil {
-			tb.t.Fatalf("couldn't unmarshal timestamp %s: %v", removedAtStr, err)
-		}
-		resp.RemovedAt = &removedAt
-	}
-
-	if integrationConfMap, ok := respMap["integration_config"].(map[string]any); ok {
-		if enabledRegions, ok := integrationConfMap["enabled_regions"].([]any); ok {
-			for _, r := range enabledRegions {
-				resp.IntegrationConfig.EnabledRegions = append(
-					resp.IntegrationConfig.EnabledRegions, r.(string),
-				)
-			}
-		}
-
-		tc, err := cloudintegrations.NewCloudTelemetryCollectionConfig(cloudProvider)
+		tc, err := cloudintegrations.ParseCloudTelemetryCollectionStrategyFromMap(
+			cloudProvider, telemetryCollectionConfMap,
+		)
 		if err != nil {
 			tb.t.Fatalf(
-				"couldn't init telemetry collection config for %s while parsing response", cloudProvider,
+				"couldn't parse telemetry collection strategy from response map: %v", err,
 			)
-		}
-
-		telemetryCollectionConfMap, ok := respMap["cloud_telemetry_collection_strategy"].(map[string]any)
-		if ok {
-			metricsConf, err := parseToStructWithJsonTags[cloudintegrations.AWSMetricsCollectionConfig](
-				telemetryCollectionConfMap["metrics"],
-			)
-			if err != nil {
-				tb.t.Fatalf("couldn't parse metrics collection conf: %v", err)
-			}
-			tc.LogsCollectionConfig = metricsConf
-
-			logsConf, err := parseToStructWithJsonTags[cloudintegrations.AWSLogsCollectionConfig](
-				telemetryCollectionConfMap["logs"],
-			)
-			if err != nil {
-				tb.t.Fatalf("couldn't parse logs collection conf: %v", err)
-			}
-			tc.LogsCollectionConfig = logsConf
 		}
 
 		resp.IntegrationConfig.TelemetryConfig = tc
-
 	}
 
-	return &resp
-}
-
-func parseToStructWithJsonTags[StructType any](val any) (
-	*StructType, error,
-) {
-	valJson, err := json.Marshal(val)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't marshal map back to json: %w", err)
-	}
-
-	var res StructType
-	err = json.Unmarshal(valJson, &res)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't unmarshal map json to struct: %w", err)
-	}
-
-	return &res, nil
+	return resp
 }
 
 func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(

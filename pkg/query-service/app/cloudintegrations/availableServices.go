@@ -89,7 +89,7 @@ func readAllServiceDefinitions() error {
 		cloudProviderDirPath := path.Join(rootDirName, d.Name())
 		cloudServices, err := readServiceDefinitionsFromDir(cloudProviderDirPath)
 		if err != nil {
-			return fmt.Errorf("couldn't read %s service definitions", d.Name())
+			return fmt.Errorf("couldn't read %s service definitions: %w", d.Name(), err)
 		}
 
 		if len(cloudServices) < 1 {
@@ -163,6 +163,8 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 			integrationJsonPath, err,
 		)
 	}
+
+	// telemetry collection strategy can't be parsed directly from json
 
 	hydratedSpec := hydrated.(map[string]interface{})
 	hydratedSpecJson, err := koanfJson.Parser().Marshal(hydratedSpec)

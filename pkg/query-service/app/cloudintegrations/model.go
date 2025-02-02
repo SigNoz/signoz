@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 )
 
@@ -229,17 +230,71 @@ type CloudTelemetryCollectionStrategy struct {
 func NewCloudTelemetryCollectionConfig(cloudProvider string) (
 	*CloudTelemetryCollectionStrategy, error,
 ) {
+	return ParseCloudTelemetryCollectionStrategyFromMap(
+		cloudProvider, map[string]any{},
+	)
+}
+
+// Parsing directly from JSON doesn't work since metrics and logs
+// collection strategy fields are interfaces in CloudTelemetryCollectionStrategy
+func ParseCloudTelemetryCollectionStrategyFromMap(
+	cloudProvider string, data map[string]any,
+) (*CloudTelemetryCollectionStrategy, error) {
+
 	if cloudProvider == "aws" {
-		return &CloudTelemetryCollectionStrategy{
+		result := CloudTelemetryCollectionStrategy{
 			MetricsCollectionConfig: &AWSMetricsCollectionConfig{
 				CloudwatchMetricsStreamFilters: []CloudwatchMetricStreamFilter{},
 			},
 			LogsCollectionConfig: &AWSLogsCollectionConfig{
 				CloudwatchLogsSubscriptions: []CloudwatchLogsSubscriptionConfig{},
 			},
-		}, nil
+		}
+
+		if metricsConfMap, ok := data["metrics"].(map[string]any); ok {
+			metricsConf, err := ParseStructWithJsonTagsFromMap[AWSMetricsCollectionConfig](metricsConfMap)
+			if err != nil {
+				return nil, fmt.Errorf("couldn't decode metrics collection strategy: %w", err)
+			}
+			result.MetricsCollectionConfig = metricsConf
+		}
+
+		if logsConfMap, ok := data["metrics"].(map[string]any); ok {
+			logsConf, err := ParseStructWithJsonTagsFromMap[AWSLogsCollectionConfig](logsConfMap)
+			if err != nil {
+				return nil, fmt.Errorf("couldn't decode logs collection strategy: %w", err)
+			}
+			result.LogsCollectionConfig = logsConf
+		}
+
+		return &result, nil
 	}
+
 	return nil, fmt.Errorf("unsupported cloud provider: %w", cloudProvider)
+}
+
+func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
+	*StructType, error,
+) {
+	var res StructType
+
+	mapDecoder, err := mapstructure.NewDecoder(
+		&mapstructure.DecoderConfig{
+			Metadata: nil,
+			Result:   &res,
+			TagName:  "json",
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't prepare map structure decoder: %w", err)
+	}
+
+	err = mapDecoder.Decode(data)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't decode map: %w", err)
+	}
+
+	return &res, nil
 }
 
 type CloudSignalCollectionConfig interface {
