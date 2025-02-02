@@ -142,7 +142,7 @@ type CloudServiceDetails struct {
 
 	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
 
-	CloudTelemetryCollectionStrategy CloudTelemetryCollectionStrategy `json:"cloud_telemetry_collection_strategy"`
+	TelemetryCollectionStrategy CloudTelemetryCollectionStrategy `json:"telemetry_collection_strategy"`
 }
 
 type CloudServiceConfig struct {
@@ -259,7 +259,7 @@ func ParseCloudTelemetryCollectionStrategyFromMap(
 			result.MetricsCollectionConfig = metricsConf
 		}
 
-		if logsConfMap, ok := data["metrics"].(map[string]any); ok {
+		if logsConfMap, ok := data["logs"].(map[string]any); ok {
 			logsConf, err := ParseStructWithJsonTagsFromMap[AWSLogsCollectionConfig](logsConfMap)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't decode logs collection strategy: %w", err)
@@ -280,9 +280,11 @@ func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
 
 	mapDecoder, err := mapstructure.NewDecoder(
 		&mapstructure.DecoderConfig{
-			Metadata: nil,
-			Result:   &res,
-			TagName:  "json",
+			Metadata:             nil,
+			Result:               &res,
+			TagName:              "json",
+			ErrorUnused:          true, // extra map keys not allowed
+			IgnoreUntaggedFields: true,
 		},
 	)
 	if err != nil {
@@ -339,15 +341,13 @@ type AWSLogsCollectionConfig struct {
 }
 
 type CloudwatchLogsSubscriptionConfig struct {
-	// must be a unique alphanumeric value across all CW logs subscriptions
-	Id string `json:"id"`
-
 	// subscribe to all logs groups with specified prefix.
 	// eg: `/aws/rds/`
 	LogGroupNamePrefix string `json:"log_group_name_prefix"`
 
 	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
-	FilterPattern string `json:"filter_pattern,omitempty"`
+	// "" implies no filtering is required.
+	FilterPattern string `json:"filter_pattern"`
 }
 
 func (alc *AWSLogsCollectionConfig) UpdateWithServiceConfig(

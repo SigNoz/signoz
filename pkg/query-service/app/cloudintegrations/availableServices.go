@@ -86,23 +86,25 @@ func readAllServiceDefinitions() error {
 			continue
 		}
 
-		cloudProviderDirPath := path.Join(rootDirName, d.Name())
-		cloudServices, err := readServiceDefinitionsFromDir(cloudProviderDirPath)
+		cloudProvider := d.Name()
+
+		cloudProviderDirPath := path.Join(rootDirName, cloudProvider)
+		cloudServices, err := readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath)
 		if err != nil {
-			return fmt.Errorf("couldn't read %s service definitions: %w", d.Name(), err)
+			return fmt.Errorf("couldn't read %s service definitions: %w", cloudProvider, err)
 		}
 
 		if len(cloudServices) < 1 {
-			return fmt.Errorf("no %s services could be read", d.Name())
+			return fmt.Errorf("no %s services could be read", cloudProvider)
 		}
 
-		availableServices[d.Name()] = cloudServices
+		availableServices[cloudProvider] = cloudServices
 	}
 
 	return nil
 }
 
-func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
+func readServiceDefinitionsFromDir(cloudProvider string, cloudProviderDirPath string) (
 	map[string]CloudServiceDetails, error,
 ) {
 	svcDefDirs, err := fs.ReadDir(serviceDefinitionFiles, cloudProviderDirPath)
@@ -118,7 +120,7 @@ func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
 		}
 
 		svcDirPath := path.Join(cloudProviderDirPath, d.Name())
-		s, err := readServiceDefinition(svcDirPath)
+		s, err := readServiceDefinition(cloudProvider, svcDirPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't read svc definition for %s: %w", d.Name(), err)
 		}
@@ -135,14 +137,14 @@ func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
 	return svcDefs, nil
 }
 
-func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
-	integrationJsonPath := path.Join(dirpath, "integration.json")
+func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServiceDetails, error) {
+	integrationJsonPath := path.Join(svcDirpath, "integration.json")
 
 	serializedSpec, err := serviceDefinitionFiles.ReadFile(integrationJsonPath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't find integration.json in %s: %w",
-			dirpath, err,
+			svcDirpath, err,
 		)
 	}
 
@@ -155,7 +157,7 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 	}
 
 	hydrated, err := integrations.HydrateFileUris(
-		integrationSpec, serviceDefinitionFiles, dirpath,
+		integrationSpec, serviceDefinitionFiles, svcDirpath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -163,10 +165,15 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 			integrationJsonPath, err,
 		)
 	}
+	hydratedSpec := hydrated.(map[string]any)
 
-	// telemetry collection strategy can't be parsed directly from json
+	// telemetry collection strategy can't be parsed directly
+	telemetryCollectionStrategyMap, ok := hydratedSpec["telemetry_collection_strategy"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("couldn't find telemetry_collection_strategy")
+	}
+	delete(hydratedSpec, "telemetry_collection_strategy")
 
-	hydratedSpec := hydrated.(map[string]interface{})
 	hydratedSpecJson, err := koanfJson.Parser().Marshal(hydratedSpec)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -185,6 +192,14 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 			integrationJsonPath, err,
 		)
 	}
+
+	telemetryCollectionStrategy, err := ParseCloudTelemetryCollectionStrategyFromMap(
+		cloudProvider, telemetryCollectionStrategyMap,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse telemetry_collection_strategy: %w", err)
+	}
+	serviceDef.TelemetryCollectionStrategy = *telemetryCollectionStrategy
 
 	err = validateServiceDefinition(serviceDef)
 	if err != nil {

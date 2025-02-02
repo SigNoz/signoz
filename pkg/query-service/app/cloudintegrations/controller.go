@@ -253,7 +253,7 @@ func (c *Controller) CheckInAsAgent(
 		if svcDetails != nil {
 			if config.Metrics != nil && config.Metrics.Enabled {
 				err := agentConfig.TelemetryConfig.MetricsCollectionConfig.UpdateWithServiceConfig(
-					svcDetails.CloudTelemetryCollectionStrategy.MetricsCollectionConfig,
+					svcDetails.TelemetryCollectionStrategy.MetricsCollectionConfig,
 				)
 				if err != nil {
 					return nil, model.InternalError(fmt.Errorf(
@@ -264,7 +264,7 @@ func (c *Controller) CheckInAsAgent(
 
 			if config.Logs != nil && config.Logs.Enabled {
 				err := agentConfig.TelemetryConfig.LogsCollectionConfig.UpdateWithServiceConfig(
-					svcDetails.CloudTelemetryCollectionStrategy.LogsCollectionConfig,
+					svcDetails.TelemetryCollectionStrategy.LogsCollectionConfig,
 				)
 				if err != nil {
 					return nil, model.InternalError(fmt.Errorf(
