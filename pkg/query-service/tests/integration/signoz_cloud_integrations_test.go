@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	koanfJson "github.com/knadh/koanf/parsers/json"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
@@ -224,7 +225,12 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
 	require.Nil(checkinResp.RemovedAt)
 	require.Equal(testEnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
-	require.Empty(checkinResp.IntegrationConfig.TelemetryConfig.MetricsCollectionConfig.CloudwatchMetricsStreamFilters)
+
+	metricsConfig := checkinResp.IntegrationConfig.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	require.Empty(metricsConfig.CloudwatchMetricsStreamFilters)
+
+	logsConfig := checkinResp.IntegrationConfig.TelemetryConfig.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	require.Empty(logsConfig.CloudwatchLogsSubscriptions)
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
@@ -263,14 +269,16 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	integrationConf := checkinResp.IntegrationConfig
 	require.Equal(testEnabledRegions, integrationConf.EnabledRegions)
 
+	metricsConfig = integrationConf.TelemetryConfig.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
 	metricStreamNamespaces := []string{}
-	for _, f := range integrationConf.TelemetryConfig.MetricsCollectionConfig.CloudwatchMetricsStreamFilters {
+	for _, f := range metricsConfig.CloudwatchMetricsStreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/EC2", "AWS/RDS"}, metricStreamNamespaces)
 
+	logsConfig = integrationConf.TelemetryConfig.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
 	logGroupPrefixes := []string{}
-	for _, f := range integrationConf.TelemetryConfig.LogsCollectionConfig.CloudwatchLogsSubscriptions {
+	for _, f := range logsConfig.CloudwatchLogsSubscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(1, len(logGroupPrefixes))
@@ -382,13 +390,90 @@ func (tb *CloudIntegrationsTestBed) CheckInAsAgentWithQS(
 		fmt.Sprintf("/api/v1/cloud-integrations/%s/agent-check-in", cloudProvider), req,
 	)
 
-	var resp cloudintegrations.AgentCheckInResponse
-	err := json.Unmarshal(respDataJson, &resp)
+	// cloud provider specific telemetry collection config can't be unmarshaled directly
+	respMap, err := koanfJson.Parser().Unmarshal(respDataJson)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into AgentCheckInResponse")
+		tb.t.Fatalf(
+			"could not unmarshal apiResponse.Data json into map[string]any: %v", err,
+		)
+	}
+
+	resp := cloudintegrations.AgentCheckInResponse{}
+
+	if accountId, ok := respMap["account_id"].(string); ok {
+		resp.AccountId = accountId
+	}
+
+	if cloudAccountId, ok := respMap["cloud_account_id"].(string); ok {
+		resp.CloudAccountId = cloudAccountId
+	}
+
+	if removedAtStr, ok := respMap["removed_at"].(string); ok {
+		var removedAt time.Time
+		err := json.Unmarshal([]byte(removedAtStr), &removedAt)
+		if err != nil {
+			tb.t.Fatalf("couldn't unmarshal timestamp %s: %v", removedAtStr, err)
+		}
+		resp.RemovedAt = &removedAt
+	}
+
+	if integrationConfMap, ok := respMap["integration_config"].(map[string]any); ok {
+		if enabledRegions, ok := integrationConfMap["enabled_regions"].([]any); ok {
+			for _, r := range enabledRegions {
+				resp.IntegrationConfig.EnabledRegions = append(
+					resp.IntegrationConfig.EnabledRegions, r.(string),
+				)
+			}
+		}
+
+		tc, err := cloudintegrations.NewCloudTelemetryCollectionConfig(cloudProvider)
+		if err != nil {
+			tb.t.Fatalf(
+				"couldn't init telemetry collection config for %s while parsing response", cloudProvider,
+			)
+		}
+
+		telemetryCollectionConfMap, ok := respMap["cloud_telemetry_collection_strategy"].(map[string]any)
+		if ok {
+			metricsConf, err := parseToStructWithJsonTags[cloudintegrations.AWSMetricsCollectionConfig](
+				telemetryCollectionConfMap["metrics"],
+			)
+			if err != nil {
+				tb.t.Fatalf("couldn't parse metrics collection conf: %v", err)
+			}
+			tc.LogsCollectionConfig = metricsConf
+
+			logsConf, err := parseToStructWithJsonTags[cloudintegrations.AWSLogsCollectionConfig](
+				telemetryCollectionConfMap["logs"],
+			)
+			if err != nil {
+				tb.t.Fatalf("couldn't parse logs collection conf: %v", err)
+			}
+			tc.LogsCollectionConfig = logsConf
+		}
+
+		resp.IntegrationConfig.TelemetryConfig = tc
+
 	}
 
 	return &resp
+}
+
+func parseToStructWithJsonTags[StructType any](val any) (
+	*StructType, error,
+) {
+	valJson, err := json.Marshal(val)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't marshal map back to json: %w", err)
+	}
+
+	var res StructType
+	err = json.Unmarshal(valJson, &res)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't unmarshal map json to struct: %w", err)
+	}
+
+	return &res, nil
 }
 
 func (tb *CloudIntegrationsTestBed) UpdateAccountConfigWithQS(
@@ -500,7 +585,7 @@ func RequestQSAndParseResp[ResponseType any](
 
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into %T", resp)
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into %T: %v", resp, err)
 	}
 
 	return &resp

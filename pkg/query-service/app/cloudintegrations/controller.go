@@ -167,47 +167,13 @@ type AgentCheckInResponse struct {
 	CloudAccountId string     `json:"cloud_account_id"`
 	RemovedAt      *time.Time `json:"removed_at"`
 
-	IntegrationConfig AgentConfig `json:"integration_config"`
+	IntegrationConfig IntegrationConfigForAgent `json:"integration_config"`
 }
 
-type AgentConfig struct {
+type IntegrationConfigForAgent struct {
 	EnabledRegions []string `json:"enabled_regions"`
 
-	TelemetryConfig IntegrationTelemetryConfig `json:"telemetry"`
-}
-
-type IntegrationTelemetryConfig struct {
-	MetricsCollectionConfig MetricsCollectionConfig `json:"metrics"`
-
-	LogsCollectionConfig LogsCollectionConfig `json:"logs"`
-}
-
-type MetricsCollectionConfig struct {
-	// to be used for https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
-	CloudwatchMetricsStreamFilters []MetricStreamFilter `json:"cloudwatch_metric_stream_filters"`
-}
-
-type MetricStreamFilter struct {
-	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
-	// json tags here are in the shape expected by AWS API linked above
-	Namespace   string   `json:"Namespace"`
-	MetricNames []string `json:"MetricNames,omitempty"`
-}
-
-type LogsCollectionConfig struct {
-	CloudwatchLogsSubscriptions []CloudwatchLogsSubscriptionConfig `json:"cloudwatch_logs_subscriptions"`
-}
-
-type CloudwatchLogsSubscriptionConfig struct {
-	// must be a unique alphanumeric value across all CW logs subscriptions
-	Id string `json:"id"`
-
-	// subscribe to all logs groups with specified prefix.
-	// eg: `/aws/rds/`
-	LogGroupNamePrefix string `json:"log_group_name_prefix"`
-
-	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
-	FilterPattern string `json:"filter_pattern,omitempty"`
+	TelemetryConfig *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -245,18 +211,73 @@ func (c *Controller) CheckInAsAgent(
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	enabledRegions := []string{}
-	if account.Config != nil && account.Config.EnabledRegions != nil {
-		enabledRegions = account.Config.EnabledRegions
+	// prepare and return integration config to be consumed by agent
+	telemetryConfig, err := NewCloudTelemetryCollectionConfig(cloudProvider)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't init cloud telemetry config: %w", err,
+		))
 	}
 
-	agentConfig := AgentConfig{
-		EnabledRegions: enabledRegions,
+	agentConfig := IntegrationConfigForAgent{
+		EnabledRegions:  []string{},
+		TelemetryConfig: telemetryConfig,
+	}
+
+	if account.Config != nil && account.Config.EnabledRegions != nil {
+		agentConfig.EnabledRegions = account.Config.EnabledRegions
+	}
+
+	services, apiErr := listCloudProviderServices(cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
+	}
+	svcDetailsById := map[string]*CloudServiceDetails{}
+	for _, svcDetails := range services {
+		svcDetailsById[svcDetails.Id] = &svcDetails
+	}
+
+	cloudAccountId := *account.CloudAccountId
+
+	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
+		ctx, cloudProvider, cloudAccountId,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, "couldn't get service configs for cloud account",
+		)
+	}
+
+	for svcId, config := range svcConfigs {
+		svcDetails := svcDetailsById[svcId]
+		if svcDetails != nil {
+			if config.Metrics != nil && config.Metrics.Enabled {
+				err := agentConfig.TelemetryConfig.MetricsCollectionConfig.UpdateWithServiceConfig(
+					svcDetails.CloudTelemetryCollectionStrategy.MetricsCollectionConfig,
+				)
+				if err != nil {
+					return nil, model.InternalError(fmt.Errorf(
+						"couldn't accumulate metrics config for svc %s: %w", svcId, err,
+					))
+				}
+			}
+
+			if config.Logs != nil && config.Logs.Enabled {
+				err := agentConfig.TelemetryConfig.LogsCollectionConfig.UpdateWithServiceConfig(
+					svcDetails.CloudTelemetryCollectionStrategy.LogsCollectionConfig,
+				)
+				if err != nil {
+					return nil, model.InternalError(fmt.Errorf(
+						"couldn't accumulate logs config for svc %s: %w", svcId, err,
+					))
+				}
+			}
+		}
 	}
 
 	return &AgentCheckInResponse{
 		AccountId:         account.Id,
-		CloudAccountId:    *account.CloudAccountId,
+		CloudAccountId:    cloudAccountId,
 		RemovedAt:         account.RemovedAt,
 		IntegrationConfig: agentConfig,
 	}, nil

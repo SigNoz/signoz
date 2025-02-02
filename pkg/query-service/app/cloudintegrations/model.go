@@ -140,6 +140,8 @@ type CloudServiceDetails struct {
 	DataCollected DataCollectedForService `json:"data_collected"`
 
 	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
+
+	CloudTelemetryCollectionStrategy CloudTelemetryCollectionStrategy `json:"cloud_telemetry_collection_strategy"`
 }
 
 type CloudServiceConfig struct {
@@ -215,4 +217,100 @@ type CloudServiceConnectionStatus struct {
 type SignalConnectionStatus struct {
 	LastReceivedTsMillis int64  `json:"last_received_ts_ms"` // epoch milliseconds
 	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
+}
+
+type CloudTelemetryCollectionStrategy struct {
+	// The exact shape of sub configs will depend on the cloud provider
+	MetricsCollectionConfig CloudSignalCollectionConfig `json:"metrics"`
+
+	LogsCollectionConfig CloudSignalCollectionConfig `json:"logs"`
+}
+
+func NewCloudTelemetryCollectionConfig(cloudProvider string) (
+	*CloudTelemetryCollectionStrategy, error,
+) {
+	if cloudProvider == "aws" {
+		return &CloudTelemetryCollectionStrategy{
+			MetricsCollectionConfig: &AWSMetricsCollectionConfig{
+				CloudwatchMetricsStreamFilters: []CloudwatchMetricStreamFilter{},
+			},
+			LogsCollectionConfig: &AWSLogsCollectionConfig{
+				CloudwatchLogsSubscriptions: []CloudwatchLogsSubscriptionConfig{},
+			},
+		}, nil
+	}
+	return nil, fmt.Errorf("unsupported cloud provider: %w", cloudProvider)
+}
+
+type CloudSignalCollectionConfig interface {
+	// Should be able to accumulate signal collection config
+	UpdateWithServiceConfig(CloudSignalCollectionConfig) error
+}
+
+type AWSMetricsCollectionConfig struct {
+	// to be used for https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
+	CloudwatchMetricsStreamFilters []CloudwatchMetricStreamFilter `json:"cloudwatch_metric_stream_filters"`
+}
+
+type CloudwatchMetricStreamFilter struct {
+	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
+	// json tags here are in the shape expected by AWS API linked above
+	Namespace   string   `json:"Namespace"`
+	MetricNames []string `json:"MetricNames,omitempty"`
+}
+
+func (amc *AWSMetricsCollectionConfig) UpdateWithServiceConfig(
+	svcConfig CloudSignalCollectionConfig,
+) error {
+	if svcConfig == nil {
+		return nil
+	}
+
+	metricsConf, ok := svcConfig.(*AWSMetricsCollectionConfig)
+	if !ok {
+		return fmt.Errorf(
+			"AWSMetricsCollectionConfig can't be updated with %T", svcConfig,
+		)
+	}
+
+	amc.CloudwatchMetricsStreamFilters = append(
+		amc.CloudwatchMetricsStreamFilters, metricsConf.CloudwatchMetricsStreamFilters...,
+	)
+	return nil
+}
+
+type AWSLogsCollectionConfig struct {
+	CloudwatchLogsSubscriptions []CloudwatchLogsSubscriptionConfig `json:"cloudwatch_logs_subscriptions"`
+}
+
+type CloudwatchLogsSubscriptionConfig struct {
+	// must be a unique alphanumeric value across all CW logs subscriptions
+	Id string `json:"id"`
+
+	// subscribe to all logs groups with specified prefix.
+	// eg: `/aws/rds/`
+	LogGroupNamePrefix string `json:"log_group_name_prefix"`
+
+	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
+	FilterPattern string `json:"filter_pattern,omitempty"`
+}
+
+func (alc *AWSLogsCollectionConfig) UpdateWithServiceConfig(
+	svcConfig CloudSignalCollectionConfig,
+) error {
+	if svcConfig == nil {
+		return nil
+	}
+
+	logsConf, ok := svcConfig.(*AWSLogsCollectionConfig)
+	if !ok {
+		return fmt.Errorf(
+			"AWSLogsCollectionConfig can't be updated with %T", svcConfig,
+		)
+	}
+
+	alc.CloudwatchLogsSubscriptions = append(
+		alc.CloudwatchLogsSubscriptions, logsConf.CloudwatchLogsSubscriptions...,
+	)
+	return nil
 }
