@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlmigrator"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/telemetrystore"
@@ -30,6 +31,9 @@ type Config struct {
 
 	// SQLStore config
 	SQLStore sqlstore.Config `mapstructure:"sqlstore"`
+
+	// SQLMigration config
+	SQLMigration sqlmigration.Config `mapstructure:"sqlmigration"`
 
 	// SQLMigrator config
 	SQLMigrator sqlmigrator.Config `mapstructure:"sqlmigrator"`

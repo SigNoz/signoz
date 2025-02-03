@@ -6,6 +6,8 @@ import (
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/sqlmigration"
+	"go.signoz.io/signoz/pkg/sqlmigrator"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/version"
@@ -70,6 +72,7 @@ func New(
 		return nil, err
 	}
 
+	// Initialize telemetrystore from the available telemetrystore provider factories
 	telemetrystore, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
@@ -77,6 +80,22 @@ func New(
 		providerConfig.TelemetryStoreProviderFactories,
 		config.TelemetryStore.Provider,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Run migrations on the sqlstore
+	sqlmigrations, err := sqlmigration.New(
+		ctx,
+		providerSettings,
+		config.SQLMigration,
+		providerConfig.SQLMigrationProviderFactories,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sqlmigrator.New(ctx, providerSettings, sqlstore, sqlmigrations, config.SQLMigrator).Migrate(ctx)
 	if err != nil {
 		return nil, err
 	}
