@@ -57,6 +57,7 @@ func NewProviderFromNamedMap[P Provider, C Config](ctx context.Context, settings
 	return
 }
 
+// NewFromNamedMap creates all providers.
 func NewFromNamedMap[P Provider, C Config](ctx context.Context, settings ProviderSettings, config C, factories NamedMap[ProviderFactory[P, C]]) (ps []P, err error) {
 	for _, factory := range factories.factoriesInOrder {
 		var provider P

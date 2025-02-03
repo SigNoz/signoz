@@ -2,7 +2,6 @@ package base
 
 import (
 	"context"
-	"fmt"
 
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/featureflag"
@@ -20,7 +19,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (p *Provider) GetFeatures() []featureflag.Feature {
-	fmt.Println("GetFeatures from base")
-	// before returning them override with the values from config
+	// TODO : update from sqlite
 	return defaultFeatures
 }

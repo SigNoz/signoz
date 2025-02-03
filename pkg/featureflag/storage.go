@@ -1,16 +1,14 @@
 package featureflag
 
 import (
-	"database/sql"
-
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/jmoiron/sqlx"
 )
 
 type FeatureStorage struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func NewFeatureStorage(db *sql.DB) *FeatureStorage {
+func NewFeatureStorage(db *sqlx.DB) *FeatureStorage {
 	return &FeatureStorage{db: db}
 }
 

@@ -88,7 +88,8 @@ func New(
 		return nil, err
 	}
 
-	featureFlagManager := featureflag.NewFeatureFlagManager(ctx, *featureflag.NewFeatureStorage(sqlstore.SQLDB()), featureFlagProviders...)
+	featureFlagManager := featureflag.NewFeatureFlagManager(ctx, sqlstore.SQLxDB(), featureFlagProviders...)
+	// TODO : do we need to start the feature flag manager here?
 	featureFlagManager.Start(ctx)
 
 	return &SigNoz{

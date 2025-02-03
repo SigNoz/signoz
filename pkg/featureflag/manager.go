@@ -3,6 +3,7 @@ package featureflag
 import (
 	"context"
 
+	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/factory"
 )
 
@@ -12,15 +13,15 @@ var _ factory.Service = (*FeatureFlagManager)(nil)
 // FeatureFlagManager implements the FeatureFlagService interface
 type FeatureFlagManager struct {
 	providers []FeatureFlag
-	storage   FeatureStorage
+	storage   *FeatureStorage
 	features  map[Flag]Feature
 }
 
 // NewFeatureFlagManager creates a new FeatureFlagManager instance
-func NewFeatureFlagManager(ctx context.Context, storage FeatureStorage, factories ...FeatureFlag) *FeatureFlagManager {
+func NewFeatureFlagManager(ctx context.Context, sqlxDB *sqlx.DB, factories ...FeatureFlag) *FeatureFlagManager {
 	return &FeatureFlagManager{
 		providers: factories,
-		storage:   storage,
+		storage:   NewFeatureStorage(sqlxDB),
 		features:  make(map[Flag]Feature),
 	}
 }
