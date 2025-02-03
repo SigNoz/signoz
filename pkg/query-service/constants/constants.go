@@ -88,7 +88,33 @@ func EnableHostsInfraMonitoring() bool {
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
-var DEFAULT_FEATURE_SET = model.FeatureSet{}
+var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
+
+func IsPreferRPMFeatureEnabled() bool {
+	preferRPMFeatureEnabledStr := PreferRPMFeature
+	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
+	if err != nil {
+		return false
+	}
+	return preferRPMFeatureEnabledBool
+}
+
+var DEFAULT_FEATURE_SET = model.FeatureSet{
+	model.Feature{
+		Name:       model.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       PreferRPM,
+		Active:     IsPreferRPMFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+}
 
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
