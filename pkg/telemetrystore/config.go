@@ -51,7 +51,7 @@ func newConfig() factory.Config {
 			DialTimeout:  5 * time.Second,
 		},
 		ClickHouse: ClickHouseConfig{
-			DSN: "http://localhost:9000",
+			DSN: "tcp://localhost:9000",
 		},
 	}
 }
