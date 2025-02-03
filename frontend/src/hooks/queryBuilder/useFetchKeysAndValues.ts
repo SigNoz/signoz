@@ -243,13 +243,15 @@ export const useFetchKeysAndValues = (
 			fetchingSuggestionsStatus === 'success' &&
 			suggestionsData?.payload?.attributes
 		) {
-			setKeys(suggestionsData.payload.attributes);
-			setSourceKeys((prevState) =>
-				uniqWith(
-					[...(suggestionsData.payload.attributes ?? []), ...prevState],
-					isEqual,
-				),
-			);
+			if (!isInfraMonitoring) {
+				setKeys(suggestionsData.payload.attributes);
+				setSourceKeys((prevState) =>
+					uniqWith(
+						[...(suggestionsData.payload.attributes ?? []), ...prevState],
+						isEqual,
+					),
+				);
+			}
 		} else {
 			setKeys([]);
 		}
@@ -265,6 +267,7 @@ export const useFetchKeysAndValues = (
 		suggestionsData?.payload?.attributes,
 		fetchingSuggestionsStatus,
 		suggestionsData?.payload?.example_queries,
+		isInfraMonitoring,
 	]);
 
 	return {
