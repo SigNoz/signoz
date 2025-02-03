@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"time"
 
 	"go.signoz.io/signoz/pkg/apiserver"
@@ -76,7 +77,27 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 
 	mergeAndEnsureBackwardCompatibility(&config, deprecatedFlags)
 
+	if err := validateConfig(config); err != nil {
+		return Config{}, err
+	}
+
 	return config, nil
+}
+
+func validateConfig(config Config) error {
+	rvConfig := reflect.ValueOf(config)
+	for i := 0; i < rvConfig.NumField(); i++ {
+		factoryConfig, ok := rvConfig.Field(i).Interface().(factory.Config)
+		if !ok {
+			return fmt.Errorf("%q is not of type \"factory.Config\"", rvConfig.Type().Field(i).Name)
+		}
+
+		if err := factoryConfig.Validate(); err != nil {
+			return fmt.Errorf("failed to validate config %q: %w", rvConfig.Type().Field(i).Tag.Get("mapstructure"), err)
+		}
+	}
+
+	return nil
 }
 
 func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags DeprecatedFlags) {

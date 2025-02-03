@@ -33,6 +33,8 @@ func New(
 		return nil, err
 	}
 
+	instrumentation.Logger().InfoContext(ctx, "starting signoz", "config", config)
+
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
 
