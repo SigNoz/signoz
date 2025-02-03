@@ -1,0 +1,189 @@
+.account-settings-modal {
+	&__title-account-id {
+		color: var(--bg-vanilla-100);
+		font-family: 'Geist Mono';
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+	}
+
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: 17px;
+		border-radius: 3px;
+		border: 1px solid var(--bg-slate-500);
+		padding: 14px;
+		&-account-info {
+			&-connected-account-details {
+				&-title {
+					color: var(--bg-vanilla-100);
+					font-size: 14px;
+					font-weight: 500;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: -0.07px;
+				}
+				&-account-id {
+					color: var(--bg-vanilla-400);
+					font-size: 12px;
+					line-height: 18px;
+					letter-spacing: -0.06px;
+					&-account-id {
+						font-family: 'Geist Mono';
+						font-size: 12px;
+						font-weight: 700;
+						line-height: 18px;
+						letter-spacing: -0.06px;
+					}
+				}
+			}
+		}
+		&-regions-switch {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			&-title {
+				color: var(--bg-vanilla-100);
+				font-size: 14px;
+				font-weight: 500;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+			&-switch {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				&-label {
+					color: var(--bg-vanilla-400);
+					background-color: transparent;
+					border: none;
+					font-family: Inter;
+					font-size: 12px;
+					font-weight: 400;
+					line-height: 18px;
+					letter-spacing: -0.005em;
+					cursor: pointer;
+				}
+			}
+		}
+		&-regions-select {
+			margin-top: 8px;
+		}
+	}
+
+	&__footer {
+		&-close-button,
+		&-save-button {
+			color: var(--bg-vanilla-100);
+			font-family: Inter;
+			font-size: 12px;
+			font-weight: 500;
+			padding-left: 16px;
+			padding-right: 16px;
+		}
+		&-close-button {
+			border-radius: 2px;
+			background: var(--bg-slate-400);
+			border: none;
+		}
+		&-save-button {
+			&:disabled {
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+				opacity: 0.6;
+				border: none;
+			}
+			border-radius: 2px;
+			margin: 0 !important;
+		}
+	}
+	.ant-modal-body {
+		padding-bottom: 0 !important;
+	}
+	.ant-modal-footer {
+		margin: 0;
+		padding: 24px 24px 12px;
+	}
+
+	.integration-detail-content {
+		margin: 0;
+	}
+}
+
+.lightMode {
+	.account-settings-modal {
+		&__title-account-id {
+			color: var(--bg-ink-500);
+		}
+
+		&__body {
+			border-color: var(--bg-vanilla-300);
+
+			&-account-info {
+				&-connected-account-details {
+					&-title {
+						color: var(--bg-ink-500);
+					}
+
+					&-account-id {
+						color: var(--bg-ink-400);
+
+						&-account-id {
+							color: var(--bg-ink-500);
+						}
+					}
+				}
+			}
+
+			&-regions-switch {
+				&-title {
+					color: var(--bg-ink-500);
+				}
+
+				&-switch {
+					&-label {
+						color: var(--bg-ink-400);
+
+						&:hover {
+							color: var(--bg-ink-500);
+						}
+					}
+				}
+			}
+		}
+
+		&__footer {
+			&-close-button,
+			&-save-button {
+				color: var(--bg-vanilla-100);
+			}
+
+			&-close-button {
+				background: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-vanilla-300);
+				color: var(--bg-ink-400);
+
+				&:hover {
+					border-color: var(--bg-vanilla-400);
+					color: var(--bg-ink-500);
+				}
+			}
+
+			&-save-button {
+				// Keep primary button same as dark mode
+				background: var(--bg-robin-500);
+				color: var(--bg-vanilla-100);
+
+				&:disabled {
+					background: var(--bg-robin-500);
+					color: var(--bg-vanilla-100);
+					opacity: 0.6;
+				}
+
+				&:not(:disabled):hover {
+					background: var(--bg-robin-400);
+				}
+			}
+		}
+	}
+}

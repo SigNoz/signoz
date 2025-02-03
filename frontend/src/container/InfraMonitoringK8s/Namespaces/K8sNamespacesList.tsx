@@ -219,6 +219,11 @@ function K8sNamespacesList({
 		[namespacesData, groupBy],
 	);
 
+	const nestedNamespacesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const columns = useMemo(() => getK8sNamespacesListColumns(groupBy), [groupBy]);
 
 	const handleGroupByRowClick = (record: K8sNamespacesRowData): void => {
@@ -285,12 +290,26 @@ function K8sNamespacesList({
 
 	const selectedNamespaceData = useMemo(() => {
 		if (!selectedNamespaceUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the namespace from the formatted grouped by namespaces data
+			return (
+				nestedNamespacesData.find(
+					(namespace) => namespace.namespaceName === selectedNamespaceUID,
+				) || null
+			);
+		}
+		// If not grouped by, return the node from the nodes data
 		return (
 			namespacesData.find(
 				(namespace) => namespace.namespaceName === selectedNamespaceUID,
 			) || null
 		);
-	}, [selectedNamespaceUID, namespacesData]);
+	}, [
+		selectedNamespaceUID,
+		groupBy.length,
+		namespacesData,
+		nestedNamespacesData,
+	]);
 
 	const handleRowClick = (record: K8sNamespacesRowData): void => {
 		if (groupBy.length === 0) {
@@ -343,6 +362,10 @@ function K8sNamespacesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedNamespaceUID(record.namespaceUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&

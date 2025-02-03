@@ -332,6 +332,7 @@ export const celeryTasksByWorkerWidgetData = (
 					timeAggregation: 'rate',
 				},
 			],
+			yAxisUnit: 'cps',
 		}),
 	);
 
@@ -345,44 +346,103 @@ export const celeryErrorByWorkerWidgetData = (
 			description: 'Represents the number of errors by each worker.',
 			queryData: [
 				{
+					dataSource: DataSource.TRACES,
+					queryName: 'A',
+					aggregateOperator: 'count_distinct',
 					aggregateAttribute: {
-						dataType: DataTypes.String,
-						id: '------false',
-						isColumn: false,
+						dataType: 'string',
+						id: 'span_id--string----true',
+						isColumn: true,
 						isJSON: false,
-						key: '',
+						key: 'span_id',
 						type: '',
 					},
-					aggregateOperator: 'rate',
-					dataSource: DataSource.TRACES,
-					disabled: false,
-					expression: 'A',
+					timeAggregation: 'count_distinct',
+					spaceAggregation: 'sum',
+					functions: [],
 					filters: {
-						items: [],
+						items: [
+							{
+								id: uuidv4(),
+								key: {
+									dataType: DataTypes.bool,
+									id: 'has_error--bool----true',
+									isColumn: true,
+									isJSON: false,
+									key: 'has_error',
+									type: '',
+								},
+								op: '=',
+								value: 'true',
+							},
+						],
 						op: 'AND',
 					},
-					functions: [],
+					expression: 'A',
+					disabled: true,
+					stepInterval: getStepInterval(startTime, endTime),
+					having: [],
+					limit: null,
+					orderBy: [],
 					groupBy: [
 						{
 							dataType: DataTypes.String,
-							id: 'celery.hostname--string--tag--false',
 							isColumn: false,
 							isJSON: false,
 							key: 'celery.hostname',
 							type: 'tag',
+							id: 'celery.hostname--string--tag--false',
 						},
 					],
-					having: [],
-					legend: '{{celery.hostname}}',
-					limit: 10,
-					orderBy: [],
-					queryName: 'A',
+					legend: '',
 					reduceTo: 'avg',
-					spaceAggregation: 'sum',
-					stepInterval: getStepInterval(startTime, endTime),
-					timeAggregation: 'rate',
 				},
+				{
+					dataSource: 'traces',
+					queryName: 'B',
+					aggregateOperator: 'count_distinct',
+					aggregateAttribute: {
+						dataType: 'string',
+						id: 'span_id--string----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'span_id',
+						type: '',
+					},
+					timeAggregation: 'count_distinct',
+					spaceAggregation: 'sum',
+					functions: [],
+					filters: {
+						items: [],
+						op: 'AND',
+					},
+					expression: 'B',
+					disabled: true,
+					stepInterval: getStepInterval(startTime, endTime),
+					having: [],
+					limit: null,
+					orderBy: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							isColumn: false,
+							isJSON: false,
+							key: 'celery.hostname',
+							type: 'tag',
+							id: 'celery.hostname--string--tag--false',
+						},
+					],
+					legend: '',
+					reduceTo: 'avg',
+				},
+				{
+					queryName: 'F1',
+					expression: '(A/B)*100',
+					disabled: false,
+					legend: '{{celery.hostname}}',
+				} as any,
 			],
+			yAxisUnit: 'percent',
 		}),
 	);
 
@@ -392,7 +452,7 @@ export const celeryLatencyByWorkerWidgetData = (
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Latency by Worker',
+			title: 'Latency by worker',
 			description: 'Represents the latency of tasks by each worker.',
 			queryData: [
 				{
@@ -444,7 +504,7 @@ export const celeryActiveTasksWidgetData = (
 ): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
-			title: 'Tasks/ worker (Active tasks)',
+			title: 'Active Tasks by worker',
 			description: 'Represents the number of active tasks.',
 			queryData: [
 				{
@@ -487,6 +547,7 @@ export const celeryActiveTasksWidgetData = (
 					timeAggregation: 'latest',
 				},
 			],
+			yAxisUnit: 'cps',
 		}),
 	);
 

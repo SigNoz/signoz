@@ -188,6 +188,11 @@ function K8sNodesList({
 		return queryPayload;
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
+	const nestedNodesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const formattedGroupedByNodesData = useMemo(
 		() =>
 			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
@@ -274,8 +279,15 @@ function K8sNodesList({
 
 	const selectedNodeData = useMemo(() => {
 		if (!selectedNodeUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the node from the formatted grouped by nodes data
+			return (
+				nestedNodesData.find((node) => node.nodeUID === selectedNodeUID) || null
+			);
+		}
+		// If not grouped by, return the node from the nodes data
 		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
-	}, [selectedNodeUID, nodesData]);
+	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
@@ -329,6 +341,10 @@ function K8sNodesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedNodeUID(record.nodeUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&

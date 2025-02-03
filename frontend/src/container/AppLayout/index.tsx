@@ -22,6 +22,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -292,6 +293,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'MESSAGING_QUEUES_CELERY_TASK' ||
 		routeKey === 'MESSAGING_QUEUES_OVERVIEW';
 
+	const isCloudIntegrationPage = (): boolean =>
+		routeKey === 'INTEGRATIONS' &&
+		new URLSearchParams(window.location.search).get('integration') ===
+			INTEGRATION_TYPES.AWS_INTEGRATION;
+
 	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
 	const isAlertHistory = (): boolean => routeKey === 'ALERT_HISTORY';
 	const isAlertOverview = (): boolean => routeKey === 'ALERT_OVERVIEW';
@@ -426,6 +432,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isAlertHistory() ||
 											isAlertOverview() ||
 											isMessagingQueues() ||
+											isCloudIntegrationPage() ||
 											isInfraMonitoring()
 												? 0
 												: '0 1rem',

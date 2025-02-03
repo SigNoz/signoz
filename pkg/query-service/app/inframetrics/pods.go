@@ -2,11 +2,14 @@ package inframetrics
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -103,6 +106,137 @@ func (p *PodsRepo) GetPodAttributeValues(ctx context.Context, req v3.FilterAttri
 		return nil, err
 	}
 	return attributeValuesResponse, nil
+}
+
+func (p *PodsRepo) DidSendPodMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(podMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(didSendPodMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := p.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (p *PodsRepo) DidSendClusterMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(clusterMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(didSendClusterMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := p.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (p *PodsRepo) IsSendingOptionalPodMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(optionalPodMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(isSendingOptionalPodMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := p.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (p *PodsRepo) SendingRequiredMetadata(ctx context.Context) ([]model.PodOnboardingStatus, error) {
+	namesStr := "'" + strings.Join(podMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(isSendingRequiredMetadataQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr)
+
+	result, err := p.reader.GetListResultV3(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	statuses := []model.PodOnboardingStatus{}
+
+	// for each pod, check if we have all the required metadata
+	for _, row := range result {
+		status := model.PodOnboardingStatus{}
+		switch v := row.Data["k8s_cluster_name"].(type) {
+		case string:
+			status.HasClusterName = true
+			status.ClusterName = v
+		case *string:
+			status.HasClusterName = *v != ""
+			status.ClusterName = *v
+		}
+		switch v := row.Data["k8s_node_name"].(type) {
+		case string:
+			status.HasNodeName = true
+			status.NodeName = v
+		case *string:
+			status.HasNodeName = *v != ""
+			status.NodeName = *v
+		}
+		switch v := row.Data["k8s_namespace_name"].(type) {
+		case string:
+			status.HasNamespaceName = true
+			status.NamespaceName = v
+		case *string:
+			status.HasNamespaceName = *v != ""
+			status.NamespaceName = *v
+		}
+		switch v := row.Data["k8s_deployment_name"].(type) {
+		case string:
+			status.HasDeploymentName = true
+		case *string:
+			status.HasDeploymentName = *v != ""
+		}
+		switch v := row.Data["k8s_statefulset_name"].(type) {
+		case string:
+			status.HasStatefulsetName = true
+		case *string:
+			status.HasStatefulsetName = *v != ""
+		}
+		switch v := row.Data["k8s_daemonset_name"].(type) {
+		case string:
+			status.HasDaemonsetName = true
+		case *string:
+			status.HasDaemonsetName = *v != ""
+		}
+		switch v := row.Data["k8s_cronjob_name"].(type) {
+		case string:
+			status.HasCronjobName = true
+		case *string:
+			status.HasCronjobName = *v != ""
+		}
+		switch v := row.Data["k8s_job_name"].(type) {
+		case string:
+			status.HasJobName = true
+		case *string:
+			status.HasJobName = *v != ""
+		}
+
+		switch v := row.Data["k8s_pod_name"].(type) {
+		case string:
+			status.PodName = v
+		case *string:
+			status.PodName = *v
+		}
+
+		if !status.HasClusterName ||
+			!status.HasNodeName ||
+			!status.HasNamespaceName ||
+			(!status.HasDeploymentName && !status.HasStatefulsetName && !status.HasDaemonsetName && !status.HasCronjobName && !status.HasJobName) {
+			statuses = append(statuses, status)
+		}
+	}
+
+	return statuses, nil
 }
 
 func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListRequest) (map[string]map[string]string, error) {

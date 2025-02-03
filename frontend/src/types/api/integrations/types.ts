@@ -1,4 +1,4 @@
-interface IntegrationsProps {
+export interface IntegrationsProps {
 	author: {
 		email: string;
 		homepage: string;
@@ -8,6 +8,7 @@ interface IntegrationsProps {
 	id: string;
 	icon: string;
 	is_installed: boolean;
+	is_new?: boolean;
 	title: string;
 }
 

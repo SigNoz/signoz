@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -23,6 +24,10 @@ func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
 
 	list, _ := file.Readdirnames(0) // 0 to read all files and folders
 	for _, filename := range list {
+		if strings.ToLower(filepath.Ext(filename)) != ".json" {
+			zap.L().Debug("Skipping non-json file", zap.String("filename", filename))
+			continue
+		}
 		zap.L().Info("Provisioning dashboard: ", zap.String("filename", filename))
 
 		// using filepath.Join for platform specific path creation

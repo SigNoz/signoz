@@ -201,6 +201,11 @@ function K8sClustersList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedClustersData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sClustersList(
 		query as K8sClustersListPayload,
 		{
@@ -283,12 +288,21 @@ function K8sClustersList({
 
 	const selectedClusterData = useMemo(() => {
 		if (!selectedClusterName) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the cluster from the formatted grouped by clusters data
+			return (
+				nestedClustersData.find(
+					(cluster) => cluster.meta.k8s_cluster_name === selectedClusterName,
+				) || null
+			);
+		}
+		// If not grouped by, return the cluster from the clusters data
 		return (
 			clustersData.find(
 				(cluster) => cluster.meta.k8s_cluster_name === selectedClusterName,
 			) || null
 		);
-	}, [selectedClusterName, clustersData]);
+	}, [selectedClusterName, groupBy.length, clustersData, nestedClustersData]);
 
 	const handleRowClick = (record: K8sClustersRowData): void => {
 		if (groupBy.length === 0) {
@@ -341,6 +355,10 @@ function K8sClustersList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedClusterName(record.clusterUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
