@@ -227,11 +227,13 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	require.Nil(checkinResp.RemovedAt)
 	require.Equal(testAccountConfig.EnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
 
-	metricsConfig := checkinResp.IntegrationConfig.TelemetryCollectionStrategy.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
-	require.Empty(metricsConfig.CloudwatchMetricsStreamFilters)
+	telemetryCollectionStrategy := checkinResp.IntegrationConfig.TelemetryCollectionStrategy
 
-	logsConfig := checkinResp.IntegrationConfig.TelemetryCollectionStrategy.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
-	require.Empty(logsConfig.CloudwatchLogsSubscriptions)
+	metricsStrategy := telemetryCollectionStrategy.MetricsCollectionStrategy.(*cloudintegrations.AWSMetricsCollectionStrategy)
+	require.Empty(metricsStrategy.CloudwatchMetricsStreamFilters)
+
+	logsStrategy := telemetryCollectionStrategy.LogsCollectionStrategy.(*cloudintegrations.AWSLogsCollectionStrategy)
+	require.Empty(logsStrategy.CloudwatchLogsSubscriptions)
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
@@ -271,16 +273,16 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	integrationConf := checkinResp.IntegrationConfig
 	require.Equal(testAccountConfig.EnabledRegions, integrationConf.EnabledRegions)
 
-	metricsConfig = integrationConf.TelemetryCollectionStrategy.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	metricsStrategy = integrationConf.TelemetryCollectionStrategy.MetricsCollectionStrategy.(*cloudintegrations.AWSMetricsCollectionStrategy)
 	metricStreamNamespaces := []string{}
-	for _, f := range metricsConfig.CloudwatchMetricsStreamFilters {
+	for _, f := range metricsStrategy.CloudwatchMetricsStreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/EC2", "AWS/RDS"}, metricStreamNamespaces)
 
-	logsConfig = integrationConf.TelemetryCollectionStrategy.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	logsStrategy = integrationConf.TelemetryCollectionStrategy.LogsCollectionStrategy.(*cloudintegrations.AWSLogsCollectionStrategy)
 	logGroupPrefixes := []string{}
-	for _, f := range logsConfig.CloudwatchLogsSubscriptions {
+	for _, f := range logsStrategy.CloudwatchLogsSubscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(1, len(logGroupPrefixes))
@@ -313,16 +315,16 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	integrationConf = checkinResp.IntegrationConfig
 	require.Equal(testAccountConfig2.EnabledRegions, integrationConf.EnabledRegions)
 
-	metricsConfig = integrationConf.TelemetryCollectionStrategy.MetricsCollectionConfig.(*cloudintegrations.AWSMetricsCollectionConfig)
+	metricsStrategy = integrationConf.TelemetryCollectionStrategy.MetricsCollectionStrategy.(*cloudintegrations.AWSMetricsCollectionStrategy)
 	metricStreamNamespaces = []string{}
-	for _, f := range metricsConfig.CloudwatchMetricsStreamFilters {
+	for _, f := range metricsStrategy.CloudwatchMetricsStreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
 	require.Equal([]string{"AWS/RDS"}, metricStreamNamespaces)
 
-	logsConfig = integrationConf.TelemetryCollectionStrategy.LogsCollectionConfig.(*cloudintegrations.AWSLogsCollectionConfig)
+	logsStrategy = integrationConf.TelemetryCollectionStrategy.LogsCollectionStrategy.(*cloudintegrations.AWSLogsCollectionStrategy)
 	logGroupPrefixes = []string{}
-	for _, f := range logsConfig.CloudwatchLogsSubscriptions {
+	for _, f := range logsStrategy.CloudwatchLogsSubscriptions {
 		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
 	}
 	require.Equal(0, len(logGroupPrefixes))

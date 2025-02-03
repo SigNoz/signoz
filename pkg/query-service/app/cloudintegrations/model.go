@@ -237,9 +237,9 @@ type CloudSignalCollectionStrategy interface {
 }
 
 type CloudTelemetryCollectionStrategy struct {
-	MetricsCollectionConfig CloudSignalCollectionStrategy `json:"metrics"`
+	MetricsCollectionStrategy CloudSignalCollectionStrategy `json:"metrics"`
 
-	LogsCollectionConfig CloudSignalCollectionStrategy `json:"logs"`
+	LogsCollectionStrategy CloudSignalCollectionStrategy `json:"logs"`
 }
 
 func NewCloudTelemetryCollectionStrategy(cloudProvider string) (
@@ -258,34 +258,34 @@ func ParseCloudTelemetryCollectionStrategyFromMap(
 
 	if cloudProvider == "aws" {
 		result := CloudTelemetryCollectionStrategy{
-			MetricsCollectionConfig: &AWSMetricsCollectionConfig{
+			MetricsCollectionStrategy: &AWSMetricsCollectionStrategy{
 				CloudwatchMetricsStreamFilters: []CloudwatchMetricStreamFilter{},
 			},
-			LogsCollectionConfig: &AWSLogsCollectionConfig{
+			LogsCollectionStrategy: &AWSLogsCollectionStrategy{
 				CloudwatchLogsSubscriptions: []CloudwatchLogsSubscriptionConfig{},
 			},
 		}
 
-		if metricsConfMap, ok := data["metrics"].(map[string]any); ok {
-			metricsConf, err := ParseStructWithJsonTagsFromMap[AWSMetricsCollectionConfig](
-				metricsConfMap,
+		if metricsStrategyMap, ok := data["metrics"].(map[string]any); ok {
+			metricsStrategy, err := ParseStructWithJsonTagsFromMap[AWSMetricsCollectionStrategy](
+				metricsStrategyMap,
 			)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"couldn't decode metrics collection strategy: %w", err,
 				)
 			}
-			result.MetricsCollectionConfig = metricsConf
+			result.MetricsCollectionStrategy = metricsStrategy
 		}
 
-		if logsConfMap, ok := data["logs"].(map[string]any); ok {
-			logsConf, err := ParseStructWithJsonTagsFromMap[AWSLogsCollectionConfig](
-				logsConfMap,
+		if logsStrategyMap, ok := data["logs"].(map[string]any); ok {
+			logsStrategy, err := ParseStructWithJsonTagsFromMap[AWSLogsCollectionStrategy](
+				logsStrategyMap,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't decode logs collection strategy: %w", err)
 			}
-			result.LogsCollectionConfig = logsConf
+			result.LogsCollectionStrategy = logsStrategy
 		}
 
 		return &result, nil
@@ -312,7 +312,7 @@ func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
 	return &res, nil
 }
 
-type AWSMetricsCollectionConfig struct {
+type AWSMetricsCollectionStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	CloudwatchMetricsStreamFilters []CloudwatchMetricStreamFilter `json:"cloudwatch_metric_stream_filters"`
 }
@@ -324,27 +324,28 @@ type CloudwatchMetricStreamFilter struct {
 	MetricNames []string `json:"MetricNames,omitempty"`
 }
 
-func (amc *AWSMetricsCollectionConfig) UpdateWithServiceStrategy(
-	svcConfig CloudSignalCollectionStrategy,
+func (amc *AWSMetricsCollectionStrategy) UpdateWithServiceStrategy(
+	svcStrategy CloudSignalCollectionStrategy,
 ) error {
-	if svcConfig == nil {
+	if svcStrategy == nil {
 		return nil
 	}
 
-	metricsConf, ok := svcConfig.(*AWSMetricsCollectionConfig)
+	metricsStrategy, ok := svcStrategy.(*AWSMetricsCollectionStrategy)
 	if !ok {
 		return fmt.Errorf(
-			"AWSMetricsCollectionConfig can't be updated with %T", svcConfig,
+			"AWSMetricsCollectionStrategy can't be updated with %T", svcStrategy,
 		)
 	}
 
 	amc.CloudwatchMetricsStreamFilters = append(
-		amc.CloudwatchMetricsStreamFilters, metricsConf.CloudwatchMetricsStreamFilters...,
+		amc.CloudwatchMetricsStreamFilters,
+		metricsStrategy.CloudwatchMetricsStreamFilters...,
 	)
 	return nil
 }
 
-type AWSLogsCollectionConfig struct {
+type AWSLogsCollectionStrategy struct {
 	CloudwatchLogsSubscriptions []CloudwatchLogsSubscriptionConfig `json:"cloudwatch_logs_subscriptions"`
 }
 
@@ -358,22 +359,23 @@ type CloudwatchLogsSubscriptionConfig struct {
 	FilterPattern string `json:"filter_pattern"`
 }
 
-func (alc *AWSLogsCollectionConfig) UpdateWithServiceStrategy(
-	svcConfig CloudSignalCollectionStrategy,
+func (alc *AWSLogsCollectionStrategy) UpdateWithServiceStrategy(
+	svcStrategy CloudSignalCollectionStrategy,
 ) error {
-	if svcConfig == nil {
+	if svcStrategy == nil {
 		return nil
 	}
 
-	logsConf, ok := svcConfig.(*AWSLogsCollectionConfig)
+	logsStrategy, ok := svcStrategy.(*AWSLogsCollectionStrategy)
 	if !ok {
 		return fmt.Errorf(
-			"AWSLogsCollectionConfig can't be updated with %T", svcConfig,
+			"AWSLogsCollectionStrategy can't be updated with %T", svcStrategy,
 		)
 	}
 
 	alc.CloudwatchLogsSubscriptions = append(
-		alc.CloudwatchLogsSubscriptions, logsConf.CloudwatchLogsSubscriptions...,
+		alc.CloudwatchLogsSubscriptions,
+		logsStrategy.CloudwatchLogsSubscriptions...,
 	)
 	return nil
 }
