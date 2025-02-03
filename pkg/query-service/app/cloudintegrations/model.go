@@ -262,6 +262,7 @@ func (cs *CloudTelemetryCollectionStrategy) AddServiceStrategy(
 		if metricsEnabled {
 			cs.AWSMetrics.AddServiceStrategy(svcStrategy.AWSMetrics)
 		}
+		return nil
 	}
 
 	return fmt.Errorf("unsupported cloud provider: %s", cs.Provider)

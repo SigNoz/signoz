@@ -264,9 +264,14 @@ func (c *Controller) CheckInAsAgent(
 			metricsEnabled := svcConfig.Metrics != nil && svcConfig.Metrics.Enabled
 			logsEnabled := svcConfig.Logs != nil && svcConfig.Logs.Enabled
 			if logsEnabled || metricsEnabled {
-				agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
+				err := agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
 					svcDetails.TelemetryCollectionStrategy, logsEnabled, metricsEnabled,
 				)
+				if err != nil {
+					return nil, model.InternalError(fmt.Errorf(
+						"couldn't add service telemetry collection strategy: %w", err,
+					))
+				}
 			}
 		}
 	}
