@@ -10,7 +10,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
 
-	"go.signoz.io/signoz/ee/query-service/license/sqlite"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -26,10 +25,6 @@ func NewLicenseRepo(db *sqlx.DB) Repo {
 	return Repo{
 		db: db,
 	}
-}
-
-func (r *Repo) InitDB(inputDB *sqlx.DB) error {
-	return sqlite.InitDB(inputDB)
 }
 
 func (r *Repo) GetLicensesV3(ctx context.Context) ([]*model.LicenseV3, error) {

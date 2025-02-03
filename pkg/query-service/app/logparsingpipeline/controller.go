@@ -30,11 +30,10 @@ func NewLogParsingPipelinesController(
 	getIntegrationPipelines func(context.Context) ([]Pipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(db)
-	err := repo.InitDB(db)
 	return &LogParsingPipelineController{
 		Repo:                    repo,
 		GetIntegrationPipelines: getIntegrationPipelines,
-	}, err
+	}, nil
 }
 
 // PipelinesResponse is used to prepare http response for pipelines config related requests

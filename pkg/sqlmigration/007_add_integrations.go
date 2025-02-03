@@ -48,6 +48,17 @@ func (migration *addIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
+	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS cloud_integrations_service_configs(
+		cloud_provider TEXT NOT NULL,
+		cloud_account_id TEXT NOT NULL,
+		service_id TEXT NOT NULL,
+		config_json TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+		UNIQUE(cloud_provider, cloud_account_id, service_id)
+	)`); err != nil {
+		return err
+	}
+
 	return nil
 }
 

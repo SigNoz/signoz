@@ -9,28 +9,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
-func InitSqliteDBIfNeeded(db *sqlx.DB) error {
-	if db == nil {
-		return fmt.Errorf("db is required")
-	}
-
-	createTablesStatements := `
-		CREATE TABLE IF NOT EXISTS integrations_installed(
-			integration_id TEXT PRIMARY KEY,
-			config_json TEXT,
-			installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)
-	`
-	_, err := db.Exec(createTablesStatements)
-	if err != nil {
-		return fmt.Errorf(
-			"could not ensure integrations schema in sqlite DB: %w", err,
-		)
-	}
-
-	return nil
-}
-
 type InstalledIntegrationsSqliteRepo struct {
 	db *sqlx.DB
 }
@@ -38,13 +16,6 @@ type InstalledIntegrationsSqliteRepo struct {
 func NewInstalledIntegrationsSqliteRepo(db *sqlx.DB) (
 	*InstalledIntegrationsSqliteRepo, error,
 ) {
-	err := InitSqliteDBIfNeeded(db)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't ensure sqlite schema for installed integrations: %w", err,
-		)
-	}
-
 	return &InstalledIntegrationsSqliteRepo{
 		db: db,
 	}, nil
