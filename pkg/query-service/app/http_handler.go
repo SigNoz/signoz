@@ -31,6 +31,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartApi"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
@@ -2601,20 +2602,25 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 
 	spanEvaluation.HandleFunc("/evaluation", am.ViewAccess(aH.getProducerConsumerEval)).Methods(http.MethodPost)
 
-	// -------------------------------------------------
-	// Celery-specific routes
-	celeryRouter := messagingQueuesRouter.PathPrefix("/celery").Subrouter()
-
-	// Celery overview routes
-	celeryRouter.HandleFunc("/overview", am.ViewAccess(aH.getCeleryOverview)).Methods(http.MethodPost)
-
-	// Celery tasks routes
-	celeryRouter.HandleFunc("/tasks", am.ViewAccess(aH.getCeleryTasks)).Methods(http.MethodPost)
-
-	// Celery performance routes
-	celeryRouter.HandleFunc("/performance", am.ViewAccess(aH.getCeleryPerformance)).Methods(http.MethodPost)
-
 	// for other messaging queues, add SubRouters here
+}
+
+// RegisterThirdPartyApiRoutes adds third-party-api integration routes
+func (aH *APIHandler) RegisterThirdPartyApiRoutes(router *mux.Router, am *AuthMiddleware) {
+
+	// Main messaging queues router
+	thirdPartyApiRouter := router.PathPrefix("/api/v1/third-party-apis").Subrouter()
+
+	// Domain Overview route
+	overviewRouter := thirdPartyApiRouter.PathPrefix("/overview").Subrouter()
+
+	overviewRouter.HandleFunc("/list", am.ViewAccess(aH.getDomainList)).Methods(http.MethodPost)
+	overviewRouter.HandleFunc("/domain", am.ViewAccess(aH.getDomainInfo)).Methods(http.MethodPost)
+
+	// Fetchers
+	fetchRouter := thirdPartyApiRouter.PathPrefix("/overview").Subrouter()
+
+	fetchRouter.HandleFunc("/services", am.ViewAccess(aH.getUrlList)).Methods(http.MethodPost)
 }
 
 // not using md5 hashing as the plain string would work
@@ -3509,6 +3515,15 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 	return queue, nil
+}
+
+// ParseRequstBody for third party APIs
+func ParseRequstBody(r *http.Request) (*thirdPartApi.ThirdPartApis, *model.ApiError) {
+	thirdPartApis := new(thirdPartApi.ThirdPartApis)
+	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return thirdPartApis, nil
 }
 
 // Preferences
@@ -5515,13 +5530,79 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, results)
 }
 
-func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
+	thirdPartyQueryRequest, apiErr := ParseRequstBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := thirdPartApi.BuildDomainList(thirdPartyQueryRequest)
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	if !thirdPartyQueryRequest.ShowIP {
+		result = thirdPartApi.FilterResponse(result)
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getCeleryTasks(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery tasks logic for both state and list types
+func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
+	thirdPartyQueryRequest, apiErr := ParseRequstBody(r)
+
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := thirdPartApi.BuildDomainInfo(thirdPartyQueryRequest)
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	if !thirdPartyQueryRequest.ShowIP {
+		result = thirdPartApi.FilterResponse(result)
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getCeleryPerformance(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery performance logic for error, rate, and latency types
+func (aH *APIHandler) getUrlList(w http.ResponseWriter, r *http.Request) {
 }
