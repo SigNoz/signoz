@@ -1,7 +1,9 @@
 package cloudintegrations
 
 import (
+	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path"
@@ -165,21 +167,6 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 	}
 	hydratedSpec := hydrated.(map[string]any)
 
-	// telemetry collection strategy can't be JSON parsed directly
-	// since it contains interface fields.
-	telemetryCollectionStrategyMap, ok := hydratedSpec["telemetry_collection_strategy"].(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("couldn't find telemetry_collection_strategy")
-	}
-	delete(hydratedSpec, "telemetry_collection_strategy")
-
-	telemetryCollectionStrategy, err := ParseCloudTelemetryCollectionStrategyFromMap(
-		cloudProvider, telemetryCollectionStrategyMap,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't parse telemetry_collection_strategy: %w", err)
-	}
-
 	serviceDef, err := ParseStructWithJsonTagsFromMap[CloudServiceDetails](hydratedSpec)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -188,12 +175,12 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 		)
 	}
 
-	serviceDef.TelemetryCollectionStrategy = telemetryCollectionStrategy
-
 	err = validateServiceDefinition(serviceDef)
 	if err != nil {
 		return nil, fmt.Errorf("invalid service definition %s: %w", serviceDef.Id, err)
 	}
+
+	serviceDef.TelemetryCollectionStrategy.Provider = cloudProvider
 
 	return serviceDef, nil
 
@@ -217,7 +204,29 @@ func validateServiceDefinition(s *CloudServiceDetails) error {
 		seenDashboardIds[dashboardId] = nil
 	}
 
+	if s.TelemetryCollectionStrategy == nil {
+		return fmt.Errorf("telemetry_collection_strategy is required")
+	}
+
 	// potentially more to follow
 
 	return nil
+}
+
+func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
+	*StructType, error,
+) {
+	mapJson, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't marshal map to json: %w", err)
+	}
+
+	var res StructType
+	decoder := json.NewDecoder(bytes.NewReader(mapJson))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&res)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't unmarshal json back to struct: %w", err)
+	}
+	return &res, nil
 }

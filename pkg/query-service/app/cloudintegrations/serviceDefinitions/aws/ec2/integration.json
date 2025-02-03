@@ -28,7 +28,7 @@
     "logs": []
   },
   "telemetry_collection_strategy": {
-    "metrics": {
+    "aws_metrics": {
       "cloudwatch_metric_stream_filters": [
         {
           "Namespace": "AWS/EC2"

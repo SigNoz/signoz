@@ -261,26 +261,12 @@ func (c *Controller) CheckInAsAgent(
 		svcConfig := svcConfigs[svcId]
 
 		if svcDetails != nil {
-			if svcConfig.Metrics != nil && svcConfig.Metrics.Enabled {
-				err := agentConfig.TelemetryCollectionStrategy.MetricsCollectionStrategy.UpdateWithServiceStrategy(
-					svcDetails.TelemetryCollectionStrategy.MetricsCollectionStrategy,
+			metricsEnabled := svcConfig.Metrics != nil && svcConfig.Metrics.Enabled
+			logsEnabled := svcConfig.Logs != nil && svcConfig.Logs.Enabled
+			if logsEnabled || metricsEnabled {
+				agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
+					svcDetails.TelemetryCollectionStrategy, logsEnabled, metricsEnabled,
 				)
-				if err != nil {
-					return nil, model.InternalError(fmt.Errorf(
-						"couldn't accumulate metrics collection strategy for svc %s: %w", svcId, err,
-					))
-				}
-			}
-
-			if svcConfig.Logs != nil && svcConfig.Logs.Enabled {
-				err := agentConfig.TelemetryCollectionStrategy.LogsCollectionStrategy.UpdateWithServiceStrategy(
-					svcDetails.TelemetryCollectionStrategy.LogsCollectionStrategy,
-				)
-				if err != nil {
-					return nil, model.InternalError(fmt.Errorf(
-						"couldn't accumulate logs collection strategy for svc %s: %w", svcId, err,
-					))
-				}
 			}
 		}
 	}
