@@ -48,6 +48,7 @@ function WidgetGraphComponent({
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
+	customErrorMessage,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -317,6 +318,13 @@ function WidgetGraphComponent({
 					setSearchTerm={setSearchTerm}
 				/>
 			</div>
+
+			{queryResponse.error && customErrorMessage && (
+				<div className="error-message-container">
+					<Typography.Text type="warning">{customErrorMessage}</Typography.Text>
+				</div>
+			)}
+
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
 				<Skeleton />
 			)}

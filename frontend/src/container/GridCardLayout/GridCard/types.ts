@@ -37,6 +37,7 @@ export interface WidgetGraphComponentProps {
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	customErrorMessage?: string;
 }
 
 export interface GridCardGraphProps {
@@ -54,6 +55,9 @@ export interface GridCardGraphProps {
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	customErrorMessage?: string;
+	start?: number;
+	end?: number;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

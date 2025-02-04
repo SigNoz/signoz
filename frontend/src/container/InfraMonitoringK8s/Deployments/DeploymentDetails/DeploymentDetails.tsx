@@ -197,6 +197,10 @@ function DeploymentDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Deployments list details tab changed', {
+			deployment: deployment?.deploymentName,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -220,6 +224,7 @@ function DeploymentDetails({
 			logEvent('Infra Monitoring: Deployments list details time updated', {
 				deployment: deployment?.deploymentName,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

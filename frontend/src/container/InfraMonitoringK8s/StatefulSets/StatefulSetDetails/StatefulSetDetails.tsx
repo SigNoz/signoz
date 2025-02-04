@@ -198,6 +198,10 @@ function StatefulSetDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: StatefulSets list details tab changed', {
+			statefulSet: statefulSet?.statefulSetName,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -221,6 +225,7 @@ function StatefulSetDetails({
 			logEvent('Infra Monitoring: StatefulSets list details time updated', {
 				statefulSet: statefulSet?.statefulSetName,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

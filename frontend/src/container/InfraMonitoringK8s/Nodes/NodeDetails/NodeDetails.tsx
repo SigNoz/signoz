@@ -181,6 +181,10 @@ function NodeDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Nodes list details tab changed', {
+			node: node?.nodeUID,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -204,6 +208,7 @@ function NodeDetails({
 			logEvent('Infra Monitoring: Nodes list details time updated', {
 				node: node?.nodeUID,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

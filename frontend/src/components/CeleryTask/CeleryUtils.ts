@@ -90,3 +90,40 @@ export const paths = (
 
 	return renderer(u, seriesIdx, idx0, idx1, extendGap, buildClip);
 };
+
+export const createFiltersFromData = (
+	data: Record<string, any>,
+): Array<{
+	id: string;
+	key: {
+		key: string;
+		dataType: DataTypes;
+		type: string;
+		isColumn: boolean;
+		isJSON: boolean;
+		id: string;
+	};
+	op: string;
+	value: string;
+}> => {
+	const excludeKeys = ['A', 'A_without_unit'];
+
+	return (
+		Object.entries(data)
+			.filter(([key]) => !excludeKeys.includes(key))
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			.map(([key, value]) => ({
+				id: uuidv4(),
+				key: {
+					key,
+					dataType: DataTypes.String,
+					type: 'tag',
+					isColumn: false,
+					isJSON: false,
+					id: `${key}--string--tag--false`,
+				},
+				op: '=',
+				value: value.toString(),
+			}))
+	);
+};

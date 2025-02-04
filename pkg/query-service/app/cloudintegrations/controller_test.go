@@ -71,8 +71,8 @@ func TestAgentCheckIns(t *testing.T) {
 		},
 	)
 	require.Nil(apiErr)
-	require.Equal(testAccountId1, resp1.Account.Id)
-	require.Equal(testCloudAccountId1, *resp1.Account.CloudAccountId)
+	require.Equal(testAccountId1, resp1.AccountId)
+	require.Equal(testCloudAccountId1, resp1.CloudAccountId)
 
 	// The agent should not be able to check in with a different
 	// cloud account id for the same account.
@@ -262,9 +262,10 @@ func makeTestConnectedAccount(t *testing.T, controller *Controller, cloudAccount
 		},
 	)
 	require.Nil(apiErr)
-	require.Equal(testAccountId, resp.Account.Id)
-	require.Equal(cloudAccountId, *resp.Account.CloudAccountId)
+	require.Equal(testAccountId, resp.AccountId)
+	require.Equal(cloudAccountId, resp.CloudAccountId)
 
-	return &resp.Account
-
+	acc, err := controller.accountsRepo.get(context.TODO(), "aws", resp.AccountId)
+	require.Nil(err)
+	return acc
 }

@@ -218,20 +218,26 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 				showTitle: false,
 			},
 			width: 200,
-			sorter: (a: RowData, b: RowData): number =>
-				String(a.error_percentage).localeCompare(String(b.error_percentage)),
+			sorter: (a: RowData, b: RowData): number => {
+				const aValue = Number(a.error_percentage);
+				const bValue = Number(b.error_percentage);
+				return aValue - bValue;
+			},
 			render: ProgressRender,
 		},
 		{
-			title: 'LATENCY (P95)',
+			title: 'LATENCY (P95) in ms',
 			dataIndex: 'p95_latency',
 			key: 'p95_latency',
 			ellipsis: {
 				showTitle: false,
 			},
 			width: 100,
-			sorter: (a: RowData, b: RowData): number =>
-				String(a.p95_latency).localeCompare(String(b.p95_latency)),
+			sorter: (a: RowData, b: RowData): number => {
+				const aValue = Number(a.p95_latency);
+				const bValue = Number(b.p95_latency);
+				return aValue - bValue;
+			},
 			render: (value: number | string): string => {
 				if (!isNumber(value)) return value.toString();
 				return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
@@ -245,8 +251,11 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 				showTitle: false,
 			},
 			width: 100,
-			sorter: (a: RowData, b: RowData): number =>
-				String(a.throughput).localeCompare(String(b.throughput)),
+			sorter: (a: RowData, b: RowData): number => {
+				const aValue = Number(a.throughput);
+				const bValue = Number(b.throughput);
+				return aValue - bValue;
+			},
 			render: (value: number | string): string => {
 				if (!isNumber(value)) return value.toString();
 				return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
