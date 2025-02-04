@@ -38,7 +38,7 @@ const getStatus = (
 function ServiceStatus({
 	serviceStatus,
 }: {
-	serviceStatus: IServiceStatus | null;
+	serviceStatus: IServiceStatus | undefined;
 }): JSX.Element {
 	const logsLastReceivedTimestamp = serviceStatus?.logs?.last_received_ts_ms;
 	const metricsLastReceivedTimestamp =
@@ -116,9 +116,8 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__title-bar">
 				<div className="service-details__details-title">Details</div>
 				<div className="service-details__right-actions">
-					{serviceDetailsData?.status && (
-						<ServiceStatus serviceStatus={serviceDetailsData.status} />
-					)}
+					<ServiceStatus serviceStatus={serviceDetailsData.status} />
+
 					{!!accountId && signalStatus.isAnySignalConfigured ? (
 						<Button
 							className="configure-button configure-button--default"
