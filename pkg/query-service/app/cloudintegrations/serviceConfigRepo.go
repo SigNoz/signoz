@@ -38,42 +38,9 @@ type serviceConfigRepository interface {
 func newServiceConfigRepository(db *sqlx.DB) (
 	*serviceConfigSQLRepository, error,
 ) {
-
-	if err := initServiceConfigSqliteDBIfNeeded(db); err != nil {
-		return nil, fmt.Errorf(
-			"could not init sqlite DB for cloudintegrations service configs: %w", err,
-		)
-	}
-
 	return &serviceConfigSQLRepository{
 		db: db,
 	}, nil
-}
-
-func initServiceConfigSqliteDBIfNeeded(db *sqlx.DB) error {
-
-	if db == nil {
-		return fmt.Errorf("db is required")
-	}
-
-	createTableStatement := `
-		CREATE TABLE IF NOT EXISTS cloud_integrations_service_configs(
-			cloud_provider TEXT NOT NULL,
-			cloud_account_id TEXT NOT NULL,
-			service_id TEXT NOT NULL,
-			config_json TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			UNIQUE(cloud_provider, cloud_account_id, service_id)
-		)
-	`
-	_, err := db.Exec(createTableStatement)
-	if err != nil {
-		return fmt.Errorf(
-			"could not ensure cloud provider service configs schema in sqlite DB: %w", err,
-		)
-	}
-
-	return nil
 }
 
 type serviceConfigSQLRepository struct {

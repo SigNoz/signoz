@@ -205,44 +205,6 @@ var db *sqlx.DB
 
 func InitDB(inputDB *sqlx.DB) error {
 	db = inputDB
-	// create the user preference table
-	tableSchema := `
-	PRAGMA foreign_keys = ON;
-	CREATE TABLE IF NOT EXISTS user_preference(
-		preference_id TEXT NOT NULL,
-		preference_value TEXT,
-		user_id TEXT NOT NULL,
-		PRIMARY KEY (preference_id,user_id),
-		FOREIGN KEY (user_id)
-			REFERENCES users(id)
-			ON UPDATE CASCADE
-			ON DELETE CASCADE
-	);`
-
-	_, err := db.Exec(tableSchema)
-	if err != nil {
-		return fmt.Errorf("error in creating user_preference table: %s", err.Error())
-	}
-
-	// create the org preference table
-	tableSchema = `
-	PRAGMA foreign_keys = ON;
-	CREATE TABLE IF NOT EXISTS org_preference(
-		preference_id TEXT NOT NULL,
-		preference_value TEXT,
-		org_id TEXT NOT NULL,
-		PRIMARY KEY (preference_id,org_id),
-		FOREIGN KEY (org_id)
-			REFERENCES organizations(id)
-			ON UPDATE CASCADE
-			ON DELETE CASCADE
-	);`
-
-	_, err = db.Exec(tableSchema)
-	if err != nil {
-		return fmt.Errorf("error in creating org_preference table: %s", err.Error())
-	}
-
 	return nil
 }
 

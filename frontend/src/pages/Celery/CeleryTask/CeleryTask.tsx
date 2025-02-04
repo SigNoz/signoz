@@ -19,11 +19,16 @@ export default function CeleryTask(): JSX.Element {
 		<div className="celery-task-container">
 			<div className="celery-content">
 				<div className="celery-content-header">
-					<p className="celery-content-header-title">Celery Task</p>
-					<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
+					<p className="celery-content-header-title">Celery</p>
+					<div className="celery-content-header-right">
+						<DateTimeSelectionV2 showAutoRefresh hideShareModal={false} />
+					</div>
 				</div>
-				<CeleryTaskConfigOptions />
-				<CeleryTaskGraphGrid onClick={onTaskClick} queryEnabled={!task} />
+				<CeleryTaskGraphGrid
+					onClick={onTaskClick}
+					queryEnabled={!task}
+					configureOptionComponent={<CeleryTaskConfigOptions />}
+				/>
 			</div>
 			{!!task && (
 				<CeleryTaskDetail

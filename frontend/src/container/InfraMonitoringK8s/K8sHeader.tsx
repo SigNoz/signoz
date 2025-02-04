@@ -2,13 +2,14 @@
 import './InfraMonitoringK8s.styles.scss';
 
 import { Button, Select } from 'antd';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { K8sCategory } from './constants';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
@@ -47,7 +48,7 @@ function K8sHeader({
 }: K8sHeaderProps): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
 
-	const { currentQuery } = useQueryBuilder();
+	const currentQuery = initialQueriesMap[DataSource.METRICS];
 
 	const updatedCurrentQuery = useMemo(
 		() => ({

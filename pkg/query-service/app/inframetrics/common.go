@@ -8,6 +8,84 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
+var (
+	// TODO(srikanthccv): import metadata yaml from receivers and use generated files to check the metrics
+	podMetricNamesToCheck = []string{
+		"k8s_pod_cpu_utilization",
+		"k8s_pod_memory_usage",
+		"k8s_pod_cpu_request_utilization",
+		"k8s_pod_memory_request_utilization",
+		"k8s_pod_cpu_limit_utilization",
+		"k8s_pod_memory_limit_utilization",
+		"k8s_container_restarts",
+		"k8s_pod_phase",
+	}
+	nodeMetricNamesToCheck = []string{
+		"k8s_node_cpu_utilization",
+		"k8s_node_allocatable_cpu",
+		"k8s_node_memory_usage",
+		"k8s_node_allocatable_memory",
+		"k8s_node_condition_ready",
+	}
+	clusterMetricNamesToCheck = []string{
+		"k8s_daemonset_desired_scheduled_nodes",
+		"k8s_daemonset_current_scheduled_nodes",
+		"k8s_deployment_desired",
+		"k8s_deployment_available",
+		"k8s_job_desired_successful_pods",
+		"k8s_job_active_pods",
+		"k8s_job_failed_pods",
+		"k8s_job_successful_pods",
+		"k8s_statefulset_desired_pods",
+		"k8s_statefulset_current_pods",
+	}
+	optionalPodMetricNamesToCheck = []string{
+		"k8s_pod_cpu_request_utilization",
+		"k8s_pod_memory_request_utilization",
+		"k8s_pod_cpu_limit_utilization",
+		"k8s_pod_memory_limit_utilization",
+	}
+
+	// did they ever send _any_ pod metrics?
+	didSendPodMetricsQuery = `
+	SELECT count() FROM %s.%s WHERE metric_name IN (%s)
+`
+
+	// did they ever send any node metrics?
+	didSendNodeMetricsQuery = `
+	SELECT count() FROM %s.%s WHERE metric_name IN (%s)
+`
+
+	// did they ever send any cluster metrics?
+	didSendClusterMetricsQuery = `
+	SELECT count() FROM %s.%s WHERE metric_name IN (%s)
+`
+
+	// if they ever sent _any_ pod metrics, we assume they know how to send pod metrics
+	// now, are they sending optional pod metrics such request/limit metrics?
+	isSendingOptionalPodMetricsQuery = `
+	SELECT count() FROM %s.%s WHERE metric_name IN (%s)
+`
+
+	// there should be [cluster, node, namespace, one of (deployment, statefulset, daemonset, cronjob, job)] for each pod
+	isSendingRequiredMetadataQuery = `
+	SELECT any(JSONExtractString(labels, 'k8s_cluster_name')) as k8s_cluster_name,
+		any(JSONExtractString(labels, 'k8s_node_name')) as k8s_node_name,
+		any(JSONExtractString(labels, 'k8s_namespace_name')) as k8s_namespace_name,
+		any(JSONExtractString(labels, 'k8s_deployment_name')) as k8s_deployment_name,
+		any(JSONExtractString(labels, 'k8s_statefulset_name')) as k8s_statefulset_name,
+		any(JSONExtractString(labels, 'k8s_daemonset_name')) as k8s_daemonset_name,
+		any(JSONExtractString(labels, 'k8s_cronjob_name')) as k8s_cronjob_name,
+		any(JSONExtractString(labels, 'k8s_job_name')) as k8s_job_name,
+		JSONExtractString(labels, 'k8s_pod_name') as k8s_pod_name
+	FROM %s.%s WHERE metric_name IN (%s)
+		AND (unix_milli >= (toUnixTimestamp(now() - toIntervalMinute(60)) * 1000))
+		AND JSONExtractString(labels, 'k8s_namespace_name') NOT IN ('kube-system', 'kube-public', 'kube-node-lease', 'metallb-system')
+	GROUP BY k8s_pod_name
+	LIMIT 1 BY k8s_cluster_name, k8s_node_name, k8s_namespace_name
+`
+)
+
 // getParamsForTopItems returns the step, time series table name and samples table name
 // for the top items query. what are we doing here?
 // we want to identify the top hosts/pods/nodes quickly, so we use pre-aggregated data

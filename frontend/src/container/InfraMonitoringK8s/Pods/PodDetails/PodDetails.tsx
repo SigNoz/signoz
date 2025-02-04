@@ -198,6 +198,10 @@ function PodDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Pods list details tab changed', {
+			pod: pod?.podUID,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -221,6 +225,7 @@ function PodDetails({
 			logEvent('Infra Monitoring: Pods list details time updated', {
 				pod: pod?.podUID,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

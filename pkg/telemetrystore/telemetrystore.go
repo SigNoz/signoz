@@ -8,7 +8,6 @@ import (
 )
 
 type TelemetryStore interface {
-	// Returns the SigNoz Wrapper for Clickhouse
 	ClickHouseDB() clickhouse.Conn
 }
 

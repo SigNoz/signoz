@@ -1,6 +1,7 @@
 package telemetrystore
 
 import (
+	"fmt"
 	"time"
 
 	"go.signoz.io/signoz/pkg/factory"
@@ -50,13 +51,15 @@ func newConfig() factory.Config {
 			DialTimeout:  5 * time.Second,
 		},
 		ClickHouse: ClickHouseConfig{
-			DSN: "http://localhost:9000",
-
-			// No default query settings, as default's are set in ch config
+			DSN: "tcp://localhost:9000",
 		},
 	}
 }
 
 func (c Config) Validate() error {
+	if c.Provider != "clickhouse" {
+		return fmt.Errorf("provider: %q is not supported", c.Provider)
+	}
+
 	return nil
 }

@@ -6,8 +6,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
+import { Button } from 'container/MetricsApplication/Tabs/styles';
+import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,15 +19,13 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
 	applyCeleryFilterOnWidgetData,
+	createFiltersFromData,
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
-import {
-	celeryTaskLatencyWidgetData,
-	celeryTimeSeriesTablesWidgetData,
-} from './CeleryTaskGraphUtils';
+import { useNavigateToTraces } from '../useNavigateToTraces';
+import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
 
 interface TabData {
 	label: string;
@@ -38,10 +39,8 @@ export enum CeleryTaskGraphState {
 }
 
 function CeleryTaskLatencyGraph({
-	onClick,
 	queryEnabled,
 }: {
-	onClick: (task: CaptureDataProps) => void;
 	queryEnabled: boolean;
 }): JSX.Element {
 	const history = useHistory();
@@ -106,31 +105,51 @@ function CeleryTaskLatencyGraph({
 		[celeryTaskLatencyData, selectedFilters],
 	);
 
-	const onGraphClick = (
-		xValue: number,
-		_yValue: number,
-		_mouseX: number,
-		_mouseY: number,
-		data?: {
-			[key: string]: string;
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
+	const [entityData, setEntityData] = useState<{
+		entity: string;
+		value: string;
+	}>();
+
+	const handleSetTimeStamp = useCallback((selectTime: number) => {
+		setSelectedTimeStamp(selectTime);
+	}, []);
+
+	const onGraphClick = useCallback(
+		(type: string): OnClickPluginOpts['onClick'] => (
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+			data,
+		): Promise<void> => {
+			const [firstDataPoint] = Object.entries(data || {});
+			const [entity, value] = firstDataPoint;
+			setEntityData({
+				entity,
+				value,
+			});
+
+			return onGraphClickHandler(handleSetTimeStamp)(
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				type,
+			);
 		},
-	): void => {
-		const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
+		[handleSetTimeStamp],
+	);
 
-		// Extract entity and value from data
-		const [firstDataPoint] = Object.entries(data || {});
-		const [entity, value] = (firstDataPoint || ([] as unknown)) as [
-			string,
-			string,
-		];
+	const navigateToTraces = useNavigateToTraces();
 
-		onClick?.({
-			entity,
-			value,
-			timeRange: [start, end],
-			widgetData: celeryTimeSeriesTablesWidgetData(entity, value, 'Task Latency'),
+	const goToTraces = useCallback(() => {
+		const { start, end } = getStartAndEndTimesInMilliseconds(selectedTimeStamp);
+		const filters = createFiltersFromData({
+			[entityData?.entity as string]: entityData?.value,
 		});
-	};
+		navigateToTraces(filters, start, end, true);
+	}, [entityData, navigateToTraces, selectedTimeStamp]);
 
 	return (
 		<Card
@@ -161,32 +180,62 @@ function CeleryTaskLatencyGraph({
 			</Row>
 			<div className="celery-task-graph-grid-content">
 				{graphState === CeleryTaskGraphState.P99 && (
-					<GridCard
-						widget={updatedWidgetData}
-						headerMenuList={[...ViewMenuAction]}
-						onDragSelect={onDragSelect}
-						onClickHandler={onGraphClick}
-						isQueryEnabled={queryEnabled}
-					/>
+					<>
+						<Button
+							type="default"
+							size="small"
+							id="Celery_p99_latency_button"
+							onClick={goToTraces}
+						>
+							View Traces
+						</Button>
+						<GridCard
+							widget={updatedWidgetData}
+							headerMenuList={[...ViewMenuAction]}
+							onDragSelect={onDragSelect}
+							onClickHandler={onGraphClick('Celery_p99_latency')}
+							isQueryEnabled={queryEnabled}
+						/>
+					</>
 				)}
 
 				{graphState === CeleryTaskGraphState.P95 && (
-					<GridCard
-						widget={updatedWidgetData}
-						headerMenuList={[...ViewMenuAction]}
-						onDragSelect={onDragSelect}
-						onClickHandler={onGraphClick}
-						isQueryEnabled={queryEnabled}
-					/>
+					<>
+						<Button
+							type="default"
+							size="small"
+							id="Celery_p95_latency_button"
+							onClick={goToTraces}
+						>
+							View Traces
+						</Button>
+						<GridCard
+							widget={updatedWidgetData}
+							headerMenuList={[...ViewMenuAction]}
+							onDragSelect={onDragSelect}
+							onClickHandler={onGraphClick('Celery_p95_latency')}
+							isQueryEnabled={queryEnabled}
+						/>
+					</>
 				)}
 				{graphState === CeleryTaskGraphState.P90 && (
-					<GridCard
-						widget={updatedWidgetData}
-						headerMenuList={[...ViewMenuAction]}
-						onDragSelect={onDragSelect}
-						onClickHandler={onGraphClick}
-						isQueryEnabled={queryEnabled}
-					/>
+					<>
+						<Button
+							type="default"
+							size="small"
+							id="Celery_p90_latency_button"
+							onClick={goToTraces}
+						>
+							View Traces
+						</Button>
+						<GridCard
+							widget={updatedWidgetData}
+							headerMenuList={[...ViewMenuAction]}
+							onDragSelect={onDragSelect}
+							onClickHandler={onGraphClick('Celery_p90_latency')}
+							isQueryEnabled={queryEnabled}
+						/>
+					</>
 				)}
 			</div>
 		</Card>

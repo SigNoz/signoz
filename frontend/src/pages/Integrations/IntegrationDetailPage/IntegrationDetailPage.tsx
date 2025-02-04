@@ -126,7 +126,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								logs: null,
 								metrics: null,
 							})}
-							refetchIntegrationDetails={refetch}
+							onUnInstallSuccess={refetch}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
 						<IntegrationDetailContent
@@ -140,7 +140,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							<IntergrationsUninstallBar
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}
-								refetchIntegrationDetails={refetch}
+								onUnInstallSuccess={refetch}
 								connectionStatus={connectionStatus}
 							/>
 						)}

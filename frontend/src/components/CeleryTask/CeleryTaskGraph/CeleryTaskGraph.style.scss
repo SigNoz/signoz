@@ -6,93 +6,85 @@
 	padding-bottom: 16px;
 	margin-bottom: 16px;
 
-	.celery-task-graph-grid {
-		display: grid;
-		grid-template-columns: 60% 40%;
-		align-items: flex-start;
-		gap: 10px;
+	.celery-task-graph-bar,
+	.celery-task-graph-task-latency {
+		height: 380px !important;
 		width: 100%;
+		box-sizing: border-box;
 
-		.celery-task-graph {
-			height: 380px !important;
+		.celery-task-graph-grid-content {
 			padding: 6px;
-			width: 100%;
-			box-sizing: border-box;
+			height: 100%;
+		}
 
-			.ant-card-body {
-				height: calc(100% - 18px);
+		.ant-card-body {
+			height: calc(100% - 18px);
 
-				.widget-graph-container {
-					&.bar {
-						height: calc(100% - 110px);
-					}
+			.widget-graph-container {
+				&.bar {
+					height: calc(100% - 110px);
+				}
+
+				&.graph {
+					height: calc(100% - 80px);
 				}
 			}
 		}
+	}
 
-		.celery-task-graph-worker-count {
+	.celery-task-graph-worker-count {
+		height: 100%;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border: 1px solid var(--bg-slate-500);
+		background: linear-gradient(
+				0deg,
+				rgba(171, 189, 255, 0) 0%,
+				rgba(171, 189, 255, 0) 100%
+			),
+			#0b0c0e;
+
+		.ant-card-body {
 			height: 100%;
 			width: 100%;
+		}
+
+		.worker-count-text-container {
+			height: 100%;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			border: 1px solid var(--bg-slate-500);
-			background: linear-gradient(
-					0deg,
-					rgba(171, 189, 255, 0) 0%,
-					rgba(171, 189, 255, 0) 100%
-				),
-				#0b0c0e;
 
-			.ant-card-body {
-				height: 100%;
-				width: 100%;
-			}
-
-			.worker-count-text-container {
-				height: 100%;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-
-				.celery-task-graph-worker-count-text {
-					font-size: 2.5vw;
-					text-align: center;
-				}
-			}
-
-			.worker-count-header {
-				display: flex;
-				justify-content: start;
-				align-items: start;
-				position: absolute;
-				height: 100%;
-				width: 100%;
+			.celery-task-graph-worker-count-text {
+				font-size: 2.5vw;
+				text-align: center;
 			}
 		}
 
-		.celery-task-graph-bar,
-		.celery-task-graph-task-latency {
-			height: 380px !important;
+		.worker-count-header {
+			display: flex;
+			justify-content: start;
+			align-items: start;
+			position: absolute;
+			height: 100%;
 			width: 100%;
-			box-sizing: border-box;
+		}
+	}
 
-			.celery-task-graph-grid-content {
-				padding: 6px;
-				height: 100%;
-			}
+	.celery-task-graph {
+		height: 380px !important;
+		padding: 6px;
+		width: 100%;
+		box-sizing: border-box;
 
-			.ant-card-body {
-				height: calc(100% - 18px);
+		.ant-card-body {
+			height: calc(100% - 18px);
 
-				.widget-graph-container {
-					&.bar {
-						height: calc(100% - 110px);
-					}
-
-					&.graph {
-						height: calc(100% - 80px);
-					}
+			.widget-graph-container {
+				&.bar {
+					height: calc(100% - 110px);
 				}
 			}
 		}
@@ -113,6 +105,90 @@
 
 			.ant-card-body {
 				height: calc(100% - 18px);
+			}
+		}
+	}
+
+	.metric-based-graphs,
+	.trace-based-graphs {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+
+		.metric-page-grid {
+			display: grid;
+			grid-template-columns: 30% 19%;
+			align-items: flex-start;
+			gap: 10px;
+			width: 100%;
+
+			.celery-task-graph {
+				height: 280px !important;
+			}
+		}
+	}
+
+	.trace-based-graphs {
+		.trace-based-graphs-header {
+			display: grid;
+			grid-template-columns: 50% 50%;
+			align-items: center;
+			gap: 24px;
+			width: 100%;
+		}
+	}
+
+	.configure-option-Info {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: 16px;
+		align-items: center;
+
+		border: 1px dashed var(--bg-slate-50);
+		border-radius: 4px;
+		padding: 6px 24px 6px 12px;
+		width: max-content;
+
+		.configure-option-Info-text {
+			color: var(--bg-vanilla-400);
+			font-size: 12px;
+			font-weight: 400;
+		}
+	}
+
+	.row-panel {
+		border-radius: 4px;
+		background: rgba(18, 19, 23, 0.4);
+		padding: 8px;
+		display: flex;
+		gap: 6px;
+		align-items: center;
+		height: 48px !important;
+		width: 100%;
+
+		.ant-typography {
+			font-size: 14px;
+			font-weight: 500;
+		}
+
+		.row-panel-section {
+			display: flex;
+			gap: 6px;
+			align-items: center;
+
+			.row-icon {
+				color: var(--bg-vanilla-400);
+				cursor: pointer;
+			}
+
+			.section-title {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px;
+				letter-spacing: -0.07px;
 			}
 		}
 	}
@@ -170,11 +246,13 @@
 
 .lightMode {
 	.celery-task-graph-grid-container {
-		.celery-task-graph-grid {
-			.celery-task-graph-worker-count {
-				border: 1px solid var(--bg-vanilla-300);
-				background: unset;
-			}
+		.celery-task-graph-worker-count {
+			border: 1px solid var(--bg-vanilla-300);
+			background: unset;
+		}
+
+		.row-panel .row-panel-section .section-title {
+			color: var(--bg-ink-400);
 		}
 	}
 
@@ -202,5 +280,9 @@
 		&__indicator {
 			background-color: var(--bg-ink-400);
 		}
+	}
+
+	.configure-option-Info {
+		border: 1px dashed var(--bg-robin-400);
 	}
 }

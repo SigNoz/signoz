@@ -15,8 +15,9 @@ import { ConnectionStates } from './TestConnection';
 interface IntergrationsUninstallBarProps {
 	integrationTitle: string;
 	integrationId: string;
-	refetchIntegrationDetails: () => void;
+	onUnInstallSuccess: () => void;
 	connectionStatus: ConnectionStates;
+	removeIntegrationTitle?: string;
 }
 function IntergrationsUninstallBar(
 	props: IntergrationsUninstallBarProps,
@@ -24,8 +25,9 @@ function IntergrationsUninstallBar(
 	const {
 		integrationTitle,
 		integrationId,
-		refetchIntegrationDetails,
+		onUnInstallSuccess,
 		connectionStatus,
+		removeIntegrationTitle = 'Remove from SigNoz',
 	} = props;
 	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,7 +37,7 @@ function IntergrationsUninstallBar(
 		isLoading: isUninstallLoading,
 	} = useMutation(unInstallIntegration, {
 		onSuccess: () => {
-			refetchIntegrationDetails();
+			onUnInstallSuccess?.();
 			setIsModalOpen(false);
 		},
 		onError: () => {
@@ -79,7 +81,7 @@ function IntergrationsUninstallBar(
 				icon={<X size={14} />}
 				onClick={(): void => showModal()}
 			>
-				Remove from SigNoz
+				{removeIntegrationTitle}
 			</Button>
 			<Modal
 				className="remove-integration-modal"
@@ -102,5 +104,9 @@ function IntergrationsUninstallBar(
 		</div>
 	);
 }
+
+IntergrationsUninstallBar.defaultProps = {
+	removeIntegrationTitle: 'Remove from SigNoz',
+};
 
 export default IntergrationsUninstallBar;
