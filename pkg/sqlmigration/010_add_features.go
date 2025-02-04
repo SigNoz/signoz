@@ -36,7 +36,7 @@ func (migration *addFeatures) Up(ctx context.Context, db *bun.DB) error {
 		is_changed BOOLEAN DEFAULT FALSE,
 		is_changeable BOOLEAN DEFAULT TRUE,
 		requires_restart BOOLEAN DEFAULT FALSE,
-		UNIQUE(org_id, name)
+		UNIQUE(org_id, name),
 		FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
 	);`); err != nil {
 		return err
