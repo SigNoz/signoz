@@ -4,69 +4,84 @@ import "go.signoz.io/signoz/pkg/featureflag"
 
 var basePlanFeatures = []featureflag.Feature{
 	{
-		Name:     featureflag.FeatureSSO,
-		IsActive: false,
+		Name:         featureflag.FeatureSSO,
+		IsActive:     false,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureOSS,
-		IsActive: false,
+		Name:         featureflag.FeatureOSS,
+		IsActive:     false,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureUseSpanMetrics,
-		IsActive: true,
+		Name:         featureflag.FeatureUseSpanMetrics,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureGateway,
-		IsActive: false,
+		Name:         featureflag.FeatureGateway,
+		IsActive:     false,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeaturePremiumSupport,
-		IsActive: false,
+		Name:         featureflag.FeaturePremiumSupport,
+		IsActive:     false,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureHostsInfraMonitoring,
-		IsActive: false,
+		Name:         featureflag.FeatureHostsInfraMonitoring,
+		IsActive:     false,
+		IsChangeable: false,
 	},
 }
 
 var proPlanFeatures = []featureflag.Feature{
 	{
-		Name:     featureflag.FeatureSSO,
-		IsActive: true,
+		Name:         featureflag.FeatureSSO,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureCustomMetricsFunc,
-		IsActive: true,
+		Name:         featureflag.FeatureCustomMetricsFunc,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureAlertChannelMsTeams,
-		IsActive: true,
+		Name:         featureflag.FeatureAlertChannelMsTeams,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureGateway,
-		IsActive: true,
+		Name:         featureflag.FeatureGateway,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeaturePremiumSupport,
-		IsActive: true,
+		Name:         featureflag.FeaturePremiumSupport,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureAnomalyDetection,
-		IsActive: true,
+		Name:         featureflag.FeatureAnomalyDetection,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureHostsInfraMonitoring,
-		IsActive: true,
+		Name:         featureflag.FeatureHostsInfraMonitoring,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 }
 
 var enterprisePlanFeatures = []featureflag.Feature{
 	{
-		Name:     featureflag.FeatureOnboarding,
-		IsActive: true,
+		Name:         featureflag.FeatureOnboarding,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 	{
-		Name:     featureflag.FeatureChatSupport,
-		IsActive: true,
+		Name:         featureflag.FeatureChatSupport,
+		IsActive:     true,
+		IsChangeable: false,
 	},
 }

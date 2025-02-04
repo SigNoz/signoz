@@ -72,17 +72,32 @@ func (fm *FeatureFlagManager) RefreshFeatureFlags() {
 		return
 	}
 	for _, orgId := range orgIds {
-		for _, provider := range fm.providers {
-			wg.Add(1)
-			go func(orgId string, provider FeatureFlag) {
-				defer wg.Done()
+		wg.Add(1)
+		go func(orgId string) {
+			defer wg.Done()
+			// Create a map to store features by their flag or identifier
+			featureMap := make(map[string]Feature)
+
+			for _, provider := range fm.providers {
 				features := provider.GetFeatures(orgId)
-				err := fm.storage.SaveFeatureFlags(context.Background(), orgId, features)
-				if err != nil {
-					fm.logger.Error("Failed to save features", "orgId", orgId, "error", err)
+				for _, feature := range features {
+					// Assuming feature has a method or field `Flag` to identify it
+					featureMap[feature.Name.String()] = feature
 				}
-			}(orgId, provider)
-		}
+			}
+
+			// Convert the map back to a slice
+			mergedFeatures := make([]Feature, 0, len(featureMap))
+			for _, feature := range featureMap {
+				mergedFeatures = append(mergedFeatures, feature)
+			}
+
+			// Save the merged features
+			err := fm.storage.SaveFeatureFlags(context.Background(), orgId, mergedFeatures)
+			if err != nil {
+				fm.logger.Error("Failed to save features", "orgId", orgId, "error", err)
+			}
+		}(orgId)
 	}
 	wg.Wait()
 }

@@ -10,11 +10,11 @@ import (
 
 type addFeatures struct{}
 
-func NewAddFeaturesFactory() factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_features"), newAddFeatures)
+func NewAddFeatureFlagFactory() factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_feature_flag"), newAddFeatureFlag)
 }
 
-func newAddFeatures(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
+func newAddFeatureFlag(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
 	return &addFeatures{}, nil
 }
 

@@ -12,13 +12,10 @@ import (
 
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.signoz.io/signoz/ee/featureflag/zeus"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/config/envprovider"
 	"go.signoz.io/signoz/pkg/config/fileprovider"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/featureflag/base"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -152,10 +149,11 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 	providerConfig := signoz.NewProviderConfig()
-	providerConfig.FeatureFlagProviderFactories = factory.MustNewNamedMap(
-		base.NewFactory(),
-		zeus.NewFactory(),
-	)
+	// TODO: Uncomment when we want to use zeus for feature flags
+	// providerConfig.FeatureFlagProviderFactories = factory.MustNewNamedMap(
+	// 	base.NewFactory(),
+	// 	zeus.NewFactory(),
+	// )
 	signoz, err := signoz.New(context.Background(), config, providerConfig)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))

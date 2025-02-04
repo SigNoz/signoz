@@ -100,19 +100,19 @@ func New(
 		return nil, err
 	}
 
-	featureFlagProviders, err := factory.NewFromNamedMap(ctx, providerSettings, config.FeatureFlag, providerConfig.FeatureFlagProviderFactories)
-	if err != nil {
-		return nil, err
-	}
-	featureFlagManager := featureflag.NewFeatureFlagManager(ctx, instrumentation.Logger(), sqlstore.BunDB(), featureFlagProviders...)
-	// move this to zeus package later.
-	featureFlagManager.Start(ctx)
+	// TODO: uncomment when we want use it
+	// featureFlagProviders, err := factory.NewFromNamedMap(ctx, providerSettings, config.FeatureFlag, providerConfig.FeatureFlagProviderFactories)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// featureFlagManager := featureflag.NewFeatureFlagManager(ctx, instrumentation.Logger(), sqlstore.BunDB(), featureFlagProviders...)
+	// featureFlagManager.Start(ctx)
 
 	return &SigNoz{
-		Cache:              cache,
-		Web:                web,
-		SQLStore:           sqlstore,
-		TelemetryStore:     telemetrystore,
-		FeatureFlagManager: featureFlagManager,
+		Cache:          cache,
+		Web:            web,
+		SQLStore:       sqlstore,
+		TelemetryStore: telemetrystore,
+		// FeatureFlagManager: featureFlagManager,
 	}, nil
 }
