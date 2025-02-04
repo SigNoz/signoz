@@ -181,6 +181,10 @@ function ClusterDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Clusters list details tab changed', {
+			cluster: cluster?.clusterUID,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -204,6 +208,7 @@ function ClusterDetails({
 			logEvent('Infra Monitoring: Clusters list details time updated', {
 				cluster: cluster?.clusterUID,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

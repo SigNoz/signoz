@@ -233,6 +233,11 @@ function K8sNodesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sNodesRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -241,6 +246,11 @@ function K8sNodesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s nodes list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -252,7 +262,7 @@ function K8sNodesList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -266,15 +276,13 @@ function K8sNodesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s nodes list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s nodes list page visited', {});
 	}, []);
 
 	const selectedNodeData = useMemo(() => {
@@ -427,6 +435,8 @@ function K8sNodesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s nodes list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
@@ -441,6 +451,16 @@ function K8sNodesList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s nodes list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -467,10 +487,7 @@ function K8sNodesList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{
