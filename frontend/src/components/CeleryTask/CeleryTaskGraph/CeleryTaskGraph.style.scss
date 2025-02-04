@@ -117,7 +117,7 @@
 
 		.metric-page-grid {
 			display: grid;
-			grid-template-columns: 50% 50%;
+			grid-template-columns: 30% 19%;
 			align-items: flex-start;
 			gap: 10px;
 			width: 100%;
@@ -241,11 +241,13 @@
 
 .lightMode {
 	.celery-task-graph-grid-container {
-		.celery-task-graph-grid {
-			.celery-task-graph-worker-count {
-				border: 1px solid var(--bg-vanilla-300);
-				background: unset;
-			}
+		.celery-task-graph-worker-count {
+			border: 1px solid var(--bg-vanilla-300);
+			background: unset;
+		}
+
+		.row-panel .row-panel-section .section-title {
+			color: var(--bg-ink-400);
 		}
 	}
 
