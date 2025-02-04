@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline/sqlite"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -27,10 +26,6 @@ func NewRepo(db *sqlx.DB) Repo {
 	return Repo{
 		db: db,
 	}
-}
-
-func (r *Repo) InitDB(inputDB *sqlx.DB) error {
-	return sqlite.InitDB(inputDB)
 }
 
 // insertPipeline stores a given postable pipeline to database

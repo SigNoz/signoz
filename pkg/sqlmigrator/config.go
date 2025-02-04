@@ -33,8 +33,8 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
-	if c.Lock.Timeout < c.Lock.Interval {
-		return errors.New("lock_timeout must be greater than lock_interval")
+	if c.Lock.Timeout <= c.Lock.Interval {
+		return errors.New("lock::timeout must be greater than lock::interval")
 	}
 
 	return nil

@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"os"
 	"regexp"
 	"time"
 
@@ -149,25 +148,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	var reader interfaces.DataConnector
-	storage := os.Getenv("STORAGE")
-	if storage == "clickhouse" {
-		zap.L().Info("Using ClickHouse as datastore ...")
-		qb := db.NewDataConnector(
-			serverOptions.SigNoz.SQLStore.SQLxDB(),
-			serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
-			serverOptions.PromConfigPath,
-			lm,
-			serverOptions.Cluster,
-			serverOptions.UseLogsNewSchema,
-			serverOptions.UseTraceNewSchema,
-			fluxIntervalForTraceDetail,
-			serverOptions.SigNoz.Cache,
-		)
-		go qb.Start(readerReady)
-		reader = qb
-	} else {
-		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
-	}
+	qb := db.NewDataConnector(
+		serverOptions.SigNoz.SQLStore.SQLxDB(),
+		serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
+		serverOptions.PromConfigPath,
+		lm,
+		serverOptions.Cluster,
+		serverOptions.UseLogsNewSchema,
+		serverOptions.UseTraceNewSchema,
+		fluxIntervalForTraceDetail,
+		serverOptions.SigNoz.Cache,
+	)
+	go qb.Start(readerReady)
+	reader = qb
+
 	skipConfig := &basemodel.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
 		// read skip config
