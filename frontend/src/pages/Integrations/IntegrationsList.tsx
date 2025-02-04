@@ -14,7 +14,7 @@ import { handleContactSupport, INTEGRATION_TYPES } from './utils';
 
 export const AWS_INTEGRATION = {
 	id: INTEGRATION_TYPES.AWS_INTEGRATION,
-	title: 'AWS Web Services',
+	title: 'Amazon Web Services',
 	description: 'One-click setup for AWS monitoring with SigNoz',
 	icon: `Logos/aws-dark.svg`,
 	is_new: true,
