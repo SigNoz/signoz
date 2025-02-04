@@ -2,17 +2,19 @@ import './AccountSettingsModal.style.scss';
 
 import { Form, Select, Switch } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	getRegionPreviewText,
 	useAccountSettingsModal,
 } from 'hooks/integrations/aws/useAccountSettingsModal';
-import IntergrationsUninstallBar from 'pages/Integrations/IntegrationDetailPage/IntegrationsUninstallBar';
-import { ConnectionStates } from 'pages/Integrations/IntegrationDetailPage/TestConnection';
-import { AWS_INTEGRATION } from 'pages/Integrations/IntegrationsList';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
+import { useQueryClient } from 'react-query';
 
 import { CloudAccount } from '../../ServicesSection/types';
 import { RegionSelector } from './RegionSelector';
+import RemoveIntegrationAccount from './RemoveIntegrationAccount';
 
 interface AccountSettingsModalProps {
 	isOpen: boolean;
@@ -41,6 +43,16 @@ function AccountSettingsModal({
 		handleSubmit,
 		handleClose,
 	} = useAccountSettingsModal({ onClose, account, setActiveAccount });
+
+	const queryClient = useQueryClient();
+	const urlQuery = useUrlQuery();
+
+	const handleRemoveIntegrationAccountSuccess = (): void => {
+		queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
+		urlQuery.delete('accountId');
+		handleClose();
+		history.replace({ search: urlQuery.toString() });
+	};
 
 	const renderRegionSelector = useCallback(() => {
 		if (isRegionSelectOpen) {
@@ -164,12 +176,9 @@ function AccountSettingsModal({
 					</Form.Item>
 
 					<div className="integration-detail-content">
-						<IntergrationsUninstallBar
-							integrationTitle={AWS_INTEGRATION.title}
-							integrationId={AWS_INTEGRATION.id}
-							onUnInstallSuccess={handleClose}
-							removeIntegrationTitle="Remove"
-							connectionStatus={ConnectionStates.Connected}
+						<RemoveIntegrationAccount
+							accountId={account?.id}
+							onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
 						/>
 					</div>
 				</div>
