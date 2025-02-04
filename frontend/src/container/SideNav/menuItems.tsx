@@ -89,6 +89,12 @@ const menuItems: SidebarItem[] = [
 		isNew: true,
 	},
 	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics Explorer',
+		icon: <BarChart2 size={16} />,
+		isNew: true,
+	},
+	{
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
 		icon: <LayoutGrid size={16} />,
