@@ -117,7 +117,7 @@
 
 		.metric-page-grid {
 			display: grid;
-			grid-template-columns: 50% 50%;
+			grid-template-columns: 30% 19%;
 			align-items: flex-start;
 			gap: 10px;
 			width: 100%;
@@ -143,6 +143,11 @@
 		grid-template-columns: max-content 1fr;
 		gap: 16px;
 		align-items: center;
+
+		border: 1px dashed var(--bg-slate-50);
+		border-radius: 4px;
+		padding: 6px 24px 6px 12px;
+		width: max-content;
 
 		.configure-option-Info-text {
 			color: var(--bg-vanilla-400);
@@ -241,11 +246,13 @@
 
 .lightMode {
 	.celery-task-graph-grid-container {
-		.celery-task-graph-grid {
-			.celery-task-graph-worker-count {
-				border: 1px solid var(--bg-vanilla-300);
-				background: unset;
-			}
+		.celery-task-graph-worker-count {
+			border: 1px solid var(--bg-vanilla-300);
+			background: unset;
+		}
+
+		.row-panel .row-panel-section .section-title {
+			color: var(--bg-ink-400);
 		}
 	}
 
@@ -273,5 +280,9 @@
 		&__indicator {
 			background-color: var(--bg-ink-400);
 		}
+	}
+
+	.configure-option-Info {
+		border: 1px dashed var(--bg-robin-400);
 	}
 }
