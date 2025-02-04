@@ -6,6 +6,7 @@ import type { CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { useGetK8sEntityStatus } from 'hooks/infraMonitoring/useGetK8sEntityStatus';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -52,6 +53,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
 
 	const { currentQuery } = useQueryBuilder();
+
+	const { data: k8sEntityStatusData } = useGetK8sEntityStatus();
+	const k8sEntityStatus = k8sEntityStatusData?.payload;
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -329,6 +333,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -337,6 +342,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -345,6 +351,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -353,6 +360,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -361,6 +369,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -369,6 +378,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -377,6 +387,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -385,6 +396,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 
@@ -393,6 +405,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								isFiltersVisible={showFilters}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								quickFiltersLastUpdated={quickFiltersLastUpdated}
+								entityStatus={k8sEntityStatus}
 							/>
 						)}
 					</div>

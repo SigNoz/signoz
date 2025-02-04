@@ -14,6 +14,7 @@ import {
 } from 'antd';
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import { K8sEntityStatusResponse } from 'api/infraMonitoring/getK8sEntityStatus';
 import { K8sVolumesListPayload } from 'api/infraMonitoring/getK8sVolumesList';
 import classNames from 'classnames';
 import { useGetK8sVolumesList } from 'hooks/infraMonitoring/useGetK8sVolumesList';
@@ -31,6 +32,7 @@ import {
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
+import EntityStatusEmptyStateWrapper from '../EntityStatusEmptyStateWrapper';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -45,10 +47,12 @@ import VolumeDetails from './VolumeDetails';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sVolumesList({
+	entityStatus,
 	isFiltersVisible,
 	handleFilterVisibilityChange,
 	quickFiltersLastUpdated,
 }: {
+	entityStatus: K8sEntityStatusResponse | null | undefined;
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
 	quickFiltersLastUpdated: number;
@@ -464,58 +468,63 @@ function K8sVolumesList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			<Table
-				className={classNames('k8s-list-table', 'volumes-list-table', {
-					'expanded-volumes-list-table': isGroupedByAttribute,
-				})}
-				dataSource={isFetching || isLoading ? [] : formattedVolumesData}
-				columns={columns}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					total: totalCount,
-					showSizeChanger: true,
-					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
-				}}
-				scroll={{ x: true }}
-				loading={{
-					spinning: isFetching || isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+			<EntityStatusEmptyStateWrapper
+				category={K8sCategory.VOLUMES}
+				data={entityStatus}
+			>
+				<Table
+					className={classNames('k8s-list-table', 'volumes-list-table', {
+						'expanded-volumes-list-table': isGroupedByAttribute,
+					})}
+					dataSource={isFetching || isLoading ? [] : formattedVolumesData}
+					columns={columns}
+					pagination={{
+						current: currentPage,
+						pageSize,
+						total: totalCount,
+						showSizeChanger: true,
+						hideOnSinglePage: false,
+						onChange: (page, pageSize): void => {
+							setCurrentPage(page);
+							setPageSize(pageSize);
+						},
+					}}
+					scroll={{ x: true }}
+					loading={{
+						spinning: isFetching || isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					locale={{
+						emptyText:
+							isFetching || isLoading ? null : (
+								<div className="no-filtered-hosts-message-container">
+									<div className="no-filtered-hosts-message-content">
+										<img
+											src="/Icons/emptyState.svg"
+											alt="thinking-emoji"
+											className="empty-state-svg"
+										/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
+										<Typography.Text className="no-filtered-hosts-message">
+											This query had no results. Edit your query and try again!
+										</Typography.Text>
+									</div>
 								</div>
-							</div>
-						),
-				}}
-				tableLayout="fixed"
-				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
-				})}
-				expandable={{
-					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-					expandIcon: expandRowIconRenderer,
-					expandedRowKeys,
-				}}
-			/>
+							),
+					}}
+					tableLayout="fixed"
+					onChange={handleTableChange}
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => handleRowClick(record),
+						className: 'clickable-row',
+					})}
+					expandable={{
+						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
+					}}
+				/>
+			</EntityStatusEmptyStateWrapper>
 
 			<VolumeDetails
 				volume={selectedVolumeData}
