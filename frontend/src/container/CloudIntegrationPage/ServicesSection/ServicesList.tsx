@@ -1,7 +1,7 @@
 import Spinner from 'components/Spinner';
 import { useGetAccountServices } from 'hooks/integrations/aws/useGetAccountServices';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import ServiceItem from './ServiceItem';
@@ -17,10 +17,13 @@ function ServicesList({ accountId, filter }: ServicesListProps): JSX.Element {
 	const { data: services = [], isLoading } = useGetAccountServices(accountId);
 	const activeService = urlQuery.get('service');
 
-	const handleServiceClick = (serviceId: string): void => {
-		urlQuery.set('service', serviceId);
-		navigate({ search: urlQuery.toString() });
-	};
+	const handleActiveService = useCallback(
+		(serviceId: string): void => {
+			urlQuery.set('service', serviceId);
+			navigate({ search: urlQuery.toString() });
+		},
+		[navigate, urlQuery],
+	);
 
 	const filteredServices = useMemo(() => {
 		if (filter === 'all_services') return services;
@@ -32,6 +35,12 @@ function ServicesList({ accountId, filter }: ServicesListProps): JSX.Element {
 		});
 	}, [services, filter]);
 
+	useEffect(() => {
+		if (activeService || !services?.length) return;
+
+		handleActiveService(services[0].id);
+	}, [services, activeService, handleActiveService]);
+
 	if (isLoading) return <Spinner size="large" height="25vh" />;
 	if (!services) return <div>No services found</div>;
 
@@ -41,7 +50,7 @@ function ServicesList({ accountId, filter }: ServicesListProps): JSX.Element {
 				<ServiceItem
 					key={service.id}
 					service={service}
-					onClick={handleServiceClick}
+					onClick={handleActiveService}
 					isActive={service.id === activeService}
 				/>
 			))}
