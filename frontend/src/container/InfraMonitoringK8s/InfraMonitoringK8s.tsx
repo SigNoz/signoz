@@ -4,6 +4,7 @@ import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
 import { Collapse, Tooltip, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -68,6 +69,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
 		handleChangeQueryData('filters', query.builder.queryData[0].filters);
 		setQuickFiltersLastUpdated(Date.now());
+
+		logEvent(
+			`Infra Monitoring: K8s ${selectedCategory} list quick filters applied`,
+			{},
+		);
 	};
 
 	const items: CollapseProps['items'] = [

@@ -2,7 +2,6 @@ package license
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -50,11 +49,6 @@ func StartManager(db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) 
 	}
 
 	repo := NewLicenseRepo(db)
-	err := repo.InitDB(db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initiate license repo: %v", err)
-	}
-
 	m := &Manager{
 		repo: &repo,
 	}

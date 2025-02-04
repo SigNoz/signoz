@@ -123,11 +123,12 @@ export default function CeleryTaskGraphGrid({
 							key={celeryActiveTasksData.id}
 							widgetData={celeryActiveTasksData}
 							queryEnabled={queryEnabled}
+							customErrorMessage="Enable Flower metrics to view this graph"
 						/>
 						<Card className="celery-task-graph-worker-count">
 							<div className="worker-count-header">
 								<Typography.Text className="worker-count-header-text">
-									Worker Count
+									Worker Online
 								</Typography.Text>
 							</div>
 							<div className="worker-count-text-container">
@@ -173,7 +174,7 @@ export default function CeleryTaskGraphGrid({
 				{!collapsedSections.traceBasedGraphs && (
 					<>
 						<CeleryTaskBar queryEnabled={queryEnabled} onClick={onClick} />
-						<CeleryTaskLatencyGraph onClick={onClick} queryEnabled={queryEnabled} />
+						<CeleryTaskLatencyGraph queryEnabled={queryEnabled} />
 						<div className="celery-task-graph-grid-bottom">
 							{bottomWidgetData.map((widgetData, index) => (
 								<CeleryTaskGraph

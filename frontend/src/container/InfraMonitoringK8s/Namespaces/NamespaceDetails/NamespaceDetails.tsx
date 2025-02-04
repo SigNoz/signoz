@@ -183,6 +183,10 @@ function NamespaceDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Namespaces list details tab changed', {
+			namespace: namespace?.namespaceName,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -206,6 +210,7 @@ function NamespaceDetails({
 			logEvent('Infra Monitoring: Namespaces list details time updated', {
 				namespace: namespace?.namespaceName,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

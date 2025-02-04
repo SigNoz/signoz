@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,7 +24,6 @@ import (
 func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// Test for happy path of connecting and managing AWS integration accounts
 
-	t0 := time.Now()
 	require := require.New(t)
 	testbed := NewCloudIntegrationsTestBed(t, nil)
 
@@ -67,11 +67,9 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 			CloudAccountId: testAWSAccountId,
 		},
 	)
-	require.Equal(testAccountId, agentCheckInResp.Account.Id)
-	require.Equal(testAccountConfig, *agentCheckInResp.Account.Config)
-	require.Equal(testAWSAccountId, *agentCheckInResp.Account.CloudAccountId)
-	require.LessOrEqual(t0.Unix(), agentCheckInResp.Account.CreatedAt.Unix())
-	require.Nil(agentCheckInResp.Account.RemovedAt)
+	require.Equal(testAccountId, agentCheckInResp.AccountId)
+	require.Equal(testAWSAccountId, agentCheckInResp.CloudAccountId)
+	require.Nil(agentCheckInResp.RemovedAt)
 
 	// Polling for connection status from UI should now return latest status
 	accountStatusResp1 := testbed.GetAccountStatusFromQS("aws", testAccountId)
@@ -107,10 +105,9 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 			CloudAccountId: testAWSAccountId,
 		},
 	)
-	require.Equal(testAccountId, agentCheckInResp1.Account.Id)
-	require.Equal(testAccountConfig2, *agentCheckInResp1.Account.Config)
-	require.Equal(testAWSAccountId, *agentCheckInResp1.Account.CloudAccountId)
-	require.Nil(agentCheckInResp1.Account.RemovedAt)
+	require.Equal(testAccountId, agentCheckInResp1.AccountId)
+	require.Equal(testAWSAccountId, agentCheckInResp1.CloudAccountId)
+	require.Nil(agentCheckInResp1.RemovedAt)
 
 	// Should be able to disconnect/remove account from UI.
 	tsBeforeDisconnect := time.Now()
@@ -125,9 +122,9 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 			CloudAccountId: testAWSAccountId,
 		},
 	)
-	require.Equal(testAccountId, agentCheckInResp2.Account.Id)
-	require.Equal(testAWSAccountId, *agentCheckInResp2.Account.CloudAccountId)
-	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.Account.RemovedAt)
+	require.Equal(testAccountId, agentCheckInResp2.AccountId)
+	require.Equal(testAWSAccountId, agentCheckInResp2.CloudAccountId)
+	require.LessOrEqual(tsBeforeDisconnect, *agentCheckInResp2.RemovedAt)
 }
 
 func TestAWSIntegrationServices(t *testing.T) {
@@ -191,6 +188,149 @@ func TestAWSIntegrationServices(t *testing.T) {
 	require.Equal(svcId, svcDetailResp.Id)
 	require.NotNil(svcDetailResp.Config)
 	require.Equal(testSvcConfig, *svcDetailResp.Config)
+
+}
+
+func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
+	require := require.New(t)
+
+	testbed := NewCloudIntegrationsTestBed(t, nil)
+
+	// configure a connected account
+	testAccountConfig := cloudintegrations.AccountConfig{
+		EnabledRegions: []string{"us-east-1", "us-east-2"},
+	}
+	connectionUrlResp := testbed.GenerateConnectionUrlFromQS(
+		"aws", cloudintegrations.GenerateConnectionUrlRequest{
+			AgentConfig: cloudintegrations.SigNozAgentConfig{
+				Region:       "us-east-1",
+				SigNozAPIKey: "test-api-key",
+			},
+			AccountConfig: testAccountConfig,
+		},
+	)
+	testAccountId := connectionUrlResp.AccountId
+	require.NotEmpty(testAccountId)
+	require.NotEmpty(connectionUrlResp.ConnectionUrl)
+
+	testAWSAccountId := "389389489489"
+	checkinResp := testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+
+	require.Equal(testAccountId, checkinResp.AccountId)
+	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
+	require.Nil(checkinResp.RemovedAt)
+	require.Equal(testAccountConfig.EnabledRegions, checkinResp.IntegrationConfig.EnabledRegions)
+
+	telemetryCollectionStrategy := checkinResp.IntegrationConfig.TelemetryCollectionStrategy
+	require.Equal("aws", telemetryCollectionStrategy.Provider)
+	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
+	require.Empty(telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters)
+	require.NotNil(telemetryCollectionStrategy.AWSLogs)
+	require.Empty(telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions)
+
+	// helper
+	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
+		testSvcConfig := cloudintegrations.CloudServiceConfig{}
+		if metricsEnabled {
+			testSvcConfig.Metrics = &cloudintegrations.CloudServiceMetricsConfig{
+				Enabled: metricsEnabled,
+			}
+		}
+		if logsEnabled {
+			testSvcConfig.Logs = &cloudintegrations.CloudServiceLogsConfig{
+				Enabled: logsEnabled,
+			}
+		}
+
+		updateSvcConfigResp := testbed.UpdateServiceConfigWithQS("aws", svcId, cloudintegrations.UpdateServiceConfigRequest{
+			CloudAccountId: testAWSAccountId,
+			Config:         testSvcConfig,
+		})
+		require.Equal(svcId, updateSvcConfigResp.Id)
+		require.Equal(testSvcConfig, updateSvcConfigResp.Config)
+	}
+
+	setServiceConfig("ec2", true, false)
+	setServiceConfig("rds", true, true)
+
+	checkinResp = testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+
+	require.Equal(testAccountId, checkinResp.AccountId)
+	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
+	require.Nil(checkinResp.RemovedAt)
+
+	integrationConf := checkinResp.IntegrationConfig
+	require.Equal(testAccountConfig.EnabledRegions, integrationConf.EnabledRegions)
+
+	telemetryCollectionStrategy = integrationConf.TelemetryCollectionStrategy
+	require.Equal("aws", telemetryCollectionStrategy.Provider)
+	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
+	metricStreamNamespaces := []string{}
+	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
+		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
+	}
+	require.Equal([]string{"AWS/EC2", "AWS/RDS"}, metricStreamNamespaces)
+
+	require.NotNil(telemetryCollectionStrategy.AWSLogs)
+	logGroupPrefixes := []string{}
+	for _, f := range telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions {
+		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
+	}
+	require.Equal(1, len(logGroupPrefixes))
+	require.True(strings.HasPrefix(logGroupPrefixes[0], "/aws/rds"))
+
+	// change regions and update service configs and validate config changes for agent
+	testAccountConfig2 := cloudintegrations.AccountConfig{
+		EnabledRegions: []string{"us-east-2", "us-west-1"},
+	}
+	latestAccount := testbed.UpdateAccountConfigWithQS(
+		"aws", testAccountId, testAccountConfig2,
+	)
+	require.Equal(testAccountId, latestAccount.Id)
+	require.Equal(testAccountConfig2, *latestAccount.Config)
+
+	// disable metrics for one and logs for the other.
+	// config should be as expected.
+	setServiceConfig("ec2", false, false)
+	setServiceConfig("rds", true, false)
+
+	checkinResp = testbed.CheckInAsAgentWithQS(
+		"aws", cloudintegrations.AgentCheckInRequest{
+			AccountId:      testAccountId,
+			CloudAccountId: testAWSAccountId,
+		},
+	)
+	require.Equal(testAccountId, checkinResp.AccountId)
+	require.Equal(testAWSAccountId, checkinResp.CloudAccountId)
+	require.Nil(checkinResp.RemovedAt)
+	integrationConf = checkinResp.IntegrationConfig
+	require.Equal(testAccountConfig2.EnabledRegions, integrationConf.EnabledRegions)
+
+	telemetryCollectionStrategy = integrationConf.TelemetryCollectionStrategy
+	require.Equal("aws", telemetryCollectionStrategy.Provider)
+	require.NotNil(telemetryCollectionStrategy.AWSMetrics)
+	metricStreamNamespaces = []string{}
+	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
+		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
+	}
+	require.Equal([]string{"AWS/RDS"}, metricStreamNamespaces)
+
+	require.NotNil(telemetryCollectionStrategy.AWSLogs)
+	logGroupPrefixes = []string{}
+	for _, f := range telemetryCollectionStrategy.AWSLogs.CloudwatchLogsSubscriptions {
+		logGroupPrefixes = append(logGroupPrefixes, f.LogGroupNamePrefix)
+	}
+	require.Equal(0, len(logGroupPrefixes))
 
 }
 
@@ -412,7 +552,7 @@ func RequestQSAndParseResp[ResponseType any](
 
 	err := json.Unmarshal(respDataJson, &resp)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into %T", resp)
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into %T: %v", resp, err)
 	}
 
 	return &resp

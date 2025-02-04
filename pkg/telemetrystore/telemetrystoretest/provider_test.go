@@ -3,8 +3,6 @@ package telemetrystoretest
 import (
 	"testing"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,14 +29,7 @@ func TestNew(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, provider)
 			assert.NotNil(t, provider.Mock())
-			assert.NotNil(t, provider.Clickhouse())
-
-			// Verify the returned interfaces implement the expected types
-			_, ok := provider.Mock().(cmock.ClickConnMockCommon)
-			assert.True(t, ok, "Mock() should return cmock.ClickConnMockCommon")
-
-			_, ok = provider.Clickhouse().(clickhouse.Conn)
-			assert.True(t, ok, "Clickhouse() should return clickhouse.Conn")
+			assert.NotNil(t, provider.ClickHouseDB())
 		})
 	}
 }

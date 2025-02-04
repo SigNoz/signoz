@@ -37,40 +37,9 @@ type cloudProviderAccountsRepository interface {
 func newCloudProviderAccountsRepository(db *sqlx.DB) (
 	*cloudProviderAccountsSQLRepository, error,
 ) {
-	if err := initAccountsSqliteDBIfNeeded(db); err != nil {
-		return nil, fmt.Errorf("could not init sqlite DB for cloudintegrations accounts: %w", err)
-	}
-
 	return &cloudProviderAccountsSQLRepository{
 		db: db,
 	}, nil
-}
-
-func initAccountsSqliteDBIfNeeded(db *sqlx.DB) error {
-	if db == nil {
-		return fmt.Errorf("db is required")
-	}
-
-	createTablesStatements := `
-		CREATE TABLE IF NOT EXISTS cloud_integrations_accounts(
-			cloud_provider TEXT NOT NULL,
-			id TEXT NOT NULL,
-			config_json TEXT,
-			cloud_account_id TEXT,
-			last_agent_report_json TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			removed_at TIMESTAMP,
-			UNIQUE(cloud_provider, id)
-		)
-	`
-	_, err := db.Exec(createTablesStatements)
-	if err != nil {
-		return fmt.Errorf(
-			"could not ensure cloud provider accounts schema in sqlite DB: %w", err,
-		)
-	}
-
-	return nil
 }
 
 type cloudProviderAccountsSQLRepository struct {

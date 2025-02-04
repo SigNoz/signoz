@@ -3,7 +3,10 @@ package telemetrystoretest
 import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	"go.signoz.io/signoz/pkg/telemetrystore"
 )
+
+var _ telemetrystore.TelemetryStore = (*Provider)(nil)
 
 // Provider represents a mock telemetry store provider for testing
 type Provider struct {
@@ -23,8 +26,8 @@ func New() (*Provider, error) {
 	}, nil
 }
 
-// Clickhouse returns the mock Clickhouse connection
-func (p *Provider) Clickhouse() clickhouse.Conn {
+// ClickhouseDB returns the mock Clickhouse connection
+func (p *Provider) ClickHouseDB() clickhouse.Conn {
 	return p.mock.(clickhouse.Conn)
 }
 
