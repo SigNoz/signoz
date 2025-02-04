@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"golang.org/x/exp/maps"
 )
 
 var SupportedCloudProviders = []string{
@@ -92,6 +93,11 @@ type GenerateConnectionUrlRequest struct {
 type SigNozAgentConfig struct {
 	// The region in which SigNoz agent should be installed.
 	Region string `json:"region"`
+
+	IngestionUrl string `json:"ingestion_url"`
+	IngestionKey string `json:"ingestion_key"`
+	SigNozAPIUrl string `json:"signoz_api_url"`
+	SigNozAPIKey string `json:"signoz_api_key"`
 }
 
 type GenerateConnectionUrlResponse struct {
@@ -163,7 +169,17 @@ type AgentCheckInRequest struct {
 }
 
 type AgentCheckInResponse struct {
-	Account AccountRecord `json:"account"`
+	AccountId      string     `json:"account_id"`
+	CloudAccountId string     `json:"cloud_account_id"`
+	RemovedAt      *time.Time `json:"removed_at"`
+
+	IntegrationConfig IntegrationConfigForAgent `json:"integration_config"`
+}
+
+type IntegrationConfigForAgent struct {
+	EnabledRegions []string `json:"enabled_regions"`
+
+	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -201,8 +217,70 @@ func (c *Controller) CheckInAsAgent(
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
+	// prepare and return integration config to be consumed by agent
+	telemetryCollectionStrategy, err := NewCloudTelemetryCollectionStrategy(cloudProvider)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't init telemetry collection strategy: %w", err,
+		))
+	}
+
+	agentConfig := IntegrationConfigForAgent{
+		EnabledRegions:              []string{},
+		TelemetryCollectionStrategy: telemetryCollectionStrategy,
+	}
+
+	if account.Config != nil && account.Config.EnabledRegions != nil {
+		agentConfig.EnabledRegions = account.Config.EnabledRegions
+	}
+
+	services, apiErr := listCloudProviderServices(cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
+	}
+	svcDetailsById := map[string]*CloudServiceDetails{}
+	for _, svcDetails := range services {
+		svcDetailsById[svcDetails.Id] = &svcDetails
+	}
+
+	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
+		ctx, cloudProvider, *account.CloudAccountId,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, "couldn't get service configs for cloud account",
+		)
+	}
+
+	// accumulate config in a fixed order to ensure same config generated across runs
+	configuredSvcIds := maps.Keys(svcConfigs)
+	slices.Sort(configuredSvcIds)
+
+	for _, svcId := range configuredSvcIds {
+		svcDetails := svcDetailsById[svcId]
+		svcConfig := svcConfigs[svcId]
+
+		if svcDetails != nil {
+			metricsEnabled := svcConfig.Metrics != nil && svcConfig.Metrics.Enabled
+			logsEnabled := svcConfig.Logs != nil && svcConfig.Logs.Enabled
+			if logsEnabled || metricsEnabled {
+				err := agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
+					svcDetails.TelemetryCollectionStrategy, logsEnabled, metricsEnabled,
+				)
+				if err != nil {
+					return nil, model.InternalError(fmt.Errorf(
+						"couldn't add service telemetry collection strategy: %w", err,
+					))
+				}
+			}
+		}
+	}
+
 	return &AgentCheckInResponse{
-		Account: *account,
+		AccountId:         account.Id,
+		CloudAccountId:    *account.CloudAccountId,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: agentConfig,
 	}, nil
 }
 
