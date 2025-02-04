@@ -19,6 +19,10 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import {
+	applyCeleryFilterOnWidgetData,
+	getFiltersFromQueryParams,
+} from '../CeleryUtils';
 import { useGetGraphCustomSeries } from '../useGetGraphCustomSeries';
 import {
 	celeryAllStateWidgetData,
@@ -72,9 +76,25 @@ function CeleryTaskBar({
 
 	const [barState, setBarState] = useState<CeleryTaskState>(CeleryTaskState.All);
 
+	const selectedFilters = useMemo(
+		() =>
+			getFiltersFromQueryParams(
+				QueryParams.taskName,
+				urlQuery,
+				'celery.task_name',
+			),
+		[urlQuery],
+	);
+
 	const celeryAllStateData = useMemo(
 		() => celeryAllStateWidgetData(minTime, maxTime),
 		[minTime, maxTime],
+	);
+
+	const celeryAllStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryAllStateData),
+		[selectedFilters, celeryAllStateData],
 	);
 
 	const celeryFailedStateData = useMemo(
@@ -82,14 +102,32 @@ function CeleryTaskBar({
 		[minTime, maxTime],
 	);
 
+	const celeryFailedStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryFailedStateData),
+		[selectedFilters, celeryFailedStateData],
+	);
+
 	const celeryRetryStateData = useMemo(
 		() => celeryRetryStateWidgetData(minTime, maxTime),
 		[minTime, maxTime],
 	);
 
+	const celeryRetryStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryRetryStateData),
+		[selectedFilters, celeryRetryStateData],
+	);
+
 	const celerySuccessStateData = useMemo(
 		() => celerySuccessStateWidgetData(minTime, maxTime),
 		[minTime, maxTime],
+	);
+
+	const celerySuccessStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celerySuccessStateData),
+		[selectedFilters, celerySuccessStateData],
 	);
 
 	const onGraphClick = (
@@ -141,7 +179,7 @@ function CeleryTaskBar({
 			<div className="celery-task-graph-grid-content">
 				{barState === CeleryTaskState.All && (
 					<GridCard
-						widget={celeryAllStateData}
+						widget={celeryAllStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -153,7 +191,7 @@ function CeleryTaskBar({
 				)}
 				{barState === CeleryTaskState.Failed && (
 					<GridCard
-						widget={celeryFailedStateData}
+						widget={celeryFailedStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -165,7 +203,7 @@ function CeleryTaskBar({
 				)}
 				{barState === CeleryTaskState.Retry && (
 					<GridCard
-						widget={celeryRetryStateData}
+						widget={celeryRetryStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -177,7 +215,7 @@ function CeleryTaskBar({
 				)}
 				{barState === CeleryTaskState.Successful && (
 					<GridCard
-						widget={celerySuccessStateData}
+						widget={celerySuccessStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
