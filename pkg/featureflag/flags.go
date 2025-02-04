@@ -1,5 +1,10 @@
 package featureflag
 
+import (
+	"database/sql/driver"
+	"fmt"
+)
+
 type Flag struct {
 	s string
 }
@@ -10,6 +15,27 @@ func NewFlag(s string) Flag {
 
 func (f Flag) String() string {
 	return f.s
+}
+
+// Implement the sql.Scanner interface
+func (f *Flag) Scan(value interface{}) error {
+	if value == nil {
+		*f = Flag{}
+		return nil
+	}
+
+	strValue, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("expected string but got %T", value)
+	}
+
+	*f = NewFlag(strValue)
+	return nil
+}
+
+// Implement the driver.Valuer interface
+func (f Flag) Value() (driver.Value, error) {
+	return f.String(), nil
 }
 
 // Flag variables

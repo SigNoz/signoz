@@ -32,7 +32,7 @@ var basePlanFeatures = []featureflag.Feature{
 var proPlanFeatures = []featureflag.Feature{
 	{
 		Name:     featureflag.FeatureSSO,
-		IsActive: false,
+		IsActive: true,
 	},
 	{
 		Name:     featureflag.FeatureCustomMetricsFunc,

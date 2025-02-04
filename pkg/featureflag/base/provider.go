@@ -11,14 +11,13 @@ type Provider struct {
 }
 
 func NewFactory() factory.ProviderFactory[featureflag.FeatureFlag, featureflag.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("base-features"), New)
+	return factory.NewProviderFactory(factory.MustNewName("base"), New)
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config featureflag.Config) (featureflag.FeatureFlag, error) {
 	return &Provider{}, nil
 }
 
-func (p *Provider) GetFeatures() []featureflag.Feature {
-	// TODO : update from sqlite
+func (p *Provider) GetFeatures(orgId string) []featureflag.Feature {
 	return defaultFeatures
 }

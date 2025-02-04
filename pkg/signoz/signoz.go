@@ -95,18 +95,17 @@ func New(
 		config.SQLMigration,
 		providerConfig.SQLMigrationProviderFactories,
 	)
-  err = sqlmigrator.New(ctx, providerSettings, sqlstore, sqlmigrations, config.SQLMigrator).Migrate(ctx)
+	err = sqlmigrator.New(ctx, providerSettings, sqlstore, sqlmigrations, config.SQLMigrator).Migrate(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-
 	featureFlagProviders, err := factory.NewFromNamedMap(ctx, providerSettings, config.FeatureFlag, providerConfig.FeatureFlagProviderFactories)
-  if err != nil {
+	if err != nil {
 		return nil, err
 	}
-	featureFlagManager := featureflag.NewFeatureFlagManager(ctx, sqlstore.SQLxDB(), featureFlagProviders...)
-	// TODO : do we need to start the feature flag manager here?
+	featureFlagManager := featureflag.NewFeatureFlagManager(ctx, instrumentation.Logger(), sqlstore.BunDB(), featureFlagProviders...)
+	// move this to zeus package later.
 	featureFlagManager.Start(ctx)
 
 	return &SigNoz{

@@ -18,7 +18,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return &Provider{}, nil
 }
 
-func (p *Provider) GetFeatures() []featureflag.Feature {
+func (p *Provider) GetFeatures(orgId string) []featureflag.Feature {
 	// TODO : get the features from zeus
 	return basePlanFeatures
 }
