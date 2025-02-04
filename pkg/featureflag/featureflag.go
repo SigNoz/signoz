@@ -10,14 +10,14 @@ import (
 // FeatureFlag is the interface that all feature flag providers must implement
 type FeatureFlag interface {
 	//pass context
-	GetFeatures(orgId string) []Feature
+	GetFeatures(orgID string) []Feature
 }
 
 // Feature is the struct that holds the feature flag data
 type Feature struct {
 	bun.BaseModel `bun:"table:feature_flag"` // This specifies the table name as "features"
 
-	OrgId        string `bun:"org_id"`
+	OrgID        string `bun:"org_id"`
 	Name         Flag   `bun:"name"`
 	Description  string `bun:"description"`
 	Stage        Stage  `bun:"stage"`
@@ -31,7 +31,7 @@ type Feature struct {
 // Add a method to Feature for comparison
 func (f Feature) Equals(other Feature) bool {
 	return f.Name == other.Name &&
-		f.OrgId == other.OrgId &&
+		f.OrgID == other.OrgID &&
 		f.Description == other.Description &&
 		f.Stage == other.Stage &&
 		f.IsActive == other.IsActive &&

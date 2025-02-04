@@ -66,20 +66,20 @@ func (fm *FeatureFlagManager) Stop(ctx context.Context) error {
 
 func (fm *FeatureFlagManager) RefreshFeatureFlags() {
 	var wg sync.WaitGroup
-	orgIds, err := fm.storage.ListOrgIDs(context.Background())
+	orgIDs, err := fm.storage.ListOrgIDs(context.Background())
 	if err != nil {
-		fm.logger.Error("Error listing orgIds", "error", err)
+		fm.logger.Error("Error listing orgIDs", "error", err)
 		return
 	}
-	for _, orgId := range orgIds {
+	for _, orgID := range orgIDs {
 		wg.Add(1)
-		go func(orgId string) {
+		go func(orgID string) {
 			defer wg.Done()
 			// Create a map to store features by their flag or identifier
 			featureMap := make(map[string]Feature)
 
 			for _, provider := range fm.providers {
-				features := provider.GetFeatures(orgId)
+				features := provider.GetFeatures(orgID)
 				for _, feature := range features {
 					// Assuming feature has a method or field `Flag` to identify it
 					featureMap[feature.Name.String()] = feature
@@ -93,26 +93,26 @@ func (fm *FeatureFlagManager) RefreshFeatureFlags() {
 			}
 
 			// Save the merged features
-			err := fm.storage.SaveFeatureFlags(context.Background(), orgId, mergedFeatures)
+			err := fm.storage.SaveFeatureFlags(context.Background(), orgID, mergedFeatures)
 			if err != nil {
-				fm.logger.Error("Failed to save features", "orgId", orgId, "error", err)
+				fm.logger.Error("Failed to save features", "orgID", orgID, "error", err)
 			}
-		}(orgId)
+		}(orgID)
 	}
 	wg.Wait()
 }
 
 // GetFeatureFlags returns all features for an org
-func (fm *FeatureFlagManager) ListFeatureFlags(ctx context.Context, orgId string) ([]Feature, error) {
-	return fm.storage.ListFeatureFlags(ctx, orgId)
+func (fm *FeatureFlagManager) ListFeatureFlags(ctx context.Context, orgID string) ([]Feature, error) {
+	return fm.storage.ListFeatureFlags(ctx, orgID)
 }
 
 // GetFeatureFlag returns a specific feature by flag
-func (fm *FeatureFlagManager) GetFeatureFlag(ctx context.Context, orgId string, flag Flag) (Feature, error) {
-	return fm.storage.GetFeatureFlag(ctx, orgId, flag)
+func (fm *FeatureFlagManager) GetFeatureFlag(ctx context.Context, orgID string, flag Flag) (Feature, error) {
+	return fm.storage.GetFeatureFlag(ctx, orgID, flag)
 }
 
 // UpdateFeatureFlag updates a specific feature by flag for an org
-func (fm *FeatureFlagManager) UpdateFeatureFlag(ctx context.Context, orgId string, flag Flag, feature Feature) error {
-	return fm.storage.UpdateFeatureFlag(ctx, orgId, flag, feature)
+func (fm *FeatureFlagManager) UpdateFeatureFlag(ctx context.Context, orgID string, flag Flag, feature Feature) error {
+	return fm.storage.UpdateFeatureFlag(ctx, orgID, flag, feature)
 }
