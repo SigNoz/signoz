@@ -6,13 +6,17 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters';
 
+export interface FilterCofigs {
+	aggregateOperator?: string;
+	dataSource?: DataSource;
+	aggregateAttribute?: string;
+	filterAttributeKeyDataType?: DataTypes;
+	tagType?: string;
+}
+
 export const useCeleryFilterOptions = (
 	type: string | string[],
-	aggregateOperator?: string,
-	dataSource?: DataSource,
-	aggregateAttribute?: string,
-	filterAttributeKeyDataType?: DataTypes,
-	tagType?: string,
+	filterCofigs?: FilterCofigs,
 ): {
 	searchText: string;
 	handleSearch: (value: string) => void;
@@ -23,11 +27,7 @@ export const useCeleryFilterOptions = (
 	const { isFetching, options } = useGetAllFilters({
 		attributeKey: type,
 		searchText,
-		aggregateOperator,
-		dataSource,
-		aggregateAttribute,
-		filterAttributeKeyDataType,
-		tagType,
+		...filterCofigs,
 	});
 	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
 		setSearchText(searchText as string);
