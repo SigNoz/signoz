@@ -144,6 +144,11 @@
 		gap: 16px;
 		align-items: center;
 
+		border: 1px dashed var(--bg-slate-50);
+		border-radius: 4px;
+		padding: 6px 24px 6px 12px;
+		width: max-content;
+
 		.configure-option-Info-text {
 			color: var(--bg-vanilla-400);
 			font-size: 12px;
@@ -275,5 +280,9 @@
 		&__indicator {
 			background-color: var(--bg-ink-400);
 		}
+	}
+
+	.configure-option-Info {
+		border: 1px dashed var(--bg-robin-400);
 	}
 }
