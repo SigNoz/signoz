@@ -32,6 +32,9 @@ function CeleryTaskGraph({
 	openTracesButton,
 	onOpenTraceBtnClick,
 	applyCeleryTaskFilter,
+	customErrorMessage,
+	start,
+	end,
 }: {
 	widgetData: Widgets;
 	onClick?: (task: CaptureDataProps) => void;
@@ -42,6 +45,9 @@ function CeleryTaskGraph({
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	applyCeleryTaskFilter?: boolean;
+	customErrorMessage?: string;
+	start?: number;
+	end?: number;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -116,6 +122,9 @@ function CeleryTaskGraph({
 				openTracesButton={openTracesButton}
 				onOpenTraceBtnClick={onOpenTraceBtnClick}
 				version={ENTITY_VERSION_V4}
+				customErrorMessage={customErrorMessage}
+				start={start}
+				end={end}
 			/>
 		</Card>
 	);
@@ -129,6 +138,9 @@ CeleryTaskGraph.defaultProps = {
 	openTracesButton: false,
 	onOpenTraceBtnClick: undefined,
 	applyCeleryTaskFilter: false,
+	customErrorMessage: undefined,
+	start: undefined,
+	end: undefined,
 };
 
 export default CeleryTaskGraph;

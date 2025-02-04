@@ -192,6 +192,10 @@ function JobDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Jobs list details tab changed', {
+			job: job?.jobName,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -215,6 +219,7 @@ function JobDetails({
 			logEvent('Infra Monitoring: Jobs list details time updated', {
 				job: job?.jobName,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
