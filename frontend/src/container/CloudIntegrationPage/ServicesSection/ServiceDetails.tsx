@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Wrench } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import ConfigureServiceModal from './ConfigureServiceModal';
 
@@ -65,6 +65,26 @@ function ServiceDetails(): JSX.Element | null {
 		accountId || undefined,
 	);
 
+	const { config, status } = serviceDetailsData ?? {};
+
+	const configMetrics = useMemo(
+		() => ({
+			total: Object.keys(config || {}).length,
+			enabled: Object.values(config || {}).filter((item) => item && item.enabled)
+				.length,
+		}),
+		[config],
+	);
+
+	const signalStatus = useMemo(
+		() => ({
+			isAnySignalConfigured:
+				!!status?.logs?.last_received_ts_ms ||
+				!!status?.metrics?.last_received_ts_ms,
+		}),
+		[status],
+	);
+
 	if (isLoading) {
 		return <Spinner size="large" height="50vh" />;
 	}
@@ -99,13 +119,21 @@ function ServiceDetails(): JSX.Element | null {
 					{serviceDetailsData?.status && (
 						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
-					{!!accountId && (
+					{!!accountId && signalStatus.isAnySignalConfigured ? (
 						<Button
-							className="configure-button"
+							className="configure-button configure-button--default"
 							onClick={(): void => setIsConfigureServiceModalOpen(true)}
 						>
 							<Wrench size={12} color={Color.BG_VANILLA_400} />
-							Configure
+							Configure ({configMetrics.enabled}/{configMetrics.total})
+						</Button>
+					) : (
+						<Button
+							type="primary"
+							className="configure-button configure-button--primary"
+							onClick={(): void => setIsConfigureServiceModalOpen(true)}
+						>
+							Enable Service
 						</Button>
 					)}
 				</div>
