@@ -1,6 +1,6 @@
 {
-  "id": "rds-postgres",
-  "title": "RDS Postgres",
+  "id": "rds",
+  "title": "Amazon RDS",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "assets": {
@@ -26,5 +26,22 @@
       }
     ],
     "logs": []
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/RDS"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/aws/rds",
+          "filter_pattern": ""
+        }
+      ]
+    }
   }
 }
