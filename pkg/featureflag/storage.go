@@ -52,7 +52,7 @@ func (s *FeatureStorage) ListFeatureFlags(ctx context.Context, orgId string) ([]
 	err := s.db.NewSelect().
 		Model(&features).
 		Where("org_id = ?", orgId).
-		Scan(context.Background())
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
