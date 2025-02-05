@@ -244,7 +244,7 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 			},
 		},
 		{
-			title: 'THROUGHPUT',
+			title: 'THROUGHPUT (ops/s)',
 			dataIndex: 'throughput',
 			key: 'throughput',
 			ellipsis: {
