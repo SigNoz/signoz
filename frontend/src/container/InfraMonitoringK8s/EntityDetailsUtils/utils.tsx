@@ -7,7 +7,10 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { nanoToMilli } from 'utils/timeUtils';
@@ -301,3 +304,12 @@ export const getEntityTracesQueryPayload = (
 		],
 	},
 });
+
+export const filterOutPrimaryFilters = (
+	filters: TagFilterItem[],
+	primaryKeys: string[],
+): TagFilterItem[] =>
+	filters.filter(
+		(filter) =>
+			!primaryKeys.includes(filter.key?.key ?? '') && filter.key?.key !== 'id',
+	);
