@@ -183,7 +183,16 @@ type CloudServiceMetricsConfig struct {
 }
 
 type CloudServiceAssets struct {
-	Dashboards []dashboards.Data `json:"dashboards"`
+	Dashboards []CloudServiceDashboard `json:"dashboards"`
+}
+
+type CloudServiceDashboard struct {
+	Id          string           `json:"id"`
+	Url         string           `json:"url"`
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	Image       string           `json:"image"`
+	Definition  *dashboards.Data `json:"definition,omitempty"`
 }
 
 type SupportedSignals struct {

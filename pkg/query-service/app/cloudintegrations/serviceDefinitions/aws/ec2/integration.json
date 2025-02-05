@@ -3,9 +3,6 @@
   "title": "EC2",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
-  "assets": {
-    "dashboards": []
-  },
   "supported_signals": {
     "metrics": true,
     "logs": false
@@ -35,5 +32,16 @@
         }
       ]
     }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "EC2 Overview",
+        "description": "Overview of EC2 metrics",
+        "image": "file://assets/dashboards/overview.jpg",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
   }
 }
