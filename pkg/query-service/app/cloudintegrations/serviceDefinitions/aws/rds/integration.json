@@ -3,9 +3,6 @@
   "title": "Amazon RDS",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
-  "assets": {
-    "dashboards": []
-  },
   "supported_signals": {
     "metrics": true,
     "logs": true
@@ -43,5 +40,16 @@
         }
       ]
     }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "RDS Overview",
+        "description": "Overview of RDS",
+        "image": "file://assets/dashboards/overview.jpg",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
   }
 }

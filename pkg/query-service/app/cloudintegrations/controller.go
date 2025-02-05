@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
 )
@@ -455,4 +456,94 @@ func (c *Controller) UpdateServiceConfig(
 		Id:     serviceId,
 		Config: *updatedConfig,
 	}, nil
+}
+
+// All dashboards that are available based on cloud integrations configuration
+// across all cloud providers
+func (c *Controller) AvailableDashboards(ctx context.Context) (
+	[]dashboards.Dashboard, *model.ApiError,
+) {
+	allDashboards := []dashboards.Dashboard{}
+
+	for _, provider := range []string{"aws"} {
+		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, provider)
+		if apiErr != nil {
+			return nil, model.WrapApiError(
+				apiErr, fmt.Sprintf("couldn't get available dashboards for %s", provider),
+			)
+		}
+
+		allDashboards = append(allDashboards, providerDashboards...)
+	}
+
+	return allDashboards, nil
+}
+
+func (c *Controller) AvailableDashboardsForCloudProvider(
+	ctx context.Context, cloudProvider string,
+) ([]dashboards.Dashboard, *model.ApiError) {
+	// for v0 service dashboards are only available when metrics are enabled.
+	// maps from svcId to creation ts of earliest connected account with the svc enabled.
+	// the ts gets used on returned dashboards
+	servicesWithAvailableMetrics := map[string]*time.Time{}
+
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
+	}
+
+	for _, ar := range accountRecords {
+		if ar.CloudAccountId != nil {
+			configsBySvcId, apiErr := c.serviceConfigRepo.getAllForAccount(
+				ctx, cloudProvider, *ar.CloudAccountId,
+			)
+			if apiErr != nil {
+				return nil, apiErr
+			}
+
+			for svcId, config := range configsBySvcId {
+				if config.Metrics.Enabled {
+					if servicesWithAvailableMetrics[svcId] == nil || ar.CreatedAt.Unix() < servicesWithAvailableMetrics[svcId].Unix() {
+						servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
+					}
+				}
+			}
+		}
+	}
+
+	allServices, apiErr := listCloudProviderServices(cloudProvider)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	svcDashboards := []dashboards.Dashboard{}
+	for _, svc := range allServices {
+		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
+		if serviceDashboardsCreatedAt != nil {
+			for _, d := range svc.Assets.Dashboards {
+				isLocked := 1
+				author := fmt.Sprintf("%s-integration", cloudProvider)
+				svcDashboards = append(svcDashboards, dashboards.Dashboard{
+					Uuid:      c.dashboardUuid(cloudProvider, svc.Id, d.Id),
+					Locked:    &isLocked,
+					Data:      *d.Definition,
+					CreatedAt: *serviceDashboardsCreatedAt,
+					CreateBy:  &author,
+					UpdatedAt: *serviceDashboardsCreatedAt,
+					UpdateBy:  &author,
+				})
+			}
+			servicesWithAvailableMetrics[svc.Id] = nil
+		}
+	}
+
+	return svcDashboards, nil
+}
+
+func (c *Controller) dashboardUuid(
+	cloudProvider string, svcId string, dashboardId string,
+) string {
+	return fmt.Sprintf(
+		"%s-integration--%s--%s", cloudProvider, svcId, dashboardId,
+	)
 }

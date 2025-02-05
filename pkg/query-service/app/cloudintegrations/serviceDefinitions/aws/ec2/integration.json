@@ -38,7 +38,7 @@
       {
         "id": "overview",
         "title": "EC2 Overview",
-        "description": "Overview of EC2 metrics",
+        "description": "Overview of EC2",
         "image": "file://assets/dashboards/overview.jpg",
         "definition": "file://assets/dashboards/overview.json"
       }

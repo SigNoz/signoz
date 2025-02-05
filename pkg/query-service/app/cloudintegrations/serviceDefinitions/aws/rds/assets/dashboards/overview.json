@@ -1,6 +1,6 @@
 {
-  "id": "ec2-overview",
-  "description": "This dashboard provides a high-level overview of your EC2 instances",
+  "id": "rds-overview",
+  "description": "This dashboard provides a high-level overview of RDS",
   "layout": [
     {
       "h": 3,
@@ -104,11 +104,12 @@
   ],
   "name": "",
   "tags": [
+    "RDS",
+    "database",
     "aws",
-    "integration",
-    "ec2"
+    "integration"
   ],
-  "title": "EC2 overview",
+  "title": "RDS overview",
   "variables": {
     "4250ef7b-8f42-4a24-902a-a764d070b92d": {
       "allSelected": true,
