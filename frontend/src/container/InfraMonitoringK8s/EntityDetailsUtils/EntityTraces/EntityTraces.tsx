@@ -26,6 +26,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	filterOutPrimaryFilters,
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
 } from '../utils';
@@ -44,6 +45,7 @@ interface Props {
 	tracesFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 	queryKey: string;
+	queryKeyFilters: string[];
 }
 
 function EntityTraces({
@@ -54,6 +56,7 @@ function EntityTraces({
 	tracesFilters,
 	selectedInterval,
 	queryKey,
+	queryKeyFilters,
 }: Props): JSX.Element {
 	const [traces, setTraces] = useState<any[]>([]);
 	const [offset] = useState<number>(0);
@@ -73,14 +76,14 @@ function EntityTraces({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: [],
+							items: filterOutPrimaryFilters(tracesFilters.items, queryKeyFilters),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, queryKeyFilters, tracesFilters.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;

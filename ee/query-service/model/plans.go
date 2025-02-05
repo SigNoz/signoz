@@ -21,7 +21,7 @@ var (
 )
 
 var (
-	LicenseStatusInvalid = "INVALID"
+	LicenseStatusInactive = "INACTIVE"
 )
 
 const DisableUpsell = "DISABLE_UPSELL"

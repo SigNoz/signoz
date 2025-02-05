@@ -266,7 +266,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               demo-app
                             </div>
@@ -277,7 +277,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               4.35 s
                             </div>
@@ -292,7 +292,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               customer
                             </div>
@@ -303,7 +303,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               431 ms
                             </div>
@@ -318,7 +318,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               mysql
                             </div>
@@ -329,7 +329,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               431 ms
                             </div>
@@ -344,7 +344,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               frontend
                             </div>
@@ -355,7 +355,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               287 ms
                             </div>
@@ -370,7 +370,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               driver
                             </div>
@@ -381,7 +381,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               230 ms
                             </div>
@@ -396,7 +396,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               route
                             </div>
@@ -407,7 +407,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               66.4 ms
                             </div>
@@ -422,7 +422,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               redis
                             </div>
@@ -433,7 +433,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               31.3 ms
                             </div>
