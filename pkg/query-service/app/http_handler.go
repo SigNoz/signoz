@@ -1192,12 +1192,24 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-			r.Context(), uuid,
-		)
-		if apiError != nil {
-			RespondError(w, apiError, nil)
-			return
+		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
+			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
+				r.Context(), uuid,
+			)
+			if apiError != nil {
+				RespondError(w, apiError, nil)
+				return
+			}
+
+		} else {
+			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+				r.Context(), uuid,
+			)
+			if apiError != nil {
+				RespondError(w, apiError, nil)
+				return
+			}
+
 		}
 
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -539,11 +540,55 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 
 	return svcDashboards, nil
 }
+func (c *Controller) GetDashboardById(
+	ctx context.Context,
+	dashboardUuid string,
+) (*dashboards.Dashboard, *model.ApiError) {
+	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	allDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, fmt.Sprintf("couldn't list available dashboards"),
+		)
+	}
+
+	for _, d := range allDashboards {
+		if d.Uuid == dashboardUuid {
+			return &d, nil
+		}
+	}
+
+	return nil, model.NotFoundError(fmt.Errorf(
+		"couldn't find dashboard with uuid: %s", dashboardUuid,
+	))
+}
 
 func (c *Controller) dashboardUuid(
 	cloudProvider string, svcId string, dashboardId string,
 ) string {
 	return fmt.Sprintf(
-		"%s-integration--%s--%s", cloudProvider, svcId, dashboardId,
+		"cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId,
 	)
+}
+
+func (c *Controller) parseDashboardUuid(dashboardUuid string) (
+	cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError,
+) {
+	parts := strings.SplitN(dashboardUuid, "--", 4)
+	if len(parts) != 4 || parts[0] != "cloud-integration" {
+		return "", "", "", model.BadRequest(fmt.Errorf(
+			"invalid cloud integration dashboard id",
+		))
+	}
+
+	return parts[1], parts[2], parts[3], nil
+}
+
+func (c *Controller) IsCloudIntegrationDashboardUuid(dashboardUuid string) bool {
+	_, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
+	return apiErr == nil
 }
