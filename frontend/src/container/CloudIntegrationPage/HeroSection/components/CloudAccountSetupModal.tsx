@@ -16,7 +16,6 @@ import { RegionSelector } from './RegionSelector';
 import { SuccessView } from './SuccessView';
 
 function CloudAccountSetupModal({
-	isOpen,
 	onClose,
 }: IntegrationModalProps): JSX.Element {
 	const {
@@ -39,6 +38,8 @@ function CloudAccountSetupModal({
 		accountId,
 		selectedDeploymentRegion,
 		handleRegionChange,
+		connectionParams,
+		isConnectionParamsLoading,
 	} = useIntegrationModal({ onClose });
 
 	const renderContent = useCallback(() => {
@@ -69,6 +70,8 @@ function CloudAccountSetupModal({
 				accountId={accountId}
 				selectedDeploymentRegion={selectedDeploymentRegion}
 				handleRegionChange={handleRegionChange}
+				connectionParams={connectionParams}
+				isConnectionParamsLoading={isConnectionParamsLoading}
 			/>
 		);
 	}, [
@@ -84,6 +87,8 @@ function CloudAccountSetupModal({
 		accountId,
 		selectedDeploymentRegion,
 		handleRegionChange,
+		connectionParams,
+		isConnectionParamsLoading,
 		setSelectedRegions,
 		setIncludeAllRegions,
 	]);
@@ -152,7 +157,7 @@ function CloudAccountSetupModal({
 
 	return (
 		<SignozModal
-			open={isOpen}
+			open
 			className="cloud-account-setup-modal"
 			title={modalConfig.title}
 			onCancel={handleClose}

@@ -17,14 +17,12 @@ import { RegionSelector } from './RegionSelector';
 import RemoveIntegrationAccount from './RemoveIntegrationAccount';
 
 interface AccountSettingsModalProps {
-	isOpen: boolean;
 	onClose: () => void;
 	account: CloudAccount;
 	setActiveAccount: Dispatch<SetStateAction<CloudAccount | null>>;
 }
 
 function AccountSettingsModal({
-	isOpen,
 	onClose,
 	account,
 	setActiveAccount,
@@ -132,7 +130,7 @@ function AccountSettingsModal({
 
 	return (
 		<SignozModal
-			open={isOpen}
+			open
 			title={modalTitle}
 			onCancel={handleClose}
 			onOk={handleSubmit}

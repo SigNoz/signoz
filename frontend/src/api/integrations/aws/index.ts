@@ -9,6 +9,7 @@ import {
 import {
 	AccountConfigPayload,
 	AccountConfigResponse,
+	ConnectionParams,
 	ConnectionUrlResponse,
 } from 'types/api/integrations/aws';
 
@@ -77,4 +78,11 @@ export const updateServiceConfig = async (
 		payload,
 	);
 	return response.data;
+};
+
+export const getConnectionParams = async (): Promise<ConnectionParams> => {
+	const response = await axios.get(
+		'/cloud-integrations/aws/accounts/generate-connection-params',
+	);
+	return response.data.data;
 };

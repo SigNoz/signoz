@@ -195,17 +195,19 @@ function AccountActions(): JSX.Element {
 				onAccountSettingsModalOpen={(): void => setIsAccountSettingsModalOpen(true)}
 			/>
 
-			<CloudAccountSetupModal
-				isOpen={isIntegrationModalOpen}
-				onClose={(): void => setIsIntegrationModalOpen(false)}
-			/>
+			{isIntegrationModalOpen && (
+				<CloudAccountSetupModal
+					onClose={(): void => setIsIntegrationModalOpen(false)}
+				/>
+			)}
 
-			<AccountSettingsModal
-				isOpen={isAccountSettingsModalOpen}
-				onClose={(): void => setIsAccountSettingsModalOpen(false)}
-				account={activeAccount as CloudAccount}
-				setActiveAccount={setActiveAccount}
-			/>
+			{isAccountSettingsModalOpen && (
+				<AccountSettingsModal
+					onClose={(): void => setIsAccountSettingsModalOpen(false)}
+					account={activeAccount as CloudAccount}
+					setActiveAccount={setActiveAccount}
+				/>
+			)}
 		</div>
 	);
 }
