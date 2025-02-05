@@ -56,11 +56,10 @@ func (migration *addPats) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// table:rules op:add column created_at
 	if _, err := db.
 		NewAddColumn().
 		Table("personal_access_tokens").
-		ColumnExpr("role test not null default 'ADMIN'").
+		ColumnExpr("role TEXT NOT NULL DEFAULT 'ADMIN'").
 		Apply(WrapIfNotExists(ctx, db, "personal_access_tokens", "role")).
 		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
