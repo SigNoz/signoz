@@ -4157,7 +4157,7 @@ func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
 			defer wg.Done()
 
 			metricsConnStatus, apiErr := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
-				ctx, cloudAccountId, telemetryCollectionStrategy.AWSMetrics,
+				ctx, cloudAccountId, telemetryCollectionStrategy.AWSMetrics, svcDetails.DataCollected.Metrics,
 			)
 
 			resultLock.Lock()
@@ -4205,6 +4205,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 	ctx context.Context,
 	cloudAccountId string,
 	strategy *cloudintegrations.AWSMetricsCollectionStrategy,
+	metricsCollectedBySvc []cloudintegrations.CollectedMetric,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
 	if strategy == nil || len(strategy.CloudwatchMetricsStreamFilters) < 1 {
 		return nil, nil
@@ -4225,8 +4226,13 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 		"service_name":      metricsNamespaceParts[1],
 	}
 
+	metricNamesCollectedBySvc := []string{}
+	for _, cm := range metricsCollectedBySvc {
+		metricNamesCollectedBySvc = append(metricNamesCollectedBySvc, cm.Name)
+	}
+
 	statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-		ctx, []string{}, expectedLabelValues,
+		ctx, metricNamesCollectedBySvc, expectedLabelValues,
 	)
 	if apiErr != nil {
 		return nil, apiErr

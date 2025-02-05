@@ -3898,19 +3898,20 @@ func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
-	whereClauseParts := []string{}
+	// at least 1 metric name must be specified.
+	// this query can be too slow otherwise.
+	if len(metricNames) < 1 {
+		return nil, model.BadRequest(fmt.Errorf("atleast 1 metric name must be specified"))
+	}
 
-	if len(metricNames) > 0 {
-		quotedMetricNames := []string{}
-		for _, m := range metricNames {
-			quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
-		}
-		commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
+	quotedMetricNames := []string{}
+	for _, m := range metricNames {
+		quotedMetricNames = append(quotedMetricNames, utils.ClickHouseFormattedValue(m))
+	}
+	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
 
-		whereClauseParts = append(
-			whereClauseParts,
-			fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
-		)
+	whereClauseParts := []string{
+		fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
 	}
 
 	if labelValues != nil {
