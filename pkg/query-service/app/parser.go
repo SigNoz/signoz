@@ -787,6 +787,17 @@ func parseFilterAttributeValueRequestBody(r *http.Request) (*v3.FilterAttributeV
 		}
 	}
 
+	if req.StartTimeMillis == 0 {
+		return nil, fmt.Errorf("startTimeMillis is required")
+	}
+
+	if req.EndTimeMillis == 0 {
+		return nil, fmt.Errorf("endTimeMillis is required")
+	}
+
+	req.StartTimeMillis = req.StartTimeMillis - time.Hour.Milliseconds()*6
+	req.EndTimeMillis = req.EndTimeMillis + time.Hour.Milliseconds()*6
+
 	return &req, nil
 }
 

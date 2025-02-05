@@ -297,6 +297,8 @@ func (q AttributeKeyDataType) String() string {
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
 type FilterAttributeValueRequest struct {
+	StartTimeMillis            int64                `json:"startTimeMillis"`
+	EndTimeMillis              int64                `json:"endTimeMillis"`
 	DataSource                 DataSource           `json:"dataSource"`
 	AggregateOperator          AggregateOperator    `json:"aggregateOperator"`
 	AggregateAttribute         string               `json:"aggregateAttribute"`

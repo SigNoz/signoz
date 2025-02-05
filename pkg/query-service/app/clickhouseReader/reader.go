@@ -4116,11 +4116,18 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 }
 
 func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.FilterAttributeValueRequest) ([]string, error) {
-	var conditions []string
+	var andConditions []string
+
+	andConditions = append(andConditions, fmt.Sprintf("unix_milli >= %d", req.StartTimeMillis))
+	andConditions = append(andConditions, fmt.Sprintf("unix_milli <= %d", req.EndTimeMillis))
 
 	if len(req.SelectedAttributeValues) != 0 {
 		for _, item := range req.SelectedAttributeValues {
-			fmtVal := utils.ClickHouseFormattedValue(item.Value)
+			// we only support string for related values
+			if item.Key.DataType != v3.AttributeKeyDataTypeString {
+				continue
+			}
+
 			var colName string
 			switch item.Key.Type {
 			case v3.AttributeKeyTypeResource:
@@ -4130,10 +4137,34 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 			default:
 				colName = "attributes"
 			}
-			conditions = append(conditions, fmt.Sprintf("mapContains(%s, '%s') AND %s['%s'] IN %s", colName, item.Key.Key, colName, item.Key.Key, fmtVal))
+			// IN doesn't make use of map value index, we convert it to = or !=
+			operator := item.Operator
+			if v3.FilterOperator(strings.ToLower(string(item.Operator))) == v3.FilterOperatorIn {
+				operator = "="
+			} else if v3.FilterOperator(strings.ToLower(string(item.Operator))) == v3.FilterOperatorNotIn {
+				operator = "!="
+			}
+			addCondition := func(val string) {
+				andConditions = append(andConditions, fmt.Sprintf("mapContains(%s, '%s') AND %s['%s'] %s %s", colName, item.Key.Key, colName, item.Key.Key, operator, val))
+			}
+			switch v := item.Value.(type) {
+			case string:
+				fmtVal := utils.ClickHouseFormattedValue(v)
+				addCondition(fmtVal)
+			case []string:
+				for _, val := range v {
+					fmtVal := utils.ClickHouseFormattedValue(val)
+					addCondition(fmtVal)
+				}
+			case []interface{}:
+				for _, val := range v {
+					fmtVal := utils.ClickHouseFormattedValue(val)
+					addCondition(fmtVal)
+				}
+			}
 		}
 	}
-	whereClause := strings.Join(conditions, " OR ")
+	whereClause := strings.Join(andConditions, " AND ")
 
 	var selectColumn string
 	switch req.TagType {
@@ -4146,12 +4177,13 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 	}
 
 	filterSubQuery := fmt.Sprintf(
-		"SELECT DISTINCT %s FROM %s.%s WHERE %s",
+		"SELECT DISTINCT %s FROM %s.%s WHERE %s LIMIT 100",
 		selectColumn,
 		r.metadataDB,
 		r.metadataTable,
 		whereClause,
 	)
+	zap.L().Info("filterSubQuery for related values", zap.String("query", filterSubQuery))
 
 	rows, err := r.db.Query(ctx, filterSubQuery)
 	if err != nil {
