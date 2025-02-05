@@ -116,9 +116,8 @@
 		gap: 10px;
 
 		.metric-page-grid {
-			display: grid;
-			grid-template-columns: 30% 19%;
-			align-items: flex-start;
+			display: flex;
+			flex-direction: row;
 			gap: 10px;
 			width: 100%;
 
