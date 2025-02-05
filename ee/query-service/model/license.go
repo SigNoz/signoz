@@ -139,8 +139,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	if err != nil {
 		return nil, err
 	}
-	// if license status is inactive then default it to basic
-	if status == LicenseStatusInactive {
+	// if license status is invalid then default it to basic
+	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic
 	}
 
