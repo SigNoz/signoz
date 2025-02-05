@@ -47,7 +47,7 @@ function AccountSettingsModal({
 
 	const handleRemoveIntegrationAccountSuccess = (): void => {
 		queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
-		urlQuery.delete('accountId');
+		urlQuery.delete('cloudAccountId');
 		handleClose();
 		history.replace({ search: urlQuery.toString() });
 	};
