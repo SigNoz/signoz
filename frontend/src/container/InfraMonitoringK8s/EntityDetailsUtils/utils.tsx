@@ -309,4 +309,7 @@ export const filterOutPrimaryFilters = (
 	filters: TagFilterItem[],
 	primaryKeys: string[],
 ): TagFilterItem[] =>
-	filters.filter((filter) => !primaryKeys.includes(filter.key?.key ?? ''));
+	filters.filter(
+		(filter) =>
+			!primaryKeys.includes(filter.key?.key ?? '') && filter.key?.key !== 'id',
+	);
