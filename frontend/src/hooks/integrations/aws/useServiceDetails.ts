@@ -5,11 +5,11 @@ import { useQuery, UseQueryResult } from 'react-query';
 
 export function useServiceDetails(
 	serviceId: string,
-	accountId?: string,
+	cloudAccountId?: string,
 ): UseQueryResult<ServiceData> {
 	return useQuery(
-		[REACT_QUERY_KEY.AWS_SERVICE_DETAILS, serviceId, accountId],
-		() => getServiceDetails(serviceId, accountId),
+		[REACT_QUERY_KEY.AWS_SERVICE_DETAILS, serviceId, cloudAccountId],
+		() => getServiceDetails(serviceId, cloudAccountId),
 		{
 			enabled: !!serviceId,
 		},

@@ -19,9 +19,11 @@ export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 };
 
 export const getAwsServices = async (
-	accountId?: string,
+	cloudAccountId?: string,
 ): Promise<Service[]> => {
-	const params = accountId ? { account_id: accountId } : undefined;
+	const params = cloudAccountId
+		? { cloud_account_id: cloudAccountId }
+		: undefined;
 	const response = await axios.get('/cloud-integrations/aws/services', {
 		params,
 	});
@@ -31,9 +33,11 @@ export const getAwsServices = async (
 
 export const getServiceDetails = async (
 	serviceId: string,
-	accountId?: string,
+	cloudAccountId?: string,
 ): Promise<ServiceData> => {
-	const params = accountId ? { account_id: accountId } : undefined;
+	const params = cloudAccountId
+		? { cloud_account_id: cloudAccountId }
+		: undefined;
 	const response = await axios.get(
 		`/cloud-integrations/aws/services/${serviceId}`,
 		{ params },

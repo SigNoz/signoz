@@ -7,14 +7,19 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import ServiceItem from './ServiceItem';
 
 interface ServicesListProps {
-	accountId: string;
+	cloudAccountId: string;
 	filter: 'all_services' | 'enabled' | 'available';
 }
 
-function ServicesList({ accountId, filter }: ServicesListProps): JSX.Element {
+function ServicesList({
+	cloudAccountId,
+	filter,
+}: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const { data: services = [], isLoading } = useGetAccountServices(accountId);
+	const { data: services = [], isLoading } = useGetAccountServices(
+		cloudAccountId,
+	);
 	const activeService = urlQuery.get('service');
 
 	const handleActiveService = useCallback(
