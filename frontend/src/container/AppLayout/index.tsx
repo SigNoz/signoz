@@ -250,7 +250,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			!isFetchingActiveLicenseV3 &&
 			!isNull(activeLicenseV3) &&
-			activeLicenseV3?.event_queue?.event === LicenseEvent.DEFAULT
+			activeLicenseV3?.event_queue?.event === LicenseEvent.FAILED_PAYMENT
 		) {
 			setShowPaymentFailedWarning(true);
 		}
