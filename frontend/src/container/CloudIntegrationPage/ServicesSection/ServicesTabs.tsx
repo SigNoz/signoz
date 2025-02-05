@@ -20,17 +20,17 @@ export enum ServiceFilterType {
 }
 
 interface ServicesFilterProps {
-	accountId: string;
+	cloudAccountId: string;
 	onFilterChange: (value: ServiceFilterType) => void;
 }
 
 function ServicesFilter({
-	accountId,
+	cloudAccountId,
 	onFilterChange,
 }: ServicesFilterProps): JSX.Element | null {
 	const { data: services, isLoading } = useQuery(
-		[REACT_QUERY_KEY.AWS_SERVICES, accountId],
-		() => getAwsServices(accountId),
+		[REACT_QUERY_KEY.AWS_SERVICES, cloudAccountId],
+		() => getAwsServices(cloudAccountId),
 	);
 
 	const { enabledCount, availableCount } = useMemo(() => {
@@ -77,7 +77,7 @@ function ServicesFilter({
 
 function ServicesSection(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const accountId = urlQuery.get('accountId') || '';
+	const cloudAccountId = urlQuery.get('cloudAccountId') || '';
 
 	const [activeFilter, setActiveFilter] = useState<
 		'all_services' | 'enabled' | 'available'
@@ -86,8 +86,11 @@ function ServicesSection(): JSX.Element {
 	return (
 		<div className="services-section">
 			<div className="services-section__sidebar">
-				<ServicesFilter accountId={accountId} onFilterChange={setActiveFilter} />
-				<ServicesList accountId={accountId} filter={activeFilter} />
+				<ServicesFilter
+					cloudAccountId={cloudAccountId}
+					onFilterChange={setActiveFilter}
+				/>
+				<ServicesList cloudAccountId={cloudAccountId} filter={activeFilter} />
 			</div>
 			<div className="services-section__content">
 				<ServiceDetails />

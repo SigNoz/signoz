@@ -54,7 +54,7 @@ function ServiceStatus({
 
 function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
-	const accountId = urlQuery.get('accountId');
+	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
 	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
 		false,
@@ -62,7 +62,7 @@ function ServiceDetails(): JSX.Element | null {
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
-		accountId || undefined,
+		cloudAccountId || undefined,
 	);
 
 	const { config, status } = serviceDetailsData ?? {};
@@ -118,7 +118,7 @@ function ServiceDetails(): JSX.Element | null {
 				<div className="service-details__right-actions">
 					<ServiceStatus serviceStatus={serviceDetailsData.status} />
 
-					{!!accountId && signalStatus.isAnySignalConfigured ? (
+					{!!cloudAccountId && signalStatus.isAnySignalConfigured ? (
 						<Button
 							className="configure-button configure-button--default"
 							onClick={(): void => setIsConfigureServiceModalOpen(true)}
@@ -151,7 +151,7 @@ function ServiceDetails(): JSX.Element | null {
 				onClose={(): void => setIsConfigureServiceModalOpen(false)}
 				serviceName={serviceDetailsData.title}
 				serviceId={serviceId || ''}
-				cloudAccountId={accountId || ''}
+				cloudAccountId={cloudAccountId || ''}
 				initialConfig={serviceDetailsData.config}
 				supportedSignals={serviceDetailsData.supported_signals || {}}
 			/>

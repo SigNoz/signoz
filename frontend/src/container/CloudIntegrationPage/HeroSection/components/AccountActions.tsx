@@ -141,7 +141,8 @@ function AccountActions(): JSX.Element {
 	const initialAccount = useMemo(
 		() =>
 			accounts?.length
-				? getAccountById(accounts, urlQuery.get('accountId') || '') || accounts[0]
+				? getAccountById(accounts, urlQuery.get('cloudAccountId') || '') ||
+				  accounts[0]
 				: null,
 		[accounts, urlQuery],
 	);
@@ -154,7 +155,7 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
-			urlQuery.set('accountId', initialAccount.cloud_account_id);
+			urlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
 			navigate({ search: urlQuery.toString() });
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,7 +187,7 @@ function AccountActions(): JSX.Element {
 				onAccountChange={(value): void => {
 					if (accounts) {
 						setActiveAccount(getAccountById(accounts, value));
-						urlQuery.set('accountId', value);
+						urlQuery.set('cloudAccountId', value);
 						navigate({ search: urlQuery.toString() });
 					}
 				}}
