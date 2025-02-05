@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import { ServiceData } from './types';
 
 function DashboardItem({
@@ -5,8 +7,8 @@ function DashboardItem({
 }: {
 	dashboard: ServiceData['assets']['dashboards'][number];
 }): JSX.Element {
-	return (
-		<div className="cloud-service-dashboard-item">
+	const content = (
+		<>
 			<div className="cloud-service-dashboard-item__title">{dashboard.title}</div>
 			<div className="cloud-service-dashboard-item__preview">
 				<img
@@ -15,6 +17,18 @@ function DashboardItem({
 					className="cloud-service-dashboard-item__preview-image"
 				/>
 			</div>
+		</>
+	);
+
+	return (
+		<div className="cloud-service-dashboard-item">
+			{dashboard.url ? (
+				<Link to={dashboard.url} className="cloud-service-dashboard-item__link">
+					{content}
+				</Link>
+			) : (
+				content
+			)}
 		</div>
 	);
 }
