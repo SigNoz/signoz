@@ -4206,7 +4206,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 	cloudAccountId string,
 	strategy *cloudintegrations.AWSMetricsCollectionStrategy,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if len(strategy.CloudwatchMetricsStreamFilters) < 1 {
+	if strategy == nil || len(strategy.CloudwatchMetricsStreamFilters) < 1 {
 		return nil, nil
 	}
 
@@ -4232,15 +4232,14 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 		return nil, apiErr
 	}
 
-	var result *cloudintegrations.SignalConnectionStatus
 	if statusForLastReceivedMetric != nil {
-		result = &cloudintegrations.SignalConnectionStatus{
+		return &cloudintegrations.SignalConnectionStatus{
 			LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
 			LastReceivedFrom:     "signoz-aws-integration",
-		}
+		}, nil
 	}
 
-	return result, nil
+	return nil, nil
 }
 
 func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
@@ -4248,6 +4247,77 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 	cloudAccountId string,
 	strategy *cloudintegrations.AWSLogsCollectionStrategy,
 ) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
+	if strategy == nil || len(strategy.CloudwatchLogsSubscriptions) < 1 {
+		return nil, nil
+	}
+
+	logGroupNamePrefix := strategy.CloudwatchLogsSubscriptions[0].LogGroupNamePrefix
+	if len(logGroupNamePrefix) < 1 {
+		return nil, nil
+	}
+
+	logsConnTestFilter := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "cloud.account.id",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    cloudAccountId,
+			},
+			{
+				Key: v3.AttributeKey{
+					Key:      "aws.cloudwatch.log_group_name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "like",
+				Value:    logGroupNamePrefix + "%",
+			},
+		},
+	}
+
+	// TODO(Raj): Receive this as a param from UI in the future.
+	lookbackSeconds := int64(15 * 60)
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnTestFilter,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, _, err := aH.querier.QueryRange(
+		ctx, qrParams,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		return &cloudintegrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     "signoz-aws-integration",
+		}, nil
+	}
+
 	return nil, nil
 }
 
