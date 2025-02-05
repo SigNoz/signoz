@@ -1,6 +1,7 @@
 import { Skeleton, Typography } from 'antd';
+import getIngestionData from 'api/settings/getIngestionData';
+import { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	ArrowUpRight,
@@ -12,8 +13,9 @@ import {
 	TriangleAlert,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
+import { IngestionInfo } from 'types/api/settings/ingestion';
 import { downloadFile } from 'utils/downloadFile';
 
 function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
@@ -35,23 +37,27 @@ function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 }
 
 export default function OnboardingIngestionDetails(): JSX.Element {
-	const {
-		data: ingestionKeys,
-		isLoading: isIngestionKeysLoading,
-		error,
-		isError,
-	} = useGetAllIngestionsKeys({
-		search: '',
-		page: 1,
-		per_page: 1,
-	});
-
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionKeyProps>(
-		{} as IngestionKeyProps,
+	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionInfo>(
+		{} as IngestionInfo,
 	);
+
+	const {
+		status,
+		data: ingestionData,
+		isLoading: isIngestionKeysLoading,
+		error,
+		isError,
+	} = useQuery({
+		queryFn: () => getIngestionData(),
+	});
+
+	useEffect(() => {
+		console.log('status', status);
+		console.log('ingestionData', ingestionData);
+	}, [status, ingestionData]);
 
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
@@ -77,17 +83,25 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		const firstKey =
-			ingestionKeys?.data.data &&
-			Array.isArray(ingestionKeys.data.data) &&
-			ingestionKeys?.data.data[0];
+		if (
+			status === 'success' &&
+			ingestionData &&
+			ingestionData &&
+			Array.isArray(ingestionData.payload)
+		) {
+			const payload = ingestionData.payload[0] || {
+				ingestionKey: '',
+				ingestionURL: '',
+				dataRegion: '',
+			};
 
-		setFirstIngestionKey(firstKey || ({} as IngestionKeyProps));
+			setFirstIngestionKey(payload);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ingestionKeys?.data?.data]);
+	}, [status, ingestionData?.payload]);
 
-	const ingestionURL = '';
-	const ingestionKey = firstIngestionKey?.value;
+	const ingestionURL = firstIngestionKey?.ingestionURL;
+	const ingestionKey = firstIngestionKey?.ingestionKey;
 
 	const endpointDetails = `OTEL_EXPORTER_OTLP_ENDPOINT=${ingestionURL} \nOTEL_EXPORTER_OTLP_HEADERS=signoz-access-token=${ingestionKey}`;
 
@@ -96,7 +110,8 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 			{isError && (
 				<div className="ingestion-endpoint-section-error-container">
 					<Typography.Text className="ingestion-endpoint-section-error-text error">
-						<TriangleAlert size={14} /> {error?.message}
+						<TriangleAlert size={14} />{' '}
+						{(error as AxiosError)?.message || 'Something went wrong'}
 					</Typography.Text>
 
 					<div className="ingestion-setup-details-links">
@@ -180,11 +195,12 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 									</Typography.Text>
 
 									<Typography.Text className="ingestion-key-value-copy">
-										{maskKey(firstIngestionKey?.value)}
+										{maskKey(firstIngestionKey?.ingestionKey)}
+
 										<Copy
 											size={14}
 											className="copy-btn"
-											onClick={(): void => handleCopyKey(firstIngestionKey?.value)}
+											onClick={(): void => handleCopyKey(firstIngestionKey?.ingestionKey)}
 										/>
 									</Typography.Text>
 								</>
