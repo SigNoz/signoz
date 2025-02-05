@@ -63,21 +63,20 @@ function ServiceDetails(): JSX.Element | null {
 		cloudAccountId || undefined,
 	);
 
-	const { config } = serviceDetailsData ?? {};
+	// eslint-disable-next-line @typescript-eslint/naming-convention
+	const { config, supported_signals } = serviceDetailsData ?? {};
 
-	const configMetrics = useMemo(
-		() => ({
-			total: Object.keys(config || {}).length,
-			enabled: Object.values(config || {}).filter((item) => item && item.enabled)
-				.length,
-		}),
+	const totalSupportedSignals = Object.entries(supported_signals || {}).filter(
+		([, value]) => !!value,
+	).length;
+	const enabledSignals = useMemo(
+		() =>
+			Object.values(config || {}).filter((item) => item && item.enabled).length,
 		[config],
 	);
 
-	const signalStatus = useMemo(
-		() => ({
-			isAnySignalConfigured: !!config?.logs?.enabled || !!config?.metrics?.enabled,
-		}),
+	const isAnySignalConfigured = useMemo(
+		() => !!config?.logs?.enabled || !!config?.metrics?.enabled,
 		[config],
 	);
 
@@ -114,12 +113,12 @@ function ServiceDetails(): JSX.Element | null {
 				<div className="service-details__right-actions">
 					<ServiceStatus serviceStatus={serviceDetailsData.status} />
 
-					{!!cloudAccountId && signalStatus.isAnySignalConfigured ? (
+					{!!cloudAccountId && isAnySignalConfigured ? (
 						<Button
 							className="configure-button configure-button--default"
 							onClick={(): void => setIsConfigureServiceModalOpen(true)}
 						>
-							Configure ({configMetrics.enabled}/{configMetrics.total})
+							Configure ({enabledSignals}/{totalSupportedSignals})
 						</Button>
 					) : (
 						<Button
