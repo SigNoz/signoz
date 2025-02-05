@@ -1,4 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
@@ -8,7 +7,6 @@ import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/t
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import ConfigureServiceModal from './ConfigureServiceModal';
@@ -65,7 +63,7 @@ function ServiceDetails(): JSX.Element | null {
 		cloudAccountId || undefined,
 	);
 
-	const { config, status } = serviceDetailsData ?? {};
+	const { config } = serviceDetailsData ?? {};
 
 	const configMetrics = useMemo(
 		() => ({
@@ -78,11 +76,9 @@ function ServiceDetails(): JSX.Element | null {
 
 	const signalStatus = useMemo(
 		() => ({
-			isAnySignalConfigured:
-				!!status?.logs?.last_received_ts_ms ||
-				!!status?.metrics?.last_received_ts_ms,
+			isAnySignalConfigured: !!config?.logs?.enabled || !!config?.metrics?.enabled,
 		}),
-		[status],
+		[config],
 	);
 
 	if (isLoading) {
@@ -123,7 +119,6 @@ function ServiceDetails(): JSX.Element | null {
 							className="configure-button configure-button--default"
 							onClick={(): void => setIsConfigureServiceModalOpen(true)}
 						>
-							<Wrench size={12} color={Color.BG_VANILLA_400} />
 							Configure ({configMetrics.enabled}/{configMetrics.total})
 						</Button>
 					) : (
@@ -146,15 +141,17 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />
 			</div>
-			<ConfigureServiceModal
-				isOpen={isConfigureServiceModalOpen}
-				onClose={(): void => setIsConfigureServiceModalOpen(false)}
-				serviceName={serviceDetailsData.title}
-				serviceId={serviceId || ''}
-				cloudAccountId={cloudAccountId || ''}
-				initialConfig={serviceDetailsData.config}
-				supportedSignals={serviceDetailsData.supported_signals || {}}
-			/>
+			{isConfigureServiceModalOpen && (
+				<ConfigureServiceModal
+					isOpen
+					onClose={(): void => setIsConfigureServiceModalOpen(false)}
+					serviceName={serviceDetailsData.title}
+					serviceId={serviceId || ''}
+					cloudAccountId={cloudAccountId || ''}
+					initialConfig={serviceDetailsData.config}
+					supportedSignals={serviceDetailsData.supported_signals || {}}
+				/>
+			)}
 		</div>
 	);
 }
