@@ -3896,27 +3896,45 @@ func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (
 }
 
 func (r *ClickHouseReader) GetLatestReceivedMetric(
-	ctx context.Context, metricNames []string,
+	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
-	if len(metricNames) < 1 {
+	whereClauseParts := []string{}
+
+	if len(metricNames) > 0 {
+		quotedMetricNames := []string{}
+		for _, m := range metricNames {
+			quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
+		}
+		commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
+
+		whereClauseParts = append(
+			whereClauseParts,
+			fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
+		)
+	}
+
+	if labelValues != nil {
+		for label, val := range labelValues {
+			whereClauseParts = append(
+				whereClauseParts,
+				fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
+			)
+		}
+	}
+
+	if len(whereClauseParts) < 1 {
 		return nil, nil
 	}
 
-	quotedMetricNames := []string{}
-	for _, m := range metricNames {
-		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
-	}
-	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
+	whereClause := strings.Join(whereClauseParts, " AND ")
 
 	query := fmt.Sprintf(`
 		SELECT metric_name, labels, unix_milli
 		from %s.%s
-		where metric_name in (
-			%s
-		)
+		where %s
 		order by unix_milli desc
 		limit 1
-		`, signozMetricDBName, signozTSTableNameV4, commaSeparatedMetricNames,
+		`, signozMetricDBName, signozTSTableNameV4, whereClause,
 	)
 
 	rows, err := r.db.Query(ctx, query)
