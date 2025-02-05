@@ -1,6 +1,6 @@
 export enum LicenseEvent {
 	NO_EVENT = '',
-	DEFAULT = 'DEFAULT',
+	FAILED_PAYMENT = 'FAILED_PAYMENT',
 }
 
 export enum LicenseStatus {
@@ -9,7 +9,7 @@ export enum LicenseStatus {
 }
 
 export enum LicenseState {
-	DEFAULTED = 'DEFAULTED',
+	PAYMENT_FAILED = 'PAYMENT_FAILED',
 	ACTIVE = 'ACTIVE',
 }
 
