@@ -4,7 +4,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 function Views(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div>Views</div>
+			Views
 		</Sentry.ErrorBoundary>
 	);
 }
