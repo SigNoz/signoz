@@ -4281,7 +4281,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 	}
 
 	// TODO(Raj): Receive this as a param from UI in the future.
-	lookbackSeconds := int64(15 * 60)
+	lookbackSeconds := int64(30 * 60)
 
 	qrParams := &v3.QueryRangeParamsV3{
 		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
