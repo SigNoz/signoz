@@ -6,6 +6,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/models"
 )
 
 type addIntegrations struct{}
@@ -27,35 +28,24 @@ func (migration *addIntegrations) Register(migrations *migrate.Migrations) error
 }
 
 func (migration *addIntegrations) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS integrations_installed(
-		integration_id TEXT PRIMARY KEY,
-		config_json TEXT,
-		installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.Integration)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS cloud_integrations_accounts(
-		cloud_provider TEXT NOT NULL,
-		id TEXT NOT NULL,
-		config_json TEXT,
-		cloud_account_id TEXT,
-		last_agent_report_json TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-		removed_at TIMESTAMP,
-		UNIQUE(cloud_provider, id)
-	)`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.CloudIntegrationAccount)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS cloud_integrations_service_configs(
-		cloud_provider TEXT NOT NULL,
-		cloud_account_id TEXT NOT NULL,
-		service_id TEXT NOT NULL,
-		config_json TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-		UNIQUE(cloud_provider, cloud_account_id, service_id)
-	)`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.CloudIntegrationServiceConfig)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 

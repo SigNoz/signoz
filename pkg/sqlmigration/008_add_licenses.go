@@ -6,6 +6,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/models"
 )
 
 type addLicenses struct{}
@@ -27,42 +28,31 @@ func (migration *addLicenses) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addLicenses) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS licenses(
-		key TEXT PRIMARY KEY,
-		createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-		updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-		planDetails TEXT,
-		activationId TEXT,
-		validationMessage TEXT,
-		lastValidated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.License)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS sites(
-		uuid TEXT PRIMARY KEY,
-		alias VARCHAR(180) DEFAULT 'PROD',
-		url VARCHAR(300),
-		createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.Site)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS feature_status (
-		name TEXT PRIMARY KEY,
-		active bool,
-		usage INTEGER DEFAULT 0,
-		usage_limit INTEGER DEFAULT 0,
-		route TEXT
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.FeatureStatus)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS licenses_v3 (
-		id TEXT PRIMARY KEY,
-		key TEXT NOT NULL UNIQUE,
-		data TEXT
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.LicenseV3)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 

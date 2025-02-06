@@ -6,6 +6,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/models"
 )
 
 type addPipelines struct{}
@@ -27,18 +28,10 @@ func (migration *addPipelines) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addPipelines) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS pipelines(
-		id TEXT PRIMARY KEY,
-		order_id INTEGER,
-		enabled BOOLEAN,
-		created_by TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		name VARCHAR(400) NOT NULL,
-		alias VARCHAR(20) NOT NULL,
-		description TEXT,
-		filter TEXT NOT NULL,
-		config_json TEXT
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model((*models.Pipeline)(nil)).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
