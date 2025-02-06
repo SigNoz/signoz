@@ -353,7 +353,11 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	}
 
 	fm := featureManager.StartManager()
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	mockClickhouse.MatchExpectationsInOrder(false)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
+		Reader:                      reader,
 		AppDao:                      dao.DB(),
 		CloudIntegrationsController: controller,
 		FeatureFlags:                fm,
@@ -373,9 +377,10 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	}
 
 	return &CloudIntegrationsTestBed{
-		t:             t,
-		testUser:      user,
-		qsHttpHandler: router,
+		t:              t,
+		testUser:       user,
+		qsHttpHandler:  router,
+		mockClickhouse: mockClickhouse,
 	}
 }
 
@@ -503,6 +508,15 @@ func (tb *CloudIntegrationsTestBed) GetServiceDetailFromQS(
 	if cloudAccountId != nil {
 		path = fmt.Sprintf("%s?cloud_account_id=%s", path, *cloudAccountId)
 	}
+
+	// add mock expectations for connection status queries
+	metricCols := []mockhouse.ColumnType{}
+	metricCols = append(metricCols, mockhouse.ColumnType{Type: "String", Name: "metric_name"})
+	metricCols = append(metricCols, mockhouse.ColumnType{Type: "String", Name: "labels"})
+	metricCols = append(metricCols, mockhouse.ColumnType{Type: "Int64", Name: "unix_milli"})
+	tb.mockClickhouse.ExpectQuery(
+		`SELECT.*from.*signoz_metrics.*`,
+	).WillReturnRows(mockhouse.NewRows(metricCols, [][]any{}))
 
 	return RequestQSAndParseResp[cloudintegrations.CloudServiceDetails](
 		tb, path, nil,
