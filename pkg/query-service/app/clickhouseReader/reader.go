@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	chprom "github.com/prometheus/prometheus/storage/clickhouse"
 	"math"
 	"math/rand"
 	"os"
@@ -112,6 +113,7 @@ var (
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
 	db                      clickhouse.Conn
+	tenantDb                clickhouse.Conn
 	localDB                 *sqlx.DB
 	TraceDB                 string
 	operationsTable         string
@@ -167,6 +169,7 @@ type ClickHouseReader struct {
 func NewReader(
 	localDB *sqlx.DB,
 	db driver.Conn,
+	tenantDb driver.Conn,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
@@ -176,11 +179,12 @@ func NewReader(
 	cache cache.Cache,
 ) *ClickHouseReader {
 	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	return NewReaderFromClickhouseConnection(db, tenantDb, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
 func NewReaderFromClickhouseConnection(
 	db driver.Conn,
+	tenantDb driver.Conn,
 	options *Options,
 	localDB *sqlx.DB,
 	configFile string,
@@ -444,12 +448,13 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	services := []string{}
-	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
+	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, traceIndexView(tenant))
 
 	if r.useTraceNewSchema {
-		query = fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
+		query = fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, traceIndexView(tenant))
 	}
 
 	rows, err := r.db.Query(ctx, query)
@@ -473,6 +478,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 }
 
 func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time, services []string) (*map[string][]string, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	start = start.In(time.UTC)
 
@@ -480,7 +486,7 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 	operations := map[string][]string{}
 	// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
 	// We can only use the `start` time to filter the operations
-	query := fmt.Sprintf(`SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start`, r.TraceDB, r.topLevelOperationsTable)
+	query := fmt.Sprintf(`SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start`, r.TraceDB, fmt.Sprintf("%s (tenant='%s')", constants.TENANT_TRACES_TL_OPS_VIEW, tenant))
 	if len(services) > 0 {
 		query += ` AND serviceName IN @services`
 	}
@@ -571,6 +577,7 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 }
 
 func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -618,14 +625,14 @@ func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model
 					count(*) as numCalls
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
-				r.TraceDB, r.traceTableName,
+				r.TraceDB, traceIndexView(tenant),
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
 				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-				r.TraceDB, r.traceTableName,
+				r.TraceDB, traceIndexView(tenant),
 			)
 
 			args := []interface{}{}
@@ -646,6 +653,7 @@ func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model
 						resource_fingerprint GLOBAL IN ` +
 				resourceSubQuery +
 				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+			query += constants.UseAliasesInViewSettings
 
 			args = append(args,
 				clickhouse.Named("start_bucket", strconv.FormatInt(queryParams.Start.Unix()-1800, 10)),
@@ -672,6 +680,7 @@ func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model
 						resource_fingerprint GLOBAL IN ` +
 				resourceSubQuery +
 				`) AND ts_bucket_start >= @start_bucket AND ts_bucket_start <= @end_bucket`
+			errorQuery += constants.UseAliasesInViewSettings
 
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
@@ -994,6 +1003,7 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 }
 
 func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	namedArgs := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
@@ -1015,7 +1025,7 @@ func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *
 			name
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
-		r.TraceDB, r.traceTableName,
+		r.TraceDB, traceIndexView(tenant),
 	)
 
 	resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
@@ -1034,6 +1044,7 @@ func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *
 		query += " LIMIT @limit"
 		namedArgs = append(namedArgs, clickhouse.Named("limit", queryParams.Limit))
 	}
+	query += constants.UseAliasesInViewSettings
 	err = r.db.Select(ctx, &topOperationsItems, query, namedArgs...)
 
 	if err != nil {
@@ -1140,7 +1151,9 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1185,7 +1198,8 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	var startTime, endTime, durationNano uint64
 	var searchScanResponses []model.SpanItemV2
 
-	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
+	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, traceIndexView(tenant))
+	query += constants.UseAliasesInViewSettings
 
 	start := time.Now()
 
@@ -1288,7 +1302,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -1454,7 +1468,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
 	var hasMissingSpans bool
 
-	userEmail , emailErr := auth.GetEmailFromJwt(ctx)
+	userEmail, emailErr := auth.GetEmailFromJwt(ctx)
 	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
 	if err == nil {
 		startTime = cachedTraceData.StartTime
@@ -1530,8 +1544,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
-			if endTime == 0 ||  (startTimeUnixNano + jsonItem.DurationNano )  > endTime {
-				endTime =  (startTimeUnixNano + jsonItem.DurationNano )
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1708,12 +1722,12 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			}
 
 			// metadata calculation
-			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())	
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
-			if endTime == 0 || ( startTimeUnixNano + jsonItem.DurationNano )  > endTime {
-				endTime =  (startTimeUnixNano + jsonItem.DurationNano )
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1777,7 +1791,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 	trace.Spans = selectedSpansForRequest
 	trace.StartTimestampMillis = startTime / 1000000
-	trace.EndTimestampMillis = endTime / 1000000	
+	trace.EndTimestampMillis = endTime / 1000000
 	return trace, nil
 }
 
@@ -2530,7 +2544,16 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 }
 
+func traceIndexView(tenant string) string {
+	return fmt.Sprintf("%s (tenant='%s')", constants.TENANT_TRACES_INDEX_VIEW, tenant)
+}
+
+func errorsView(tenant string) string {
+	return fmt.Sprintf("%s (tenant='%s', window_start='%d', window_end='%d')", constants.TENANT_TRACES_ERROR_INDEX_VIEW, tenant)
+}
+
 func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.ListErrorsParams) (*[]model.Error, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var getErrorResponses []model.Error
 
@@ -2545,7 +2568,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	} else {
 		query = query + ", any(exceptionType) as exceptionType"
 	}
-	query += fmt.Sprintf(" FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
+	query += fmt.Sprintf(" FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, errorsView(tenant))
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 
 	if len(queryParams.ServiceName) != 0 {
@@ -2603,10 +2626,11 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 }
 
 func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.CountErrorsParams) (uint64, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var errorCount uint64
 
-	query := fmt.Sprintf("SELECT count(distinct(groupID)) FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT count(distinct(groupID)) FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, errorsView(tenant))
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) != 0 {
 		query = query + " AND serviceName ilike @serviceName"
@@ -2640,6 +2664,7 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 }
 
 func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	if queryParams.ErrorID == "" {
 		zap.L().Error("errorId missing from params")
@@ -2647,7 +2672,7 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID AND errorID = @errorID LIMIT 1", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID AND errorID = @errorID LIMIT 1", r.TraceDB, errorsView(tenant))
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
@@ -2667,10 +2692,11 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 }
 
 func (r *ClickHouseReader) GetErrorFromGroupID(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID LIMIT 1", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID LIMIT 1", r.TraceDB, errorsView(tenant))
 	args := []interface{}{clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
@@ -2715,10 +2741,11 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 }
 
 func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-	query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp >= @timestamp AND errorID != @errorID ORDER BY timestamp ASC LIMIT 2", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp >= @timestamp AND errorID != @errorID ORDER BY timestamp ASC LIMIT 2", r.TraceDB, errorsView(tenant))
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
@@ -2739,7 +2766,7 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 		if getNextErrorIDReponse[0].Timestamp.UnixNano() == getNextErrorIDReponse[1].Timestamp.UnixNano() {
 			var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-			query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID > @errorID ORDER BY errorID ASC LIMIT 1", r.TraceDB, r.errorTable)
+			query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID > @errorID ORDER BY errorID ASC LIMIT 1", r.TraceDB, errorsView(tenant))
 			args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 			err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
@@ -2753,7 +2780,7 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 			if len(getNextErrorIDReponse) == 0 {
 				var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-				query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp > @timestamp ORDER BY timestamp ASC LIMIT 1", r.TraceDB, r.errorTable)
+				query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp > @timestamp ORDER BY timestamp ASC LIMIT 1", r.TraceDB, errorsView(tenant))
 				args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 				err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
@@ -2784,10 +2811,11 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 }
 
 func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-	query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp <= @timestamp AND errorID != @errorID ORDER BY timestamp DESC LIMIT 2", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp <= @timestamp AND errorID != @errorID ORDER BY timestamp DESC LIMIT 2", r.TraceDB, errorsView(tenant))
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
@@ -2808,7 +2836,7 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 		if getPrevErrorIDReponse[0].Timestamp.UnixNano() == getPrevErrorIDReponse[1].Timestamp.UnixNano() {
 			var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-			query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID < @errorID ORDER BY errorID DESC LIMIT 1", r.TraceDB, r.errorTable)
+			query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID < @errorID ORDER BY errorID DESC LIMIT 1", r.TraceDB, errorsView(tenant))
 			args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 			err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
@@ -2822,7 +2850,7 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 			if len(getPrevErrorIDReponse) == 0 {
 				var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-				query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp < @timestamp ORDER BY timestamp DESC LIMIT 1", r.TraceDB, r.errorTable)
+				query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp < @timestamp ORDER BY timestamp DESC LIMIT 1", r.TraceDB, errorsView(tenant))
 				args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 				err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
@@ -2988,16 +3016,18 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 }
 
 func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
 	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
-	group by serviceName, env, language;`, r.TraceDB, r.traceTableName, int(interval.Minutes()))
+	group by serviceName, env, language;`, r.TraceDB, traceIndexView(tenant), int(interval.Minutes()))
 
 	if r.useTraceNewSchema {
 		queryStr = fmt.Sprintf(`select serviceName, resources_string['deployment.environment'] as env, 
 	resources_string['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
-	group by serviceName, env, language;`, r.TraceDB, r.traceTableName, int(interval.Minutes()))
+	group by serviceName, env, language;`, r.TraceDB, traceIndexView(tenant), int(interval.Minutes()))
 	}
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
@@ -3287,7 +3317,17 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	return nil
 }
 
+func attributeKeysView(tenant string) string {
+	return fmt.Sprintf("%s (tenant='%s')", constants.TENANT_TRACES_ATTR_KEYS_VIEW, tenant)
+}
+
+func attributeTagView(tenant string) string {
+	return fmt.Sprintf("%s (tenant='%s')", constants.TENANT_TRACES_TAG_ATTR_VEIW, tenant)
+}
+
 func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	// response will contain top level fields from the otel trace model
 	response := model.GetFieldsResponse{
 		Selected:    []model.Field{},
@@ -3308,7 +3348,7 @@ func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFields
 
 	// get attribute keys
 	attributes := []model.Field{}
-	query := fmt.Sprintf("SELECT tagKey, tagType, dataType from %s.%s group by tagKey, tagType, dataType", r.TraceDB, r.spanAttributesKeysTable)
+	query := fmt.Sprintf("SELECT tagKey, tagType, dataType from %s.%s group by tagKey, tagType, dataType", r.TraceDB, attributeKeysView(tenant))
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3699,13 +3739,14 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 	req *v3.AggregateAttributeRequest,
 	skipDotNames bool,
 ) (*v3.AggregateAttributeResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var query string
 	var err error
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 
-	query = fmt.Sprintf("SELECT metric_name, type, is_monotonic, temporality FROM %s.%s WHERE metric_name ILIKE $1 GROUP BY metric_name, type, is_monotonic, temporality", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT metric_name, type, is_monotonic, temporality FROM %s.%s WHERE metric_name ILIKE $1 GROUP BY metric_name, type, is_monotonic, temporality", signozMetricDBName, chprom.MetricsViewForTenant(chprom.DistributedTimeSeriesV41dayView, tenant, 0, math.MaxInt64))
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3752,6 +3793,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 }
 
 func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var query string
 	var err error
@@ -3759,7 +3801,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var response v3.FilterAttributeKeyResponse
 
 	// skips the internal attributes i.e attributes starting with __
-	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, chprom.MetricsViewForTenant(chprom.DistributedTimeSeriesV41dayView, tenant, common.PastDayRoundOff(), math.MaxInt64))
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3788,13 +3830,14 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 }
 
 func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var query string
 	var err error
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, chprom.MetricsViewForTenant(chprom.DistributedTimeSeriesV41dayView, tenant, common.PastDayRoundOff(), math.MaxInt64))
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3820,13 +3863,14 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 }
 
 func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	unixMilli := common.PastDayRoundOff()
 
 	// Note: metric metadata should be accessible regardless of the time range selection
 	// our standard retention period is 30 days, so we are querying the table v4_1_day to reduce the
 	// amount of data scanned
-	query := fmt.Sprintf("SELECT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY temporality, description, type, unit, is_monotonic", signozMetricDBName, signozTSTableNameV41Day)
+	query := fmt.Sprintf("SELECT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY temporality, description, type, unit, is_monotonic", signozMetricDBName, chprom.MetricsViewForTenant(chprom.DistributedTimeSeriesV41dayView, tenant, unixMilli, math.MaxInt64))
 	rows, err := r.db.Query(ctx, query, metricName, unixMilli)
 	if err != nil {
 		zap.L().Error("Error while fetching metric metadata", zap.Error(err))
@@ -3845,7 +3889,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		}
 	}
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, 'le') as le from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $3 GROUP BY le ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, 'le') as le from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $3 GROUP BY le ORDER BY le", signozMetricDBName, chprom.MetricsViewForTenant(chprom.DistributedTimeSeriesV41dayView, tenant, unixMilli, math.MaxInt64))
 	rows, err = r.db.Query(ctx, query, metricName, unixMilli, serviceName)
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -3969,6 +4013,7 @@ func isColumn(useLogsNewSchema bool, tableStatement, attrType, field, datType st
 }
 
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var query string
 	var err error
@@ -4011,7 +4056,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		return nil, fmt.Errorf("unsupported aggregate operator")
 	}
 
-	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type from %s.%s WHERE %s limit $2", r.logsDB, r.logsTagAttributeTableV2, where)
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type from %s.%s WHERE %s limit $2", r.logsDB, attributeTagView(tenant), where)
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -4054,16 +4099,18 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 }
 
 func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	var query string
 	var err error
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where tag_key ILIKE $1 limit $2", r.logsDB, attributeTagView(tenant))
 		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s limit $1", r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s limit $1", r.logsDB, attributeTagView(tenant))
 		rows, err = r.db.Query(ctx, query, req.Limit)
 	}
 
@@ -4112,6 +4159,8 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 }
 
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	var err error
 	var filterValueColumn string
 	var rows driver.Rows
@@ -4172,10 +4221,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
 		}
-		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.logsDB, attributeTagView(tenant), filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	} else {
-		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND tag_type=$2 LIMIT $3", filterValueColumn, r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND tag_type=$2 LIMIT $3", filterValueColumn, r.logsDB, attributeTagView(tenant))
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
 	}
 
@@ -4430,8 +4479,51 @@ func logCommentKVs(ctx context.Context) map[string]string {
 	return logCommentKVs
 }
 
+var tenantRe = regexp.MustCompile(`^tenant\s*=`)
+
+func imputeTenant(query string, tenant string, tenantIdx int) string {
+	// query = "SELECT whatever FROM my_tenant_view (tenant = 'mytenant') WHERE ..."
+	start := query[tenantIdx:] // 	tenant = 'mytenant') WHERE ...
+
+	if !tenantRe.MatchString(start) {
+		// defeat comment hacking
+		equalsIdx := strings.IndexRune(start, '=')
+		if equalsIdx > -1 {
+			sub := start[:equalsIdx]
+			if strings.Contains(sub, "/*") || strings.Contains(sub, "--") {
+				return query[:tenantIdx] + "invalid"
+			}
+		}
+		// string "tenant" not being used to designate a view parameter in this case
+		return query
+	}
+
+	firstQuoteStartIdx := strings.IndexRune(start, '\'')
+	firstQuoteStart := start[firstQuoteStartIdx:]                                // 	'mytenant') WHERE ...
+	suffix := firstQuoteStart[1:][strings.IndexRune(firstQuoteStart[1:], '\''):] //  ') WHERE ...
+	return query[:tenantIdx] + "tenant='" + tenant + suffix
+}
+
+func imputeTenantInQuery(query string, tenant string) string {
+	// this parsing is not very general and could be improved upon...
+	lastTenantIdx := -1
+	tenantIdx := strings.Index(query, "tenant")
+	for lastTenantIdx != tenantIdx {
+		query = imputeTenant(query, tenant, tenantIdx)
+		lastTenantIdx = tenantIdx
+		tenantIdx = tenantIdx + 1 + strings.Index(query[tenantIdx+1:], "tenant") // finds the next occurrence of "tenant"
+	}
+	return query
+}
+
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+	query = imputeTenantInQuery(query, tenant)
+	db := r.db
+	if r.tenantDb != nil {
+		db = r.tenantDb
+	}
 
 	ctxArgs := map[string]interface{}{"query": query}
 	for k, v := range logCommentKVs(ctx) {
@@ -4464,7 +4556,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 		}
 	}
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := db.Query(ctx, query)
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
@@ -4646,6 +4738,8 @@ func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 }
 
 func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	var query string
 	var err error
 	var rows driver.Rows
@@ -4686,7 +4780,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	default:
 		return nil, fmt.Errorf("unsupported aggregate operator")
 	}
-	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE %s", r.TraceDB, r.spanAttributeTableV2, where)
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE %s", r.TraceDB, attributeTagView(tenant), where)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -4742,13 +4836,14 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 }
 
 func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	var query string
 	var err error
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 LIMIT $2", r.TraceDB, r.spanAttributeTableV2)
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 LIMIT $2", r.TraceDB, attributeTagView(tenant))
 
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 
@@ -4807,6 +4902,8 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 }
 
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	var query string
 	var filterValueColumn string
 	var err error
@@ -4856,14 +4953,14 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		if r.useTraceNewSchema {
 			where += " AND ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR))"
 		}
-		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE %s AND %s ILIKE $1 LIMIT $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE %s AND %s ILIKE $1 LIMIT $2", selectKey, r.TraceDB, traceIndexView(tenant), where, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 	} else {
 		filterValueColumnWhere := filterValueColumn
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
 		}
-		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.TraceDB, r.spanAttributeTableV2, filterValueColumnWhere)
+		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE tag_key=$1 AND %s ILIKE $2 AND tag_type=$3 LIMIT $4", filterValueColumn, r.TraceDB, attributeTagView(tenant), filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	}
 
@@ -4896,12 +4993,14 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 }
 
 func (r *ClickHouseReader) GetSpanAttributeKeysV2(ctx context.Context) (map[string]v3.AttributeKey, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	var query string
 	var err error
 	var rows driver.Rows
 	response := map[string]v3.AttributeKey{}
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType FROM %s.%s", r.TraceDB, attributeKeysView(tenant))
 
 	rows, err = r.db.Query(ctx, query)
 	if err != nil {
@@ -4944,6 +5043,8 @@ func (r *ClickHouseReader) GetSpanAttributeKeysV2(ctx context.Context) (map[stri
 }
 
 func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	if r.useTraceNewSchema {
 		return r.GetSpanAttributeKeysV2(ctx)
 	}
@@ -4952,7 +5053,7 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 	var rows driver.Rows
 	response := map[string]v3.AttributeKey{}
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s", r.TraceDB, attributeKeysView(tenant))
 
 	rows, err = r.db.Query(ctx, query)
 

@@ -789,7 +789,7 @@ func Test_buildLogsQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype, tt.args.preferRPM)
+			got, err := buildLogsQuery(nil, tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype, tt.args.preferRPM)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildLogsQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return

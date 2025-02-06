@@ -1,7 +1,9 @@
 package v4
 
 import (
+	"context"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
@@ -18,7 +20,8 @@ import (
 // from the database
 // start and end are in milliseconds
 // step is in seconds
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
+func PrepareMetricQuery(ctx context.Context, start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	if valFilter := metrics.AddMetricValueFilter(mq); valFilter != nil {
 		mq.MetricValueFilter = valFilter
@@ -58,15 +61,15 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	var err error
 	if mq.Temporality == v3.Delta {
 		if panelType == v3.PanelTypeTable {
-			query, err = delta.PrepareMetricQueryDeltaTable(start, end, mq.StepInterval, mq)
+			query, err = delta.PrepareMetricQueryDeltaTable(tenant, start, end, mq.StepInterval, mq)
 		} else {
-			query, err = delta.PrepareMetricQueryDeltaTimeSeries(start, end, mq.StepInterval, mq)
+			query, err = delta.PrepareMetricQueryDeltaTimeSeries(tenant, start, end, mq.StepInterval, mq)
 		}
 	} else {
 		if panelType == v3.PanelTypeTable {
-			query, err = cumulative.PrepareMetricQueryCumulativeTable(start, end, mq.StepInterval, mq)
+			query, err = cumulative.PrepareMetricQueryCumulativeTable(tenant, start, end, mq.StepInterval, mq)
 		} else {
-			query, err = cumulative.PrepareMetricQueryCumulativeTimeSeries(start, end, mq.StepInterval, mq)
+			query, err = cumulative.PrepareMetricQueryCumulativeTimeSeries(tenant, start, end, mq.StepInterval, mq)
 		}
 	}
 

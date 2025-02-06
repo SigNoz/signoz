@@ -10,9 +10,10 @@ import (
 )
 
 type provider struct {
-	settings       factory.ScopedProviderSettings
-	clickHouseConn clickhouse.Conn
-	hooks          []telemetrystore.TelemetryStoreHook
+	settings             factory.ScopedProviderSettings
+	clickHouseConn       clickhouse.Conn
+	tenantClickHouseConn clickhouse.Conn
+	hooks                []telemetrystore.TelemetryStoreHook
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
@@ -46,15 +47,36 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
+	var tenantConn driver.Conn
+	if config.ClickHouse.TenantDSN != "" {
+		options, err := clickhouse.ParseDSN(config.ClickHouse.DSN)
+		if err != nil {
+			return nil, err
+		}
+		options.MaxIdleConns = config.Connection.MaxIdleConns
+		options.MaxOpenConns = config.Connection.MaxOpenConns
+		options.DialTimeout = config.Connection.DialTimeout
+
+		tenantConn, err = clickhouse.Open(options)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &provider{
-		settings:       settings,
-		clickHouseConn: chConn,
-		hooks:          hooks,
+		settings:             settings,
+		clickHouseConn:       chConn,
+		tenantClickHouseConn: tenantConn,
+		hooks:                hooks,
 	}, nil
 }
 
 func (p *provider) ClickHouseDB() clickhouse.Conn {
 	return p
+}
+
+func (p *provider) TenantClickHouseDB() clickhouse.Conn {
+	return p.tenantClickHouseConn
 }
 
 func (p provider) Close() error {

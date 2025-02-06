@@ -54,7 +54,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		fm := featureManager.StartManager()
 		qb := NewQueryBuilder(qbOptions, fm)
 
-		queries, err := qb.PrepareQueries(q)
+		queries, err := qb.PrepareQueries(nil, q)
 
 		require.NoError(t, err)
 
@@ -96,7 +96,7 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 		fm := featureManager.StartManager()
 		qb := NewQueryBuilder(qbOptions, fm)
 
-		_, err := qb.PrepareQueries(q)
+		_, err := qb.PrepareQueries(nil, q)
 
 		require.NoError(t, err)
 	})
@@ -171,7 +171,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		fm := featureManager.StartManager()
 		qb := NewQueryBuilder(qbOptions, fm)
 
-		queries, err := qb.PrepareQueries(q)
+		queries, err := qb.PrepareQueries(nil, q)
 
 		require.NoError(t, err)
 
@@ -341,7 +341,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		fm := featureManager.StartManager()
 		qb := NewQueryBuilder(qbOptions, fm)
 
-		queries, err := qb.PrepareQueries(q)
+		queries, err := qb.PrepareQueries(nil, q)
 		require.Contains(t, queries["F1"], "SELECT A.`os.type` as `os.type`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) as A  INNER JOIN (SELECT * FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.network.io' AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000) as filtered_time_series USING fingerprint WHERE metric_name = 'system.network.io' AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) HAVING value > 4) as B  ON A.`os.type` = B.`os.type` AND A.`ts` = B.`ts`")
 		require.NoError(t, err)
 
@@ -500,7 +500,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			}
 			fm := featureManager.StartManager()
 			qb := NewQueryBuilder(qbOptions, fm)
-			queries, err := qb.PrepareQueries(c.query)
+			queries, err := qb.PrepareQueries(nil, c.query)
 
 			require.NoError(t, err)
 			require.Equal(t, c.expected, queries[c.queryToTest])
@@ -708,7 +708,7 @@ func TestLogsQueryWithFormula(t *testing.T) {
 
 	for _, test := range testLogsWithFormula {
 		t.Run(test.Name, func(t *testing.T) {
-			queries, err := qb.PrepareQueries(test.Query)
+			queries, err := qb.PrepareQueries(nil, test.Query)
 			require.NoError(t, err)
 			require.Equal(t, test.ExpectedQuery, queries["C"])
 		})
@@ -919,7 +919,7 @@ func TestLogsQueryWithFormulaV2(t *testing.T) {
 
 	for _, test := range testLogsWithFormulaV2 {
 		t.Run(test.Name, func(t *testing.T) {
-			queries, err := qb.PrepareQueries(test.Query)
+			queries, err := qb.PrepareQueries(nil, test.Query)
 			require.NoError(t, err)
 			require.Equal(t, test.ExpectedQuery, queries["C"])
 		})

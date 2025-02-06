@@ -46,6 +46,7 @@ func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request))
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		ctx = context.WithValue(ctx, constants.ContextTenantKey, user.Organization)
 		r = r.WithContext(ctx)
 		f(w, r)
 	}
@@ -69,6 +70,7 @@ func (am *AuthMiddleware) EditAccess(f func(http.ResponseWriter, *http.Request))
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		ctx = context.WithValue(ctx, constants.ContextTenantKey, user.Organization)
 		r = r.WithContext(ctx)
 		f(w, r)
 	}
@@ -93,6 +95,7 @@ func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request))
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		ctx = context.WithValue(ctx, constants.ContextTenantKey, user.Organization)
 		r = r.WithContext(ctx)
 		f(w, r)
 	}
@@ -116,6 +119,7 @@ func (am *AuthMiddleware) AdminAccess(f func(http.ResponseWriter, *http.Request)
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		ctx = context.WithValue(ctx, constants.ContextTenantKey, user.Organization)
 		r = r.WithContext(ctx)
 		f(w, r)
 	}

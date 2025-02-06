@@ -90,7 +90,7 @@ func (p *NamespacesRepo) getMetadataAttributes(ctx context.Context, req model.Na
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	query, err := helpers.PrepareTimeseriesFilterQuery("TODO", req.Start, req.End, &mq)
 	if err != nil {
 		return nil, err
 	}

@@ -125,6 +125,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	clickhouseReader := clickhouseReader.NewReader(
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
+		serverOptions.SigNoz.TelemetryStore.TenantClickHouseDB(),
 		serverOptions.PromConfigPath,
 		fm,
 		serverOptions.Cluster,
@@ -303,6 +304,12 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		if user.User.OrgId == "" {
 			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
+
+		org, apiErr := dao.DB().GetOrg(context.TODO(), user.User.OrgId) // could easily be cached to avoid per-request sqllite overhead
+		if apiErr != nil {
+			return nil, apiErr.Err
+		}
+		user.Organization = org.Name
 
 		return user, nil
 	}

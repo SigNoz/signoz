@@ -137,6 +137,11 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 		config.TelemetryStore.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
 	}
 
+	if os.Getenv("TenantClickHouseUrl") != "" {
+		fmt.Println("[Deprecated] env TenantClickHouseUrl is deprecated and scheduled for removal...")
+		config.TelemetryStore.ClickHouse.TenantDSN = os.Getenv("TenantClickHouseUrl")
+	}
+
 	if deprecatedFlags.MaxIdleConns != 50 {
 		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS env variable instead.")
 		config.TelemetryStore.Connection.MaxIdleConns = deprecatedFlags.MaxIdleConns

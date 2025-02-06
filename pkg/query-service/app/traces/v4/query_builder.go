@@ -1,6 +1,7 @@
 package v4
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -213,6 +214,10 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
+func tracesView(tenant string, bucketStartSeconds, bucketEndSeconds int64) string {
+	return fmt.Sprintf("%s (tenant='%s', window_start='%d', window_end='%d')", constants.TENANT_TRACES_INDEX_RES_VIEW, tenant, bucketStartSeconds, bucketEndSeconds)
+}
+
 func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 	var query string
 	if fs == nil || len(fs.Items) == 0 {
@@ -238,7 +243,9 @@ func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, error) {
+func buildTracesQuery(ctx context.Context, start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	tracesStart := utils.GetEpochNanoSecs(start)
 	tracesEnd := utils.GetEpochNanoSecs(end)
 
@@ -292,12 +299,12 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if mq.AggregateOperator == v3.AggregateOperatorNoOp {
 		var query string
 		if panelType == v3.PanelTypeTrace {
-			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter)
-			afterSubQuery := tracesV3.AddLimitToQuery(constants.TracesExplorerViewSQLSelectAfterSubQuery, mq.Limit)
+			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, tracesView(tenant, bucketStart, bucketEnd), timeFilter, filterSubQuery)
+			afterSubQuery := tracesV3.AddLimitToQuery(withSubQuery, mq.Limit)
 			if mq.Offset != 0 {
 				afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
 			}
-			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery)
+			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, tracesView(tenant, bucketStart, bucketEnd)) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter)
 			// adding this to avoid the distributed product mode error which doesn't allow global in
 			query += " settings distributed_product_mode='allow', max_memory_usage=10000000000"
 		} else if panelType == v3.PanelTypeList {
@@ -306,7 +313,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 			}
 			selectLabels = getSelectLabels(mq.SelectColumns)
 			// add it to the select labels
-			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
+			selectLabels = getSelectLabels(mq.SelectColumns)
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + tracesView(tenant, bucketStart, bucketEnd) + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
@@ -344,7 +352,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	queryTmpl = queryTmpl + selectLabels +
 		" %s as value " +
-		"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 +
+		"from " + constants.SIGNOZ_TRACE_DBNAME + "." + tracesView(tenant, bucketStart, bucketEnd) +
 		" where " + timeFilter + "%s" +
 		"%s%s" +
 		"%s"
@@ -418,7 +426,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 // PrepareTracesQuery returns the query string for traces
 // start and end are in epoch millisecond
 // step is in seconds
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareTracesQuery(ctx context.Context, start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+
 	// adjust the start and end time to the step interval
 	if panelType == v3.PanelTypeGraph {
 		// adjust the start and end time to the step interval for graph panel types
@@ -427,22 +436,22 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 	}
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
+		query, err := buildTracesQuery(ctx, start, end, mq.StepInterval, mq, panelType, options)
 		if err != nil {
 			return "", err
 		}
 		query = tracesV3.AddLimitToQuery(query, mq.Limit)
 
-		return query, nil
+		return query + constants.UseAliasesInViewSettings, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
+		query, err := buildTracesQuery(ctx, start, end, mq.StepInterval, mq, panelType, options)
 		if err != nil {
 			return "", err
 		}
-		return query, nil
+		return query + constants.UseAliasesInViewSettings, nil
 	}
 
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, panelType, options)
+	query, err := buildTracesQuery(ctx, start, end, mq.StepInterval, mq, panelType, options)
 	if err != nil {
 		return "", err
 	}
@@ -456,5 +465,5 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 			query = tracesV3.AddOffsetToQuery(query, mq.Offset)
 		}
 	}
-	return query, err
+	return query + constants.UseAliasesInViewSettings, err
 }

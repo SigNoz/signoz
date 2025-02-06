@@ -2,7 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
@@ -56,11 +55,13 @@ func (migration *addDashboards) Up(ctx context.Context, db *bun.DB) error {
 		name TEXT NOT NULL UNIQUE,
 		type TEXT NOT NULL,
 		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
+		data TEXT NOT NULL,
+		created_by TEXT
 	);`); err != nil {
 		return err
 	}
-
+	// TODO: de-uniqueify 'name' column for full multi-tenant, and move created_by column addition to migration
+	
 	// table:planned_maintenance
 	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS planned_maintenance (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

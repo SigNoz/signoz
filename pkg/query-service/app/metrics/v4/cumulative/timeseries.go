@@ -108,10 +108,10 @@ const (
 // value to be reset to 0. This will produce an inaccurate result. The max is the best approximation we can get.
 // We don't expect the process to restart very often, so this should be a good approximation.
 
-func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func prepareTimeAggregationSubQuery(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var subQuery string
 
-	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(tenant, start, end, mq)
 	if err != nil {
 		return "", err
 	}
@@ -178,10 +178,10 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 }
 
 // PrepareMetricQueryCumulativeTimeSeries prepares the query to be used for fetching metrics
-func PrepareMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func PrepareMetricQueryCumulativeTimeSeries(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
-	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(tenant, start, end, step, mq)
 	if err != nil {
 		return "", err
 	}

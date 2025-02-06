@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"fmt"
+	"github.com/prometheus/prometheus/storage/clickhouse"
 	"strings"
 	"time"
 
@@ -70,6 +71,23 @@ func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, str
 	}
 
 	return start, end, tableName
+}
+
+func timeSeriesTableToTenantView(table string, tenant string, start, end int64) string {
+	view := clickhouse.DistributedTimeSeriesV4View
+	switch table {
+	case constants.SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME:
+		view = clickhouse.DistributedTimeSeriesV4View
+	case constants.SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME:
+		view = clickhouse.DistributedTimeSeriesV46hrsView
+	case constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME:
+		view = clickhouse.DistributedTimeSeriesV41dayView
+	case constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME:
+		// adjust the start time to nearest 1 week
+		view = clickhouse.DistributedTimeSeriesV41weekView
+	}
+
+	return clickhouse.MetricsViewForTenant(view, tenant, start, end)
 }
 
 // start and end are in milliseconds
@@ -256,7 +274,7 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 }
 
 // PrepareTimeseriesFilterQuery builds the sub-query to be used for filtering timeseries based on the search criteria
-func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string, error) {
+func PrepareTimeseriesFilterQuery(tenant string, start, end int64, mq *v3.BuilderQuery) (string, error) {
 	var conditions []string
 	var fs *v3.FilterSet = mq.Filters
 	var groupTags []v3.AttributeKey = mq.GroupBy
@@ -265,8 +283,9 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
+	viewSql := timeSeriesTableToTenantView(tableName, tenant, start, end)
 
-	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
+	// redundant with viewSql // conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
@@ -335,7 +354,7 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 		"SELECT DISTINCT %s FROM %s.%s WHERE %s",
 		selectLabels,
 		constants.SIGNOZ_METRIC_DBNAME,
-		tableName,
+		viewSql,
 		whereClause,
 	)
 

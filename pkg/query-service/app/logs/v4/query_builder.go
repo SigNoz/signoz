@@ -1,6 +1,7 @@
 package v4
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -287,12 +288,15 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 	step int64,
 	preferRPM bool,
 	timeFilter string,
+	bucketStart int64,
+	bucketEnd int64,
 	whereClause string,
 	groupBy string,
 	having string,
 	orderBy string,
+	tenant string,
 ) (string, error) {
-	queryTmpl := " %s as value from signoz_logs." + DISTRIBUTED_LOGS_V2 +
+	queryTmpl := " %s as value from signoz_logs." + logsView(tenant, bucketStart, bucketEnd) +
 		" where " + timeFilter + "%s" +
 		"%s%s" +
 		"%s"
@@ -349,7 +353,13 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 	}
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
+func logsView(tenant string, bucketStartSeconds, bucketEndSeconds int64) string {
+	return fmt.Sprintf("%s (tenant='%s', window_start='%d', window_end='%d')", constants.TENANT_LOGS_VIEW, tenant, bucketStartSeconds, bucketEndSeconds)
+}
+
+func buildLogsQuery(ctx context.Context, panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	// timerange will be sent in epoch millisecond
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
@@ -394,7 +404,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		// with noop any filter or different order by other than ts will use new table
 		sqlSelect := constants.LogsSQLSelectV2
 		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
-		query := fmt.Sprintf(queryTmpl, DISTRIBUTED_LOGS_V2, timeFilter, filterSubQuery, orderBy)
+		query := fmt.Sprintf(queryTmpl, logsView(tenant, bucketStart, bucketEnd), timeFilter, filterSubQuery, orderBy)
 		return query, nil
 		// ---- NOOP ends here ----
 	}
@@ -425,7 +435,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
-	aggClause, err := generateAggregateClause(mq.AggregateOperator, aggregationKey, step, preferRPM, timeFilter, filterSubQuery, groupBy, having, orderBy)
+	aggClause, err := generateAggregateClause(mq.AggregateOperator, aggregationKey, step, preferRPM, timeFilter, bucketStart, bucketEnd, filterSubQuery, groupBy, having, orderBy, tenant)
 	if err != nil {
 		return "", err
 	}
@@ -453,7 +463,9 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	return query, nil
 }
 
-func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
+func buildLogsLiveTailQuery(ctx context.Context, mq *v3.BuilderQuery) (string, error) {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, v3.AttributeKey{})
 	if err != nil {
 		return "", err
@@ -476,7 +488,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	// the reader will add the timestamp and id filters
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
-		query := constants.LogsSQLSelectV2 + "from signoz_logs." + DISTRIBUTED_LOGS_V2 + " where "
+		query := constants.LogsSQLSelectV2 + "from signoz_logs." + logsView(tenant, 0, 0) + " where "
 		if len(filterSubQuery) > 0 {
 			query = query + filterSubQuery + " AND "
 		}
@@ -488,7 +500,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 }
 
 // PrepareLogsQuery prepares the query for logs
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareLogsQuery(ctx context.Context, start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data
@@ -498,14 +510,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	// }
 
 	if options.IsLivetailQuery {
-		query, err := buildLogsLiveTailQuery(mq)
+		query, err := buildLogsLiveTailQuery(ctx, mq)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group_by names (no values)
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(ctx, panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
 		if err != nil {
 			return "", err
 		}
@@ -513,14 +525,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+		query, err := buildLogsQuery(ctx, panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+	query, err := buildLogsQuery(ctx, panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
 	if err != nil {
 		return "", err
 	}

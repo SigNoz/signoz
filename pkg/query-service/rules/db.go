@@ -20,11 +20,11 @@ import (
 
 // Data store to capture user alert rule settings
 type RuleDB interface {
-	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
-	GetChannels() (*[]model.ChannelItem, *model.ApiError)
-	DeleteChannel(id string) *model.ApiError
-	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
-	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
+	GetChannel(ctx context.Context, id string) (*model.ChannelItem, *model.ApiError)
+	GetChannels(ctx context.Context, tenant string) (*[]model.ChannelItem, *model.ApiError)
+	DeleteChannel(ctx context.Context, id string) *model.ApiError
+	CreateChannel(ctx context.Context, receiver *am.Receiver) (*am.Receiver, *model.ApiError)
+	EditChannel(ctx context.Context, receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
 
 	// CreateRuleTx stores rule in the db and returns tx and group name (on success)
 	CreateRuleTx(ctx context.Context, rule string) (int64, Tx, error)
@@ -36,7 +36,7 @@ type RuleDB interface {
 	DeleteRuleTx(ctx context.Context, id string) (string, Tx, error)
 
 	// GetStoredRules fetches the rule definitions from db
-	GetStoredRules(ctx context.Context) ([]StoredRule, error)
+	GetStoredRules(ctx context.Context, tenant string) ([]StoredRule, error)
 
 	// GetStoredRule for a given ID from DB
 	GetStoredRule(ctx context.Context, id string) (*StoredRule, error)
@@ -153,7 +153,7 @@ func (r *ruleDB) EditRuleTx(ctx context.Context, rule string, id string) (string
 	//if err != nil {
 	//	return groupName, tx, err
 	//}
-	stmt, err := r.Prepare(`UPDATE rules SET updated_by=$1, updated_at=$2, data=$3 WHERE id=$4;`)
+	stmt, err := r.Prepare(`UPDATE rules SET updated_by=$1, updated_at=$2, data=$3 WHERE id=$4 AND ` + common.TenantSqlPredicate(ctx))
 	if err != nil {
 		zap.L().Error("Error in preparing statement for UPDATE to rules", zap.Error(err))
 		// tx.Rollback()
@@ -182,7 +182,7 @@ func (r *ruleDB) DeleteRuleTx(ctx context.Context, id string) (string, Tx, error
 	// 	return groupName, tx, err
 	// }
 
-	stmt, err := r.Prepare(`DELETE FROM rules WHERE id=$1;`)
+	stmt, err := r.Prepare(`DELETE FROM rules WHERE id=$1 AND ` + common.TenantSqlPredicate(ctx))
 
 	if err != nil {
 		return groupName, nil, err
@@ -199,11 +199,14 @@ func (r *ruleDB) DeleteRuleTx(ctx context.Context, id string) (string, Tx, error
 	return groupName, nil, nil
 }
 
-func (r *ruleDB) GetStoredRules(ctx context.Context) ([]StoredRule, error) {
+func (r *ruleDB) GetStoredRules(ctx context.Context, tenant string) ([]StoredRule, error) {
 
 	rules := []StoredRule{}
 
 	query := "SELECT id, created_at, created_by, updated_at, updated_by, data FROM rules"
+	if tenant != "" {
+		query += " WHERE " + common.TenantSqlPredicate(ctx)
+	}
 
 	err := r.Select(&rules, query)
 
@@ -223,7 +226,7 @@ func (r *ruleDB) GetStoredRule(ctx context.Context, id string) (*StoredRule, err
 
 	rule := &StoredRule{}
 
-	query := fmt.Sprintf("SELECT id, created_at, created_by, updated_at, updated_by, data FROM rules WHERE id=%d", intId)
+	query := fmt.Sprintf("SELECT id, created_at, created_by, updated_at, updated_by, data FROM rules WHERE id=%d AND "+common.TenantSqlPredicate(ctx), intId)
 	err = r.Get(rule, query)
 
 	// zap.L().Info(query)
@@ -239,7 +242,7 @@ func (r *ruleDB) GetStoredRule(ctx context.Context, id string) (*StoredRule, err
 func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMaintenance, error) {
 	maintenances := []PlannedMaintenance{}
 
-	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance"
+	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE " + common.TenantSqlPredicate(ctx)
 
 	err := r.Select(&maintenances, query)
 
@@ -254,7 +257,7 @@ func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMainten
 func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*PlannedMaintenance, error) {
 	maintenance := &PlannedMaintenance{}
 
-	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE id=$1"
+	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE id=$1 AND " + common.TenantSqlPredicate(ctx)
 	err := r.Get(maintenance, query, id)
 
 	if err != nil {
@@ -286,7 +289,7 @@ func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance Plann
 }
 
 func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (string, error) {
-	query := "DELETE FROM planned_maintenance WHERE id=$1"
+	query := "DELETE FROM planned_maintenance WHERE id=$1 AND " + common.TenantSqlPredicate(ctx)
 	_, err := r.Exec(query, id)
 
 	if err != nil {
@@ -302,7 +305,7 @@ func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance Planned
 	maintenance.UpdatedBy = email
 	maintenance.UpdatedAt = time.Now()
 
-	query := "UPDATE planned_maintenance SET name=$1, description=$2, schedule=$3, alert_ids=$4, updated_at=$5, updated_by=$6 WHERE id=$7"
+	query := "UPDATE planned_maintenance SET name=$1, description=$2, schedule=$3, alert_ids=$4, updated_at=$5, updated_by=$6 WHERE id=$7 AND " + common.TenantSqlPredicate(ctx)
 	_, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.UpdatedAt, maintenance.UpdatedBy, id)
 
 	if err != nil {
@@ -348,12 +351,12 @@ func getChannelType(receiver *am.Receiver) string {
 	return ""
 }
 
-func (r *ruleDB) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
+func (r *ruleDB) GetChannel(ctx context.Context, id string) (*model.ChannelItem, *model.ApiError) {
 
 	idInt, _ := strconv.Atoi(id)
 	channel := model.ChannelItem{}
 
-	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=?;"
+	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=? AND " + common.TenantSqlPredicate(ctx)
 
 	stmt, err := r.Preparex(query)
 
@@ -372,11 +375,11 @@ func (r *ruleDB) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
 	return &channel, nil
 }
 
-func (r *ruleDB) DeleteChannel(id string) *model.ApiError {
+func (r *ruleDB) DeleteChannel(ctx context.Context, id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
 
-	channelToDelete, apiErrorObj := r.GetChannel(id)
+	channelToDelete, apiErrorObj := r.GetChannel(ctx, id)
 
 	if apiErrorObj != nil {
 		return apiErrorObj
@@ -388,7 +391,7 @@ func (r *ruleDB) DeleteChannel(id string) *model.ApiError {
 	}
 
 	{
-		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1;`)
+		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1 AND ` + common.TenantSqlPredicate(ctx))
 		if err != nil {
 			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback()
@@ -419,11 +422,14 @@ func (r *ruleDB) DeleteChannel(id string) *model.ApiError {
 
 }
 
-func (r *ruleDB) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
+func (r *ruleDB) GetChannels(ctx context.Context, tenant string) (*[]model.ChannelItem, *model.ApiError) {
 
 	channels := []model.ChannelItem{}
 
 	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels"
+	if tenant != "" {
+		query += " WHERE " + common.TenantSqlPredicate(ctx)
+	}
 
 	err := r.Select(&channels, query)
 
@@ -438,11 +444,11 @@ func (r *ruleDB) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
 
 }
 
-func (r *ruleDB) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError) {
+func (r *ruleDB) EditChannel(ctx context.Context, receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError) {
 
 	idInt, _ := strconv.Atoi(id)
 
-	channel, apiErrObj := r.GetChannel(id)
+	channel, apiErrObj := r.GetChannel(ctx, id)
 
 	if apiErrObj != nil {
 		return nil, apiErrObj
@@ -461,7 +467,7 @@ func (r *ruleDB) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *m
 	receiverString, _ := json.Marshal(receiver)
 
 	{
-		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4;`)
+		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4 AND ` + common.TenantSqlPredicate(ctx))
 
 		if err != nil {
 			zap.L().Error("Error in preparing statement for UPDATE to notification_channels", zap.Error(err))
@@ -493,7 +499,11 @@ func (r *ruleDB) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *m
 
 }
 
-func (r *ruleDB) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
+func (r *ruleDB) CreateChannel(ctx context.Context, receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
+	var userEmail string
+	if user := common.GetUserFromContext(ctx); user != nil {
+		userEmail = user.Email
+	}
 
 	channel_type := getChannelType(receiver)
 
@@ -505,7 +515,7 @@ func (r *ruleDB) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiE
 	}
 
 	{
-		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
+		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data, created_by) VALUES($1,$2,$3,$4,$5,$6);`)
 		if err != nil {
 			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback()
@@ -513,7 +523,7 @@ func (r *ruleDB) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiE
 		}
 		defer stmt.Close()
 
-		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString)); err != nil {
+		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString), userEmail); err != nil {
 			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback() // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -622,7 +632,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	}
 	alertsInfo.AlertNames = alertNames
 
-	channels, _ := r.GetChannels()
+	channels, _ := r.GetChannels(ctx, "")
 	if channels != nil {
 		alertsInfo.TotalChannels = len(*channels)
 		for _, channel := range *channels {

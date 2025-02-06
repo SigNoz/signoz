@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -337,7 +338,7 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 // from the database
 // start and end are in milliseconds
 // step is in seconds
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+func PrepareMetricQuery(ctx context.Context, start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 

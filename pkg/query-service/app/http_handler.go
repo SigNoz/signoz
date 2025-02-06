@@ -1236,6 +1236,8 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
+	tenant := r.Context().Value(constants.ContextTenantKey).(string)
+	ctx = context.WithValue(ctx, constants.ContextTenantKey, tenant)
 
 	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, string(body))
 	if apiRrr != nil {
@@ -1311,7 +1313,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
+	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(r.Context(), id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1321,7 +1323,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
+	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(r.Context(), id)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1330,7 +1332,8 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
+	tenant := r.Context().Value(constants.ContextTenantKey).(string)
+	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels(r.Context(), tenant)
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
 		return
@@ -1383,7 +1386,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(receiver, id)
+	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(r.Context(), receiver, id)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -1411,7 +1414,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(receiver)
+	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(r.Context(), receiver)
 
 	if apiErrorObj != nil {
 		RespondError(w, apiErrorObj, nil)
@@ -4414,7 +4417,7 @@ func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	category := r.URL.Query().Get("category")
 
-	queries, err := explorer.GetViewsForFilters(sourcePage, name, category)
+	queries, err := explorer.GetViewsForFilters(r.Context(), sourcePage, name, category)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4445,7 +4448,7 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
-	view, err := explorer.GetView(viewID)
+	view, err := explorer.GetView(r.Context(), viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4480,7 +4483,7 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
 	viewID := mux.Vars(r)["viewId"]
-	err := explorer.DeleteView(viewID)
+	err := explorer.DeleteView(r.Context(), viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4968,7 +4971,7 @@ func (aH *APIHandler) liveTailLogsV2(w http.ResponseWriter, r *http.Request) {
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(r.Context(), queryRangeParams)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
@@ -5054,7 +5057,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(r.Context(), queryRangeParams)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return

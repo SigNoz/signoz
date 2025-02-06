@@ -9,6 +9,7 @@ import (
 
 type TelemetryStore interface {
 	ClickHouseDB() clickhouse.Conn
+	TenantClickHouseDB() clickhouse.Conn
 }
 
 type TelemetryStoreHook interface {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"slices"
 	"strings"
 
@@ -158,6 +159,8 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 		is being used to ensure the `limit` clause minimizes the amount of data scanned.
 	*/
 
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
+
 	if len(attributes) > 10 {
 		zap.L().Error(
 			"log attribute values requested for too many attributes. This can lead to slow and costly queries",
@@ -176,7 +179,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 				string_value != '' or number_value is not null
 			)
 			limit %d
-		)`, r.logsDB, r.logsTagAttributeTableV2, idx+1, limit))
+		)`, r.logsDB, attributeTagView(tenant), idx+1, limit))
 
 		tagKeyQueryArgs = append(tagKeyQueryArgs, attrib.Key)
 	}

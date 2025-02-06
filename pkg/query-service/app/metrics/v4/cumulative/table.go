@@ -8,10 +8,10 @@ import (
 )
 
 // PrepareMetricQueryCumulativeTable prepares the query to be used for fetching metrics
-func PrepareMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func PrepareMetricQueryCumulativeTable(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
-	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(tenant, start, end, step, mq)
 	if err != nil {
 		return "", err
 	}

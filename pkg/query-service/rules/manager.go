@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
 	"sort"
 	"strconv"
 	"strings"
@@ -41,6 +43,7 @@ type PrepareTaskOptions struct {
 
 type PrepareTestRuleOptions struct {
 	Rule        *PostableRule
+	Tenant      string
 	RuleDB      RuleDB
 	Logger      *zap.Logger
 	Reader      interfaces.Reader
@@ -259,7 +262,7 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate() error {
-	storedRules, err := m.ruleDB.GetStoredRules(context.Background())
+	storedRules, err := m.ruleDB.GetStoredRules(context.Background(), "")
 	if err != nil {
 		return err
 	}
@@ -293,9 +296,14 @@ func (m *Manager) initiate() error {
 			}
 		}
 		if !parsedRule.Disabled {
-			err := m.addTask(parsedRule, taskName)
+			userPayload, err := dao.DB().GetUserByEmail(context.Background(), *rec.CreatedBy)
 			if err != nil {
-				zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
+				zap.L().Error("failed to get user when initializing rule", zap.String("name", taskName), zap.Error(err))
+			} else {
+				err := m.addTask(parsedRule, taskName, userPayload.Organization)
+				if err != nil {
+					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
+				}
 			}
 		}
 	}
@@ -333,6 +341,7 @@ func (m *Manager) Stop() {
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error {
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	parsedRule, err := ParsePostableRule([]byte(ruleStr))
 
@@ -346,7 +355,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 	}
 
 	if !m.opts.DisableRules {
-		err = m.syncRuleStateWithTask(taskName, parsedRule)
+		err = m.syncRuleStateWithTask(taskName, parsedRule, tenant)
 		if err != nil {
 			return err
 		}
@@ -355,7 +364,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 	return nil
 }
 
-func (m *Manager) editTask(rule *PostableRule, taskName string) error {
+func (m *Manager) editTask(rule *PostableRule, taskName string, tenant string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -403,7 +412,8 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		// is told to run. This is necessary to avoid running
 		// queries against a bootstrapping storage.
 		<-m.block
-		newTask.Run(m.opts.Context)
+		ctx := context.WithValue(m.opts.Context, constants.ContextTenantKey, tenant)
+		newTask.Run(ctx)
 	}()
 
 	m.tasks[taskName] = newTask
@@ -458,11 +468,12 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 
 	lastInsertId, tx, err := m.ruleDB.CreateRuleTx(ctx, ruleStr)
 	taskName := prepareTaskName(lastInsertId)
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 	if err != nil {
 		return nil, err
 	}
 	if !m.opts.DisableRules {
-		if err := m.addTask(parsedRule, taskName); err != nil {
+		if err := m.addTask(parsedRule, taskName, tenant); err != nil {
 			tx.Rollback()
 			return nil, err
 		}
@@ -479,7 +490,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 	return gettableRule, nil
 }
 
-func (m *Manager) addTask(rule *PostableRule, taskName string) error {
+func (m *Manager) addTask(rule *PostableRule, taskName string, tenant string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -519,7 +530,8 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		// is told to run. This is necessary to avoid running
 		// queries against a bootstrapping storage.
 		<-m.block
-		newTask.Run(m.opts.Context)
+		ctx := context.WithValue(m.opts.Context, constants.ContextTenantKey, tenant)
+		newTask.Run(ctx)
 	}()
 
 	m.tasks[taskName] = newTask
@@ -641,7 +653,7 @@ func (m *Manager) ListActiveRules() ([]Rule, error) {
 func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 	// fetch rules from DB
-	storedRules, err := m.ruleDB.GetStoredRules(ctx)
+	storedRules, err := m.ruleDB.GetStoredRules(ctx, ctx.Value(constants.ContextTenantKey).(string))
 	if err != nil {
 		return nil, err
 	}
@@ -704,7 +716,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 // syncRuleStateWithTask ensures that the state of a stored rule matches
 // the task state. For example - if a stored rule is disabled, then
 // there is no task running against it.
-func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) error {
+func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule, tenant string) error {
 
 	if rule.Disabled {
 		// check if rule has any task running
@@ -716,11 +728,11 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 		// check if rule has a task running
 		if _, ok := m.tasks[taskName]; !ok {
 			// rule has not task, start one
-			if err := m.addTask(rule, taskName); err != nil {
+			if err := m.addTask(rule, taskName, tenant); err != nil {
 				return err
 			}
 		} else {
-			if err := m.editTask(rule, taskName); err != nil {
+			if err := m.editTask(rule, taskName, tenant); err != nil {
 				return err
 			}
 		}
@@ -742,6 +754,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	}
 
 	taskName := prepareTaskName(ruleId)
+	tenant := ctx.Value(constants.ContextTenantKey).(string)
 
 	// retrieve rule from DB
 	storedJSON, err := m.ruleDB.GetStoredRule(ctx, ruleId)
@@ -764,7 +777,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(taskName, patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(taskName, patchedRule, tenant); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
@@ -780,7 +793,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 		// write failed, rollback task state
 
 		// restore task state from the stored rule
-		if err := m.syncRuleStateWithTask(taskName, &storedRule); err != nil {
+		if err := m.syncRuleStateWithTask(taskName, &storedRule, tenant); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 
@@ -816,6 +829,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 
 	alertCount, apiErr := m.prepareTestRuleFunc(PrepareTestRuleOptions{
 		Rule:              parsedRule,
+		Tenant:            ctx.Value(constants.ContextTenantKey).(string),
 		RuleDB:            m.ruleDB,
 		Logger:            m.logger,
 		Reader:            m.reader,

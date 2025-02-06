@@ -15,11 +15,11 @@ var (
 )
 
 // prepareTimeAggregationSubQuery builds the sub-query to be used for temporal aggregation
-func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func prepareTimeAggregationSubQuery(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
 
-	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(tenant, start, end, mq)
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 }
 
 // See `canShortCircuit` below for details
-func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func prepareQueryOptimized(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
 	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
@@ -78,7 +78,7 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 
 	var query string
 
-	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(tenant, start, end, mq)
 	if err != nil {
 		return "", err
 	}
@@ -125,15 +125,15 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 }
 
 // PrepareMetricQueryDeltaTimeSeries builds the query to be used for fetching metrics
-func PrepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func PrepareMetricQueryDeltaTimeSeries(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	if canShortCircuit(mq) {
-		return prepareQueryOptimized(start, end, step, mq)
+		return prepareQueryOptimized(tenant, start, end, step, mq)
 	}
 
 	var query string
 
-	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(tenant, start, end, step, mq)
 	if err != nil {
 		return "", err
 	}

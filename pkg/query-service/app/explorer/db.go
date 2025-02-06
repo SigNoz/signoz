@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"slices"
 	"strings"
 	"time"
@@ -76,13 +77,13 @@ func GetViews() ([]*v3.SavedView, error) {
 	return savedViews, nil
 }
 
-func GetViewsForFilters(sourcePage string, name string, category string) ([]*v3.SavedView, error) {
+func GetViewsForFilters(ctx context.Context, sourcePage string, name string, category string) ([]*v3.SavedView, error) {
 	var views []SavedView
 	var err error
 	if len(category) == 0 {
-		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND name LIKE ?", sourcePage, "%"+name+"%")
+		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND name LIKE ? AND "+common.TenantSqlPredicate(ctx), sourcePage, "%"+name+"%")
 	} else {
-		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND category LIKE ? AND name LIKE ?", sourcePage, "%"+category+"%", "%"+name+"%")
+		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND category LIKE ? AND name LIKE ? AND "+common.TenantSqlPredicate(ctx), sourcePage, "%"+category+"%", "%"+name+"%")
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
@@ -153,9 +154,9 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	return uuid_, nil
 }
 
-func GetView(uuid_ string) (*v3.SavedView, error) {
+func GetView(ctx context.Context, uuid_ string) (*v3.SavedView, error) {
 	var view SavedView
-	err := db.Get(&view, "SELECT * FROM saved_views WHERE uuid = ?", uuid_)
+	err := db.Get(&view, "SELECT * FROM saved_views WHERE uuid = ? AND "+common.TenantSqlPredicate(ctx), uuid_)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
 	}
@@ -194,7 +195,7 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 	updatedAt := time.Now()
 	updatedBy := email
 
-	_, err = db.Exec("UPDATE saved_views SET updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ? WHERE uuid = ?",
+	_, err = db.Exec("UPDATE saved_views SET updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ? WHERE uuid = ? AND "+common.TenantSqlPredicate(ctx),
 		updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData, uuid_)
 	if err != nil {
 		return fmt.Errorf("error in updating saved view: %s", err.Error())
@@ -202,8 +203,8 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 	return nil
 }
 
-func DeleteView(uuid_ string) error {
-	_, err := db.Exec("DELETE FROM saved_views WHERE uuid = ?", uuid_)
+func DeleteView(ctx context.Context, uuid_ string) error {
+	_, err := db.Exec("DELETE FROM saved_views WHERE uuid = ? AND "+common.TenantSqlPredicate(ctx), uuid_)
 	if err != nil {
 		return fmt.Errorf("error in deleting explorer query: %s", err.Error())
 	}

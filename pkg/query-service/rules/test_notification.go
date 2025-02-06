@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,6 +17,7 @@ import (
 func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError) {
 
 	ctx := context.Background()
+	ctx = context.WithValue(ctx, constants.ContextTenantKey, opts.Tenant)
 
 	if opts.Rule == nil {
 		return 0, model.BadRequest(fmt.Errorf("rule is required"))

@@ -8,15 +8,15 @@ import (
 )
 
 // PrepareMetricQueryDeltaTable builds the query to be used for fetching metrics
-func PrepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func PrepareMetricQueryDeltaTable(tenant string, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	if canShortCircuit(mq) {
-		return prepareQueryOptimized(start, end, step, mq)
+		return prepareQueryOptimized(tenant, start, end, step, mq)
 	}
 
 	var query string
 
-	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(tenant, start, end, step, mq)
 	if err != nil {
 		return "", err
 	}

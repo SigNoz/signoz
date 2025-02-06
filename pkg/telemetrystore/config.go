@@ -32,7 +32,8 @@ type ClickHouseQuerySettings struct {
 }
 
 type ClickHouseConfig struct {
-	DSN string `mapstructure:"dsn"`
+	DSN       string `mapstructure:"dsn"`
+	TenantDSN string
 
 	QuerySettings ClickHouseQuerySettings `mapstructure:"settings"`
 }
