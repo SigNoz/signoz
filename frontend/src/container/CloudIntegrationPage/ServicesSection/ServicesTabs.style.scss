@@ -135,18 +135,25 @@
 					color: var(--bg-cherry-400);
 				}
 			}
+
 			.configure-button {
-				display: flex;
-				align-items: center;
-				gap: 6px;
-				color: var(--bg-vanilla-400);
-				background: var(--bg-ink-300);
-				border: 1px solid var(--bg-slate-400);
 				border-radius: 2px;
 				font-size: 12px;
-				font-weight: 400;
-				line-height: 10px; /* 83.333% */
 				letter-spacing: 0.12px;
+				font-weight: 500;
+				width: 116px;
+				box-shadow: none;
+				&--default {
+					color: var(--bg-vanilla-400);
+					background: var(--bg-slate-400);
+					border: 1px solid var(--bg-slate-400);
+				}
+				&--primary {
+					background-color: var(--bg-robin-500);
+					color: var(--bg-vanilla-100);
+					font-weight: 500;
+					color: var(--Vanilla-100, #fff);
+				}
 			}
 		}
 	}

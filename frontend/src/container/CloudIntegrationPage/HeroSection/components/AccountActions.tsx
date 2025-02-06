@@ -1,7 +1,7 @@
 import './AccountActions.style.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select } from 'antd';
+import { Button, Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import { useAwsAccounts } from 'hooks/integrations/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -53,15 +53,100 @@ const getAccountById = (
 ): CloudAccount | null =>
 	accounts.find((account) => account.cloud_account_id === accountId) || null;
 
+function AccountActionsRenderer({
+	accounts,
+	isLoading,
+	activeAccount,
+	selectOptions,
+	onAccountChange,
+	onIntegrationModalOpen,
+	onAccountSettingsModalOpen,
+}: {
+	accounts: CloudAccount[] | undefined;
+	isLoading: boolean;
+	activeAccount: CloudAccount | null;
+	selectOptions: SelectProps['options'];
+	onAccountChange: (value: string) => void;
+	onIntegrationModalOpen: () => void;
+	onAccountSettingsModalOpen: () => void;
+}): JSX.Element {
+	if (isLoading) {
+		return (
+			<div className="hero-section__actions-with-account">
+				<Skeleton.Input
+					active
+					size="large"
+					block
+					className="hero-section__input-skeleton"
+				/>
+				<div className="hero-section__action-buttons">
+					<Skeleton.Button
+						active
+						size="large"
+						className="hero-section__new-account-button-skeleton"
+					/>
+					<Skeleton.Button
+						active
+						size="large"
+						className="hero-section__account-settings-button-skeleton"
+					/>
+				</div>
+			</div>
+		);
+	}
+	if (accounts?.length) {
+		return (
+			<div className="hero-section__actions-with-account">
+				<Select
+					value={`Account: ${activeAccount?.cloud_account_id}`}
+					options={selectOptions}
+					rootClassName="cloud-account-selector"
+					placeholder="Select AWS Account"
+					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
+					optionRender={(option): JSX.Element =>
+						renderOption(option, activeAccount?.cloud_account_id)
+					}
+					onChange={onAccountChange}
+				/>
+				<div className="hero-section__action-buttons">
+					<Button
+						type="primary"
+						className="hero-section__action-button primary"
+						onClick={onIntegrationModalOpen}
+					>
+						Add New AWS Account
+					</Button>
+					<Button
+						type="default"
+						className="hero-section__action-button secondary"
+						onClick={onAccountSettingsModalOpen}
+					>
+						Account Settings
+					</Button>
+				</div>
+			</div>
+		);
+	}
+	return (
+		<Button
+			className="hero-section__action-button primary"
+			onClick={onIntegrationModalOpen}
+		>
+			Integrate Now
+		</Button>
+	);
+}
+
 function AccountActions(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const { data: accounts } = useAwsAccounts();
+	const { data: accounts, isLoading } = useAwsAccounts();
 
 	const initialAccount = useMemo(
 		() =>
 			accounts?.length
-				? getAccountById(accounts, urlQuery.get('accountId') || '') || accounts[0]
+				? getAccountById(accounts, urlQuery.get('cloudAccountId') || '') ||
+				  accounts[0]
 				: null,
 		[accounts, urlQuery],
 	);
@@ -74,7 +159,7 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
-			urlQuery.set('accountId', initialAccount.cloud_account_id);
+			urlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
 			navigate({ search: urlQuery.toString() });
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,60 +183,35 @@ function AccountActions(): JSX.Element {
 
 	return (
 		<div className="hero-section__actions">
-			{accounts?.length ? (
-				<div className="hero-section__actions-with-account">
-					<Select
-						value={`Account: ${activeAccount?.cloud_account_id}`}
-						options={selectOptions}
-						rootClassName="cloud-account-selector"
-						placeholder="Select AWS Account"
-						suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
-						optionRender={(option): JSX.Element =>
-							renderOption(option, activeAccount?.cloud_account_id)
-						}
-						onChange={(value): void => {
-							setActiveAccount(getAccountById(accounts, value));
-							urlQuery.set('accountId', value);
-							navigate({ search: urlQuery.toString() });
-						}}
-					/>
-					<div className="hero-section__action-buttons">
-						<Button
-							type="primary"
-							className="hero-section__action-button primary"
-							onClick={(): void => setIsIntegrationModalOpen(true)}
-						>
-							Add New AWS Account
-						</Button>
-						<Button
-							type="default"
-							className="hero-section__action-button secondary"
-							onClick={(): void => setIsAccountSettingsModalOpen(true)}
-						>
-							Account Settings
-						</Button>
-					</div>
-				</div>
-			) : (
-				<Button
-					className="hero-section__action-button primary"
-					onClick={(): void => setIsIntegrationModalOpen(true)}
-				>
-					Integrate Now
-				</Button>
+			<AccountActionsRenderer
+				accounts={accounts}
+				isLoading={isLoading}
+				activeAccount={activeAccount}
+				selectOptions={selectOptions}
+				onAccountChange={(value): void => {
+					if (accounts) {
+						setActiveAccount(getAccountById(accounts, value));
+						urlQuery.set('cloudAccountId', value);
+						navigate({ search: urlQuery.toString() });
+					}
+				}}
+				onIntegrationModalOpen={(): void => setIsIntegrationModalOpen(true)}
+				onAccountSettingsModalOpen={(): void => setIsAccountSettingsModalOpen(true)}
+			/>
+
+			{isIntegrationModalOpen && (
+				<CloudAccountSetupModal
+					onClose={(): void => setIsIntegrationModalOpen(false)}
+				/>
 			)}
 
-			<CloudAccountSetupModal
-				isOpen={isIntegrationModalOpen}
-				onClose={(): void => setIsIntegrationModalOpen(false)}
-			/>
-
-			<AccountSettingsModal
-				isOpen={isAccountSettingsModalOpen}
-				onClose={(): void => setIsAccountSettingsModalOpen(false)}
-				account={activeAccount as CloudAccount}
-				setActiveAccount={setActiveAccount}
-			/>
+			{isAccountSettingsModalOpen && (
+				<AccountSettingsModal
+					onClose={(): void => setIsAccountSettingsModalOpen(false)}
+					account={activeAccount as CloudAccount}
+					setActiveAccount={setActiveAccount}
+				/>
+			)}
 		</div>
 	);
 }

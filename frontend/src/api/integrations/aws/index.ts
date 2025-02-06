@@ -9,19 +9,22 @@ import {
 import {
 	AccountConfigPayload,
 	AccountConfigResponse,
+	ConnectionParams,
 	ConnectionUrlResponse,
 } from 'types/api/integrations/aws';
 
 export const getAwsAccounts = async (): Promise<CloudAccount[]> => {
 	const response = await axios.get('/cloud-integrations/aws/accounts');
 
-	return response.data.data;
+	return response.data.data.accounts;
 };
 
 export const getAwsServices = async (
-	accountId?: string,
+	cloudAccountId?: string,
 ): Promise<Service[]> => {
-	const params = accountId ? { account_id: accountId } : undefined;
+	const params = cloudAccountId
+		? { cloud_account_id: cloudAccountId }
+		: undefined;
 	const response = await axios.get('/cloud-integrations/aws/services', {
 		params,
 	});
@@ -31,9 +34,11 @@ export const getAwsServices = async (
 
 export const getServiceDetails = async (
 	serviceId: string,
-	accountId?: string,
+	cloudAccountId?: string,
 ): Promise<ServiceData> => {
-	const params = accountId ? { account_id: accountId } : undefined;
+	const params = cloudAccountId
+		? { cloud_account_id: cloudAccountId }
+		: undefined;
 	const response = await axios.get(
 		`/cloud-integrations/aws/services/${serviceId}`,
 		{ params },
@@ -73,4 +78,11 @@ export const updateServiceConfig = async (
 		payload,
 	);
 	return response.data;
+};
+
+export const getConnectionParams = async (): Promise<ConnectionParams> => {
+	const response = await axios.get(
+		'/cloud-integrations/aws/accounts/generate-connection-params',
+	);
+	return response.data.data;
 };
