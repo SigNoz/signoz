@@ -538,7 +538,7 @@ func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(expectation *model.
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		`SELECT.*metric_name, labels, unix_milli.*from.*signoz_metrics.*where metric_name in.*limit 1.*`,
+		`SELECT.*from.*signoz_metrics.*`,
 	).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
