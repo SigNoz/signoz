@@ -10,16 +10,346 @@
   "data_collected": {
     "metrics": [
       {
-        "name": "ec2_cpuutilization_average",
-        "type": "Gauge",
-        "unit": "number",
-        "description": "CloudWatch metric CPUUtilization"
+        "name": "CPUCreditBalance",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
       },
       {
-        "name": "ec2_cpuutilization_maximum",
-        "type": "Gauge",
-        "unit": "number",
-        "description": "CloudWatch metric CPUUtilization"
+        "name": "CPUCreditBalance_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditBalance_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditUsage",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditUsage_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditUsage_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditBalance",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditBalance_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditBalance_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditsCharged",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditsCharged_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditsCharged_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUUtilization",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSByteBalance_",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSByteBalance__count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSByteBalance__sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSIOBalance_",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSIOBalance__count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSIOBalance__sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSReadBytes",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSReadBytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSReadBytes_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSReadOps",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSReadOps_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSReadOps_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSWriteBytes",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSWriteBytes_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSWriteBytes_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSWriteOps",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSWriteOps_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSWriteOps_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "MetadataNoToken",
+        "unit": "None",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "MetadataNoToken_count",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "MetadataNoToken_sum",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkIn",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkIn_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkIn_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkOut",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkOut_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkOut_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkPacketsIn",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkPacketsIn_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkPacketsIn_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkPacketsOut",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkPacketsOut_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkPacketsOut_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_Instance",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_Instance_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_Instance_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_System",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_System_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_System_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StatusCheckFailed_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
       }
     ],
     "logs": []

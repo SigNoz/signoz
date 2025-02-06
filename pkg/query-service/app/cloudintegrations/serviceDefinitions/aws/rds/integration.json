@@ -10,19 +10,923 @@
   "data_collected": {
     "metrics": [
       {
-        "name": "rds_postgres_cpuutilization_average",
-        "type": "Gauge",
-        "unit": "number",
-        "description": "CloudWatch metric CPUUtilization"
+        "name": "BurstBalance",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
       },
       {
-        "name": "rds_postgres_cpuutilization_maximum",
-        "type": "Gauge",
-        "unit": "number",
-        "description": "CloudWatch metric CPUUtilization"
+        "name": "BurstBalance_count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "BurstBalance_sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditBalance",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditBalance_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditBalance_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditUsage",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditUsage_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUCreditUsage_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditBalance",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditBalance_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditBalance_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditsCharged",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditsCharged_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUSurplusCreditsCharged_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUUtilization",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CheckpointLag",
+        "unit": "Seconds",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CheckpointLag_count",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CheckpointLag_sum",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoad",
+        "unit": "None",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "DBLoadCPU",
+        "unit": "None",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "DBLoadCPU_count",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoadCPU_sum",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoadNonCPU",
+        "unit": "None",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "DBLoadNonCPU_count",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoadNonCPU_sum",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoadRelativeToNumVCPUs",
+        "unit": "None",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "DBLoadRelativeToNumVCPUs_count",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoadRelativeToNumVCPUs_sum",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoad_count",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DBLoad_sum",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DatabaseConnections",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "DatabaseConnections_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DatabaseConnections_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DiskQueueDepth",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "DiskQueueDepth_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "DiskQueueDepth_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSByteBalance_",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSByteBalance__count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSByteBalance__sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSIOBalance_",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EBSIOBalance__count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EBSIOBalance__sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "FreeStorageSpace",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "FreeStorageSpace_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "FreeStorageSpace_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "FreeableMemory",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "FreeableMemory_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "FreeableMemory_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "MaximumUsedTransactionIDs",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "MaximumUsedTransactionIDs_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "MaximumUsedTransactionIDs_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkReceiveThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkReceiveThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkReceiveThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkTransmitThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkTransmitThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkTransmitThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "OldestReplicationSlotLag",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "OldestReplicationSlotLag_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "OldestReplicationSlotLag_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReadIOPS",
+        "unit": "Count/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "ReadIOPS_count",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReadIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReadLatency",
+        "unit": "Seconds",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "ReadLatency_count",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReadLatency_sum",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReadThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "ReadThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReadThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReplicationSlotDiskUsage",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "ReplicationSlotDiskUsage_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ReplicationSlotDiskUsage_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "SwapUsage",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "SwapUsage_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "SwapUsage_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TransactionLogsDiskUsage",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "TransactionLogsDiskUsage_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TransactionLogsDiskUsage_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TransactionLogsGeneration",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "TransactionLogsGeneration_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TransactionLogsGeneration_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "WriteIOPS",
+        "unit": "Count/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "WriteIOPS_count",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "WriteIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "WriteLatency",
+        "unit": "Seconds",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "WriteLatency_count",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "WriteLatency_sum",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "WriteThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "WriteThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "WriteThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ACUUtilization",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "ACUUtilization_count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ACUUtilization_sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "BackupRetentionPeriodStorageUsed",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "BackupRetentionPeriodStorageUsed_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "BackupRetentionPeriodStorageUsed_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "BufferCacheHitRatio",
+        "unit": "Percent",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "BufferCacheHitRatio_count",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "BufferCacheHitRatio_sum",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CommitLatency",
+        "unit": "Milliseconds",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CommitLatency_count",
+        "unit": "Milliseconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CommitLatency_sum",
+        "unit": "Milliseconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CommitThroughput",
+        "unit": "Count/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "CommitThroughput_count",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "CommitThroughput_sum",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "Deadlocks",
+        "unit": "Count/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "Deadlocks_count",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "Deadlocks_sum",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EngineUptime",
+        "unit": "Seconds",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "EngineUptime_count",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "EngineUptime_sum",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "NetworkThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "NetworkThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "RDSToAuroraPostgreSQLReplicaLag",
+        "unit": "Seconds",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "RDSToAuroraPostgreSQLReplicaLag_count",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "RDSToAuroraPostgreSQLReplicaLag_sum",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ServerlessDatabaseCapacity",
+        "unit": "None",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "ServerlessDatabaseCapacity_count",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "ServerlessDatabaseCapacity_sum",
+        "unit": "None",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkReceiveThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkReceiveThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkReceiveThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkTransmitThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkTransmitThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "StorageNetworkTransmitThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TempStorageIOPS",
+        "unit": "Count/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "TempStorageIOPS_count",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TempStorageIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TempStorageThroughput",
+        "unit": "Bytes/Second",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "TempStorageThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TempStorageThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TotalBackupStorageBilled",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "TotalBackupStorageBilled_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "TotalBackupStorageBilled_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "VolumeBytesUsed",
+        "unit": "Bytes",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "VolumeBytesUsed_count",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "VolumeBytesUsed_sum",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "VolumeReadIOPs",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "VolumeReadIOPs_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "VolumeReadIOPs_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "VolumeWriteIOPs",
+        "unit": "Count",
+        "type": "Summary",
+        "description": ""
+      },
+      {
+        "name": "VolumeWriteIOPs_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "VolumeWriteIOPs_sum",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
       }
     ],
-    "logs": []
+    "logs": [
+      {
+        "name": "Account Id",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
   },
   "telemetry_collection_strategy": {
     "aws_metrics": {
@@ -47,7 +951,7 @@
         "id": "overview",
         "title": "RDS Overview",
         "description": "Overview of RDS",
-        "image": "file://assets/dashboards/overview.jpg",
+        "image": "file://assets/dashboards/overview.png",
         "definition": "file://assets/dashboards/overview.json"
       }
     ]
