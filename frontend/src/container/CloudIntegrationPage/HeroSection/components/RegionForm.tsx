@@ -12,6 +12,7 @@ import {
 	MonitoringRegionsSection,
 	RegionDeploymentSection,
 } from './IntegrateNowFormSections';
+import RenderConnectionFields from './RenderConnectionParams';
 
 const allRegions = (): string[] =>
 	regions.flatMap((r) => r.subRegions.map((sr) => sr.name));
@@ -35,6 +36,8 @@ export function RegionForm({
 	accountId,
 	selectedDeploymentRegion,
 	handleRegionChange,
+	connectionParams,
+	isConnectionParamsLoading,
 }: RegionFormProps): JSX.Element {
 	const startTimeRef = useRef(Date.now());
 	const refetchInterval = 10 * 1000;
@@ -88,6 +91,11 @@ export function RegionForm({
 					isFormDisabled={isFormDisabled}
 				/>
 				<ComplianceNote />
+				<RenderConnectionFields
+					isConnectionParamsLoading={isConnectionParamsLoading}
+					connectionParams={connectionParams}
+					isFormDisabled={isFormDisabled}
+				/>
 			</div>
 		</Form>
 	);

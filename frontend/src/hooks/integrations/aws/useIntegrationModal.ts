@@ -4,6 +4,7 @@ import {
 	ActiveViewEnum,
 	ModalStateEnum,
 } from 'container/CloudIntegrationPage/HeroSection/types';
+import useAxiosError from 'hooks/useAxiosError';
 import {
 	Dispatch,
 	SetStateAction,
@@ -13,11 +14,13 @@ import {
 	useState,
 } from 'react';
 import {
+	ConnectionParams,
 	ConnectionUrlResponse,
 	GenerateConnectionUrlPayload,
 } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
+import { useConnectionParams } from './useConnectionParams';
 import { useGenerateConnectionUrl } from './useGenerateConnectionUrl';
 
 interface UseIntegrationModalProps {
@@ -44,6 +47,8 @@ interface UseIntegrationModal {
 	accountId?: string;
 	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
+	connectionParams?: ConnectionParams;
+	isConnectionParamsLoading: boolean;
 }
 
 export function useIntegrationModal({
@@ -102,6 +107,12 @@ export function useIntegrationModal({
 		isLoading: isGeneratingUrl,
 	} = useGenerateConnectionUrl();
 
+	const handleError = useAxiosError();
+	const {
+		data: connectionParams,
+		isLoading: isConnectionParamsLoading,
+	} = useConnectionParams({ options: { onError: handleError } });
+
 	const handleGenerateUrl = useCallback(
 		(payload: GenerateConnectionUrlPayload): void => {
 			generateUrl(payload, {
@@ -126,6 +137,9 @@ export function useIntegrationModal({
 			const payload: GenerateConnectionUrlPayload = {
 				agent_config: {
 					region: values.region,
+					ingestion_url: connectionParams?.ingestion_url || values.ingestion_url,
+					ingestion_key: connectionParams?.ingestion_key || values.ingestion_key,
+					signoz_api_url: connectionParams?.signoz_api_url || values.signoz_api_url,
 				},
 				account_config: {
 					regions: includeAllRegions ? ['all'] : selectedRegions,
@@ -138,7 +152,13 @@ export function useIntegrationModal({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [form, includeAllRegions, selectedRegions, handleGenerateUrl]);
+	}, [
+		form,
+		includeAllRegions,
+		selectedRegions,
+		handleGenerateUrl,
+		connectionParams,
+	]);
 
 	return {
 		form,
@@ -160,5 +180,7 @@ export function useIntegrationModal({
 		setModalState,
 		selectedDeploymentRegion,
 		handleRegionChange,
+		connectionParams,
+		isConnectionParamsLoading,
 	};
 }

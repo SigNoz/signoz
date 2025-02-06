@@ -2,11 +2,9 @@ import './CloudAccountSetupModal.style.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import SignozModal from 'components/SignozModal/SignozModal';
-import ROUTES from 'constants/routes';
 import { useIntegrationModal } from 'hooks/integrations/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import {
 	ActiveViewEnum,
@@ -18,7 +16,6 @@ import { RegionSelector } from './RegionSelector';
 import { SuccessView } from './SuccessView';
 
 function CloudAccountSetupModal({
-	isOpen,
 	onClose,
 }: IntegrationModalProps): JSX.Element {
 	const {
@@ -41,6 +38,8 @@ function CloudAccountSetupModal({
 		accountId,
 		selectedDeploymentRegion,
 		handleRegionChange,
+		connectionParams,
+		isConnectionParamsLoading,
 	} = useIntegrationModal({ onClose });
 
 	const renderContent = useCallback(() => {
@@ -71,6 +70,8 @@ function CloudAccountSetupModal({
 				accountId={accountId}
 				selectedDeploymentRegion={selectedDeploymentRegion}
 				handleRegionChange={handleRegionChange}
+				connectionParams={connectionParams}
+				isConnectionParamsLoading={isConnectionParamsLoading}
 			/>
 		);
 	}, [
@@ -86,6 +87,8 @@ function CloudAccountSetupModal({
 		accountId,
 		selectedDeploymentRegion,
 		handleRegionChange,
+		connectionParams,
+		isConnectionParamsLoading,
 		setSelectedRegions,
 		setIncludeAllRegions,
 	]);
@@ -96,11 +99,6 @@ function CloudAccountSetupModal({
 		[selectedRegions, allRegions],
 	);
 
-	const navigate = useNavigate();
-	const handleGoToDashboards = useCallback((): void => {
-		navigate(ROUTES.ALL_DASHBOARD);
-	}, [navigate]);
-
 	const getModalConfig = useCallback(() => {
 		// Handle success state first
 		if (modalState === ModalStateEnum.SUCCESS) {
@@ -108,11 +106,11 @@ function CloudAccountSetupModal({
 				title: 'AWS Webservice Integration',
 				okText: (
 					<div className="cloud-account-setup-success-view__footer-button">
-						Go to Dashboards
+						Continue
 					</div>
 				),
 				block: true,
-				onOk: handleGoToDashboards,
+				onOk: handleClose,
 				cancelButtonProps: { style: { display: 'none' } },
 				disabled: false,
 			};
@@ -151,7 +149,7 @@ function CloudAccountSetupModal({
 		isLoading,
 		isGeneratingUrl,
 		activeView,
-		handleGoToDashboards,
+		handleClose,
 		setActiveView,
 	]);
 
@@ -159,7 +157,7 @@ function CloudAccountSetupModal({
 
 	return (
 		<SignozModal
-			open={isOpen}
+			open
 			className="cloud-account-setup-modal"
 			title={modalConfig.title}
 			onCancel={handleClose}
