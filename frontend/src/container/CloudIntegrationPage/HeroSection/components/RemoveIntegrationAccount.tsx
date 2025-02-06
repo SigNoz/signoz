@@ -26,7 +26,7 @@ function RemoveIntegrationAccount({
 
 	const {
 		mutate: removeIntegration,
-		isLoading: isRemoveIntagrationLoading,
+		isLoading: isRemoveIntegrationLoading,
 	} = useMutation(removeAwsIntegrationAccount, {
 		onSuccess: () => {
 			onRemoveIntegrationAccountSuccess?.();
@@ -77,7 +77,7 @@ function RemoveIntegrationAccount({
 				okText="Remove Integration"
 				okButtonProps={{
 					danger: true,
-					disabled: isRemoveIntagrationLoading,
+					disabled: isRemoveIntegrationLoading,
 				}}
 			>
 				<div className="remove-integration-modal__text">
