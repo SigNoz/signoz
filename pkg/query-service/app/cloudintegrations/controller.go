@@ -405,6 +405,18 @@ func (c *Controller) GetServiceDetails(
 
 		if config != nil {
 			service.Config = config
+
+			if config.Metrics != nil && config.Metrics.Enabled {
+				// add links to service dashboards, making them clickable.
+				for i, d := range service.Assets.Dashboards {
+					dashboardUuid := c.dashboardUuid(
+						cloudProvider, serviceId, d.Id,
+					)
+					service.Assets.Dashboards[i].Url = fmt.Sprintf(
+						"/dashboard/%s", dashboardUuid,
+					)
+				}
+			}
 		}
 	}
 
@@ -483,15 +495,14 @@ func (c *Controller) AvailableDashboards(ctx context.Context) (
 func (c *Controller) AvailableDashboardsForCloudProvider(
 	ctx context.Context, cloudProvider string,
 ) ([]dashboards.Dashboard, *model.ApiError) {
-	// for v0 service dashboards are only available when metrics are enabled.
-	// maps from svcId to creation ts of earliest connected account with the svc enabled.
-	// the ts gets used on returned dashboards
-	servicesWithAvailableMetrics := map[string]*time.Time{}
 
 	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
 	}
+
+	// for v0, service dashboards are only available when metrics are enabled.
+	servicesWithAvailableMetrics := map[string]*time.Time{}
 
 	for _, ar := range accountRecords {
 		if ar.CloudAccountId != nil {
@@ -504,9 +515,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 
 			for svcId, config := range configsBySvcId {
 				if config.Metrics.Enabled {
-					if servicesWithAvailableMetrics[svcId] == nil || ar.CreatedAt.Unix() < servicesWithAvailableMetrics[svcId].Unix() {
-						servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
-					}
+					servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
 				}
 			}
 		}
