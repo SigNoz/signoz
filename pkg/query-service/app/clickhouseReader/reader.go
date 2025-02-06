@@ -3900,27 +3900,46 @@ func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (
 }
 
 func (r *ClickHouseReader) GetLatestReceivedMetric(
-	ctx context.Context, metricNames []string,
+	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
+	// at least 1 metric name must be specified.
+	// this query can be too slow otherwise.
 	if len(metricNames) < 1 {
-		return nil, nil
+		return nil, model.BadRequest(fmt.Errorf("atleast 1 metric name must be specified"))
 	}
 
 	quotedMetricNames := []string{}
 	for _, m := range metricNames {
-		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
+		quotedMetricNames = append(quotedMetricNames, utils.ClickHouseFormattedValue(m))
 	}
 	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
 
+	whereClauseParts := []string{
+		fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
+	}
+
+	if labelValues != nil {
+		for label, val := range labelValues {
+			whereClauseParts = append(
+				whereClauseParts,
+				fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
+			)
+		}
+	}
+
+	if len(whereClauseParts) < 1 {
+		return nil, nil
+	}
+
+	whereClause := strings.Join(whereClauseParts, " AND ")
+
 	query := fmt.Sprintf(`
-		SELECT metric_name, labels, unix_milli
+		SELECT metric_name, anyLast(labels), max(unix_milli)
 		from %s.%s
-		where metric_name in (
-			%s
-		)
-		order by unix_milli desc
+		where %s
+		group by metric_name
 		limit 1
-		`, signozMetricDBName, signozTSTableNameV4, commaSeparatedMetricNames,
+		`, signozMetricDBName, signozTSTableNameV4, whereClause,
 	)
 
 	rows, err := r.db.Query(ctx, query)

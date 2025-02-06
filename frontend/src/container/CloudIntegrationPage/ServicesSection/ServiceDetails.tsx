@@ -1,4 +1,3 @@
-import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, TabsProps } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
@@ -8,8 +7,7 @@ import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/t
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Wrench } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import ConfigureServiceModal from './ConfigureServiceModal';
 
@@ -38,7 +36,7 @@ const getStatus = (
 function ServiceStatus({
 	serviceStatus,
 }: {
-	serviceStatus: IServiceStatus | null;
+	serviceStatus: IServiceStatus | undefined;
 }): JSX.Element {
 	const logsLastReceivedTimestamp = serviceStatus?.logs?.last_received_ts_ms;
 	const metricsLastReceivedTimestamp =
@@ -54,7 +52,7 @@ function ServiceStatus({
 
 function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
-	const accountId = urlQuery.get('accountId');
+	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
 	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
 		false,
@@ -62,7 +60,24 @@ function ServiceDetails(): JSX.Element | null {
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
-		accountId || undefined,
+		cloudAccountId || undefined,
+	);
+
+	// eslint-disable-next-line @typescript-eslint/naming-convention
+	const { config, supported_signals } = serviceDetailsData ?? {};
+
+	const totalSupportedSignals = Object.entries(supported_signals || {}).filter(
+		([, value]) => !!value,
+	).length;
+	const enabledSignals = useMemo(
+		() =>
+			Object.values(config || {}).filter((item) => item && item.enabled).length,
+		[config],
+	);
+
+	const isAnySignalConfigured = useMemo(
+		() => !!config?.logs?.enabled || !!config?.metrics?.enabled,
+		[config],
 	);
 
 	if (isLoading) {
@@ -96,16 +111,22 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__title-bar">
 				<div className="service-details__details-title">Details</div>
 				<div className="service-details__right-actions">
-					{serviceDetailsData?.status && (
-						<ServiceStatus serviceStatus={serviceDetailsData.status} />
-					)}
-					{!!accountId && (
+					<ServiceStatus serviceStatus={serviceDetailsData.status} />
+
+					{!!cloudAccountId && isAnySignalConfigured ? (
 						<Button
-							className="configure-button"
+							className="configure-button configure-button--default"
 							onClick={(): void => setIsConfigureServiceModalOpen(true)}
 						>
-							<Wrench size={12} color={Color.BG_VANILLA_400} />
-							Configure
+							Configure ({enabledSignals}/{totalSupportedSignals})
+						</Button>
+					) : (
+						<Button
+							type="primary"
+							className="configure-button configure-button--primary"
+							onClick={(): void => setIsConfigureServiceModalOpen(true)}
+						>
+							Enable Service
 						</Button>
 					)}
 				</div>
@@ -119,15 +140,17 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__tabs">
 				<Tabs items={tabItems} />
 			</div>
-			<ConfigureServiceModal
-				isOpen={isConfigureServiceModalOpen}
-				onClose={(): void => setIsConfigureServiceModalOpen(false)}
-				serviceName={serviceDetailsData.title}
-				serviceId={serviceId || ''}
-				cloudAccountId={accountId || ''}
-				initialConfig={serviceDetailsData.config}
-				supportedSignals={serviceDetailsData.supported_signals || {}}
-			/>
+			{isConfigureServiceModalOpen && (
+				<ConfigureServiceModal
+					isOpen
+					onClose={(): void => setIsConfigureServiceModalOpen(false)}
+					serviceName={serviceDetailsData.title}
+					serviceId={serviceId || ''}
+					cloudAccountId={cloudAccountId || ''}
+					initialConfig={serviceDetailsData.config}
+					supportedSignals={serviceDetailsData.supported_signals || {}}
+				/>
+			)}
 		</div>
 	);
 }
