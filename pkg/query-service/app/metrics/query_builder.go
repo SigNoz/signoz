@@ -69,7 +69,7 @@ func AddMetricValueFilter(mq *v3.BuilderQuery) *v3.MetricValueFilter {
 				case string:
 					numericValue, err := strconv.ParseFloat(v, 64)
 					if err != nil {
-						zap.L().Warn("invalid type for metric value filter, ignoring", zap.Any("type", reflect.TypeOf(v)))
+						zap.L().Warn("invalid type for metric value filter, ignoring", zap.Any("type", reflect.TypeOf(v)), zap.String("value", v))
 						continue
 					}
 					metricValueFilter = &v3.MetricValueFilter{
