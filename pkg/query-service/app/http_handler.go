@@ -4270,7 +4270,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 				Key: v3.AttributeKey{
 					Key:      "cloud.account.id",
 					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
+					Type:     v3.AttributeKeyTypeResource,
 				},
 				Operator: "=",
 				Value:    cloudAccountId,
@@ -4279,7 +4279,7 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 				Key: v3.AttributeKey{
 					Key:      "aws.cloudwatch.log_group_name",
 					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
+					Type:     v3.AttributeKeyTypeResource,
 				},
 				Operator: "like",
 				Value:    logGroupNamePrefix + "%",
