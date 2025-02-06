@@ -310,7 +310,6 @@ const hasNonNullValues = (obj: any): boolean => {
 		return true;
 	}
 	if (obj && typeof obj === 'object') {
-		console.log(obj);
 		return Object.values(obj).some((value) =>
 			value === null ? false : hasNonNullValues(value),
 		);
