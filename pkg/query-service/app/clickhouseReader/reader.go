@@ -4135,7 +4135,8 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 			case v3.AttributeKeyTypeTag:
 				colName = "attributes"
 			default:
-				colName = "attributes"
+				// we only support resource and tag for related values as of now
+				continue
 			}
 			// IN doesn't make use of map value index, we convert it to = or !=
 			operator := item.Operator
@@ -4987,6 +4988,11 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
+	}
+
+	relatedValues, _ := r.FetchRelatedValues(ctx, req)
+	attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+		StringAttributeValues: relatedValues,
 	}
 
 	return &attributeValues, nil
