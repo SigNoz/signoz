@@ -514,7 +514,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 			}
 
 			for svcId, config := range configsBySvcId {
-				if config.Metrics.Enabled {
+				if config.Metrics != nil && config.Metrics.Enabled {
 					servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
 				}
 			}
