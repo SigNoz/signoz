@@ -3930,10 +3930,10 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 	whereClause := strings.Join(whereClauseParts, " AND ")
 
 	query := fmt.Sprintf(`
-		SELECT metric_name, labels, unix_milli
+		SELECT metric_name, anyLast(labels), max(unix_milli)
 		from %s.%s
 		where %s
-		order by unix_milli desc
+		group by metric_name
 		limit 1
 		`, signozMetricDBName, signozTSTableNameV4, whereClause,
 	)
