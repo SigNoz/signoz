@@ -777,25 +777,12 @@ func parseFilterAttributeValueRequestBody(r *http.Request) (*v3.FilterAttributeV
 		return nil, err
 	}
 
-	if err := req.DataSource.Validate(); err != nil {
+	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	if req.DataSource != v3.DataSourceMetrics {
-		if err := req.AggregateOperator.Validate(); err != nil {
-			return nil, err
-		}
-	}
-
-	if req.StartTimeMillis == 0 {
-		return nil, fmt.Errorf("startTimeMillis is required")
-	}
-
-	if req.EndTimeMillis == 0 {
-		return nil, fmt.Errorf("endTimeMillis is required")
-	}
-
-	req.StartTimeMillis = req.StartTimeMillis - time.Hour.Milliseconds()*6
+	// offset by two windows periods for start for better results
+	req.StartTimeMillis = req.StartTimeMillis - time.Hour.Milliseconds()*6*2
 	req.EndTimeMillis = req.EndTimeMillis + time.Hour.Milliseconds()*6
 
 	return &req, nil

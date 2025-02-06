@@ -311,6 +311,48 @@ type FilterAttributeValueRequest struct {
 	MetricNames                []string             `json:"metricNames"`
 }
 
+func (f *FilterAttributeValueRequest) Validate() error {
+	if f.FilterAttributeKey == "" {
+		return fmt.Errorf("filterAttributeKey is required")
+	}
+
+	if f.StartTimeMillis == 0 {
+		return fmt.Errorf("startTimeMillis is required")
+	}
+
+	if f.EndTimeMillis == 0 {
+		return fmt.Errorf("endTimeMillis is required")
+	}
+
+	if f.Limit == 0 {
+		f.Limit = 100
+	}
+
+	if f.Limit > 1000 {
+		return fmt.Errorf("limit must be less than 1000")
+	}
+
+	if f.SelectedAttributeValues != nil {
+		for _, value := range f.SelectedAttributeValues {
+			if value.Key.Key == "" {
+				return fmt.Errorf("selectedAttributeValues must contain a valid key")
+			}
+		}
+	}
+
+	if err := f.DataSource.Validate(); err != nil {
+		return fmt.Errorf("invalid data source: %w", err)
+	}
+
+	if f.DataSource != DataSourceMetrics {
+		if err := f.AggregateOperator.Validate(); err != nil {
+			return fmt.Errorf("invalid aggregate operator: %w", err)
+		}
+	}
+
+	return nil
+}
+
 type AggregateAttributeResponse struct {
 	AttributeKeys []AttributeKey `json:"attributeKeys"`
 }
