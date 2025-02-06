@@ -307,7 +307,7 @@ type FilterAttributeValueRequest struct {
 	TagType                    TagType              `json:"tagType"`
 	SearchText                 string               `json:"searchText"`
 	Limit                      int                  `json:"limit"`
-	SelectedAttributeValues    []FilterItem         `json:"selectedAttributeValues"`
+	ExistingFilterItems        []FilterItem         `json:"existingFilterItems"`
 	MetricNames                []string             `json:"metricNames"`
 }
 
@@ -332,10 +332,10 @@ func (f *FilterAttributeValueRequest) Validate() error {
 		return fmt.Errorf("limit must be less than 1000")
 	}
 
-	if f.SelectedAttributeValues != nil {
-		for _, value := range f.SelectedAttributeValues {
+	if f.ExistingFilterItems != nil {
+		for _, value := range f.ExistingFilterItems {
 			if value.Key.Key == "" {
-				return fmt.Errorf("selectedAttributeValues must contain a valid key")
+				return fmt.Errorf("existingFilterItems must contain a valid key")
 			}
 		}
 	}

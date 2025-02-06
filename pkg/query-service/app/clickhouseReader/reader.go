@@ -4121,8 +4121,8 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 	andConditions = append(andConditions, fmt.Sprintf("unix_milli >= %d", req.StartTimeMillis))
 	andConditions = append(andConditions, fmt.Sprintf("unix_milli <= %d", req.EndTimeMillis))
 
-	if len(req.SelectedAttributeValues) != 0 {
-		for _, item := range req.SelectedAttributeValues {
+	if len(req.ExistingFilterItems) != 0 {
+		for _, item := range req.ExistingFilterItems {
 			// we only support string for related values
 			if item.Key.DataType != v3.AttributeKeyDataTypeString {
 				continue
@@ -4184,7 +4184,7 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 		r.metadataTable,
 		whereClause,
 	)
-	zap.L().Info("filterSubQuery for related values", zap.String("query", filterSubQuery))
+	zap.L().Debug("filterSubQuery for related values", zap.String("query", filterSubQuery))
 
 	rows, err := r.db.Query(ctx, filterSubQuery)
 	if err != nil {
@@ -4198,7 +4198,9 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 		if err := rows.Scan(&value); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
-		attributeValues = append(attributeValues, value)
+		if value != "" {
+			attributeValues = append(attributeValues, value)
+		}
 	}
 
 	return attributeValues, nil
