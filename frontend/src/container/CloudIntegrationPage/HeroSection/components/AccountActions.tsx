@@ -77,15 +77,19 @@ function AccountActionsRenderer({
 					active
 					size="large"
 					block
-					style={{ width: '300px', marginBottom: '16px' }}
+					className="hero-section__input-skeleton"
 				/>
 				<div className="hero-section__action-buttons">
 					<Skeleton.Button
 						active
 						size="large"
-						style={{ width: '180px', marginRight: '8px' }}
+						className="hero-section__new-account-button-skeleton"
 					/>
-					<Skeleton.Button active size="large" style={{ width: '140px' }} />
+					<Skeleton.Button
+						active
+						size="large"
+						className="hero-section__account-settings-button-skeleton"
+					/>
 				</div>
 			</div>
 		);
