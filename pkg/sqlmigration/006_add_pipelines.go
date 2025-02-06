@@ -2,11 +2,11 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/models"
 )
 
 type addPipelines struct{}
@@ -29,7 +29,19 @@ func (migration *addPipelines) Register(migrations *migrate.Migrations) error {
 
 func (migration *addPipelines) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
-		Model((*models.Pipeline)(nil)).
+		Model(&struct {
+			bun.BaseModel `bun:"table:pipelines"`
+			ID            string    `bun:"id,pk,type:text"`
+			OrderID       int       `bun:"order_id"`
+			Enabled       bool      `bun:"enabled"`
+			CreatedBy     string    `bun:"created_by,type:text"`
+			CreatedAt     time.Time `bun:"created_at,default:current_timestamp"`
+			Name          string    `bun:"name,type:varchar(400),notnull"`
+			Alias         string    `bun:"alias,type:varchar(20),notnull"`
+			Description   string    `bun:"description,type:text"`
+			Filter        string    `bun:"filter,type:text,notnull"`
+			ConfigJSON    string    `bun:"config_json,type:text"`
+		}{}).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
