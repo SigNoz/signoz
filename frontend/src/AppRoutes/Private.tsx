@@ -156,7 +156,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			const currentRoute = mapRoutes.get('current');
 			const shouldSuspendWorkspace =
 				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicenseV3.state === LicenseState.DEFAULTED;
 
 			if (shouldSuspendWorkspace && currentRoute) {
 				navigateToWorkSpaceSuspended(currentRoute);
