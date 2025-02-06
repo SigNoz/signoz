@@ -24,6 +24,7 @@ const AlertChannelOpsgenie = "ALERT_CHANNEL_OPSGENIE"
 const AlertChannelEmail = "ALERT_CHANNEL_EMAIL"
 const AnomalyDetection = "ANOMALY_DETECTION"
 const HostsInfraMonitoring = "HOSTS_INFRA_MONITORING"
+const AWSIntegration = "AWS_INTEGRATION"
 
 var BasicPlan = FeatureSet{
 	Feature{
