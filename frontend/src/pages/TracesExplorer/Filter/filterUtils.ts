@@ -305,6 +305,19 @@ type IuseGetAggregateValue = {
 	isFetching: boolean;
 };
 
+const hasNonNullValues = (obj: any): boolean => {
+	if (Array.isArray(obj) && obj.length > 0) {
+		return true;
+	}
+	if (obj && typeof obj === 'object') {
+		console.log(obj);
+		return Object.values(obj).some((value) =>
+			value === null ? false : hasNonNullValues(value),
+		);
+	}
+	return obj !== null;
+};
+
 export function useGetAggregateValues(
 	props: AggregateValuesProps,
 ): IuseGetAggregateValue {
@@ -327,7 +340,7 @@ export function useGetAggregateValues(
 			});
 
 			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
+				const values = Object.values(payload).find(hasNonNullValues) || [];
 				setResults(values);
 			}
 		} catch (e) {
