@@ -116,8 +116,8 @@ export default function OverviewRightPanelGraph({
 		isDarkMode: false,
 		drawStyle: 'bars',
 		colorMapping: {
-			False: Color.BG_CHERRY_500,
-			True: Color.BG_FOREST_400,
+			True: Color.BG_CHERRY_500,
+			False: Color.BG_FOREST_400,
 			None: Color.BG_SLATE_200,
 			'Request Rate': Color.BG_ROBIN_500,
 		},

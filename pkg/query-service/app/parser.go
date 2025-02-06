@@ -769,6 +769,25 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 	return &req, nil
 }
 
+func parseFilterAttributeValueRequestBody(r *http.Request) (*v3.FilterAttributeValueRequest, error) {
+
+	var req v3.FilterAttributeValueRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// offset by two windows periods for start for better results
+	req.StartTimeMillis = req.StartTimeMillis - time.Hour.Milliseconds()*6*2
+	req.EndTimeMillis = req.EndTimeMillis + time.Hour.Milliseconds()*6
+
+	return &req, nil
+}
+
 func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	err := qp.CompositeQuery.Validate()
 	if err != nil {
