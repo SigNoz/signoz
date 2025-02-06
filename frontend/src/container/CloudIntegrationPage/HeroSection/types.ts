@@ -27,7 +27,7 @@ export interface RegionFormProps {
 	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
 	connectionParams?: ConnectionParams;
-	isConnectionParamsLoading: boolean;
+	isConnectionParamsLoading?: boolean;
 }
 
 export interface IntegrationModalProps {

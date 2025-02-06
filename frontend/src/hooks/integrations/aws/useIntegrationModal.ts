@@ -4,6 +4,7 @@ import {
 	ActiveViewEnum,
 	ModalStateEnum,
 } from 'container/CloudIntegrationPage/HeroSection/types';
+import useAxiosError from 'hooks/useAxiosError';
 import {
 	Dispatch,
 	SetStateAction,
@@ -106,10 +107,11 @@ export function useIntegrationModal({
 		isLoading: isGeneratingUrl,
 	} = useGenerateConnectionUrl();
 
+	const handleError = useAxiosError();
 	const {
 		data: connectionParams,
 		isLoading: isConnectionParamsLoading,
-	} = useConnectionParams();
+	} = useConnectionParams({ options: { onError: handleError } });
 
 	const handleGenerateUrl = useCallback(
 		(payload: GenerateConnectionUrlPayload): void => {

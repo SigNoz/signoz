@@ -6,13 +6,12 @@ function RenderConnectionFields({
 	connectionParams,
 	isFormDisabled,
 }: {
-	isConnectionParamsLoading: boolean;
+	isConnectionParamsLoading?: boolean;
 	connectionParams?: ConnectionParams | null;
 	isFormDisabled?: boolean;
 }): JSX.Element | null {
 	if (
 		isConnectionParamsLoading ||
-		!connectionParams ||
 		(!!connectionParams?.ingestion_url &&
 			!!connectionParams?.ingestion_key &&
 			!!connectionParams?.signoz_api_url)
@@ -56,6 +55,7 @@ function RenderConnectionFields({
 RenderConnectionFields.defaultProps = {
 	connectionParams: null,
 	isFormDisabled: false,
+	isConnectionParamsLoading: false,
 };
 
 export default RenderConnectionFields;

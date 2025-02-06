@@ -39,12 +39,9 @@ function RemoveIntegrationAccount({
 		},
 	});
 	const handleOk = (): void => {
-		logEvent(
-			INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_REMOVE_INTEGRATION,
-			{
-				accountId,
-			},
-		);
+		logEvent(INTEGRATION_TELEMETRY_EVENTS.AWS_INTEGRATION_ACCOUNT_REMOVED, {
+			accountId,
+		});
 		removeIntegration(accountId);
 	};
 
@@ -57,8 +54,8 @@ function RemoveIntegrationAccount({
 			<div className="remove-integration-account__header">
 				<div className="remove-integration-account__title">Remove Integration</div>
 				<div className="remove-integration-account__subtitle">
-					{`Removing this integration won't delete any existing data but will stop
-					collecting new data from AWS.`}
+					Removing this integration won&apos;t delete any existing data but will stop
+					collecting new data from AWS.
 				</div>
 			</div>
 			<Button
@@ -81,16 +78,13 @@ function RemoveIntegrationAccount({
 				}}
 			>
 				<div className="remove-integration-modal__text">
-					<div>
-						Removing this account will remove all components created for sending
-						telemetry to SigNoz in your AWS account within the next ~15 minutes
-						(cloudformation stacks named signoz-integration-telemetry-collection in
-						enabled regions).
-					</div>
-					<div>
-						After that, you can delete the cloudformation stack that was created
-						manually when connecting this account.
-					</div>
+					Removing this account will remove all components created for sending
+					telemetry to SigNoz in your AWS account within the next ~15 minutes
+					(cloudformation stacks named signoz-integration-telemetry-collection in
+					enabled regions). <br />
+					<br />
+					After that, you can delete the cloudformation stack that was created
+					manually when connecting this account.
 				</div>
 			</Modal>
 		</div>
