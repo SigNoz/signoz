@@ -508,6 +508,37 @@ func TestPrepareMetricQueryGauge(t *testing.T) {
 			expectedQueryContains: "SELECT ts, sum(per_series_value) as value FROM (SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as per_series_value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system_cpu_usage' AND temporality = 'Unspecified' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name = 'system_cpu_usage' AND unix_milli >= 1650991980000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY ts ORDER BY ts ASC",
 		},
 		{
+			name: "test value filter with string value",
+			builderQuery: &v3.BuilderQuery{
+				QueryName:    "A",
+				StepInterval: 60,
+				DataSource:   v3.DataSourceMetrics,
+				AggregateAttribute: v3.AttributeKey{
+					Key: "k8s_pod_phase",
+				},
+				Temporality: v3.Unspecified,
+				Filters: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "__value",
+								Type:     v3.AttributeKeyTypeTag,
+								DataType: v3.AttributeKeyDataTypeString,
+							},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "200",
+						},
+					},
+				},
+				Expression:       "A",
+				TimeAggregation:  v3.TimeAggregationAvg,
+				SpaceAggregation: v3.SpaceAggregationSum,
+				Disabled:         false,
+			},
+			expectedQueryContains: "WHERE isNaN(per_series_value) = 0 AND per_series_value = 200",
+		},
+		{
 			name: "test gauge query with group by host_name",
 			builderQuery: &v3.BuilderQuery{
 				QueryName:    "A",
