@@ -566,7 +566,7 @@ func Test_buildTracesQuery(t *testing.T) {
 				},
 			},
 			want: "SELECT timestamp as timestamp_datetime, spanID, traceID, name as `name` from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND ((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations ))  order by timestamp ASC",
+				"AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)  AND ((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from signoz_traces.distributed_top_level_operations )) AND parent_span_id != ''  order by timestamp ASC",
 		},
 		{
 			name: "test noop list view with root_spans",
