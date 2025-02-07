@@ -23,9 +23,6 @@ type Store interface {
 	// initial state of silences or notification log when starting the alertmanager.
 	GetState(context.Context, uint64, alertmanagertypes.StateName) (string, error)
 
-	// Deletes the state for an organization
-	DelState(context.Context, uint64, alertmanagertypes.StateName) error
-
 	// Get an alertmanager config for an organization
 	GetConfig(context.Context, uint64) (*alertmanagertypes.Config, error)
 

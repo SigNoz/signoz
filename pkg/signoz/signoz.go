@@ -3,6 +3,8 @@ package signoz
 import (
 	"context"
 
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
@@ -16,10 +18,11 @@ import (
 )
 
 type SigNoz struct {
-	Cache          cache.Cache
-	Web            web.Web
-	SQLStore       sqlstore.SQLStore
-	TelemetryStore telemetrystore.TelemetryStore
+	Cache             cache.Cache
+	Web               web.Web
+	SQLStore          sqlstore.SQLStore
+	TelemetryStore    telemetrystore.TelemetryStore
+	AlertmanagerStore alertmanagerstore.Store
 }
 
 func New(
@@ -102,10 +105,16 @@ func New(
 		return nil, err
 	}
 
+	alertmanagerstore, err := sqlalertmanagerstore.NewFactory(sqlstore).New(ctx, providerSettings, config.Alertmanager.Store)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SigNoz{
-		Cache:          cache,
-		Web:            web,
-		SQLStore:       sqlstore,
-		TelemetryStore: telemetrystore,
+		Cache:             cache,
+		Web:               web,
+		SQLStore:          sqlstore,
+		TelemetryStore:    telemetrystore,
+		AlertmanagerStore: alertmanagerstore,
 	}, nil
 }

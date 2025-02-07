@@ -12,13 +12,17 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/memoryalertmanagerstore"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/alertmanagerstoretest"
 	"go.signoz.io/signoz/pkg/factory/factorytest"
+	"go.signoz.io/signoz/pkg/factory/providertest"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 func TestServerStartStop(t *testing.T) {
-	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), 1, memoryalertmanagerstore.New([]uint64{1}))
+	store, err := alertmanagerstoretest.New(context.Background(), providertest.NewSettings(), alertmanagerstore.NewConfig().(alertmanagerstore.Config), []uint64{1})
+	require.NoError(t, err)
+	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), 1, store)
 	require.NoError(t, err)
 
 	require.NoError(t, server.Start(context.Background()))
@@ -26,7 +30,9 @@ func TestServerStartStop(t *testing.T) {
 }
 
 func TestServerWithDefaultConfig(t *testing.T) {
-	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), 1, memoryalertmanagerstore.New([]uint64{1}))
+	store, err := alertmanagerstoretest.New(context.Background(), providertest.NewSettings(), alertmanagerstore.NewConfig().(alertmanagerstore.Config), []uint64{1})
+	require.NoError(t, err)
+	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), 1, store)
 	require.NoError(t, err)
 
 	require.NoError(t, server.Start(context.Background()))
@@ -36,7 +42,9 @@ func TestServerWithDefaultConfig(t *testing.T) {
 }
 
 func TestServerTestReceiverWebhook(t *testing.T) {
-	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), 1, memoryalertmanagerstore.New([]uint64{1}))
+	store, err := alertmanagerstoretest.New(context.Background(), providertest.NewSettings(), alertmanagerstore.NewConfig().(alertmanagerstore.Config), []uint64{1})
+	require.NoError(t, err)
+	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), 1, store)
 	require.NoError(t, err)
 
 	webhookListener, err := net.Listen("tcp", "localhost:0")

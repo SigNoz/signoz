@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
 )
 
@@ -20,6 +21,18 @@ var (
 type Config struct {
 	c   *config.Config
 	raw []byte
+}
+
+type StoredConfig struct {
+	bun.BaseModel `bun:"table:alertmanager_config"`
+
+	ID            uint64    `bun:"id"`
+	Config        string    `bun:"config"`
+	SilencesState string    `bun:"silences_state"`
+	NFLogState    string    `bun:"nflog_state"`
+	CreatedAt     time.Time `bun:"created_at"`
+	UpdatedAt     time.Time `bun:"updated_at"`
+	OrgID         uint64    `bun:"org_id"`
 }
 
 func NewConfig(c *config.Config) *Config {

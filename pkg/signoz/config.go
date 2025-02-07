@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
@@ -44,6 +45,9 @@ type Config struct {
 
 	// TelemetryStore config
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
+
+	// Alertmanager config
+	Alertmanager alertmanager.Config `mapstructure:"alertmanager"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.

@@ -170,6 +170,11 @@ func (server *Server) Start(ctx context.Context) error {
 			server.srvConfig.Route.GroupWait,
 			server.srvConfig.Route.RepeatInterval,
 		)
+
+		if err := server.store.SetConfig(ctx, server.orgID, config); err != nil {
+			server.settings.Logger().ErrorContext(ctx, "failed to set config", "error", err)
+			return err
+		}
 	}
 
 	return server.SetConfig(ctx, config)
