@@ -3,6 +3,7 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
 	"go.signoz.io/signoz/pkg/errors"
@@ -29,7 +30,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config alertman
 	}, nil
 }
 
-func (provider *provider) GetState(ctx context.Context, orgID uint64, stateName alertmanagertypes.StateName) (string, error) {
+func (provider *provider) GetState(ctx context.Context, orgID string, stateName alertmanagertypes.StateName) (string, error) {
 	storedConfig := new(alertmanagertypes.StoredConfig)
 
 	err := provider.
@@ -41,28 +42,39 @@ func (provider *provider) GetState(ctx context.Context, orgID uint64, stateName 
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find alertmanager config for org %d", orgID)
+			return "", errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find alertmanager config for org %s", orgID)
 		}
 
 		return "", err
 	}
 
 	if stateName == alertmanagertypes.SilenceStateName {
-		return storedConfig.SilencesState, nil
+		decodedState, err := base64.RawStdEncoding.DecodeString(storedConfig.SilencesState)
+		if err != nil {
+			return "", err
+		}
+
+		return string(decodedState), nil
 	}
 
 	if stateName == alertmanagertypes.NFLogStateName {
-		return storedConfig.NFLogState, nil
+		decodedState, err := base64.RawStdEncoding.DecodeString(storedConfig.NFLogState)
+		if err != nil {
+			return "", err
+		}
+
+		return string(decodedState), nil
 	}
 
-	return "", errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerStateNotFound, "cannot find alertmanager state for org %d", orgID)
+	return "", errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerStateNotFound, "cannot find alertmanager state for org %s", orgID)
 }
 
-func (provider *provider) SetState(ctx context.Context, orgID uint64, stateName alertmanagertypes.StateName, state alertmanagertypes.State) (int64, error) {
+func (provider *provider) SetState(ctx context.Context, orgID string, stateName alertmanagertypes.StateName, state alertmanagertypes.State) (int64, error) {
 	marshalledState, err := state.MarshalBinary()
 	if err != nil {
 		return 0, err
 	}
+	encodedState := base64.StdEncoding.EncodeToString(marshalledState)
 
 	q := provider.
 		sqlstore.
@@ -72,11 +84,11 @@ func (provider *provider) SetState(ctx context.Context, orgID uint64, stateName 
 		Where("org_id = ?", orgID)
 
 	if stateName == alertmanagertypes.SilenceStateName {
-		q.Set("silences_state = ?", marshalledState)
+		q.Set("silences_state = ?", encodedState)
 	}
 
 	if stateName == alertmanagertypes.NFLogStateName {
-		q.Set("nflog_state = ?", marshalledState)
+		q.Set("nflog_state = ?", encodedState)
 	}
 
 	_, err = q.Exec(ctx)
@@ -87,7 +99,7 @@ func (provider *provider) SetState(ctx context.Context, orgID uint64, stateName 
 	return int64(len(marshalledState)), nil
 }
 
-func (provider *provider) GetConfig(ctx context.Context, orgID uint64) (*alertmanagertypes.Config, error) {
+func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
 	storedConfig := new(alertmanagertypes.StoredConfig)
 
 	err := provider.
@@ -99,7 +111,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID uint64) (*alertma
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find alertmanager config for org %d", orgID)
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find alertmanager config for org %s", orgID)
 		}
 
 		return nil, err
@@ -113,7 +125,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID uint64) (*alertma
 	return config, nil
 }
 
-func (provider *provider) SetConfig(ctx context.Context, orgID uint64, config *alertmanagertypes.Config) error {
+func (provider *provider) SetConfig(ctx context.Context, orgID string, config *alertmanagertypes.Config) error {
 	_, err := provider.
 		sqlstore.
 		BunDB().
@@ -130,7 +142,7 @@ func (provider *provider) SetConfig(ctx context.Context, orgID uint64, config *a
 	return nil
 }
 
-func (provider *provider) DelConfig(ctx context.Context, orgID uint64) error {
+func (provider *provider) DelConfig(ctx context.Context, orgID string) error {
 	_, err := provider.
 		sqlstore.
 		BunDB().
@@ -145,8 +157,8 @@ func (provider *provider) DelConfig(ctx context.Context, orgID uint64) error {
 	return nil
 }
 
-func (provider *provider) ListOrgIDs(ctx context.Context) ([]uint64, error) {
-	var orgIDs []uint64
+func (provider *provider) ListOrgIDs(ctx context.Context) ([]string, error) {
+	var orgIDs []string
 
 	err := provider.
 		sqlstore.

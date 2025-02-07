@@ -11,12 +11,12 @@ var _ factory.Service = (*Servers)(nil)
 
 type Servers struct {
 	// Map of organization id to server
-	servers map[uint64]*Server
+	servers map[string]*Server
 }
 
 func New(ctx context.Context, settings factory.Settings, config Config, store alertmanagerstore.Store) (*Servers, error) {
 	multi := &Servers{
-		servers: map[uint64]*Server{},
+		servers: map[string]*Server{},
 	}
 
 	orgIDs, err := store.ListOrgIDs(ctx)

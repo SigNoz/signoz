@@ -32,7 +32,7 @@ type StoredConfig struct {
 	NFLogState    string    `bun:"nflog_state"`
 	CreatedAt     time.Time `bun:"created_at"`
 	UpdatedAt     time.Time `bun:"updated_at"`
-	OrgID         uint64    `bun:"org_id"`
+	OrgID         string    `bun:"org_id"`
 }
 
 func NewConfig(c *config.Config) *Config {

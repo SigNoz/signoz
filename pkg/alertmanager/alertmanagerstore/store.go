@@ -17,21 +17,21 @@ type Store interface {
 	// The return type matches the return of `silence.Maintenance` or `nflog.Maintenance`.
 	// See https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/silence/silence.go#L217
 	// and https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/nflog/nflog.go#L94
-	SetState(context.Context, uint64, alertmanagertypes.StateName, alertmanagertypes.State) (int64, error)
+	SetState(context.Context, string, alertmanagertypes.StateName, alertmanagertypes.State) (int64, error)
 
 	// Gets the silence state or the notification log state as a string from the store. This is used as a snapshot to load the
 	// initial state of silences or notification log when starting the alertmanager.
-	GetState(context.Context, uint64, alertmanagertypes.StateName) (string, error)
+	GetState(context.Context, string, alertmanagertypes.StateName) (string, error)
 
 	// Get an alertmanager config for an organization
-	GetConfig(context.Context, uint64) (*alertmanagertypes.Config, error)
+	GetConfig(context.Context, string) (*alertmanagertypes.Config, error)
 
 	// Set an alertmanager config for an organization
-	SetConfig(context.Context, uint64, *alertmanagertypes.Config) error
+	SetConfig(context.Context, string, *alertmanagertypes.Config) error
 
 	// Deletes the config for an organization
-	DelConfig(context.Context, uint64) error
+	DelConfig(context.Context, string) error
 
 	// Get all organization ids
-	ListOrgIDs(context.Context) ([]uint64, error)
+	ListOrgIDs(context.Context) ([]string, error)
 }

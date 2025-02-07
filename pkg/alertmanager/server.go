@@ -40,7 +40,7 @@ type Server struct {
 	// Settings is the factorysettings for the alertmanager
 	settings factory.NamespacedSettings
 	// orgID is the orgID for the alertmanager
-	orgID uint64
+	orgID string
 	// store is the backing store for the alertmanager
 	store alertmanagerstore.Store
 	// alertmanager primitives from upstream alertmanager
@@ -58,7 +58,7 @@ type Server struct {
 	stopc           chan struct{}
 }
 
-func NewForOrg(ctx context.Context, settings factory.Settings, srvConfig Config, orgID uint64, store alertmanagerstore.Store) (*Server, error) {
+func NewForOrg(ctx context.Context, settings factory.Settings, srvConfig Config, orgID string, store alertmanagerstore.Store) (*Server, error) {
 	server := &Server{
 		srvConfig: srvConfig,
 		settings:  factory.NewNamespacedSettings(settings, "go.signoz.io/signoz/pkg/alertmanager"),
