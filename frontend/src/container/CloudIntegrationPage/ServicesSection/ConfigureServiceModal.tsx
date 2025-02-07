@@ -34,10 +34,20 @@ function ConfigureServiceModal({
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Track current form values
-	const [currentValues, setCurrentValues] = useState({
+	const initialValues = {
 		metrics: initialConfig?.metrics?.enabled || false,
 		logs: initialConfig?.logs?.enabled || false,
-	});
+	};
+	const [currentValues, setCurrentValues] = useState(initialValues);
+
+	const isSaveDisabled = useMemo(
+		() =>
+			// save should be allowed if going from enabled to fully disabled service
+			// disable only if current values same as initial config
+			currentValues.metrics === initialValues.metrics &&
+			currentValues.logs === initialValues.logs,
+		[currentValues, initialValues.metrics, initialValues.logs],
+	);
 
 	const {
 		mutate: updateServiceConfig,
@@ -92,11 +102,6 @@ function ConfigureServiceModal({
 		queryClient,
 		onClose,
 	]);
-
-	const isSaveDisabled = useMemo(
-		() => currentValues.metrics === false && currentValues.logs === false,
-		[currentValues],
-	);
 
 	const handleClose = useCallback(() => {
 		form.resetFields();
