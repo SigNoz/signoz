@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -64,6 +65,15 @@ func AddMetricValueFilter(mq *v3.BuilderQuery) *v3.MetricValueFilter {
 				case uint64:
 					metricValueFilter = &v3.MetricValueFilter{
 						Value: float64(v),
+					}
+				case string:
+					numericValue, err := strconv.ParseFloat(v, 64)
+					if err != nil {
+						zap.L().Warn("invalid type for metric value filter, ignoring", zap.Any("type", reflect.TypeOf(v)), zap.String("value", v))
+						continue
+					}
+					metricValueFilter = &v3.MetricValueFilter{
+						Value: numericValue,
 					}
 				}
 			}
