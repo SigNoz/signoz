@@ -371,32 +371,18 @@ function OnboardingAddDataSource(): JSX.Element {
 						</div>
 
 						<div className="header-right-section">
-							<Flex gap={8}>
-								<LaunchChatSupport
-									attributes={{
-										dataSource: selectedDataSource?.dataSource,
-										framework: selectedFramework?.label,
-										environment: selectedEnvironment?.label,
-										screen: ONBOARDING_V2_SCREEN,
-									}}
-									eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
-									message=""
-									buttonText="Get Expert Assistance"
-									className="periscope-btn get-help-btn primary rounded-btn"
-								/>
-								<LaunchChatSupport
-									attributes={{
-										dataSource: selectedDataSource?.dataSource,
-										framework: selectedFramework?.label,
-										environment: selectedEnvironment?.label,
-										screen: ONBOARDING_V2_SCREEN,
-									}}
-									eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
-									message=""
-									buttonText="Get Help"
-									className="periscope-btn get-help-btn outlined"
-								/>
-							</Flex>
+							<LaunchChatSupport
+								attributes={{
+									dataSource: selectedDataSource?.dataSource,
+									framework: selectedFramework?.label,
+									environment: selectedEnvironment?.label,
+									screen: ONBOARDING_V2_SCREEN,
+								}}
+								eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
+								message=""
+								buttonText="Get Help"
+								className="periscope-btn get-help-btn outlined"
+							/>
 						</div>
 					</div>
 				</div>
