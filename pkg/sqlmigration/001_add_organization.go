@@ -127,7 +127,7 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 		Model(&struct {
 			bun.BaseModel      `bun:"table:apdex_settings"`
 			ServiceName        string  `bun:"service_name,pk,type:text"`
-			Threshold          float64 `bun:"threshold,notnull"`
+			Threshold          float64 `bun:"threshold,type:float,notnull"`
 			ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
 		}{}).
 		IfNotExists().

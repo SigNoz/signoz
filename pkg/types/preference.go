@@ -6,9 +6,9 @@ import "github.com/uptrace/bun"
 type UserPreference struct {
 	bun.BaseModel `bun:"table:user_preference"`
 
-	PreferenceID    string `bun:"preference_id,type:text,notnull"`
-	PreferenceValue string `bun:"preference_value,type:text,notnull"`
-	UserID          string `bun:"user_id,type:text,notnull"`
+	PreferenceID    string `bun:"preference_id,type:text,pk"`
+	PreferenceValue string `bun:"preference_value,type:text"`
+	UserID          string `bun:"user_id,type:text,pk"`
 	User            *User  `bun:"rel:belongs-to,join:user_id=id,pk,on_delete:CASCADE,on_update:CASCADE"`
 }
 

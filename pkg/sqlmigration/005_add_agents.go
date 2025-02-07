@@ -32,8 +32,8 @@ func (migration *addAgents) Up(ctx context.Context, db *bun.DB) error {
 		Model(&struct {
 			bun.BaseModel   `bun:"table:agents"`
 			AgentID         string     `bun:"agent_id,pk,type:text,unique"`
-			StartedAt       time.Time  `bun:"started_at,notnull"`
-			TerminatedAt    *time.Time `bun:"terminated_at,type:timestamp"`
+			StartedAt       time.Time  `bun:"started_at,type:datetime,notnull"`
+			TerminatedAt    *time.Time `bun:"terminated_at,type:datetime"`
 			CurrentStatus   string     `bun:"current_status,type:text,notnull"`
 			EffectiveConfig string     `bun:"effective_config,type:text,notnull"`
 		}{}).

@@ -8,7 +8,8 @@ import (
 
 // TODO: check constraints are not working
 type Organization struct {
-	bun.BaseModel   `bun:"table:organizations"`
+	bun.BaseModel `bun:"table:organizations"`
+
 	ID              string `bun:"id,pk,type:text"`
 	Name            string `bun:"name,type:text,notnull"`
 	CreatedAt       int    `bun:"created_at,notnull"`
@@ -67,7 +68,7 @@ type UserFlags struct {
 type ApdexSettings struct {
 	bun.BaseModel      `bun:"table:apdex_settings"`
 	ServiceName        string  `bun:"service_name,pk,type:text"`
-	Threshold          float64 `bun:"threshold,notnull"`
+	Threshold          float64 `bun:"threshold,type:float,notnull"`
 	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
 }
 
