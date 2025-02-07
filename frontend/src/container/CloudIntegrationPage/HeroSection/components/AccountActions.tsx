@@ -159,8 +159,9 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
-			urlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
-			navigate({ search: urlQuery.toString() });
+			const latestUrlQuery = new URLSearchParams(window.location.search);
+			latestUrlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
+			navigate({ search: latestUrlQuery.toString() });
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialAccount]);
