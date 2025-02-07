@@ -32,6 +32,7 @@ import {
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
+	Onboarding,
 	OnboardingV2,
 	OrganizationSettings,
 	OrgOnboarding,
@@ -68,9 +69,16 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.GET_STARTED,
 		exact: false,
-		component: OnboardingV2,
+		component: Onboarding,
 		isPrivate: true,
 		key: 'GET_STARTED',
+	},
+	{
+		path: ROUTES.GET_STARTED_V3,
+		exact: false,
+		component: OnboardingV2,
+		isPrivate: true,
+		key: 'GET_STARTED_V3',
 	},
 	{
 		path: ROUTES.ONBOARDING,
