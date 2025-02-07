@@ -3,6 +3,7 @@ package cloudintegrations
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -122,11 +123,29 @@ func (c *Controller) GenerateConnectionUrl(
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	// TODO(Raj): Add actual cloudformation template for AWS integration after it has been shipped.
+	// TODO(Raj): parameterized this in follow up changes
+	agentVersion := "latest"
+
 	connectionUrl := fmt.Sprintf(
-		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration/",
+		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",
 		req.AgentConfig.Region, req.AgentConfig.Region,
 	)
+
+	for qp, value := range map[string]string{
+		"param_SigNozIntegrationAgentVersion": agentVersion,
+		"param_SigNozApiUrl":                  req.AgentConfig.SigNozAPIUrl,
+		"param_SigNozApiKey":                  req.AgentConfig.SigNozAPIKey,
+		"param_SigNozAccountId":               account.Id,
+		"param_IngestionUrl":                  req.AgentConfig.IngestionUrl,
+		"param_IngestionKey":                  req.AgentConfig.IngestionKey,
+		"stackName":                           "signoz-integration",
+		"templateURL": fmt.Sprintf(
+			"https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json",
+			agentVersion,
+		),
+	} {
+		connectionUrl += fmt.Sprintf("&%s=%s", qp, url.QueryEscape(value))
+	}
 
 	return &GenerateConnectionUrlResponse{
 		AccountId:     account.Id,
