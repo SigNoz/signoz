@@ -73,15 +73,15 @@ interface Entity {
 const setupStepItemsBase = [
 	{
 		title: 'Org Setup',
-		description: ' ',
+		description: <Typography.Text>&nbsp;</Typography.Text>,
 	},
 	{
 		title: 'Add your first data source',
-		description: '',
+		description: ' ',
 	},
 	{
 		title: 'Configure Your Product',
-		description: '',
+		description: ' ',
 	},
 ];
 

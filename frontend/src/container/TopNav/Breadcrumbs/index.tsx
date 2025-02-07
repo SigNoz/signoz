@@ -9,7 +9,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
 	[ROUTES.GET_STARTED]: 'Get Started',
-	[ROUTES.GET_STARTED_OLD]: 'Get Started',
+	[ROUTES.GET_STARTED_V3]: 'Get Started',
 	[ROUTES.ALL_CHANNELS]: 'Channels',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
