@@ -111,10 +111,6 @@ func (i *SDK) Logger() *slog.Logger {
 	return i.logger
 }
 
-func (i *SDK) SlogLogger() *slog.Logger {
-	return i.slogLogger
-}
-
 func (i *SDK) MeterProvider() sdkmetric.MeterProvider {
 	return i.sdk.MeterProvider()
 }
@@ -138,7 +134,7 @@ func (i *SDK) ToProviderSettings() factory.ProviderSettings {
 
 func (i *SDK) ToFactorySettings() factory.Settings {
 	return factory.Settings{
-		Logger:               i.SlogLogger(),
+		Logger:               i.Logger(),
 		MeterProvider:        i.MeterProvider(),
 		TracerProvider:       i.TracerProvider(),
 		PrometheusRegisterer: i.PrometheusRegisterer(),

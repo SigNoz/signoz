@@ -31,10 +31,6 @@ func (i *noopInstrumentation) Logger() *slog.Logger {
 	return i.logger
 }
 
-func (i *noopInstrumentation) SlogLogger() *slog.Logger {
-	return i.slogLogger
-}
-
 func (i *noopInstrumentation) MeterProvider() sdkmetric.MeterProvider {
 	return i.meterProvider
 }
@@ -58,7 +54,7 @@ func (i *noopInstrumentation) ToProviderSettings() factory.ProviderSettings {
 
 func (i *noopInstrumentation) ToFactorySettings() factory.Settings {
 	return factory.Settings{
-		Logger:               i.SlogLogger(),
+		Logger:               i.Logger(),
 		MeterProvider:        i.MeterProvider(),
 		TracerProvider:       i.TracerProvider(),
 		PrometheusRegisterer: i.PrometheusRegisterer(),

@@ -30,7 +30,7 @@ type base struct {
 func (b *base) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("type", b.t.s),
-		slog.String("code", b.c),
+		slog.String("code", b.c.s),
 		slog.String("message", b.m),
 		slog.String("url", b.u),
 		slog.Any("additional", b.a),
