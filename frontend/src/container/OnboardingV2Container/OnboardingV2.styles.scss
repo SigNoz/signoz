@@ -70,6 +70,13 @@
 
 	&__steps {
 		padding: 1rem 0rem;
+
+		.ant-steps-item-description {
+			max-width: 160px !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+		}
 	}
 
 	&__description {
@@ -314,10 +321,6 @@
 			align-items: center;
 			gap: 8px;
 		}
-	}
-
-	.onboarding-product-setup-container {
-		padding: 0px 1rem;
 	}
 
 	.get-help-btn {
@@ -628,15 +631,15 @@
 
 .onboarding-product-setup-container {
 	display: flex;
-	gap: 32px;
+	gap: 8px;
 	box-sizing: border-box;
 	position: relative;
 
 	&_left-section {
 		position: relative;
 
-		flex: 0 0 60%;
-		max-width: 60%;
+		flex: 0 0 70%;
+		max-width: 70%;
 
 		display: flex;
 		gap: 24px;
@@ -673,7 +676,7 @@
 
 	&_right-section {
 		flex: 1;
-		max-width: 40%;
+		max-width: 30%;
 		height: calc(100vh - 120px);
 
 		display: flex;
@@ -850,7 +853,8 @@
 					justify-content: space-between;
 					gap: 8px;
 
-					.ingestion-key-label {
+					.ingestion-key-label,
+					.ingestion-region-label {
 						display: flex;
 						align-items: center;
 						gap: 8px;
@@ -871,6 +875,64 @@
 
 						.copy-btn {
 							cursor: pointer;
+						}
+					}
+				}
+
+				.ingestion-key-region-details-section {
+					display: flex;
+					flex-direction: column;
+					justify-content: space-between;
+					gap: 8px;
+					width: 100%;
+
+					.ingestion-region-container {
+						display: flex;
+						align-items: center;
+						justify-content: space-between;
+						gap: 8px;
+
+						.ingestion-region-value-copy {
+							display: flex;
+							align-items: center;
+							gap: 8px;
+
+							&.ant-typography {
+								color: var(--bg-robin-400);
+								font-family: Inter;
+								font-size: 13px;
+								font-weight: 400;
+								line-height: 24px; /* 171.429% */
+							}
+
+							.copy-btn {
+								cursor: pointer;
+							}
+						}
+					}
+
+					.ingestion-key-container {
+						display: flex;
+						align-items: center;
+						justify-content: space-between;
+						gap: 8px;
+
+						.ingestion-key-value-copy {
+							display: flex;
+							align-items: center;
+							gap: 8px;
+
+							&.ant-typography {
+								color: var(--bg-robin-400);
+								font-family: Inter;
+								font-size: 13px;
+								font-weight: 400;
+								line-height: 24px; /* 171.429% */
+							}
+
+							.copy-btn {
+								cursor: pointer;
+							}
 						}
 					}
 				}

@@ -1,22 +1,20 @@
 import { Skeleton, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import { AxiosError } from 'axios';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	ArrowUpRight,
-	CircleArrowDown,
-	Clipboard,
 	Copy,
 	Info,
 	Key,
+	MapPin,
 	TriangleAlert,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { IngestionInfo } from 'types/api/settings/ingestion';
-import { downloadFile } from 'utils/downloadFile';
 
 function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 	if (!key) {
@@ -28,9 +26,7 @@ function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 		return key; // Return the key as-is if it's too short to mask
 	}
 
-	// Calculate the number of characters to mask
-	const maskLength = key.length - visibleStart - visibleEnd;
-	const maskedSection = '*'.repeat(maskLength);
+	const maskedSection = '*'.repeat(5);
 
 	// Construct and return the masked key
 	return key.slice(0, visibleStart) + maskedSection + key.slice(-visibleEnd);
@@ -54,6 +50,13 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		queryFn: () => getIngestionData(),
 	});
 
+	const {
+		data: deploymentsData,
+		isLoading: isLoadingDeploymentsData,
+		isFetching: isFetchingDeploymentsData,
+		isError: isDeploymentsDataError,
+	} = useGetDeploymentsData();
+
 	useEffect(() => {
 		console.log('status', status);
 		console.log('ingestionData', ingestionData);
@@ -64,22 +67,6 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		notifications.success({
 			message: 'Copied to clipboard',
 		});
-	};
-
-	const handleDownloadFile = (text: string): void => {
-		downloadFile(text, 'endpoint-details.env')
-			.then(() => {
-				setTimeout(() => {
-					notifications.success({
-						message: 'Download successful',
-					});
-				}, 300);
-			})
-			.catch(() => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
-			});
 	};
 
 	useEffect(() => {
@@ -99,11 +86,6 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [status, ingestionData?.payload]);
-
-	const ingestionURL = firstIngestionKey?.ingestionURL;
-	const ingestionKey = firstIngestionKey?.ingestionKey;
-
-	const endpointDetails = `OTEL_EXPORTER_OTLP_ENDPOINT=${ingestionURL} \nOTEL_EXPORTER_OTLP_HEADERS=signoz-access-token=${ingestionKey}`;
 
 	return (
 		<div className="configure-product-ingestion-section-content">
@@ -134,76 +116,62 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 
 			{(isIngestionKeysLoading || !isError) && (
 				<>
-					<div className="ingestion-endpoint-section">
-						<div className="ingestion-endpoint-section-header">
-							<div className="ingestion-endpoint-section-title">
-								<Typography.Text>Endpoints</Typography.Text>
-							</div>
-
-							{!isIngestionKeysLoading && (
-								<div className="ingestion-endpoint-copy-download-section">
-									<Typography.Text>
-										<CircleArrowDown
-											size={14}
-											className="download-btn"
-											onClick={(): void => handleDownloadFile(endpointDetails)}
-										/>
-
-										<Clipboard
-											size={14}
-											className="copy-btn"
-											onClick={(): void => handleCopyKey(endpointDetails)}
-										/>
-									</Typography.Text>
-								</div>
-							)}
-						</div>
-
-						<div className="ingestion-endpoint-info-section">
-							<Typography.Text className="ingestion-endpoint-section-text">
-								Copy endpoint variables to your app
-							</Typography.Text>
-							<div className="ingestion-endpoint-details-section">
-								{isIngestionKeysLoading ? (
-									<div className="skeleton-container">
-										<Skeleton.Input active className="skeleton-input" /> <br />
-										<Skeleton.Input active className="skeleton-input" />
-									</div>
-								) : (
-									<Typography.Text className="ingestion-endpoint-section-endpoint-info">
-										{endpointDetails}
-									</Typography.Text>
-								)}
-							</div>
-						</div>
-					</div>
-
 					<div className="ingestion-key-details-section">
 						<Typography.Text className="ingestion-key-details-section-text">
 							You can use this key to send your telemetry data to SigNoz.
 						</Typography.Text>
 
 						<div className="ingestion-key-details-section-key">
-							{isIngestionKeysLoading ? (
+							{isIngestionKeysLoading ||
+							isLoadingDeploymentsData ||
+							isFetchingDeploymentsData ? (
 								<div className="skeleton-container">
+									<Skeleton.Input active className="skeleton-input" />
+									<Skeleton.Input active className="skeleton-input" />
+									<Skeleton.Input active className="skeleton-input" />
 									<Skeleton.Input active className="skeleton-input" />
 								</div>
 							) : (
-								<>
-									<Typography.Text className="ingestion-key-label">
-										<Key size={14} /> Ingestion Key
-									</Typography.Text>
+								<div className="ingestion-key-region-details-section">
+									{!isDeploymentsDataError &&
+										!isLoadingDeploymentsData &&
+										!isFetchingDeploymentsData && (
+											<div className="ingestion-region-container">
+												<Typography.Text className="ingestion-region-label">
+													<MapPin size={14} /> Region
+												</Typography.Text>
 
-									<Typography.Text className="ingestion-key-value-copy">
-										{maskKey(firstIngestionKey?.ingestionKey)}
+												<Typography.Text className="ingestion-region-value-copy">
+													{deploymentsData?.data?.data?.cluster.region.name}
 
-										<Copy
-											size={14}
-											className="copy-btn"
-											onClick={(): void => handleCopyKey(firstIngestionKey?.ingestionKey)}
-										/>
-									</Typography.Text>
-								</>
+													<Copy
+														size={14}
+														className="copy-btn"
+														onClick={(): void =>
+															handleCopyKey(
+																deploymentsData?.data?.data?.cluster.region.name || '',
+															)
+														}
+													/>
+												</Typography.Text>
+											</div>
+										)}
+									<div className="ingestion-key-container">
+										<Typography.Text className="ingestion-key-label">
+											<Key size={14} /> Ingestion Key
+										</Typography.Text>
+
+										<Typography.Text className="ingestion-key-value-copy">
+											{maskKey(firstIngestionKey?.ingestionKey)}
+
+											<Copy
+												size={14}
+												className="copy-btn"
+												onClick={(): void => handleCopyKey(firstIngestionKey?.ingestionKey)}
+											/>
+										</Typography.Text>
+									</div>
+								</div>
 							)}
 						</div>
 					</div>
@@ -212,14 +180,23 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 						<Info size={14} />
 
 						<span>
-							Find your ingestion URL and learn more about sending data to SigNoz{' '}
+							We support{' '}
 							<a
-								href="https://signoz.io/docs/ingestion/signoz-cloud/overview/"
+								href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"
 							>
-								here <ArrowUpRight size={14} />
+								multiple ingestions keys
+							</a>
+							. To create a new one,{' '}
+							<a
+								href="/settings/ingestion-settings"
+								target="_blank"
+								className="learn-more"
+								rel="noreferrer"
+							>
+								click here <ArrowUpRight size={14} />
 							</a>
 						</span>
 					</div>
