@@ -14,7 +14,8 @@ function RenderConnectionFields({
 		isConnectionParamsLoading ||
 		(!!connectionParams?.ingestion_url &&
 			!!connectionParams?.ingestion_key &&
-			!!connectionParams?.signoz_api_url)
+			!!connectionParams?.signoz_api_url &&
+			!!connectionParams?.signoz_api_key)
 	) {
 		return null;
 	}
@@ -46,6 +47,15 @@ function RenderConnectionFields({
 					rules={[{ required: true, message: 'Please enter SigNoz API URL' }]}
 				>
 					<Input placeholder="Enter SigNoz API URL" disabled={isFormDisabled} />
+				</Form.Item>
+			)}
+			{!connectionParams?.signoz_api_key && (
+				<Form.Item
+					name="signoz_api_key"
+					label="SigNoz API KEY"
+					rules={[{ required: true, message: 'Please enter SigNoz API Key' }]}
+				>
+					<Input placeholder="Enter SigNoz API Key" disabled={isFormDisabled} />
 				</Form.Item>
 			)}
 		</Form.Item>
