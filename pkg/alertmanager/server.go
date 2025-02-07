@@ -1,4 +1,4 @@
-package alertmanagerserver
+package alertmanager
 
 import (
 	"context"
@@ -15,11 +15,10 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/timeinterval"
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagertypes"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
 	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.uber.org/zap"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 var _ factory.Service = (*Server)(nil)
@@ -32,33 +31,40 @@ var (
 )
 
 type Server struct {
-	config                 alertmanager.Config
-	settings               factory.ScopedProviderSettings
-	orgID                  string
-	store                  alertmanager.Store
-	alerts                 *mem.Alerts
-	nflog                  *nflog.Log
-	dispatcher             *dispatch.Dispatcher
-	inhibitor              *inhibit.Inhibitor
-	silencer               *silence.Silencer
-	silences               *silence.Silences
-	timeIntervals          map[string][]timeinterval.TimeInterval
-	pipelineBuilder        *notify.PipelineBuilder
-	marker                 *alertmanagertypes.MemMarker
-	tmpl                   *template.Template
-	wg                     sync.WaitGroup
-	stopc                  chan struct{}
+	// srvConfig is the server config for the alertmanager
+	srvConfig Config
+	// alertmanagerConfigHash is the hash of the alertmanager config
 	alertmanagerConfigHash [16]byte
-	alertmanagerConfigRaw  []byte
+	// alertmanagerConfigRaw is the raw config of the alertmanager
+	alertmanagerConfigRaw []byte
+	// Settings is the factorysettings for the alertmanager
+	settings factory.NamespacedSettings
+	// orgID is the orgID for the alertmanager
+	orgID uint64
+	// store is the backing store for the alertmanager
+	store alertmanagerstore.Store
+	// alertmanager primitives from upstream alertmanager
+	alerts          *mem.Alerts
+	nflog           *nflog.Log
+	dispatcher      *dispatch.Dispatcher
+	inhibitor       *inhibit.Inhibitor
+	silencer        *silence.Silencer
+	silences        *silence.Silences
+	timeIntervals   map[string][]timeinterval.TimeInterval
+	pipelineBuilder *notify.PipelineBuilder
+	marker          *alertmanagertypes.MemMarker
+	tmpl            *template.Template
+	wg              sync.WaitGroup
+	stopc           chan struct{}
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, orgID string, store alertmanager.Store) (*Server, error) {
+func NewForOrg(ctx context.Context, settings factory.Settings, srvConfig Config, orgID uint64, store alertmanagerstore.Store) (*Server, error) {
 	server := &Server{
-		config:   config,
-		settings: factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"),
-		orgID:    orgID,
-		store:    store,
-		stopc:    make(chan struct{}),
+		srvConfig: srvConfig,
+		settings:  factory.NewNamespacedSettings(settings, "go.signoz.io/signoz/pkg/alertmanager"),
+		orgID:     orgID,
+		store:     store,
+		stopc:     make(chan struct{}),
 	}
 	// initialize marker
 	server.marker = alertmanagertypes.NewMarker(server.settings.PrometheusRegisterer())
@@ -78,13 +84,13 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// Initialize silences
 	server.silences, err = silence.New(silence.Options{
 		SnapshotReader: strings.NewReader(silencesstate),
-		Retention:      config.Silences.Retention,
+		Retention:      srvConfig.Silences.Retention,
 		Limits: silence.Limits{
-			MaxSilences:         func() int { return config.Silences.Max },
-			MaxSilenceSizeBytes: func() int { return config.Silences.MaxSizeBytes },
+			MaxSilences:         func() int { return srvConfig.Silences.Max },
+			MaxSilenceSizeBytes: func() int { return srvConfig.Silences.MaxSizeBytes },
 		},
 		Metrics: server.settings.PrometheusRegisterer(),
-		Logger:  server.settings.SlogLogger(),
+		Logger:  server.settings.Logger(),
 	})
 	if err != nil {
 		return nil, err
@@ -93,9 +99,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// Initialize notification log
 	server.nflog, err = nflog.New(nflog.Options{
 		SnapshotReader: strings.NewReader(nflogstate),
-		Retention:      server.config.NFLog.Retention,
+		Retention:      server.srvConfig.NFLog.Retention,
 		Metrics:        server.settings.PrometheusRegisterer(),
-		Logger:         server.settings.SlogLogger(),
+		Logger:         server.settings.Logger(),
 	})
 	if err != nil {
 		return nil, err
@@ -105,10 +111,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	server.wg.Add(1)
 	go func() {
 		defer server.wg.Done()
-		server.silences.Maintenance(server.config.Silences.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
+		server.silences.Maintenance(server.srvConfig.Silences.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := server.silences.GC(); err != nil {
-				server.settings.ZapLogger().Error("silence garbage collection", zap.Error(err))
+				server.settings.Logger().ErrorContext(ctx, "silence garbage collection", "error", err)
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -121,9 +127,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	server.wg.Add(1)
 	go func() {
 		defer server.wg.Done()
-		server.nflog.Maintenance(server.config.NFLog.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
+		server.nflog.Maintenance(server.srvConfig.NFLog.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			if _, err := server.nflog.GC(); err != nil {
-				server.settings.ZapLogger().Error("notification log garbage collection", zap.Error(err))
+				server.settings.Logger().ErrorContext(ctx, "notification log garbage collection", "error", err)
 				// Don't return without saving the current state.
 			}
 
@@ -131,7 +137,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.config.Alerts.GCInterval, nil, server.settings.SlogLogger(), server.settings.PrometheusRegisterer())
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.settings.Logger(), server.settings.PrometheusRegisterer())
 	if err != nil {
 		return nil, err
 	}
@@ -149,20 +155,20 @@ func (server *Server) Start(ctx context.Context) error {
 
 	if config == nil {
 		config = alertmanagertypes.NewDefaultConfig(
-			server.config.ResolveTimeout,
-			server.config.SMTP.Hello,
-			server.config.SMTP.From,
-			server.config.SMTP.Host,
-			server.config.SMTP.Port,
-			server.config.SMTP.AuthUsername,
-			server.config.SMTP.AuthPassword,
-			server.config.SMTP.AuthSecret,
-			server.config.SMTP.AuthIdentity,
-			server.config.SMTP.RequireTLS,
-			server.config.Route.GroupBy,
-			server.config.Route.GroupInterval,
-			server.config.Route.GroupWait,
-			server.config.Route.RepeatInterval,
+			server.srvConfig.ResolveTimeout,
+			server.srvConfig.SMTP.Hello,
+			server.srvConfig.SMTP.From,
+			server.srvConfig.SMTP.Host,
+			server.srvConfig.SMTP.Port,
+			server.srvConfig.SMTP.AuthUsername,
+			server.srvConfig.SMTP.AuthPassword,
+			server.srvConfig.SMTP.AuthSecret,
+			server.srvConfig.SMTP.AuthIdentity,
+			server.srvConfig.SMTP.RequireTLS,
+			server.srvConfig.Route.GroupBy,
+			server.srvConfig.Route.GroupInterval,
+			server.srvConfig.Route.GroupWait,
+			server.srvConfig.Route.RepeatInterval,
 		)
 	}
 
@@ -170,7 +176,7 @@ func (server *Server) Start(ctx context.Context) error {
 }
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
-	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, server.config.ResolveTimeout, time.Now())
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, server.srvConfig.ResolveTimeout, time.Now())
 
 	// Notification sending alert takes precedence over validation errors.
 	if err := server.alerts.Put(alerts...); err != nil {
@@ -201,7 +207,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		return err
 	}
 
-	server.tmpl.ExternalURL = server.config.ExternalUrl
+	server.tmpl.ExternalURL = server.srvConfig.ExternalUrl
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -216,10 +222,10 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	for _, rcv := range config.Receivers {
 		if _, found := activeReceivers[rcv.Name]; !found {
 			// No need to build a receiver if no route is using it.
-			server.settings.ZapLogger().Info("skipping creation of receiver not referenced by any route", zap.String("receiver", rcv.Name))
+			server.settings.Logger().InfoContext(ctx, "skipping creation of receiver not referenced by any route", "receiver", rcv.Name)
 			continue
 		}
-		integrations, err := alertmanagertypes.NewReceiverIntegrations(rcv, server.tmpl, server.settings.SlogLogger())
+		integrations, err := alertmanagertypes.NewReceiverIntegrations(rcv, server.tmpl, server.settings.Logger())
 		if err != nil {
 			return err
 		}
@@ -247,9 +253,9 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.dispatcher.Stop()
 	}
 
-	server.inhibitor = inhibit.NewInhibitor(server.alerts, config.InhibitRules, server.marker, server.settings.SlogLogger())
+	server.inhibitor = inhibit.NewInhibitor(server.alerts, config.InhibitRules, server.marker, server.settings.Logger())
 	server.timeIntervals = timeIntervals
-	server.silencer = silence.NewSilencer(server.silences, server.marker, server.settings.SlogLogger())
+	server.silencer = silence.NewSilencer(server.silences, server.marker, server.settings.Logger())
 
 	var pipelinePeer notify.Peer
 	pipeline := server.pipelineBuilder.New(
@@ -277,7 +283,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.marker,
 		timeoutFunc,
 		nil,
-		server.settings.SlogLogger(),
+		server.settings.Logger(),
 		dispatch.NewDispatcherMetrics(false, server.settings.PrometheusRegisterer()),
 	)
 
@@ -294,7 +300,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	return alertmanagertypes.TestReceiver(ctx, receiver, server.tmpl, server.settings.SlogLogger())
+	return alertmanagertypes.TestReceiver(ctx, receiver, server.tmpl, server.settings.Logger())
 }
 
 func (server *Server) Stop(ctx context.Context) error {

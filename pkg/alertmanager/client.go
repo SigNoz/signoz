@@ -3,7 +3,7 @@ package alertmanager
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagertypes"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 type Client interface {

@@ -55,3 +55,12 @@ func (i *noopInstrumentation) ToProviderSettings() factory.ProviderSettings {
 		PrometheusRegisterer: i.PrometheusRegisterer(),
 	}
 }
+
+func (i *noopInstrumentation) ToFactorySettings() factory.Settings {
+	return factory.Settings{
+		Logger:               i.SlogLogger(),
+		MeterProvider:        i.MeterProvider(),
+		TracerProvider:       i.TracerProvider(),
+		PrometheusRegisterer: i.PrometheusRegisterer(),
+	}
+}

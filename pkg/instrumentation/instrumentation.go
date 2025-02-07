@@ -30,6 +30,8 @@ type Instrumentation interface {
 	PrometheusRegisterer() prometheus.Registerer
 	// ToProviderSettings converts instrumentation to provider settings.
 	ToProviderSettings() factory.ProviderSettings
+	// ToFactorySettings converts instrumentation to factory settings.
+	ToFactorySettings() factory.Settings
 }
 
 // Merges the input attributes with the resource attributes.
