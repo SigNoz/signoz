@@ -1,4 +1,4 @@
-FROM nginx:1.26-alpine
+FROM nginx:1.27.4-alpine
 
 # Add Maintainer Info
 LABEL maintainer="signoz"
