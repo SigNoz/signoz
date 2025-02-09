@@ -394,7 +394,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
-		if mq.AggregateAttribute.Key != "" && mq.AggregateAttribute.Key != "timestamp" {
+		if mq.AggregateAttribute.Key != "" {
 			if mq.AggregateAttribute.IsColumn {
 				subQuery, err := existsSubQueryForFixedColumn(mq.AggregateAttribute, v3.FilterOperatorExists)
 				if err == nil {
