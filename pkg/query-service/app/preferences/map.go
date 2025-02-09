@@ -11,4 +11,14 @@ var preferenceMap = map[string]Preference{
 		IsDiscreteValues: true,
 		AllowedScopes:    []string{"org"},
 	},
+	"THIRD_ONBOARDING": {
+		Key:              "THIRD_ONBOARDING",
+		Name:             "Organisation Onboarding",
+		Description:      "Organisation Onboarding",
+		ValueType:        "string",
+		DefaultValue:     "",
+		AllowedValues:    []interface{}{},
+		IsDiscreteValues: true,
+		AllowedScopes:    []string{"org"},
+	},
 }

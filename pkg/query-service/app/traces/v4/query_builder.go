@@ -328,6 +328,9 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
 		aggregationKey = getColumnName(mq.AggregateAttribute)
+		if mq.AggregateAttribute.Key == "timestamp" {
+			aggregationKey = "toUnixTimestamp64Nano(timestamp)"
+		}
 	}
 
 	var queryTmpl string

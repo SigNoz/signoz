@@ -48,7 +48,7 @@ func getGroupBy(existingGroupBy []v3.AttributeKey, apiGroupBy []v3.AttributeKey)
 	return existingGroupBy
 }
 
-func BuildDomainList(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, error) {
+func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, error) {
 
 	unixMilliStart := thirdPartyApis.Start
 	unixMilliEnd := thirdPartyApis.End
@@ -144,7 +144,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items: []v3.FilterItem{
+			Items: getFilterSet([]v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
 						Key:      "has_error",
@@ -154,7 +154,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 					Operator: "=",
 					Value:    "true",
 				},
-			},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "error_rate",
 		GroupBy: getGroupBy([]v3.AttributeKey{
@@ -181,7 +181,7 @@ func BuildDomainList(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    []v3.FilterItem{},
+			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
 		},
 		Expression: "p99",
 		GroupBy: getGroupBy([]v3.AttributeKey{
@@ -213,14 +213,14 @@ func BuildDomainList(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 	return queryRangeParams, nil
 }
 
-func BuildDomainInfo(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, error) {
+func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, error) {
 	unixMilliStart := thirdPartyApis.Start
 	unixMilliEnd := thirdPartyApis.End
 
 	builderQueries := make(map[string]*v3.BuilderQuery)
 
-	builderQueries["A"] = &v3.BuilderQuery{
-		QueryName:         "A",
+	builderQueries["endpoints"] = &v3.BuilderQuery{
+		QueryName:         "endpoints",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
 		AggregateOperator: v3.AggregateOperatorCount,
@@ -235,11 +235,11 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 			Operator: "AND",
 			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
 		},
-		Expression: "A",
+		Expression: "endpoints",
 		Disabled:   false,
 		GroupBy: getGroupBy([]v3.AttributeKey{
 			{
-				Key:      "net.peer.name",
+				Key:      "http.url",
 				DataType: v3.AttributeKeyDataTypeString,
 				Type:     v3.AttributeKeyTypeTag,
 			},
@@ -248,8 +248,8 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 		ReduceTo: v3.ReduceToOperatorAvg,
 	}
 
-	builderQueries["B"] = &v3.BuilderQuery{
-		QueryName:         "B",
+	builderQueries["p99"] = &v3.BuilderQuery{
+		QueryName:         "p99",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
 		AggregateOperator: v3.AggregateOperatorP99,
@@ -264,67 +264,50 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartApis) (*v3.QueryRangeParamsV3, err
 			Operator: "AND",
 			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
 		},
-		Expression: "B",
+		Expression: "p99",
 		Disabled:   false,
 		Having:     nil,
-		GroupBy: getGroupBy([]v3.AttributeKey{
-			{
-				Key:      "net.peer.name",
-				DataType: v3.AttributeKeyDataTypeString,
-				Type:     v3.AttributeKeyTypeTag,
-			},
-		}, thirdPartyApis.GroupBy),
-		Legend:   "",
-		ReduceTo: v3.ReduceToOperatorAvg,
+		GroupBy:    getGroupBy([]v3.AttributeKey{}, thirdPartyApis.GroupBy),
+		Legend:     "",
+		ReduceTo:   v3.ReduceToOperatorAvg,
 	}
 
-	builderQueries["C"] = &v3.BuilderQuery{
-		QueryName:         "C",
+	builderQueries["error_rate"] = &v3.BuilderQuery{
+		QueryName:         "error_rate",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
 		AggregateOperator: v3.AggregateOperatorRate,
 		AggregateAttribute: v3.AttributeKey{
-
 			Key: "",
 		},
 		TimeAggregation:  v3.TimeAggregationRate,
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items: getFilterSet([]v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key:      "has_error",
-						DataType: v3.AttributeKeyDataTypeBool,
-						IsColumn: true,
-					},
-					Operator: "=",
-					Value:    "true",
-				},
-			}, thirdPartyApis.Filters),
+			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
 		},
-		Expression: "C",
+		Expression: "error_rate",
 		Disabled:   false,
 		GroupBy:    getGroupBy([]v3.AttributeKey{}, thirdPartyApis.GroupBy),
 		Legend:     "",
 		ReduceTo:   v3.ReduceToOperatorAvg,
 	}
 
-	builderQueries["D"] = &v3.BuilderQuery{
-		QueryName:         "D",
+	builderQueries["lastseen"] = &v3.BuilderQuery{
+		QueryName:         "lastseen",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
-		AggregateOperator: v3.AggregateOperatorMax, // JSON "max"
+		AggregateOperator: v3.AggregateOperatorMax,
 		AggregateAttribute: v3.AttributeKey{
 			Key: "timestamp",
 		},
-		TimeAggregation:  v3.TimeAggregationMax, // JSON "max"
+		TimeAggregation:  v3.TimeAggregationMax,
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
 			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
 		},
-		Expression: "D",
+		Expression: "lastseen",
 		Disabled:   false,
 		Having:     nil,
 		OrderBy:    nil,
