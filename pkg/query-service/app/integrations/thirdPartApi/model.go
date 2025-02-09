@@ -2,7 +2,7 @@ package thirdPartApi
 
 import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
-type ThirdPartApis struct {
+type ThirdPartyApis struct {
 	Start    int64             `json:"start"`
 	End      int64             `json:"end"`
 	ShowIP   bool              `json:"show_ip,omitempty"`

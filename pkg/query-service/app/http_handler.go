@@ -3518,8 +3518,8 @@ func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError
 }
 
 // ParseRequstBody for third party APIs
-func ParseRequstBody(r *http.Request) (*thirdPartApi.ThirdPartApis, *model.ApiError) {
-	thirdPartApis := new(thirdPartApi.ThirdPartApis)
+func ParseRequstBody(r *http.Request) (*thirdPartApi.ThirdPartyApis, *model.ApiError) {
+	thirdPartApis := new(thirdPartApi.ThirdPartyApis)
 	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
@@ -5557,6 +5557,8 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+
 	if !thirdPartyQueryRequest.ShowIP {
 		result = thirdPartApi.FilterResponse(result)
 	}
@@ -5593,6 +5595,8 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
+
+	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
 	if !thirdPartyQueryRequest.ShowIP {
 		result = thirdPartApi.FilterResponse(result)
