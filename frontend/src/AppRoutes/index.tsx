@@ -110,6 +110,18 @@ function App(): JSX.Element {
 					source: 'signoz-ui',
 					isPaidUser: !!licenses?.trialConvertedToSubscription,
 				});
+
+				if (
+					window.cioanalytics &&
+					typeof window.cioanalytics.identify === 'function'
+				) {
+					window.cioanalytics.reset();
+					window.cioanalytics.identify(email, {
+						name: user.name,
+						email,
+						role: user.role,
+					});
+				}
 			}
 		},
 		[hostname, isFetchingLicenses, licenses, org],
