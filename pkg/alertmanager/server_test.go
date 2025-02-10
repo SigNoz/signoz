@@ -22,7 +22,7 @@ import (
 func TestServerStartStop(t *testing.T) {
 	store, err := alertmanagerstoretest.New(context.Background(), providertest.NewSettings(), alertmanagerstore.NewConfig().(alertmanagerstore.Config), []string{"1"})
 	require.NoError(t, err)
-	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), "1", store)
+	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), newConfig().(Config), "1", store)
 	require.NoError(t, err)
 
 	require.NoError(t, server.Start(context.Background()))
@@ -32,7 +32,7 @@ func TestServerStartStop(t *testing.T) {
 func TestServerWithDefaultConfig(t *testing.T) {
 	store, err := alertmanagerstoretest.New(context.Background(), providertest.NewSettings(), alertmanagerstore.NewConfig().(alertmanagerstore.Config), []string{"1"})
 	require.NoError(t, err)
-	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), "1", store)
+	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), newConfig().(Config), "1", store)
 	require.NoError(t, err)
 
 	require.NoError(t, server.Start(context.Background()))
@@ -44,7 +44,7 @@ func TestServerWithDefaultConfig(t *testing.T) {
 func TestServerTestReceiverWebhook(t *testing.T) {
 	store, err := alertmanagerstoretest.New(context.Background(), providertest.NewSettings(), alertmanagerstore.NewConfig().(alertmanagerstore.Config), []string{"1"})
 	require.NoError(t, err)
-	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), NewConfig().(Config), "1", store)
+	server, err := NewForOrg(context.Background(), factorytest.NewSettings(), newConfig().(Config), "1", store)
 	require.NoError(t, err)
 
 	webhookListener, err := net.Listen("tcp", "localhost:0")

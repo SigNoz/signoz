@@ -20,6 +20,7 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/signoz"
 )
 
 type APIHandlerOptions struct {
@@ -41,6 +42,7 @@ type APIHandlerOptions struct {
 	FluxInterval      time.Duration
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	SigNoz            *signoz.SigNoz
 }
 
 type APIHandler struct {
@@ -65,6 +67,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		FluxInterval:                  opts.FluxInterval,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
+		SigNoz:                        opts.SigNoz,
 	})
 
 	if err != nil {

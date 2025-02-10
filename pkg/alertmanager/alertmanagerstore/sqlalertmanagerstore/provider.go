@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"fmt"
 
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
 	"go.signoz.io/signoz/pkg/errors"
@@ -42,7 +43,7 @@ func (provider *provider) GetState(ctx context.Context, orgID string, stateName 
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find alertmanager config for org %s", orgID)
+			return "", errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerStateNotFound, "cannot find alertmanager state for org %s", orgID)
 		}
 
 		return "", err
@@ -117,7 +118,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 		return nil, err
 	}
 
-	config, err := alertmanagertypes.NewConfigFromString(storedConfig.Config)
+	config, err := alertmanagertypes.NewConfigFromString(storedConfig.Config, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -126,16 +127,38 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 }
 
 func (provider *provider) SetConfig(ctx context.Context, orgID string, config *alertmanagertypes.Config) error {
-	_, err := provider.
-		sqlstore.
-		BunDB().
-		NewInsert().
-		Model(&alertmanagertypes.StoredConfig{}).
-		Where("org_id = ?", orgID).
-		Set("config = ?", string(config.Raw())).
-		On("CONFLICT (org_id) DO UPDATE").
-		Exec(ctx)
+	tx, err := provider.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback() //nolint:errcheck
+
+	if _, err = tx.
+		NewInsert().
+		Model(config.StoredConfig()).
+		On("CONFLICT (org_id) DO UPDATE").
+		Set("config = ?", string(config.StoredConfig().Config)).
+		Set("updated_at = ?", config.StoredConfig().UpdatedAt).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	channels := config.Channels()
+	fmt.Println("channels", channels)
+	if len(channels) != 0 {
+		fmt.Println("channels", channels)
+		if _, err = tx.NewInsert().
+			Model(&channels).
+			On("CONFLICT (name) DO UPDATE").
+			Set("data = EXCLUDED.data").
+			Set("updated_at = EXCLUDED.updated_at").
+			Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 
@@ -154,6 +177,17 @@ func (provider *provider) DelConfig(ctx context.Context, orgID string) error {
 		return err
 	}
 
+	_, err = provider.
+		sqlstore.
+		BunDB().
+		NewDelete().
+		Model(&alertmanagertypes.Channel{}).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -164,7 +198,7 @@ func (provider *provider) ListOrgIDs(ctx context.Context) ([]string, error) {
 		sqlstore.
 		BunDB().
 		NewSelect().
-		ModelTableExpr("organizations").
+		Table("organizations").
 		ColumnExpr("id").
 		Scan(ctx, &orgIDs)
 	if err != nil {
@@ -172,4 +206,21 @@ func (provider *provider) ListOrgIDs(ctx context.Context) ([]string, error) {
 	}
 
 	return orgIDs, nil
+}
+
+func (provider *provider) ListChannels(ctx context.Context, orgID string) (alertmanagertypes.Channels, error) {
+	channels := alertmanagertypes.Channels{}
+
+	err := provider.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&channels).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return channels, nil
 }

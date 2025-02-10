@@ -38,8 +38,18 @@ func (migration *addAlertmanagerConfiguration) Up(ctx context.Context, db *bun.D
 			NFLogState    string    `bun:"nflog_state"`
 			CreatedAt     time.Time `bun:"created_at"`
 			UpdatedAt     time.Time `bun:"updated_at"`
-			OrgID         string    `bun:"org_id"`
+			OrgID         string    `bun:"org_id,unique"`
 		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
+		IfNotExists().
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := db.
+		NewAddColumn().
+		Table("notification_channels").
+		ColumnExpr("org_id TEXT").
 		Exec(ctx); err != nil {
 		return err
 	}

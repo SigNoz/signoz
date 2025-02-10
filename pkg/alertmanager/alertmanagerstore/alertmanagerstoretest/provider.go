@@ -54,7 +54,7 @@ func (provider *Provider) GetConfig(ctx context.Context, orgID string) (*alertma
 		return nil, errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find config for org %s", orgID)
 	}
 
-	return alertmanagertypes.NewConfigFromString(provider.Configs[orgID])
+	return alertmanagertypes.NewConfigFromString(provider.Configs[orgID], orgID)
 }
 
 func (provider *Provider) SetConfig(ctx context.Context, orgID string, config *alertmanagertypes.Config) error {
@@ -69,4 +69,17 @@ func (provider *Provider) DelConfig(ctx context.Context, orgID string) error {
 
 func (provider *Provider) ListOrgIDs(ctx context.Context) ([]string, error) {
 	return provider.OrgIDs, nil
+}
+
+func (provider *Provider) ListChannels(ctx context.Context, orgID string) (alertmanagertypes.Channels, error) {
+	if _, ok := provider.Configs[orgID]; !ok {
+		return nil, errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerConfigNotFound, "cannot find config for org %s", orgID)
+	}
+
+	config, err := alertmanagertypes.NewConfigFromString(provider.Configs[orgID], orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return config.Channels(), nil
 }

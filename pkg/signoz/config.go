@@ -67,6 +67,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
+		alertmanager.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

@@ -2,21 +2,38 @@ package alertmanager
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
+	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
+)
+
+var (
+	ErrCodeAlertmanagerNotFound = errors.MustNewCode("alertmanager_not_found")
 )
 
 var _ factory.Service = (*Servers)(nil)
+var _ Client = (*Servers)(nil)
 
 type Servers struct {
+	config Config
+	// Store is the store for the alertmanager
+	store alertmanagerstore.Store
 	// Map of organization id to server
 	servers map[string]*Server
+	// Mutex to protect the servers map
+	serversMtx sync.RWMutex
 }
 
 func New(ctx context.Context, settings factory.Settings, config Config, store alertmanagerstore.Store) (*Servers, error) {
-	multi := &Servers{
-		servers: map[string]*Server{},
+	servers := &Servers{
+		config:     config,
+		store:      store,
+		servers:    map[string]*Server{},
+		serversMtx: sync.RWMutex{},
 	}
 
 	orgIDs, err := store.ListOrgIDs(ctx)
@@ -30,25 +47,114 @@ func New(ctx context.Context, settings factory.Settings, config Config, store al
 			return nil, err
 		}
 
-		multi.servers[orgID] = server
+		servers.servers[orgID] = server
 	}
 
-	return multi, nil
+	return servers, nil
 }
 
-func (m *Servers) Start(ctx context.Context) error {
-	for _, server := range m.servers {
+func (ss *Servers) Start(ctx context.Context) error {
+	for _, server := range ss.servers {
 		err := server.Start(ctx)
 		if err != nil {
 			return err
 		}
 	}
 
+	ticker := time.NewTicker(ss.config.PollInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			for _, server := range ss.servers {
+				config, err := ss.store.GetConfig(ctx, server.orgID)
+				if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+					server.settings.Logger().ErrorContext(ctx, "failed to get config", "error", err, "orgID", server.orgID)
+					continue
+				}
+				if config == nil {
+					config = alertmanagertypes.NewDefaultConfig(
+						server.srvConfig.ResolveTimeout,
+						server.srvConfig.SMTP.Hello,
+						server.srvConfig.SMTP.From,
+						server.srvConfig.SMTP.Host,
+						server.srvConfig.SMTP.Port,
+						server.srvConfig.SMTP.AuthUsername,
+						server.srvConfig.SMTP.AuthPassword,
+						server.srvConfig.SMTP.AuthSecret,
+						server.srvConfig.SMTP.AuthIdentity,
+						server.srvConfig.SMTP.RequireTLS,
+						server.srvConfig.Route.GroupBy,
+						server.srvConfig.Route.GroupInterval,
+						server.srvConfig.Route.GroupWait,
+						server.srvConfig.Route.RepeatInterval,
+						server.orgID,
+					)
+				}
+
+				if err := server.SetConfig(ctx, config); err != nil {
+					server.settings.Logger().ErrorContext(ctx, "failed to set config in alertmanager", "error", err, "orgID", server.orgID)
+				}
+			}
+		}
+	}
+}
+
+func (ss *Servers) SetConfig(ctx context.Context, orgID string, postableConfig alertmanagertypes.PostableConfig) error {
+	server, ok := ss.servers[orgID]
+	if !ok {
+		return errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for orgID %q", orgID)
+	}
+
+	cfg, err := ss.store.GetConfig(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	err = cfg.MergeWithPostableConfig(postableConfig)
+	if err != nil {
+		return err
+	}
+
+	if err := server.store.SetConfig(ctx, server.orgID, cfg); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (m *Servers) Stop(ctx context.Context) error {
-	for _, server := range m.servers {
+func (ss *Servers) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+	server, ok := ss.servers[orgID]
+	if !ok {
+		return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for orgID %q", orgID)
+	}
+
+	return server.GetAlerts(ctx, params)
+}
+
+func (ss *Servers) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	server, ok := ss.servers[orgID]
+	if !ok {
+		return errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for orgID %q", orgID)
+	}
+
+	return server.PutAlerts(ctx, alerts)
+}
+
+func (ss *Servers) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+	server, ok := ss.servers[orgID]
+	if !ok {
+		return errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for orgID %q", orgID)
+	}
+
+	return server.TestReceiver(ctx, receiver)
+}
+
+func (ss *Servers) Stop(ctx context.Context) error {
+	for _, server := range ss.servers {
 		server.Stop(ctx)
 	}
 

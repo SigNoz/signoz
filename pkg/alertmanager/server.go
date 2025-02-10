@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/prometheus/common/model"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
 	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/factory"
@@ -37,6 +38,8 @@ type Server struct {
 	alertmanagerConfigHash [16]byte
 	// alertmanagerConfigRaw is the raw config of the alertmanager
 	alertmanagerConfigRaw []byte
+	// alertmanagerConfig is the config of the alertmanager
+	alertmanagerConfig *alertmanagertypes.Config
 	// Settings is the factorysettings for the alertmanager
 	settings factory.NamespacedSettings
 	// orgID is the orgID for the alertmanager
@@ -44,18 +47,19 @@ type Server struct {
 	// store is the backing store for the alertmanager
 	store alertmanagerstore.Store
 	// alertmanager primitives from upstream alertmanager
-	alerts          *mem.Alerts
-	nflog           *nflog.Log
-	dispatcher      *dispatch.Dispatcher
-	inhibitor       *inhibit.Inhibitor
-	silencer        *silence.Silencer
-	silences        *silence.Silences
-	timeIntervals   map[string][]timeinterval.TimeInterval
-	pipelineBuilder *notify.PipelineBuilder
-	marker          *alertmanagertypes.MemMarker
-	tmpl            *template.Template
-	wg              sync.WaitGroup
-	stopc           chan struct{}
+	alerts            *mem.Alerts
+	nflog             *nflog.Log
+	dispatcher        *dispatch.Dispatcher
+	dispatcherMetrics *dispatch.DispatcherMetrics
+	inhibitor         *inhibit.Inhibitor
+	silencer          *silence.Silencer
+	silences          *silence.Silences
+	timeIntervals     map[string][]timeinterval.TimeInterval
+	pipelineBuilder   *notify.PipelineBuilder
+	marker            *alertmanagertypes.MemMarker
+	tmpl              *template.Template
+	wg                sync.WaitGroup
+	stopc             chan struct{}
 }
 
 func NewForOrg(ctx context.Context, settings factory.Settings, srvConfig Config, orgID string, store alertmanagerstore.Store) (*Server, error) {
@@ -71,13 +75,13 @@ func NewForOrg(ctx context.Context, settings factory.Settings, srvConfig Config,
 
 	// get silences for initial state
 	silencesstate, err := store.GetState(ctx, server.orgID, alertmanagertypes.SilenceStateName)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
 	// get nflog for initial state
 	nflogstate, err := store.GetState(ctx, server.orgID, alertmanagertypes.NFLogStateName)
-	if err != nil {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
@@ -143,6 +147,7 @@ func NewForOrg(ctx context.Context, settings factory.Settings, srvConfig Config,
 	}
 
 	server.pipelineBuilder = notify.NewPipelineBuilder(server.settings.PrometheusRegisterer(), featurecontrol.NoopFlags{})
+	server.dispatcherMetrics = dispatch.NewDispatcherMetrics(false, server.settings.PrometheusRegisterer())
 
 	return server, nil
 }
@@ -169,15 +174,18 @@ func (server *Server) Start(ctx context.Context) error {
 			server.srvConfig.Route.GroupInterval,
 			server.srvConfig.Route.GroupWait,
 			server.srvConfig.Route.RepeatInterval,
+			server.orgID,
 		)
-
-		if err := server.store.SetConfig(ctx, server.orgID, config); err != nil {
-			server.settings.Logger().ErrorContext(ctx, "failed to set config", "error", err)
-			return err
-		}
 	}
 
 	return server.SetConfig(ctx, config)
+}
+
+func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+	return alertmanagertypes.NewGettableAlertsFromAlertProvider(server.alerts, server.alertmanagerConfig, server.marker.Status, func(labels model.LabelSet) {
+		server.inhibitor.Mutes(labels)
+		server.silencer.Mutes(labels)
+	}, params)
 }
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
@@ -204,7 +212,7 @@ func (server *Server) ConfigRaw() []byte {
 }
 
 func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertmanagertypes.Config) error {
-	config := alertmanagerConfig.Config()
+	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
 	server.tmpl, err = template.FromGlobs(config.Templates)
@@ -289,7 +297,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		timeoutFunc,
 		nil,
 		server.settings.Logger(),
-		dispatch.NewDispatcherMetrics(false, server.settings.PrometheusRegisterer()),
+		server.dispatcherMetrics,
 	)
 
 	// Do not try to add these to `server.wg as there seems to be a race condition if
@@ -300,6 +308,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 	server.alertmanagerConfigHash = alertmanagerConfig.Hash()
 	server.alertmanagerConfigRaw = alertmanagerConfig.Raw()
+	server.alertmanagerConfig = alertmanagerConfig
 
 	return nil
 }

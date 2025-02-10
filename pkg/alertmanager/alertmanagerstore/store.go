@@ -34,4 +34,7 @@ type Store interface {
 
 	// Get all organization ids
 	ListOrgIDs(context.Context) ([]string, error)
+
+	// Get all channels for an organization
+	ListChannels(context.Context, string) (alertmanagertypes.Channels, error)
 }

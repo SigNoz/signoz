@@ -132,3 +132,17 @@ func GetEmailFromJwt(ctx context.Context) (string, error) {
 
 	return claims["email"].(string), nil
 }
+
+func GetOrgIdFromJwt(ctx context.Context) (string, error) {
+	jwt, ok := ExtractJwtFromContext(ctx)
+	if !ok {
+		return "", model.InternalError(fmt.Errorf("failed to extract jwt from context"))
+	}
+
+	claims, err := ParseJWT(jwt)
+	if err != nil {
+		return "", model.InternalError(fmt.Errorf("failed get claims from jwt %v", err))
+	}
+
+	return claims["orgId"].(string), nil
+}

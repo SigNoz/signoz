@@ -3,11 +3,12 @@ package signoz
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore"
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
+	"go.signoz.io/signoz/pkg/registry"
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlmigrator"
 	"go.signoz.io/signoz/pkg/sqlstore"
@@ -18,11 +19,12 @@ import (
 )
 
 type SigNoz struct {
-	Cache             cache.Cache
-	Web               web.Web
-	SQLStore          sqlstore.SQLStore
-	TelemetryStore    telemetrystore.TelemetryStore
-	AlertmanagerStore alertmanagerstore.Store
+	*registry.Registry
+	Cache              cache.Cache
+	Web                web.Web
+	SQLStore           sqlstore.SQLStore
+	TelemetryStore     telemetrystore.TelemetryStore
+	AlertmanagerClient alertmanager.Client
 }
 
 func New(
@@ -40,6 +42,9 @@ func New(
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	// Get the factory settings from instrumentation
+	factorySettings := instrumentation.ToFactorySettings()
 
 	// Initialize cache from the available cache provider factories
 	cache, err := factory.NewProviderFromNamedMap(
@@ -105,16 +110,29 @@ func New(
 		return nil, err
 	}
 
-	alertmanagerstore, err := sqlalertmanagerstore.NewFactory(sqlstore).New(ctx, providerSettings, config.Alertmanager.Store)
+	alertmanagerstore, err := sqlalertmanagerstore.
+		NewFactory(sqlstore).
+		New(ctx, providerSettings, config.Alertmanager.Store)
+	if err != nil {
+		return nil, err
+	}
+
+	alertmanagerService, err := alertmanager.New(ctx, factorySettings, config.Alertmanager, alertmanagerstore)
+	if err != nil {
+		return nil, err
+	}
+
+	registry, err := registry.New(instrumentation.Logger(), factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanagerService))
 	if err != nil {
 		return nil, err
 	}
 
 	return &SigNoz{
-		Cache:             cache,
-		Web:               web,
-		SQLStore:          sqlstore,
-		TelemetryStore:    telemetrystore,
-		AlertmanagerStore: alertmanagerstore,
+		Registry:           registry,
+		Cache:              cache,
+		Web:                web,
+		SQLStore:           sqlstore,
+		TelemetryStore:     telemetrystore,
+		AlertmanagerClient: alertmanagerService,
 	}, nil
 }

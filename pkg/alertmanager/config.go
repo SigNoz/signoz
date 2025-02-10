@@ -95,7 +95,11 @@ type NFLogConfig struct {
 	Retention time.Duration `mapstructure:"retention"`
 }
 
-func NewConfig() factory.Config {
+func NewConfigFactory() factory.ConfigFactory {
+	return factory.NewConfigFactory(factory.MustNewName("alertmanager"), newConfig)
+}
+
+func newConfig() factory.Config {
 	return Config{
 		PollInterval: 15 * time.Second,
 		ExternalUrl: &url.URL{

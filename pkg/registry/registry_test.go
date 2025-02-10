@@ -2,12 +2,13 @@ package registry
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/factory/servicetest"
-	"go.uber.org/zap"
 )
 
 func TestRegistryWith2HttpServers(t *testing.T) {
@@ -17,7 +18,7 @@ func TestRegistryWith2HttpServers(t *testing.T) {
 	http2, err := servicetest.NewHttpService("http2")
 	require.NoError(t, err)
 
-	registry, err := New(zap.NewNop(), http1, http2)
+	registry, err := New(slog.New(slog.NewTextHandler(io.Discard, nil)), http1, http2)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -41,7 +42,7 @@ func TestRegistryWith2HttpServersWithoutWait(t *testing.T) {
 	http2, err := servicetest.NewHttpService("http2")
 	require.NoError(t, err)
 
-	registry, err := New(zap.NewNop(), http1, http2)
+	registry, err := New(slog.New(slog.NewTextHandler(io.Discard, nil)), http1, http2)
 	require.NoError(t, err)
 
 	ctx := context.Background()

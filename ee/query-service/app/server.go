@@ -269,6 +269,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		GatewayUrl:                    serverOptions.GatewayUrl,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		SigNoz:                        serverOptions.SigNoz,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

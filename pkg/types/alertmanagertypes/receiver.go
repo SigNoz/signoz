@@ -15,6 +15,7 @@ import (
 )
 
 type (
+	// Receiver is the type for the receiver configuration.
 	Receiver = config.Receiver
 )
 
