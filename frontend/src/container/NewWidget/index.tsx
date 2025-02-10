@@ -369,7 +369,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 		if (isNewDashboard) {
 			const newLayoutItem = placeWidgetAtBottom(widgetId, updatedLayout);
-			console.log('newLayoutItem', newLayoutItem);
 			updatedLayout = [...updatedLayout, newLayoutItem];
 		}
 
