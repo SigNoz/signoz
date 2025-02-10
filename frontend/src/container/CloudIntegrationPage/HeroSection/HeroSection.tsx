@@ -21,7 +21,7 @@ function HeroSection(): JSX.Element {
 				<img src="/Logos/aws-dark.svg" alt="aws-logo" />
 			</div>
 			<div className="hero-section__details">
-				<div className="title">AWS Web Services</div>
+				<div className="title">Amazon Web Services</div>
 				<div className="description">
 					One-click setup for AWS monitoring with SigNoz
 				</div>

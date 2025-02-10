@@ -53,23 +53,18 @@ export function SuccessView(): JSX.Element {
 						WHAT NEXT
 					</h4>
 					<div className="what-next-items-wrapper">
-						{[
-							'Understand your AWS services with SigNoz’s out-of-the-box dashboards',
-							'Set up alerts for real-time monitoring.',
-							'Track logs and traces.',
-						].map((item) => (
-							<Alert
-								key={item}
-								message={
-									<div className="what-next-items-wrapper__item">
-										<div className="what-next-item-bullet-icon">•</div>
-										<div className="what-next-item-text">{item}</div>
+						<Alert
+							message={
+								<div className="what-next-items-wrapper__item">
+									<div className="what-next-item-bullet-icon">•</div>
+									<div className="what-next-item-text">
+										Set up your AWS services effortlessly under your enabled account.
 									</div>
-								}
-								type="info"
-								className="what-next-items-wrapper__item"
-							/>
-						))}
+								</div>
+							}
+							type="info"
+							className="what-next-items-wrapper__item"
+						/>
 					</div>
 				</div>
 			</div>

@@ -68,6 +68,8 @@ jobs:
           echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
           echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
+          echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
+          echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
       - name: Setup golang
         uses: actions/setup-go@v4
         with:

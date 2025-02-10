@@ -1,5 +1,6 @@
 import { FormInstance } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
+import { ConnectionParams } from 'types/api/integrations/aws';
 
 export enum ActiveViewEnum {
 	SELECT_REGIONS = 'select-regions',
@@ -25,9 +26,10 @@ export interface RegionFormProps {
 	accountId?: string;
 	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
+	connectionParams?: ConnectionParams;
+	isConnectionParamsLoading?: boolean;
 }
 
 export interface IntegrationModalProps {
-	isOpen: boolean;
 	onClose: () => void;
 }

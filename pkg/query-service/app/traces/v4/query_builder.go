@@ -229,7 +229,7 @@ func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
 			query = "parent_span_id = '' "
 			return query, nil
 		} else if keyName == constants.SpanSearchScopeEntryPoint {
-			query = "((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) "
+			query = "((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) AND parent_span_id != '' "
 			return query, nil
 		} else {
 			return "", fmt.Errorf("invalid scope item type: %s", item.Key.Type)
