@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
@@ -18,6 +19,16 @@ type (
 	// Receiver is the type for the receiver configuration.
 	Receiver = config.Receiver
 )
+
+func NewReceiverFromString(receiver string) (Receiver, error) {
+	receiverObj := config.Receiver{}
+	err := json.Unmarshal([]byte(receiver), &receiverObj)
+	if err != nil {
+		return Receiver{}, err
+	}
+
+	return receiverObj, nil
+}
 
 func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
 	return receiver.BuildReceiverIntegrations(nc, tmpl, logger)

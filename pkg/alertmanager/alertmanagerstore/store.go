@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrCodeAlertmanagerConfigNotFound = errors.MustNewCode("alertmanager_config_not_found")
-	ErrCodeAlertmanagerStateNotFound  = errors.MustNewCode("alertmanager_state_not_found")
+	ErrCodeAlertmanagerConfigNotFound  = errors.MustNewCode("alertmanager_config_not_found")
+	ErrCodeAlertmanagerStateNotFound   = errors.MustNewCode("alertmanager_state_not_found")
+	ErrCodeAlertmanagerChannelNotFound = errors.MustNewCode("alertmanager_channel_not_found")
 )
 
 type Store interface {
@@ -37,4 +38,7 @@ type Store interface {
 
 	// Get all channels for an organization
 	ListChannels(context.Context, string) (alertmanagertypes.Channels, error)
+
+	// Get a channel for an organization
+	GetChannel(context.Context, string, uint64) (*alertmanagertypes.Channel, error)
 }

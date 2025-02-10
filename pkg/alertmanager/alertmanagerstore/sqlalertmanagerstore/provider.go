@@ -224,3 +224,25 @@ func (provider *provider) ListChannels(ctx context.Context, orgID string) (alert
 
 	return channels, nil
 }
+
+func (provider *provider) GetChannel(ctx context.Context, orgID string, id uint64) (*alertmanagertypes.Channel, error) {
+	channel := new(alertmanagertypes.Channel)
+
+	err := provider.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(channel).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagerstore.ErrCodeAlertmanagerChannelNotFound, "cannot find channel for org %s", orgID)
+		}
+
+		return nil, err
+	}
+
+	return channel, nil
+}

@@ -18,4 +18,19 @@ type Client interface {
 
 	// TestReceiver sends a test alert to a receiver.
 	TestReceiver(context.Context, string, alertmanagertypes.Receiver) error
+
+	// CreateChannel creates a channel for the organization.
+	CreateChannel(context.Context, string, *alertmanagertypes.Channel) error
+
+	// GetChannel gets a channel for the organization.
+	GetChannel(context.Context, string, uint64) (*alertmanagertypes.Channel, error)
+
+	// DeleteChannel deletes a channel for the organization.
+	DelChannel(context.Context, string, uint64) error
+
+	// ListChannels lists all channels for the organization.
+	ListChannels(context.Context, string) (alertmanagertypes.Channels, error)
+
+	// UpdateChannel updates a channel for the organization.
+	UpdateChannel(context.Context, string, uint64, string) error
 }

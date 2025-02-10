@@ -1317,36 +1317,74 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	idVar := mux.Vars(r)["id"]
+	id, err := strconv.ParseUint(idVar, 10, 64)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	channel, err := aH.SigNoz.AlertmanagerClient.GetChannel(r.Context(), orgId, id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, channel)
 }
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	idVar := mux.Vars(r)["id"]
+	id, err := strconv.ParseUint(idVar, 10, 64)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	err = aH.SigNoz.AlertmanagerClient.DelChannel(r.Context(), orgId, id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, "notification channel successfully deleted")
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	channels, err := aH.SigNoz.AlertmanagerClient.ListChannels(r.Context(), orgId)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, channels)
 }
 
 // testChannels sends test alert to all registered channels
 func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1356,22 +1394,29 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+	receiver, err := alertmanagertypes.NewReceiverFromString(string(body))
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
-	// send alert
-	apiErrorObj := aH.alertManager.TestReceiver(receiver)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+
+	err = aH.SigNoz.AlertmanagerClient.TestReceiver(r.Context(), orgId, receiver)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
 	aH.Respond(w, "test alert sent")
 }
 
 func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
+	idVar := mux.Vars(r)["id"]
+	id, err := strconv.ParseUint(idVar, 10, 64)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	orgId, err := auth.GetOrgIdFromJwt(r.Context())
 	if err != nil {
 		render.Error(w, err)
@@ -1386,10 +1431,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.SigNoz.AlertmanagerClient.SetConfig(r.Context(), orgId, alertmanagertypes.PostableConfig{
-		Receiver: string(body),
-		Action:   alertmanagertypes.PostableConfigActionUpdate,
-	})
+	err = aH.SigNoz.AlertmanagerClient.UpdateChannel(r.Context(), orgId, id, string(body))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -1414,10 +1456,13 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.SigNoz.AlertmanagerClient.SetConfig(r.Context(), orgId, alertmanagertypes.PostableConfig{
-		Receiver: string(body),
-		Action:   alertmanagertypes.PostableConfigActionCreate,
-	})
+	channel, err := alertmanagertypes.NewChannelFromReceiverString(string(body), orgId)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	err = aH.SigNoz.AlertmanagerClient.CreateChannel(r.Context(), orgId, channel)
 	if err != nil {
 		render.Error(w, err)
 		return

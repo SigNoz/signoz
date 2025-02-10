@@ -103,24 +103,9 @@ func (ss *Servers) Start(ctx context.Context) error {
 	}
 }
 
-func (ss *Servers) SetConfig(ctx context.Context, orgID string, postableConfig alertmanagertypes.PostableConfig) error {
-	server, ok := ss.servers[orgID]
-	if !ok {
-		return errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for orgID %q", orgID)
-	}
-
-	cfg, err := ss.store.GetConfig(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	err = cfg.MergeWithPostableConfig(postableConfig)
-	if err != nil {
-		return err
-	}
-
-	if err := server.store.SetConfig(ctx, server.orgID, cfg); err != nil {
-		return err
+func (ss *Servers) Stop(ctx context.Context) error {
+	for _, server := range ss.servers {
+		server.Stop(ctx)
 	}
 
 	return nil
@@ -144,6 +129,24 @@ func (ss *Servers) PutAlerts(ctx context.Context, orgID string, alerts alertmana
 	return server.PutAlerts(ctx, alerts)
 }
 
+func (ss *Servers) SetConfig(ctx context.Context, orgID string, postableConfig alertmanagertypes.PostableConfig) error {
+	cfg, err := ss.store.GetConfig(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	err = cfg.MergeWithPostableConfig(postableConfig)
+	if err != nil {
+		return err
+	}
+
+	if err := ss.store.SetConfig(ctx, orgID, cfg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ss *Servers) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
 	server, ok := ss.servers[orgID]
 	if !ok {
@@ -153,10 +156,59 @@ func (ss *Servers) TestReceiver(ctx context.Context, orgID string, receiver aler
 	return server.TestReceiver(ctx, receiver)
 }
 
-func (ss *Servers) Stop(ctx context.Context) error {
-	for _, server := range ss.servers {
-		server.Stop(ctx)
+func (ss *Servers) CreateChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel) error {
+	receiver, err := alertmanagertypes.NewReceiverFromChannel(channel)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	return ss.SetConfig(ctx, orgID, alertmanagertypes.PostableConfig{
+		Action:   alertmanagertypes.PostableConfigActionCreate,
+		Receiver: receiver,
+	})
+}
+
+func (ss *Servers) GetChannel(ctx context.Context, orgID string, id uint64) (*alertmanagertypes.Channel, error) {
+	return ss.store.GetChannel(ctx, orgID, id)
+}
+
+func (ss *Servers) DelChannel(ctx context.Context, orgID string, id uint64) error {
+	channel, err := ss.store.GetChannel(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	receiver, err := alertmanagertypes.NewReceiverFromChannel(channel)
+	if err != nil {
+		return err
+	}
+
+	return ss.SetConfig(ctx, orgID, alertmanagertypes.PostableConfig{
+		Action:   alertmanagertypes.PostableConfigActionDelete,
+		Receiver: receiver,
+	})
+}
+
+func (ss *Servers) ListChannels(ctx context.Context, orgID string) (alertmanagertypes.Channels, error) {
+	return ss.store.ListChannels(ctx, orgID)
+}
+
+func (ss *Servers) UpdateChannel(ctx context.Context, orgID string, id uint64, data string) error {
+	existingChannel, err := ss.store.GetChannel(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	existingChannel.Data = data
+	existingChannel.UpdatedAt = time.Now()
+
+	receiver, err := alertmanagertypes.NewReceiverFromChannel(existingChannel)
+	if err != nil {
+		return err
+	}
+
+	return ss.SetConfig(ctx, orgID, alertmanagertypes.PostableConfig{
+		Action:   alertmanagertypes.PostableConfigActionUpdate,
+		Receiver: receiver,
+	})
 }

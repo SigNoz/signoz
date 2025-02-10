@@ -18,6 +18,8 @@ var (
 
 type Channels = []*Channel
 
+type GettableChannels = []*Channel
+
 // Channel represents a single receiver of the alertmanager config.
 type Channel struct {
 	bun.BaseModel `bun:"table:notification_channels"`
@@ -29,6 +31,16 @@ type Channel struct {
 	CreatedAt time.Time `json:"created_at" bun:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
 	OrgID     string    `json:"org_id" bun:"org_id"`
+}
+
+func NewChannelFromReceiverString(receiver string, orgID string) (*Channel, error) {
+	receiverObj := config.Receiver{}
+	err := json.Unmarshal([]byte(receiver), &receiverObj)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewChannelFromReceiver(receiverObj, orgID)
 }
 
 func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, error) {
@@ -84,6 +96,16 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 	}
 
 	return &channel, nil
+}
+
+func NewReceiverFromChannel(channel *Channel) (Receiver, error) {
+	receiver := Receiver{}
+	err := json.Unmarshal([]byte(channel.Data), &receiver)
+	if err != nil {
+		return Receiver{}, err
+	}
+
+	return receiver, nil
 }
 
 func NewChannelsFromConfig(c *config.Config, orgID string) Channels {

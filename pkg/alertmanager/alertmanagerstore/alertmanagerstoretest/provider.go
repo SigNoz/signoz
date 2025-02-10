@@ -83,3 +83,7 @@ func (provider *Provider) ListChannels(ctx context.Context, orgID string) (alert
 
 	return config.Channels(), nil
 }
+
+func (provider *Provider) GetChannel(ctx context.Context, orgID string, id uint64) (*alertmanagertypes.Channel, error) {
+	return nil, nil
+}

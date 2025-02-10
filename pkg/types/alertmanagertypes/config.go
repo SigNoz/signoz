@@ -31,7 +31,7 @@ var (
 
 // PostableConfig is the type for the receiver configuration that can be posted to the API.
 type PostableConfig struct {
-	Receiver string
+	Receiver Receiver
 	Action   int
 }
 
@@ -137,19 +137,13 @@ func newRawFromConfig(c *config.Config) []byte {
 }
 
 func (c *Config) MergeWithPostableConfig(postableConfig PostableConfig) error {
-	receiver := config.Receiver{}
-	err := json.Unmarshal([]byte(postableConfig.Receiver), &receiver)
-	if err != nil {
-		return err
-	}
-
 	switch postableConfig.Action {
 	case PostableConfigActionCreate:
-		return c.CreateReceiver(&config.Route{Receiver: receiver.Name, Continue: true}, receiver)
+		return c.CreateReceiver(&config.Route{Receiver: postableConfig.Receiver.Name, Continue: true}, postableConfig.Receiver)
 	case PostableConfigActionUpdate:
-		return c.UpdateReceiver(&config.Route{Receiver: receiver.Name, Continue: true}, receiver)
+		return c.UpdateReceiver(&config.Route{Receiver: postableConfig.Receiver.Name, Continue: true}, postableConfig.Receiver)
 	case PostableConfigActionDelete:
-		return c.DeleteReceiver(receiver.Name)
+		return c.DeleteReceiver(postableConfig.Receiver.Name)
 	default:
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "invalid action")
 	}
