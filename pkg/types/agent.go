@@ -8,7 +8,7 @@ import (
 
 type Agent struct {
 	bun.BaseModel   `bun:"table:agents"`
-	AgentID         string     `bun:"agent_id,pk,type:text,unique"`
+	AgentID         string     `bun:"agent_id,pk,type:text"`
 	StartedAt       time.Time  `bun:"started_at,type:datetime,notnull"`
 	TerminatedAt    *time.Time `bun:"terminated_at,type:datetime"`
 	CurrentStatus   string     `bun:"current_status,type:text,notnull"`
