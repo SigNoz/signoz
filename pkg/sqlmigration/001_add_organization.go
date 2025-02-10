@@ -112,7 +112,7 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:user_flags"`
-			UserID        string `bun:"user_id,type:text,notnull"`
+			UserID        string `bun:"user_id,pk,type:text,notnull"`
 			Flags         string `bun:"flags,type:text"`
 		}{}).
 		ForeignKey(`("user_id") REFERENCES "users" ("id")`).

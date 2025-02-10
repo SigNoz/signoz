@@ -56,7 +56,7 @@ type ResetPasswordRequest struct {
 
 type UserFlags struct {
 	bun.BaseModel `bun:"table:user_flags"`
-	UserID        string `bun:"user_id,type:text,notnull"`
+	UserID        string `bun:"user_id,pk,type:text,notnull"`
 	Flags         string `bun:"flags,type:text"`
 }
 

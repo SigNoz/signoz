@@ -45,9 +45,9 @@ func (migration *addPreferences) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel   `bun:"table:org_preference"`
-			PreferenceID    string `bun:"preference_id,type:text,notnull"`
+			PreferenceID    string `bun:"preference_id,pk,type:text,notnull"`
 			PreferenceValue string `bun:"preference_value,type:text,notnull"`
-			OrgID           string `bun:"org_id,type:text,notnull"`
+			OrgID           string `bun:"org_id,pk,type:text,notnull"`
 		}{}).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
 		IfNotExists().
