@@ -20,14 +20,13 @@ type Organization struct {
 type Invite struct {
 	bun.BaseModel `bun:"table:invites"`
 
-	ID        int           `bun:"id,pk,autoincrement"`
-	Name      string        `bun:"name,type:text,notnull"`
-	Email     string        `bun:"email,type:text,notnull,unique"`
-	Token     string        `bun:"token,type:text,notnull"`
-	CreatedAt int           `bun:"created_at,notnull"`
-	Role      string        `bun:"role,type:text,notnull"`
-	OrgID     string        `bun:"org_id,type:text,notnull"`
-	Org       *Organization `bun:"rel:belongs-to,join:org_id=id"`
+	ID        int    `bun:"id,pk,autoincrement"`
+	Name      string `bun:"name,type:text,notnull"`
+	Email     string `bun:"email,type:text,notnull,unique"`
+	Token     string `bun:"token,type:text,notnull"`
+	CreatedAt int    `bun:"created_at,notnull"`
+	Role      string `bun:"role,type:text,notnull"`
+	OrgID     string `bun:"org_id,type:text,notnull"`
 }
 
 type Group struct {
@@ -38,16 +37,14 @@ type Group struct {
 
 type User struct {
 	bun.BaseModel     `bun:"table:users"`
-	ID                string        `bun:"id,pk,type:text"`
-	Name              string        `bun:"name,type:text,notnull"`
-	Email             string        `bun:"email,type:text,notnull,unique"`
-	Password          string        `bun:"password,type:text,notnull"`
-	CreatedAt         int           `bun:"created_at,notnull"`
-	ProfilePictureURL string        `bun:"profile_picture_url,type:text"`
-	GroupID           string        `bun:"group_id,type:text,notnull"`
-	Group             *Group        `bun:"rel:belongs-to,join:group_id=id"`
-	OrgID             string        `bun:"org_id,type:text,notnull"`
-	Org               *Organization `bun:"rel:belongs-to,join:org_id=id"`
+	ID                string `bun:"id,pk,type:text"`
+	Name              string `bun:"name,type:text,notnull"`
+	Email             string `bun:"email,type:text,notnull,unique"`
+	Password          string `bun:"password,type:text,notnull"`
+	CreatedAt         int    `bun:"created_at,notnull"`
+	ProfilePictureURL string `bun:"profile_picture_url,type:text"`
+	GroupID           string `bun:"group_id,type:text,notnull"`
+	OrgID             string `bun:"org_id,type:text,notnull"`
 }
 
 type ResetPasswordRequest struct {
@@ -55,13 +52,11 @@ type ResetPasswordRequest struct {
 	ID            int    `bun:"id,pk,autoincrement"`
 	Token         string `bun:"token,type:text,notnull"`
 	UserID        string `bun:"user_id,type:text,notnull"`
-	User          *User  `bun:"rel:belongs-to,join:user_id=id"`
 }
 
 type UserFlags struct {
 	bun.BaseModel `bun:"table:user_flags"`
 	UserID        string `bun:"user_id,type:text,notnull"`
-	User          *User  `bun:"rel:belongs-to,join:user_id=id"`
 	Flags         string `bun:"flags,type:text"`
 }
 

@@ -12,7 +12,6 @@ type PersonalAccessToken struct {
 	ID              int    `bun:"id,pk,autoincrement"`
 	Role            string `bun:"role,type:text,notnull,default:'ADMIN'"`
 	UserID          string `bun:"user_id,type:text,notnull"`
-	User            *User  `bun:"rel:belongs-to,join:user_id=id"`
 	Token           string `bun:"token,type:text,notnull,unique"`
 	Name            string `bun:"name,type:text,notnull"`
 	CreatedAt       int    `bun:"created_at,notnull,default:0"`
@@ -26,11 +25,10 @@ type PersonalAccessToken struct {
 type OrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
-	ID        string        `bun:"id,pk,type:text"`
-	OrgID     string        `bun:"org_id,type:text,notnull"`
-	Name      string        `bun:"name,type:varchar(50),notnull,unique"`
-	CreatedAt time.Time     `bun:"created_at,notnull"`
-	UpdatedAt *time.Time    `bun:"updated_at,type:timestamp"`
-	Data      string        `bun:"data,type:text,notnull"`
-	Org       *Organization `bun:"rel:belongs-to,join:org_id=id"`
+	ID        string     `bun:"id,pk,type:text"`
+	OrgID     string     `bun:"org_id,type:text,notnull"`
+	Name      string     `bun:"name,type:varchar(50),notnull,unique"`
+	CreatedAt time.Time  `bun:"created_at,notnull"`
+	UpdatedAt *time.Time `bun:"updated_at,type:timestamp"`
+	Data      string     `bun:"data,type:text,notnull"`
 }

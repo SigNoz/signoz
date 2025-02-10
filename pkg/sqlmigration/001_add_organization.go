@@ -7,7 +7,6 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 type addOrganization struct{}
@@ -61,17 +60,17 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel     `bun:"table:users"`
-			ID                string              `bun:"id,pk,type:text"`
-			Name              string              `bun:"name,type:text,notnull"`
-			Email             string              `bun:"email,type:text,notnull,unique"`
-			Password          string              `bun:"password,type:text,notnull"`
-			CreatedAt         int                 `bun:"created_at,notnull"`
-			ProfilePictureURL string              `bun:"profile_picture_url,type:text"`
-			GroupID           string              `bun:"group_id,type:text,notnull"`
-			Group             *types.Group        `bun:"rel:belongs-to,join:group_id=id"`
-			OrgID             string              `bun:"org_id,type:text,notnull"`
-			Org               *types.Organization `bun:"rel:belongs-to,join:org_id=id"`
+			ID                string `bun:"id,pk,type:text"`
+			Name              string `bun:"name,type:text,notnull"`
+			Email             string `bun:"email,type:text,notnull,unique"`
+			Password          string `bun:"password,type:text,notnull"`
+			CreatedAt         int    `bun:"created_at,notnull"`
+			ProfilePictureURL string `bun:"profile_picture_url,type:text"`
+			GroupID           string `bun:"group_id,type:text,notnull"`
+			OrgID             string `bun:"org_id,type:text,notnull,"`
 		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		ForeignKey(`("group_id") REFERENCES "groups" ("id")`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
@@ -81,15 +80,15 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:invites"`
-			ID            int                 `bun:"id,pk,autoincrement"`
-			Name          string              `bun:"name,type:text,notnull"`
-			Email         string              `bun:"email,type:text,notnull,unique"`
-			Token         string              `bun:"token,type:text,notnull"`
-			CreatedAt     int                 `bun:"created_at,notnull"`
-			Role          string              `bun:"role,type:text,notnull"`
-			OrgID         string              `bun:"org_id,type:text,notnull"`
-			Org           *types.Organization `bun:"rel:belongs-to,join:org_id=id"`
+			ID            int    `bun:"id,pk,autoincrement"`
+			Name          string `bun:"name,type:text,notnull"`
+			Email         string `bun:"email,type:text,notnull,unique"`
+			Token         string `bun:"token,type:text,notnull"`
+			CreatedAt     int    `bun:"created_at,notnull"`
+			Role          string `bun:"role,type:text,notnull"`
+			OrgID         string `bun:"org_id,type:text,notnull"`
 		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
@@ -99,11 +98,11 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:reset_password_request"`
-			ID            int         `bun:"id,pk,autoincrement"`
-			Token         string      `bun:"token,type:text,notnull"`
-			UserID        string      `bun:"user_id,type:text,notnull"`
-			User          *types.User `bun:"rel:belongs-to,join:user_id=id"`
+			ID            int    `bun:"id,pk,autoincrement"`
+			Token         string `bun:"token,type:text,notnull"`
+			UserID        string `bun:"user_id,type:text,notnull"`
 		}{}).
+		ForeignKey(`("user_id") REFERENCES "users" ("id")`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
@@ -113,10 +112,10 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:user_flags"`
-			UserID        string      `bun:"user_id,type:text,notnull"`
-			User          *types.User `bun:"rel:belongs-to,join:user_id=id"`
-			Flags         string      `bun:"flags,type:text"`
+			UserID        string `bun:"user_id,type:text,notnull"`
+			Flags         string `bun:"flags,type:text"`
 		}{}).
+		ForeignKey(`("user_id") REFERENCES "users" ("id")`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err

@@ -6,7 +6,6 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 type addPreferences struct{}
@@ -32,12 +31,12 @@ func (migration *addPreferences) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel   `bun:"table:user_preference"`
-			PreferenceID    string      `bun:"preference_id,type:text,pk"`
-			PreferenceValue string      `bun:"preference_value,type:text"`
-			UserID          string      `bun:"user_id,type:text,pk"`
-			User            *types.User `bun:"rel:belongs-to,join:user_id=id,pk,on_delete:CASCADE,on_update:CASCADE"`
+			PreferenceID    string `bun:"preference_id,type:text,pk"`
+			PreferenceValue string `bun:"preference_value,type:text"`
+			UserID          string `bun:"user_id,type:text,pk"`
 		}{}).
 		IfNotExists().
+		ForeignKey(`("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -46,11 +45,11 @@ func (migration *addPreferences) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel   `bun:"table:org_preference"`
-			PreferenceID    string              `bun:"preference_id,type:text,notnull"`
-			PreferenceValue string              `bun:"preference_value,type:text,notnull"`
-			OrgID           string              `bun:"org_id,type:text,notnull"`
-			Org             *types.Organization `bun:"rel:belongs-to,join:org_id=id,pk,on_delete:CASCADE,on_update:CASCADE"`
+			PreferenceID    string `bun:"preference_id,type:text,notnull"`
+			PreferenceValue string `bun:"preference_value,type:text,notnull"`
+			OrgID           string `bun:"org_id,type:text,notnull"`
 		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
