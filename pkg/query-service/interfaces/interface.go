@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
@@ -113,6 +115,17 @@ type Reader interface {
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
+
+	GetMetricsCardinalityPercentage(ctx context.Context, request *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.CardinalityTreemap, *model.ApiError)
+	GetMetricsDataPointsPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.DataPointTreemap, *model.ApiError)
+	GetMetricsDataPointsAndLastReceived(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError)
+	GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, uint64, *model.ApiError)
+	GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError)
+	GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError)
+	GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError)
+	GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError)
+	GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest, skipDotNames bool) (*[]v3.AttributeKey, *model.ApiError)
+	ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError)
 }
 
 type Querier interface {
