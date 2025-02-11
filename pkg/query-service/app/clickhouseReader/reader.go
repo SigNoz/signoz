@@ -1184,7 +1184,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1332,7 +1332,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -5309,4 +5309,90 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 		response = append(response, key)
 	}
 	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError) {
+	query := fmt.Sprintf("SELECT COUNT(*) AS data_points, MAX(unix_milli) AS last_received_time FROM %s.%s WHERE metric_name = ?", signozMetricDBName, signozSampleTableName)
+	var lastRecievedTimestamp int64 // Changed from uint64 to int64
+	var dataPoints uint64
+	err := r.db.QueryRow(ctx, query, metricName).Scan(&dataPoints, &lastRecievedTimestamp)
+	if err != nil {
+		return 0, 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return dataPoints, uint64(lastRecievedTimestamp), nil // Convert to uint64 before returning
+}
+
+func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, uint64, *model.ApiError) {
+	query := fmt.Sprintf("SELECT count(*), uniq(labels), count(distinct fingerprint) AS cardinality FROM %s.%s WHERE metric_name = '%s'", signozMetricDBName, signozTSTableNameV4, metricName)
+	var timeSeriesCount uint64
+	var cardinality uint64
+	var fingerprint uint64
+	err := r.db.QueryRow(ctx, query).Scan(&timeSeriesCount, &cardinality, &fingerprint)
+	if err != nil {
+		return 0, 0, 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return timeSeriesCount, cardinality, fingerprint, nil
+}
+
+func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
+	milli := time.Now().Add(-duration).UnixMilli()
+	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozSampleTableName, metricName)
+	var timeSeries uint64
+	// Using QueryRow instead of Select since we're only expecting a single value
+	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
+	if err != nil {
+		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return timeSeries, nil
+}
+
+func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError) {
+	query := fmt.Sprintf(`
+        SELECT 
+            kv.1 AS key, 
+            groupUniqArray(kv.2) AS value, 
+            1 / log2(1 + length(groupUniqArray(kv.2))) AS contribution 
+        FROM %s.%s
+        ARRAY JOIN arrayZip(
+            JSONExtractKeys(labels),
+            arrayMap(k -> JSONExtractString(labels, k), JSONExtractKeys(labels))
+        ) AS kv
+        WHERE 
+            metric_name = ?
+            AND NOT startsWith(kv.1, '__')
+        GROUP BY kv.1
+        ORDER BY contribution DESC;
+    `, signozMetricDBName, signozTSLocalTableNameV4)
+
+	rows, err := r.db.Query(ctx, query, metricName)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close() // Ensure the rows are closed
+
+	var attributesList []metrics_explorer.Attribute
+	for rows.Next() {
+		var key string
+		var value []string
+		var contribution float64
+
+		// Manually scan each value into its corresponding variable
+		if err := rows.Scan(&key, &value, &contribution); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+
+		// Append the scanned values into the struct
+		attributesList = append(attributesList, metrics_explorer.Attribute{
+			Key:          key,
+			Value:        value,
+			Contribution: contribution,
+		})
+	}
+
+	// Handle any errors encountered while scanning rows
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+
+	return &attributesList, nil
 }

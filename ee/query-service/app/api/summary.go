@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 
@@ -46,4 +47,16 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	aH.Respond(w, values)
+}
+
+func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) {
+	metricName := mux.Vars(r)["metric_name"]
+	ctx := r.Context()
+	metricsDetail, apiError := aH.APIHandler.SummaryService.GetMetricsSummary(ctx, metricName)
+	if apiError != nil {
+		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	aH.Respond(w, metricsDetail)
 }
