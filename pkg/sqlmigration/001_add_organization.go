@@ -67,7 +67,7 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 			CreatedAt         int    `bun:"created_at,notnull"`
 			ProfilePictureURL string `bun:"profile_picture_url,type:text"`
 			GroupID           string `bun:"group_id,type:text,notnull"`
-			OrgID             string `bun:"org_id,type:text,notnull,"`
+			OrgID             string `bun:"org_id,type:text,notnull"`
 		}{}).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		ForeignKey(`("group_id") REFERENCES "groups" ("id")`).
