@@ -3738,7 +3738,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 		}
 
 		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-			ctx, connectionTests.Metrics,
+			ctx, connectionTests.Metrics, nil,
 		)
 
 		resultLock.Lock()
@@ -4104,12 +4104,227 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
 		r.Context(), cloudProvider, serviceId, cloudAccountId,
 	)
-
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
+
+	// Add connection status for the 2 signals.
+	if cloudAccountId != nil {
+		connStatus, apiErr := aH.calculateCloudIntegrationServiceConnectionStatus(
+			r.Context(), cloudProvider, *cloudAccountId, resp,
+		)
+		if apiErr != nil {
+			RespondError(w, apiErr, nil)
+			return
+		}
+		resp.ConnectionStatus = connStatus
+	}
+
 	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
+	ctx context.Context,
+	cloudProvider string,
+	cloudAccountId string,
+	svcDetails *cloudintegrations.CloudServiceDetails,
+) (*cloudintegrations.CloudServiceConnectionStatus, *model.ApiError) {
+	if cloudProvider != "aws" {
+		// TODO(Raj): Make connection check generic for all providers in a follow up change
+		return nil, model.BadRequest(
+			fmt.Errorf("unsupported cloud provider: %s", cloudProvider),
+		)
+	}
+
+	telemetryCollectionStrategy := svcDetails.TelemetryCollectionStrategy
+	if telemetryCollectionStrategy == nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
+		))
+	}
+
+	result := &cloudintegrations.CloudServiceConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
+
+	var wg sync.WaitGroup
+
+	// Calculate metrics connection status
+	if telemetryCollectionStrategy.AWSMetrics != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			metricsConnStatus, apiErr := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
+				ctx, cloudAccountId, telemetryCollectionStrategy.AWSMetrics, svcDetails.DataCollected.Metrics,
+			)
+
+			resultLock.Lock()
+			defer resultLock.Unlock()
+
+			if apiErr != nil {
+				errors = append(errors, apiErr)
+			} else {
+				result.Metrics = metricsConnStatus
+			}
+		}()
+	}
+
+	// Calculate logs connection status
+	if telemetryCollectionStrategy.AWSLogs != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
+				ctx, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
+			)
+
+			resultLock.Lock()
+			defer resultLock.Unlock()
+
+			if apiErr != nil {
+				errors = append(errors, apiErr)
+			} else {
+				result.Logs = logsConnStatus
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return result, nil
+
+}
+func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
+	ctx context.Context,
+	cloudAccountId string,
+	strategy *cloudintegrations.AWSMetricsCollectionStrategy,
+	metricsCollectedBySvc []cloudintegrations.CollectedMetric,
+) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
+	if strategy == nil || len(strategy.CloudwatchMetricsStreamFilters) < 1 {
+		return nil, nil
+	}
+
+	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
+	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
+	if len(metricsNamespaceParts) < 2 {
+		return nil, model.InternalError(fmt.Errorf(
+			"unexpected metric namespace: %s", metricsNamespace,
+		))
+	}
+
+	expectedLabelValues := map[string]string{
+		"cloud_provider":    "aws",
+		"cloud_account_id":  cloudAccountId,
+		"service_namespace": metricsNamespaceParts[0],
+		"service_name":      metricsNamespaceParts[1],
+	}
+
+	metricNamesCollectedBySvc := []string{}
+	for _, cm := range metricsCollectedBySvc {
+		metricNamesCollectedBySvc = append(metricNamesCollectedBySvc, cm.Name)
+	}
+
+	statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
+		ctx, metricNamesCollectedBySvc, expectedLabelValues,
+	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	if statusForLastReceivedMetric != nil {
+		return &cloudintegrations.SignalConnectionStatus{
+			LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+			LastReceivedFrom:     "signoz-aws-integration",
+		}, nil
+	}
+
+	return nil, nil
+}
+
+func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
+	ctx context.Context,
+	cloudAccountId string,
+	strategy *cloudintegrations.AWSLogsCollectionStrategy,
+) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
+	if strategy == nil || len(strategy.CloudwatchLogsSubscriptions) < 1 {
+		return nil, nil
+	}
+
+	logGroupNamePrefix := strategy.CloudwatchLogsSubscriptions[0].LogGroupNamePrefix
+	if len(logGroupNamePrefix) < 1 {
+		return nil, nil
+	}
+
+	logsConnTestFilter := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "cloud.account.id",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+				Operator: "=",
+				Value:    cloudAccountId,
+			},
+			{
+				Key: v3.AttributeKey{
+					Key:      "aws.cloudwatch.log_group_name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+				Operator: "like",
+				Value:    logGroupNamePrefix + "%",
+			},
+		},
+	}
+
+	// TODO(Raj): Receive this as a param from UI in the future.
+	lookbackSeconds := int64(30 * 60)
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnTestFilter,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, _, err := aH.querier.QueryRange(
+		ctx, qrParams,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		return &cloudintegrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     "signoz-aws-integration",
+		}, nil
+	}
+
+	return nil, nil
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(

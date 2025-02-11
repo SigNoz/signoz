@@ -12,6 +12,7 @@ import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { filterOutPrimaryFilters } from '../utils';
 import EntityLogs from './EntityLogs';
 
 interface Props {
@@ -58,14 +59,14 @@ function EntityLogsDetailedView({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: [],
+							items: filterOutPrimaryFilters(logFilters.items, queryKeyFilters),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, logFilters.items, queryKeyFilters],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;

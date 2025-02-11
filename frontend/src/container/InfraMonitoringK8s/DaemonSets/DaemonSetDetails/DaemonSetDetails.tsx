@@ -155,13 +155,9 @@ function DaemonSetDetails({
 		[daemonSet?.meta.k8s_daemonset_name],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
@@ -175,8 +171,7 @@ function DaemonSetDetails({
 	}, []);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -231,7 +226,7 @@ function DaemonSetDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DAEMON_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
@@ -264,7 +259,7 @@ function DaemonSetDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DAEMON_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
@@ -344,8 +339,8 @@ function DaemonSetDetails({
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logAndTracesFilters,
+				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -379,7 +374,7 @@ function DaemonSetDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logAndTracesFilters,
 						},
 					],
 				},
@@ -556,7 +551,7 @@ function DaemonSetDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							category={K8sCategory.DAEMONSETS}
 							queryKey="daemonsetLogs"
@@ -572,9 +567,13 @@ function DaemonSetDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="daemonsetTraces"
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_DAEMON_SET_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

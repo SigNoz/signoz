@@ -24,7 +24,9 @@ function Header(): JSX.Element {
 						},
 						{
 							title: (
-								<div className="cloud-header__breadcrumb-title">AWS web services</div>
+								<div className="cloud-header__breadcrumb-title">
+									Amazon Web Services
+								</div>
 							),
 						},
 					]}

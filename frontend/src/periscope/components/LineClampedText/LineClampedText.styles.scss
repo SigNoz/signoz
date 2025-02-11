@@ -1,6 +1,10 @@
-.line-clamped-text {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	text-overflow: ellipsis;
+.line-clamped-wrapper {
+	max-height: 300px;
+	overflow-y: auto;
+	&__text {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 }

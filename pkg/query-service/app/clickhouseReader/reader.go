@@ -49,6 +49,7 @@ import (
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/metrics"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
@@ -3794,11 +3795,16 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
+	names := []string{req.AggregateAttribute}
+	if _, ok := metrics.MetricsUnderTransition[req.AggregateAttribute]; ok {
+		names = append(names, metrics.MetricsUnderTransition[req.AggregateAttribute])
+	}
+
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -3896,27 +3902,46 @@ func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (
 }
 
 func (r *ClickHouseReader) GetLatestReceivedMetric(
-	ctx context.Context, metricNames []string,
+	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
+	// at least 1 metric name must be specified.
+	// this query can be too slow otherwise.
 	if len(metricNames) < 1 {
-		return nil, nil
+		return nil, model.BadRequest(fmt.Errorf("atleast 1 metric name must be specified"))
 	}
 
 	quotedMetricNames := []string{}
 	for _, m := range metricNames {
-		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
+		quotedMetricNames = append(quotedMetricNames, utils.ClickHouseFormattedValue(m))
 	}
 	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
 
+	whereClauseParts := []string{
+		fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
+	}
+
+	if labelValues != nil {
+		for label, val := range labelValues {
+			whereClauseParts = append(
+				whereClauseParts,
+				fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
+			)
+		}
+	}
+
+	if len(whereClauseParts) < 1 {
+		return nil, nil
+	}
+
+	whereClause := strings.Join(whereClauseParts, " AND ")
+
 	query := fmt.Sprintf(`
-		SELECT metric_name, labels, unix_milli
+		SELECT metric_name, anyLast(labels), max(unix_milli)
 		from %s.%s
-		where metric_name in (
-			%s
-		)
-		order by unix_milli desc
+		where %s
+		group by metric_name
 		limit 1
-		`, signozMetricDBName, signozTSTableNameV4, commaSeparatedMetricNames,
+		`, signozMetricDBName, signozTSTableNameV4, whereClause,
 	)
 
 	rows, err := r.db.Query(ctx, query)
