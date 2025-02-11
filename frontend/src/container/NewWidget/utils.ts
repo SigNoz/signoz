@@ -10,7 +10,7 @@ import {
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
-import { cloneDeep, isEmpty, isEqual, set, unset } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
 import { Layout } from 'react-grid-layout';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -611,7 +611,7 @@ export const placeWidgetAtBottom = (
 		);
 
 		// If there's enough space for a 6-width widget
-		if (maxXInLastRow + 6 <= 12) {
+		if (maxXInLastRow + defaultTo(widgetWidth, 6) <= 12) {
 			return {
 				i: widgetId,
 				x: maxXInLastRow,
