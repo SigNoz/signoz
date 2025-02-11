@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"io"
 	"math"
 	"net/http"
@@ -126,6 +127,8 @@ type APIHandler struct {
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
 
+	SummaryService *metricsexplorer.SummaryService
+
 	pvcsRepo *inframetrics.PvcsRepo
 }
 
@@ -211,6 +214,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
+	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -241,6 +246,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
+		SummaryService:                summaryService,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
