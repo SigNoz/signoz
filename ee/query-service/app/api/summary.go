@@ -81,3 +81,23 @@ func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 	aH.Respond(w, slmr)
 }
+
+func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, _ := io.ReadAll(r.Body)
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	ctx := r.Context()
+	params, apiError := explorer.ParseTreeMapMetricsParams(r)
+	if apiError != nil {
+		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	result, apiError := aH.APIHandler.SummaryService.GetMetricsTreemap(ctx, params)
+	if apiError != nil {
+		zap.L().Error("error getting heatmap data", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	aH.Respond(w, result)
+
+}

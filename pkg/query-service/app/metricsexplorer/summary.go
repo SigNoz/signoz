@@ -200,3 +200,25 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 func (receiver *SummaryService) ListMetricsWithSummary(ctx context.Context, params *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	return receiver.reader.ListSummaryMetrics(ctx, params)
 }
+
+func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *metrics_explorer.TreeMapMetricsRequest) (*metrics_explorer.TreeMap, *model.ApiError) {
+	var response metrics_explorer.TreeMap
+	switch params.Treemap {
+	case metrics_explorer.CardinalityTreeMap:
+		cardinality, apiError := receiver.reader.GetMetricsCardinalityPercentage(ctx, params)
+		if apiError != nil {
+			return nil, apiError
+		}
+		response.Cardinality = *cardinality
+		return &response, nil
+	case metrics_explorer.DataPointsTreeMap:
+		dataPoints, apiError := receiver.reader.GetMetricsDataPointsPercentage(ctx, params)
+		if apiError != nil {
+			return nil, apiError
+		}
+		response.DataPoints = *dataPoints
+		return &response, nil
+	default:
+		return nil, nil
+	}
+}
