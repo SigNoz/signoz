@@ -5334,18 +5334,6 @@ func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, 
 	return timeSeriesCount, cardinality, fingerprint, nil
 }
 
-func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
-	milli := time.Now().Add(-duration).UnixMilli()
-	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozSampleTableName, metricName)
-	var timeSeries uint64
-	// Using QueryRow instead of Select since we're only expecting a single value
-	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
-	if err != nil {
-		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
-	}
-	return timeSeries, nil
-}
-
 func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError) {
 	query := fmt.Sprintf(`
         SELECT 
@@ -5395,4 +5383,16 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 	}
 
 	return &attributesList, nil
+}
+
+func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
+	milli := time.Now().Add(-duration).UnixMilli()
+	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozSampleTableName, metricName)
+	var timeSeries uint64
+	// Using QueryRow instead of Select since we're only expecting a single value
+	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
+	if err != nil {
+		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return timeSeries, nil
 }
