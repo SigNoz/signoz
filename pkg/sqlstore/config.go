@@ -11,6 +11,13 @@ type Config struct {
 	Connection ConnectionConfig `mapstructure:",squash"`
 	// Sqlite is the sqlite configuration.
 	Sqlite SqliteConfig `mapstructure:"sqlite"`
+	// Postgres is the postgres configuration.
+	Postgres PostgresConfig `mapstructure:"postgres"`
+}
+
+type PostgresConfig struct {
+	// DSN is the database source name.
+	DSN string `mapstructure:"dsn"`
 }
 
 type SqliteConfig struct {

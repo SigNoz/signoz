@@ -39,26 +39,19 @@ func (migration *modifyDatetime) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
-	tables := []string{"dashboards", "rules", "planned_maintenance", "ttl_status"}
+	tables := []string{"dashboards", "rules", "planned_maintenance", "ttl_status", "saved_views"}
 	columns := []string{"created_at", "updated_at"}
 	for _, table := range tables {
 		for _, column := range columns {
-			// rename old column
-			if _, err := db.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
+			if err := modifyColumn(ctx, tx, table, column); err != nil {
 				return err
 			}
-			// create a new column
-			if _, err := db.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` TIMESTAMP NOT NULL`); err != nil {
-				return err
-			}
-			// update the new column with the value of the old column
-			if _, err := db.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = `+column+`_old`); err != nil {
-				return err
-			}
-			// drop the old column
-			if _, err := db.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
-				return err
-			}
+		}
+	}
+
+	for _, column := range []string{"started_at", "terminated_at"} {
+		if err := modifyColumn(ctx, tx, "agents", column); err != nil {
+			return err
 		}
 	}
 
@@ -66,6 +59,29 @@ func (migration *modifyDatetime) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
+	return nil
+}
+
+func modifyColumn(ctx context.Context, tx bun.Tx, table string, column string) error {
+	// rename old column
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
+		return err
+	}
+
+	// cannot add not null constraint to the column
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` TIMESTAMP`); err != nil {
+		return err
+	}
+
+	// update the new column with the value of the old column
+	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = `+column+`_old`); err != nil {
+		return err
+	}
+
+	// drop the old column
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
+		return err
+	}
 	return nil
 }
 
