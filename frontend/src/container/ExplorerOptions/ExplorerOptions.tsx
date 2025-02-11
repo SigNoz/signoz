@@ -25,7 +25,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
+} from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -37,7 +40,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { cloneDeep, isEqual, omit } from 'lodash-es';
 import {
 	Check,
 	ConciergeBell,
@@ -46,6 +49,7 @@ import {
 	Plus,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import {
 	CSSProperties,
 	Dispatch,
@@ -56,15 +60,12 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 import { PreservedViewsTypes } from './constants';
@@ -114,6 +115,7 @@ function ExplorerOptions({
 		panelType,
 		isStagedQueryUpdated,
 		redirectWithQueryBuilderData,
+		isDefaultQuery,
 	} = useQueryBuilder();
 
 	const handleSaveViewModalToggle = (): void => {
@@ -133,7 +135,7 @@ function ExplorerOptions({
 		setIsSaveModalOpen(false);
 	};
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const handleConditionalQueryModification = useCallback((): string => {
 		if (
@@ -257,13 +259,17 @@ function ExplorerOptions({
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const { options, handleOptionsChange } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		storageKey:
+			sourcepage === DataSource.TRACES
+				? LOCALSTORAGE.TRACES_LIST_OPTIONS
+				: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: sourcepage,
 		aggregateOperator: StringOperators.NOOP,
 	});
 
 	type ExtraData = {
 		selectColumns?: BaseAutocompleteData[];
+		version?: number;
 	};
 
 	const updateOrRestoreSelectColumns = (
@@ -284,14 +290,20 @@ function ExplorerOptions({
 			console.error('Error parsing extraData:', error);
 		}
 
+		let backwardCompatibleOptions = options;
+
+		if (!extraData?.version) {
+			backwardCompatibleOptions = omit(options, 'version');
+		}
+
 		if (extraData.selectColumns?.length) {
 			handleOptionsChange({
-				...options,
+				...backwardCompatibleOptions,
 				selectColumns: extraData.selectColumns,
 			});
 		} else if (!isEqual(defaultTraceSelectedColumns, options.selectColumns)) {
 			handleOptionsChange({
-				...options,
+				...backwardCompatibleOptions,
 				selectColumns: defaultTraceSelectedColumns,
 			});
 		}
@@ -399,6 +411,14 @@ function ExplorerOptions({
 	const handleClearSelect = (): void => {
 		removeCurrentViewFromLocalStorage();
 
+		handleOptionsChange({
+			...options,
+			selectColumns:
+				sourcepage === DataSource.TRACES
+					? defaultTraceSelectedColumns
+					: defaultLogsSelectedColumns,
+		});
+
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
@@ -424,6 +444,7 @@ function ExplorerOptions({
 			extraData: JSON.stringify({
 				color,
 				selectColumns: options.selectColumns,
+				version: 1,
 			}),
 			notifications,
 			panelType: panelType || PANEL_TYPES.LIST,
@@ -472,7 +493,7 @@ function ExplorerOptions({
 		}
 	};
 
-	const isEditDeleteSupported = allowedRoles.includes(role as string);
+	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
 	const [
 		isRecentlyUsedSavedViewSelected,
@@ -480,6 +501,11 @@ function ExplorerOptions({
 	] = useState(false);
 
 	useEffect(() => {
+		// If the query is not the default query, don't set the recently used saved view
+		if (!isDefaultQuery({ currentQuery, sourcePage: sourcepage })) {
+			return;
+		}
+
 		const parsedPreservedView = JSON.parse(
 			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
 		);
@@ -501,12 +527,18 @@ function ExplorerOptions({
 			setIsRecentlyUsedSavedViewSelected(false);
 		}
 
-		return (): void => clearTimeout(timeoutId);
+		// eslint-disable-next-line consistent-return
+		return (): void => {
+			clearTimeout(timeoutId);
+		};
 	}, [
 		PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 		PRESERVED_VIEW_TYPE,
+		currentQuery,
+		isDefaultQuery,
 		isRecentlyUsedSavedViewSelected,
 		onMenuItemSelectHandler,
+		sourcepage,
 		viewKey,
 		viewName,
 		viewsData?.data?.data,

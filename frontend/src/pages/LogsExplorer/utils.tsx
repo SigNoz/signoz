@@ -1,7 +1,7 @@
 import {
 	FiltersType,
 	IQuickFiltersConfig,
-} from 'components/QuickFilters/QuickFilters';
+} from 'components/QuickFilters/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -103,6 +103,18 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		title: 'K8s Namespace Name',
 		attributeKey: {
 			key: 'k8s.namespace.name',
+			dataType: DataTypes.String,
+			type: 'resource',
+			isColumn: false,
+			isJSON: false,
+		},
+		defaultOpen: false,
+	},
+	{
+		type: FiltersType.CHECKBOX,
+		title: 'K8s Pod Name',
+		attributeKey: {
+			key: 'k8s.pod.name',
 			dataType: DataTypes.String,
 			type: 'resource',
 			isColumn: false,

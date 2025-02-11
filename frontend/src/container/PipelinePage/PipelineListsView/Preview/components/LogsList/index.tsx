@@ -3,6 +3,7 @@ import './styles.scss';
 import { ExpandAltOutlined } from '@ant-design/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
@@ -27,7 +28,7 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 					<div className="logs-preview-list-item-timestamp">
 						{formatTimezoneAdjustedTimestamp(
 							log.timestamp,
-							'MMM DD HH:mm:ss.SSS (UTC Z)',
+							DATE_TIME_FORMATS.UTC_MONTH_SHORT,
 						)}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>

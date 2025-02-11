@@ -11,7 +11,7 @@ import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isArray, isEqual } from 'lodash-es';
+import { isArray, isEmpty, isEqual } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
@@ -189,7 +189,7 @@ export function Filter(props: FilterProps): JSX.Element {
 							...item.filters,
 							items: props?.resetAll
 								? []
-								: (unionTagFilterItems(item.filters.items, preparePostData())
+								: (unionTagFilterItems(item.filters?.items, preparePostData())
 										.map((item) =>
 											item.key?.key === props?.clearByType ? undefined : item,
 										)
@@ -198,10 +198,14 @@ export function Filter(props: FilterProps): JSX.Element {
 					})),
 				},
 			};
-			if (selectedFilters) {
+			if (!isEmpty(selectedFilters)) {
 				logEvent('Traces Explorer: Sidebar filter used', {
 					selectedFilters,
 				});
+			}
+
+			if (isEqual(currentQuery, preparedQuery) && !props?.resetAll) {
+				return;
 			}
 			redirectWithQueryBuilderData(preparedQuery);
 		},

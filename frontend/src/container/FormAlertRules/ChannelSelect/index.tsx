@@ -3,12 +3,10 @@ import { Select, Spin } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/channels/getAll';
-import AppReducer from 'types/reducer/app';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
 
@@ -49,10 +47,10 @@ function ChannelSelect({
 		});
 	}
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
-		role,
+		user.role,
 	);
 
 	const renderOptions = (): ReactNode[] => {

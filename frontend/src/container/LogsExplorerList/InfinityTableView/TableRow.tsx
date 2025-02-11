@@ -79,6 +79,7 @@ export default function TableRow({
 				return (
 					<TableCellStyled
 						$isDragColumn={false}
+						$isLogIndicator={column.key === 'state-indicator'}
 						$isDarkMode={isDarkMode}
 						key={column.key}
 						fontSize={fontSize}

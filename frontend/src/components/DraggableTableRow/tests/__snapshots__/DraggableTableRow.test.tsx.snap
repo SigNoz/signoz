@@ -99,5 +99,3 @@ exports[`DraggableTableRow Snapshot test should render DraggableTableRow 1`] = `
   </div>
 </DocumentFragment>
 `;
-
-exports[`PipelinePage container test should render AddNewPipeline section 1`] = `<DocumentFragment />`;

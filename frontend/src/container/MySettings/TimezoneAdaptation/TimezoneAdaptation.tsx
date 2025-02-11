@@ -2,6 +2,7 @@ import './TimezoneAdaptation.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { Delete } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo } from 'react';
@@ -27,6 +28,18 @@ function TimezoneAdaptation(): JSX.Element {
 
 	const handleOverrideClear = (): void => {
 		updateTimezone(browserTimezone);
+		logEvent('Settings: Timezone override cleared', {});
+	};
+
+	const handleSwitchChange = (): void => {
+		setIsAdaptationEnabled((prev) => {
+			const isEnabled = !prev;
+			logEvent(
+				`Settings: Timezone adaptation ${isEnabled ? 'enabled' : 'disabled'}`,
+				{},
+			);
+			return isEnabled;
+		});
 	};
 
 	return (
@@ -35,7 +48,7 @@ function TimezoneAdaptation(): JSX.Element {
 				<h2 className="timezone-adaption__title">Adapt to my timezone</h2>
 				<Switch
 					checked={isAdaptationEnabled}
-					onChange={setIsAdaptationEnabled}
+					onChange={handleSwitchChange}
 					style={getSwitchStyles()}
 				/>
 			</div>

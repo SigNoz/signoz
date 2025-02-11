@@ -1,3 +1,10 @@
+.query-builder-search-container {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
 .selectOptionContainer {
 	display: flex;
 	gap: 8px;
@@ -409,4 +416,7 @@
 			}
 		}
 	}
+}
+.span-scope-selector {
+	width: 160px;
 }

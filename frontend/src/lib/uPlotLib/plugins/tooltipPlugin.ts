@@ -1,4 +1,5 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -72,11 +73,11 @@ const generateTooltipContent = (
 				if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
-						.format('MMM DD YYYY');
+						.format(DATE_TIME_FORMATS.MONTH_YEAR);
 				} else {
 					tooltipTitle = dayjs(data[0][idx] * 1000)
 						.tz(timezone)
-						.format('MMM DD YYYY h:mm:ss A');
+						.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 				}
 			} else if (item.show) {
 				const {

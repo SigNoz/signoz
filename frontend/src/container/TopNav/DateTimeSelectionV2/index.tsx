@@ -6,6 +6,7 @@ import { Button, Popover, Switch, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import {
@@ -202,7 +203,7 @@ function DateTimeSelection({
 		timeInterval: Time | CustomTimeType = '15m',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
-			const format = 'DD/MM/YYYY HH:mm';
+			const format = DATE_TIME_FORMATS.UK_DATETIME;
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
@@ -384,8 +385,12 @@ function DateTimeSelection({
 		}
 	}, [defaultRelativeTime, onSelectHandler]);
 
-	const [modalStartTime, setModalStartTime] = useState<number>(0);
-	const [modalEndTime, setModalEndTime] = useState<number>(0);
+	const [modalStartTime, setModalStartTime] = useState<number>(
+		searchStartTime ? parseInt(searchStartTime, 10) : 0,
+	);
+	const [modalEndTime, setModalEndTime] = useState<number>(
+		searchEndTime ? parseInt(searchEndTime, 10) : 0,
+	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {

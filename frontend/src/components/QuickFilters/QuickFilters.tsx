@@ -7,43 +7,15 @@ import {
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { cloneDeep, isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import Slider from './FilterRenderers/Slider/Slider';
-
-export enum FiltersType {
-	SLIDER = 'SLIDER',
-	CHECKBOX = 'CHECKBOX',
-}
-
-export enum MinMax {
-	MIN = 'MIN',
-	MAX = 'MAX',
-}
-
-export enum SpecficFilterOperations {
-	ALL = 'ALL',
-	ONLY = 'ONLY',
-}
-
-export interface IQuickFiltersConfig {
-	type: FiltersType;
-	title: string;
-	attributeKey: BaseAutocompleteData;
-	customRendererForValue?: (value: string) => JSX.Element;
-	defaultOpen: boolean;
-}
-
-interface IQuickFiltersProps {
-	config: IQuickFiltersConfig[];
-	handleFilterVisibilityChange: () => void;
-}
+import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
-	const { config, handleFilterVisibilityChange } = props;
+	const { config, handleFilterVisibilityChange, source, onFilterChange } = props;
 
 	const {
 		currentQuery,
@@ -78,47 +50,73 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				})),
 			},
 		};
-		redirectWithQueryBuilderData(preparedQuery);
+
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(preparedQuery);
+		} else {
+			redirectWithQueryBuilderData(preparedQuery);
+		}
 	};
 
 	const lastQueryName =
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
+
 	return (
 		<div className="quick-filters">
-			<section className="header">
-				<section className="left-actions">
-					<FilterOutlined />
-					<Typography.Text className="text">Filters for</Typography.Text>
-					<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-						<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
-					</Tooltip>
+			{source !== QuickFiltersSource.INFRA_MONITORING && (
+				<section className="header">
+					<section className="left-actions">
+						<FilterOutlined />
+						<Typography.Text className="text">Filters for</Typography.Text>
+						<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
+							<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
+						</Tooltip>
+					</section>
+
+					<section className="right-actions">
+						<Tooltip title="Reset All">
+							<SyncOutlined className="sync-icon" onClick={handleReset} />
+						</Tooltip>
+						<div className="divider-filter" />
+						<Tooltip title="Collapse Filters">
+							<VerticalAlignTopOutlined
+								rotate={270}
+								onClick={handleFilterVisibilityChange}
+							/>
+						</Tooltip>
+					</section>
 				</section>
-				<section className="right-actions">
-					<Tooltip title="Reset All">
-						<SyncOutlined className="sync-icon" onClick={handleReset} />
-					</Tooltip>
-					<div className="divider-filter" />
-					<Tooltip title="Collapse Filters">
-						<VerticalAlignTopOutlined
-							rotate={270}
-							onClick={handleFilterVisibilityChange}
-						/>
-					</Tooltip>
-				</section>
-			</section>
+			)}
 
 			<section className="filters">
 				{config.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:
-							return <Checkbox filter={filter} />;
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 						case FiltersType.SLIDER:
 							return <Slider filter={filter} />;
+						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
-							return <Checkbox filter={filter} />;
+							return (
+								<Checkbox
+									source={source}
+									filter={filter}
+									onFilterChange={onFilterChange}
+								/>
+							);
 					}
 				})}
 			</section>
 		</div>
 	);
 }
+
+QuickFilters.defaultProps = {
+	onFilterChange: null,
+};

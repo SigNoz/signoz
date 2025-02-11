@@ -1,3 +1,4 @@
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
@@ -16,7 +17,7 @@ export const getFormattedDate = (epochTimestamp: number): string => {
 	const date = dayjs.unix(epochTimestamp);
 
 	// Format the date as "18 Nov 2013"
-	return date.format('DD MMM YYYY');
+	return date.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT);
 };
 
 export const getFormattedDateWithMinutes = (epochTimestamp: number): string => {
@@ -24,7 +25,7 @@ export const getFormattedDateWithMinutes = (epochTimestamp: number): string => {
 	const date = dayjs.unix(epochTimestamp);
 
 	// Format the date as "18 Nov 2013"
-	return date.format('DD MMM YYYY HH:mm');
+	return date.format(DATE_TIME_FORMATS.MONTH_DATETIME_SHORT);
 };
 
 export const getRemainingDays = (billingEndDate: number): number => {

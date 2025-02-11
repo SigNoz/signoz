@@ -417,11 +417,13 @@ export default function LogsFormatOptionsMenu({
 														{key}
 													</Tooltip>
 												</div>
-												<X
-													className="delete-btn"
-													size={14}
-													onClick={(): void => addColumn.onRemove(id as string)}
-												/>
+												{addColumn?.value?.length > 1 && (
+													<X
+														className="delete-btn"
+														size={14}
+														onClick={(): void => addColumn.onRemove(id as string)}
+													/>
+												)}
 											</div>
 										))}
 										{addColumn && addColumn?.value?.length === 0 && (

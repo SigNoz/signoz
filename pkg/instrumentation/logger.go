@@ -1,45 +1,35 @@
 package instrumentation
 
 import (
-	"context"
+	"log/slog"
 	"os"
 
-	"go.opentelemetry.io/contrib/bridges/otelzap"
-	contribsdkconfig "go.opentelemetry.io/contrib/config"
-	sdklog "go.opentelemetry.io/otel/log"
-	nooplog "go.opentelemetry.io/otel/log/noop"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"go.signoz.io/signoz/pkg/instrumentation/loghandler"
 )
 
-// newLoggerProvider creates a new logger provider based on the configuration.
-// If logging is disabled, it returns a no-op logger provider.
-func newLoggerProvider(ctx context.Context, cfg Config, cfgResource contribsdkconfig.Resource) (sdklog.LoggerProvider, error) {
-	if !cfg.Logs.Enabled {
-		return nooplog.NewLoggerProvider(), nil
-	}
+func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
+	logger := slog.New(
+		loghandler.New(
+			slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: config.Logs.Level, AddSource: true, ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				// This is more in line with OpenTelemetry semantic conventions
+				if a.Key == slog.SourceKey {
+					a.Key = "code"
+					return a
+				}
 
-	sdk, err := contribsdkconfig.NewSDK(
-		contribsdkconfig.WithContext(ctx),
-		contribsdkconfig.WithOpenTelemetryConfiguration(contribsdkconfig.OpenTelemetryConfiguration{
-			LoggerProvider: &cfg.Logs.LoggerProvider,
-			Resource:       &cfgResource,
-		}),
-	)
-	if err != nil {
-		return nil, err
-	}
+				if a.Key == slog.TimeKey {
+					a.Key = "timestamp"
+					return a
+				}
 
-	return sdk.LoggerProvider(), nil
-}
-
-// newLogger creates a new Zap logger with the configured level and output.
-// It combines a JSON encoder for stdout and an OpenTelemetry bridge.
-func newLogger(cfg Config, provider sdklog.LoggerProvider) *zap.Logger {
-	core := zapcore.NewTee(
-		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapcore.AddSync(os.Stdout), cfg.Logs.Level),
-		otelzap.NewCore("go.signoz.io/pkg/instrumentation", otelzap.WithLoggerProvider(provider)),
+				return a
+			}}),
+			wrappers...,
+		),
 	)
 
-	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
+	slog.SetDefault(logger)
+	_ = slog.SetLogLoggerLevel(config.Logs.Level)
+
+	return logger
 }

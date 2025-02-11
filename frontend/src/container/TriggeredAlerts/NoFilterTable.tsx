@@ -3,6 +3,7 @@ import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';
@@ -86,7 +87,7 @@ function NoFilterTable({
 			render: (date): JSX.Element => (
 				<Typography>{`${formatTimezoneAdjustedTimestamp(
 					date,
-					'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+					DATE_TIME_FORMATS.UTC_US,
 				)}`}</Typography>
 			),
 		},
