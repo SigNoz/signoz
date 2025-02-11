@@ -408,5 +408,12 @@ export const HAVING_OPERATORS: string[] = [
 	OPERATORS['<'],
 ];
 
-// We are changing the visible option name for Value panel to Number - under this ticket - #6233 (signoz repo)
-export const ValuePanelVisibleOption = 'Number';
+export enum PanelDisplay {
+	TIME_SERIES = 'Time Series',
+	VALUE = 'Number',
+	TABLE = 'Table',
+	LIST = 'List',
+	BAR = 'Bar',
+	PIE = 'Pie',
+	HISTOGRAM = 'Histogram',
+}
