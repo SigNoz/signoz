@@ -30,7 +30,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	settings.Logger().InfoContext(ctx, "connected to postgres", "dsn", config.Postgres.DSN)
+	settings.Logger().InfoContext(ctx, "connected to postgres", "dsn", "[REDACTED]")
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
 
 	return &provider{
