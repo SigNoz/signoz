@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES, ValuePanelVisibleOption } from 'constants/queryBuilder';
 import {
 	BarChart3,
 	LineChart,
@@ -18,7 +18,7 @@ const Items: ItemsProps[] = [
 	{
 		name: PANEL_TYPES.VALUE,
 		icon: <SigmaSquare size={16} color={Color.BG_ROBIN_400} />,
-		display: 'Value',
+		display: ValuePanelVisibleOption,
 	},
 	{
 		name: PANEL_TYPES.TABLE,

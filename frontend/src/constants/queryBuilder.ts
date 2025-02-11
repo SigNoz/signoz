@@ -407,3 +407,6 @@ export const HAVING_OPERATORS: string[] = [
 	OPERATORS['<='],
 	OPERATORS['<'],
 ];
+
+// We are changing the visible option name for Value panel to Number - under this ticket - #6233 (signoz repo)
+export const ValuePanelVisibleOption = 'Number';
