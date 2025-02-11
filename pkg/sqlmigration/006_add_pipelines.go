@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -27,18 +28,22 @@ func (migration *addPipelines) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addPipelines) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS pipelines(
-		id TEXT PRIMARY KEY,
-		order_id INTEGER,
-		enabled BOOLEAN,
-		created_by TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		name VARCHAR(400) NOT NULL,
-		alias VARCHAR(20) NOT NULL,
-		description TEXT,
-		filter TEXT NOT NULL,
-		config_json TEXT
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:pipelines"`
+			ID            string    `bun:"id,pk,type:text"`
+			OrderID       int       `bun:"order_id"`
+			Enabled       bool      `bun:"enabled"`
+			CreatedBy     string    `bun:"created_by,type:text"`
+			CreatedAt     time.Time `bun:"created_at,default:current_timestamp"`
+			Name          string    `bun:"name,type:varchar(400),notnull"`
+			Alias         string    `bun:"alias,type:varchar(20),notnull"`
+			Description   string    `bun:"description,type:text"`
+			Filter        string    `bun:"filter,type:text,notnull"`
+			ConfigJSON    string    `bun:"config_json,type:text"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
