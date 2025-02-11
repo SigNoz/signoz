@@ -196,3 +196,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 
 	return metricDetailsDTO, nil
 }
+
+func (receiver *SummaryService) ListMetricsWithSummary(ctx context.Context, params *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
+	return receiver.reader.ListSummaryMetrics(ctx, params)
+}

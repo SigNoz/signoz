@@ -31,3 +31,14 @@ func ParseFilterValueSuggestions(r *http.Request) (*metrics_explorer.FilterValue
 
 	return filterValueRequest, nil
 }
+
+func ParseSummaryListMetricsParams(r *http.Request) (*metrics_explorer.SummaryListMetricsRequest, *model.ApiError) {
+	var listMetricsParams *metrics_explorer.SummaryListMetricsRequest
+
+	// parse the request body
+	if err := json.NewDecoder(r.Body).Decode(&listMetricsParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+
+	return listMetricsParams, nil
+}

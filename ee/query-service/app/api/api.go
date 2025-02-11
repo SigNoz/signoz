@@ -217,4 +217,7 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *baseapp.AuthM
 	router.HandleFunc("/api/v1/metrics/{metric_name}",
 		am.ViewAccess(ah.GetMetricsDetails)).
 		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics",
+		am.ViewAccess(ah.ListMetrics)).
+		Methods(http.MethodPost)
 }
