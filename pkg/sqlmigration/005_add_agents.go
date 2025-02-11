@@ -31,11 +31,11 @@ func (migration *addAgents) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := db.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel   `bun:"table:agents"`
-			AgentID         string     `bun:"agent_id,pk,type:text,unique"`
-			StartedAt       time.Time  `bun:"started_at,type:datetime,notnull"`
-			TerminatedAt    *time.Time `bun:"terminated_at,type:datetime"`
-			CurrentStatus   string     `bun:"current_status,type:text,notnull"`
-			EffectiveConfig string     `bun:"effective_config,type:text,notnull"`
+			AgentID         string    `bun:"agent_id,pk,type:text,unique"`
+			StartedAt       time.Time `bun:"started_at,type:datetime,notnull"`
+			TerminatedAt    time.Time `bun:"terminated_at,type:datetime"`
+			CurrentStatus   string    `bun:"current_status,type:text,notnull"`
+			EffectiveConfig string    `bun:"effective_config,type:text,notnull"`
 		}{}).
 		IfNotExists().
 		Exec(ctx); err != nil {
@@ -58,11 +58,15 @@ func (migration *addAgents) Up(ctx context.Context, db *bun.DB) error {
 			DeployStatus   string    `bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
 			DeploySequence int       `bun:"deploy_sequence"`
 			DeployResult   string    `bun:"deploy_result,type:text"`
-			LastHash       string    `bun:"last_hash,type:text,unique"`
+			LastHash       string    `bun:"last_hash,type:text"`
 			LastConfig     string    `bun:"last_config,type:text"`
 		}{}).
 		IfNotExists().
 		Exec(ctx); err != nil {
+		return err
+	}
+	// add an index on the last_hash column
+	if _, err := db.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS agent_config_versions_nu1 ON agent_config_versions(last_hash);`); err != nil {
 		return err
 	}
 

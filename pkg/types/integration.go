@@ -17,13 +17,13 @@ type Integration struct {
 type CloudIntegrationAccount struct {
 	bun.BaseModel `bun:"table:cloud_integrations_accounts"`
 
-	CloudProvider       string     `bun:"cloud_provider,type:text"`
-	ID                  string     `bun:"id,type:text,notnull"`
-	ConfigJSON          string     `bun:"config_json,type:text"`
-	CloudAccountID      string     `bun:"cloud_account_id,type:text"`
-	LastAgentReportJSON string     `bun:"last_agent_report_json,type:text"`
-	CreatedAt           time.Time  `bun:"created_at,default:current_timestamp"`
-	RemovedAt           *time.Time `bun:"removed_at,type:timestamp"`
+	CloudProvider       string    `bun:"cloud_provider,type:text,unique:cloud_provider_id"`
+	ID                  string    `bun:"id,type:text,notnull,unique:cloud_provider_id"`
+	ConfigJSON          string    `bun:"config_json,type:text"`
+	CloudAccountID      string    `bun:"cloud_account_id,type:text"`
+	LastAgentReportJSON string    `bun:"last_agent_report_json,type:text"`
+	CreatedAt           time.Time `bun:"created_at,notnull,default:current_timestamp"`
+	RemovedAt           time.Time `bun:"removed_at,type:timestamp"`
 }
 
 type CloudIntegrationServiceConfig struct {

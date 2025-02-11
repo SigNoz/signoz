@@ -1,8 +1,6 @@
 package types
 
 import (
-	"time"
-
 	"github.com/uptrace/bun"
 )
 
@@ -25,10 +23,10 @@ type PersonalAccessToken struct {
 type OrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
-	ID        string     `bun:"id,pk,type:text"`
-	OrgID     string     `bun:"org_id,type:text,notnull"`
-	Name      string     `bun:"name,type:varchar(50),notnull,unique"`
-	CreatedAt time.Time  `bun:"created_at,notnull"`
-	UpdatedAt *time.Time `bun:"updated_at,type:timestamp"`
-	Data      string     `bun:"data,type:text,notnull"`
+	ID        string `bun:"id,pk,type:text"`
+	OrgID     string `bun:"org_id,type:text,notnull"`
+	Name      string `bun:"name,type:varchar(50),notnull,unique"`
+	CreatedAt int    `bun:"created_at,notnull"`
+	UpdatedAt int    `bun:"updated_at,type:timestamp"`
+	Data      string `bun:"data,type:text,notnull"`
 }

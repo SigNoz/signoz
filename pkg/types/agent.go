@@ -8,11 +8,11 @@ import (
 
 type Agent struct {
 	bun.BaseModel   `bun:"table:agents"`
-	AgentID         string     `bun:"agent_id,pk,type:text"`
-	StartedAt       time.Time  `bun:"started_at,type:datetime,notnull"`
-	TerminatedAt    *time.Time `bun:"terminated_at,type:datetime"`
-	CurrentStatus   string     `bun:"current_status,type:text,notnull"`
-	EffectiveConfig string     `bun:"effective_config,type:text,notnull"`
+	AgentID         string    `bun:"agent_id,pk,type:text"`
+	StartedAt       time.Time `bun:"started_at,type:datetime,notnull"`
+	TerminatedAt    time.Time `bun:"terminated_at,type:datetime"`
+	CurrentStatus   string    `bun:"current_status,type:text,notnull"`
+	EffectiveConfig string    `bun:"effective_config,type:text,notnull"`
 }
 
 type AgentConfigVersion struct {
@@ -31,7 +31,7 @@ type AgentConfigVersion struct {
 	DeployStatus   string    `bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
 	DeploySequence int       `bun:"deploy_sequence"`
 	DeployResult   string    `bun:"deploy_result,type:text"`
-	LastHash       string    `bun:"last_hash,type:text,unique"`
+	LastHash       string    `bun:"last_hash,type:text"`
 	LastConfig     string    `bun:"last_config,type:text"`
 }
 
