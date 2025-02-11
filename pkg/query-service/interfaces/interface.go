@@ -126,6 +126,9 @@ type Reader interface {
 	GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError)
 
 	ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError)
+
+	GetMetricsCardinalityPercentage(ctx context.Context, request *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.CardinalityTreemap, *model.ApiError)
+	GetMetricsDataPointsPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.DataPointTreemap, *model.ApiError)
 }
 
 type Querier interface {
