@@ -71,6 +71,8 @@ const DashboardContext = createContext<IDashboardContext>({
 	setVariablesToGetUpdated: () => {},
 	dashboardQueryRangeCalled: false,
 	setDashboardQueryRangeCalled: () => {},
+	selectedRowWidgetId: '',
+	setSelectedRowWidgetId: () => {},
 });
 
 interface Props {
@@ -86,6 +88,10 @@ export function DashboardProvider({
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
+
+	const [selectedRowWidgetId, setSelectedRowWidgetId] = useState<string | null>(
+		null,
+	);
 
 	const [
 		dashboardQueryRangeCalled,
@@ -416,6 +422,8 @@ export function DashboardProvider({
 			setVariablesToGetUpdated,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
+			selectedRowWidgetId,
+			setSelectedRowWidgetId,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -435,6 +443,8 @@ export function DashboardProvider({
 			setVariablesToGetUpdated,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
+			selectedRowWidgetId,
+			setSelectedRowWidgetId,
 		],
 	);
 
