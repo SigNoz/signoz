@@ -65,8 +65,14 @@ func (migration *addAgents) Up(ctx context.Context, db *bun.DB) error {
 		Exec(ctx); err != nil {
 		return err
 	}
+
 	// add an index on the last_hash column
-	if _, err := db.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS agent_config_versions_nu1 ON agent_config_versions(last_hash);`); err != nil {
+	if _, err := db.NewCreateIndex().
+		Table("agent_config_versions").
+		Column("last_hash").
+		Index("idx_agent_config_versions_last_hash").
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
