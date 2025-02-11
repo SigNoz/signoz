@@ -392,8 +392,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			);
 			const nextRowId = nextRowIndex !== -1 ? updatedLayout[nextRowIndex].i : null;
 
-			console.log(nextRowId);
-
 			const newLayoutItem = placeWidgetBetweenRows(
 				widgetId,
 				updatedLayout,

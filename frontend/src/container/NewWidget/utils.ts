@@ -659,7 +659,6 @@ export const placeWidgetBetweenRows = (
 	// slice the layout from current row to next row
 	const sectionWidgets =
 		nextRowIndex === -1 ? layout : layout.slice(0, nextRowIndex);
-	console.log('sectionWidgets', sectionWidgets, nextRowIndex);
 
 	const newWidgetLayout = placeWidgetAtBottom(
 		widgetId,
@@ -667,7 +666,8 @@ export const placeWidgetBetweenRows = (
 		widgetWidth,
 		widgetHeight,
 	);
+	const remainingWidgets = nextRowIndex === -1 ? [] : layout.slice(nextRowIndex);
 
 	// add new layout in between the sectionWidgets and the rest of the layout
-	return [...sectionWidgets, newWidgetLayout, ...layout.slice(nextRowIndex)];
+	return [...sectionWidgets, newWidgetLayout, ...remainingWidgets];
 };
