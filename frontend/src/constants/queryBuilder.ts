@@ -407,3 +407,13 @@ export const HAVING_OPERATORS: string[] = [
 	OPERATORS['<='],
 	OPERATORS['<'],
 ];
+
+export enum PanelDisplay {
+	TIME_SERIES = 'Time Series',
+	VALUE = 'Number',
+	TABLE = 'Table',
+	LIST = 'List',
+	BAR = 'Bar',
+	PIE = 'Pie',
+	HISTOGRAM = 'Histogram',
+}
