@@ -22,12 +22,12 @@ func ParseFilterKeySuggestions(r *http.Request) (*metrics_explorer.FilterKeyRequ
 }
 
 func ParseFilterValueSuggestions(r *http.Request) (*metrics_explorer.FilterValueRequest, *model.ApiError) {
-	var filterValueRequest *metrics_explorer.FilterValueRequest
+	var filterValueRequest metrics_explorer.FilterValueRequest
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&filterValueRequest); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
-	return filterValueRequest, nil
+	return &filterValueRequest, nil
 }
