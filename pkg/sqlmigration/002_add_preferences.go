@@ -28,24 +28,30 @@ func (migration *addPreferences) Register(migrations *migrate.Migrations) error 
 
 func (migration *addPreferences) Up(ctx context.Context, db *bun.DB) error {
 	// table:user_preference
-	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS user_preference (
-		preference_id TEXT NOT NULL, 
-		preference_value TEXT, 
-		user_id TEXT NOT NULL, 
-		PRIMARY KEY (preference_id,user_id), 
-		FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
-	)`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel   `bun:"table:user_preference"`
+			PreferenceID    string `bun:"preference_id,type:text,pk"`
+			PreferenceValue string `bun:"preference_value,type:text"`
+			UserID          string `bun:"user_id,type:text,pk"`
+		}{}).
+		IfNotExists().
+		ForeignKey(`("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// table:org_preference
-	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS org_preference (
-		preference_id TEXT NOT NULL,
-		preference_value TEXT,
-		org_id TEXT NOT NULL,
-		PRIMARY KEY (preference_id,org_id),
-		FOREIGN KEY (org_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel   `bun:"table:org_preference"`
+			PreferenceID    string `bun:"preference_id,pk,type:text,notnull"`
+			PreferenceValue string `bun:"preference_value,type:text,notnull"`
+			OrgID           string `bun:"org_id,pk,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
