@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	"github.com/uptrace/bun"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type Store interface {
 	ListOrgIDs(ctx context.Context) ([]string, error)
-	GetFeatureFlag(ctx context.Context, orgID string, name Flag) (Feature, error)
-	ListFeatureFlags(ctx context.Context, orgID string) ([]Feature, error)
-	UpdateFeatureFlag(ctx context.Context, orgID string, name Flag, feature Feature) error
-	SaveFeatureFlags(ctx context.Context, orgID string, features []Feature) error
+	GetFeatureFlag(ctx context.Context, orgID string, name types.Flag) (types.Feature, error)
+	ListFeatureFlags(ctx context.Context, orgID string) ([]types.Feature, error)
+	UpdateFeatureFlag(ctx context.Context, orgID string, name types.Flag, feature types.Feature) error
+	SaveFeatureFlags(ctx context.Context, orgID string, features []types.Feature) error
 }
 
 type FeatureStorage struct {
@@ -33,22 +34,22 @@ func (s *FeatureStorage) ListOrgIDs(ctx context.Context) ([]string, error) {
 	return orgIDs, err
 }
 
-func (s *FeatureStorage) GetFeatureFlag(ctx context.Context, orgID string, name Flag) (Feature, error) {
-	var dbFeature Feature
+func (s *FeatureStorage) GetFeatureFlag(ctx context.Context, orgID string, name types.Flag) (types.Feature, error) {
+	var dbFeature types.Feature
 	err := s.db.NewSelect().
 		Model(&dbFeature).
 		Where("org_id = ?", orgID).
 		Where("name = ?", name.String()).
 		Scan(ctx)
 	if err != nil {
-		return Feature{}, fmt.Errorf("failed to get feature flag: %w", err)
+		return types.Feature{}, fmt.Errorf("failed to get feature flag: %w", err)
 	}
 	return dbFeature, nil
 }
 
 // will return all features for an org
-func (s *FeatureStorage) ListFeatureFlags(ctx context.Context, orgID string) ([]Feature, error) {
-	var features []Feature
+func (s *FeatureStorage) ListFeatureFlags(ctx context.Context, orgID string) ([]types.Feature, error) {
+	var features []types.Feature
 	err := s.db.NewSelect().
 		Model(&features).
 		Where("org_id = ?", orgID).
@@ -60,7 +61,7 @@ func (s *FeatureStorage) ListFeatureFlags(ctx context.Context, orgID string) ([]
 }
 
 // UpdateFeature updates a specific feature by flag for an org
-func (s *FeatureStorage) UpdateFeatureFlag(ctx context.Context, orgID string, name Flag, feature Feature) error {
+func (s *FeatureStorage) UpdateFeatureFlag(ctx context.Context, orgID string, name types.Flag, feature types.Feature) error {
 	_, err := s.db.NewUpdate().
 		Model(&feature).
 		Set("description = ?, stage = ?, is_active = ?, is_changed = true", feature.Description, feature.Stage.String(), feature.IsActive).
@@ -74,7 +75,7 @@ func (s *FeatureStorage) UpdateFeatureFlag(ctx context.Context, orgID string, na
 // SaveFeatureFlags saves a list of features to the database
 // we write all the features to the db first time.
 // if any update for zeus/constants it will update the flags as they will have IsChangeable = false
-func (s *FeatureStorage) SaveFeatureFlags(ctx context.Context, orgID string, features []Feature) error {
+func (s *FeatureStorage) SaveFeatureFlags(ctx context.Context, orgID string, features []types.Feature) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -92,7 +93,7 @@ func (s *FeatureStorage) SaveFeatureFlags(ctx context.Context, orgID string, fea
 	}()
 
 	// Fetch all existing features for the orgId
-	var existingFeatures []Feature
+	var existingFeatures []types.Feature
 	err = tx.NewSelect().
 		Model(&existingFeatures).
 		Where("org_id = ?", orgID).
@@ -102,7 +103,7 @@ func (s *FeatureStorage) SaveFeatureFlags(ctx context.Context, orgID string, fea
 	}
 
 	// Convert the slice to a map
-	existingFeaturesMap := make(map[string]Feature)
+	existingFeaturesMap := make(map[string]types.Feature)
 	for _, feature := range existingFeatures {
 		existingFeaturesMap[feature.Name.String()] = feature
 	}

@@ -27,20 +27,25 @@ func (migration *addFeatures) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addFeatures) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS feature_flag(
-		org_id TEXT NOT NULL,
-		name TEXT NOT NULL,
-		description TEXT,
-		stage TEXT,
-		is_active BOOLEAN DEFAULT FALSE,
-		is_changed BOOLEAN DEFAULT FALSE,
-		is_changeable BOOLEAN DEFAULT TRUE,
-		requires_restart BOOLEAN DEFAULT FALSE,
-		UNIQUE(org_id, name),
-		FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:feature_flag"`
+
+			OrgID           string `bun:"org_id,type:text,notnull,unique:org_id_name"`
+			Name            string `bun:"name,type:text,notnull,unique:org_id_name"`
+			Description     string `bun:"description,type:text"`
+			Stage           string `bun:"stage,type:text"`
+			IsActive        bool   `bun:"is_active,notnull,default:false"`
+			IsChanged       bool   `bun:"is_changed,notnull,default:false"`
+			IsChangeable    bool   `bun:"is_changeable,notnull,default:true"`
+			RequiresRestart bool   `bun:"requires_restart,notnull,default:false"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
+
 	return nil
 }
 

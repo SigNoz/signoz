@@ -8,6 +8,7 @@ import (
 
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 // Ensure FeatureFlagManager implements FeatureFlagService
@@ -76,7 +77,7 @@ func (fm *FeatureFlagManager) RefreshFeatureFlags() {
 		go func(orgID string) {
 			defer wg.Done()
 			// Create a map to store features by their flag or identifier
-			featureMap := make(map[string]Feature)
+			featureMap := make(map[string]types.Feature)
 
 			for _, provider := range fm.providers {
 				features := provider.GetFeatures(orgID)
@@ -87,7 +88,7 @@ func (fm *FeatureFlagManager) RefreshFeatureFlags() {
 			}
 
 			// Convert the map back to a slice
-			mergedFeatures := make([]Feature, 0, len(featureMap))
+			mergedFeatures := make([]types.Feature, 0, len(featureMap))
 			for _, feature := range featureMap {
 				mergedFeatures = append(mergedFeatures, feature)
 			}
@@ -103,16 +104,16 @@ func (fm *FeatureFlagManager) RefreshFeatureFlags() {
 }
 
 // GetFeatureFlags returns all features for an org
-func (fm *FeatureFlagManager) ListFeatureFlags(ctx context.Context, orgID string) ([]Feature, error) {
+func (fm *FeatureFlagManager) ListFeatureFlags(ctx context.Context, orgID string) ([]types.Feature, error) {
 	return fm.storage.ListFeatureFlags(ctx, orgID)
 }
 
 // GetFeatureFlag returns a specific feature by flag
-func (fm *FeatureFlagManager) GetFeatureFlag(ctx context.Context, orgID string, flag Flag) (Feature, error) {
+func (fm *FeatureFlagManager) GetFeatureFlag(ctx context.Context, orgID string, flag types.Flag) (types.Feature, error) {
 	return fm.storage.GetFeatureFlag(ctx, orgID, flag)
 }
 
 // UpdateFeatureFlag updates a specific feature by flag for an org
-func (fm *FeatureFlagManager) UpdateFeatureFlag(ctx context.Context, orgID string, flag Flag, feature Feature) error {
+func (fm *FeatureFlagManager) UpdateFeatureFlag(ctx context.Context, orgID string, flag types.Flag, feature types.Feature) error {
 	return fm.storage.UpdateFeatureFlag(ctx, orgID, flag, feature)
 }
