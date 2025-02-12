@@ -10,7 +10,8 @@ import {
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'container/NewDashboard/ComponentsSlider/constants';
 import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFilter/config';
-import { cloneDeep, isEmpty, isEqual, set, unset } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, isEqual, set, unset } from 'lodash-es';
+import { Layout } from 'react-grid-layout';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -574,4 +575,99 @@ export const unitOptions = (columnUnit: string): DefaultOptionType[] => {
 			label: filteredCategory,
 			options: getCategorySelectOptionByName(filteredCategory),
 		}));
+};
+
+export const placeWidgetAtBottom = (
+	widgetId: string,
+	layout: Layout[],
+	widgetWidth?: number,
+	widgetHeight?: number,
+): Layout => {
+	if (layout.length === 0) {
+		return { i: widgetId, x: 0, y: 0, w: widgetWidth || 6, h: widgetHeight || 6 };
+	}
+
+	// Find the maximum Y coordinate and height
+	const { maxY } = layout.reduce(
+		(acc, curr) => ({
+			maxY: Math.max(acc.maxY, curr.y + curr.h),
+		}),
+		{ maxY: 0 },
+	);
+
+	// Check for available space in the last row
+	const lastRowWidgets = layout.filter((item) => item.y + item.h === maxY);
+	const occupiedXInLastRow = lastRowWidgets.reduce(
+		(acc, widget) => acc + widget.w,
+		0,
+	);
+
+	// If there's space in the last row (total width < 12)
+	if (occupiedXInLastRow < 12) {
+		// Find the rightmost X coordinate in the last row
+		const maxXInLastRow = lastRowWidgets.reduce(
+			(acc, widget) => Math.max(acc, widget.x + widget.w),
+			0,
+		);
+
+		// If there's enough space for a 6-width widget
+		if (maxXInLastRow + defaultTo(widgetWidth, 6) <= 12) {
+			return {
+				i: widgetId,
+				x: maxXInLastRow,
+				y: maxY - (widgetHeight || 6), // Align with the last row
+				w: widgetWidth || 6,
+				h: widgetHeight || 6,
+			};
+		}
+	}
+
+	// If no space in last row, place at the bottom
+	return {
+		i: widgetId,
+		x: 0,
+		y: maxY,
+		w: widgetWidth || 6,
+		h: widgetHeight || 6,
+	};
+};
+
+export const placeWidgetBetweenRows = (
+	widgetId: string,
+	layout: Layout[],
+	_currentRowId: string,
+	nextRowId?: string | null,
+	widgetWidth?: number,
+	widgetHeight?: number,
+): Layout[] => {
+	if (layout.length === 0) {
+		return [
+			{
+				i: widgetId,
+				x: 0,
+				y: 0,
+				w: widgetWidth || 6,
+				h: widgetHeight || 6,
+			},
+		];
+	}
+
+	const nextRowIndex = nextRowId
+		? layout.findIndex((item) => item.i === nextRowId)
+		: -1;
+
+	// slice the layout from current row to next row
+	const sectionWidgets =
+		nextRowIndex === -1 ? layout : layout.slice(0, nextRowIndex);
+
+	const newWidgetLayout = placeWidgetAtBottom(
+		widgetId,
+		sectionWidgets,
+		widgetWidth,
+		widgetHeight,
+	);
+	const remainingWidgets = nextRowIndex === -1 ? [] : layout.slice(nextRowIndex);
+
+	// add new layout in between the sectionWidgets and the rest of the layout
+	return [...sectionWidgets, newWidgetLayout, ...remainingWidgets];
 };

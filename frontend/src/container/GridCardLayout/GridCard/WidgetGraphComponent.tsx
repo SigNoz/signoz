@@ -6,6 +6,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -133,18 +134,14 @@ function WidgetGraphComponent({
 			(l) => l.i === widget.id,
 		);
 
-		// added the cloned panel on the top as it is given most priority when arranging
-		// in the layout. React_grid_layout assigns priority from top, hence no random position for cloned panel
-		const layout = [
-			{
-				i: uuid,
-				w: originalPanelLayout?.w || 6,
-				x: 0,
-				h: originalPanelLayout?.h || 6,
-				y: 0,
-			},
-			...(selectedDashboard.data.layout || []),
-		];
+		const newLayoutItem = placeWidgetAtBottom(
+			uuid,
+			selectedDashboard?.data.layout || [],
+			originalPanelLayout?.w || 6,
+			originalPanelLayout?.h || 6,
+		);
+
+		const layout = [...(selectedDashboard.data.layout || []), newLayoutItem];
 
 		updateDashboardMutation.mutateAsync(
 			{
@@ -231,21 +228,6 @@ function WidgetGraphComponent({
 	};
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
-
-	const loadingState =
-		(queryResponse.isLoading || queryResponse.status === 'idle') &&
-		widget.panelTypes !== PANEL_TYPES.LIST;
-
-	if (loadingState) {
-		return (
-			<Skeleton
-				style={{
-					height: '100%',
-					padding: '16px',
-				}}
-			/>
-		);
-	}
 
 	return (
 		<div
