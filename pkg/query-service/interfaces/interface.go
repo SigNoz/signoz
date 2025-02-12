@@ -6,7 +6,6 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
