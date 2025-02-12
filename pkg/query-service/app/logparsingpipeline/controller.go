@@ -27,15 +27,13 @@ type LogParsingPipelineController struct {
 
 func NewLogParsingPipelinesController(
 	db *sqlx.DB,
-	engine string,
 	getIntegrationPipelines func(context.Context) ([]Pipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(db)
-	err := repo.InitDB(engine)
 	return &LogParsingPipelineController{
 		Repo:                    repo,
 		GetIntegrationPipelines: getIntegrationPipelines,
-	}, err
+	}, nil
 }
 
 // PipelinesResponse is used to prepare http response for pipelines config related requests

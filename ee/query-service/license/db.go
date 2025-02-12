@@ -10,7 +10,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
 
-	"go.signoz.io/signoz/ee/query-service/license/sqlite"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -26,28 +25,6 @@ func NewLicenseRepo(db *sqlx.DB) Repo {
 	return Repo{
 		db: db,
 	}
-}
-
-func (r *Repo) InitDB(engine string) error {
-	switch engine {
-	case "sqlite3", "sqlite":
-		return sqlite.InitDB(r.db)
-	default:
-		return fmt.Errorf("unsupported db")
-	}
-}
-
-func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
-	licenses := []model.License{}
-
-	query := "SELECT key, activationId, planDetails, validationMessage FROM licenses"
-
-	err := r.db.Select(&licenses, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get licenses from db: %v", err)
-	}
-
-	return licenses, nil
 }
 
 func (r *Repo) GetLicensesV3(ctx context.Context) ([]*model.LicenseV3, error) {
@@ -76,35 +53,6 @@ func (r *Repo) GetLicensesV3(ctx context.Context) ([]*model.LicenseV3, error) {
 	}
 
 	return licenseV3Data, nil
-}
-
-func (r *Repo) GetActiveLicenseV2(ctx context.Context) (*model.License, *basemodel.ApiError) {
-	var err error
-	licenses := []model.License{}
-
-	query := "SELECT key, activationId, planDetails, validationMessage FROM licenses"
-
-	err = r.db.Select(&licenses, query)
-	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
-	}
-
-	var active *model.License
-	for _, l := range licenses {
-		l.ParsePlan()
-		if active == nil &&
-			(l.ValidFrom != 0) &&
-			(l.ValidUntil == -1 || l.ValidUntil > time.Now().Unix()) {
-			active = &l
-		}
-		if active != nil &&
-			l.ValidFrom > active.ValidFrom &&
-			(l.ValidUntil == -1 || l.ValidUntil > time.Now().Unix()) {
-			active = &l
-		}
-	}
-
-	return active, nil
 }
 
 // GetActiveLicense fetches the latest active license from DB.
@@ -161,50 +109,56 @@ func (r *Repo) GetActiveLicenseV3(ctx context.Context) (*model.LicenseV3, error)
 	return active, nil
 }
 
-// InsertLicense inserts a new license in db
-func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
+// InsertLicenseV3 inserts a new license v3 in db
+func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) *model.ApiError {
 
-	if l.Key == "" {
-		return fmt.Errorf("insert license failed: license key is required")
+	query := `INSERT INTO licenses_v3 (id, key, data) VALUES ($1, $2, $3)`
+
+	// licsense is the entity of zeus so putting the entire license here without defining schema
+	licenseData, err := json.Marshal(l.Data)
+	if err != nil {
+		return &model.ApiError{Typ: basemodel.ErrorBadData, Err: err}
 	}
 
-	query := `INSERT INTO licenses 
-						(key, planDetails, activationId, validationmessage) 
-						VALUES ($1, $2, $3, $4)`
-
-	_, err := r.db.ExecContext(ctx,
+	_, err = r.db.ExecContext(ctx,
 		query,
+		l.ID,
 		l.Key,
-		l.PlanDetails,
-		l.ActivationId,
-		l.ValidationMessage)
+		string(licenseData),
+	)
 
 	if err != nil {
+		if sqliteErr, ok := err.(sqlite3.Error); ok {
+			if sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+				zap.L().Error("error in inserting license data: ", zap.Error(sqliteErr))
+				return &model.ApiError{Typ: model.ErrorConflict, Err: sqliteErr}
+			}
+		}
 		zap.L().Error("error in inserting license data: ", zap.Error(err))
-		return fmt.Errorf("failed to insert license in db: %v", err)
+		return &model.ApiError{Typ: basemodel.ErrorExec, Err: err}
 	}
 
 	return nil
 }
 
-// UpdatePlanDetails writes new plan details to the db
-func (r *Repo) UpdatePlanDetails(ctx context.Context,
-	key,
-	planDetails string) error {
+// UpdateLicenseV3 updates a new license v3 in db
+func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 
-	if key == "" {
-		return fmt.Errorf("update plan details failed: license key is required")
+	// the key and id for the license can't change so only update the data here!
+	query := `UPDATE licenses_v3 SET data=$1 WHERE id=$2;`
+
+	license, err := json.Marshal(l.Data)
+	if err != nil {
+		return fmt.Errorf("insert license failed: license marshal error")
 	}
-
-	query := `UPDATE licenses 
-						SET planDetails = $1,
-						updatedAt = $2
-						WHERE key = $3`
-
-	_, err := r.db.ExecContext(ctx, query, planDetails, time.Now(), key)
+	_, err = r.db.ExecContext(ctx,
+		query,
+		license,
+		l.ID,
+	)
 
 	if err != nil {
-		zap.L().Error("error in updating license: ", zap.Error(err))
+		zap.L().Error("error in updating license data: ", zap.Error(err))
 		return fmt.Errorf("failed to update license in db: %v", err)
 	}
 
@@ -284,61 +238,5 @@ func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
 			return err
 		}
 	}
-	return nil
-}
-
-// InsertLicenseV3 inserts a new license v3 in db
-func (r *Repo) InsertLicenseV3(ctx context.Context, l *model.LicenseV3) *model.ApiError {
-
-	query := `INSERT INTO licenses_v3 (id, key, data) VALUES ($1, $2, $3)`
-
-	// licsense is the entity of zeus so putting the entire license here without defining schema
-	licenseData, err := json.Marshal(l.Data)
-	if err != nil {
-		return &model.ApiError{Typ: basemodel.ErrorBadData, Err: err}
-	}
-
-	_, err = r.db.ExecContext(ctx,
-		query,
-		l.ID,
-		l.Key,
-		string(licenseData),
-	)
-
-	if err != nil {
-		if sqliteErr, ok := err.(sqlite3.Error); ok {
-			if sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-				zap.L().Error("error in inserting license data: ", zap.Error(sqliteErr))
-				return &model.ApiError{Typ: model.ErrorConflict, Err: sqliteErr}
-			}
-		}
-		zap.L().Error("error in inserting license data: ", zap.Error(err))
-		return &model.ApiError{Typ: basemodel.ErrorExec, Err: err}
-	}
-
-	return nil
-}
-
-// UpdateLicenseV3 updates a new license v3 in db
-func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
-
-	// the key and id for the license can't change so only update the data here!
-	query := `UPDATE licenses_v3 SET data=$1 WHERE id=$2;`
-
-	license, err := json.Marshal(l.Data)
-	if err != nil {
-		return fmt.Errorf("insert license failed: license marshal error")
-	}
-	_, err = r.db.ExecContext(ctx,
-		query,
-		license,
-		l.ID,
-	)
-
-	if err != nil {
-		zap.L().Error("error in updating license data: ", zap.Error(err))
-		return fmt.Errorf("failed to update license in db: %v", err)
-	}
-
 	return nil
 }

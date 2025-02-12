@@ -43,4 +43,8 @@ export interface IDashboardContext {
 	) => void;
 	variablesToGetUpdated: string[];
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
+	dashboardQueryRangeCalled: boolean;
+	setDashboardQueryRangeCalled: (value: boolean) => void;
+	selectedRowWidgetId: string | null;
+	setSelectedRowWidgetId: React.Dispatch<React.SetStateAction<string | null>>;
 }

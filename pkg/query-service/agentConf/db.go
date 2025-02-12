@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
@@ -17,15 +16,6 @@ import (
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
 	db *sqlx.DB
-}
-
-func (r *Repo) initDB(engine string) error {
-	switch engine {
-	case "sqlite3", "sqlite":
-		return sqlite.InitDB(r.db)
-	default:
-		return fmt.Errorf("unsupported db")
-	}
 }
 
 func (r *Repo) GetConfigHistory(

@@ -37,13 +37,24 @@ function GridCardGraph({
 	onDragSelect,
 	customTooltipElement,
 	dataAvailable,
+	getGraphData,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
+	customErrorMessage,
+	start,
+	end,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
+	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
+		false,
+	);
 	const {
 		toScrollWidgetId,
 		setToScrollWidgetId,
 		variablesToGetUpdated,
+		setDashboardQueryRangeCalled,
 	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -173,6 +184,8 @@ function GridCardGraph({
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval,
+			start,
+			end,
 		},
 		version || DEFAULT_ENTITY_VERSION,
 		{
@@ -202,11 +215,19 @@ function GridCardGraph({
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
+				if (customErrorMessage) {
+					setIsInternalServerError(
+						String(error.message).includes('API responded with 500'),
+					);
+				}
+				setDashboardQueryRangeCalled(true);
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
+				getGraphData?.(data?.payload?.data);
+				setDashboardQueryRangeCalled(true);
 			},
 		},
 	);
@@ -245,6 +266,10 @@ function GridCardGraph({
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
 					customTooltipElement={customTooltipElement}
+					openTracesButton={openTracesButton}
+					onOpenTraceBtnClick={onOpenTraceBtnClick}
+					customSeries={customSeries}
+					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 				/>
 			)}
 		</div>

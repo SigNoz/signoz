@@ -1,0 +1,47 @@
+{
+  "id": "rds",
+  "title": "Amazon RDS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "assets": {
+    "dashboards": []
+  },
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "rds_postgres_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric CPUUtilization"
+      },
+      {
+        "name": "rds_postgres_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "CloudWatch metric CPUUtilization"
+      }
+    ],
+    "logs": []
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/RDS"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/aws/rds",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  }
+}

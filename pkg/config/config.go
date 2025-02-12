@@ -3,33 +3,34 @@ package config
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/web"
+	"go.signoz.io/signoz/pkg/factory"
 )
 
-// Config defines the entire configuration of signoz.
-type Config struct {
-	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
-	Web             web.Config             `mapstructure:"web"`
-}
-
-func New(ctx context.Context, settings ProviderSettings) (*Config, error) {
-	provider, err := NewProvider(settings)
+func New(ctx context.Context, resolverConfig ResolverConfig, configFactories []factory.ConfigFactory) (*Conf, error) {
+	// Get the config from the resolver
+	resolver, err := NewResolver(resolverConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return provider.Get(ctx)
-}
-
-func byName(name string) (any, bool) {
-	switch name {
-	case "instrumentation":
-		return &instrumentation.Config{}, true
-	case "web":
-		return &web.Config{}, true
-	default:
-		return nil, false
+	resolvedConf, err := resolver.Do(ctx)
+	if err != nil {
+		return nil, err
 	}
 
+	conf := NewConf()
+	// Set the default configs
+	for _, factory := range configFactories {
+		c := factory.New()
+		if err := conf.Set(factory.Name().String(), c); err != nil {
+			return nil, err
+		}
+	}
+
+	err = conf.Merge(resolvedConf)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }

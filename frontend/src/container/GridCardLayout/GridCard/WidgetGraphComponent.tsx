@@ -6,6 +6,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -22,11 +23,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import WidgetHeader from '../WidgetHeader';
@@ -48,6 +46,10 @@ function WidgetGraphComponent({
 	onClickHandler,
 	onDragSelect,
 	customTooltipElement,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
+	customErrorMessage,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -76,10 +78,6 @@ function WidgetGraphComponent({
 	const tableProcessedDataRef = useRef<RowData[]>([]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
-		(state) => state.app.featureResponse,
-	);
 
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
@@ -117,7 +115,6 @@ function WidgetGraphComponent({
 					setSelectedDashboard(updatedDashboard.payload);
 				}
 				setDeleteModal(false);
-				featureResponse.refetch();
 			},
 			onError: () => {
 				notifications.error({
@@ -137,18 +134,14 @@ function WidgetGraphComponent({
 			(l) => l.i === widget.id,
 		);
 
-		// added the cloned panel on the top as it is given most priority when arranging
-		// in the layout. React_grid_layout assigns priority from top, hence no random position for cloned panel
-		const layout = [
-			{
-				i: uuid,
-				w: originalPanelLayout?.w || 6,
-				x: 0,
-				h: originalPanelLayout?.h || 6,
-				y: 0,
-			},
-			...(selectedDashboard.data.layout || []),
-		];
+		const newLayoutItem = placeWidgetAtBottom(
+			uuid,
+			selectedDashboard?.data.layout || [],
+			originalPanelLayout?.w || 6,
+			originalPanelLayout?.h || 6,
+		);
+
+		const layout = [...(selectedDashboard.data.layout || []), newLayoutItem];
 
 		updateDashboardMutation.mutateAsync(
 			{
@@ -236,21 +229,6 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
-	const loadingState =
-		(queryResponse.isLoading || queryResponse.status === 'idle') &&
-		widget.panelTypes !== PANEL_TYPES.LIST;
-
-	if (loadingState) {
-		return (
-			<Skeleton
-				style={{
-					height: '100%',
-					padding: '16px',
-				}}
-			/>
-		);
-	}
-
 	return (
 		<div
 			style={{
@@ -322,6 +300,13 @@ function WidgetGraphComponent({
 					setSearchTerm={setSearchTerm}
 				/>
 			</div>
+
+			{queryResponse.error && customErrorMessage && (
+				<div className="error-message-container">
+					<Typography.Text type="warning">{customErrorMessage}</Typography.Text>
+				</div>
+			)}
+
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
 				<Skeleton />
 			)}
@@ -341,6 +326,9 @@ function WidgetGraphComponent({
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
 						searchTerm={searchTerm}
+						openTracesButton={openTracesButton}
+						onOpenTraceBtnClick={onOpenTraceBtnClick}
+						customSeries={customSeries}
 					/>
 				</div>
 			)}

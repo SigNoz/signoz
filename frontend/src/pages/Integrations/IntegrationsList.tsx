@@ -4,12 +4,29 @@ import './Integrations.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, List, Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { MoveUpRight, RotateCw } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { Dispatch, SetStateAction, useMemo } from 'react';
+import { IntegrationsProps } from 'types/api/integrations/types';
 import { isCloudUser } from 'utils/app';
 
-import { handleContactSupport } from './utils';
+import { handleContactSupport, INTEGRATION_TYPES } from './utils';
+
+export const AWS_INTEGRATION = {
+	id: INTEGRATION_TYPES.AWS_INTEGRATION,
+	title: 'Amazon Web Services',
+	description: 'One-click setup for AWS monitoring with SigNoz',
+	author: {
+		name: 'SigNoz',
+		email: 'integrations@signoz.io',
+		homepage: 'https://signoz.io',
+	},
+	icon: `Logos/aws-dark.svg`,
+	is_installed: false,
+	is_new: true,
+};
 
 interface IntegrationsListProps {
 	setSelectedIntegration: (id: string) => void;
@@ -29,14 +46,33 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 		refetch,
 	} = useGetAllIntegrations();
 
+	const { featureFlags } = useAppContext();
+	const isAwsIntegrationEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.AWS_INTEGRATION)
+			?.active || false;
+
 	const filteredDataList = useMemo(() => {
-		if (data?.data.data.integrations) {
-			return data?.data.data.integrations.filter((item) =>
-				item.title.toLowerCase().includes(searchTerm.toLowerCase()),
-			);
+		let integrationsList: IntegrationsProps[] = [];
+
+		if (
+			isAwsIntegrationEnabled &&
+			AWS_INTEGRATION.title.toLowerCase().includes(searchTerm.toLowerCase())
+		) {
+			integrationsList.push(AWS_INTEGRATION);
 		}
-		return [];
-	}, [data?.data.data.integrations, searchTerm]);
+
+		// Add other integrations
+		if (data?.data.data.integrations) {
+			integrationsList = [
+				...integrationsList,
+				...data.data.data.integrations.filter((item) =>
+					item.title.toLowerCase().includes(searchTerm.toLowerCase()),
+				),
+			];
+		}
+
+		return integrationsList;
+	}, [data?.data.data.integrations, isAwsIntegrationEnabled, searchTerm]);
 
 	const loading = isLoading || isFetching || isRefetching;
 
@@ -93,7 +129,10 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 									<img src={item.icon} alt={item.title} className="list-item-image" />
 								</div>
 								<div className="list-item-details">
-									<Typography.Text className="heading">{item.title}</Typography.Text>
+									<Typography.Text className="heading">
+										{item.title}
+										{item.is_new && <div className="heading__new-tag">NEW</div>}
+									</Typography.Text>
 									<Typography.Text className="description">
 										{item.description}
 									</Typography.Text>

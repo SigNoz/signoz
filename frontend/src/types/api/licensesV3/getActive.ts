@@ -1,13 +1,16 @@
 export enum LicenseEvent {
-	FAILED_PAYMENT = 'FAILED_PAYMENT',
+	NO_EVENT = '',
+	DEFAULT = 'DEFAULT',
 }
 
 export enum LicenseStatus {
 	SUSPENDED = 'SUSPENDED',
+	VALID = 'VALID',
 }
 
 export enum LicenseState {
-	PAYMENT_FAILED = 'PAYMENT_FAILED',
+	DEFAULTED = 'DEFAULTED',
+	ACTIVE = 'ACTIVE',
 }
 
 export type LicenseV3EventQueueResModel = {

@@ -34,36 +34,11 @@ type SavedView struct {
 }
 
 // InitWithDSN sets up setting up the connection pool global variable.
-func InitWithDSN(dataSourceName string) (*sqlx.DB, error) {
-	var err error
-
-	db, err = sqlx.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	tableSchema := `CREATE TABLE IF NOT EXISTS saved_views (
-		uuid TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		category TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		created_by TEXT,
-		updated_at datetime NOT NULL,
-		updated_by TEXT,
-		source_page TEXT NOT NULL,
-		tags TEXT,
-		data TEXT NOT NULL,
-		extra_data TEXT
-	);`
-
-	_, err = db.Exec(tableSchema)
-	if err != nil {
-		return nil, fmt.Errorf("error in creating saved views table: %s", err.Error())
-	}
-
+func InitWithDSN(inputDB *sqlx.DB) error {
+	db = inputDB
 	telemetry.GetInstance().SetSavedViewsInfoCallback(GetSavedViewsInfo)
 
-	return db, nil
+	return nil
 }
 
 func InitWithDB(sqlDB *sqlx.DB) {

@@ -1,11 +1,9 @@
 package clickhouseReader
 
 import (
-	"context"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.uber.org/zap"
 )
 
 type Encoding string
@@ -18,7 +16,6 @@ const (
 )
 
 const (
-	defaultDatasource              string        = "tcp://localhost:9000"
 	defaultTraceDB                 string        = "signoz_traces"
 	defaultOperationsTable         string        = "distributed_signoz_operations"
 	defaultIndexTable              string        = "distributed_signoz_index_v2"
@@ -58,9 +55,6 @@ type namespaceConfig struct {
 	namespace               string
 	Enabled                 bool
 	Datasource              string
-	MaxIdleConns            int
-	MaxOpenConns            int
-	DialTimeout             time.Duration
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
@@ -99,37 +93,6 @@ type namespaceConfig struct {
 // Connecto defines how to connect to the database
 type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
-func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
-	ctx := context.Background()
-	options, err := clickhouse.ParseDSN(cfg.Datasource)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the DSN contained any of the following options, if not set from configuration
-	if options.MaxIdleConns == 0 {
-		options.MaxIdleConns = cfg.MaxIdleConns
-	}
-	if options.MaxOpenConns == 0 {
-		options.MaxOpenConns = cfg.MaxOpenConns
-	}
-	if options.DialTimeout == 0 {
-		options.DialTimeout = cfg.DialTimeout
-	}
-
-	zap.L().Info("Connecting to Clickhouse", zap.String("at", options.Addr[0]), zap.Int("MaxIdleConns", options.MaxIdleConns), zap.Int("MaxOpenConns", options.MaxOpenConns), zap.Duration("DialTimeout", options.DialTimeout))
-	db, err := clickhouse.Open(options)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := db.Ping(ctx); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
 // Options store storage plugin related configs
 type Options struct {
 	primary *namespaceConfig
@@ -139,26 +102,13 @@ type Options struct {
 
 // NewOptions creates a new Options struct.
 func NewOptions(
-	datasource string,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	primaryNamespace string,
 	otherNamespaces ...string,
 ) *Options {
-
-	if datasource == "" {
-		datasource = defaultDatasource
-	}
-
 	options := &Options{
 		primary: &namespaceConfig{
 			namespace:               primaryNamespace,
 			Enabled:                 true,
-			Datasource:              datasource,
-			MaxIdleConns:            maxIdleConns,
-			MaxOpenConns:            maxOpenConns,
-			DialTimeout:             dialTimeout,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,
@@ -181,7 +131,6 @@ func NewOptions(
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
 			Encoding:                defaultEncoding,
-			Connector:               defaultConnector,
 
 			LogsTableV2:              defaultLogsTableV2,
 			LogsLocalTableV2:         defaultLogsLocalTableV2,
@@ -200,7 +149,6 @@ func NewOptions(
 		if namespace == archiveNamespace {
 			options.others[namespace] = &namespaceConfig{
 				namespace:              namespace,
-				Datasource:             datasource,
 				TraceDB:                "",
 				OperationsTable:        "",
 				IndexTable:             "",
@@ -214,7 +162,6 @@ func NewOptions(
 				WriteBatchDelay:        defaultWriteBatchDelay,
 				WriteBatchSize:         defaultWriteBatchSize,
 				Encoding:               defaultEncoding,
-				Connector:              defaultConnector,
 			}
 		} else {
 			options.others[namespace] = &namespaceConfig{namespace: namespace}

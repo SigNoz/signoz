@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import MessagingQueues from 'pages/MessagingQueues';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -10,6 +11,7 @@ import {
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
+	CustomDomainSettings,
 	DashboardPage,
 	DashboardWidget,
 	EditAlertChannelsAlerts,
@@ -26,8 +28,7 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
-	MessagingQueues,
-	MQDetailPage,
+	MetricsExplorer,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -289,6 +290,13 @@ const routes: AppRoutes[] = [
 		key: 'MY_SETTINGS',
 	},
 	{
+		path: ROUTES.CUSTOM_DOMAIN_SETTINGS,
+		exact: true,
+		component: CustomDomainSettings,
+		isPrivate: true,
+		key: 'CUSTOM_DOMAIN_SETTINGS',
+	},
+	{
 		path: ROUTES.LOGS,
 		exact: true,
 		component: Logs,
@@ -387,17 +395,31 @@ const routes: AppRoutes[] = [
 		key: 'INTEGRATIONS',
 	},
 	{
-		path: ROUTES.MESSAGING_QUEUES,
+		path: ROUTES.MESSAGING_QUEUES_KAFKA,
 		exact: true,
 		component: MessagingQueues,
-		key: 'MESSAGING_QUEUES',
+		key: 'MESSAGING_QUEUES_KAFKA',
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.MESSAGING_QUEUES_DETAIL,
+		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 		exact: true,
-		component: MQDetailPage,
-		key: 'MESSAGING_QUEUES_DETAIL',
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_CELERY_TASK',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_OVERVIEW',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
+		exact: true,
+		component: MessagingQueues,
+		key: 'MESSAGING_QUEUES_KAFKA_DETAIL',
 		isPrivate: true,
 	},
 	{
@@ -405,6 +427,34 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: InfrastructureMonitoring,
 		key: 'INFRASTRUCTURE_MONITORING_HOSTS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
+		exact: true,
+		component: InfrastructureMonitoring,
+		key: 'INFRASTRUCTURE_MONITORING_KUBERNETES',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER_EXPLORER,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.METRICS_EXPLORER_VIEWS,
+		exact: true,
+		component: MetricsExplorer,
+		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
 ];
@@ -427,23 +477,28 @@ export const LIST_LICENSES: AppRoutes = {
 
 export const oldRoutes = [
 	'/pipelines',
-	'/logs/old-logs-explorer',
 	'/logs-explorer',
 	'/logs-explorer/live',
 	'/logs-save-views',
 	'/traces-save-views',
-	'/settings/api-keys',
+	'/settings/access-tokens',
+	'/messaging-queues',
 ];
 
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
-	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
 	'/logs-explorer': '/logs/logs-explorer',
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/api-keys': '/settings/access-tokens',
+	'/settings/access-tokens': '/settings/api-keys',
+	'/messaging-queues': '/messaging-queues/overview',
 };
+
+export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
+	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.WORKSPACE_SUSPENDED,
+];
 
 export interface AppRoutes {
 	component: RouteProps['component'];

@@ -186,7 +186,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		id: logData.id,
 		severityNumber: logData.severityNumber,
 		severityText: logData.severityText,
-		spanId: logData.spanId,
+		spanID: logData.spanID,
 		timestamp: logData.timestamp,
 		traceFlags: logData.traceFlags,
 		traceId: logData.traceId,

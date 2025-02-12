@@ -59,7 +59,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, queries["C"], "SELECT A.`ts` as `ts`, A.value / B.value")
-		require.Contains(t, queries["C"], "WHERE metric_name = 'name' AND temporality = 'Cumulative' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'in') IN ['a','b','c']")
+		require.Contains(t, queries["C"], "WHERE metric_name IN ['name'] AND temporality = 'Cumulative' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		require.Contains(t, queries["C"], "(value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))")
 	})
 }
@@ -216,6 +216,136 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		// So(queries["F5"], ShouldContainSubstring, "SELECT A.ts as ts, ((A.value - B.value) / B.value) * 100")
 		// So(strings.Count(queries["F5"], " ON "), ShouldEqual, 1)
 	})
+	t.Run("TestBuildQueryWithDotMetricNameAndAttribute", func(t *testing.T) {
+		q := &v3.QueryRangeParamsV3{
+			Start: 1735036101000,
+			End:   1735637901000,
+			Step:  60,
+			Variables: map[string]interface{}{
+				"SIGNOZ_START_TIME": 1735034992000,
+				"SIGNOZ_END_TIME":   1735036792000,
+			},
+			FormatForWeb: false,
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				FillGaps:  false,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:         "A",
+						DataSource:        v3.DataSourceMetrics,
+						AggregateOperator: v3.AggregateOperatorAvg,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "system.memory.usage",
+							DataType: v3.AttributeKeyDataTypeFloat64,
+							Type:     v3.AttributeKeyType("Gauge"),
+							IsColumn: true,
+						},
+						TimeAggregation:  v3.TimeAggregationAvg,
+						SpaceAggregation: v3.SpaceAggregationSum,
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key: v3.AttributeKey{
+										Key:      "os.type",
+										DataType: v3.AttributeKeyDataTypeString,
+										Type:     v3.AttributeKeyTypeTag,
+										IsColumn: false,
+									},
+									Operator: v3.FilterOperatorEqual,
+									Value:    "linux",
+								},
+							},
+						},
+						Expression:   "A",
+						Disabled:     true,
+						StepInterval: 60,
+						OrderBy: []v3.OrderBy{
+							{
+								ColumnName: "#SIGNOZ_VALUE",
+								Order:      v3.DirectionAsc,
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{
+								Key:      "os.type",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+						},
+						Legend:   "",
+						ReduceTo: v3.ReduceToOperatorAvg,
+						Having:   []v3.Having{},
+					},
+					"B": {
+						QueryName:         "B",
+						DataSource:        v3.DataSourceMetrics,
+						AggregateOperator: v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "system.network.io",
+							DataType: v3.AttributeKeyDataTypeFloat64,
+							Type:     v3.AttributeKeyType("Sum"),
+							IsColumn: true,
+						},
+						TimeAggregation:  v3.TimeAggregationIncrease,
+						SpaceAggregation: v3.SpaceAggregationSum,
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items:    []v3.FilterItem{},
+						},
+						Expression:   "B",
+						Disabled:     true,
+						StepInterval: 60,
+						OrderBy: []v3.OrderBy{
+							{
+								Key:      "os.type",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{
+								Key:      "os.type",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+								IsColumn: false,
+							},
+						},
+						Legend:   "",
+						ReduceTo: v3.ReduceToOperatorAvg,
+						Having: []v3.Having{
+							{
+								ColumnName: "SUM(system.network.io)",
+								Operator:   v3.HavingOperatorGreaterThan,
+								Value:      4,
+							},
+						},
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A + B",
+						Disabled:   false,
+						Legend:     "",
+						OrderBy:    []v3.OrderBy{},
+						Limit:      2,
+					},
+				},
+			},
+		}
+		qbOptions := QueryBuilderOptions{
+			BuildMetricQuery: metricsv3.PrepareMetricQuery,
+		}
+		fm := featureManager.StartManager()
+		qb := NewQueryBuilder(qbOptions, fm)
+
+		queries, err := qb.PrepareQueries(q)
+		require.Contains(t, queries["F1"], "SELECT A.`os.type` as `os.type`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.memory.usage'] AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name IN ['system.memory.usage'] AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) as A  INNER JOIN (SELECT * FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.network.io'] AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000) as filtered_time_series USING fingerprint WHERE metric_name IN ['system.network.io'] AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) HAVING value > 4) as B  ON A.`os.type` = B.`os.type` AND A.`ts` = B.`ts`")
+		require.NoError(t, err)
+
+	})
 }
 
 func TestDeltaQueryBuilder(t *testing.T) {
@@ -261,7 +391,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 				},
 			},
 			queryToTest: "A",
-			expected:    "SELECT  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY ts ORDER BY  ts",
+			expected:    "SELECT  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['signoz_latency_count'] AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name IN ['signoz_latency_count'] AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY ts ORDER BY  ts",
 		},
 		{
 			name: "TestQueryWithExpression - Error rate",
@@ -331,7 +461,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 				},
 			},
 			queryToTest: "C",
-			expected:    "SELECT A.`ts` as `ts`, A.value * 100 / B.value as value FROM (SELECT  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, 'status_code') IN ['STATUS_CODE_ERROR'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY ts ORDER BY  ts) as A  INNER JOIN (SELECT  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY ts ORDER BY  ts) as B  ON A.`ts` = B.`ts`",
+			expected:    "SELECT A.`ts` as `ts`, A.value * 100 / B.value as value FROM (SELECT  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['signoz_latency_count'] AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, 'status_code') IN ['STATUS_CODE_ERROR'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name IN ['signoz_latency_count'] AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY ts ORDER BY  ts) as A  INNER JOIN (SELECT  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['signoz_latency_count'] AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name IN ['signoz_latency_count'] AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY ts ORDER BY  ts) as B  ON A.`ts` = B.`ts`",
 		},
 		{
 			name: "TestQuery - Quantile",
@@ -359,7 +489,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 				},
 			},
 			queryToTest: "A",
-			expected:    "SELECT service_name,  ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) as value FROM (SELECT service_name,le,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, JSONExtractString(labels, 'le') as le, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'signoz_latency_bucket' AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_bucket' AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY service_name,le,ts ORDER BY service_name ASC,le ASC, ts) GROUP BY service_name,ts ORDER BY service_name ASC, ts",
+			expected:    "SELECT service_name,  ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) as value FROM (SELECT service_name,le,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, JSONExtractString(labels, 'le') as le, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['signoz_latency_bucket'] AND temporality = 'Delta' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name IN ['signoz_latency_bucket'] AND unix_milli >= 1650991980000 AND unix_milli <= 1651078380000 GROUP BY service_name,le,ts ORDER BY service_name ASC,le ASC, ts) GROUP BY service_name,ts ORDER BY service_name ASC, ts",
 		},
 	}
 
@@ -1170,13 +1300,14 @@ func TestGenerateCacheKeysMetricsBuilder(t *testing.T) {
 					QueryType: v3.QueryTypeBuilder,
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"A": {
-							QueryName:          "A",
-							StepInterval:       60,
-							DataSource:         v3.DataSourceMetrics,
-							AggregateOperator:  v3.AggregateOperatorSumRate,
-							Expression:         "A",
-							AggregateAttribute: v3.AttributeKey{Key: "signoz_latency_bucket"},
-							Temporality:        v3.Delta,
+							QueryName:            "A",
+							StepInterval:         60,
+							DataSource:           v3.DataSourceMetrics,
+							AggregateOperator:    v3.AggregateOperatorSumRate,
+							SecondaryAggregation: v3.SecondaryAggregationMax,
+							Expression:           "A",
+							AggregateAttribute:   v3.AttributeKey{Key: "signoz_latency_bucket"},
+							Temporality:          v3.Delta,
 							Filters: &v3.FilterSet{
 								Operator: "AND",
 								Items: []v3.FilterItem{
@@ -1203,8 +1334,89 @@ func TestGenerateCacheKeysMetricsBuilder(t *testing.T) {
 				},
 			},
 			expectedCacheKeys: map[string]string{
-				"A": "source=metrics&step=60&aggregate=sum_rate&timeAggregation=&spaceAggregation=&aggregateAttribute=signoz_latency_bucket---false&filter-0=key:service_name---false,op:=,value:A&groupBy-0=service_name---false&groupBy-1=le---false&having-0=column:value,op:>,value:100",
+				"A": "source=metrics&step=60&aggregate=sum_rate&timeAggregation=&spaceAggregation=&aggregateAttribute=signoz_latency_bucket---false&filter-0=key:service_name---false,op:=,value:A&groupBy-0=service_name---false&groupBy-1=le---false&secondaryAggregation=max&having-0=column:value,op:>,value:100",
 			},
+		},
+		{
+			name: "version=v3;panelType=value;dataSource=metrics;queryType=builder with expression", //not caching panel type value for v3
+			query: &v3.QueryRangeParamsV3{
+				Version: "v3",
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeValue,
+					FillGaps:  false,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:         "A",
+							DataSource:        v3.DataSourceMetrics,
+							AggregateOperator: v3.AggregateOperatorNoOp,
+							AggregateAttribute: v3.AttributeKey{
+								Key:      "system_memory_usage",
+								DataType: v3.AttributeKeyDataTypeFloat64,
+								Type:     v3.AttributeKeyType("Gauge"),
+								IsColumn: true,
+							},
+							TimeAggregation:  v3.TimeAggregationUnspecified,
+							SpaceAggregation: v3.SpaceAggregationSum,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "state",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+											IsColumn: false,
+										},
+										Operator: v3.FilterOperatorEqual,
+										Value:    "cached",
+									},
+								},
+							},
+							Expression:   "A",
+							Disabled:     true,
+							StepInterval: 60,
+						},
+						"B": {
+							QueryName:         "B",
+							DataSource:        v3.DataSourceMetrics,
+							AggregateOperator: v3.AggregateOperatorNoOp,
+							AggregateAttribute: v3.AttributeKey{
+								Key:      "system_memory_usage",
+								DataType: v3.AttributeKeyDataTypeFloat64,
+								Type:     v3.AttributeKeyType("Gauge"),
+								IsColumn: true,
+							},
+							TimeAggregation:  v3.TimeAggregationUnspecified,
+							SpaceAggregation: v3.SpaceAggregationSum,
+							Filters: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "state",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+											IsColumn: false,
+										},
+										Operator: v3.FilterOperatorEqual,
+										Value:    "cached",
+									},
+								},
+							},
+							Expression:   "B",
+							Disabled:     true,
+							StepInterval: 60,
+						},
+						"F1": {
+							QueryName:  "F1",
+							Expression: "A+B",
+							Disabled:   false,
+						},
+					},
+				},
+			},
+			expectedCacheKeys: map[string]string{},
 		},
 		{
 			name: "version=v4;panelType=table;dataSource=metrics;queryType=builder",

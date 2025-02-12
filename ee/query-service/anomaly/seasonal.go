@@ -194,10 +194,11 @@ func (p *BaseSeasonalProvider) getMovingAvg(series *v3.Series, movingAvgWindowSi
 	}
 	var sum float64
 	points := series.Points[startIdx:]
-	for i := 0; i < movingAvgWindowSize && i < len(points); i++ {
+	windowSize := int(math.Min(float64(movingAvgWindowSize), float64(len(points))))
+	for i := 0; i < windowSize; i++ {
 		sum += points[i].Value
 	}
-	avg := sum / float64(movingAvgWindowSize)
+	avg := sum / float64(windowSize)
 	return avg
 }
 
@@ -226,21 +227,25 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 	// plus the average of the current season series
 	// minus the mean of the past season series, past2 season series and past3 season series
 	for idx, curr := range series.Points {
-		predictedValue :=
-			p.getMovingAvg(prevSeries, movingAvgWindowSize, idx) +
-				p.getAvg(currentSeasonSeries) -
-				p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))
+		movingAvg := p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
+		avg := p.getAvg(currentSeasonSeries)
+		mean := p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))
+		predictedValue := movingAvg + avg - mean
 
 		if predictedValue < 0 {
+			// this should not happen (except when the data has extreme outliers)
+			// we will use the moving avg of the previous period series in this case
+			zap.L().Warn("predictedValue is less than 0", zap.Float64("predictedValue", predictedValue), zap.Any("labels", series.Labels))
 			predictedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
 		}
 
-		zap.L().Info("predictedSeries",
-			zap.Float64("movingAvg", p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)),
-			zap.Float64("avg", p.getAvg(currentSeasonSeries)),
-			zap.Float64("mean", p.getMean(p.getAvg(pastSeasonSeries), p.getAvg(past2SeasonSeries), p.getAvg(past3SeasonSeries))),
+		zap.L().Debug("predictedSeries",
+			zap.Float64("movingAvg", movingAvg),
+			zap.Float64("avg", avg),
+			zap.Float64("mean", mean),
 			zap.Any("labels", series.Labels),
 			zap.Float64("predictedValue", predictedValue),
+			zap.Float64("curr", curr.Value),
 		)
 		predictedSeries.Points = append(predictedSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,

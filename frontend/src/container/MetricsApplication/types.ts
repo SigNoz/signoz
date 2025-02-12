@@ -11,6 +11,7 @@ export interface GetWidgetQueryBuilderProps {
 	yAxisUnit?: Widgets['yAxisUnit'];
 	id?: Widgets['id'];
 	fillSpans?: Widgets['fillSpans'];
+	columnUnits?: Widgets['columnUnits'];
 }
 
 export interface NavigateToTraceProps {

@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline/sqlite"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -26,15 +25,6 @@ const logPipelines = "log_pipelines"
 func NewRepo(db *sqlx.DB) Repo {
 	return Repo{
 		db: db,
-	}
-}
-
-func (r *Repo) InitDB(engine string) error {
-	switch engine {
-	case "sqlite3", "sqlite":
-		return sqlite.InitDB(r.db)
-	default:
-		return fmt.Errorf("unsupported db")
 	}
 }
 
