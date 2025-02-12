@@ -1,0 +1,142 @@
+package featureflag
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/uptrace/bun"
+	"go.signoz.io/signoz/pkg/types"
+)
+
+type Store interface {
+	ListOrgIDs(ctx context.Context) ([]string, error)
+	GetFeatureFlag(ctx context.Context, orgID string, name types.Flag) (types.Feature, error)
+	ListFeatureFlags(ctx context.Context, orgID string) ([]types.Feature, error)
+	UpdateFeatureFlag(ctx context.Context, orgID string, name types.Flag, feature types.Feature) error
+	SaveFeatureFlags(ctx context.Context, orgID string, features []types.Feature) error
+}
+
+type FeatureStorage struct {
+	db *bun.DB
+}
+
+func NewFeatureStorage(db *bun.DB) Store {
+	return &FeatureStorage{db: db}
+}
+
+func (s *FeatureStorage) ListOrgIDs(ctx context.Context) ([]string, error) {
+	var orgIDs []string
+	err := s.db.NewSelect().
+		Table("organizations").
+		Model(&orgIDs).
+		Column("id").
+		Scan(ctx)
+	return orgIDs, err
+}
+
+func (s *FeatureStorage) GetFeatureFlag(ctx context.Context, orgID string, name types.Flag) (types.Feature, error) {
+	var dbFeature types.Feature
+	err := s.db.NewSelect().
+		Model(&dbFeature).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name.String()).
+		Scan(ctx)
+	if err != nil {
+		return types.Feature{}, fmt.Errorf("failed to get feature flag: %w", err)
+	}
+	return dbFeature, nil
+}
+
+// will return all features for an org
+func (s *FeatureStorage) ListFeatureFlags(ctx context.Context, orgID string) ([]types.Feature, error) {
+	var features []types.Feature
+	err := s.db.NewSelect().
+		Model(&features).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return features, nil
+}
+
+// UpdateFeature updates a specific feature by flag for an org
+func (s *FeatureStorage) UpdateFeatureFlag(ctx context.Context, orgID string, name types.Flag, feature types.Feature) error {
+	_, err := s.db.NewUpdate().
+		Model(&feature).
+		Set("description = ?, stage = ?, is_active = ?, is_changed = true", feature.Description, feature.Stage.String(), feature.IsActive).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name.String()).
+		Where("is_changeable = true").
+		Exec(ctx)
+	return err
+}
+
+// SaveFeatureFlags saves a list of features to the database
+// we write all the features to the db first time.
+// if any update for zeus/constants it will update the flags as they will have IsChangeable = false
+func (s *FeatureStorage) SaveFeatureFlags(ctx context.Context, orgID string, features []types.Feature) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	// Fetch all existing features for the orgId
+	var existingFeatures []types.Feature
+	err = tx.NewSelect().
+		Model(&existingFeatures).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Convert the slice to a map
+	existingFeaturesMap := make(map[string]types.Feature)
+	for _, feature := range existingFeatures {
+		existingFeaturesMap[feature.Name.String()] = feature
+	}
+
+	for _, feature := range features {
+		feature.OrgID = orgID
+		dbFeature, exists := existingFeaturesMap[feature.Name.String()]
+		if !exists {
+			// Feature not present, create it
+			_, err = tx.NewInsert().
+				Model(&feature).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Feature present, check if value is changed using reflect.DeepEqual
+			if !dbFeature.Equals(feature) {
+				// If a feature i.e constants/from zeus is not changeable and is changed then we replace it
+				// if feature default value is changed in constants/zeus then we update it if the feature value is not changed by user
+				if !dbFeature.IsChangeable || !dbFeature.IsChanged {
+					// Update the feature
+					_, err = tx.NewUpdate().
+						Model(&feature).
+						Where("org_id = ? AND name = ?", feature.OrgID, feature.Name.String()).
+						Exec(ctx)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	return err
+}

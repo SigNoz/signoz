@@ -46,6 +46,7 @@ func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
 			sqlmigration.NewAddIntegrationsFactory(),
 			sqlmigration.NewAddLicensesFactory(),
 			sqlmigration.NewAddPatsFactory(),
+			sqlmigration.NewAddFeatureFlagFactory(),
 		),
 	)
 	if err != nil {

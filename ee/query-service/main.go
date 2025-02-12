@@ -148,8 +148,13 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
-
-	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
+	providerConfig := signoz.NewProviderConfig()
+	// TODO: Uncomment when we want to use zeus for feature flags
+	// providerConfig.FeatureFlagProviderFactories = factory.MustNewNamedMap(
+	// 	base.NewFactory(),
+	// 	zeus.NewFactory(),
+	// )
+	signoz, err := signoz.New(context.Background(), config, providerConfig)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}

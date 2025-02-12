@@ -5,6 +5,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/featureflag"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlmigrator"
@@ -16,10 +17,11 @@ import (
 )
 
 type SigNoz struct {
-	Cache          cache.Cache
-	Web            web.Web
-	SQLStore       sqlstore.SQLStore
-	TelemetryStore telemetrystore.TelemetryStore
+	Cache              cache.Cache
+	Web                web.Web
+	SQLStore           sqlstore.SQLStore
+	TelemetryStore     telemetrystore.TelemetryStore
+	FeatureFlagManager *featureflag.FeatureFlagManager
 }
 
 func New(
@@ -93,19 +95,24 @@ func New(
 		config.SQLMigration,
 		providerConfig.SQLMigrationProviderFactories,
 	)
-	if err != nil {
-		return nil, err
-	}
-
 	err = sqlmigrator.New(ctx, providerSettings, sqlstore, sqlmigrations, config.SQLMigrator).Migrate(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: uncomment when we want use it
+	// featureFlagProviders, err := factory.NewFromNamedMap(ctx, providerSettings, config.FeatureFlag, providerConfig.FeatureFlagProviderFactories)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// featureFlagManager := featureflag.NewFeatureFlagManager(ctx, instrumentation.Logger(), sqlstore.BunDB(), featureFlagProviders...)
+	// featureFlagManager.Start(ctx)
 
 	return &SigNoz{
 		Cache:          cache,
 		Web:            web,
 		SQLStore:       sqlstore,
 		TelemetryStore: telemetrystore,
+		// FeatureFlagManager: featureFlagManager,
 	}, nil
 }

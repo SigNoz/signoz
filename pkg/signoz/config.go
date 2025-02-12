@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/featureflag"
 	"go.signoz.io/signoz/pkg/instrumentation"
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlmigrator"
@@ -44,6 +45,9 @@ type Config struct {
 
 	// TelemetryStore config
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
+
+	// FeatureFlag config
+	FeatureFlag featureflag.Config `mapstructure:"featureflag"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
