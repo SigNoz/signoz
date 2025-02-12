@@ -32,14 +32,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
+	// Set the maximum number of open connections
+	pgConfig.MaxConns = int32(config.Connection.MaxOpenConns)
+
 	// Use pgxpool to create a connection pool
 	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	// Set the maximum number of open connections
-	pool.Config().MaxConns = int32(config.Connection.MaxOpenConns)
 
 	sqldb := stdlib.OpenDBFromPool(pool)
 
