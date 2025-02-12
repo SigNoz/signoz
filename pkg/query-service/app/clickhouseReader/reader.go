@@ -5247,17 +5247,17 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError) {
+func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
 	var query string
 	var err error
 	var rows driver.Rows
-	var attributeValues []v3.AttributeKey
+	var attributeValues []string
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE JSONExtractString(labels, $2) ILIKE $3 AND unix_milli >= $4 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
+	rows, err = r.db.Query(ctx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -5270,26 +5270,19 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 		if err := rows.Scan(&atrributeValue); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		key := v3.AttributeKey{
-			Key:      atrributeValue,
-			DataType: v3.AttributeKeyDataTypeString,
-			Type:     v3.AttributeKeyTypeTag,
-			IsColumn: false,
-		}
-		attributeValues = append(attributeValues, key)
+		attributeValues = append(attributeValues, atrributeValue)
 	}
-
-	return &attributeValues, nil
+	return attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError) {
+func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
 	var rows driver.Rows
-	var response []v3.AttributeKey
+	var response []string
 	query := fmt.Sprintf("SELECT DISTINCT unit FROM %s.%s WHERE unit ILIKE $1 AND unit IS NOT NULL ORDER BY unit", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	// Remove the unnecessary parameters from db.Query
+
 	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -5301,12 +5294,7 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 		if err := rows.Scan(&attributeKey); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		key := v3.AttributeKey{
-			Key:      attributeKey,
-			DataType: v3.AttributeKeyDataTypeString,
-			IsColumn: true,
-		}
-		response = append(response, key)
+		response = append(response, attributeKey)
 	}
-	return &response, nil
+	return response, nil
 }
