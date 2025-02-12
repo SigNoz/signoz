@@ -25,7 +25,7 @@ func NewFactory() factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStore, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlstore/pgstore")
+	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlstore/postgressqlstore")
 
 	pgConfig, err := pgxpool.ParseConfig(config.Postgres.DSN)
 	if err != nil {
