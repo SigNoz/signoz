@@ -27,77 +27,42 @@ func (migration *addPats) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addPats) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS org_domains(
-		id TEXT PRIMARY KEY,
-		org_id TEXT NOT NULL,
-		name VARCHAR(50) NOT NULL UNIQUE,
-		created_at INTEGER NOT NULL,
-		updated_at INTEGER,
-		data TEXT  NOT NULL,
-		FOREIGN KEY(org_id) REFERENCES organizations(id)
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:org_domains"`
+
+			ID        string `bun:"id,pk,type:text"`
+			OrgID     string `bun:"org_id,type:text,notnull"`
+			Name      string `bun:"name,type:varchar(50),notnull,unique"`
+			CreatedAt int    `bun:"created_at,notnull"`
+			UpdatedAt int    `bun:"updated_at,type:timestamp"`
+			Data      string `bun:"data,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS personal_access_tokens (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		role TEXT NOT NULL,
-		user_id TEXT NOT NULL,
-		token TEXT NOT NULL UNIQUE,
-		name TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		expires_at INTEGER NOT NULL,
-		updated_at INTEGER NOT NULL,
-		last_used INTEGER NOT NULL,
-		revoked BOOLEAN NOT NULL,
-		updated_by_user_id TEXT NOT NULL,
-		FOREIGN KEY(user_id) REFERENCES users(id)
-	);`); err != nil {
-		return err
-	}
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:personal_access_tokens"`
 
-	if _, err := db.
-		NewAddColumn().
-		Table("personal_access_tokens").
-		ColumnExpr("role TEXT NOT NULL DEFAULT 'ADMIN'").
-		Apply(WrapIfNotExists(ctx, db, "personal_access_tokens", "role")).
-		Exec(ctx); err != nil && err != ErrNoExecute {
-		return err
-	}
-
-	if _, err := db.
-		NewAddColumn().
-		Table("personal_access_tokens").
-		ColumnExpr("updated_at INTEGER NOT NULL DEFAULT 0").
-		Apply(WrapIfNotExists(ctx, db, "personal_access_tokens", "updated_at")).
-		Exec(ctx); err != nil && err != ErrNoExecute {
-		return err
-	}
-
-	if _, err := db.
-		NewAddColumn().
-		Table("personal_access_tokens").
-		ColumnExpr("last_used INTEGER NOT NULL DEFAULT 0").
-		Apply(WrapIfNotExists(ctx, db, "personal_access_tokens", "last_used")).
-		Exec(ctx); err != nil && err != ErrNoExecute {
-		return err
-	}
-
-	if _, err := db.
-		NewAddColumn().
-		Table("personal_access_tokens").
-		ColumnExpr("revoked BOOLEAN NOT NULL DEFAULT FALSE").
-		Apply(WrapIfNotExists(ctx, db, "personal_access_tokens", "revoked")).
-		Exec(ctx); err != nil && err != ErrNoExecute {
-		return err
-	}
-
-	if _, err := db.
-		NewAddColumn().
-		Table("personal_access_tokens").
-		ColumnExpr("updated_by_user_id TEXT NOT NULL DEFAULT ''").
-		Apply(WrapIfNotExists(ctx, db, "personal_access_tokens", "updated_by_user_id")).
-		Exec(ctx); err != nil && err != ErrNoExecute {
+			ID              int    `bun:"id,pk,autoincrement"`
+			Role            string `bun:"role,type:text,notnull,default:'ADMIN'"`
+			UserID          string `bun:"user_id,type:text,notnull"`
+			Token           string `bun:"token,type:text,notnull,unique"`
+			Name            string `bun:"name,type:text,notnull"`
+			CreatedAt       int    `bun:"created_at,notnull,default:0"`
+			ExpiresAt       int    `bun:"expires_at,notnull,default:0"`
+			UpdatedAt       int    `bun:"updated_at,notnull,default:0"`
+			LastUsed        int    `bun:"last_used,notnull,default:0"`
+			Revoked         bool   `bun:"revoked,notnull,default:false"`
+			UpdatedByUserID string `bun:"updated_by_user_id,type:text,notnull,default:''"`
+		}{}).
+		ForeignKey(`("user_id") REFERENCES "users" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 

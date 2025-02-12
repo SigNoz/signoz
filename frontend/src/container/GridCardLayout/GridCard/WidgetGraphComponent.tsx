@@ -229,21 +229,6 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
-	const loadingState =
-		(queryResponse.isLoading || queryResponse.status === 'idle') &&
-		widget.panelTypes !== PANEL_TYPES.LIST;
-
-	if (loadingState) {
-		return (
-			<Skeleton
-				style={{
-					height: '100%',
-					padding: '16px',
-				}}
-			/>
-		);
-	}
-
 	return (
 		<div
 			style={{
