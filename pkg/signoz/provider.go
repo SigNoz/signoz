@@ -46,6 +46,7 @@ func NewProviderConfig() ProviderConfig {
 		),
 		SQLStoreProviderFactories: factory.MustNewNamedMap(
 			sqlitesqlstore.NewFactory(),
+			// postgressqlstore.NewFactory(),
 		),
 		SQLMigrationProviderFactories: factory.MustNewNamedMap(
 			sqlmigration.NewAddDataMigrationsFactory(),
@@ -59,6 +60,7 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddLicensesFactory(),
 			sqlmigration.NewAddPatsFactory(),
 			sqlmigration.NewAddAlertmanagerConfigurationFactory(),
+			sqlmigration.NewModifyDatetimeFactory(),
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
 			clickhousetelemetrystore.NewFactory(hook),

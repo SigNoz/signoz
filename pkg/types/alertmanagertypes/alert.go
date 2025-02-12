@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"sort"
@@ -38,16 +39,6 @@ type (
 	// An alias for the GettableAlertsParams type from the alertmanager package.
 	GettableAlertsParams = alert.GetAlertsParams
 )
-
-func NewGettableAlertsParams(req *http.Request) (GettableAlertsParams, error) {
-	params := alert.NewGetAlertsParams()
-	err := (&params).BindRequest(req, &middleware.MatchedRoute{})
-	if err != nil {
-		return GettableAlertsParams{}, err
-	}
-
-	return params, nil
-}
 
 // Converts a slice of PostableAlert to a slice of Alert.
 func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
@@ -91,6 +82,34 @@ func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout t
 	}
 
 	return validAlerts, errs
+}
+
+func NewTestAlert(receiver Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
+	return &Alert{
+		Alert: model.Alert{
+			StartsAt: startsAt,
+			Labels: model.LabelSet{
+				"alertname": model.LabelValue(fmt.Sprintf("Test Alert (%s)", receiver.Name)),
+				"severity":  "critical",
+			},
+			Annotations: model.LabelSet{
+				"description": "Test alert fired from SigNoz",
+				"summary":     "Test alert fired from SigNoz",
+				"message":     "Test alert fired from SigNoz",
+			},
+		},
+		UpdatedAt: updatedAt,
+	}
+}
+
+func NewGettableAlertsParams(req *http.Request) (GettableAlertsParams, error) {
+	params := alert.NewGetAlertsParams()
+	err := (&params).BindRequest(req, &middleware.MatchedRoute{})
+	if err != nil {
+		return GettableAlertsParams{}, err
+	}
+
+	return params, nil
 }
 
 func NewGettableAlertsFromAlertProvider(
@@ -145,11 +164,6 @@ func NewGettableAlertsFromAlertProvider(
 		res = append(res, alert)
 	}
 
-	if err != nil {
-		//logger.Error("Failed to get alerts", "err", err)
-		return nil, err
-	}
-
 	sort.Slice(res, func(i, j int) bool {
 		return *res[i].Fingerprint < *res[j].Fingerprint
 	})
@@ -157,7 +171,14 @@ func NewGettableAlertsFromAlertProvider(
 	return res, nil
 }
 
-func alertFilter(getAlertStatusFunc func(model.Fingerprint) types.AlertStatus, setAlertStatusFunc func(model.LabelSet), matchers []*labels.Matcher, silenced, inhibited, active bool) func(a *types.Alert, now time.Time) bool {
+func alertFilter(
+	getAlertStatusFunc func(model.Fingerprint) types.AlertStatus,
+	setAlertStatusFunc func(model.LabelSet),
+	matchers []*labels.Matcher,
+	silenced bool,
+	inhibited bool,
+	active bool,
+) func(a *types.Alert, now time.Time) bool {
 	return func(a *types.Alert, now time.Time) bool {
 		if !a.EndsAt.IsZero() && a.EndsAt.Before(now) {
 			return false

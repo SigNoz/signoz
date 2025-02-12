@@ -4,9 +4,9 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
+	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
@@ -17,32 +17,24 @@ const (
 	DefaultReceiverName string = "default-receiver"
 )
 
-const (
-	PostableConfigActionCreate int = iota + 1
-	PostableConfigActionUpdate
-	PostableConfigActionDelete
-)
-
 var (
-	ErrCodeAlertmanagerConfigInvalid          = errors.MustNewCode("alertmanager_config_invalid")
-	ErrCodeAlertmanagerConfigConflict         = errors.MustNewCode("alertmanager_config_conflict")
-	ErrCodeAlertmanagerChannelDefaultReceiver = errors.MustNewCode("alertmanager_channel_default_receiver")
+	ErrCodeAlertmanagerConfigInvalid  = errors.MustNewCode("alertmanager_config_invalid")
+	ErrCodeAlertmanagerConfigConflict = errors.MustNewCode("alertmanager_config_conflict")
 )
 
-// PostableConfig is the type for the receiver configuration that can be posted to the API.
-type PostableConfig struct {
-	Receiver Receiver
-	Action   int
+type (
+	// GlobalConfig is the type for the global configuration
+	GlobalConfig = config.GlobalConfig
+)
+
+type RouteConfig struct {
+	GroupByStr     []string
+	GroupInterval  time.Duration
+	GroupWait      time.Duration
+	RepeatInterval time.Duration
 }
 
-type Config struct {
-	alertmanagerConfig *config.Config
-	storedConfig       *StoredConfig
-	channels           Channels
-	orgID              string
-}
-
-type StoredConfig struct {
+type StoreableConfig struct {
 	bun.BaseModel `bun:"table:alertmanager_config"`
 
 	ID            uint64    `bun:"id"`
@@ -54,11 +46,26 @@ type StoredConfig struct {
 	OrgID         string    `bun:"org_id"`
 }
 
+// Config is the type for the entire alertmanager configuration
+type Config struct {
+	// alertmanagerConfig is the actual alertmanager configuration referenced from the upstream
+	alertmanagerConfig *config.Config
+
+	// storeableConfig is the representation of the config in the store
+	storeableConfig *StoreableConfig
+
+	// channels is the list of channels
+	channels Channels
+
+	// orgID is the organization ID
+	orgID string
+}
+
 func NewConfig(c *config.Config, orgID string) *Config {
 	channels := NewChannelsFromConfig(c, orgID)
 	return &Config{
 		alertmanagerConfig: c,
-		storedConfig: &StoredConfig{
+		storeableConfig: &StoreableConfig{
 			Config:        string(newRawFromConfig(c)),
 			SilencesState: "",
 			NFLogState:    "",
@@ -70,50 +77,23 @@ func NewConfig(c *config.Config, orgID string) *Config {
 	}
 }
 
-func NewDefaultConfig(
-	resolveTimeout time.Duration,
-	smtpHello string,
-	smtpFrom string,
-	smtpHost string,
-	smtpPort int,
-	smtpAuthUsername string,
-	smtpAuthPassword string,
-	smtpAuthSecret string,
-	smtpAuthIdentity string,
-	smtpRequireTLS bool,
-	routeGroupByStr []string,
-	routeGroupInterval time.Duration,
-	routeGroupWait time.Duration,
-	routeRepeatInterval time.Duration,
-	orgID string,
-) *Config {
-	global := config.DefaultGlobalConfig()
-	global.ResolveTimeout = model.Duration(resolveTimeout)
-
-	// Override the default SMTP config with the user provided config.
-	global.SMTPHello = smtpHello
-	global.SMTPFrom = smtpFrom
-	global.SMTPSmarthost = config.HostPort{
-		Host: smtpHost,
-		Port: strconv.Itoa(smtpPort),
+func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID string) (*Config, error) {
+	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
+	if err != nil {
+		return nil, err
 	}
-	global.SMTPAuthUsername = smtpAuthUsername
-	global.SMTPAuthPassword = config.Secret(smtpAuthPassword)
-	global.SMTPAuthSecret = config.Secret(smtpAuthSecret)
-	global.SMTPAuthIdentity = smtpAuthIdentity
-	global.SMTPRequireTLS = smtpRequireTLS
 
 	return NewConfig(&config.Config{
-		Global: &global,
+		Global: &globalConfig,
 		Route: &config.Route{
 			Receiver:       DefaultReceiverName,
-			GroupByStr:     routeGroupByStr,
-			GroupInterval:  (*model.Duration)(&routeGroupInterval),
-			GroupWait:      (*model.Duration)(&routeGroupWait),
-			RepeatInterval: (*model.Duration)(&routeRepeatInterval),
+			GroupByStr:     routeConfig.GroupByStr,
+			GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
+			GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
+			RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
 		},
 		Receivers: []config.Receiver{{Name: DefaultReceiverName}},
-	}, orgID)
+	}, orgID), nil
 }
 
 func NewConfigFromString(s string, orgID string) (*Config, error) {
@@ -136,25 +116,12 @@ func newRawFromConfig(c *config.Config) []byte {
 	return b
 }
 
-func (c *Config) MergeWithPostableConfig(postableConfig PostableConfig) error {
-	switch postableConfig.Action {
-	case PostableConfigActionCreate:
-		return c.CreateReceiver(&config.Route{Receiver: postableConfig.Receiver.Name, Continue: true}, postableConfig.Receiver)
-	case PostableConfigActionUpdate:
-		return c.UpdateReceiver(&config.Route{Receiver: postableConfig.Receiver.Name, Continue: true}, postableConfig.Receiver)
-	case PostableConfigActionDelete:
-		return c.DeleteReceiver(postableConfig.Receiver.Name)
-	default:
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "invalid action")
-	}
-}
-
 func (c *Config) AlertmanagerConfig() *config.Config {
 	return c.alertmanagerConfig
 }
 
-func (c *Config) StoredConfig() *StoredConfig {
-	return c.storedConfig
+func (c *Config) StoreableConfig() *StoreableConfig {
+	return c.storeableConfig
 }
 
 func (c *Config) Channels() Channels {
@@ -200,13 +167,13 @@ func (c *Config) CreateReceiver(route *config.Route, receiver config.Receiver) e
 		return err
 	}
 
-	channel, err := NewChannelFromReceiver(receiver, c.orgID)
-	if err == nil {
-		c.channels = append(c.channels, channel)
+	channel := NewChannelFromReceiver(receiver, c.orgID)
+	if channel != nil {
+		c.channels[channel.Name] = channel
 	}
 
-	c.storedConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storedConfig.UpdatedAt = time.Now()
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.UpdatedAt = time.Now()
 	return nil
 }
 
@@ -223,12 +190,11 @@ func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) e
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
 			c.alertmanagerConfig.Receivers[i] = receiver
-			channel, err := NewChannelFromReceiver(receiver, c.orgID)
-			if err != nil {
-				return err
+			channel := NewChannelFromReceiver(receiver, c.orgID)
+			if channel != nil {
+				c.channels[channel.Name] = channel
+				c.channels[channel.Name].UpdatedAt = time.Now()
 			}
-			c.channels[i] = channel
-			c.channels[i].UpdatedAt = time.Now()
 			break
 		}
 	}
@@ -241,8 +207,8 @@ func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) e
 		}
 	}
 
-	c.storedConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storedConfig.UpdatedAt = time.Now()
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
 }
@@ -263,13 +229,13 @@ func (c *Config) DeleteReceiver(name string) error {
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == name {
 			c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers[:i], c.alertmanagerConfig.Receivers[i+1:]...)
-			c.channels = append(c.channels[:i], c.channels[i+1:]...)
+			delete(c.channels, name)
 			break
 		}
 	}
 
-	c.storedConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storedConfig.UpdatedAt = time.Now()
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
 }

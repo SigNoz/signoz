@@ -8,15 +8,14 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 var (
 	// Regular expression to match anything before "_configs"
-	typeRegex = regexp.MustCompile(`^(.+)_configs`)
+	receiverTypeRegex = regexp.MustCompile(`^(.+)_configs`)
 )
 
-type Channels = []*Channel
+type Channels = map[string]*Channel
 
 type GettableChannels = []*Channel
 
@@ -33,19 +32,11 @@ type Channel struct {
 	OrgID     string    `json:"org_id" bun:"org_id"`
 }
 
-func NewChannelFromReceiverString(receiver string, orgID string) (*Channel, error) {
-	receiverObj := config.Receiver{}
-	err := json.Unmarshal([]byte(receiver), &receiverObj)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewChannelFromReceiver(receiverObj, orgID)
-}
-
-func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, error) {
+// NewChannelFromReceiver creates a new Channel from a Receiver.
+// It can return nil if the receiver is the default receiver.
+func NewChannelFromReceiver(receiver config.Receiver, orgID string) *Channel {
 	if receiver.Name == DefaultReceiverName {
-		return nil, errors.New(errors.TypeUnsupported, ErrCodeAlertmanagerChannelDefaultReceiver, "default receiver is not allowed as a channel")
+		return nil
 	}
 
 	// Initialize channel with common fields
@@ -77,7 +68,7 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 		}
 
 		// Extract the base type name (e.g., "email_configs" -> "email")
-		matches := typeRegex.FindStringSubmatch(yamlTag)
+		matches := receiverTypeRegex.FindStringSubmatch(yamlTag)
 		if len(matches) != 2 {
 			continue
 		}
@@ -95,7 +86,7 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 		break
 	}
 
-	return &channel, nil
+	return &channel
 }
 
 func NewReceiverFromChannel(channel *Channel) (Receiver, error) {
@@ -111,56 +102,29 @@ func NewReceiverFromChannel(channel *Channel) (Receiver, error) {
 func NewChannelsFromConfig(c *config.Config, orgID string) Channels {
 	channels := Channels{}
 	for _, receiver := range c.Receivers {
-		channel, err := NewChannelFromReceiver(receiver, orgID)
-		if err != nil {
+		channel := NewChannelFromReceiver(receiver, orgID)
+		if channel == nil {
 			continue
 		}
 
-		channels = append(channels, channel)
+		channels[channel.Name] = channel
 	}
 
 	return channels
 }
 
-func NewConfigFromChannels(
-	resolveTimeout time.Duration,
-	smtpHello string,
-	smtpFrom string,
-	smtpHost string,
-	smtpPort int,
-	smtpAuthUsername string,
-	smtpAuthPassword string,
-	smtpAuthSecret string,
-	smtpAuthIdentity string,
-	smtpRequireTLS bool,
-	routeGroupByStr []string,
-	routeGroupInterval time.Duration,
-	routeGroupWait time.Duration,
-	routeRepeatInterval time.Duration,
-	channels Channels,
-	orgID string,
-) (*Config, error) {
-	cfg := NewDefaultConfig(
-		resolveTimeout,
-		smtpHello,
-		smtpFrom,
-		smtpHost,
-		smtpPort,
-		smtpAuthUsername,
-		smtpAuthPassword,
-		smtpAuthSecret,
-		smtpAuthIdentity,
-		smtpRequireTLS,
-		routeGroupByStr,
-		routeGroupInterval,
-		routeGroupWait,
-		routeRepeatInterval,
+func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
+	cfg, err := NewDefaultConfig(
+		globalConfig,
+		routeConfig,
 		orgID,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, channel := range channels {
-		receiver := config.Receiver{}
-		err := json.Unmarshal([]byte(channel.Data), &receiver)
+		receiver, err := NewReceiver(channel.Data)
 		if err != nil {
 			return nil, err
 		}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/common/model"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/config/receiver"
@@ -20,36 +19,18 @@ type (
 	Receiver = config.Receiver
 )
 
-func NewReceiverFromString(receiver string) (Receiver, error) {
-	receiverObj := config.Receiver{}
-	err := json.Unmarshal([]byte(receiver), &receiverObj)
+func NewReceiver(input string) (Receiver, error) {
+	receiver := Receiver{}
+	err := json.Unmarshal([]byte(input), &receiver)
 	if err != nil {
 		return Receiver{}, err
 	}
 
-	return receiverObj, nil
+	return receiver, nil
 }
 
 func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
 	return receiver.BuildReceiverIntegrations(nc, tmpl, logger)
-}
-
-func NewTestAlert(receiver Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
-	return &Alert{
-		Alert: model.Alert{
-			StartsAt: startsAt,
-			Labels: model.LabelSet{
-				"alertname": model.LabelValue(fmt.Sprintf("Test Alert (%s)", receiver.Name)),
-				"severity":  "critical",
-			},
-			Annotations: model.LabelSet{
-				"description": "Test alert fired from SigNoz",
-				"summary":     "Test alert fired from SigNoz",
-				"message":     "Test alert fired from SigNoz",
-			},
-		},
-		UpdatedAt: updatedAt,
-	}
 }
 
 func TestReceiver(ctx context.Context, receiver Receiver, tmpl *template.Template, logger *slog.Logger) error {
