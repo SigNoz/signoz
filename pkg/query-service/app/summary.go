@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Reques
 		RespondError(w, apiError, nil)
 		return
 	}
-	keys, apiError := aH.APIHandler.SummaryService.FilterKeys(ctx, params)
+	keys, apiError := aH.SummaryService.FilterKeys(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter keys", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -40,7 +40,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	values, apiError := aH.APIHandler.SummaryService.FilterValues(ctx, params)
+	values, apiError := aH.SummaryService.FilterValues(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter values", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
