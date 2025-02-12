@@ -46,6 +46,7 @@ func NewProviderConfig() ProviderConfig {
 		),
 		SQLStoreProviderFactories: factory.MustNewNamedMap(
 			sqlitesqlstore.NewFactory(),
+			// postgressqlstore.NewFactory(),
 		),
 		SQLMigrationProviderFactories: factory.MustNewNamedMap(
 			sqlmigration.NewAddDataMigrationsFactory(),

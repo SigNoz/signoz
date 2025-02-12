@@ -1,11 +1,12 @@
-package pgstore
+package postgressqlstore
 
 import (
 	"context"
 	"database/sql"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.signoz.io/signoz/pkg/factory"
@@ -26,12 +27,21 @@ func NewFactory() factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlstore/pgstore")
 
-	sqldb, err := sql.Open("postgres", config.Postgres.DSN)
+	pgConfig, err := pgxpool.ParseConfig(config.Postgres.DSN)
 	if err != nil {
 		return nil, err
 	}
-	settings.Logger().InfoContext(ctx, "connected to postgres", "dsn", "[REDACTED]")
-	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
+
+	// Use pgxpool to create a connection pool
+	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the maximum number of open connections
+	pool.Config().MaxConns = int32(config.Connection.MaxOpenConns)
+
+	sqldb := stdlib.OpenDBFromPool(pool)
 
 	return &provider{
 		settings: settings,
