@@ -40,7 +40,7 @@ func (migration *addFeatures) Up(ctx context.Context, db *bun.DB) error {
 			IsChangeable    bool   `bun:"is_changeable,notnull,default:true"`
 			RequiresRestart bool   `bun:"requires_restart,notnull,default:false"`
 		}{}).
-		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
 		IfNotExists().
 		Exec(ctx); err != nil {
 		return err
