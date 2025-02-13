@@ -1184,7 +1184,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1332,7 +1332,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -5381,4 +5381,89 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	return timeSeries, nil
+}
+
+func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
+	var args []interface{}
+	// Build filters dynamically
+	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
+
+	// Build ordering dynamically
+	orderByClause := ""
+	if len(req.OrderBy) > 0 {
+		orderParts := []string{}
+		for _, order := range req.OrderBy {
+			orderParts = append(orderParts, fmt.Sprintf("%s %s", order.ColumnName, order.Order))
+		}
+		orderByClause = "ORDER BY " + strings.Join(orderParts, ", ")
+	}
+
+	whereClause := strings.Join(conditions, " AND ")
+	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
+
+	query := fmt.Sprintf(`
+		SELECT 
+    t.metric_name AS metric_name,
+    ANY_VALUE(t.description) AS description,
+    ANY_VALUE(t.type) AS type,
+    t.unit,
+    COUNT(DISTINCT t.fingerprint) AS cardinality,
+    COALESCE(MAX(s.data_points), 0) AS dataPoints,
+    MAX(s.last_received_time) AS lastReceived,
+    COUNT(DISTINCT t.metric_name) OVER () AS total
+FROM (
+    -- First, filter the main table before the join
+    SELECT metric_name, description, type, unit, fingerprint
+    FROM %s.%s
+    WHERE unix_milli BETWEEN ? AND ?
+      AND %s
+) AS t
+LEFT JOIN (
+    -- Also filter the joined table early
+    SELECT 
+        metric_name,
+        %s AS data_points,
+        MAX(unix_milli) AS last_received_time
+    FROM %s.%s
+    WHERE unix_milli BETWEEN ? AND ?
+    GROUP BY metric_name
+) AS s USING (metric_name)
+GROUP BY t.metric_name, t.unit
+%s
+LIMIT %d OFFSET %d;`,
+		signozMetricDBName, tsTable, whereClause,
+		countExp, signozMetricDBName, sampleTable,
+		orderByClause, req.Limit, req.Offset)
+
+	// Add query parameters
+	args = append(args,
+		start, end, // For samples subquery
+		start, end, // For main query
+	)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		zap.L().Error("Error executing metrics summary query", zap.Error(err))
+		return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	// Process results
+	var response metrics_explorer.SummaryListMetricsResponse
+	for rows.Next() {
+		var metric metrics_explorer.MetricDetail
+		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.Type, &metric.Unit, &metric.Cardinality, &metric.DataPoints, &metric.LastReceived, &response.Total); err != nil {
+			zap.L().Error("Error scanning metric row", zap.Error(err))
+			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		response.Metrics = append(response.Metrics, metric)
+	}
+
+	if err := rows.Err(); err != nil {
+		zap.L().Error("Error iterating over metric rows", zap.Error(err))
+		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+
+	return &response, nil
 }
