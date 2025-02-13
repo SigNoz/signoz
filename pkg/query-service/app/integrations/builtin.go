@@ -231,6 +231,16 @@ func readFileIfUri(fs embed.FS, maybeFileUri string, basedir string) (interface{
 		dataUri := fmt.Sprintf("data:image/svg+xml;base64,%s", base64Svg)
 		return dataUri, nil
 
+	} else if strings.HasSuffix(maybeFileUri, ".jpeg") || strings.HasSuffix(maybeFileUri, ".jpg") {
+		base64Contents := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/jpeg;base64,%s", base64Contents)
+		return dataUri, nil
+
+	} else if strings.HasSuffix(maybeFileUri, ".png") {
+		base64Contents := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/png;base64,%s", base64Contents)
+		return dataUri, nil
+
 	}
 
 	return nil, fmt.Errorf("unsupported file type %s", maybeFileUri)
