@@ -66,6 +66,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
 		setSelectedRowWidgetId,
+		isDashboardFetching,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -231,7 +232,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			!isEqual(layouts, dashboardLayout) &&
 			!isDashboardLocked &&
 			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading
+			!updateDashboardMutation.isLoading &&
+			!isDashboardFetching
 		) {
 			onSaveHandler();
 		}
