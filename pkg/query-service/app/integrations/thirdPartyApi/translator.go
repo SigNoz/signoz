@@ -1,4 +1,4 @@
-package thirdPartApi
+package thirdPartyApi
 
 import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -11,22 +11,23 @@ func FilterResponse(results []*v3.Result) []*v3.Result {
 	filteredResults := make([]*v3.Result, 0, len(results))
 
 	for _, res := range results {
-		if res.Table != nil {
-			filteredRows := make([]*v3.TableRow, 0, len(res.Table.Rows))
-			for _, row := range res.Table.Rows {
-				if row.Data != nil {
-					if domainVal, ok := row.Data["net.peer.name"]; ok {
-						if domainStr, ok := domainVal.(string); ok {
-							if net.ParseIP(domainStr) != nil {
-								continue
-							}
+		if res.Table == nil {
+			continue
+		}
+		filteredRows := make([]*v3.TableRow, 0, len(res.Table.Rows))
+		for _, row := range res.Table.Rows {
+			if row.Data != nil {
+				if domainVal, ok := row.Data["net.peer.name"]; ok {
+					if domainStr, ok := domainVal.(string); ok {
+						if net.ParseIP(domainStr) != nil {
+							continue
 						}
 					}
 				}
-				filteredRows = append(filteredRows, row)
 			}
-			res.Table.Rows = filteredRows
+			filteredRows = append(filteredRows, row)
 		}
+		res.Table.Rows = filteredRows
 
 		filteredResults = append(filteredResults, res)
 	}
