@@ -20,6 +20,12 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
 	useGetPanelTypesQueryParam: jest.fn(() => 'mockedPanelType'),
 }));
