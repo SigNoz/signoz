@@ -42,8 +42,7 @@ function ConfigureServiceModal({
 
 	const isSaveDisabled = useMemo(
 		() =>
-			// save should be allowed if going from enabled to fully disabled service
-			// disable only if current values same as initial config
+			// disable only if current values are same as the initial config
 			currentValues.metrics === initialValues.metrics &&
 			currentValues.logs === initialValues.logs,
 		[currentValues, initialValues.metrics, initialValues.logs],
