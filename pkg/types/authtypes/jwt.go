@@ -11,6 +11,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+var jwtSecret string
+var JwtExpiry = 30 * time.Minute
+var JwtRefresh = 30 * 24 * time.Hour
+
 func GetJwtFromRequest(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
@@ -33,7 +37,7 @@ func GetJwtFromRequest(r *http.Request) (string, error) {
 	return r.Header.Get("Sec-WebSocket-Protocol"), nil
 }
 
-func GetJwtClaims(jwtStr string, jwtSecret string) (jwt.MapClaims, error) {
+func GetJwtClaims(jwtStr string) (jwt.MapClaims, error) {
 	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
 	// reference - https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Parser.ParseWithClaims
 	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
@@ -112,4 +116,49 @@ func GetEmailFromContext(ctx context.Context) (string, bool) {
 func GetOrgIDFromContext(ctx context.Context) (string, bool) {
 	orgId, ok := ctx.Value(OrgIDContextKey).(string)
 	return orgId, ok
+}
+
+// TokenClaims represents the standard claims used in both access and refresh tokens
+type TokenClaims struct {
+	UserID  string `json:"id"`
+	GroupID string `json:"gid"`
+	Email   string `json:"email"`
+	OrgID   string `json:"orgId"`
+	Expiry  int64  `json:"exp"`
+}
+
+// signToken creates and signs a JWT token with the given claims
+func signToken(claims TokenClaims) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    claims.UserID,
+		"gid":   claims.GroupID,
+		"email": claims.Email,
+		"orgId": claims.OrgID,
+		"exp":   claims.Expiry,
+	})
+	return token.SignedString([]byte(jwtSecret))
+}
+
+// GetAccessJwt creates an access token with the provided claims
+func GetAccessJwt(orgId, userId, groupId, email string) (string, error) {
+	claims := TokenClaims{
+		UserID:  userId,
+		GroupID: groupId,
+		Email:   email,
+		OrgID:   orgId,
+		Expiry:  time.Now().Add(JwtExpiry).Unix(),
+	}
+	return signToken(claims)
+}
+
+// GetRefreshJwt creates a refresh token with the provided claims
+func GetRefreshJwt(orgId, userId, groupId, email string) (string, error) {
+	claims := TokenClaims{
+		UserID:  userId,
+		GroupID: groupId,
+		Email:   email,
+		OrgID:   orgId,
+		Expiry:  time.Now().Add(JwtRefresh).Unix(),
+	}
+	return signToken(claims)
 }

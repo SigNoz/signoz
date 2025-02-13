@@ -57,7 +57,7 @@ func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
 		return nil, err
 	}
 
-	claims, err := authtypes.GetJwtClaims(jwt, "")
+	claims, err := authtypes.GetJwtClaims(jwt)
 	if err != nil {
 		return nil, err
 	}

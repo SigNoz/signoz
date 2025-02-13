@@ -585,7 +585,7 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
 		// parse the refresh token
-		claims, err := authtypes.GetJwtClaims(req.RefreshToken, JwtSecret)
+		claims, err := authtypes.GetJwtClaims(req.RefreshToken)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse refresh token")
 		}
@@ -634,31 +634,14 @@ func passwordMatch(hash, password string) bool {
 func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
 	j := model.UserJwtObject{}
 	var err error
-	j.AccessJwtExpiry = time.Now().Add(JwtExpiry).Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   j.AccessJwtExpiry,
-		"orgId": user.OrgId,
-	})
-
-	j.AccessJwt, err = token.SignedString([]byte(JwtSecret))
+	j.AccessJwtExpiry = time.Now().Add(authtypes.JwtExpiry).Unix()
+	j.AccessJwt, err = authtypes.GetAccessJwt(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
-	j.RefreshJwtExpiry = time.Now().Add(JwtRefresh).Unix()
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   j.RefreshJwtExpiry,
-		"orgId": user.OrgId,
-	})
-
-	j.RefreshJwt, err = token.SignedString([]byte(JwtSecret))
+	j.RefreshJwtExpiry = time.Now().Add(authtypes.JwtRefresh).Unix()
+	j.RefreshJwt, err = authtypes.GetRefreshJwt(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
