@@ -190,18 +190,10 @@ func validateServiceDefinition(s *CloudServiceDetails) error {
 	// Validate dashboard data
 	seenDashboardIds := map[string]interface{}{}
 	for _, dd := range s.Assets.Dashboards {
-		did, exists := dd["id"]
-		if !exists {
-			return fmt.Errorf("id is required. not specified in dashboard titled %v", dd["title"])
+		if _, seen := seenDashboardIds[dd.Id]; seen {
+			return fmt.Errorf("multiple dashboards found with id %s", dd.Id)
 		}
-		dashboardId, ok := did.(string)
-		if !ok {
-			return fmt.Errorf("id must be string in dashboard titled %v", dd["title"])
-		}
-		if _, seen := seenDashboardIds[dashboardId]; seen {
-			return fmt.Errorf("multiple dashboards found with id %s", dashboardId)
-		}
-		seenDashboardIds[dashboardId] = nil
+		seenDashboardIds[dd.Id] = nil
 	}
 
 	if s.TelemetryCollectionStrategy == nil {
