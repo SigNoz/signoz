@@ -31,7 +31,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartApi"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
@@ -2616,11 +2616,6 @@ func (aH *APIHandler) RegisterThirdPartyApiRoutes(router *mux.Router, am *AuthMi
 
 	overviewRouter.HandleFunc("/list", am.ViewAccess(aH.getDomainList)).Methods(http.MethodPost)
 	overviewRouter.HandleFunc("/domain", am.ViewAccess(aH.getDomainInfo)).Methods(http.MethodPost)
-
-	// Fetchers
-	fetchRouter := thirdPartyApiRouter.PathPrefix("/overview").Subrouter()
-
-	fetchRouter.HandleFunc("/services", am.ViewAccess(aH.getUrlList)).Methods(http.MethodPost)
 }
 
 // not using md5 hashing as the plain string would work
@@ -3497,33 +3492,6 @@ func (aH *APIHandler) getProducerConsumerEval(
 		Result: result,
 	}
 	aH.Respond(w, resp)
-}
-
-// ParseKafkaQueueBody parse for messaging queue params
-func ParseKafkaQueueBody(r *http.Request) (*kafka.MessagingQueue, *model.ApiError) {
-	messagingQueue := new(kafka.MessagingQueue)
-	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
-	}
-	return messagingQueue, nil
-}
-
-// ParseQueueBody parses for any queue
-func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError) {
-	queue := new(queues2.QueueListRequest)
-	if err := json.NewDecoder(r.Body).Decode(queue); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
-	}
-	return queue, nil
-}
-
-// ParseRequstBody for third party APIs
-func ParseRequstBody(r *http.Request) (*thirdPartApi.ThirdPartyApis, *model.ApiError) {
-	thirdPartApis := new(thirdPartApi.ThirdPartyApis)
-	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
-	}
-	return thirdPartApis, nil
 }
 
 // Preferences
@@ -5531,7 +5499,7 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
-	thirdPartyQueryRequest, apiErr := ParseRequstBody(r)
+	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -5539,7 +5507,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := thirdPartApi.BuildDomainList(thirdPartyQueryRequest)
+	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		zap.L().Error(err.Error())
@@ -5559,8 +5527,8 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 
 	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
-	if !thirdPartyQueryRequest.ShowIP {
-		result = thirdPartApi.FilterResponse(result)
+	if !thirdPartyQueryRequest.ShowIp {
+		result = thirdPartyApi.FilterResponse(result)
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -5570,7 +5538,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
-	thirdPartyQueryRequest, apiErr := ParseRequstBody(r)
+	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
@@ -5578,7 +5546,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams, err := thirdPartApi.BuildDomainInfo(thirdPartyQueryRequest)
+	queryRangeParams, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		zap.L().Error(err.Error())
@@ -5598,15 +5566,12 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 
 	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
 
-	if !thirdPartyQueryRequest.ShowIP {
-		result = thirdPartApi.FilterResponse(result)
+	if !thirdPartyQueryRequest.ShowIp {
+		result = thirdPartyApi.FilterResponse(result)
 	}
 
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
 	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) getUrlList(w http.ResponseWriter, r *http.Request) {
 }

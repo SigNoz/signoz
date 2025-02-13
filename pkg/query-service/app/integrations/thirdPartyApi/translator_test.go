@@ -1,4 +1,4 @@
-package thirdPartApi
+package thirdPartyApi
 
 import (
 	"testing"
