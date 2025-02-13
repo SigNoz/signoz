@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Reques
 		RespondError(w, apiError, nil)
 		return
 	}
-	keys, apiError := aH.APIHandler.SummaryService.FilterKeys(ctx, params)
+	keys, apiError := aH.SummaryService.FilterKeys(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter keys", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -41,7 +41,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	values, apiError := aH.APIHandler.SummaryService.FilterValues(ctx, params)
+	values, apiError := aH.SummaryService.FilterValues(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter values", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -53,7 +53,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) {
 	metricName := mux.Vars(r)["metric_name"]
 	ctx := r.Context()
-	metricsDetail, apiError := aH.APIHandler.SummaryService.GetMetricsSummary(ctx, metricName)
+	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, metricName)
 	if apiError != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)

@@ -605,6 +605,21 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
 }
 
+func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddleware) {
+	router.HandleFunc("/api/v1/metrics/filters/keys",
+		am.ViewAccess(ah.FilterKeysSuggestion)).
+		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics/filters/values",
+		am.ViewAccess(ah.FilterValuesSuggestion)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
+		am.ViewAccess(ah.GetMetricsDetails)).
+		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics",
+		am.ViewAccess(ah.ListMetrics)).
+		Methods(http.MethodPost)
+}
+
 func Intersection(a, b []int) (c []int) {
 	m := make(map[int]bool)
 

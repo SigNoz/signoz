@@ -5247,17 +5247,17 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError) {
+func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
 	var query string
 	var err error
 	var rows driver.Rows
-	var attributeValues []v3.AttributeKey
+	var attributeValues []string
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE JSONExtractString(labels, $2) ILIKE $3 AND unix_milli >= $4 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
+	rows, err = r.db.Query(ctx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -5270,26 +5270,19 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 		if err := rows.Scan(&atrributeValue); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		key := v3.AttributeKey{
-			Key:      atrributeValue,
-			DataType: v3.AttributeKeyDataTypeString,
-			Type:     v3.AttributeKeyTypeTag,
-			IsColumn: false,
-		}
-		attributeValues = append(attributeValues, key)
+		attributeValues = append(attributeValues, atrributeValue)
 	}
-
-	return &attributeValues, nil
+	return attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError) {
+func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
 	var rows driver.Rows
-	var response []v3.AttributeKey
+	var response []string
 	query := fmt.Sprintf("SELECT DISTINCT unit FROM %s.%s WHERE unit ILIKE $1 AND unit IS NOT NULL ORDER BY unit", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	// Remove the unnecessary parameters from db.Query
+
 	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -5301,14 +5294,9 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 		if err := rows.Scan(&attributeKey); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		key := v3.AttributeKey{
-			Key:      attributeKey,
-			DataType: v3.AttributeKeyDataTypeString,
-			IsColumn: true,
-		}
-		response = append(response, key)
+		response = append(response, attributeKey)
 	}
-	return &response, nil
+	return response, nil
 }
 
 func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError) {
@@ -5322,35 +5310,33 @@ func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Conte
 	return dataPoints, uint64(lastRecievedTimestamp), nil // Convert to uint64 before returning
 }
 
-func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, uint64, *model.ApiError) {
-	query := fmt.Sprintf("SELECT count(*), uniq(labels), count(distinct fingerprint) AS cardinality FROM %s.%s WHERE metric_name = '%s'", signozMetricDBName, signozTSTableNameV4, metricName)
+func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError) {
+	query := fmt.Sprintf(`SELECT 
+     uniq(arrayJoin(arrayMap(x -> x.2, arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels))))) AS cardinality,
+    count(DISTINCT fingerprint) AS timeSeriesCount
+FROM %s.%s
+WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Day)
 	var timeSeriesCount uint64
 	var cardinality uint64
-	var fingerprint uint64
-	err := r.db.QueryRow(ctx, query).Scan(&timeSeriesCount, &cardinality, &fingerprint)
+	err := r.db.QueryRow(ctx, query, metricName).Scan(&timeSeriesCount, &cardinality)
 	if err != nil {
-		return 0, 0, 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		return 0, 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	return timeSeriesCount, cardinality, fingerprint, nil
+	return timeSeriesCount, cardinality, nil
 }
 
 func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError) {
 	query := fmt.Sprintf(`
-        SELECT 
-            kv.1 AS key, 
-            groupUniqArray(kv.2) AS value, 
-            1 / log2(1 + length(groupUniqArray(kv.2))) AS contribution 
-        FROM %s.%s
-        ARRAY JOIN arrayZip(
-            JSONExtractKeys(labels),
-            arrayMap(k -> JSONExtractString(labels, k), JSONExtractKeys(labels))
-        ) AS kv
-        WHERE 
-            metric_name = ?
-            AND NOT startsWith(kv.1, '__')
-        GROUP BY kv.1
-        ORDER BY contribution DESC;
-    `, signozMetricDBName, signozTSLocalTableNameV4)
+SELECT 
+    kv.1 AS key,
+    arrayMap(x -> replaceAll(x, '"', ''), groupUniqArray(kv.2)) AS values,
+    length(groupUniqArray(kv.2)) AS valueCount
+FROM %s.%s
+ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
+WHERE metric_name = 'system_memory_usage'
+GROUP BY kv.1
+ORDER BY valueCount DESC;
+    `, signozMetricDBName, signozTSTableNameV41Day)
 
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
@@ -5361,19 +5347,19 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 	var attributesList []metrics_explorer.Attribute
 	for rows.Next() {
 		var key string
-		var value []string
-		var contribution float64
+		var values []string
+		var valueCount uint64
 
 		// Manually scan each value into its corresponding variable
-		if err := rows.Scan(&key, &value, &contribution); err != nil {
+		if err := rows.Scan(&key, &values, &valueCount); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 
 		// Append the scanned values into the struct
 		attributesList = append(attributesList, metrics_explorer.Attribute{
-			Key:          key,
-			Value:        value,
-			Contribution: contribution,
+			Key:        key,
+			Value:      values,
+			ValueCount: valueCount,
 		})
 	}
 
@@ -5387,7 +5373,7 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 
 func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
 	milli := time.Now().Add(-duration).UnixMilli()
-	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozSampleTableName, metricName)
+	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV41Day, metricName)
 	var timeSeries uint64
 	// Using QueryRow instead of Select since we're only expecting a single value
 	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
