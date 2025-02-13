@@ -66,8 +66,6 @@ exporters:
       enabled: true
   clickhousemetricswrite/prometheus:
     endpoint: tcp://clickhouse:9000/signoz_metrics
-  clickhousemetricswritev2:
-    dsn: tcp://clickhouse:9000/signoz_metrics
   clickhouselogsexporter:
     dsn: tcp://clickhouse:9000/signoz_logs
     timeout: 10s
@@ -90,11 +88,11 @@ service:
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [clickhousemetricswrite, clickhousemetricswritev2]
+      exporters: [clickhousemetricswrite]
     metrics/prometheus:
       receivers: [prometheus]
       processors: [batch]
-      exporters: [clickhousemetricswrite/prometheus, clickhousemetricswritev2]
+      exporters: [clickhousemetricswrite/prometheus]
     logs:
       receivers: [otlp]
       processors: [batch]

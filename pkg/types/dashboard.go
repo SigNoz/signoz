@@ -31,18 +31,6 @@ type Rule struct {
 	Data      string    `bun:"data,type:text,notnull"`
 }
 
-type NotificationChannel struct {
-	bun.BaseModel `bun:"table:notification_channels"`
-
-	ID        int       `bun:"id,pk,autoincrement"`
-	CreatedAt time.Time `bun:"created_at,type:datetime,notnull"`
-	UpdatedAt time.Time `bun:"updated_at,type:datetime,notnull"`
-	Name      string    `bun:"name,type:text,notnull,unique"`
-	Type      string    `bun:"type,type:text,notnull"`
-	Deleted   int       `bun:"deleted,notnull,default:0"`
-	Data      string    `bun:"data,type:text,notnull"`
-}
-
 type PlannedMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
 

@@ -188,7 +188,7 @@ services:
         condition: service_healthy
   query-service:
     !!merge <<: *db-depend
-    image: signoz/query-service:${DOCKER_TAG:-0.71.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.72.0}
     container_name: signoz-query-service
     command:
       - --config=/root/config/prometheus.yml
@@ -222,7 +222,7 @@ services:
       retries: 3
   frontend:
     !!merge <<: *common
-    image: signoz/frontend:${DOCKER_TAG:-0.71.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.72.0}
     container_name: signoz-frontend
     depends_on:
       - alertmanager
@@ -234,7 +234,7 @@ services:
   # TODO: support otel-collector multiple replicas. Nginx/Traefik for loadbalancing?
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.26}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.27}
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml

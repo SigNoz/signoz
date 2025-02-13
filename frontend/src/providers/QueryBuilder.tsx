@@ -20,6 +20,7 @@ import {
 	panelTypeDataSourceFormValuesMap,
 	PartialPanelTypes,
 } from 'container/NewWidget/utils';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -747,12 +748,17 @@ export function QueryBuilderProvider({
 	);
 
 	const isStagedQueryUpdated = useCallback(
-		(viewData: ViewProps[] | undefined, viewKey: string): boolean =>
+		(
+			viewData: ViewProps[] | undefined,
+			viewKey: string,
+			options: OptionsQuery,
+		): boolean =>
 			isQueryUpdatedInView({
 				currentPanelType: panelType,
 				data: viewData,
 				stagedQuery,
 				viewKey,
+				options,
 			}),
 		[panelType, stagedQuery],
 	);
