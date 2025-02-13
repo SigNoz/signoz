@@ -1,7 +1,12 @@
 import { Button, Popover } from 'antd';
-import { EllipsisIcon, PenLine, X } from 'lucide-react';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useState } from 'react';
 import { Layout } from 'react-grid-layout';
+import { ROLES, USER_ROLES } from 'types/roles';
+import { ComponentTypes } from 'utils/permission';
 
 interface WidgetRowHeaderProps {
 	rowWidgetProperties: {
@@ -27,6 +32,23 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 		id,
 	} = props;
 	const [isRowSettingsOpen, setIsRowSettingsOpen] = useState<boolean>(false);
+
+	const {
+		handleToggleDashboardSlider,
+		selectedDashboard,
+		isDashboardLocked,
+		setSelectedRowWidgetId,
+	} = useDashboard();
+
+	const permissions: ComponentTypes[] = ['add_panel'];
+	const { user } = useAppContext();
+
+	const userRole: ROLES | null =
+		selectedDashboard?.created_by === user?.email
+			? (USER_ROLES.AUTHOR as ROLES)
+			: user.role;
+	const [addPanelPermission] = useComponentPermission(permissions, userRole);
+
 	return (
 		<Popover
 			open={isRowSettingsOpen}
@@ -50,6 +72,20 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							}}
 						>
 							Rename
+						</Button>
+					</section>
+					<section className="section-1">
+						<Button
+							className="new-panel-btn"
+							type="text"
+							disabled={!editWidget && addPanelPermission && !isDashboardLocked}
+							icon={<Plus size={14} />}
+							onClick={(): void => {
+								setSelectedRowWidgetId(id);
+								handleToggleDashboardSlider(true);
+							}}
+						>
+							New Panel
 						</Button>
 					</section>
 					{!rowWidgetProperties.collapsed && (

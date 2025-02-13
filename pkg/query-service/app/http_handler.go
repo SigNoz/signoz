@@ -380,7 +380,6 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeKeys))).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(
 		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeValues))).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(aH.autoCompleteAttributeValuesPost)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
@@ -4810,35 +4809,6 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http.Request) {
 	var response *v3.FilterAttributeValueResponse
 	req, err := parseFilterAttributeValueRequest(r)
-
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	switch req.DataSource {
-	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
-	case v3.DataSourceLogs:
-		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
-	case v3.DataSourceTraces:
-		response, err = aH.reader.GetTraceAttributeValues(r.Context(), req)
-	default:
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
-		return
-	}
-
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, response)
-}
-
-func (aH *APIHandler) autoCompleteAttributeValuesPost(w http.ResponseWriter, r *http.Request) {
-	var response *v3.FilterAttributeValueResponse
-	req, err := parseFilterAttributeValueRequestBody(r)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)

@@ -45,6 +45,7 @@ import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
+import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
 interface GraphLayoutProps {
@@ -64,6 +65,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		isDashboardLocked,
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
+		setSelectedRowWidgetId,
+		isDashboardFetching,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -173,6 +176,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			onSuccess: (updatedDashboard) => {
+				setSelectedRowWidgetId(null);
 				if (updatedDashboard.payload) {
 					if (updatedDashboard.payload.data.layout)
 						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
@@ -190,7 +194,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const widgetActions = !isDashboardLocked
 		? [...ViewMenuAction, ...EditMenuAction]
-		: [...ViewMenuAction];
+		: [...ViewMenuAction, MenuItemKeys.CreateAlerts];
 
 	const handleLayoutChange = (layout: Layout[]): void => {
 		const filterLayout = removeUndefinedValuesFromLayout(layout);
@@ -228,7 +232,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			!isEqual(layouts, dashboardLayout) &&
 			!isDashboardLocked &&
 			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading
+			!updateDashboardMutation.isLoading &&
+			!isDashboardFetching
 		) {
 			onSaveHandler();
 		}
