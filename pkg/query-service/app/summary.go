@@ -2,10 +2,11 @@ package app
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"io"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"go.signoz.io/signoz/pkg/query-service/model"
 
 	explorer "go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slmr, apiErr := aH.APIHandler.SummaryService.ListMetricsWithSummary(ctx, params)
+	slmr, apiErr := aH.SummaryService.ListMetricsWithSummary(ctx, params)
 	if apiErr != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiErr.Err))
 		RespondError(w, apiError, nil)

@@ -5385,11 +5385,6 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
-
-	// Convert time range to Unix timestamps
-	startUnix, _ := time.Parse("2006-01-02T15:04:05Z", req.StartDate)
-	endUnix, _ := time.Parse("2006-01-02T15:04:05Z", req.EndDate)
-
 	// Build filters dynamically
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
 
@@ -5404,41 +5399,47 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 
 	whereClause := strings.Join(conditions, " AND ")
+	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
 
-	// Final query with simplified structure
 	query := fmt.Sprintf(`
 		SELECT 
-			t.metric_name AS metric_name,
-			argMax(t.description, t.fingerprint) AS description,
-			argMax(t.type, t.fingerprint) AS type,
-			t.unit,
-			COUNT(DISTINCT t.fingerprint) AS cardinality,
-			COALESCE(MAX(s.data_points), 0) AS dataPoints,
-			MAX(s.last_received_time) AS lastReceived,
-			COUNT(DISTINCT t.metric_name) OVER () AS total
-		FROM %s.%s AS t
-		LEFT JOIN (
-			SELECT 
-				metric_name,
-				COUNT(*) AS data_points,
-				MAX(unix_milli) AS last_received_time
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-			GROUP BY metric_name
-		) AS s USING (metric_name)
-		WHERE t.unix_milli BETWEEN ? AND ? AND
-		%s
-		GROUP BY t.metric_name, t.unit
-		%s
-		LIMIT %d OFFSET %d;`,
-		signozMetricDBName, signozTSTableNameV4,
-		signozMetricDBName, signozSampleTableName,
-		whereClause, orderByClause, req.Limit, req.Offset)
+    t.metric_name AS metric_name,
+    ANY_VALUE(t.description) AS description,
+    ANY_VALUE(t.type) AS type,
+    t.unit,
+    COUNT(DISTINCT t.fingerprint) AS cardinality,
+    COALESCE(MAX(s.data_points), 0) AS dataPoints,
+    MAX(s.last_received_time) AS lastReceived,
+    COUNT(DISTINCT t.metric_name) OVER () AS total
+FROM (
+    -- First, filter the main table before the join
+    SELECT metric_name, description, type, unit, fingerprint
+    FROM %s.%s
+    WHERE unix_milli BETWEEN ? AND ?
+      AND %s
+) AS t
+LEFT JOIN (
+    -- Also filter the joined table early
+    SELECT 
+        metric_name,
+        %s AS data_points,
+        MAX(unix_milli) AS last_received_time
+    FROM %s.%s
+    WHERE unix_milli BETWEEN ? AND ?
+    GROUP BY metric_name
+) AS s USING (metric_name)
+GROUP BY t.metric_name, t.unit
+%s
+LIMIT %d OFFSET %d;`,
+		signozMetricDBName, tsTable, whereClause,
+		countExp, signozMetricDBName, sampleTable,
+		orderByClause, req.Limit, req.Offset)
 
 	// Add query parameters
 	args = append(args,
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For samples subquery
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For main query
+		start, end, // For samples subquery
+		start, end, // For main query
 	)
 
 	rows, err := r.db.Query(ctx, query, args...)
