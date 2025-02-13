@@ -3,14 +3,16 @@ package metricsexplorer
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"time"
+
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"sync"
-	"time"
+	"golang.org/x/sync/errgroup"
 )
 
 type SummaryService struct {
@@ -74,32 +76,14 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, params *metric
 }
 
 func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricName string) (metrics_explorer.MetricDetailsDTO, *model.ApiError) {
-	var (
-		wg               sync.WaitGroup
-		metricDetailsDTO metrics_explorer.MetricDetailsDTO
-		errCh            = make(chan *model.ApiError, 1)
-	)
+	var metricDetailsDTO metrics_explorer.MetricDetailsDTO
+	g, ctx := errgroup.WithContext(ctx)
 
-	// Create a context with cancellation to stop other goroutines on the first error
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	handleError := func(err *model.ApiError) {
-		select {
-		case errCh <- err: // Send the error if no error was sent yet
-			cancel() // Cancel other goroutines
-		default:
-		}
-	}
-
-	wg.Add(6)
-
-	go func() {
-		defer wg.Done()
+	// Call 1: GetMetricMetadata
+	g.Go(func() error {
 		metadata, err := receiver.reader.GetMetricMetadata(ctx, metricName, metricName)
 		if err != nil {
-			handleError(&model.ApiError{Typ: "ClickHouseError", Err: err})
-			return
+			return &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		metricDetailsDTO.Name = metricName
 		metricDetailsDTO.Unit = metadata.Unit
@@ -108,91 +92,85 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		metricDetailsDTO.Metadata.MetricType = metadata.Type
 		metricDetailsDTO.Metadata.Description = metadata.Description
 		metricDetailsDTO.Metadata.Unit = metadata.Unit
-	}()
+		return nil
+	})
 
-	// Call 1: GetMetricsDataPointsAndLastReceived
-	go func() {
-		defer wg.Done()
+	// Call 2: GetMetricsDataPointsAndLastReceived
+	g.Go(func() error {
 		dataPoints, lastReceived, err := receiver.reader.GetMetricsDataPointsAndLastReceived(ctx, metricName)
 		if err != nil {
-			handleError(err)
-			return
+			return err
 		}
 		metricDetailsDTO.DataPoints = dataPoints
 		metricDetailsDTO.LastReceived = lastReceived
-	}()
+		return nil
+	})
 
-	// Call 2: GetTotalTimeSeriesForMetricName
-	go func() {
-		defer wg.Done()
-		totalSeries, totalSeriesLastReceived, cardinality, err := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
+	// Call 3: GetTotalTimeSeriesForMetricName
+	g.Go(func() error {
+		totalSeries, cardinality, err := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
 		if err != nil {
-			handleError(err)
-			return
+			return err
 		}
 		metricDetailsDTO.TimeSeriesTotal = totalSeries
-		metricDetailsDTO.LastReceived = totalSeriesLastReceived
 		metricDetailsDTO.Cardinality = cardinality
-	}()
+		return nil
+	})
 
-	// Call 3: GetActiveTimeSeriesForMetricName
-	go func() {
-		defer wg.Done()
+	// Call 4: GetActiveTimeSeriesForMetricName
+	g.Go(func() error {
 		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 30*time.Minute)
 		if err != nil {
-			handleError(err)
-			return
+			return err
 		}
 		metricDetailsDTO.TimeSeriesActive = activeSeries
-	}()
+		return nil
+	})
 
-	// Call 4: GetAttributesForMetricName
-	go func() {
-		defer wg.Done()
+	// Call 5: GetAttributesForMetricName
+	g.Go(func() error {
 		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName)
 		if err != nil {
-			handleError(err)
-			return
+			return err
 		}
 		if attributes != nil {
 			metricDetailsDTO.Attributes = *attributes
 		}
-	}()
+		return nil
+	})
 
-	go func() {
-		defer wg.Done()
+	// Call 6: GetDashboardsWithMetricName
+	g.Go(func() error {
 		data, err := dashboards.GetDashboardsWithMetricName(ctx, metricName)
 		if err != nil {
-			handleError(err)
-			return
+			return err
 		}
 		if data != nil {
 			jsonData, err := json.Marshal(data)
 			if err != nil {
-				fmt.Printf("Error marshalling data: %v\n", err)
-				return
+				zap.L().Error("Error marshalling data:", zap.Error(err))
+				return &model.ApiError{Typ: "MarshallingErr", Err: err}
 			}
 
-			// Unmarshal the JSON directly into a slice of Dashboard structs
 			var dashboards []metrics_explorer.Dashboard
 			err = json.Unmarshal(jsonData, &dashboards)
 			if err != nil {
-				fmt.Printf("Error unmarshalling JSON: %v\n", err)
-				return
+				zap.L().Error("Error unmarshalling data:", zap.Error(err))
+				return &model.ApiError{Typ: "UnMarshallingErr", Err: err}
 			}
 			metricDetailsDTO.Dashboards = dashboards
 		}
-	}()
+		return nil
+	})
 
-	//TODO: ADD ALERTS CONFIG
-
-	// Wait for all goroutines to complete
-	wg.Wait()
-	close(errCh)
-
-	// If an error occurred, return immediately
-	if apiErr := <-errCh; apiErr != nil {
-		return metrics_explorer.MetricDetailsDTO{}, apiErr
+	// Wait for all goroutines and handle any errors
+	if err := g.Wait(); err != nil {
+		// Type assert to check if it's already an ApiError
+		if apiErr, ok := err.(*model.ApiError); ok {
+			return metrics_explorer.MetricDetailsDTO{}, apiErr
+		}
+		// If it's not an ApiError, wrap it in one
+		return metrics_explorer.MetricDetailsDTO{}, &model.ApiError{Typ: "InternalError", Err: err}
 	}
 
 	return metricDetailsDTO, nil

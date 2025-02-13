@@ -52,7 +52,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) {
 	metricName := mux.Vars(r)["metric_name"]
 	ctx := r.Context()
-	metricsDetail, apiError := aH.APIHandler.SummaryService.GetMetricsSummary(ctx, metricName)
+	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, metricName)
 	if apiError != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)

@@ -65,9 +65,9 @@ type SummaryListMetricsResponse struct {
 }
 
 type Attribute struct {
-	Key          string   `json:"key" db:"key"`
-	Value        []string `json:"value" db:"value"`
-	Contribution float64  `json:"contribution" db:"contribution"`
+	Key        string   `json:"key" db:"key"`
+	Value      []string `json:"value" db:"value"`
+	ValueCount uint64   `json:"valueCount" db:"valueCount"`
 }
 
 // Metadata holds additional information about the metric.
