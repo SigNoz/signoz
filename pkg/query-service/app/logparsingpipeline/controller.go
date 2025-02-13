@@ -11,10 +11,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -50,9 +50,9 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	postable []PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
-	userId, authErr := auth.ExtractUserIdFromContext(ctx)
-	if authErr != nil {
-		return nil, model.UnauthorizedError(errors.Wrap(authErr, "failed to get userId from context"))
+	userId, ok := authtypes.GetUserIDFromContext(ctx)
+	if !ok {
+		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
 	}
 
 	var pipelines []Pipeline

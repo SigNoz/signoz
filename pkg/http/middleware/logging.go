@@ -11,8 +11,8 @@ import (
 
 	"github.com/gorilla/mux"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -133,7 +133,7 @@ func (middleware *Logging) getLogCommentKVs(r *http.Request) map[string]string {
 		client = "api"
 	}
 
-	email, _ := auth.GetEmailFromJwt(r.Context())
+	email, _ := authtypes.GetEmailFromContext(r.Context())
 
 	kvs := map[string]string{
 		"path":        path,

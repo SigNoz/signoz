@@ -32,6 +32,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -440,8 +441,8 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		userEmail, err := auth.GetEmailFromJwt(r.Context())
-		if err == nil {
+		userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+		if ok {
 			// switch case to set data["screen"] based on the referrer
 			switch {
 			case dashboardMatched:
@@ -478,8 +479,6 @@ func getActiveLogs(path string, r *http.Request) {
 
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := auth.AttachJwtToContext(r.Context(), r)
-		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
@@ -498,8 +497,8 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		// if telemetry.GetInstance().IsSampled() {
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
-			if err == nil {
+			userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+			if ok {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
 			}
 		}

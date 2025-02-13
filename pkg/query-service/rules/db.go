@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -267,7 +267,7 @@ func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*Pla
 
 func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error) {
 
-	email, _ := auth.GetEmailFromJwt(ctx)
+	email, _ := authtypes.GetEmailFromContext(ctx)
 	maintenance.CreatedBy = email
 	maintenance.CreatedAt = time.Now()
 	maintenance.UpdatedBy = email
@@ -298,7 +298,7 @@ func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (strin
 }
 
 func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
-	email, _ := auth.GetEmailFromJwt(ctx)
+	email, _ := authtypes.GetEmailFromContext(ctx)
 	maintenance.UpdatedBy = email
 	maintenance.UpdatedAt = time.Now()
 

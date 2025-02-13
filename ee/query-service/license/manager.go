@@ -10,8 +10,8 @@ import (
 
 	"sync"
 
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -237,8 +237,8 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseResponse *model.LicenseV3, errResponse *model.ApiError) {
 	defer func() {
 		if errResponse != nil {
-			userEmail, err := auth.GetEmailFromJwt(ctx)
-			if err == nil {
+			userEmail, ok := authtypes.GetEmailFromContext(ctx)
+			if ok {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED,
 					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail, true, false)
 			}

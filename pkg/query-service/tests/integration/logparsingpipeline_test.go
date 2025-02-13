@@ -22,13 +22,13 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -540,7 +540,19 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	}
 
 	respWriter := httptest.NewRecorder()
-	ctx := auth.AttachJwtToContext(req.Context(), req)
+
+	jwt, err := authtypes.GetJwtFromRequest(req)
+	if err != nil {
+		tb.t.Fatalf("couldn't get jwt from request: %v", err)
+	}
+
+	claims, err := authtypes.GetJwtClaims(jwt, "")
+	if err != nil {
+		tb.t.Fatalf("couldn't get jwt claims: %v", err)
+	}
+
+	ctx := authtypes.AttachClaimsToContext(req.Context(), claims)
+
 	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 

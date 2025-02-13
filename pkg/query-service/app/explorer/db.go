@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -125,9 +125,9 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
-	email, err := auth.GetEmailFromJwt(ctx)
-	if err != nil {
-		return "", err
+	email, ok := authtypes.GetEmailFromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("error in getting email from context")
 	}
 
 	createBy := email
@@ -186,9 +186,9 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
 	}
 
-	email, err := auth.GetEmailFromJwt(ctx)
-	if err != nil {
-		return err
+	email, ok := authtypes.GetEmailFromContext(ctx)
+	if !ok {
+		return fmt.Errorf("error in getting email from context")
 	}
 
 	updatedAt := time.Now()

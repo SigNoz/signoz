@@ -49,6 +49,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 
@@ -1596,8 +1597,8 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err == nil {
+	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	if ok {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
 	}
 }
@@ -1608,8 +1609,8 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err == nil {
+	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	if ok {
 		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
@@ -1714,8 +1715,8 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err == nil {
+	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	if ok {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
 	}
 
@@ -2422,9 +2423,9 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"isAnonymous":      req.IsAnonymous,
 		"organizationName": req.Name,
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err != nil {
-		zap.L().Error("failed to get user email from jwt", zap.Error(err))
+	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	if !ok {
+		zap.L().Error("failed to get user email from jwt")
 	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
 
@@ -4986,8 +4987,8 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
 
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
-			if err == nil {
+			userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+			if ok {
 				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
 				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
 
