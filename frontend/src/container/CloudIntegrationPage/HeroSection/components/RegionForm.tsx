@@ -1,6 +1,6 @@
 import { Form } from 'antd';
 import cx from 'classnames';
-import { useAccountStatus } from 'hooks/integrations/aws/useAccountStatus';
+import { useAccountStatus } from 'hooks/Integrations/aws/useAccountStatus';
 import { useRef } from 'react';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
