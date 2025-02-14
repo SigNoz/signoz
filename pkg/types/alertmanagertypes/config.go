@@ -268,6 +268,9 @@ type ConfigStore interface {
 
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
+
+	// ListOrgs returns the list of orgs
+	ListOrgs(context.Context) ([]string, error)
 }
 
 // MarshalSecretValue if set to true will expose Secret type

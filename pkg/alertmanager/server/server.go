@@ -34,7 +34,7 @@ type Server struct {
 	logger *slog.Logger
 
 	// registry is the prometheus registry for the alertmanager
-	registry *prometheus.Registry
+	registry prometheus.Registerer
 
 	// srvConfig is the server config for the alertmanager
 	srvConfig Config
@@ -64,7 +64,7 @@ type Server struct {
 	stopc             chan struct{}
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry *prometheus.Registry, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
 	server := &Server{
 		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/server"),
 		registry:   registry,

@@ -81,3 +81,20 @@ func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config) 
 
 	return nil
 }
+
+func (store *config) ListOrgs(ctx context.Context) ([]string, error) {
+	var orgIDs []string
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Table("organizations").
+		ColumnExpr("id").
+		Scan(ctx, &orgIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return orgIDs, nil
+}
