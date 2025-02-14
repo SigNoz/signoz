@@ -433,7 +433,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			{showSlowApiWarning && isTrailUser && (
+			{showSlowApiWarning && isTrialUser && (
 				<div className="slow-api-warning-banner">
 					The API is taking longer than expected. This might happen due to high load
 					on the server. This is a temporary issue and will be resolved soon.
