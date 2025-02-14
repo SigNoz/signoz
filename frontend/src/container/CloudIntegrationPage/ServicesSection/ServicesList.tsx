@@ -24,10 +24,11 @@ function ServicesList({
 
 	const handleActiveService = useCallback(
 		(serviceId: string): void => {
-			urlQuery.set('service', serviceId);
-			navigate({ search: urlQuery.toString() });
+			const latestUrlQuery = new URLSearchParams(window.location.search);
+			latestUrlQuery.set('service', serviceId);
+			navigate({ search: latestUrlQuery.toString() });
 		},
-		[navigate, urlQuery],
+		[navigate],
 	);
 
 	const filteredServices = useMemo(() => {

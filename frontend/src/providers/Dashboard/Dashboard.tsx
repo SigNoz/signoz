@@ -73,6 +73,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	setDashboardQueryRangeCalled: () => {},
 	selectedRowWidgetId: '',
 	setSelectedRowWidgetId: () => {},
+	isDashboardFetching: false,
 });
 
 interface Props {
@@ -193,6 +194,8 @@ export function DashboardProvider({
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
 
+	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
+
 	const mergeDBWithLocalStorage = (
 		data: Dashboard,
 		localStorageVariables: any,
@@ -257,10 +260,16 @@ export function DashboardProvider({
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
-			queryFn: () =>
-				getDashboard({
-					uuid: dashboardId,
-				}),
+			queryFn: async () => {
+				setIsDashboardFetching(true);
+				try {
+					return await getDashboard({
+						uuid: dashboardId,
+					});
+				} finally {
+					setIsDashboardFetching(false);
+				}
+			},
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
 				const updatedDashboardData = transformDashboardVariables(data);
@@ -425,6 +434,7 @@ export function DashboardProvider({
 			setDashboardQueryRangeCalled,
 			selectedRowWidgetId,
 			setSelectedRowWidgetId,
+			isDashboardFetching,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -446,6 +456,7 @@ export function DashboardProvider({
 			setDashboardQueryRangeCalled,
 			selectedRowWidgetId,
 			setSelectedRowWidgetId,
+			isDashboardFetching,
 		],
 	);
 

@@ -12,6 +12,7 @@ import (
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -557,11 +558,17 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create cloud integrations controller: %v", err)
+	}
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                 reader,
-		AppDao:                 dao.DB(),
-		IntegrationsController: controller,
-		FeatureFlags:           fm,
+		Reader:                      reader,
+		AppDao:                      dao.DB(),
+		IntegrationsController:      controller,
+		FeatureFlags:                fm,
+		CloudIntegrationsController: cloudIntegrationsController,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
