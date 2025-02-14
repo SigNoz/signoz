@@ -6,13 +6,17 @@ import './AppLayout.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
 import manageCreditCardApi from 'api/billing/manage';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
@@ -21,6 +25,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
+import { X } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
@@ -42,6 +47,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { isCloudUser } from 'utils/app';
+import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
 	getFormattedDateWithMinutes,
@@ -71,6 +77,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		showPaymentFailedWarning,
 		setShowPaymentFailedWarning,
 	] = useState<boolean>(false);
+
+	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
@@ -261,6 +269,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (!isLoggedIn) {
 			setShowTrialExpiryBanner(false);
 			setShowPaymentFailedWarning(false);
+			setShowSlowApiWarning(false);
 		}
 	}, [isLoggedIn]);
 
@@ -360,6 +369,45 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		licenses,
 	]);
 
+	// Listen for API warnings
+	const handleWarning = (isSlow: boolean): void => {
+		const dontShowSlowApiWarning = getLocalStorageApi(
+			LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING,
+		);
+
+		const isDontShowSlowApiWarning = dontShowSlowApiWarning === 'true';
+
+		if (isDontShowSlowApiWarning) {
+			setShowSlowApiWarning(false);
+		} else {
+			setShowSlowApiWarning(isSlow);
+		}
+	};
+
+	useEffect(() => {
+		eventEmitter.on(Events.SLOW_API_WARNING, handleWarning);
+
+		return (): void => {
+			eventEmitter.off(Events.SLOW_API_WARNING, handleWarning);
+		};
+	}, []);
+
+	const isTrailUser = useMemo(
+		(): boolean =>
+			(!isFetchingLicenses &&
+				licenses &&
+				licenses.onTrial &&
+				!licenses.trialConvertedToSubscription) ||
+			false,
+		[licenses, isFetchingLicenses],
+	);
+
+	const handleDismissSlowApiWarning = (): void => {
+		setShowSlowApiWarning(false);
+
+		setLocalStorageApi(LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING, 'true');
+	};
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
@@ -384,6 +432,17 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</div>
 			)}
+
+			{showSlowApiWarning && isTrailUser && (
+				<div className="slow-api-warning-banner">
+					The API is taking longer than expected. This might happen due to high load
+					on the server. This is a temporary issue and will be resolved soon.
+					<a className="dismiss-banner" onClick={handleDismissSlowApiWarning}>
+						<X className="dismiss-banner-icon" size={16} />
+					</a>
+				</div>
+			)}
+
 			{!showTrialExpiryBanner && showPaymentFailedWarning && (
 				<div className="payment-failed-banner">
 					Your bill payment has failed. Your workspace will get suspended on{' '}
