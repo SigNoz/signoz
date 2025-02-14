@@ -11,11 +11,35 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-var jwtSecret string
-var JwtExpiry = 30 * time.Minute
-var JwtRefresh = 30 * 24 * time.Hour
+type patTokenKey struct{}
+type jwtClaimsKey struct{}
 
-func GetJwtFromRequest(r *http.Request) (string, error) {
+var PatTokenKey = patTokenKey{}
+var JwtClaimsKey = jwtClaimsKey{}
+
+type Claims struct {
+	jwt.StandardClaims
+	UserID  string `json:"id"`
+	GroupID string `json:"gid"`
+	Email   string `json:"email"`
+	OrgID   string `json:"orgId"`
+}
+
+type JWT struct {
+	JwtSecret  string
+	JwtExpiry  time.Duration
+	JwtRefresh time.Duration
+}
+
+func NewJWT(jwtSecret string, jwtExpiry time.Duration, jwtRefresh time.Duration) *JWT {
+	return &JWT{
+		JwtSecret:  jwtSecret,
+		JwtExpiry:  jwtExpiry,
+		JwtRefresh: jwtRefresh,
+	}
+}
+
+func (j *JWT) GetJwtFromRequest(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return "", errors.New("missing Authorization header")
@@ -37,29 +61,40 @@ func GetJwtFromRequest(r *http.Request) (string, error) {
 	return r.Header.Get("Sec-WebSocket-Protocol"), nil
 }
 
-func GetJwtClaims(jwtStr string) (jwt.MapClaims, error) {
+func (j *JWT) GetJwtClaims(jwtStr string) (Claims, error) {
 	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
 	// reference - https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Parser.ParseWithClaims
 	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New(fmt.Sprintf("unknown signing algo: %v", token.Header["alg"]))
 		}
-		return []byte(jwtSecret), nil
+		return []byte(j.JwtSecret), nil
 	})
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to parse jwt token: %v", err))
+		return Claims{}, errors.New(fmt.Sprintf("failed to parse jwt token: %v", err))
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		return nil, errors.New("Not a valid jwt claim")
+		return Claims{}, errors.New("Not a valid jwt claim")
 	}
 
-	return claims, nil
+	// Populate UserClaims with standard claims and custom claims
+	userClaims := Claims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: int64(claims["exp"].(float64)),
+		},
+		UserID:  j.getStringClaim(claims, "id"),
+		GroupID: j.getStringClaim(claims, "gid"),
+		Email:   j.getStringClaim(claims, "email"),
+		OrgID:   j.getStringClaim(claims, "orgId"),
+	}
+
+	return userClaims, nil
 }
 
-func ValidateJwtClaims(claims jwt.MapClaims) error {
+func (j *JWT) ValidateJwtClaims(claims Claims) error {
 	now := time.Now().Unix()
 	if !claims.VerifyExpiresAt(now, true) {
 		return errors.New("jwt expired")
@@ -68,97 +103,61 @@ func ValidateJwtClaims(claims jwt.MapClaims) error {
 	return nil
 }
 
-type contextKey string
-
-const (
-	EmailContextKey   contextKey = "email"
-	OrgIDContextKey   contextKey = "orgId"
-	UserIDContextKey  contextKey = "userId"
-	GroupIDContextKey contextKey = "groupId"
-)
-
 // AttachClaimsToContext attaches individual claims to the context.
-func AttachClaimsToContext(ctx context.Context, claims jwt.MapClaims) context.Context {
-	if email, ok := claims["email"].(string); ok {
-		ctx = context.WithValue(ctx, EmailContextKey, email)
-	}
-	if orgId, ok := claims["orgId"].(string); ok {
-		ctx = context.WithValue(ctx, OrgIDContextKey, orgId)
-	}
-	if userId, ok := claims["id"].(string); ok {
-		ctx = context.WithValue(ctx, UserIDContextKey, userId)
-	}
-	if groupId, ok := claims["gid"].(string); ok {
-		ctx = context.WithValue(ctx, GroupIDContextKey, groupId)
-	}
+func (j *JWT) AttachClaimsToContext(ctx context.Context, claims Claims) context.Context {
+	ctx = context.WithValue(ctx, JwtClaimsKey, claims)
 	return ctx
 }
 
-// GetUserIDFromContext retrieves the userId from the context.
-func GetUserIDFromContext(ctx context.Context) (string, bool) {
-	userId, ok := ctx.Value(UserIDContextKey).(string)
-	return userId, ok
-}
-
-// GetGroupIDFromContext retrieves the groupId from the context.
-func GetGroupIDFromContext(ctx context.Context) (string, bool) {
-	groupId, ok := ctx.Value(GroupIDContextKey).(string)
-	return groupId, ok
-}
-
-// GetEmailFromContext retrieves the email from the context.
-func GetEmailFromContext(ctx context.Context) (string, bool) {
-	email, ok := ctx.Value(EmailContextKey).(string)
-	return email, ok
-}
-
-// GetOrgIDFromContext retrieves the orgId from the context.
-func GetOrgIDFromContext(ctx context.Context) (string, bool) {
-	orgId, ok := ctx.Value(OrgIDContextKey).(string)
-	return orgId, ok
-}
-
-// TokenClaims represents the standard claims used in both access and refresh tokens
-type TokenClaims struct {
-	UserID  string `json:"id"`
-	GroupID string `json:"gid"`
-	Email   string `json:"email"`
-	OrgID   string `json:"orgId"`
-	Expiry  int64  `json:"exp"`
-}
-
 // signToken creates and signs a JWT token with the given claims
-func signToken(claims TokenClaims) (string, error) {
+func (j *JWT) signToken(claims Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    claims.UserID,
 		"gid":   claims.GroupID,
 		"email": claims.Email,
 		"orgId": claims.OrgID,
-		"exp":   claims.Expiry,
+		"exp":   claims.ExpiresAt,
 	})
-	return token.SignedString([]byte(jwtSecret))
+	return token.SignedString([]byte(j.JwtSecret))
 }
 
 // GetAccessJwt creates an access token with the provided claims
-func GetAccessJwt(orgId, userId, groupId, email string) (string, error) {
-	claims := TokenClaims{
+func (j *JWT) GetAccessJwt(orgId, userId, groupId, email string) (string, error) {
+	claims := Claims{
 		UserID:  userId,
 		GroupID: groupId,
 		Email:   email,
 		OrgID:   orgId,
-		Expiry:  time.Now().Add(JwtExpiry).Unix(),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(j.JwtExpiry).Unix(),
+		},
 	}
-	return signToken(claims)
+	return j.signToken(claims)
 }
 
 // GetRefreshJwt creates a refresh token with the provided claims
-func GetRefreshJwt(orgId, userId, groupId, email string) (string, error) {
-	claims := TokenClaims{
+func (j *JWT) GetRefreshJwt(orgId, userId, groupId, email string) (string, error) {
+	claims := Claims{
 		UserID:  userId,
 		GroupID: groupId,
 		Email:   email,
 		OrgID:   orgId,
-		Expiry:  time.Now().Add(JwtRefresh).Unix(),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(j.JwtRefresh).Unix(),
+		},
 	}
-	return signToken(claims)
+	return j.signToken(claims)
+}
+
+// getStringClaim safely retrieves a string claim from the claims map.
+func (j *JWT) getStringClaim(claims jwt.MapClaims, key string) string {
+	if value, ok := claims[key].(string); ok {
+		return value
+	}
+	return "" // Return an empty string if the claim is not present
+}
+
+func GetClaimsFromContext(ctx context.Context) (Claims, bool) {
+	claims, ok := ctx.Value(JwtClaimsKey).(Claims)
+	return claims, ok
 }

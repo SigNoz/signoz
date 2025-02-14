@@ -50,7 +50,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	postable []PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
-	userId, ok := authtypes.GetUserIDFromContext(ctx)
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
 	if !ok {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
 	}
@@ -84,7 +84,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, userId, agentConf.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, claims.UserID, agentConf.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, err
 	}

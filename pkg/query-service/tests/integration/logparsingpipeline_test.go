@@ -28,7 +28,6 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -470,6 +469,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		AppDao:                        dao.DB(),
 		LogsParsingPipelineController: controller,
+		JWT:                           jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -541,17 +541,17 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	respWriter := httptest.NewRecorder()
 
-	jwt, err := authtypes.GetJwtFromRequest(req)
+	jwt, err := tb.apiHandler.JWT.GetJwtFromRequest(req)
 	if err != nil {
 		tb.t.Fatalf("couldn't get jwt from request: %v", err)
 	}
 
-	claims, err := authtypes.GetJwtClaims(jwt, "")
+	claims, err := tb.apiHandler.JWT.GetJwtClaims(jwt)
 	if err != nil {
 		tb.t.Fatalf("couldn't get jwt claims: %v", err)
 	}
 
-	ctx := authtypes.AttachClaimsToContext(req.Context(), claims)
+	ctx := tb.apiHandler.JWT.AttachClaimsToContext(req.Context(), claims)
 
 	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)

@@ -133,7 +133,11 @@ func (middleware *Logging) getLogCommentKVs(r *http.Request) map[string]string {
 		client = "api"
 	}
 
-	email, _ := authtypes.GetEmailFromContext(r.Context())
+	var email string
+	claims, ok := authtypes.GetClaimsFromContext(r.Context())
+	if ok {
+		email = claims.Email
+	}
 
 	kvs := map[string]string{
 		"path":        path,

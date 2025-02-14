@@ -8,7 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -76,12 +75,12 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	adminUserId, ok := authtypes.GetUserIDFromContext(ctx)
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.Wrap(err, "failed to extract admin user id")
 	}
 
-	au, apiErr := dao.DB().GetUser(ctx, adminUserId)
+	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
 	if apiErr != nil {
 		return nil, errors.Wrap(err, "failed to query admin user from the DB")
 	}
@@ -119,12 +118,12 @@ func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.Bulk
 		FailedInvites:     []model.FailedInvite{},
 	}
 
-	adminUserId, ok := authtypes.GetUserIDFromContext(ctx)
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("failed to extract admin user id")
 	}
 
-	au, apiErr := dao.DB().GetUser(ctx, adminUserId)
+	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query admin user from the DB")
 	}
@@ -541,16 +540,16 @@ func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.Ap
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
-func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginResponse, error) {
+func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT) (*model.LoginResponse, error) {
 	zap.L().Debug("Login method called for user", zap.String("email", request.Email))
 
-	user, err := authenticateLogin(ctx, request)
+	user, err := authenticateLogin(ctx, request, jwt)
 	if err != nil {
 		zap.L().Error("Failed to authenticate login request", zap.Error(err))
 		return nil, err
 	}
 
-	userjwt, err := GenerateJWTForUser(&user.User)
+	userjwt, err := GenerateJWTForUser(&user.User, jwt)
 	if err != nil {
 		zap.L().Error("Failed to generate JWT against login creds", zap.Error(err))
 		return nil, err
@@ -567,35 +566,34 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 	}, nil
 }
 
-func claimsToUserPayload(claims jwt.MapClaims) (*model.UserPayload, error) {
+func claimsToUserPayload(claims authtypes.Claims) (*model.UserPayload, error) {
 	user := &model.UserPayload{
 		User: model.User{
-			Id:      claims[string(authtypes.UserIDContextKey)].(string),
-			GroupId: claims[string(authtypes.GroupIDContextKey)].(string),
-			Email:   claims[string(authtypes.EmailContextKey)].(string),
-			OrgId:   claims[string(authtypes.OrgIDContextKey)].(string),
+			Id:      claims.UserID,
+			GroupId: claims.GroupID,
+			Email:   claims.Email,
+			OrgId:   claims.OrgID,
 		},
 	}
-
 	return user, nil
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserPayload, error) {
+func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authtypes.JWT) (*model.UserPayload, error) {
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
 		// parse the refresh token
-		claims, err := authtypes.GetJwtClaims(req.RefreshToken)
+		claims, err := jwt.GetJwtClaims(req.RefreshToken)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse refresh token")
 		}
 
-		err = authtypes.ValidateJwtClaims(claims)
+		err = jwt.ValidateJwtClaims(claims)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}
 
-		if claims[string(authtypes.OrgIDContextKey)] == "" {
+		if claims.OrgID == "" {
 			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
@@ -631,17 +629,17 @@ func passwordMatch(hash, password string) bool {
 	return err == nil
 }
 
-func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
+func GenerateJWTForUser(user *model.User, jwt *authtypes.JWT) (model.UserJwtObject, error) {
 	j := model.UserJwtObject{}
 	var err error
-	j.AccessJwtExpiry = time.Now().Add(authtypes.JwtExpiry).Unix()
-	j.AccessJwt, err = authtypes.GetAccessJwt(user.OrgId, user.Id, user.GroupId, user.Email)
+	j.AccessJwtExpiry = time.Now().Add(jwt.JwtExpiry).Unix()
+	j.AccessJwt, err = jwt.GetAccessJwt(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
-	j.RefreshJwtExpiry = time.Now().Add(authtypes.JwtRefresh).Unix()
-	j.RefreshJwt, err = authtypes.GetRefreshJwt(user.OrgId, user.Id, user.GroupId, user.Email)
+	j.RefreshJwtExpiry = time.Now().Add(jwt.JwtRefresh).Unix()
+	j.RefreshJwt, err = jwt.GetRefreshJwt(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}

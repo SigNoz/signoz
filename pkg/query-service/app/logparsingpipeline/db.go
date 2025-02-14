@@ -45,7 +45,7 @@ func (r *Repo) insertPipeline(
 		))
 	}
 
-	email, ok := authtypes.GetEmailFromContext(ctx)
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
 	if !ok {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}
@@ -61,7 +61,7 @@ func (r *Repo) insertPipeline(
 		Config:      postable.Config,
 		RawConfig:   string(rawConfig),
 		Creator: Creator{
-			CreatedBy: email,
+			CreatedBy: claims.Email,
 			CreatedAt: time.Now(),
 		},
 	}

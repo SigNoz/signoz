@@ -237,10 +237,10 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseResponse *model.LicenseV3, errResponse *model.ApiError) {
 	defer func() {
 		if errResponse != nil {
-			userEmail, ok := authtypes.GetEmailFromContext(ctx)
+			claims, ok := authtypes.GetClaimsFromContext(ctx)
 			if ok {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED,
-					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail, true, false)
+					map[string]interface{}{"err": errResponse.Err.Error()}, claims.Email, true, false)
 			}
 		}
 	}()

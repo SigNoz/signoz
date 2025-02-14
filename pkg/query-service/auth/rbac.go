@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -49,30 +48,20 @@ func InitAuthCache(ctx context.Context) error {
 	return nil
 }
 
-// TODO: remove this function altogether
-func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
-	//get token and validate it
-	jwt, err := authtypes.GetJwtFromRequest(r)
-	if err != nil {
-		return nil, err
+func GetUserFromReqContext(ctx context.Context) (*model.UserPayload, error) {
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("no claims found in context")
 	}
 
-	claims, err := authtypes.GetJwtClaims(jwt)
-	if err != nil {
-		return nil, err
+	user := &model.UserPayload{
+		User: model.User{
+			Id:      claims.UserID,
+			GroupId: claims.GroupID,
+			Email:   claims.Email,
+			OrgId:   claims.OrgID,
+		},
 	}
-
-	// validate the claims
-	err = authtypes.ValidateJwtClaims(claims)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := claimsToUserPayload(claims)
-	if err != nil {
-		return nil, err
-	}
-
 	return user, nil
 }
 

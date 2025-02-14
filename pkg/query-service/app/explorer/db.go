@@ -125,13 +125,13 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
-	email, ok := authtypes.GetEmailFromContext(ctx)
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("error in getting email from context")
 	}
 
-	createBy := email
-	updatedBy := email
+	createBy := claims.Email
+	updatedBy := claims.Email
 
 	_, err = db.Exec(
 		"INSERT INTO saved_views (uuid, name, category, created_at, created_by, updated_at, updated_by, source_page, tags, data, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -186,13 +186,13 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
 	}
 
-	email, ok := authtypes.GetEmailFromContext(ctx)
+	claims, ok := authtypes.GetClaimsFromContext(ctx)
 	if !ok {
 		return fmt.Errorf("error in getting email from context")
 	}
 
 	updatedAt := time.Now()
-	updatedBy := email
+	updatedBy := claims.Email
 
 	_, err = db.Exec("UPDATE saved_views SET updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ? WHERE uuid = ?",
 		updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData, uuid_)

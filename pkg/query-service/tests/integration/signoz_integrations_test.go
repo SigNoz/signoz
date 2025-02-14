@@ -11,6 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
@@ -21,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.uber.org/zap"
 )
 
 // Higher level tests for UI facing APIs
@@ -562,13 +564,15 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 		AppDao:                 dao.DB(),
 		IntegrationsController: controller,
 		FeatureFlags:           fm,
+		JWT:                    jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
 	router := app.NewRouter()
-	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	router.Use(middleware.NewAuth(zap.L(), jwt).Wrap)
+	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 

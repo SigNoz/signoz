@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	// TODO(remove): Remove auth packages
@@ -10,41 +11,49 @@ import (
 )
 
 type Auth struct {
-	logger    *zap.Logger
-	jwtSecret string
+	logger *zap.Logger
+	jwt    *authtypes.JWT
 }
 
-func NewAuth(logger *zap.Logger) *Auth {
+func NewAuth(logger *zap.Logger, jwt *authtypes.JWT) *Auth {
 	if logger == nil {
 		panic("cannot build auth middleware, logger is empty")
 	}
 
-	return &Auth{logger: logger}
+	return &Auth{logger: logger, jwt: jwt}
 }
 
 func (a *Auth) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		jwt, err := authtypes.GetJwtFromRequest(r)
+		// if there is a PAT token, attach it to context
+		patToken := r.Header.Get("SIGNOZ-API-KEY")
+		if patToken != "" {
+			ctx := context.WithValue(r.Context(), authtypes.PatTokenKey, patToken)
+			r = r.WithContext(ctx)
+		}
+
+		// jwt parsing
+		jwt, err := a.jwt.GetJwtFromRequest(r)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		claims, err := authtypes.GetJwtClaims(jwt, a.jwtSecret)
+		claims, err := a.jwt.GetJwtClaims(jwt)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// validate the claims
-		err = authtypes.ValidateJwtClaims(claims)
+		err = a.jwt.ValidateJwtClaims(claims)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// attach the claims to the request
-		ctx := authtypes.AttachClaimsToContext(r.Context(), claims)
+		ctx := a.jwt.AttachClaimsToContext(r.Context(), claims)
 		r = r.WithContext(ctx)
 
 		// next handler

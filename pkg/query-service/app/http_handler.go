@@ -127,6 +127,8 @@ type APIHandler struct {
 	jobsRepo         *inframetrics.JobsRepo
 
 	pvcsRepo *inframetrics.PvcsRepo
+
+	JWT *authtypes.JWT
 }
 
 type APIHandlerOpts struct {
@@ -166,6 +168,8 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
+
+	JWT *authtypes.JWT
 }
 
 // NewAPIHandler returns an APIHandler
@@ -238,6 +242,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
+		JWT:                           opts.JWT,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -1597,9 +1602,9 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	claims, ok := authtypes.GetClaimsFromContext(r.Context())
 	if ok {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, claims.Email, true, false)
 	}
 }
 
@@ -1609,9 +1614,9 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	claims, ok := authtypes.GetClaimsFromContext(r.Context())
 	if ok {
-		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1715,9 +1720,9 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
-	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	claims, ok := authtypes.GetClaimsFromContext(r.Context())
 	if ok {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
 	}
 
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
@@ -2141,7 +2146,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	// 	req.RefreshToken = c.Value
 	// }
 
-	resp, err := auth.Login(context.Background(), req)
+	resp, err := auth.Login(context.Background(), req, aH.JWT)
 	if aH.HandleError(w, err, http.StatusUnauthorized) {
 		return
 	}
@@ -2423,11 +2428,11 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"isAnonymous":      req.IsAnonymous,
 		"organizationName": req.Name,
 	}
-	userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+	claims, ok := authtypes.GetClaimsFromContext(r.Context())
 	if !ok {
 		zap.L().Error("failed to get user email from jwt")
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, claims.Email, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -4987,7 +4992,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
 
-			userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+			claims, ok := authtypes.GetClaimsFromContext(r.Context())
 			if ok {
 				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
 				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
@@ -5028,7 +5033,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"filterApplied":         queryInfoResult.FilterApplied,
 							"dashboardId":           dashboardID,
 							"widgetId":              widgetID,
-						}, userEmail, true, false)
+						}, claims.Email, true, false)
 					}
 					if alertMatched {
 						var alertID string
@@ -5055,7 +5060,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
 							"filterApplied":         queryInfoResult.FilterApplied,
 							"alertId":               alertID,
-						}, userEmail, true, false)
+						}, claims.Email, true, false)
 					}
 				}
 			}

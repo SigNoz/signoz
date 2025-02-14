@@ -69,6 +69,7 @@ type ServerOptions struct {
 	UseLogsNewSchema           bool
 	UseTraceNewSchema          bool
 	SigNoz                     *signoz.SigNoz
+	Jwt                        *authtypes.JWT
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -201,6 +202,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		JWT:                           serverOptions.Jwt,
 	})
 	if err != nil {
 		return nil, err
@@ -255,6 +257,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -285,6 +288,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 
 	r := NewRouter()
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -294,8 +298,8 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	// add auth middleware
-	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
-		user, err := auth.GetUserFromRequest(r)
+	getUserFromRequest := func(ctx context.Context) (*model.UserPayload, error) {
+		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err
@@ -441,7 +445,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+		claims, ok := authtypes.GetClaimsFromContext(r.Context())
 		if ok {
 			// switch case to set data["screen"] based on the referrer
 			switch {
@@ -457,7 +461,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 				data["screen"] = "unknown"
 				return data, true
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, claims.Email, true, false)
 		}
 	}
 	return data, true
@@ -497,9 +501,9 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		// if telemetry.GetInstance().IsSampled() {
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, ok := authtypes.GetEmailFromContext(r.Context())
+			claims, ok := authtypes.GetClaimsFromContext(r.Context())
 			if ok {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
 			}
 		}
 		// }
