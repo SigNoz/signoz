@@ -23,17 +23,18 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax, { isValidTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
 import { isObject } from 'lodash-es';
 import { Check, Copy, Info, Send, Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useNavigationType } from 'react-router-dom-v5-compat';
 import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -43,6 +44,7 @@ import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { normalizeTimeToMs } from 'utils/timeUtils';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -75,6 +77,9 @@ function DateTimeSelection({
 	modalSelectedInterval,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
+	const { safeNavigate } = useSafeNavigate();
+	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
+	const dispatch = useDispatch();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -189,8 +194,8 @@ function DateTimeSelection({
 
 		const path = `${ROUTES.LIVE_LOGS}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
 
-		history.push(path, queryHistoryState);
-	}, [panelType, queryClient, stagedQuery]);
+		safeNavigate(path, { state: queryHistoryState });
+	}, [panelType, queryClient, safeNavigate, stagedQuery]);
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -349,7 +354,7 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.relativeTime, value);
 
 				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-				history.replace(generatedUrl);
+				safeNavigate(generatedUrl);
 			}
 
 			// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
@@ -368,6 +373,7 @@ function DateTimeSelection({
 			location.pathname,
 			onTimeChange,
 			refreshButtonHidden,
+			safeNavigate,
 			stagedQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
@@ -440,7 +446,7 @@ function DateTimeSelection({
 					urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 					urlQuery.delete(QueryParams.relativeTime);
 					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-					history.replace(generatedUrl);
+					safeNavigate(generatedUrl);
 				}
 			}
 		}
@@ -467,7 +473,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			safeNavigate(generatedUrl);
 		}
 
 		if (!stagedQuery) {
@@ -509,6 +515,77 @@ function DateTimeSelection({
 		return time;
 	};
 
+	const handleAbsoluteTimeSync = useCallback(
+		(
+			startTime: string,
+			endTime: string,
+			currentMinTime: number,
+			currentMaxTime: number,
+		): void => {
+			const startTs = normalizeTimeToMs(startTime);
+			const endTs = normalizeTimeToMs(endTime);
+
+			const timeComparison = {
+				url: {
+					start: dayjs(startTs).startOf('minute'),
+					end: dayjs(endTs).startOf('minute'),
+				},
+				current: {
+					start: dayjs(normalizeTimeToMs(currentMinTime)).startOf('minute'),
+					end: dayjs(normalizeTimeToMs(currentMaxTime)).startOf('minute'),
+				},
+			};
+
+			const hasTimeChanged =
+				!timeComparison.current.start.isSame(timeComparison.url.start) ||
+				!timeComparison.current.end.isSame(timeComparison.url.end);
+
+			if (hasTimeChanged) {
+				dispatch(UpdateTimeInterval('custom', [startTs, endTs]));
+			}
+		},
+		[dispatch],
+	);
+
+	const handleRelativeTimeSync = useCallback(
+		(relativeTime: string): void => {
+			updateTimeInterval(relativeTime as Time);
+			setIsValidteRelativeTime(true);
+			setRefreshButtonHidden(false);
+		},
+		[updateTimeInterval],
+	);
+
+	// Sync time picker state with URL on browser navigation
+	useEffect(() => {
+		if (navigationType !== 'POP') return;
+
+		if (searchStartTime && searchEndTime) {
+			handleAbsoluteTimeSync(searchStartTime, searchEndTime, minTime, maxTime);
+			return;
+		}
+
+		if (
+			relativeTimeFromUrl &&
+			isValidTimeFormat(relativeTimeFromUrl) &&
+			relativeTimeFromUrl !== selectedTime
+		) {
+			handleRelativeTimeSync(relativeTimeFromUrl);
+		}
+	}, [
+		navigationType,
+		searchStartTime,
+		searchEndTime,
+		relativeTimeFromUrl,
+		selectedTime,
+		minTime,
+		maxTime,
+		dispatch,
+		updateTimeInterval,
+		handleAbsoluteTimeSync,
+		handleRelativeTimeSync,
+	]);
+
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
 		const metricsTimeDuration = getLocalStorageKey(
@@ -524,6 +601,16 @@ function DateTimeSelection({
 
 		const currentRoute = location.pathname;
 
+		// Give priority to relativeTime from URL if it exists and start /end time are not present in the url, to sync the relative time in URL param with the time picker
+		if (
+			!searchStartTime &&
+			!searchEndTime &&
+			relativeTimeFromUrl &&
+			isValidTimeFormat(relativeTimeFromUrl)
+		) {
+			handleRelativeTimeSync(relativeTimeFromUrl);
+		}
+
 		// set the default relative time for alert history and overview pages if relative time is not specified
 		if (
 			(!urlQuery.has(QueryParams.startTime) ||
@@ -535,7 +622,7 @@ function DateTimeSelection({
 			updateTimeInterval(defaultRelativeTime);
 			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			safeNavigate(generatedUrl);
 			return;
 		}
 
@@ -573,7 +660,7 @@ function DateTimeSelection({
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 
-		history.replace(generatedUrl);
+		safeNavigate(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 

@@ -10,9 +10,9 @@ import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -51,6 +51,7 @@ function WidgetGraphComponent({
 	customSeries,
 	customErrorMessage,
 }: WidgetGraphComponentProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
@@ -173,7 +174,7 @@ function WidgetGraphComponent({
 						graphType: widget?.panelTypes,
 						widgetId: uuid,
 					};
-					history.push(`${pathname}/new?${createQueryParams(queryParams)}`);
+					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
 				},
 			},
 		);
@@ -194,7 +195,7 @@ function WidgetGraphComponent({
 		const separator = existingSearch.toString() ? '&' : '';
 		const newSearch = `${existingSearch}${separator}${updatedSearch}`;
 
-		history.push({
+		safeNavigate({
 			pathname,
 			search: newSearch,
 		});
@@ -221,7 +222,7 @@ function WidgetGraphComponent({
 			});
 			setGraphVisibility(localStoredVisibilityState);
 		}
-		history.push({
+		safeNavigate({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
 		});

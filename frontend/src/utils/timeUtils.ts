@@ -134,3 +134,21 @@ export const epochToTimeString = (epochMs: number): string => {
 	};
 	return date.toLocaleTimeString('en-US', options);
 };
+
+/**
+ * Converts nanoseconds to milliseconds
+ * @param timestamp - The timestamp to convert
+ * @returns The timestamp in milliseconds
+ */
+export const normalizeTimeToMs = (timestamp: number | string): number => {
+	let ts = timestamp;
+	if (typeof timestamp === 'string') {
+		ts = Math.trunc(parseInt(timestamp, 10));
+	}
+	ts = Number(ts);
+
+	// Check if timestamp is in nanoseconds (19+ digits)
+	const isNanoSeconds = ts.toString().length >= 19;
+
+	return isNanoSeconds ? Math.floor(ts / 1_000_000) : ts;
+};
