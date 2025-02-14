@@ -3,20 +3,20 @@ package auth
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 )
 
-func GetUserFromRequest(r *http.Request, apiHandler *api.APIHandler) (*basemodel.UserPayload, error) {
-	patToken := r.Header.Get("SIGNOZ-API-KEY")
-	if len(patToken) > 0 {
+func GetUserFromRequestContext(ctx context.Context, apiHandler *api.APIHandler) (*basemodel.UserPayload, error) {
+	patToken, ok := ctx.Value(authtypes.PatTokenKey).(string)
+	if ok && patToken != "" {
 		zap.L().Debug("Received a non-zero length PAT token")
 		ctx := context.Background()
 		dao := apiHandler.AppDao()
@@ -52,5 +52,5 @@ func GetUserFromRequest(r *http.Request, apiHandler *api.APIHandler) (*basemodel
 			return nil, err
 		}
 	}
-	return baseauth.GetUserFromRequest(r)
+	return baseauth.GetUserFromReqContext(ctx)
 }

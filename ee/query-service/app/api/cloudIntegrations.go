@@ -37,7 +37,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	currentUser, err := auth.GetUserFromRequest(r)
+	currentUser, err := auth.GetUserFromReqContext(r.Context())
 	if err != nil {
 		RespondError(w, basemodel.UnauthorizedError(fmt.Errorf(
 			"couldn't deduce current user: %w", err,

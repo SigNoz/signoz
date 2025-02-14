@@ -10,6 +10,7 @@ import (
 	basedao "go.signoz.io/signoz/pkg/query-service/dao"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type ModelDao interface {
@@ -22,7 +23,7 @@ type ModelDao interface {
 
 	// auth methods
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
-	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError)
+	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (redirectURL string, apierr basemodel.BaseApiError)
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error)
 
 	// org domain (auth domains) CRUD ops

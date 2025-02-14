@@ -34,7 +34,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	user, err := auth.GetUserFromRequest(r)
+	user, err := auth.GetUserFromReqContext(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
@@ -97,7 +97,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := auth.GetUserFromRequest(r)
+	user, err := auth.GetUserFromReqContext(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
@@ -127,7 +127,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	user, err := auth.GetUserFromRequest(r)
+	user, err := auth.GetUserFromReqContext(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
@@ -147,7 +147,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	id := mux.Vars(r)["id"]
-	user, err := auth.GetUserFromRequest(r)
+	user, err := auth.GetUserFromReqContext(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
