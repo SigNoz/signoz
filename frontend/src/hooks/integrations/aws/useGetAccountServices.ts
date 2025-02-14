@@ -1,4 +1,4 @@
-import { getAwsServices } from 'api/integrations/aws';
+import { getAwsServices } from 'api/Integrations/aws';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Service } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useQuery, UseQueryResult } from 'react-query';
