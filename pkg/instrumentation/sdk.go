@@ -131,3 +131,12 @@ func (i *SDK) ToProviderSettings() factory.ProviderSettings {
 		PrometheusRegisterer: i.PrometheusRegisterer(),
 	}
 }
+
+func (i *SDK) ToFactorySettings() factory.Settings {
+	return factory.Settings{
+		Logger:               i.Logger(),
+		MeterProvider:        i.MeterProvider(),
+		TracerProvider:       i.TracerProvider(),
+		PrometheusRegisterer: i.PrometheusRegisterer(),
+	}
+}

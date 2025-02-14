@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -87,6 +86,8 @@ func init() {
 }
 
 func main() {
+	ctx := context.Background()
+
 	var promConfigPath, skipTopLvlOpsPath string
 
 	// disables rule execution but allows change to the rule definition
@@ -191,20 +192,20 @@ func main() {
 		zap.L().Fatal("Could not start server", zap.Error(err))
 	}
 
-	if err := auth.InitAuthCache(context.Background()); err != nil {
+	if err := auth.InitAuthCache(ctx); err != nil {
 		zap.L().Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
-	signalsChannel := make(chan os.Signal, 1)
-	signal.Notify(signalsChannel, os.Interrupt, syscall.SIGTERM)
+	if err := signoz.Start(ctx); err != nil {
+		zap.L().Fatal("Failed to start signoz", zap.Error(err))
+	}
 
-	for {
-		select {
-		case status := <-server.HealthCheckStatus():
-			zap.L().Info("Received HealthCheck status: ", zap.Int("status", int(status)))
-		case <-signalsChannel:
-			zap.L().Fatal("Received OS Interrupt Signal ... ")
-			server.Stop()
-		}
+	if err := signoz.Wait(ctx); err != nil {
+		zap.L().Fatal("Failed to wait for signoz", zap.Error(err))
+	}
+
+	server.Stop()
+	if err := signoz.Stop(ctx); err != nil {
+		zap.L().Fatal("Failed to stop signoz", zap.Error(err))
 	}
 }

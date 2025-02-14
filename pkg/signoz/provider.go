@@ -59,6 +59,7 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddIntegrationsFactory(),
 			sqlmigration.NewAddLicensesFactory(),
 			sqlmigration.NewAddPatsFactory(),
+			sqlmigration.NewAddAlertmanagerConfigurationFactory(),
 			sqlmigration.NewModifyDatetimeFactory(),
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(

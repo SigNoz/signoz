@@ -24,6 +24,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 
+	"go.signoz.io/signoz/pkg/http/render"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
@@ -49,6 +50,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 
 	"go.uber.org/zap"
 
@@ -126,6 +129,7 @@ type APIHandler struct {
 	jobsRepo         *inframetrics.JobsRepo
 
 	pvcsRepo *inframetrics.PvcsRepo
+	SigNoz   *signoz.SigNoz
 }
 
 type APIHandlerOpts struct {
@@ -165,6 +169,8 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
+
+	SigNoz *signoz.SigNoz
 }
 
 // NewAPIHandler returns an APIHandler
@@ -237,6 +243,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
+		SigNoz:                        opts.SigNoz,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -1330,36 +1337,74 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	idVar := mux.Vars(r)["id"]
+	id, err := strconv.ParseUint(idVar, 10, 64)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	channel, err := aH.SigNoz.AlertmanagerClient.GetChannel(r.Context(), orgId, id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, channel)
 }
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	idVar := mux.Vars(r)["id"]
+	id, err := strconv.ParseUint(idVar, 10, 64)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	err = aH.SigNoz.AlertmanagerClient.DelChannel(r.Context(), orgId, id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, "notification channel successfully deleted")
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
+	channels, err := aH.SigNoz.AlertmanagerClient.ListChannels(r.Context(), orgId)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, channels)
 }
 
 // testChannels sends test alert to all registered channels
 func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1369,24 +1414,34 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+	receiver, err := alertmanagertypes.NewReceiverFromString(string(body))
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
-	// send alert
-	apiErrorObj := aH.alertManager.TestReceiver(receiver)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+
+	err = aH.SigNoz.AlertmanagerClient.TestReceiver(r.Context(), orgId, receiver)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
+
 	aH.Respond(w, "test alert sent")
 }
 
 func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
+	idVar := mux.Vars(r)["id"]
+	id, err := strconv.ParseUint(idVar, 10, 64)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
-	id := mux.Vars(r)["id"]
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1396,17 +1451,9 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of editChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(receiver, id)
-
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	err = aH.SigNoz.AlertmanagerClient.UpdateChannel(r.Context(), orgId, id, string(body))
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -1415,6 +1462,11 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -1424,41 +1476,41 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of createChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+	channel, err := alertmanagertypes.NewChannelFromReceiverString(string(body), orgId)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(receiver)
-
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+	err = aH.SigNoz.AlertmanagerClient.CreateChannel(r.Context(), orgId, channel)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
 	aH.Respond(w, nil)
-
 }
 
 func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	amEndpoint := constants.GetAlertManagerApiPrefix()
-	resp, err := http.Get(amEndpoint + "v1/alerts" + "?" + params.Encode())
+	orgId, err := auth.GetOrgIdFromJwt(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	params, err := alertmanagertypes.NewGettableAlertsParams(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	alerts, err := aH.SigNoz.AlertmanagerClient.GetAlerts(r.Context(), orgId, params)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, string(body))
+	aH.Respond(w, alerts)
 }
 
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
