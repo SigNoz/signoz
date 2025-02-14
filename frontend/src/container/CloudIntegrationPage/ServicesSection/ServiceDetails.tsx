@@ -111,7 +111,9 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__title-bar">
 				<div className="service-details__details-title">Details</div>
 				<div className="service-details__right-actions">
-					<ServiceStatus serviceStatus={serviceDetailsData.status} />
+					{isAnySignalConfigured && (
+						<ServiceStatus serviceStatus={serviceDetailsData.status} />
+					)}
 
 					{!!cloudAccountId && isAnySignalConfigured ? (
 						<Button

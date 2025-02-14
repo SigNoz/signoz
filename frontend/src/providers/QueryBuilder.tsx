@@ -23,6 +23,7 @@ import {
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -39,7 +40,7 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 // ** Types
 import {
@@ -96,7 +97,6 @@ export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
@@ -763,6 +763,8 @@ export function QueryBuilderProvider({
 		[panelType, stagedQuery],
 	);
 
+	const { safeNavigate } = useSafeNavigate();
+
 	const redirectWithQueryBuilderData = useCallback(
 		(
 			query: Partial<Query>,
@@ -833,9 +835,9 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			history.replace(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[history, location.pathname, urlQuery],
+		[location.pathname, safeNavigate, urlQuery],
 	);
 
 	const handleSetConfig = useCallback(

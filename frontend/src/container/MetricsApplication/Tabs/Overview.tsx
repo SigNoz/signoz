@@ -13,6 +13,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
@@ -290,6 +291,7 @@ function Application(): JSX.Element {
 			},
 		],
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -317,6 +319,7 @@ function Application(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
 							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -346,6 +349,7 @@ function Application(): JSX.Element {
 								timestamp: selectedTimeStamp,
 								apmToTraceQuery,
 								stepInterval,
+								safeNavigate,
 							})}
 						>
 							View Traces

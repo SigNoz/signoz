@@ -4,8 +4,8 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 function DashboardWidget(): JSX.Element | null {
 	const { search } = useLocation();
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [selectedGraph, setSelectedGraph] = useState<PANEL_TYPES>();
 
@@ -32,11 +33,11 @@ function DashboardWidget(): JSX.Element | null {
 		const graphType = params.get('graphType') as PANEL_TYPES | null;
 
 		if (graphType === null) {
-			history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+			safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 		} else {
 			setSelectedGraph(graphType);
 		}
-	}, [dashboardId, search]);
+	}, [dashboardId, safeNavigate, search]);
 
 	if (selectedGraph === undefined || dashboardResponse.isLoading) {
 		return <Spinner tip="Loading.." />;

@@ -1032,8 +1032,16 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
 	if err != nil {
 		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
+	} else {
+		allDashboards = append(allDashboards, installedIntegrationDashboards...)
 	}
-	allDashboards = append(allDashboards, installedIntegrationDashboards...)
+
+	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
+	} else {
+		allDashboards = append(allDashboards, cloudIntegrationDashboards...)
+	}
 
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
@@ -1189,12 +1197,24 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-			r.Context(), uuid,
-		)
-		if apiError != nil {
-			RespondError(w, apiError, nil)
-			return
+		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
+			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
+				r.Context(), uuid,
+			)
+			if apiError != nil {
+				RespondError(w, apiError, nil)
+				return
+			}
+
+		} else {
+			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+				r.Context(), uuid,
+			)
+			if apiError != nil {
+				RespondError(w, apiError, nil)
+				return
+			}
+
 		}
 
 	}
