@@ -10,903 +10,747 @@
   "data_collected": {
     "metrics": [
       {
-        "name": "BurstBalance",
+        "name": "aws_RDS_BurstBalance_count",
         "unit": "Percent",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "BurstBalance_count",
+        "name": "aws_RDS_BurstBalance_max",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "BurstBalance_sum",
+        "name": "aws_RDS_BurstBalance_min",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "CPUCreditBalance",
-        "unit": "Count",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "CPUCreditBalance_count",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUCreditBalance_sum",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUCreditUsage",
-        "unit": "Count",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "CPUCreditUsage_count",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUCreditUsage_sum",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUSurplusCreditBalance",
-        "unit": "Count",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "CPUSurplusCreditBalance_count",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUSurplusCreditBalance_sum",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUSurplusCreditsCharged",
-        "unit": "Count",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "CPUSurplusCreditsCharged_count",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUSurplusCreditsCharged_sum",
-        "unit": "Count",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CPUUtilization",
+        "name": "aws_RDS_BurstBalance_sum",
         "unit": "Percent",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "CPUUtilization_count",
+        "name": "aws_RDS_CPUCreditBalance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUUtilization_count",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "CPUUtilization_sum",
+        "name": "aws_RDS_CPUUtilization_max",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "CheckpointLag",
+        "name": "aws_RDS_CPUUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CheckpointLag_count",
         "unit": "Seconds",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "CheckpointLag_count",
+        "name": "aws_RDS_CheckpointLag_max",
         "unit": "Seconds",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "CheckpointLag_sum",
+        "name": "aws_RDS_CheckpointLag_min",
         "unit": "Seconds",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoad",
+        "name": "aws_RDS_CheckpointLag_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadCPU_count",
         "unit": "None",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadCPU",
+        "name": "aws_RDS_DBLoadCPU_max",
         "unit": "None",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadCPU_count",
+        "name": "aws_RDS_DBLoadCPU_min",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadCPU_sum",
+        "name": "aws_RDS_DBLoadCPU_sum",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadNonCPU",
+        "name": "aws_RDS_DBLoadNonCPU_count",
         "unit": "None",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadNonCPU_count",
+        "name": "aws_RDS_DBLoadNonCPU_max",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadNonCPU_sum",
+        "name": "aws_RDS_DBLoadNonCPU_min",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadRelativeToNumVCPUs",
+        "name": "aws_RDS_DBLoadNonCPU_sum",
         "unit": "None",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadRelativeToNumVCPUs_count",
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_count",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoadRelativeToNumVCPUs_sum",
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_max",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoad_count",
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_min",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DBLoad_sum",
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_sum",
         "unit": "None",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DatabaseConnections",
+        "name": "aws_RDS_DBLoad_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DatabaseConnections_count",
         "unit": "Count",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DatabaseConnections_count",
+        "name": "aws_RDS_DatabaseConnections_max",
         "unit": "Count",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DatabaseConnections_sum",
+        "name": "aws_RDS_DatabaseConnections_min",
         "unit": "Count",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DiskQueueDepth",
+        "name": "aws_RDS_DatabaseConnections_sum",
         "unit": "Count",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DiskQueueDepth_count",
+        "name": "aws_RDS_DiskQueueDepth_count",
         "unit": "Count",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "DiskQueueDepth_sum",
+        "name": "aws_RDS_DiskQueueDepth_max",
         "unit": "Count",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "EBSByteBalance_",
+        "name": "aws_RDS_DiskQueueDepth_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DiskQueueDepth_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSByteBalance__count",
         "unit": "Percent",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "EBSByteBalance__count",
+        "name": "aws_RDS_EBSByteBalance__max",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "EBSByteBalance__sum",
+        "name": "aws_RDS_EBSByteBalance__min",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "EBSIOBalance_",
+        "name": "aws_RDS_EBSByteBalance__sum",
         "unit": "Percent",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "EBSIOBalance__count",
+        "name": "aws_RDS_EBSIOBalance__count",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "EBSIOBalance__sum",
+        "name": "aws_RDS_EBSIOBalance__max",
         "unit": "Percent",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "FreeStorageSpace",
+        "name": "aws_RDS_EBSIOBalance__min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSIOBalance__sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeStorageSpace_count",
         "unit": "Bytes",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "FreeStorageSpace_count",
+        "name": "aws_RDS_FreeStorageSpace_max",
         "unit": "Bytes",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "FreeStorageSpace_sum",
+        "name": "aws_RDS_FreeStorageSpace_min",
         "unit": "Bytes",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "FreeableMemory",
+        "name": "aws_RDS_FreeStorageSpace_sum",
         "unit": "Bytes",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "FreeableMemory_count",
+        "name": "aws_RDS_FreeableMemory_count",
         "unit": "Bytes",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "FreeableMemory_sum",
+        "name": "aws_RDS_FreeableMemory_max",
         "unit": "Bytes",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "MaximumUsedTransactionIDs",
+        "name": "aws_RDS_FreeableMemory_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeableMemory_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_MaximumUsedTransactionIDs_count",
         "unit": "Count",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "MaximumUsedTransactionIDs_count",
+        "name": "aws_RDS_MaximumUsedTransactionIDs_max",
         "unit": "Count",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "MaximumUsedTransactionIDs_sum",
+        "name": "aws_RDS_MaximumUsedTransactionIDs_min",
         "unit": "Count",
-        "type": "Sum",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "NetworkReceiveThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "NetworkReceiveThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "NetworkReceiveThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "NetworkTransmitThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "NetworkTransmitThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "NetworkTransmitThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "OldestReplicationSlotLag",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "OldestReplicationSlotLag_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "OldestReplicationSlotLag_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReadIOPS",
-        "unit": "Count/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "ReadIOPS_count",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReadIOPS_sum",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReadLatency",
-        "unit": "Seconds",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "ReadLatency_count",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReadLatency_sum",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReadThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "ReadThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReadThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReplicationSlotDiskUsage",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "ReplicationSlotDiskUsage_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ReplicationSlotDiskUsage_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "SwapUsage",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "SwapUsage_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "SwapUsage_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TransactionLogsDiskUsage",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "TransactionLogsDiskUsage_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TransactionLogsDiskUsage_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TransactionLogsGeneration",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "TransactionLogsGeneration_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TransactionLogsGeneration_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "WriteIOPS",
-        "unit": "Count/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "WriteIOPS_count",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "WriteIOPS_sum",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "WriteLatency",
-        "unit": "Seconds",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "WriteLatency_count",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "WriteLatency_sum",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "WriteThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "WriteThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "WriteThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ACUUtilization",
-        "unit": "Percent",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "ACUUtilization_count",
-        "unit": "Percent",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ACUUtilization_sum",
-        "unit": "Percent",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "BackupRetentionPeriodStorageUsed",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "BackupRetentionPeriodStorageUsed_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "BackupRetentionPeriodStorageUsed_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "BufferCacheHitRatio",
-        "unit": "Percent",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "BufferCacheHitRatio_count",
-        "unit": "Percent",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "BufferCacheHitRatio_sum",
-        "unit": "Percent",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CommitLatency",
-        "unit": "Milliseconds",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "CommitLatency_count",
-        "unit": "Milliseconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CommitLatency_sum",
-        "unit": "Milliseconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CommitThroughput",
-        "unit": "Count/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "CommitThroughput_count",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "CommitThroughput_sum",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "Deadlocks",
-        "unit": "Count/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "Deadlocks_count",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "Deadlocks_sum",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "EngineUptime",
-        "unit": "Seconds",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "EngineUptime_count",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "EngineUptime_sum",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "NetworkThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "NetworkThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "NetworkThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "RDSToAuroraPostgreSQLReplicaLag",
-        "unit": "Seconds",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "RDSToAuroraPostgreSQLReplicaLag_count",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "RDSToAuroraPostgreSQLReplicaLag_sum",
-        "unit": "Seconds",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ServerlessDatabaseCapacity",
-        "unit": "None",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "ServerlessDatabaseCapacity_count",
-        "unit": "None",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "ServerlessDatabaseCapacity_sum",
-        "unit": "None",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkReceiveThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkReceiveThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkReceiveThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkTransmitThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkTransmitThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "StorageNetworkTransmitThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TempStorageIOPS",
-        "unit": "Count/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "TempStorageIOPS_count",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TempStorageIOPS_sum",
-        "unit": "Count/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TempStorageThroughput",
-        "unit": "Bytes/Second",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "TempStorageThroughput_count",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TempStorageThroughput_sum",
-        "unit": "Bytes/Second",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TotalBackupStorageBilled",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "TotalBackupStorageBilled_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "TotalBackupStorageBilled_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "VolumeBytesUsed",
-        "unit": "Bytes",
-        "type": "Summary",
-        "description": ""
-      },
-      {
-        "name": "VolumeBytesUsed_count",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "VolumeBytesUsed_sum",
-        "unit": "Bytes",
-        "type": "Sum",
-        "description": ""
-      },
-      {
-        "name": "VolumeReadIOPs",
+        "name": "aws_RDS_MaximumUsedTransactionIDs_sum",
         "unit": "Count",
-        "type": "Summary",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "VolumeReadIOPs_count",
-        "unit": "Count",
-        "type": "Sum",
+        "name": "aws_RDS_NetworkReceiveThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "VolumeReadIOPs_sum",
-        "unit": "Count",
-        "type": "Sum",
+        "name": "aws_RDS_NetworkReceiveThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "VolumeWriteIOPs",
-        "unit": "Count",
-        "type": "Summary",
+        "name": "aws_RDS_NetworkReceiveThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "VolumeWriteIOPs_count",
-        "unit": "Count",
-        "type": "Sum",
+        "name": "aws_RDS_NetworkReceiveThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
         "description": ""
       },
       {
-        "name": "VolumeWriteIOPs_sum",
-        "unit": "Count",
-        "type": "Sum",
+        "name": "aws_RDS_NetworkTransmitThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_count",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_max",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_min",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_count",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_max",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_min",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
         "description": ""
       }
     ],
