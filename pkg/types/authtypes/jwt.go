@@ -47,9 +47,11 @@ func (j *JWT) GetJwtFromRequest(r *http.Request) (string, error) {
 
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer ")
-	jwt := splitToken[1]
-	if len(jwt) > 0 {
-		return jwt, nil
+	if len(splitToken) > 1 {
+		jwt := splitToken[1]
+		if len(jwt) > 0 {
+			return jwt, nil
+		}
 	}
 
 	// We expect websocket connections to send auth JWT in the
@@ -64,7 +66,7 @@ func (j *JWT) GetJwtFromRequest(r *http.Request) (string, error) {
 func (j *JWT) GetJwtClaims(jwtStr string) (Claims, error) {
 	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
 	// reference - https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Parser.ParseWithClaims
-	token, err := jwt.Parse(jwtStr, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(jwtStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New(fmt.Sprintf("unknown signing algo: %v", token.Header["alg"]))
 		}
@@ -75,23 +77,13 @@ func (j *JWT) GetJwtClaims(jwtStr string) (Claims, error) {
 		return Claims{}, errors.New(fmt.Sprintf("failed to parse jwt token: %v", err))
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	// Type assertion to retrieve claims from the token
+	userClaims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
 		return Claims{}, errors.New("Not a valid jwt claim")
 	}
 
-	// Populate UserClaims with standard claims and custom claims
-	userClaims := Claims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: int64(claims["exp"].(float64)),
-		},
-		UserID:  j.getStringClaim(claims, "id"),
-		GroupID: j.getStringClaim(claims, "gid"),
-		Email:   j.getStringClaim(claims, "email"),
-		OrgID:   j.getStringClaim(claims, "orgId"),
-	}
-
-	return userClaims, nil
+	return *userClaims, nil
 }
 
 func (j *JWT) ValidateJwtClaims(claims Claims) error {

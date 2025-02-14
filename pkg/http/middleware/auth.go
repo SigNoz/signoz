@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	// TODO(remove): Remove auth packages
-
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
