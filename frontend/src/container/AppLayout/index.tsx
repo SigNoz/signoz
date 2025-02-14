@@ -392,7 +392,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		};
 	}, []);
 
-	const isTrailUser = useMemo(
+	const isTrialUser = useMemo(
 		(): boolean =>
 			(!isFetchingLicenses &&
 				licenses &&
