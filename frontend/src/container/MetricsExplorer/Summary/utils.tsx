@@ -182,3 +182,23 @@ export const transformTreemapData = (
 		...children,
 	];
 };
+
+export const getTreemapTileStyle = (): React.CSSProperties => ({
+	overflow: 'visible',
+	cursor: 'pointer',
+	backgroundColor: Color.BG_AMBER_500,
+	borderRadius: 4,
+});
+
+export const getTreemapTileTextStyle = (): React.CSSProperties => ({
+	width: '100%',
+	height: '100%',
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+	fontSize: '12px',
+	fontWeight: 'bold',
+	color: Color.TEXT_SLATE_400,
+	textAlign: 'center',
+	padding: '4px',
+});
