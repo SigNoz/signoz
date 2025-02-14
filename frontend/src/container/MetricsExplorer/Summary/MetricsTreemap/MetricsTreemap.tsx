@@ -1,14 +1,21 @@
-import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
-import { Skeleton } from 'antd';
+import { Empty, Skeleton, Tooltip } from 'antd';
 import { stratify, treemapBinary } from 'd3-hierarchy';
 import { useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 
-import { TREEMAP_HEIGHT, TREEMAP_MARGINS } from '../constants';
+import {
+	TREEMAP_HEIGHT,
+	TREEMAP_MARGINS,
+	TREEMAP_SQUARE_PADDING,
+} from '../constants';
 import { TreemapProps, TreemapTile } from '../types';
-import { transformTreemapData } from '../utils';
+import {
+	getTreemapTileStyle,
+	getTreemapTileTextStyle,
+	transformTreemapData,
+} from '../utils';
 
 function MetricsTreemap({
 	viewType,
@@ -36,61 +43,72 @@ function MetricsTreemap({
 	const yMax = TREEMAP_HEIGHT - TREEMAP_MARGINS.TOP - TREEMAP_MARGINS.BOTTOM;
 
 	if (isLoading) {
-		return <Skeleton />;
+		return (
+			<Skeleton style={{ width: treemapWidth, height: TREEMAP_HEIGHT }} active />
+		);
+	}
+
+	if (!transformTreemapData.length) {
+		return (
+			<Empty
+				description="No metrics found"
+				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+			/>
+		);
 	}
 
 	return (
-		<svg width={treemapWidth} height={TREEMAP_HEIGHT}>
-			<rect
-				width={treemapWidth}
-				height={TREEMAP_HEIGHT}
-				rx={14}
-				fill="transparent"
-			/>
-			<Treemap<TreemapTile>
-				top={TREEMAP_MARGINS.TOP}
-				root={transformedTreemapData}
-				size={[xMax, yMax]}
-				tile={treemapBinary}
-				round
-			>
-				{(treemap): JSX.Element => (
-					<Group>
-						{treemap
-							.descendants()
-							.reverse()
-							.map((node, i) => {
-								const nodeWidth = node.x1 - node.x0;
-								const nodeHeight = node.y1 - node.y0;
-								return (
-									<Group
-										// eslint-disable-next-line react/no-array-index-key
-										key={`node-${i}`}
-										top={node.y0 + TREEMAP_MARGINS.TOP}
-										left={node.x0 + TREEMAP_MARGINS.LEFT}
-									>
-										{node.depth > 0 && (
-											<Group>
-												<rect
-													width={nodeWidth}
-													height={nodeHeight}
-													fill={Color.BG_AMBER_500}
-													stroke={Color.TEXT_SLATE_500}
-													strokeWidth={6}
-													radius={4}
-												/>
-												<text x={nodeWidth / 2} y={nodeHeight / 2} textAnchor="middle">
-													{`${node.data.displayValue}%`}
-												</text>
-											</Group>
-										)}
-									</Group>
-								);
-							})}
-					</Group>
-				)}
-			</Treemap>
-		</svg>
+		<div className="metrics-treemap">
+			<svg width={treemapWidth} height={TREEMAP_HEIGHT}>
+				<rect
+					width={treemapWidth}
+					height={TREEMAP_HEIGHT}
+					rx={14}
+					fill="transparent"
+				/>
+				<Treemap<TreemapTile>
+					top={TREEMAP_MARGINS.TOP}
+					root={transformedTreemapData}
+					size={[xMax, yMax]}
+					tile={treemapBinary}
+					round
+				>
+					{(treemap): JSX.Element => (
+						<Group>
+							{treemap
+								.descendants()
+								.reverse()
+								.map((node, i) => {
+									const nodeWidth = node.x1 - node.x0 - TREEMAP_SQUARE_PADDING;
+									const nodeHeight = node.y1 - node.y0 - TREEMAP_SQUARE_PADDING;
+									return (
+										<Group
+											// eslint-disable-next-line react/no-array-index-key
+											key={`node-${i}`}
+											top={node.y0 + TREEMAP_MARGINS.TOP}
+											left={node.x0 + TREEMAP_MARGINS.LEFT}
+										>
+											{node.depth > 0 && (
+												<Tooltip title={node.data.id} placement="top">
+													<foreignObject
+														width={nodeWidth}
+														height={nodeHeight}
+														style={getTreemapTileStyle()}
+													>
+														<div style={getTreemapTileTextStyle()}>
+															{`${node.data.displayValue}%`}
+														</div>
+													</foreignObject>
+												</Tooltip>
+											)}
+										</Group>
+									);
+								})}
+						</Group>
+					)}
+				</Treemap>
+			</svg>
+		</div>
 	);
 }
 
