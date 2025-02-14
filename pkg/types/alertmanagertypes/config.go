@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ const (
 
 var (
 	ErrCodeAlertmanagerConfigInvalid  = errors.MustNewCode("alertmanager_config_invalid")
+	ErrCodeAlertmanagerConfigNotFound = errors.MustNewCode("alertmanager_config_not_found")
 	ErrCodeAlertmanagerConfigConflict = errors.MustNewCode("alertmanager_config_conflict")
 )
 
@@ -77,6 +79,26 @@ func NewConfig(c *config.Config, orgID string) *Config {
 	}
 }
 
+func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
+	alertmanagerConfig, err := newConfigFromString(sc.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	channels := NewChannelsFromConfig(alertmanagerConfig, sc.OrgID)
+
+	return &Config{
+		alertmanagerConfig: alertmanagerConfig,
+		storeableConfig:    sc,
+		channels:           channels,
+		orgID:              sc.OrgID,
+	}, nil
+}
+
+func NewRouteFromReceiver(receiver Receiver) *config.Route {
+	return &config.Route{Receiver: receiver.Name, Continue: true}
+}
+
 func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID string) (*Config, error) {
 	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
 	if err != nil {
@@ -96,14 +118,14 @@ func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID 
 	}, orgID), nil
 }
 
-func NewConfigFromString(s string, orgID string) (*Config, error) {
+func newConfigFromString(s string) (*config.Config, error) {
 	config := new(config.Config)
 	err := json.Unmarshal([]byte(s), config)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewConfig(config, orgID), nil
+	return config, nil
 }
 
 func newRawFromConfig(c *config.Config) []byte {
@@ -238,6 +260,14 @@ func (c *Config) DeleteReceiver(name string) error {
 	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
+}
+
+type ConfigStore interface {
+	// Set creates or updates a config.
+	Set(context.Context, *Config) error
+
+	// Get returns the config for the given orgID
+	Get(context.Context, string) (*Config, error)
 }
 
 // MarshalSecretValue if set to true will expose Secret type

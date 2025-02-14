@@ -19,7 +19,8 @@ var (
 )
 
 var (
-	ErrCodeAlertmanagerStateNotFound = errors.MustNewCode("alertmanager_state_not_found")
+	ErrCodeAlertmanagerStateNotFound    = errors.MustNewCode("alertmanager_state_not_found")
+	ErrCodeAlertmanagerStateNameInvalid = errors.MustNewCode("alertmanager_state_name_invalid")
 )
 
 type StateName struct {
