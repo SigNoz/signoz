@@ -115,22 +115,23 @@ function ServiceDetails(): JSX.Element | null {
 						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
 
-					{!!cloudAccountId && isAnySignalConfigured ? (
-						<Button
-							className="configure-button configure-button--default"
-							onClick={(): void => setIsConfigureServiceModalOpen(true)}
-						>
-							Configure ({enabledSignals}/{totalSupportedSignals})
-						</Button>
-					) : (
-						<Button
-							type="primary"
-							className="configure-button configure-button--primary"
-							onClick={(): void => setIsConfigureServiceModalOpen(true)}
-						>
-							Enable Service
-						</Button>
-					)}
+					{!!cloudAccountId &&
+						(isAnySignalConfigured ? (
+							<Button
+								className="configure-button configure-button--default"
+								onClick={(): void => setIsConfigureServiceModalOpen(true)}
+							>
+								Configure ({enabledSignals}/{totalSupportedSignals})
+							</Button>
+						) : (
+							<Button
+								type="primary"
+								className="configure-button configure-button--primary"
+								onClick={(): void => setIsConfigureServiceModalOpen(true)}
+							>
+								Enable Service
+							</Button>
+						))}
 				</div>
 			</div>
 			<div className="service-details__overview">
