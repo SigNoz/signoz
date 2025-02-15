@@ -12,7 +12,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
 import {
-	initialFilters,
+	initialLogsOrderBy,
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
@@ -41,7 +41,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import {
 	cloneDeep,
 	defaultTo,
@@ -71,7 +71,6 @@ import {
 	IBuilderQuery,
 	OrderByPayload,
 	Query,
-	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
@@ -156,14 +155,6 @@ function LogsExplorerViews({
 		dataSource: initialDataSource || DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
-
-	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
-		const timestampOrderBy = listQuery?.orderBy.find(
-			(item) => item.columnName === 'timestamp',
-		);
-
-		return timestampOrderBy || null;
-	}, [listQuery]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -296,21 +287,16 @@ function LogsExplorerViews({
 	const getRequestData = useCallback(
 		(
 			query: Query | null,
-			params: {
-				page: number;
-				log: ILog | null;
-				pageSize: number;
-				filters: TagFilter;
-			},
-		): Query | null => {
+			params: { orderBy: OrderByPayload[]; page: number; pageSize: number },
+		) => {
 			if (!query) return null;
 
-			const paginateData = getPaginationQueryData({
-				filters: params.filters,
-				listItemId: params.log ? params.log.id : null,
-				orderByTimestamp,
-				page: params.page,
-				pageSize: params.pageSize,
+			const { orderBy, page, pageSize } = params;
+
+			const paginateDataV2 = getPaginationQueryDataV2({
+				orderBy,
+				page,
+				pageSize,
 			});
 
 			const queryData: IBuilderQuery[] =
@@ -319,7 +305,7 @@ function LogsExplorerViews({
 					: [
 							{
 								...(listQuery || initialQueryBuilderFormValues),
-								...paginateData,
+								...paginateDataV2,
 							},
 					  ];
 
@@ -333,53 +319,37 @@ function LogsExplorerViews({
 
 			return data;
 		},
-		[orderByTimestamp, listQuery],
+		[listQuery],
 	);
 
-	const handleEndReached = useCallback(
-		(index: number) => {
-			if (!listQuery) return;
+	const handleEndReached = useCallback(() => {
+		if (!listQuery) return;
 
-			if (isLimit) return;
-			if (logs.length < pageSize) return;
+		if (isLimit) return;
+		if (logs.length < pageSize) return;
 
-			const { limit, filters } = listQuery;
+		const { orderBy } = listQuery;
 
-			const lastLog = logs[index];
+		if (!stagedQuery) return;
 
-			const nextLogsLength = logs.length + pageSize;
-
-			const nextPageSize =
-				limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
-
-			if (!stagedQuery) return;
-
-			const newRequestData = getRequestData(stagedQuery, {
-				filters,
-				page: page + 1,
-				log: orderByTimestamp ? lastLog : null,
-				pageSize: nextPageSize,
-			});
-
-			// initialise the last log timestamp to null as we don't have the logs.
-			// as soon as we scroll to the end of the logs we set the lastLogLineTimestamp to the last log timestamp.
-			setLastLogLineTimestamp(lastLog.timestamp);
-
-			setPage((prevPage) => prevPage + 1);
-
-			setRequestData(newRequestData);
-		},
-		[
-			isLimit,
-			logs,
-			listQuery,
+		const newRequestDataV2 = getRequestData(stagedQuery, {
+			orderBy,
+			page: page + 1,
 			pageSize,
-			stagedQuery,
-			getRequestData,
-			page,
-			orderByTimestamp,
-		],
-	);
+		});
+
+		setPage((prevPage) => prevPage + 1);
+
+		setRequestData(newRequestDataV2);
+	}, [
+		listQuery,
+		isLimit,
+		logs.length,
+		pageSize,
+		stagedQuery,
+		getRequestData,
+		page,
+	]);
 
 	useEffect(() => {
 		setQueryId(v4());
@@ -568,9 +538,8 @@ function LogsExplorerViews({
 			currentMinTimeRef.current !== minTime
 		) {
 			const newRequestData = getRequestData(stagedQuery, {
-				filters: listQuery?.filters || initialFilters,
+				orderBy: listQuery?.orderBy || initialLogsOrderBy,
 				page: 1,
-				log: null,
 				pageSize,
 			});
 
@@ -582,7 +551,6 @@ function LogsExplorerViews({
 	}, [
 		stagedQuery,
 		requestData,
-		getRequestData,
 		listQuery,
 		pageSize,
 		minTime,
@@ -590,6 +558,7 @@ function LogsExplorerViews({
 		onTimeRangeChange,
 		panelType,
 		selectedView,
+		getRequestData,
 	]);
 
 	const chartData = useMemo(() => {

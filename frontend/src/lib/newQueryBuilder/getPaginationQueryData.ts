@@ -20,6 +20,44 @@ type SetupPaginationQueryData = (
 	params: SetupPaginationQueryDataParams,
 ) => Partial<IBuilderQuery>;
 
+export const getPaginationQueryDataV2 = ({
+	orderBy,
+	page,
+	pageSize,
+}: {
+	orderBy: OrderByPayload[];
+	page: number;
+	pageSize: number;
+}): any => {
+	const hasOrderById = orderBy.some((item) => item.columnName === 'id');
+	const hasOrderByTimestamp = orderBy.some(
+		(item) => item.columnName === 'timestamp',
+	);
+
+	const offset = (page - 1) * pageSize;
+
+	const queryProps = {
+		offset,
+		pageSize,
+	};
+
+	const updatedOrderBy =
+		!hasOrderById && hasOrderByTimestamp
+			? [
+					...orderBy,
+					{
+						columnName: 'id',
+						order: 'ASC',
+					},
+			  ]
+			: orderBy;
+
+	return {
+		orderBy: updatedOrderBy,
+		...queryProps,
+	};
+};
+
 export const getPaginationQueryData: SetupPaginationQueryData = ({
 	filters,
 	listItemId,

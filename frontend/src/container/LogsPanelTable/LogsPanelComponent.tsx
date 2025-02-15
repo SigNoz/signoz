@@ -28,10 +28,10 @@ import {
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getLogPanelColumnsList, getNextOrPreviousItems } from './utils';
+import { getLogPanelColumnsList } from './utils';
 
 function LogsPanelComponent({
 	widget,
@@ -43,14 +43,30 @@ function LogsPanelComponent({
 		limit: widget.query.builder.queryData[0].limit || 0,
 	});
 
+	const [orderBy, setOrderBy] = useState<OrderByPayload[]>(
+		widget.query.builder.queryData[0].orderBy.length > 0
+			? [widget.query.builder.queryData[0].orderBy[0]]
+			: [
+					{
+						columnName: 'timestamp',
+						order: 'desc',
+					},
+			  ],
+	);
+
 	useEffect(() => {
-		setRequestData((prev) => ({
-			...prev,
-			tableParams: {
-				pagination,
-			},
-		}));
-	}, [pagination, setRequestData]);
+		setRequestData((prev) => {
+			const newQueryData = { ...prev.query };
+			newQueryData.builder.queryData[0].orderBy = orderBy;
+			return {
+				...prev,
+				query: newQueryData,
+				tableParams: {
+					pagination,
+				},
+			};
+		});
+	}, [pagination, orderBy, setRequestData]);
 
 	const [pageSize, setPageSize] = useState<number>(10);
 
@@ -88,21 +104,11 @@ function LogsPanelComponent({
 		queryResponse.data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
-	const [firstLog, setFirstLog] = useState<ILog>();
-	const [lastLog, setLastLog] = useState<ILog>();
-
 	const { logs } = useLogsData({
 		result: queryResponse.data?.payload?.data?.newResult?.data?.result,
 		panelType: PANEL_TYPES.LIST,
 		stagedQuery: widget.query,
 	});
-
-	useEffect(() => {
-		if (logs.length) {
-			setFirstLog(logs[0]);
-			setLastLog(logs[logs.length - 1]);
-		}
-	}, [logs]);
 
 	const flattenLogData = useMemo(
 		() => logs.map((log) => FlatLogData(log) as RowData),
@@ -132,79 +138,40 @@ function LogsPanelComponent({
 		widget.query.builder.queryData[0].orderBy[0].columnName === 'timestamp';
 
 	const handlePreviousPagination = (): void => {
-		if (isOrderByTimeStamp) {
-			setRequestData((prev) => ({
-				...prev,
-				query: {
-					...prev.query,
-					builder: {
-						...prev.query.builder,
-						queryData: [
-							{
-								...prev.query.builder.queryData[0],
-								filters: {
-									...prev.query.builder.queryData[0].filters,
-									items: [
-										...getNextOrPreviousItems(
-											prev.query.builder.queryData[0].filters.items,
-											'PREV',
-											firstLog,
-										),
-									],
-								},
-								limit: 0,
-								offset: 0,
-							},
-						],
-					},
-				},
-			}));
-		}
-		if (!isOrderByTimeStamp) {
-			setPagination({
-				...pagination,
-				limit: 0,
-				offset: pagination.offset - pageSize,
-			});
-		}
+		setOrderBy((prev) => [
+			...(!prev.some((item) => item.columnName === 'id')
+				? [
+						{
+							columnName: 'id',
+							order: 'asc',
+						},
+				  ]
+				: []),
+		]);
+		setPagination({
+			...pagination,
+			limit: 0,
+			offset: pagination.offset - pageSize,
+		});
 	};
 
 	const handleNextPagination = (): void => {
-		if (isOrderByTimeStamp) {
-			setRequestData((prev) => ({
-				...prev,
-				query: {
-					...prev.query,
-					builder: {
-						...prev.query.builder,
-						queryData: [
-							{
-								...prev.query.builder.queryData[0],
-								filters: {
-									...prev.query.builder.queryData[0].filters,
-									items: [
-										...getNextOrPreviousItems(
-											prev.query.builder.queryData[0].filters.items,
-											'NEXT',
-											lastLog,
-										),
-									],
-								},
-								limit: 0,
-								offset: 0,
-							},
-						],
-					},
-				},
-			}));
-		}
-		if (!isOrderByTimeStamp) {
-			setPagination({
-				...pagination,
-				limit: 0,
-				offset: pagination.offset + pageSize,
-			});
-		}
+		setOrderBy((prev) => [
+			...prev,
+			...(!prev.some((item) => item.columnName === 'id')
+				? [
+						{
+							columnName: 'id',
+							order: 'asc',
+						},
+				  ]
+				: []),
+		]);
+		setPagination({
+			...pagination,
+			limit: 0,
+			offset: pagination.offset + pageSize,
+		});
 	};
 
 	if (queryResponse.isError) {

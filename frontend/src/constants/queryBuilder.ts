@@ -13,6 +13,7 @@ import {
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
+	OrderByPayload,
 	Query,
 	QueryState,
 	TagFilter,
@@ -160,6 +161,17 @@ export const initialFilters: TagFilter = {
 	items: [],
 	op: 'AND',
 };
+
+export const initialLogsOrderBy: OrderByPayload[] = [
+	{
+		columnName: 'timestamp',
+		order: 'desc',
+	},
+	{
+		columnName: 'id',
+		order: 'desc',
+	},
+];
 
 export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,

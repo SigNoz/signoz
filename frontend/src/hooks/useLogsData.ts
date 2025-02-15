@@ -5,8 +5,8 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { useEffect, useMemo, useState } from 'react';
+import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
@@ -14,7 +14,6 @@ import {
 	IBuilderQuery,
 	OrderByPayload,
 	Query,
-	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -64,14 +63,6 @@ export const useLogsData = ({
 		return logs.length >= listQuery.limit;
 	}, [logs.length, listQuery]);
 
-	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
-		const timestampOrderBy = listQuery?.orderBy.find(
-			(item) => item.columnName === 'timestamp',
-		);
-
-		return timestampOrderBy || null;
-	}, [listQuery]);
-
 	useEffect(() => {
 		if (panelType !== PANEL_TYPES.LIST) return;
 		const currentData = result || [];
@@ -89,45 +80,43 @@ export const useLogsData = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [result]);
 
-	const getRequestData = (
-		query: Query | null,
-		params: {
-			page: number;
-			log: ILog | null;
-			pageSize: number;
-			filters: TagFilter;
+	const getRequestData = useCallback(
+		(
+			query: Query | null,
+			params: { orderBy: OrderByPayload[]; page: number; pageSize: number },
+		) => {
+			if (!query) return null;
+
+			const { orderBy, page, pageSize } = params;
+
+			const paginateDataV2 = getPaginationQueryDataV2({
+				orderBy,
+				page,
+				pageSize,
+			});
+
+			const queryData: IBuilderQuery[] =
+				query.builder.queryData.length > 1
+					? query.builder.queryData
+					: [
+							{
+								...(listQuery || initialQueryBuilderFormValues),
+								...paginateDataV2,
+							},
+					  ];
+
+			const data: Query = {
+				...query,
+				builder: {
+					...query.builder,
+					queryData,
+				},
+			};
+
+			return data;
 		},
-	): Query | null => {
-		if (!query) return null;
-
-		const paginateData = getPaginationQueryData({
-			filters: params.filters,
-			listItemId: params.log ? params.log.id : null,
-			orderByTimestamp,
-			page: params.page,
-			pageSize: params.pageSize,
-		});
-
-		const queryData: IBuilderQuery[] =
-			query.builder.queryData.length > 1
-				? query.builder.queryData
-				: [
-						{
-							...(listQuery || initialQueryBuilderFormValues),
-							...paginateData,
-						},
-				  ];
-
-		const data: Query = {
-			...query,
-			builder: {
-				...query.builder,
-				queryData,
-			},
-		};
-
-		return data;
-	};
+		[listQuery],
+	);
 
 	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
 
@@ -170,35 +159,35 @@ export const useLogsData = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
-	const handleEndReached = (index: number): void => {
+	const handleEndReached = useCallback(() => {
 		if (!listQuery) return;
 
 		if (isLimit) return;
 		if (logs.length < pageSize) return;
 
-		const { limit, filters } = listQuery;
-
-		const lastLog = logs[index];
-
-		const nextLogsLength = logs.length + pageSize;
-
-		const nextPageSize =
-			limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
+		const { orderBy } = listQuery;
 
 		if (!stagedQuery) return;
 
-		const newRequestData = getRequestData(stagedQuery, {
-			filters,
+		const newRequestDataV2 = getRequestData(stagedQuery, {
+			orderBy,
 			page: page + 1,
-			log: orderByTimestamp ? lastLog : null,
-			pageSize: nextPageSize,
+			pageSize,
 		});
 
 		setPage((prevPage) => prevPage + 1);
 
-		setRequestData(newRequestData);
+		setRequestData(newRequestDataV2);
 		setShouldLoadMoreLogs(true);
-	};
+	}, [
+		listQuery,
+		isLimit,
+		logs.length,
+		pageSize,
+		stagedQuery,
+		getRequestData,
+		page,
+	]);
 
 	return { logs, handleEndReached, isFetching };
 };
