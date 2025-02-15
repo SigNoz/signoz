@@ -234,7 +234,7 @@ services:
   # TODO: support otel-collector multiple replicas. Nginx/Traefik for loadbalancing?
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.27}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.28}
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -260,7 +260,7 @@ services:
         condition: service_healthy
   schema-migrator-sync:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.24}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.28}
     container_name: schema-migrator-sync
     command:
       - sync
@@ -271,7 +271,7 @@ services:
         condition: service_healthy
   schema-migrator-async:
     !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.24}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.28}
     container_name: schema-migrator-async
     command:
       - async
