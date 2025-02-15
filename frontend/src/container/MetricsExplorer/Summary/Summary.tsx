@@ -1,6 +1,7 @@
 import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -9,7 +10,6 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -24,8 +24,8 @@ import {
 } from './utils';
 
 function Summary(): JSX.Element {
+	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [pageSize, setPageSize] = useState(10);
 	const [orderBy, setOrderBy] = useState<OrderByPayload | null>({
 		columnName: 'type',
 		order: 'asc',
@@ -38,40 +38,11 @@ function Summary(): JSX.Element {
 
 	const { currentQuery } = useQueryBuilder();
 	const queryFilters = useMemo(
-		() => ({
-			op: 'AND',
-			items: [
-				...(currentQuery?.builder?.queryData[0]?.filters?.items || []),
-				{
-					id: 'os_type',
-					key: {
-						id: 'os_type',
-						key: 'os_type',
-						dataType: DataTypes.String,
-						type: 'attribute',
-						isColumn: true,
-						isJSON: false,
-					},
-					value: 'linux',
-					op: '=',
-					filterTypeKey: 'attributes',
-				},
-				{
-					id: 'host_name',
-					key: {
-						id: 'host_name',
-						key: 'host_name',
-						dataType: DataTypes.String,
-						type: 'attribute',
-						isColumn: true,
-						isJSON: false,
-					},
-					value: 'signoz-host',
-					op: '=',
-					filterTypeKey: 'attributes',
-				},
-			],
-		}),
+		() =>
+			currentQuery?.builder?.queryData[0]?.filters || {
+				items: [],
+				op: 'and',
+			},
 		[currentQuery?.builder?.queryData],
 	);
 
@@ -81,7 +52,7 @@ function Summary(): JSX.Element {
 		entityVersion: '',
 	});
 
-	const query = useMemo(() => {
+	const metricsListQuery = useMemo(() => {
 		const baseQuery = getMetricsListQuery();
 		return {
 			...baseQuery,
@@ -91,43 +62,36 @@ function Summary(): JSX.Element {
 			startDate: convertNanoSecondsToISOString(minTime),
 			endDate: convertNanoSecondsToISOString(maxTime),
 			orderBy: [orderBy ?? { columnName: 'type', order: 'asc' }],
-			heatmap: heatmapView,
 		};
-	}, [
-		pageSize,
-		currentPage,
-		queryFilters,
-		minTime,
-		maxTime,
-		orderBy,
-		heatmapView,
-	]);
+	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy]);
+
+	const metricsTreemapQuery = useMemo(
+		() => ({
+			limit: 100,
+			filters: queryFilters,
+			heatmap: heatmapView,
+		}),
+		[queryFilters, heatmapView],
+	);
 
 	const {
 		data: metricsData,
 		isLoading: isMetricsLoading,
 		isFetching: isMetricsFetching,
-	} = useGetMetricsList(query, {
-		enabled: !!query,
+	} = useGetMetricsList(metricsListQuery, {
+		enabled: !!metricsListQuery,
 	});
 
 	const {
 		data: treeMapData,
 		isLoading: isTreeMapLoading,
 		isFetching: isTreeMapFetching,
-	} = useGetMetricsTreeMap(
-		{
-			...query,
-			heatmap: heatmapView,
-		},
-		{
-			enabled: !!query,
-		},
-	);
+	} = useGetMetricsTreeMap(metricsTreemapQuery, {
+		enabled: !!metricsTreemapQuery,
+	});
 
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
-			console.log(value);
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 		},
