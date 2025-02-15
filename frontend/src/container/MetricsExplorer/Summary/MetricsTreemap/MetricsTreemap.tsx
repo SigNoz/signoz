@@ -48,7 +48,10 @@ function MetricsTreemap({
 		);
 	}
 
-	if (!transformTreemapData.length) {
+	if (
+		data?.status === 'error' ||
+		(data?.status === 'success' && !data?.data?.heatmap?.[viewType])
+	) {
 		return (
 			<Empty
 				description="No metrics found"
