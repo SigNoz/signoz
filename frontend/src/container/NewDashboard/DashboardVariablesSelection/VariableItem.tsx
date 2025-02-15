@@ -150,11 +150,13 @@ function VariableItem({
 							let allSelected = false;
 							// The default value for multi-select is ALL and first value for
 							// single select
-							if (variableData.multiSelect) {
-								value = newOptionsData;
-								allSelected = true;
-							} else {
-								[value] = newOptionsData;
+							if (valueNotInList) {
+								if (variableData.multiSelect) {
+									value = newOptionsData;
+									allSelected = true;
+								} else {
+									[value] = newOptionsData;
+								}
 							}
 
 							if (variableData && variableData?.name && variableData?.id) {
@@ -226,6 +228,9 @@ function VariableItem({
 					}
 					setErrorMessage(message);
 				}
+				setVariablesToGetUpdated((prev) =>
+					prev.filter((v) => v !== variableData.name),
+				);
 			},
 		},
 	);
