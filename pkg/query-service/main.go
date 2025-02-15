@@ -53,6 +53,8 @@ func main() {
 	var maxOpenConns int
 	var dialTimeout time.Duration
 
+	var useHeaderAuth bool
+
 	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
 	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
@@ -69,6 +71,7 @@ func main() {
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	flag.BoolVar(&useHeaderAuth, "use-header-auth", false, "use HTTP header from a trusted proxy for authentication")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -137,6 +140,8 @@ func main() {
 	if err := auth.InitAuthCache(context.Background()); err != nil {
 		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
+
+	auth.UseHeaderAuth = useHeaderAuth
 
 	signalsChannel := make(chan os.Signal, 1)
 	signal.Notify(signalsChannel, os.Interrupt, syscall.SIGTERM)

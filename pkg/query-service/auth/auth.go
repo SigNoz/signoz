@@ -32,6 +32,14 @@ const (
 	minimumPasswordLength = 8
 )
 
+const (
+	HeaderAuthEmail = "X-Signoz-User"
+	HeaderAuthRole  = "X-Signoz-Role"
+	HeaderAuthOrg   = "X-Signoz-Org"
+)
+
+var UseHeaderAuth bool
+
 var (
 	ErrorInvalidCreds = fmt.Errorf("invalid credentials")
 )
@@ -532,6 +540,52 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	return user, nil
 }
 
+func CreateHeaderAuthUser(ctx context.Context, headerUser model.UserPayload) (*model.User, error) {
+
+	if headerUser.Email == "" || headerUser.Role == "" || headerUser.Organization == "" {
+		return nil, errors.New("all of email, role, and organization must be specified when logging in a new user via header")
+	}
+
+	org, apierr := dao.DB().GetOrgByName(ctx, headerUser.Organization)
+	if apierr != nil {
+		zap.L().Error("GetOrgByName failed", zap.Error(apierr.ToError()))
+		return nil, apierr
+	}
+	if org == nil {
+		org, apierr = dao.DB().CreateOrg(ctx,
+			&model.Organization{Name: headerUser.Organization, IsAnonymous: false, HasOptedUpdates: false})
+		if apierr != nil {
+			zap.L().Error("CreateOrg failed", zap.Error(apierr.ToError()))
+			return nil, apierr
+		}
+	}
+
+	group, apiErr := dao.DB().GetGroupByName(ctx, headerUser.Role)
+	if apiErr != nil {
+		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
+		return nil, apiErr
+	}
+
+	hash, err := PasswordHash(utils.GeneratePassowrd())
+	if err != nil {
+		zap.L().Error("failed to generate password hash when registering a user", zap.Error(err))
+		return nil, model.InternalError(model.ErrSignupFailed{})
+	}
+
+	user := &model.User{
+		Id:                uuid.NewString(),
+		Name:              headerUser.Email,
+		Email:             headerUser.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             org.Id,
+	}
+
+	return dao.DB().CreateUser(ctx, user, false)
+}
+
 // Register registers a new user. For the first register request, it doesn't need an invite token
 // and also the first registration is an enforced ADMIN registration. Every subsequent request will
 // need an invite token to go through.
@@ -550,10 +604,10 @@ func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.Ap
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
-func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginResponse, error) {
+func Login(ctx context.Context, request *model.LoginRequest, headerUser *model.UserPayload) (*model.LoginResponse, error) {
 	zap.L().Debug("Login method called for user", zap.String("email", request.Email))
 
-	user, err := authenticateLogin(ctx, request)
+	user, err := authenticateLogin(ctx, request, headerUser)
 	if err != nil {
 		zap.L().Error("Failed to authenticate login request", zap.Error(err))
 		return nil, err
@@ -577,7 +631,7 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserPayload, error) {
+func authenticateLogin(ctx context.Context, req *model.LoginRequest, headerUser *model.UserPayload) (*model.UserPayload, error) {
 
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
@@ -597,7 +651,19 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "user not found")
 	}
-	if user == nil || !passwordMatch(user.Password, req.Password) {
+	if UseHeaderAuth && headerUser != nil {
+		if user == nil {
+			// create user specified in header that doesn't already exist in DB
+			_, createerr := CreateHeaderAuthUser(ctx, *headerUser)
+			if createerr != nil {
+				return nil, errors.Wrap(createerr, "creating new user from header")
+			}
+			user, err = dao.DB().GetUserByEmail(ctx, req.Email)
+			if err != nil {
+				return nil, errors.Wrap(err.Err, "new user not found")
+			}
+		}
+	} else if user == nil || !passwordMatch(user.Password, req.Password) {
 		return nil, ErrorInvalidCreds
 	}
 	return user, nil
