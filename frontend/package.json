@@ -87,7 +87,7 @@
 		"less": "^4.1.2",
 		"less-loader": "^10.2.0",
 		"lodash-es": "^4.17.21",
-		"lucide-react": "0.379.0",
+		"lucide-react": "0.427.0",
 		"mini-css-extract-plugin": "2.4.5",
 		"overlayscrollbars": "^2.8.1",
 		"overlayscrollbars-react": "^0.5.6",
