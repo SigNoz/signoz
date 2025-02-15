@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"io"
 	"math"
 	"net/http"
@@ -125,6 +126,8 @@ type APIHandler struct {
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
 
+	SummaryService *metricsexplorer.SummaryService
+
 	pvcsRepo *inframetrics.PvcsRepo
 }
 
@@ -209,6 +212,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
+	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -237,6 +242,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
+		SummaryService:                summaryService,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -2166,7 +2172,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// http.SetCookie(w, &http.Cookie{
-	// 	Name:     "refresh-token",
+	// 	MetricName:     "refresh-token",
 	// 	Value:    resp.RefreshJwt,
 	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
 	// 	HttpOnly: true,
@@ -2212,7 +2218,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, user)
 }
 
-// editUser only changes the user's Name and ProfilePictureURL. It is intentionally designed
+// editUser only changes the user's MetricName and ProfilePictureURL. It is intentionally designed
 // to not support update of orgId, Password, createdAt for the sucurity reasons.
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
