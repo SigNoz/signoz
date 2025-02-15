@@ -149,6 +149,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
+				history.push(ROUTES.LOGIN);
 			}
 		} catch (error) {
 			notifications.error({
