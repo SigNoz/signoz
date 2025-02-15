@@ -183,10 +183,33 @@ export const transformTreemapData = (
 	];
 };
 
-export const getTreemapTileStyle = (): React.CSSProperties => ({
+const getTreemapTileBackgroundColor = (node: TreemapTile): string => {
+	console.log(node);
+	const size = node.size * 10;
+	if (size > 0.8) {
+		return Color.BG_AMBER_600;
+	}
+	if (size > 0.6) {
+		return Color.BG_AMBER_500;
+	}
+	if (size > 0.4) {
+		return Color.BG_AMBER_400;
+	}
+	if (size > 0.2) {
+		return Color.BG_AMBER_300;
+	}
+	if (size > 0.1) {
+		return Color.BG_AMBER_200;
+	}
+	return Color.BG_AMBER_100;
+};
+
+export const getTreemapTileStyle = (
+	node: TreemapTile,
+): React.CSSProperties => ({
 	overflow: 'visible',
 	cursor: 'pointer',
-	backgroundColor: Color.BG_AMBER_500,
+	backgroundColor: getTreemapTileBackgroundColor(node),
 	borderRadius: 4,
 });
 

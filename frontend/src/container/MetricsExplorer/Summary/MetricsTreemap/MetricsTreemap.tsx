@@ -93,7 +93,7 @@ function MetricsTreemap({
 													<foreignObject
 														width={nodeWidth}
 														height={nodeHeight}
-														style={getTreemapTileStyle()}
+														style={getTreemapTileStyle(node.data)}
 													>
 														<div style={getTreemapTileTextStyle()}>
 															{`${node.data.displayValue}%`}
