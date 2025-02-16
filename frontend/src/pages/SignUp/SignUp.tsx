@@ -59,6 +59,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
+	if (token === '') history.push(ROUTES.LOGIN);
+
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
 	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
@@ -106,6 +108,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.status === 'success' &&
 			getInviteDetailsResponse.data?.error
 		) {
+			history.push(ROUTES.LOGIN);
 			const { error } = getInviteDetailsResponse.data;
 			notifications.error({
 				message: error,
