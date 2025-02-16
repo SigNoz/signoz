@@ -127,7 +127,9 @@ function LogsExplorer(): JSX.Element {
 	const migrateOptionsQuery = useCallback(
 		(query: OptionsQuery): OptionsQuery => {
 			// Skip if already migrated
-			if (logListOptionsFromLocalStorage?.version || query.version) return query;
+			if (logListOptionsFromLocalStorage?.version) {
+				return logListOptionsFromLocalStorage;
+			}
 
 			// Case 1: we have localStorage columns
 			if (logListOptionsFromLocalStorage?.selectColumns?.length > 0) {
@@ -139,6 +141,8 @@ function LogsExplorer(): JSX.Element {
 					),
 				};
 			}
+
+			if (query.version) return query;
 
 			// Case 2: No query columns in localStorage in but query has columns
 			if (query.selectColumns.length > 0) {
