@@ -27,7 +27,6 @@ export type ErrorStatusCode =
 
 export enum ErrorType {
 	NotFound = 'not_found',
-	Unavailable = 'unavailable',
 }
 
 export type StatusCode = SuccessStatusCode | ErrorStatusCode;
