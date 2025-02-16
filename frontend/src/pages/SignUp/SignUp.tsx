@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { ErrorType } from 'types/common';
 
 import {
 	ButtonContainer,
@@ -149,7 +150,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
-				history.push(ROUTES.LOGIN);
+				if (response.message === ErrorType.Unavailable) {
+					history.push(ROUTES.LOGIN);
+				}
 			}
 		} catch (error) {
 			notifications.error({
