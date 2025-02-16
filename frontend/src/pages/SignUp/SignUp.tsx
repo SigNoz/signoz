@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
-import { ErrorType } from 'types/common';
 
 import {
 	ButtonContainer,
