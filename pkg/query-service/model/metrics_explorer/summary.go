@@ -122,3 +122,21 @@ var AvailableColumnFilterMap = map[string]bool{
 	"metric_name": true,
 	"unit":        true,
 }
+
+type RelatedMetricsRequest struct {
+	CurrentMetricName string `json:"currentMetricName"`
+	Start             int64  `json:"start"`
+	End               int64  `json:"end"`
+}
+
+type RelatedMetricsResponse struct {
+	RelatedMetrics []RelatedMetrics `json:"related_metrics"`
+}
+
+type RelatedMetrics struct {
+	Name             string      `json:"name"`
+	Namespace        string      `json:"namespace"`
+	Dashboards       []Dashboard `json:"dashboards"`
+	Alerts           []Alert     `json:"alerts"`
+	CommonAttributes []string    `json:"common_attributes"`
+}

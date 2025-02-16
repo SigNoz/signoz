@@ -201,3 +201,7 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 		return nil, nil
 	}
 }
+
+func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *metrics_explorer.RelatedMetricsRequest) (*metrics_explorer.RelatedMetricsResponse, *model.ApiError) {
+	return nil, nil
+}
