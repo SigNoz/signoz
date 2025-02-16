@@ -5399,6 +5399,9 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 
 	whereClause := strings.Join(conditions, " AND ")
+	if conditions != nil {
+		whereClause = "AND " + whereClause
+	}
 	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
 
@@ -5408,8 +5411,8 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
     ANY_VALUE(t.description) AS description,
     ANY_VALUE(t.type) AS type,
     t.unit,
-    COUNT(DISTINCT t.fingerprint) AS cardinality,
-    COALESCE(MAX(s.data_points), 0) AS dataPoints,
+    COUNT(DISTINCT t.fingerprint) AS timeSereis,
+    COALESCE(SUM(s.data_points), 0) AS dataPoints,
     MAX(s.last_received_time) AS lastReceived,
     COUNT(DISTINCT t.metric_name) OVER () AS total
 FROM (
@@ -5417,18 +5420,18 @@ FROM (
     SELECT metric_name, description, type, unit, fingerprint
     FROM %s.%s
     WHERE unix_milli BETWEEN ? AND ?
-      AND %s
+    %s
 ) AS t
 LEFT JOIN (
     -- Also filter the joined table early
     SELECT 
-        metric_name,
+        fingerprint,
         %s AS data_points,
         MAX(unix_milli) AS last_received_time
     FROM %s.%s
     WHERE unix_milli BETWEEN ? AND ?
-    GROUP BY metric_name
-) AS s USING (metric_name)
+    GROUP BY fingerprint
+) AS s ON t.fingerprint = s.fingerprint
 GROUP BY t.metric_name, t.unit
 %s
 LIMIT %d OFFSET %d;`,
@@ -5441,8 +5444,8 @@ LIMIT %d OFFSET %d;`,
 		start, end, // For samples subquery
 		start, end, // For main query
 	)
-
-	rows, err := r.db.Query(ctx, query, args...)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 2)
+	rows, err := r.db.Query(valueCtx, query, args...)
 	if err != nil {
 		zap.L().Error("Error executing metrics summary query", zap.Error(err))
 		return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -5453,7 +5456,7 @@ LIMIT %d OFFSET %d;`,
 	var response metrics_explorer.SummaryListMetricsResponse
 	for rows.Next() {
 		var metric metrics_explorer.MetricDetail
-		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.Type, &metric.Unit, &metric.Cardinality, &metric.DataPoints, &metric.LastReceived, &response.Total); err != nil {
+		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.Type, &metric.Unit, &metric.TimeSeries, &metric.DataPoints, &metric.LastReceived, &response.Total); err != nil {
 			zap.L().Error("Error scanning metric row", zap.Error(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
