@@ -44,6 +44,7 @@ type FormValues = {
 function SignUp({ version }: SignUpProps): JSX.Element {
 	const { t } = useTranslation(['signup']);
 	const [loading, setLoading] = useState(false);
+	const { notifications } = useNotifications();
 
 	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
 		sso: false,
@@ -59,6 +60,13 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
+	if (token === '') {
+		history.push(ROUTES.LOGIN);
+		notifications.error({
+			message: t('token_required'),
+		});
+	}
+
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
 	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
@@ -72,7 +80,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		enabled: token !== null,
 	});
 
-	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
 
 	useEffect(() => {
@@ -106,6 +113,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.status === 'success' &&
 			getInviteDetailsResponse.data?.error
 		) {
+			history.push(ROUTES.LOGIN);
 			const { error } = getInviteDetailsResponse.data;
 			notifications.error({
 				message: error,
