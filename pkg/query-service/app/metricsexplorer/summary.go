@@ -184,14 +184,14 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 	var response metrics_explorer.TreeMap
 	switch params.Treemap {
 	case metrics_explorer.CardinalityTreeMap:
-		cardinality, apiError := receiver.reader.GetMetricsCardinalityPercentage(ctx, params)
+		cardinality, apiError := receiver.reader.GetMetricsTimeSeriesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
 		response.Cardinality = *cardinality
 		return &response, nil
 	case metrics_explorer.DataPointsTreeMap:
-		dataPoints, apiError := receiver.reader.GetMetricsDataPointsPercentage(ctx, params)
+		dataPoints, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}

@@ -39,9 +39,9 @@ type MetricDetail struct {
 }
 
 type TreeMapResponseItem struct {
-	RelativePercentage float64 `json:"percentage"`
-	TotalValue         uint64  `json:"total_value"`
-	MetricName         string  `json:"metric_name"`
+	Percentage float64 `json:"percentage"`
+	TotalValue uint64  `json:"total_value"`
+	MetricName string  `json:"metric_name"`
 }
 
 type TreeMap struct {

@@ -5471,12 +5471,8 @@ LIMIT %d OFFSET %d;`,
 	return &response, nil
 }
 
-func (r *ClickHouseReader) GetMetricsCardinalityPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.CardinalityTreemap, *model.ApiError) {
+func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	var args []interface{}
-
-	// Convert time range to Unix timestamps
-	startUnix, _ := time.Parse("2006-01-02T15:04:05Z", req.StartDate)
-	endUnix, _ := time.Parse("2006-01-02T15:04:05Z", req.EndDate)
 
 	// Build filters dynamically
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "")
@@ -5484,51 +5480,52 @@ func (r *ClickHouseReader) GetMetricsCardinalityPercentage(ctx context.Context, 
 	if len(conditions) > 0 {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
+	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
 
 	// Construct the query without backticks
 	query := fmt.Sprintf(`
 		SELECT 
 			metric_name,
 			total_value,
-			(total_value * 100.0 / total_cardinality) AS relative_percentage
+			(total_value * 100.0 / total_time_series) AS percentage
 		FROM (
 			SELECT 
 					metric_name,
 					uniqExact(fingerprint) AS total_value,
 					(SELECT uniqExact(fingerprint) 
 					 FROM %s.%s 
-					 WHERE unix_milli BETWEEN ? AND ?) AS total_cardinality
+					 WHERE unix_milli BETWEEN ? AND ?) AS total_time_series
 				FROM %s.%s
 				WHERE unix_milli BETWEEN ? AND ? %s
 				GROUP BY metric_name
 			)
-			ORDER BY relative_percentage DESC
-			LIMIT %d OFFSET %d;`,
+			ORDER BY percentage DESC
+			LIMIT %d;`,
 		signozMetricDBName,
-		signozTSTableNameV4,
+		tsTable,
 		signozMetricDBName,
-		signozTSTableNameV4,
+		tsTable,
 		whereClause,
 		req.Limit,
-		req.Offset,
 	)
 
 	args = append(args,
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For total_cardinality subquery
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For main query
+		start, end, // For total_cardinality subquery
+		start, end, // For main query
 	)
 
-	rows, err := r.db.Query(ctx, query, args...)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 4)
+	rows, err := r.db.Query(valueCtx, query, args...)
 	if err != nil {
 		zap.L().Error("Error executing cardinality query", zap.Error(err), zap.String("query", query))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
 
-	var heatmap []metrics_explorer.CardinalityTreemap
+	var heatmap []metrics_explorer.TreeMapResponseItem
 	for rows.Next() {
-		var item metrics_explorer.CardinalityTreemap
-		if err := rows.Scan(&item.MetricName, &item.TotalValue, &item.RelativePercentage); err != nil {
+		var item metrics_explorer.TreeMapResponseItem
+		if err := rows.Scan(&item.MetricName, &item.TotalValue, &item.Percentage); err != nil {
 			zap.L().Error("Error scanning row", zap.Error(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
@@ -5543,69 +5540,73 @@ func (r *ClickHouseReader) GetMetricsCardinalityPercentage(ctx context.Context, 
 	return &heatmap, nil
 }
 
-func (r *ClickHouseReader) GetMetricsDataPointsPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.DataPointTreemap, *model.ApiError) {
+func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "")
 	var args []interface{}
-
-	startUnix, _ := time.Parse("2006-01-02T15:04:05Z", req.StartDate)
-	endUnix, _ := time.Parse("2006-01-02T15:04:05Z", req.EndDate)
 
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
-	query := fmt.Sprintf(
-		`SELECT 
-			s.metric_name,
-			COALESCE(s.data_points, 0) AS total_value,
-			COALESCE((s.data_points * 100.0 / total.total_data_points), 0) AS relative_percentage
-		FROM (
-			SELECT 
-				metric_name,
-				COUNT(*) AS data_points
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-			AND metric_name IN (
-				SELECT DISTINCT metric_name 
-				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ? %s
-			)
-			GROUP BY metric_name
-		) AS s
-		JOIN (
-			-- Compute total data points from the entire distributed_samples_v4 table (NO FILTERS)
-			SELECT COUNT(*) AS total_data_points
-			FROM %s.%s
-			WHERE unix_milli BETWEEN ? AND ?
-		) AS total ON 1=1  -- Use a dummy condition to join
-		ORDER BY relative_percentage DESC LIMIT %d OFFSET %d;`,
-		signozMetricDBName,
-		signozSampleTableName,
-		signozMetricDBName,
-		signozTSTableNameV4,
-		whereClause,
-		signozMetricDBName,
-		signozSampleTableName,
+
+	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
+
+	query := fmt.Sprintf(`
+WITH 
+    total AS (
+        SELECT %s AS total_samples
+        FROM %s.%s
+        WHERE unix_milli BETWEEN ? AND ?
+    ),
+    valid_metrics AS (
+        SELECT DISTINCT fingerprint 
+        FROM %s.%s
+        WHERE unix_milli BETWEEN ? AND ? %s
+    ),
+    s AS (
+        SELECT 
+            metric_name,
+            %s AS samples
+        FROM %s.%s
+        WHERE unix_milli BETWEEN ? AND ?
+          AND fingerprint IN (SELECT fingerprint FROM valid_metrics)
+        GROUP BY metric_name
+    )
+SELECT 
+    s.metric_name,
+    COALESCE(s.samples, 0) AS total_value,
+    COALESCE((s.samples * 100.0 / total.total_samples), 0) AS relative_percentage
+FROM s, total
+ORDER BY relative_percentage DESC
+LIMIT %d;
+`,
+		// total CTE: distributed samples table
+		countExp, signozMetricDBName, sampleTable,
+		// valid_metrics CTE: time-series table (with filters)
+		signozMetricDBName, tsTable, whereClause,
+		// s CTE: distributed samples table
+		countExp, signozMetricDBName, sampleTable,
 		req.Limit,
-		req.Offset,
 	)
-
 	args = append(args,
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For total_cardinality subquery
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For main query
-		startUnix.UnixMilli(), endUnix.UnixMilli(), // For total data points
+		start, end, // for total
+		start, end, // for valid_metrics
+		start, end, // for s
 	)
 
-	rows, err := r.db.Query(ctx, query, args...)
+	// Limit the query to use only 2 threads to prevent overuse of resources.
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 4)
+	rows, err := r.db.Query(valueCtx, query, args...)
 	if err != nil {
-		zap.L().Error("Error executing cardinality query", zap.Error(err), zap.String("query", query))
+		zap.L().Error("Error executing metrics datapoints percentage query", zap.Error(err), zap.String("query", query))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
 
-	var heatmap []metrics_explorer.DataPointTreemap
+	var heatmap []metrics_explorer.TreeMapResponseItem
 	for rows.Next() {
-		var item metrics_explorer.DataPointTreemap
+		var item metrics_explorer.TreeMapResponseItem
 		if err := rows.Scan(&item.MetricName, &item.TotalValue, &item.Percentage); err != nil {
 			zap.L().Error("Error scanning row", zap.Error(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
