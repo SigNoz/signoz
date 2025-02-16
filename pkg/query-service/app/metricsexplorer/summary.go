@@ -119,7 +119,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 
 	// Call 4: GetActiveTimeSeriesForMetricName
 	g.Go(func() error {
-		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 30*time.Minute)
+		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 120*time.Minute)
 		if err != nil {
 			return err
 		}

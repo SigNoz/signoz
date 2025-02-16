@@ -5315,7 +5315,7 @@ func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, 
      uniq(arrayJoin(arrayMap(x -> x.2, arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels))))) AS cardinality,
     count(DISTINCT fingerprint) AS timeSeriesCount
 FROM %s.%s
-WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Day)
+WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
 	var timeSeriesCount uint64
 	var cardinality uint64
 	err := r.db.QueryRow(ctx, query, metricName).Scan(&timeSeriesCount, &cardinality)
@@ -5329,14 +5329,14 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 	query := fmt.Sprintf(`
 SELECT 
     kv.1 AS key,
-    arrayMap(x -> replaceAll(x, '"', ''), groupUniqArray(kv.2)) AS values,
+    arrayMap(x -> trim(BOTH '\"' FROM x), groupUniqArray(kv.2)) AS values,
     length(groupUniqArray(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
-WHERE metric_name = 'system_memory_usage'
+WHERE metric_name = ?
 GROUP BY kv.1
 ORDER BY valueCount DESC;
-    `, signozMetricDBName, signozTSTableNameV41Day)
+    `, signozMetricDBName, signozTSTableNameV41Week)
 
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
@@ -5373,7 +5373,7 @@ ORDER BY valueCount DESC;
 
 func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
 	milli := time.Now().Add(-duration).UnixMilli()
-	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV41Day, metricName)
+	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV4, metricName)
 	var timeSeries uint64
 	// Using QueryRow instead of Select since we're only expecting a single value
 	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
