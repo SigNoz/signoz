@@ -1,11 +1,12 @@
-package api
+package app
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"io"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"go.signoz.io/signoz/pkg/query-service/model"
 
 	explorer "go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"go.uber.org/zap"
@@ -21,7 +22,7 @@ func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Reques
 		RespondError(w, apiError, nil)
 		return
 	}
-	keys, apiError := aH.APIHandler.SummaryService.FilterKeys(ctx, params)
+	keys, apiError := aH.SummaryService.FilterKeys(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter keys", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -41,7 +42,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	values, apiError := aH.APIHandler.SummaryService.FilterValues(ctx, params)
+	values, apiError := aH.SummaryService.FilterValues(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting filter values", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -53,7 +54,7 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) {
 	metricName := mux.Vars(r)["metric_name"]
 	ctx := r.Context()
-	metricsDetail, apiError := aH.APIHandler.SummaryService.GetMetricsSummary(ctx, metricName)
+	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, metricName)
 	if apiError != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
@@ -73,7 +74,7 @@ func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slmr, apiErr := aH.APIHandler.SummaryService.ListMetricsWithSummary(ctx, params)
+	slmr, apiErr := aH.SummaryService.ListMetricsWithSummary(ctx, params)
 	if apiErr != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiErr.Err))
 		RespondError(w, apiError, nil)
@@ -92,7 +93,7 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiError, nil)
 		return
 	}
-	result, apiError := aH.APIHandler.SummaryService.GetMetricsTreemap(ctx, params)
+	result, apiError := aH.SummaryService.GetMetricsTreemap(ctx, params)
 	if apiError != nil {
 		zap.L().Error("error getting heatmap data", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)

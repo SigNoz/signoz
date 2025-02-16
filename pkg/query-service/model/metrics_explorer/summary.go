@@ -5,22 +5,12 @@ import (
 )
 
 type SummaryListMetricsRequest struct {
-	Offset    int              `json:"offset"`
-	Limit     int              `json:"limit"`
-	OrderBy   []v3.OrderBy     `json:"orderBy"`
-	StartDate string           `json:"startDate"`
-	EndDate   string           `json:"endDate"`
-	Filters   SummaryFilterSet `json:"filters"`
-}
-
-type SummaryFilterItems struct {
-	v3.FilterItem
-	FilterTypeKey FilterTypeKey `json:"filterTypeKey"`
-}
-
-type SummaryFilterSet struct {
-	v3.FilterSet
-	Items []SummaryFilterItems `json:"items"`
+	Offset    int          `json:"offset"`
+	Limit     int          `json:"limit"`
+	OrderBy   []v3.OrderBy `json:"orderBy"`
+	StartDate int64        `json:"startDate"`
+	EndDate   int64        `json:"endDate"`
+	Filters   v3.FilterSet `json:"filters"`
 }
 
 type TreeMapType string
@@ -31,13 +21,11 @@ const (
 )
 
 type TreeMapMetricsRequest struct {
-	Offset    int              `json:"offset"`
-	Limit     int              `json:"limit"`
-	Treemap   TreeMapType      `json:"treemap"`
-	OrderBy   []v3.OrderBy     `json:"orderBy"`
-	StartDate string           `json:"startDate"`
-	EndDate   string           `json:"endDate"`
-	Filters   SummaryFilterSet `json:"filters"`
+	Limit     int          `json:"limit"`
+	Treemap   TreeMapType  `json:"treemap"`
+	StartDate int64        `json:"startDate"`
+	EndDate   int64        `json:"endDate"`
+	Filters   v3.FilterSet `json:"filters"`
 }
 
 type MetricDetail struct {
@@ -45,26 +33,20 @@ type MetricDetail struct {
 	Description  string `json:"description"`
 	Type         string `json:"type"`
 	Unit         string `json:"unit"`
-	Cardinality  uint64 `json:"cardinality"`
+	TimeSeries   uint64 `json:"cardinality"`
 	DataPoints   uint64 `json:"dataPoints"`
 	LastReceived int64  `json:"lastReceived"`
 }
 
-type CardinalityTreemap struct {
-	RelativePercentage float64 `json:"relative_percentage"`
+type TreeMapResponseItem struct {
+	RelativePercentage float64 `json:"percentage"`
 	TotalValue         uint64  `json:"total_value"`
 	MetricName         string  `json:"metric_name"`
 }
 
-type DataPointTreemap struct {
-	Percentage float64 `json:"relative_percentage"`
-	TotalValue uint64  `json:"total_value"`
-	MetricName string  `json:"metric_name"`
-}
-
 type TreeMap struct {
-	Cardinality []CardinalityTreemap `json:"cardinality"`
-	DataPoints  []DataPointTreemap   `json:"dataPoints"`
+	Cardinality []TreeMapResponseItem `json:"cardinality"`
+	DataPoints  []TreeMapResponseItem `json:"dataPoints"`
 }
 
 type SummaryListMetricsResponse struct {
@@ -73,9 +55,9 @@ type SummaryListMetricsResponse struct {
 }
 
 type Attribute struct {
-	Key          string   `json:"key" db:"key"`
-	Value        []string `json:"value" db:"value"`
-	Contribution float64  `json:"contribution" db:"contribution"`
+	Key        string   `json:"key" db:"key"`
+	Value      []string `json:"value" db:"value"`
+	ValueCount uint64   `json:"valueCount" db:"valueCount"`
 }
 
 // Metadata holds additional information about the metric.
@@ -121,15 +103,14 @@ type FilterKeyRequest struct {
 }
 
 type FilterValueRequest struct {
-	FilterAttributeKey         string                  `json:"filterAttributeKey"`
+	FilterKey                  string                  `json:"filterKey"`
 	FilterAttributeKeyDataType v3.AttributeKeyDataType `json:"filterAttributeKeyDataType"`
-	FilterTypeKey              FilterTypeKey           `json:"filterTypeKey"`
 	SearchText                 string                  `json:"searchText"`
 	Limit                      int                     `json:"limit"`
 }
 
 type FilterValueResponse struct {
-	FilterValues []v3.AttributeKey `json:"FilterValues"`
+	FilterValues []string `json:"filterValues"`
 }
 
 type FilterKeyResponse struct {
@@ -137,23 +118,7 @@ type FilterKeyResponse struct {
 	AttributeKeys []v3.AttributeKey `json:"attributeKeys"`
 }
 
-type FilterTypeKey string
-
-const (
-	FilterKeyMetricName FilterTypeKey = "metric_name"
-	FilterKeyType       FilterTypeKey = "type"
-	FilterKeyAttributes FilterTypeKey = "attributes"
-	FilterKeyUnit       FilterTypeKey = "unit"
-)
-
-var AvailableColumnFilter = []string{
-	string(FilterKeyMetricName),
-	string(FilterKeyType),
-	string(FilterKeyUnit),
-}
-
-var AvailableColumnFilterMap = map[FilterTypeKey]bool{
-	FilterKeyMetricName: true,
-	FilterKeyType:       true,
-	FilterKeyUnit:       true,
+var AvailableColumnFilterMap = map[string]bool{
+	"metric_name": true,
+	"unit":        true,
 }

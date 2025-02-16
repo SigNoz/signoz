@@ -206,22 +206,3 @@ func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 
 	ah.WriteJSON(w, r, versionResponse)
 }
-
-func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
-	router.HandleFunc("/api/v1/metrics/filters/keys",
-		am.ViewAccess(ah.FilterKeysSuggestion)).
-		Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/metrics/filters/values",
-		am.ViewAccess(ah.FilterValuesSuggestion)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/{metric_name}",
-		am.ViewAccess(ah.GetMetricsDetails)).
-		Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/metrics",
-		am.ViewAccess(ah.ListMetrics)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/treemap",
-		am.ViewAccess(ah.GetTreeMap)).
-		Methods(http.MethodPost)
-
-}

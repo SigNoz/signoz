@@ -116,12 +116,12 @@ type Reader interface {
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
 
-	GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError)
-	GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) (*[]v3.AttributeKey, *model.ApiError)
+	GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError)
+	GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError)
 	GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest, skipDotNames bool) (*[]v3.AttributeKey, *model.ApiError)
 
 	GetMetricsDataPointsAndLastReceived(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError)
-	GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, uint64, *model.ApiError)
+	GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError)
 	GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError)
 	GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError)
 

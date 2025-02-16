@@ -3,13 +3,15 @@ package utils
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 // skipKey is an optional parameter to skip processing of a specific key
-func BuildFilterConditions(fs *metrics_explorer.SummaryFilterSet, skipKey string) ([]string, error) {
+func BuildFilterConditions(fs *v3.FilterSet, skipKey string) ([]string, error) {
 	if fs == nil || len(fs.Items) == 0 {
 		return nil, nil
 	}
@@ -30,13 +32,10 @@ func BuildFilterConditions(fs *metrics_explorer.SummaryFilterSet, skipKey string
 
 		// Determine if the key is a JSON key or a normal column
 		isJSONKey := false
-		switch item.FilterTypeKey {
-		case metrics_explorer.FilterKeyAttributes:
-			isJSONKey = true // Assuming attributes are stored as JSON
-		case metrics_explorer.FilterKeyMetricName:
-			isJSONKey = false // Assuming metric names are normal columns
-		case metrics_explorer.FilterKeyUnit:
-			isJSONKey = false // Assuming units are normal columns
+		if _, exists := metrics_explorer.AvailableColumnFilterMap[item.Key.Key]; exists {
+			isJSONKey = false
+		} else {
+			isJSONKey = true
 		}
 
 		condition, err := buildSingleFilterCondition(item.Key.Key, op, fmtVal, isJSONKey)
@@ -92,5 +91,51 @@ func buildSingleFilterCondition(key string, op v3.FilterOperator, fmtVal string,
 		return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key), nil
 	default:
 		return "", fmt.Errorf("unsupported filter operator: %s", op)
+	}
+}
+
+var (
+	sixHoursInMilliseconds = time.Hour.Milliseconds() * 6
+	oneDayInMilliseconds   = time.Hour.Milliseconds() * 24
+	oneWeekInMilliseconds  = oneDayInMilliseconds * 7
+)
+
+func WhichTSTableToUse(start, end int64) (int64, int64, string) {
+
+	var tableName string
+	if end-start < sixHoursInMilliseconds {
+		// adjust the start time to nearest 1 hour
+		start = start - (start % (time.Hour.Milliseconds() * 1))
+		tableName = constants.SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME
+	} else if end-start < oneDayInMilliseconds {
+		// adjust the start time to nearest 6 hours
+		start = start - (start % (time.Hour.Milliseconds() * 6))
+		tableName = constants.SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME
+	} else if end-start < oneWeekInMilliseconds {
+		// adjust the start time to nearest 1 day
+		start = start - (start % (time.Hour.Milliseconds() * 24))
+		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
+	} else {
+		if constants.UseMetricsPreAggregation() {
+			// adjust the start time to nearest 1 week
+			start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
+			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
+		} else {
+			// continue to use the 1 day table
+			start = start - (start % (time.Hour.Milliseconds() * 24))
+			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
+		}
+	}
+
+	return start, end, tableName
+}
+
+func WhichSampleTableToUse(start, end int64) (string, string) {
+	if end-start < oneDayInMilliseconds {
+		return constants.SIGNOZ_SAMPLES_V4_TABLENAME, "count(*)"
+	} else if end-start < oneWeekInMilliseconds {
+		return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, "sum(count)"
+	} else {
+		return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME, "sum(count)"
 	}
 }
