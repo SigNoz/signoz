@@ -45,7 +45,7 @@ func (r *Repo) insertPipeline(
 		))
 	}
 
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}

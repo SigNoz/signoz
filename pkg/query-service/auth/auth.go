@@ -75,7 +75,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.Wrap(err, "failed to extract admin user id")
 	}
@@ -118,7 +118,7 @@ func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.Bulk
 		FailedInvites:     []model.FailedInvite{},
 	}
 
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("failed to extract admin user id")
 	}
@@ -583,14 +583,9 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authty
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
 		// parse the refresh token
-		claims, err := jwt.GetJwtClaims(req.RefreshToken)
+		claims, err := jwt.Claims(req.RefreshToken)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse refresh token")
-		}
-
-		err = jwt.ValidateJwtClaims(claims)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}
 
 		if claims.OrgID == "" {
@@ -633,13 +628,13 @@ func GenerateJWTForUser(user *model.User, jwt *authtypes.JWT) (model.UserJwtObje
 	j := model.UserJwtObject{}
 	var err error
 	j.AccessJwtExpiry = time.Now().Add(jwt.JwtExpiry).Unix()
-	j.AccessJwt, err = jwt.GetAccessJwt(user.OrgId, user.Id, user.GroupId, user.Email)
+	j.AccessJwt, err = jwt.AccessToken(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
 	j.RefreshJwtExpiry = time.Now().Add(jwt.JwtRefresh).Unix()
-	j.RefreshJwt, err = jwt.GetRefreshJwt(user.OrgId, user.Id, user.GroupId, user.Email)
+	j.RefreshJwt, err = jwt.RefreshToken(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}

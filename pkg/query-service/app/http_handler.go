@@ -1622,7 +1622,7 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	claims, ok := authtypes.GetClaimsFromContext(r.Context())
+	claims, ok := authtypes.NewClaimsFromContext(r.Context())
 	if ok {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, claims.Email, true, false)
 	}
@@ -1634,7 +1634,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	claims, ok := authtypes.GetClaimsFromContext(r.Context())
+	claims, ok := authtypes.NewClaimsFromContext(r.Context())
 	if ok {
 		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
@@ -1740,7 +1740,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
-	claims, ok := authtypes.GetClaimsFromContext(r.Context())
+	claims, ok := authtypes.NewClaimsFromContext(r.Context())
 	if ok {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
 	}
@@ -2448,7 +2448,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"isAnonymous":      req.IsAnonymous,
 		"organizationName": req.Name,
 	}
-	claims, ok := authtypes.GetClaimsFromContext(r.Context())
+	claims, ok := authtypes.NewClaimsFromContext(r.Context())
 	if !ok {
 		zap.L().Error("failed to get user email from jwt")
 	}
@@ -5012,7 +5012,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
 
-			claims, ok := authtypes.GetClaimsFromContext(r.Context())
+			claims, ok := authtypes.NewClaimsFromContext(r.Context())
 			if ok {
 				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
 				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {

@@ -50,7 +50,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	postable []PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
 	}

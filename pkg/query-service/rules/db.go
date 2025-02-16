@@ -302,7 +302,7 @@ func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (strin
 }
 
 func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return "", errors.New("no claims found in context")
 	}

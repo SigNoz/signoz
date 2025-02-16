@@ -125,7 +125,7 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("error in getting email from context")
 	}
@@ -186,7 +186,7 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
 	}
 
-	claims, ok := authtypes.GetClaimsFromContext(ctx)
+	claims, ok := authtypes.NewClaimsFromContext(ctx)
 	if !ok {
 		return fmt.Errorf("error in getting email from context")
 	}

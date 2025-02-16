@@ -46,7 +46,7 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		}
 
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			claims, ok := authtypes.GetClaimsFromContext(r.Context())
+			claims, ok := authtypes.NewClaimsFromContext(r.Context())
 			if ok {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
 			}
@@ -134,7 +134,7 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		claims, ok := authtypes.GetClaimsFromContext(r.Context())
+		claims, ok := authtypes.NewClaimsFromContext(r.Context())
 		if ok {
 			// switch case to set data["screen"] based on the referrer
 			switch {

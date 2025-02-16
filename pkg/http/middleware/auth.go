@@ -37,21 +37,14 @@ func (a *Auth) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		claims, err := a.jwt.GetJwtClaims(jwt)
-		if err != nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// validate the claims
-		err = a.jwt.ValidateJwtClaims(claims)
+		claims, err := a.jwt.Claims(jwt)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// attach the claims to the request
-		ctx := a.jwt.AttachClaimsToContext(r.Context(), claims)
+		ctx := a.jwt.NewContextWithClaims(r.Context(), claims)
 		r = r.WithContext(ctx)
 
 		// next handler
