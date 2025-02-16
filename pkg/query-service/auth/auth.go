@@ -452,7 +452,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	invite, err := ValidateInvite(ctx, req)
 	if err != nil {
 		zap.L().Error("failed to validate invite token", zap.Error(err))
-		return nil, model.UnavailableError(fmt.Errorf("invalid/used/expired invitation token, please contact your admin"))
+		return nil, model.ForbiddenError(fmt.Errorf("invalid/used/expired invitation token, please contact your admin"))
 	}
 
 	// checking if user email already exists, this is defensive but
