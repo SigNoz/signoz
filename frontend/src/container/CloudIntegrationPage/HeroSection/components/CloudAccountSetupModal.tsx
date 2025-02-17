@@ -3,7 +3,7 @@ import './CloudAccountSetupModal.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useIntegrationModal } from 'hooks/Integrations/aws/useIntegrationModal';
+import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';

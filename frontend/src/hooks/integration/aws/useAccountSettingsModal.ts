@@ -1,7 +1,7 @@
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { useUpdateAccountConfig } from 'hooks/Integrations/aws/useUpdateAccountConfig';
+import { useUpdateAccountConfig } from 'hooks/integration/aws/useUpdateAccountConfig';
 import { isEqual } from 'lodash-es';
 import {
 	Dispatch,

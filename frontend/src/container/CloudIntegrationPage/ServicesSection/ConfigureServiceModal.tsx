@@ -7,7 +7,7 @@ import {
 	ServiceConfig,
 	SupportedSignals,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { useUpdateServiceConfig } from 'hooks/Integrations/aws/useUpdateServiceConfig';
+import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
