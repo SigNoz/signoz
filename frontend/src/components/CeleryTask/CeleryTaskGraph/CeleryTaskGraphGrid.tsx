@@ -1,6 +1,7 @@
 import './CeleryTaskGraph.style.scss';
 
 import { Card, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -92,6 +93,15 @@ export default function CeleryTaskGraphGrid({
 		}));
 	};
 
+	const checkIfDataExists = (isDataAvailable: boolean, title: string): void => {
+		if (isDataAvailable) {
+			logEvent(`MQ Celery: ${title} data exists`, {
+				graph: title,
+				isDataAvailable,
+			});
+		}
+	};
+
 	return (
 		<div className="celery-task-graph-grid-container">
 			<div className="metric-based-graphs">
@@ -124,6 +134,10 @@ export default function CeleryTaskGraphGrid({
 							widgetData={celeryActiveTasksData}
 							queryEnabled={queryEnabled}
 							customErrorMessage="Enable Flower metrics to view this graph"
+							checkIfDataExists={(isDataAvailable): void =>
+								checkIfDataExists(isDataAvailable, 'Active Tasks by worker')
+							}
+							analyticsEvent="MQ Celery: Flower metric not enabled"
 						/>
 						<Card className="celery-task-graph-worker-count">
 							<div className="worker-count-header">
@@ -173,8 +187,19 @@ export default function CeleryTaskGraphGrid({
 				</div>
 				{!collapsedSections.traceBasedGraphs && (
 					<>
-						<CeleryTaskBar queryEnabled={queryEnabled} onClick={onClick} />
-						<CeleryTaskLatencyGraph queryEnabled={queryEnabled} />
+						<CeleryTaskBar
+							queryEnabled={queryEnabled}
+							onClick={onClick}
+							checkIfDataExists={(isDataAvailable): void =>
+								checkIfDataExists(isDataAvailable, 'State Graph')
+							}
+						/>
+						<CeleryTaskLatencyGraph
+							queryEnabled={queryEnabled}
+							checkIfDataExists={(isDataAvailable): void =>
+								checkIfDataExists(isDataAvailable, 'Task Latency')
+							}
+						/>
 						<div className="celery-task-graph-grid-bottom">
 							{bottomWidgetData.map((widgetData, index) => (
 								<CeleryTaskGraph
@@ -184,6 +209,9 @@ export default function CeleryTaskGraphGrid({
 									queryEnabled={queryEnabled}
 									rightPanelTitle={rightPanelTitle[index]}
 									applyCeleryTaskFilter
+									checkIfDataExists={(isDataAvailable): void =>
+										checkIfDataExists(isDataAvailable, rightPanelTitle[index])
+									}
 								/>
 							))}
 						</div>

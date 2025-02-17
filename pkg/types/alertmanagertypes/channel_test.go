@@ -180,11 +180,11 @@ func TestNewConfigFromChannels(t *testing.T) {
 
 			routes, err := json.Marshal(c.alertmanagerConfig.Route.Routes)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedRoutes, string(routes))
+			assert.JSONEq(t, tc.expectedRoutes, string(routes))
 
 			receivers, err := json.Marshal(c.alertmanagerConfig.Receivers)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedReceivers, string(receivers))
+			assert.JSONEq(t, tc.expectedReceivers, string(receivers))
 		})
 	}
 }

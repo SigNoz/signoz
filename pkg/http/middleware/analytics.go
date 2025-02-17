@@ -31,12 +31,12 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
+		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
+		a.getActiveLogs(path, r)
+
 		badResponseBuffer := new(bytes.Buffer)
 		writer := newBadResponseLoggingWriter(w, badResponseBuffer)
 		next.ServeHTTP(writer, r)
-
-		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
-		a.getActiveLogs(path, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": writer.StatusCode()}
 		if metadataExists {

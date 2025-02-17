@@ -58,6 +58,7 @@ export interface GridCardGraphProps {
 	customErrorMessage?: string;
 	start?: number;
 	end?: number;
+	analyticsEvent?: string;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
