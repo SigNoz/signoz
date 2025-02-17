@@ -19,11 +19,22 @@ type provider struct {
 	sqlxdb   *sqlx.DB
 }
 
-func NewFactory() factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("sqlite"), New)
+func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("sqlite"), func(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStore, error) {
+		hooks := make([]sqlstore.SQLStoreHook, len(hookFactories))
+		for i, hookFactory := range hookFactories {
+			hook, err := hookFactory.New(ctx, providerSettings, config)
+			if err != nil {
+				return nil, err
+			}
+			hooks[i] = hook
+		}
+
+		return New(ctx, providerSettings, config, hooks...)
+	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStore, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlitesqlstore")
 
 	sqldb, err := sql.Open("sqlite3", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
@@ -36,7 +47,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return &provider{
 		settings: settings,
 		sqldb:    sqldb,
-		bundb:    bun.NewDB(sqldb, sqlitedialect.New()),
+		bundb:    sqlstore.NewBunDB(sqldb, sqlitedialect.New(), hooks),
 		sqlxdb:   sqlx.NewDb(sqldb, "sqlite3"),
 	}, nil
 }
