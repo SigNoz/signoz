@@ -15,8 +15,10 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 function MetricPageGridGraph({
 	widgetData,
+	checkIfDataExists,
 }: {
 	widgetData: Widgets;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -51,9 +53,14 @@ function MetricPageGridGraph({
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onDragSelect={onDragSelect}
+				dataAvailable={checkIfDataExists}
 			/>
 		</Card>
 	);
 }
+
+MetricPageGridGraph.defaultProps = {
+	checkIfDataExists: (): void => {},
+};
 
 export default MetricPageGridGraph;
