@@ -16,7 +16,7 @@ type logging struct {
 	level  slog.Level
 }
 
-func NewFactory() factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config] {
+func NewLoggingFactory() factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("logging"), NewLogging)
 }
 

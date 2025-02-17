@@ -8,6 +8,7 @@ import (
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
+	"go.signoz.io/signoz/pkg/sqlstore/sqlstorehook"
 	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	"go.signoz.io/signoz/pkg/telemetrystore/telemetrystorehook"
@@ -34,7 +35,6 @@ type ProviderConfig struct {
 }
 
 func NewProviderConfig() ProviderConfig {
-	hook := telemetrystorehook.NewFactory()
 	return ProviderConfig{
 		CacheProviderFactories: factory.MustNewNamedMap(
 			memorycache.NewFactory(),
@@ -45,7 +45,7 @@ func NewProviderConfig() ProviderConfig {
 			noopweb.NewFactory(),
 		),
 		SQLStoreProviderFactories: factory.MustNewNamedMap(
-			sqlitesqlstore.NewFactory(),
+			sqlitesqlstore.NewFactory(sqlstorehook.NewLoggingFactory()),
 			// postgressqlstore.NewFactory(),
 		),
 		SQLMigrationProviderFactories: factory.MustNewNamedMap(
@@ -62,7 +62,7 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewModifyDatetimeFactory(),
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
-			clickhousetelemetrystore.NewFactory(hook),
+			clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
 		),
 	}
 }
