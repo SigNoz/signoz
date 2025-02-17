@@ -112,6 +112,7 @@ function MessagingQueueOverview({
 				tableApi={getTableApi(selectedView)}
 				validConfigPresent
 				type="Overview"
+				option={option}
 			/>
 		</div>
 	);
