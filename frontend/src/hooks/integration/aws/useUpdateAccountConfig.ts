@@ -1,4 +1,4 @@
-import { updateAccountConfig } from 'api/integrations/aws';
+import { updateAccountConfig } from 'api/integration/aws';
 import { useMutation, UseMutationResult } from 'react-query';
 import {
 	AccountConfigPayload,
