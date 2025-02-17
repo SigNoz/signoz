@@ -12,9 +12,9 @@ import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -105,17 +105,18 @@ function ContextLogRenderer({
 	}, [options.fontSize]);
 
 	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
+
+	const { pathname } = useLocation();
 
 	const handleLogClick = useCallback(
 		(logId: string): void => {
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 
-			// const link = `${pathname}?${urlQuery.toString()}`;
+			const link = `${pathname}?${urlQuery.toString()}`;
 
-			safeNavigate({ search: urlQuery.toString() });
+			window.open(link, '_blank', 'noopener,noreferrer');
 		},
-		[safeNavigate, urlQuery],
+		[pathname, urlQuery],
 	);
 
 	const getItemContent = useCallback(
