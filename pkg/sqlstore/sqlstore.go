@@ -16,3 +16,7 @@ type SQLStore interface {
 	// SQLxDB returns an instance of sqlx.DB.
 	SQLxDB() *sqlx.DB
 }
+
+type SQLStoreHook interface {
+	bun.QueryHook
+}
