@@ -111,10 +111,12 @@ function ContextLogRenderer({
 				data={logTorender}
 				linesPerRow={1}
 				fontSize={options.fontSize}
-				selectedFields={convertKeysToColumnFields(defaultLogsSelectedColumns)}
+				selectedFields={convertKeysToColumnFields(
+					options.selectColumns ?? defaultLogsSelectedColumns,
+				)}
 			/>
 		),
-		[log.id, options.fontSize],
+		[log.id, options.fontSize, options.selectColumns],
 	);
 
 	return (
