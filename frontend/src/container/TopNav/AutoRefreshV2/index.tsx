@@ -127,6 +127,10 @@ function AutoRefresh({
 					DASHBOARD_TIME_IN_DURATION,
 					JSON.stringify(_omit(localStorageData, pathname)),
 				);
+				setSelectedOption('off'); // Ensure selectedOption reflects the removal
+			} else {
+				// Ensure default option reflects
+				setSelectedOption('30s');
 			}
 			setIsAutoRefreshfreshEnabled(checked);
 		},
