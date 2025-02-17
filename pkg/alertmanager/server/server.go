@@ -77,20 +77,18 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 	server.marker = alertmanagertypes.NewMarker(server.registry)
 
 	// get silences for initial state
-	silencesstate, err := server.stateStore.Get(ctx, server.orgID, alertmanagertypes.SilenceStateName)
+	state, err := server.stateStore.Get(ctx, server.orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
-	// get nflog for initial state
-	nflogstate, err := server.stateStore.Get(ctx, server.orgID, alertmanagertypes.NFLogStateName)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
+	silencesSnapshot := ""
+	if state != nil {
+		silencesSnapshot = state.Silences
 	}
-
 	// Initialize silences
 	server.silences, err = silence.New(silence.Options{
-		SnapshotReader: strings.NewReader(silencesstate),
+		SnapshotReader: strings.NewReader(silencesSnapshot),
 		Retention:      srvConfig.Silences.Retention,
 		Limits: silence.Limits{
 			MaxSilences:         func() int { return srvConfig.Silences.Max },
@@ -103,9 +101,14 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		return nil, err
 	}
 
+	nflogSnapshot := ""
+	if state != nil {
+		nflogSnapshot = state.NFLog
+	}
+
 	// Initialize notification log
 	server.nflog, err = nflog.New(nflog.Options{
-		SnapshotReader: strings.NewReader(nflogstate),
+		SnapshotReader: strings.NewReader(nflogSnapshot),
 		Retention:      server.srvConfig.NFLog.Retention,
 		Metrics:        server.registry,
 		Logger:         server.logger,
@@ -125,7 +128,21 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				// Don't return here - we need to snapshot our state first.
 			}
 
-			return server.stateStore.Set(ctx, server.orgID, alertmanagertypes.SilenceStateName, server.silences)
+			state, err := server.stateStore.Get(ctx, server.orgID)
+			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+				return 0, err
+			}
+
+			if state == nil {
+				state = alertmanagertypes.NewStoreableState(server.orgID)
+			}
+
+			c, err := state.Set(alertmanagertypes.SilenceStateName, server.silences)
+			if err != nil {
+				return 0, err
+			}
+
+			return c, server.stateStore.Set(ctx, server.orgID, state)
 		})
 
 	}()
@@ -140,7 +157,21 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				// Don't return without saving the current state.
 			}
 
-			return server.stateStore.Set(ctx, server.orgID, alertmanagertypes.NFLogStateName, server.nflog)
+			state, err := server.stateStore.Get(ctx, server.orgID)
+			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+				return 0, err
+			}
+
+			if state == nil {
+				state = alertmanagertypes.NewStoreableState(server.orgID)
+			}
+
+			c, err := state.Set(alertmanagertypes.NFLogStateName, server.nflog)
+			if err != nil {
+				return 0, err
+			}
+
+			return c, server.stateStore.Set(ctx, server.orgID, state)
 		})
 	}()
 

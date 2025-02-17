@@ -39,13 +39,11 @@ type RouteConfig struct {
 type StoreableConfig struct {
 	bun.BaseModel `bun:"table:alertmanager_config"`
 
-	ID            uint64    `bun:"id"`
-	Config        string    `bun:"config"`
-	SilencesState string    `bun:"silences_state,nullzero"`
-	NFLogState    string    `bun:"nflog_state,nullzero"`
-	CreatedAt     time.Time `bun:"created_at"`
-	UpdatedAt     time.Time `bun:"updated_at"`
-	OrgID         string    `bun:"org_id"`
+	ID        uint64    `bun:"id,pk,autoincrement"`
+	Config    string    `bun:"config"`
+	CreatedAt time.Time `bun:"created_at"`
+	UpdatedAt time.Time `bun:"updated_at"`
+	OrgID     string    `bun:"org_id"`
 }
 
 // Config is the type for the entire alertmanager configuration
@@ -68,12 +66,10 @@ func NewConfig(c *config.Config, orgID string) *Config {
 	return &Config{
 		alertmanagerConfig: c,
 		storeableConfig: &StoreableConfig{
-			Config:        string(newRawFromConfig(c)),
-			SilencesState: "",
-			NFLogState:    "",
-			CreatedAt:     time.Now(),
-			UpdatedAt:     time.Now(),
-			OrgID:         orgID,
+			Config:    string(newRawFromConfig(c)),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			OrgID:     orgID,
 		},
 		channels: channels,
 	}

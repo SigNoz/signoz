@@ -3,8 +3,6 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"time"
 
 	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/sqlstore"
@@ -20,76 +18,52 @@ func NewStateStore(sqlstore sqlstore.SQLStore) alertmanagertypes.StateStore {
 }
 
 // Get implements alertmanagertypes.StateStore.
-func (store *state) Get(ctx context.Context, orgID string, stateName alertmanagertypes.StateName) (string, error) {
-	storeableConfig := new(alertmanagertypes.StoreableConfig)
+func (store *state) Get(ctx context.Context, orgID string) (*alertmanagertypes.StoreableState, error) {
+	storeableState := new(alertmanagertypes.StoreableState)
 
 	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
-		Model(storeableConfig).
+		Model(storeableState).
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerStateNotFound, "cannot find alertmanager state for org %s", orgID)
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerStateNotFound, "cannot find alertmanager state for org %s", orgID)
 		}
 
-		return "", err
+		return nil, err
 	}
 
-	if stateName == alertmanagertypes.SilenceStateName {
-		decodedState, err := base64.RawStdEncoding.DecodeString(storeableConfig.SilencesState)
-		if err != nil {
-			return "", err
-		}
-
-		return string(decodedState), nil
-	}
-
-	if stateName == alertmanagertypes.NFLogStateName {
-		decodedState, err := base64.RawStdEncoding.DecodeString(storeableConfig.NFLogState)
-		if err != nil {
-			return "", err
-		}
-
-		return string(decodedState), nil
-	}
-
-	// This should never happen
-	return "", errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerStateNameInvalid, "cannot find state with name %s for org %s", stateName.String(), orgID)
+	return storeableState, nil
 }
 
 // Set implements alertmanagertypes.StateStore.
-func (store *state) Set(ctx context.Context, orgID string, stateName alertmanagertypes.StateName, state alertmanagertypes.State) (int64, error) {
-	storeableConfig := new(alertmanagertypes.StoreableConfig)
-
-	marshalledState, err := state.MarshalBinary()
+func (store *state) Set(ctx context.Context, orgID string, storeableState *alertmanagertypes.StoreableState) error {
+	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
-		return 0, err
-	}
-	encodedState := base64.StdEncoding.EncodeToString(marshalledState)
-
-	q := store.
-		sqlstore.
-		BunDB().
-		NewUpdate().
-		Model(storeableConfig).
-		Set("updated_at = ?", time.Now()).
-		Where("org_id = ?", orgID)
-
-	if stateName == alertmanagertypes.SilenceStateName {
-		q.Set("silences_state = ?", encodedState)
+		return err
 	}
 
-	if stateName == alertmanagertypes.NFLogStateName {
-		q.Set("nflog_state = ?", encodedState)
-	}
+	defer tx.Rollback() //nolint:errcheck
 
-	_, err = q.Exec(ctx)
+	_, err = tx.
+		NewInsert().
+		Model(storeableState).
+		On("CONFLICT (org_id) DO UPDATE").
+		Set("silences = EXCLUDED.silences").
+		Set("nflog = EXCLUDED.nflog").
+		Set("updated_at = EXCLUDED.updated_at").
+		Where("org_id = ?", orgID).
+		Exec(ctx)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return int64(len(marshalledState)), nil
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
