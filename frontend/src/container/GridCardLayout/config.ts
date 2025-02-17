@@ -19,3 +19,6 @@ export const EMPTY_WIDGET_LAYOUT = {
 	h: 6,
 	y: 0,
 };
+
+export const ViewTracesMenuAction = [MenuItemKeys.ViewTraces];
+export const ViewLogsMenuAction = [MenuItemKeys.ViewLogs];
