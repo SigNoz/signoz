@@ -10,8 +10,6 @@ import (
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
-type SyncFunc func(context.Context) <-chan struct{}
-
 type Service struct {
 	// config is the config for the alertmanager service
 	config Config
@@ -30,12 +28,9 @@ type Service struct {
 
 	// Mutex to protect the servers map
 	serversMtx sync.RWMutex
-
-	// syncC is the channel to trigger the sync of the alertmanager servers
-	syncFunc SyncFunc
 }
 
-func New(ctx context.Context, settings factory.ScopedProviderSettings, config Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore, syncFunc SyncFunc) *Service {
+func New(ctx context.Context, settings factory.ScopedProviderSettings, config Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore) *Service {
 	service := &Service{
 		config:      config,
 		stateStore:  stateStore,
@@ -43,23 +38,9 @@ func New(ctx context.Context, settings factory.ScopedProviderSettings, config Co
 		settings:    settings,
 		servers:     make(map[string]*server.Server),
 		serversMtx:  sync.RWMutex{},
-		syncFunc:    syncFunc,
 	}
 
 	return service
-}
-
-func (service *Service) Start(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-service.syncFunc(ctx):
-			if err := service.SyncServers(ctx); err != nil {
-				service.settings.Logger().Error("failed to sync alertmanager servers", "error", err)
-			}
-		}
-	}
 }
 
 func (service *Service) SyncServers(ctx context.Context) error {

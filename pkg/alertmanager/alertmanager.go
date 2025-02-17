@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.signoz.io/signoz/pkg/errors"
+	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -12,6 +13,7 @@ var (
 )
 
 type Alertmanager interface {
+	factory.Service
 	// GetAlerts gets the alerts from the alertmanager per organization.
 	GetAlerts(context.Context, string, alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error)
 

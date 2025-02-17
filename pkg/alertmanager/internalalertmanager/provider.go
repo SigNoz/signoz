@@ -8,14 +8,13 @@ import (
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
-var _ alertmanager.Alertmanager = (*provider)(nil)
-
 type provider struct {
-	*alertmanager.Service
-	ticker *time.Ticker
-	syncC  chan struct{}
+	service  *alertmanager.Service
+	config   alertmanager.Config
+	settings factory.ScopedProviderSettings
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -24,37 +23,48 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager
 	})
 }
 
-func New(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore) (alertmanager.Alertmanager, error) {
-	ticker := time.NewTicker(config.Internal.PollInterval)
-	syncC := make(chan struct{})
-
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore) (alertmanager.Alertmanager, error) {
+	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/internalalertmanager")
 	return &provider{
-		Service: alertmanager.New(
+		service: alertmanager.New(
 			ctx,
-			factory.NewScopedProviderSettings(settings, "go.signoz.io/signoz/pkg/alertmanager/internalalertmanager"),
+			settings,
 			config,
 			sqlalertmanagerstore.NewStateStore(sqlstore),
 			sqlalertmanagerstore.NewConfigStore(sqlstore),
-			alertmanager.SyncFunc(func(ctx context.Context) <-chan struct{} {
-				go func() {
-					select {
-					case <-ticker.C:
-						syncC <- struct{}{}
-					case <-ctx.Done():
-						return
-					}
-				}()
-				return syncC
-			}),
 		),
-		ticker: ticker,
-		syncC:  syncC,
+		settings: settings,
+		config:   config,
 	}, nil
 }
 
+func (provider *provider) Start(ctx context.Context) error {
+	ticker := time.NewTicker(provider.config.Internal.PollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			if err := provider.service.SyncServers(ctx); err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+			}
+		}
+	}
+}
+
 func (provider *provider) Stop(ctx context.Context) error {
-	provider.ticker.Stop()
-	close(provider.syncC)
-	provider.Service.Stop(ctx)
-	return nil
+	return provider.service.Stop(ctx)
+}
+
+func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+	return provider.service.GetAlerts(ctx, orgID, params)
+}
+
+func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	return provider.service.PutAlerts(ctx, orgID, alerts)
+}
+
+func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
