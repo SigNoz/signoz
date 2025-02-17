@@ -35,6 +35,8 @@ function CeleryTaskGraph({
 	customErrorMessage,
 	start,
 	end,
+	checkIfDataExists,
+	analyticsEvent,
 }: {
 	widgetData: Widgets;
 	onClick?: (task: CaptureDataProps) => void;
@@ -48,6 +50,8 @@ function CeleryTaskGraph({
 	customErrorMessage?: string;
 	start?: number;
 	end?: number;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
+	analyticsEvent?: string;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -125,6 +129,8 @@ function CeleryTaskGraph({
 				customErrorMessage={customErrorMessage}
 				start={start}
 				end={end}
+				dataAvailable={checkIfDataExists}
+				analyticsEvent={analyticsEvent}
 			/>
 		</Card>
 	);
@@ -141,6 +147,8 @@ CeleryTaskGraph.defaultProps = {
 	customErrorMessage: undefined,
 	start: undefined,
 	end: undefined,
+	checkIfDataExists: undefined,
+	analyticsEvent: undefined,
 };
 
 export default CeleryTaskGraph;

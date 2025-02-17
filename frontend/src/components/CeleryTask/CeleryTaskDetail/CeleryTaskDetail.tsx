@@ -2,6 +2,7 @@ import './CeleryTaskDetail.style.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -97,6 +98,12 @@ export default function CeleryTaskDetail({
 					const filters = createFiltersFromData({
 						...rowData,
 						[taskData.entity]: taskData.value,
+					});
+					logEvent('MQ Celery: navigation to trace page', {
+						filters,
+						startTime,
+						endTime,
+						source: widgetData.title,
 					});
 					navigateToTrace(filters, startTime, endTime);
 				}}
