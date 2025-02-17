@@ -14,6 +14,7 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	eemiddleware "go.signoz.io/signoz/ee/http/middleware"
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
 	"go.signoz.io/signoz/ee/query-service/auth"
@@ -306,7 +307,8 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
-	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt).Wrap)
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -353,7 +355,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
-	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt).Wrap)
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,

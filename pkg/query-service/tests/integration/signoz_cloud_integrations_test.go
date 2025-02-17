@@ -370,7 +370,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	}
 
 	router := app.NewRouter()
-	router.Use(middleware.NewAuth(zap.L(), jwt).Wrap)
+	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(router, am)

@@ -1,8 +1,6 @@
 package authtypes
 
 import (
-	"context"
-	"net/http"
 	"testing"
 	"time"
 
@@ -26,32 +24,6 @@ func TestGetRefreshJwt(t *testing.T) {
 	assert.NotEmpty(t, token)
 }
 
-func TestGetJwtFromRequest(t *testing.T) {
-	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("Authorization", "Bearer testtoken")
-
-	token, err := jwtService.GetJwtFromRequest(req)
-
-	assert.NoError(t, err)
-	assert.Equal(t, "testtoken", token)
-}
-
-func TestAttachClaimsToContext(t *testing.T) {
-	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	claims := Claims{
-		UserID: "userId",
-	}
-
-	ctx := context.Background()
-	ctx = jwtService.NewContextWithClaims(ctx, claims)
-
-	retrievedClaims, ok := NewClaimsFromContext(ctx)
-	assert.True(t, ok)
-	assert.Equal(t, claims, retrievedClaims)
-	assert.Equal(t, "userId", retrievedClaims.UserID)
-}
-
 func TestGetJwtClaims(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
 
@@ -63,6 +35,7 @@ func TestGetJwtClaims(t *testing.T) {
 		OrgID:   "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 	tokenString, err := jwtService.signToken(claims)
@@ -97,6 +70,7 @@ func TestGetJwtClaimsExpiredToken(t *testing.T) {
 		OrgID:   "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 	tokenString, err := jwtService.signToken(claims)

@@ -49,7 +49,7 @@ func InitAuthCache(ctx context.Context) error {
 }
 
 func GetUserFromReqContext(ctx context.Context) (*model.UserPayload, error) {
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("no claims found in context")
 	}

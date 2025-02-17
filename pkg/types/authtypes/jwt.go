@@ -4,18 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type patTokenKey struct{}
 type jwtClaimsKey struct{}
-
-var PatTokenKey = patTokenKey{}
-var JwtClaimsKey = jwtClaimsKey{}
 
 type Claims struct {
 	jwt.RegisteredClaims
@@ -39,33 +34,45 @@ func NewJWT(jwtSecret string, jwtExpiry time.Duration, jwtRefresh time.Duration)
 	}
 }
 
-func (j *JWT) GetJwtFromRequest(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return "", errors.New("missing Authorization header")
+func parseBearerAuth(auth string) (string, bool) {
+	const prefix = "Bearer "
+	// Case insensitive prefix match
+	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+		return "", false
 	}
 
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Bearer ")
-	if len(splitToken) > 1 {
-		jwt := splitToken[1]
-		if len(jwt) > 0 {
-			return jwt, nil
+	return auth[len(prefix):], true
+}
+
+func (j *JWT) ContextFromRequest(ctx context.Context, values ...string) (context.Context, error) {
+	var value string
+	for _, v := range values {
+		if v != "" {
+			value = v
+			break
 		}
 	}
 
-	// We expect websocket connections to send auth JWT in the
-	// `Sec-Websocket-Protocol` header.
-	//
-	// The standard js websocket API doesn't allow setting headers
-	// other than the `Sec-WebSocket-Protocol` header, which is often
-	// used for auth purposes as a result.
-	return r.Header.Get("Sec-WebSocket-Protocol"), nil
+	if value == "" {
+		return ctx, errors.New("missing Authorization header")
+	}
+
+	// parse from
+	bearerToken, ok := parseBearerAuth(value)
+	if !ok {
+		// this will take care that if the value is not of type bearer token, directly use it
+		bearerToken = value
+	}
+
+	claims, err := j.Claims(bearerToken)
+	if err != nil {
+		return ctx, err
+	}
+
+	return NewContextWithClaims(ctx, claims), nil
 }
 
 func (j *JWT) Claims(jwtStr string) (Claims, error) {
-	// TODO[@vikrantgupta25] : to update this to the claims check function for better integrity of JWT
-	// reference - https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Parser.ParseWithClaims
 	token, err := jwt.ParseWithClaims(jwtStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unknown signing algo: %v", token.Header["alg"])
@@ -87,8 +94,8 @@ func (j *JWT) Claims(jwtStr string) (Claims, error) {
 }
 
 // NewContextWithClaims attaches individual claims to the context.
-func (j *JWT) NewContextWithClaims(ctx context.Context, claims Claims) context.Context {
-	ctx = context.WithValue(ctx, JwtClaimsKey, claims)
+func NewContextWithClaims(ctx context.Context, claims Claims) context.Context {
+	ctx = context.WithValue(ctx, jwtClaimsKey{}, claims)
 	return ctx
 }
 
@@ -128,7 +135,7 @@ func (j *JWT) RefreshToken(orgId, userId, groupId, email string) (string, error)
 	return j.signToken(claims)
 }
 
-func NewClaimsFromContext(ctx context.Context) (Claims, bool) {
-	claims, ok := ctx.Value(JwtClaimsKey).(Claims)
+func ClaimsFromContext(ctx context.Context) (Claims, bool) {
+	claims, ok := ctx.Value(jwtClaimsKey{}).(Claims)
 	return claims, ok
 }

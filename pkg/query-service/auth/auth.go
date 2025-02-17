@@ -75,7 +75,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.Wrap(err, "failed to extract admin user id")
 	}
@@ -118,7 +118,7 @@ func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.Bulk
 		FailedInvites:     []model.FailedInvite{},
 	}
 
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("failed to extract admin user id")
 	}

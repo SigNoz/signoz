@@ -134,7 +134,7 @@ func (middleware *Logging) getLogCommentKVs(r *http.Request) map[string]string {
 	}
 
 	var email string
-	claims, ok := authtypes.NewClaimsFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if ok {
 		email = claims.Email
 	}

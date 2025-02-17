@@ -541,17 +541,10 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	respWriter := httptest.NewRecorder()
 
-	jwt, err := tb.apiHandler.JWT.GetJwtFromRequest(req)
+	ctx, err := tb.apiHandler.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
 	if err != nil {
 		tb.t.Fatalf("couldn't get jwt from request: %v", err)
 	}
-
-	claims, err := tb.apiHandler.JWT.Claims(jwt)
-	if err != nil {
-		tb.t.Fatalf("couldn't get jwt claims: %v", err)
-	}
-
-	ctx := tb.apiHandler.JWT.NewContextWithClaims(req.Context(), claims)
 
 	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)

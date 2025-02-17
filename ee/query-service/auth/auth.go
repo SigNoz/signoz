@@ -15,7 +15,7 @@ import (
 )
 
 func GetUserFromRequestContext(ctx context.Context, apiHandler *api.APIHandler) (*basemodel.UserPayload, error) {
-	patToken, ok := ctx.Value(authtypes.PatTokenKey).(string)
+	patToken, ok := authtypes.UUIDFromContext(ctx)
 	if ok && patToken != "" {
 		zap.L().Debug("Received a non-zero length PAT token")
 		ctx := context.Background()

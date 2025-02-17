@@ -268,7 +268,7 @@ func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*Pla
 
 func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error) {
 
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return 0, errors.New("no claims found in context")
 	}
@@ -302,7 +302,7 @@ func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (strin
 }
 
 func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return "", errors.New("no claims found in context")
 	}

@@ -1164,7 +1164,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	if traceSummary.NumSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
 			zap.Uint64("Count", traceSummary.NumSpans))
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			data := map[string]interface{}{
 				"traceSize":            traceSummary.NumSpans,
@@ -1175,7 +1175,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
 	}
 
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if ok {
 		data := map[string]interface{}{
 			"traceSize": traceSummary.NumSpans,
@@ -1266,7 +1266,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
@@ -1306,7 +1306,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	if countSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
 			zap.Uint64("Count", countSpans))
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			data := map[string]interface{}{
 				"traceSize":            countSpans,
@@ -1317,7 +1317,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
 	}
 
-	claims, ok := authtypes.NewClaimsFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if ok {
 		data := map[string]interface{}{
 			"traceSize": countSpans,
@@ -1379,7 +1379,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
@@ -1455,7 +1455,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
 	var hasMissingSpans bool
 
-	claims, claimsPresent := authtypes.NewClaimsFromContext(ctx)
+	claims, claimsPresent := authtypes.ClaimsFromContext(ctx)
 	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
 	if err == nil {
 		startTime = cachedTraceData.StartTime
@@ -3464,7 +3464,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
@@ -3506,7 +3506,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
@@ -3598,7 +3598,7 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		claims, ok := authtypes.NewClaimsFromContext(ctx)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
 		if ok {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
