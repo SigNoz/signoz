@@ -105,3 +105,25 @@ func TestGetJwtClaimsInvalidSignature(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "signature is invalid")
 }
+
+func TestParseBearerAuth(t *testing.T) {
+	tests := []struct {
+		auth     string
+		expected string
+		expectOk bool
+	}{
+		{"Bearer validToken", "validToken", true},
+		{"bearer validToken", "validToken", true},
+		{"InvalidToken", "", false},
+		{"Bearer", "", false},
+		{"", "", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.auth, func(t *testing.T) {
+			token, ok := parseBearerAuth(test.auth)
+			assert.Equal(t, test.expected, token)
+			assert.Equal(t, test.expectOk, ok)
+		})
+	}
+}
