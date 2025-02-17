@@ -8,6 +8,56 @@ import (
 	sdktrace "go.opentelemetry.io/otel/trace"
 )
 
+type Settings struct {
+	// Logger is the logger.
+	Logger *slog.Logger
+	// MeterProvider is the meter provider.
+	MeterProvider sdkmetric.MeterProvider
+	// TracerProvider is the tracer provider.
+	TracerProvider sdktrace.TracerProvider
+	// PrometheusRegisterer is the prometheus registerer.
+	PrometheusRegisterer prometheus.Registerer
+}
+
+type NamespacedSettings interface {
+	Logger() *slog.Logger
+	Meter() sdkmetric.Meter
+	Tracer() sdktrace.Tracer
+	PrometheusRegisterer() prometheus.Registerer
+}
+
+type namespacedSettings struct {
+	logger               *slog.Logger
+	meter                sdkmetric.Meter
+	tracer               sdktrace.Tracer
+	prometheusRegisterer prometheus.Registerer
+}
+
+func NewNamespacedSettings(settings Settings, pkgName string) NamespacedSettings {
+	return &namespacedSettings{
+		logger:               settings.Logger.With("pkg", pkgName),
+		meter:                settings.MeterProvider.Meter(pkgName),
+		tracer:               settings.TracerProvider.Tracer(pkgName),
+		prometheusRegisterer: prometheus.WrapRegistererWith(prometheus.Labels{"pkg": pkgName}, settings.PrometheusRegisterer),
+	}
+}
+
+func (s *namespacedSettings) Logger() *slog.Logger {
+	return s.logger
+}
+
+func (s *namespacedSettings) Meter() sdkmetric.Meter {
+	return s.meter
+}
+
+func (s *namespacedSettings) Tracer() sdktrace.Tracer {
+	return s.tracer
+}
+
+func (s *namespacedSettings) PrometheusRegisterer() prometheus.Registerer {
+	return s.prometheusRegisterer
+}
+
 type ProviderSettings struct {
 	// SlogLogger is the slog logger.
 	Logger *slog.Logger

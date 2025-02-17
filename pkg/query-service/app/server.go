@@ -200,6 +200,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		SigNoz:                        serverOptions.SigNoz,
 	})
 	if err != nil {
 		return nil, err
