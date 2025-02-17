@@ -42,10 +42,12 @@ import {
 function CeleryTaskBar({
 	onClick,
 	queryEnabled,
+	checkIfDataExists,
 }: {
 	onClick?: (task: CaptureDataProps) => void;
 
 	queryEnabled: boolean;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -187,6 +189,7 @@ function CeleryTaskBar({
 							onGraphClick(celerySlowestTasksTableWidgetData, ...args)
 						}
 						customSeries={getCustomSeries}
+						dataAvailable={checkIfDataExists}
 					/>
 				)}
 				{barState === CeleryTaskState.Failed && (
@@ -232,6 +235,7 @@ function CeleryTaskBar({
 
 CeleryTaskBar.defaultProps = {
 	onClick: (): void => {},
+	checkIfDataExists: undefined,
 };
 
 export default CeleryTaskBar;
