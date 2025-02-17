@@ -1,4 +1,4 @@
-import { updateServiceConfig } from 'api/Integrations/aws';
+import { updateServiceConfig } from 'api/integration/aws';
 import { useMutation, UseMutationResult } from 'react-query';
 
 interface UpdateServiceConfigPayload {
