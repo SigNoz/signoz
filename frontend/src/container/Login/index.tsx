@@ -49,6 +49,7 @@ function Login({
 
 	const [precheckInProcess, setPrecheckInProcess] = useState(false);
 	const [precheckComplete, setPrecheckComplete] = useState(false);
+	const [headerAuthEmail, setHeaderAuthEmail] = useState<string | null>(null);
 
 	const { notifications } = useNotifications();
 
@@ -64,10 +65,13 @@ function Login({
 			getUserVersionResponse.data &&
 			getUserVersionResponse.data.payload
 		) {
-			const { setupCompleted } = getUserVersionResponse.data.payload;
+			const { setupCompleted, headerEmail } = getUserVersionResponse.data.payload;
 			if (!setupCompleted) {
 				// no org account registered yet, re-route user to sign up first
 				history.push(ROUTES.SIGN_UP);
+			}
+			if (headerEmail) {
+				setHeaderAuthEmail(headerEmail);
 			}
 		}
 	}, [getUserVersionResponse]);
@@ -185,6 +189,12 @@ function Login({
 			});
 		}
 	};
+
+	useEffect(() => {
+		form.setFieldValue('email', headerAuthEmail);
+		setPrecheckComplete(true);
+		form.submit();
+	}, [headerAuthEmail, form]);
 
 	const renderSAMLAction = (): JSX.Element => (
 		<Button

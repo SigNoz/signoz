@@ -61,6 +61,22 @@ func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
 	return user, nil
 }
 
+func GetUserFromHeader(r *http.Request) *model.UserPayload {
+	email := r.Header.Get(HeaderAuthEmail)
+	if email == "" {
+		return nil
+	}
+	role := r.Header.Get(HeaderAuthRole)
+	org := r.Header.Get(HeaderAuthOrg)
+	return &model.UserPayload{
+		User: model.User{
+			Email: email,
+		},
+		Role:         role,
+		Organization: org,
+	}
+}
+
 func IsSelfAccessRequest(user *model.UserPayload, id string) bool { return user.Id == id }
 
 func IsViewer(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.ViewerGroupId }
