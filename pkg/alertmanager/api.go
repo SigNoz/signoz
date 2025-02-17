@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/http/render"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type API struct {
@@ -29,14 +30,19 @@ func (api *API) GetAlerts(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	params, err := alertmanagertypes.NewGettableAlertsParams(req)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	orgID := "1"
-	alerts, err := api.alertmanager.GetAlerts(ctx, orgID, params)
+	alerts, err := api.alertmanager.GetAlerts(ctx, claims.OrgID, params)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -48,6 +54,12 @@ func (api *API) GetAlerts(req *http.Request, rw http.ResponseWriter) {
 func (api *API) TestReceiver(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -62,8 +74,7 @@ func (api *API) TestReceiver(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	orgID := "1"
-	err = api.alertmanager.TestReceiver(ctx, orgID, receiver)
+	err = api.alertmanager.TestReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -76,8 +87,13 @@ func (api *API) GetChannels(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	orgID := "1"
-	config, err := api.configStore.Get(ctx, orgID)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	config, err := api.configStore.Get(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -97,6 +113,12 @@ func (api *API) GetChannelByID(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	vars := mux.Vars(req)
 	if vars == nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required in path"))
@@ -115,8 +137,7 @@ func (api *API) GetChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	orgID := "1"
-	config, err := api.configStore.Get(ctx, orgID)
+	config, err := api.configStore.Get(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -136,6 +157,12 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		render.Error(rw, err)
@@ -149,8 +176,7 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	orgID := "1"
-	config, err := api.configStore.Get(ctx, orgID)
+	config, err := api.configStore.Get(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -175,6 +201,12 @@ func (api *API) DeleteChannelByID(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	vars := mux.Vars(req)
 	if vars == nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required in path"))
@@ -193,8 +225,7 @@ func (api *API) DeleteChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	orgID := "1"
-	config, err := api.configStore.Get(ctx, orgID)
+	config, err := api.configStore.Get(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
