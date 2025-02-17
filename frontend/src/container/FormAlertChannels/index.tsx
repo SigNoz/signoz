@@ -6,6 +6,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -24,6 +25,17 @@ import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
+
+type FormValues = {
+	name: string;
+	send_resolved: boolean;
+	field_channel_type: string;
+} & SlackChannel &
+	WebhookChannel &
+	PagerChannel &
+	MsTeamsChannel &
+	OpsgenieChannel &
+	EmailChannel;
 
 function FormAlertChannels({
 	formInstance,
@@ -84,12 +96,45 @@ function FormAlertChannels({
 		}
 	};
 
+	const isValidForm = (): boolean => {
+		const values = formInstance.getFieldsValue();
+		const defaultValues =
+			!values.name && !values.send_resolved && !values.field_channel_type;
+		switch (type) {
+			case ChannelType.Slack:
+				return defaultValues || !values.api_url || !values.channel;
+			case ChannelType.Webhook:
+				return defaultValues || !values.api_url;
+			case ChannelType.Pagerduty:
+				return defaultValues || !values.routing_key || !values.description;
+			case ChannelType.MsTeams:
+				return defaultValues || !values.webhook_url;
+			case ChannelType.Opsgenie:
+				return (
+					defaultValues ||
+					!values.api_key ||
+					!values.message ||
+					!values.description ||
+					!values.priority
+				);
+			case ChannelType.Email:
+				return defaultValues || !values.to;
+			default:
+				return defaultValues;
+		}
+	};
+
 	return (
 		<>
 			<Typography.Title level={3}>{title}</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
+				<Form.Item
+					required
+					label={t('field_channel_name')}
+					labelAlign="left"
+					name="name"
+				>
 					<Input
 						data-testid="channel-name-textbox"
 						disabled={editing}
@@ -163,7 +208,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
-						disabled={savingState || !hasFeature}
+						disabled={savingState || !hasFeature || isValidForm()}
 						loading={savingState}
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
@@ -171,7 +216,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
-						disabled={testingState || !hasFeature}
+						disabled={testingState || !hasFeature || isValidForm()}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
 					>
@@ -191,7 +236,7 @@ function FormAlertChannels({
 }
 
 interface FormAlertChannelsProps {
-	formInstance: FormInstance;
+	formInstance: FormInstance<FormValues>;
 	type: ChannelType;
 	setSelectedConfig: Dispatch<
 		SetStateAction<

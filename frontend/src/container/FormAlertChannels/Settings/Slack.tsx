@@ -11,7 +11,7 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="api_url" label={t('field_webhook_url')}>
+			<Form.Item required name="api_url" label={t('field_webhook_url')}>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
@@ -27,6 +27,7 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 				name="channel"
 				help={t('slack_channel_help')}
 				label={t('field_slack_recipient')}
+				required
 			>
 				<Input
 					onChange={(event): void =>
