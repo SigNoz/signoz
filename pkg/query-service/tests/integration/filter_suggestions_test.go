@@ -11,6 +11,7 @@ import (
 
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -299,13 +300,16 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		Reader:       reader,
 		AppDao:       dao.DB(),
 		FeatureFlags: fm,
+		JWT:          jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
 	router := app.NewRouter()
-	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	//add the jwt middleware
+	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 

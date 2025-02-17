@@ -25,6 +25,7 @@ import (
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -61,6 +62,7 @@ type ServerOptions struct {
 	UseLogsNewSchema           bool
 	UseTraceNewSchema          bool
 	SigNoz                     *signoz.SigNoz
+	Jwt                        *authtypes.JWT
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -193,6 +195,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FluxInterval:                  fluxInterval,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		JWT:                           serverOptions.Jwt,
 	})
 	if err != nil {
 		return nil, err
@@ -247,6 +250,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 
 	r := NewRouter()
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -277,6 +281,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 
 	r := NewRouter()
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -286,8 +291,8 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	// add auth middleware
-	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
-		user, err := auth.GetUserFromRequest(r)
+	getUserFromRequest := func(ctx context.Context) (*model.UserPayload, error) {
+		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err

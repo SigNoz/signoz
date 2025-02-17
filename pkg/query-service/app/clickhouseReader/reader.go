@@ -34,6 +34,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -43,7 +44,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/resource"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/app/traces/tracedetail"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
@@ -1164,23 +1164,23 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	if traceSummary.NumSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
 			zap.Uint64("Count", traceSummary.NumSpans))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":            traceSummary.NumSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
 		}
 		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
 	}
 
-	userEmail, err := auth.GetEmailFromJwt(ctx)
-	if err == nil {
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if ok {
 		data := map[string]interface{}{
 			"traceSize": traceSummary.NumSpans,
 		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
 	}
 
 	var startTime, endTime, durationNano uint64
@@ -1266,13 +1266,13 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
 				"spansRenderLimit": params.SpansRenderLimit,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
 		}
 	} else {
 		for i, item := range searchSpanResponses {
@@ -1306,23 +1306,23 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	if countSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
 			zap.Uint64("Count", countSpans))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":            countSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
 		}
 		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
 	}
 
-	userEmail, err := auth.GetEmailFromJwt(ctx)
-	if err == nil {
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if ok {
 		data := map[string]interface{}{
 			"traceSize": countSpans,
 		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
 	}
 
 	var startTime, endTime, durationNano uint64
@@ -1379,13 +1379,13 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
 				"spansRenderLimit": params.SpansRenderLimit,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
 		}
 	} else {
 		for i, item := range searchSpanResponses {
@@ -1455,7 +1455,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
 	var hasMissingSpans bool
 
-	userEmail , emailErr := auth.GetEmailFromJwt(ctx)
+	claims, claimsPresent := authtypes.ClaimsFromContext(ctx)
 	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
 	if err == nil {
 		startTime = cachedTraceData.StartTime
@@ -1468,8 +1468,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		totalErrorSpans = cachedTraceData.TotalErrorSpans
 		hasMissingSpans = cachedTraceData.HasMissingSpans
 
-		if emailErr == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, userEmail, true, false)
+		if claimsPresent {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, claims.Email, true, false)
 		}
 	}
 
@@ -1485,8 +1485,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		}
 		totalSpans = uint64(len(searchScanResponses))
 
-		if emailErr == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, userEmail, true, false)
+		if claimsPresent {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, claims.Email, true, false)
 		}
 
 		processingBeforeCache := time.Now()
@@ -1531,8 +1531,8 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
-			if endTime == 0 ||  (startTimeUnixNano + jsonItem.DurationNano )  > endTime {
-				endTime =  (startTimeUnixNano + jsonItem.DurationNano )
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1709,12 +1709,12 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 			}
 
 			// metadata calculation
-			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())	
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
 			if startTime == 0 || startTimeUnixNano < startTime {
 				startTime = startTimeUnixNano
 			}
-			if endTime == 0 || ( startTimeUnixNano + jsonItem.DurationNano )  > endTime {
-				endTime =  (startTimeUnixNano + jsonItem.DurationNano )
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1778,7 +1778,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, trace
 
 	trace.Spans = selectedSpansForRequest
 	trace.StartTimestampMillis = startTime / 1000000
-	trace.EndTimestampMillis = endTime / 1000000	
+	trace.EndTimestampMillis = endTime / 1000000
 	return trace, nil
 }
 
@@ -3464,9 +3464,9 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
 	}
 
@@ -3506,9 +3506,9 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
 	}
 
@@ -3598,9 +3598,9 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
 	}
 

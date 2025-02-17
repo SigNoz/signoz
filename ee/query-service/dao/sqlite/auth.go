@@ -14,6 +14,7 @@ import (
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -64,7 +65,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 
 // PrepareSsoRedirect prepares redirect page link after SSO response
 // is successfully parsed (i.e. valid email is available)
-func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError) {
+func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (redirectURL string, apierr basemodel.BaseApiError) {
 
 	userPayload, apierr := m.GetUserByEmail(ctx, email)
 	if !apierr.IsNil() {
@@ -85,7 +86,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		user = &userPayload.User
 	}
 
-	tokenStore, err := baseauth.GenerateJWTForUser(user)
+	tokenStore, err := baseauth.GenerateJWTForUser(user, jwt)
 	if err != nil {
 		zap.L().Error("failed to generate token for SSO login user", zap.Error(err))
 		return "", model.InternalErrorStr("failed to generate token for the user")

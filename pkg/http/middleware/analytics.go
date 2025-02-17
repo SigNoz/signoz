@@ -7,12 +7,10 @@ import (
 	"net/http"
 	"regexp"
 
-	// TODO(remove): Remove auth packages
-	"go.signoz.io/signoz/pkg/query-service/auth"
-
 	"github.com/gorilla/mux"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -30,8 +28,6 @@ func NewAnalytics(logger *zap.Logger) *Analytics {
 
 func (a *Analytics) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := auth.AttachJwtToContext(r.Context(), r)
-		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
@@ -50,9 +46,9 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		}
 
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
+			claims, ok := authtypes.ClaimsFromContext(r.Context())
+			if ok {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
 			}
 		}
 
@@ -138,8 +134,8 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		userEmail, err := auth.GetEmailFromJwt(r.Context())
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(r.Context())
+		if ok {
 			// switch case to set data["screen"] based on the referrer
 			switch {
 			case dashboardMatched:
@@ -154,7 +150,7 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 				data["screen"] = "unknown"
 				return data, true
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, claims.Email, true, false)
 		}
 	}
 	return data, true

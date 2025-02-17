@@ -22,7 +22,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -470,6 +469,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		AppDao:                        dao.DB(),
 		LogsParsingPipelineController: controller,
+		JWT:                           jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -540,7 +540,12 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	}
 
 	respWriter := httptest.NewRecorder()
-	ctx := auth.AttachJwtToContext(req.Context(), req)
+
+	ctx, err := tb.apiHandler.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	if err != nil {
+		tb.t.Fatalf("couldn't get jwt from request: %v", err)
+	}
+
 	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 

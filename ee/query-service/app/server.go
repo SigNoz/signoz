@@ -14,6 +14,7 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	eemiddleware "go.signoz.io/signoz/ee/http/middleware"
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
 	"go.signoz.io/signoz/ee/query-service/auth"
@@ -24,6 +25,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/rules"
 	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
@@ -72,6 +74,7 @@ type ServerOptions struct {
 	GatewayUrl                 string
 	UseLogsNewSchema           bool
 	UseTraceNewSchema          bool
+	Jwt                        *authtypes.JWT
 }
 
 // Server runs HTTP api service
@@ -261,6 +264,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		GatewayUrl:                    serverOptions.GatewayUrl,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		JWT:                           serverOptions.Jwt,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -303,6 +307,8 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -334,8 +340,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 
 	// add auth middleware
-	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		user, err := auth.GetUserFromRequest(r, apiHandler)
+	getUserFromRequest := func(ctx context.Context) (*basemodel.UserPayload, error) {
+		user, err := auth.GetUserFromRequestContext(ctx, apiHandler)
 
 		if err != nil {
 			return nil, err
@@ -349,6 +355,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
