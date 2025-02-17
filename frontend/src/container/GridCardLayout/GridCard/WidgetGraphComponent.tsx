@@ -23,10 +23,14 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
+import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
@@ -78,6 +82,8 @@ function WidgetGraphComponent({
 
 	const tableProcessedDataRef = useRef<RowData[]>([]);
 
+	const navigateToExplorerPages = useNavigateToExplorerPages();
+
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
 	const onToggleModal = useCallback(
@@ -88,6 +94,18 @@ function WidgetGraphComponent({
 	);
 
 	const updateDashboardMutation = useUpdateDashboard();
+
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const onNavigateToExplorerPages = (): void => {
+		navigateToExplorerPages({
+			widget,
+			startTime: minTime,
+			endTime: maxTime,
+		});
+	};
 
 	const onDeleteHandler = (): void => {
 		if (!selectedDashboard) return;
@@ -299,6 +317,7 @@ function WidgetGraphComponent({
 					isFetchingResponse={isFetchingResponse}
 					tableProcessedDataRef={tableProcessedDataRef}
 					setSearchTerm={setSearchTerm}
+					onNavigateToExplorerPages={onNavigateToExplorerPages}
 				/>
 			</div>
 

@@ -6,6 +6,7 @@ import {
 	CopyOutlined,
 	DeleteOutlined,
 	EditFilled,
+	EyeOutlined,
 	FullscreenOutlined,
 	InfoCircleOutlined,
 	MoreOutlined,
@@ -53,6 +54,7 @@ interface IWidgetHeaderProps {
 	isFetchingResponse: boolean;
 	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
 	setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+	onNavigateToExplorerPages?: () => void;
 }
 
 function WidgetHeader({
@@ -70,6 +72,7 @@ function WidgetHeader({
 	isFetchingResponse,
 	tableProcessedDataRef,
 	setSearchTerm,
+	onNavigateToExplorerPages,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
@@ -106,6 +109,8 @@ function WidgetHeader({
 			[MenuItemKeys.Clone]: onClone,
 			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
 			[MenuItemKeys.Download]: onDownloadHandler,
+			[MenuItemKeys.ViewTraces]: onNavigateToExplorerPages,
+			[MenuItemKeys.ViewLogs]: onNavigateToExplorerPages,
 		}),
 		[
 			onView,
@@ -114,6 +119,7 @@ function WidgetHeader({
 			onClone,
 			onCreateAlertsHandler,
 			onDownloadHandler,
+			onNavigateToExplorerPages,
 		],
 	);
 
@@ -179,6 +185,20 @@ function WidgetHeader({
 				icon: <AlertOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
+				disabled: false,
+			},
+			{
+				key: MenuItemKeys.ViewTraces,
+				icon: <EyeOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.ViewTraces],
+				isVisible: headerMenuList?.includes(MenuItemKeys.ViewTraces) || false,
+				disabled: false,
+			},
+			{
+				key: MenuItemKeys.ViewLogs,
+				icon: <EyeOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.ViewLogs],
+				isVisible: headerMenuList?.includes(MenuItemKeys.ViewLogs) || false,
 				disabled: false,
 			},
 		],
@@ -306,6 +326,7 @@ WidgetHeader.defaultProps = {
 	onClone: undefined,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
+	onNavigateToExplorerPages: undefined,
 };
 
 export default WidgetHeader;
