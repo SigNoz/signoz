@@ -5384,53 +5384,51 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
 
-	// Build filter conditions dynamically
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
+	whereClause := ""
+	if conditions != nil {
+		whereClause = "AND " + strings.Join(conditions, " AND ")
+	}
 
-	// Build ordering dynamically
 	orderByClauseFirstQuery := ""
+	firstQueryLimit := req.Limit
+	dataPointsOrder := false
+
 	if len(req.OrderBy) > 0 {
 		orderPartsFirstQuery := []string{}
-
 		for _, order := range req.OrderBy {
 			if order.ColumnName == "datapoints" {
-				// If ordering is on 'datapoints', use 'timeSeries' in the first query
+				dataPointsOrder = true
 				orderPartsFirstQuery = append(orderPartsFirstQuery, fmt.Sprintf("timeSeries %s", order.Order))
+				if req.Limit < 50 {
+					firstQueryLimit = 50
+				}
 			} else {
 				orderPartsFirstQuery = append(orderPartsFirstQuery, fmt.Sprintf("%s %s", order.ColumnName, order.Order))
 			}
 		}
-
 		orderByClauseFirstQuery = "ORDER BY " + strings.Join(orderPartsFirstQuery, ", ")
-	}
-
-	whereClause := strings.Join(conditions, " AND ")
-	if conditions != nil {
-		whereClause = "AND " + whereClause
 	}
 
 	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
 
-	// **First Query: Get List of Metrics from Time Series Table**
-	metricsQuery := fmt.Sprintf(`
-		SELECT 
+	metricsQuery := fmt.Sprintf(
+		`SELECT 
 		    t.metric_name AS metric_name,
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS type,
-		    t.unit,
+		    ANY_VALUE(t.unit),
 		    COUNT(DISTINCT t.fingerprint) AS timeSeries
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
 		%s
-		GROUP BY t.metric_name, t.unit
+		GROUP BY t.metric_name
 		%s
 		LIMIT %d OFFSET %d;`,
-		signozMetricDBName, tsTable, whereClause, orderByClauseFirstQuery, req.Limit, req.Offset)
+		signozMetricDBName, tsTable, whereClause, orderByClauseFirstQuery, firstQueryLimit, req.Offset)
 
 	args = append(args, start, end)
-
-	// Execute first query
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 8)
 	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
 	if err != nil {
@@ -5439,7 +5437,6 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 	defer rows.Close()
 
-	// Process first query results
 	var response metrics_explorer.SummaryListMetricsResponse
 	var metricNames []string
 
@@ -5457,21 +5454,19 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
-	// If no metrics found, return early
 	if len(metricNames) == 0 {
 		return &response, nil
 	}
 
-	// **Second Query: Fetch Sample Data and LastReceived for Retrieved Metrics**
-	metricsPlaceholder := make([]string, len(metricNames))
-	args = []interface{}{start, end}
-	for i, metric := range metricNames {
-		metricsPlaceholder[i] = "?"
-		args = append(args, metric)
+	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
+	if dataPointsOrder {
+		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY s.samples %s", req.OrderBy[0].Order)
+	} else {
+		orderByClauseFirstQuery = ""
 	}
 
-	sampleQuery := fmt.Sprintf(`
-		SELECT 
+	sampleQuery := fmt.Sprintf(
+		`SELECT 
 		    s.samples,
 		    s.metric_name,
 			s.unix_milli AS lastReceived
@@ -5489,16 +5484,16 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		        AND metric_name IN (%s)
 		        GROUP BY fingerprint
 		    )
+		    AND metric_name in (%s)
 		    GROUP BY metric_name
 		) AS s
+		%s
 		LIMIT %d OFFSET %d;`,
 		countExp, signozMetricDBName, sampleTable, signozMetricDBName, tsTable,
-		whereClause, strings.Join(metricsPlaceholder, ", "),
+		whereClause, metricsList, metricsList, orderByClauseFirstQuery,
 		req.Limit, req.Offset)
 
 	args = append(args, start, end)
-
-	// Execute second query
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
 	if err != nil {
 		zap.L().Error("Error executing samples query", zap.Error(err))
@@ -5506,7 +5501,6 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 	defer rows.Close()
 
-	// Process second query results
 	samplesMap := make(map[string]uint64)
 	lastReceivedMap := make(map[string]int64)
 
@@ -5526,14 +5520,22 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
-	// Update response with samples data and lastReceived from samples table
+	var filteredMetrics []metrics_explorer.MetricDetail
 	for i := range response.Metrics {
 		if samples, exists := samplesMap[response.Metrics[i].MetricName]; exists {
 			response.Metrics[i].DataPoints = samples
+			if lastReceived, exists := lastReceivedMap[response.Metrics[i].MetricName]; exists {
+				response.Metrics[i].LastReceived = lastReceived
+			}
+			filteredMetrics = append(filteredMetrics, response.Metrics[i])
 		}
-		if lastReceived, exists := lastReceivedMap[response.Metrics[i].MetricName]; exists {
-			response.Metrics[i].LastReceived = lastReceived
-		}
+	}
+	response.Metrics = filteredMetrics
+
+	if dataPointsOrder {
+		sort.Slice(response.Metrics, func(i, j int) bool {
+			return response.Metrics[i].DataPoints > response.Metrics[j].DataPoints
+		})
 	}
 
 	return &response, nil

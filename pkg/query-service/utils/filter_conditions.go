@@ -106,24 +106,24 @@ func WhichTSTableToUse(start, end int64) (int64, int64, string) {
 	if end-start < sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
 		start = start - (start % (time.Hour.Milliseconds() * 1))
-		tableName = constants.SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME
+		tableName = constants.SIGNOZ_TIMESERIES_v4_TABLENAME
 	} else if end-start < oneDayInMilliseconds {
 		// adjust the start time to nearest 6 hours
 		start = start - (start % (time.Hour.Milliseconds() * 6))
-		tableName = constants.SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME
+		tableName = constants.SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME
 	} else if end-start < oneWeekInMilliseconds {
 		// adjust the start time to nearest 1 day
 		start = start - (start % (time.Hour.Milliseconds() * 24))
-		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
+		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME
 	} else {
 		if constants.UseMetricsPreAggregation() {
 			// adjust the start time to nearest 1 week
 			start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
-			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
+			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_TABLENAME
 		} else {
 			// continue to use the 1 day table
 			start = start - (start % (time.Hour.Milliseconds() * 24))
-			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
+			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME
 		}
 	}
 
