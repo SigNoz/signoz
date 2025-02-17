@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
@@ -180,11 +181,17 @@ func TestNewConfigFromChannels(t *testing.T) {
 
 			routes, err := json.Marshal(c.alertmanagerConfig.Route.Routes)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, tc.expectedRoutes, routes)
+			var actualRoutes []map[string]any
+			err = json.Unmarshal(routes, &actualRoutes)
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, tc.expectedRoutes, actualRoutes)
 
 			receivers, err := json.Marshal(c.alertmanagerConfig.Receivers)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, tc.expectedReceivers, receivers)
+			var actualReceivers []map[string]any
+			err = json.Unmarshal(receivers, &actualReceivers)
+			assert.NoError(t, err)
+			assert.True(t, reflect.DeepEqual(tc.expectedReceivers, actualReceivers))
 		})
 	}
 }
