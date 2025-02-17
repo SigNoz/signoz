@@ -26,12 +26,14 @@ interface MetricSectionProps {
 	title: string;
 	description: string;
 	graphCount: Widgets[];
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }
 
 function MetricSection({
 	title,
 	description,
 	graphCount,
+	checkIfDataExists,
 }: MetricSectionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -50,6 +52,7 @@ function MetricSection({
 					<MetricPageGridGraph
 						key={`graph-${widgetData.id}`}
 						widgetData={widgetData}
+						checkIfDataExists={checkIfDataExists}
 					/>
 				))}
 			</div>
@@ -57,7 +60,15 @@ function MetricSection({
 	);
 }
 
-function MetricColumnGraphs(): JSX.Element {
+MetricSection.defaultProps = {
+	checkIfDataExists: (): void => {},
+};
+
+function MetricColumnGraphs({
+	checkIfDataExists,
+}: {
+	checkIfDataExists: (isDataAvailable: boolean) => void;
+}): JSX.Element {
 	const { t } = useTranslation('messagingQueues');
 
 	const metricsData = [
@@ -106,6 +117,7 @@ function MetricColumnGraphs(): JSX.Element {
 					title={metric.title}
 					description={metric.description}
 					graphCount={metric?.graphCount || []}
+					checkIfDataExists={checkIfDataExists}
 				/>
 			))}
 		</div>

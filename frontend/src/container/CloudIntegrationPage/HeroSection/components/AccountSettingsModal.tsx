@@ -6,7 +6,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	getRegionPreviewText,
 	useAccountSettingsModal,
-} from 'hooks/integrations/aws/useAccountSettingsModal';
+} from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
