@@ -104,8 +104,6 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) GetRelatedMetrics(w http.ResponseWriter, r *http.Request) {
-	bodyBytes, _ := io.ReadAll(r.Body)
-	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	ctx := r.Context()
 	params, apiError := explorer.ParseRelatedMetricsParams(r)
 	if apiError != nil {

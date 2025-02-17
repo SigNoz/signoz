@@ -5621,3 +5621,105 @@ LIMIT %d;
 
 	return &heatmap, nil
 }
+
+func (r *ClickHouseReader) GetNameSimilarityMetrics(ctx context.Context, target string, start, end int64) (map[string]float64, *model.ApiError) {
+	query := fmt.Sprintf(`
+		WITH ? AS target_metric
+		SELECT 
+			metric_name,
+			1 - (levenshteinDistance(target_metric, metric_name) / greatest(length(target_metric), length(metric_name))) AS name_similarity
+		FROM %s.%s
+		WHERE metric_name != target_metric AND unix_milli BETWEEN ? AND ?
+		GROUP BY metric_name
+		ORDER BY name_similarity DESC
+	`, signozMetricDBName, signozTSTableNameV41Week)
+
+	rows, err := r.db.Query(ctx, query, target, start, end)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	result := make(map[string]float64)
+	for rows.Next() {
+		var metric string
+		var sim float64
+		if err := rows.Scan(&metric, &sim); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		result[metric] = sim
+	}
+	return result, nil
+}
+
+func (r *ClickHouseReader) GetAttributeKeyValueScoreForMetrics(ctx context.Context, target string, start, end int64) (map[string]float64, *model.ApiError) {
+	// Query to find similar metrics based on shared label key-value pairs
+	query := fmt.Sprintf(`
+		WITH 
+		target_labels AS (
+			SELECT DISTINCT
+				kv.1 AS label_key,
+				kv.2 AS label_value,
+				uniqExact(kv.2) OVER (PARTITION BY kv.1) AS key_cardinality
+			FROM %s.%s
+			ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
+			WHERE metric_name = ?
+				AND unix_milli BETWEEN ? AND ?
+				AND NOT startsWith(kv.1, '__')
+		),
+		
+		metric_matches AS (
+			SELECT 
+				m.metric_name,
+				count(*) AS matching_pairs,
+				sum(1.0 / (0.2 * log2(1 + tl.key_cardinality))) AS weighted_similarity
+			FROM %s.%s AS m
+			ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
+			INNER JOIN target_labels AS tl 
+				ON kv.1 = tl.label_key 
+				AND kv.2 = tl.label_value
+			WHERE m.metric_name != ?
+				AND m.unix_milli BETWEEN ? AND ?
+			GROUP BY m.metric_name
+		)
+		
+		SELECT 
+			metric_name,
+			weighted_similarity AS similarity_score
+		FROM metric_matches
+		ORDER BY similarity_score DESC`,
+		signozMetricDBName, signozTSTableNameV41Week,
+		signozMetricDBName, signozTSTableNameV41Week,
+	)
+
+	rows, err := r.db.Query(ctx, query, target, start, end, target, start, end)
+	if err != nil {
+		return nil, &model.ApiError{
+			Typ: model.ErrorExec,
+			Err: fmt.Errorf("error querying similar metrics: %w", err),
+		}
+	}
+	defer rows.Close()
+
+	result := make(map[string]float64)
+	for rows.Next() {
+		var metric string
+		var score float64
+		if err := rows.Scan(&metric, &score); err != nil {
+			return nil, &model.ApiError{
+				Typ: model.ErrorExec,
+				Err: fmt.Errorf("error scanning results: %w", err),
+			}
+		}
+		result[metric] = score
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{
+			Typ: model.ErrorExec,
+			Err: fmt.Errorf("error iterating results: %w", err),
+		}
+	}
+
+	return result, nil
+}

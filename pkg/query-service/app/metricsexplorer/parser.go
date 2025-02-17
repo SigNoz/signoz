@@ -55,7 +55,7 @@ func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetric
 }
 
 func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetricsRequest, *model.ApiError) {
-	var relatedMetricParams *metrics_explorer.RelatedMetricsRequest
+	var relatedMetricParams metrics_explorer.RelatedMetricsRequest
 	relatedMetricParams.CurrentMetricName = r.URL.Query().Get("currentMetricName")
 	start, err := strconv.ParseInt(r.URL.Query().Get("start"), 10, 64)
 	if err != nil {
@@ -68,5 +68,5 @@ func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetric
 	relatedMetricParams.Start = start
 	relatedMetricParams.End = end
 
-	return relatedMetricParams, nil
+	return &relatedMetricParams, nil
 }

@@ -135,7 +135,6 @@ type RelatedMetricsResponse struct {
 
 type RelatedMetrics struct {
 	Name             string      `json:"name"`
-	Namespace        string      `json:"namespace"`
 	Dashboards       []Dashboard `json:"dashboards"`
 	Alerts           []Alert     `json:"alerts"`
 	CommonAttributes []string    `json:"common_attributes"`

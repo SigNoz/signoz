@@ -129,6 +129,9 @@ type Reader interface {
 
 	GetMetricsTimeSeriesPercentage(ctx context.Context, request *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError)
 	GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError)
+
+	GetAttributeKeyValueScoreForMetrics(ctx context.Context, target string, start, end int64) (map[string]float64, *model.ApiError)
+	GetNameSimilarityMetrics(ctx context.Context, target string, start, end int64) (map[string]float64, *model.ApiError)
 }
 
 type Querier interface {

@@ -3,6 +3,7 @@ package metricsexplorer
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"time"
 
 	"go.uber.org/zap"
@@ -203,5 +204,89 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 }
 
 func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *metrics_explorer.RelatedMetricsRequest) (*metrics_explorer.RelatedMetricsResponse, *model.ApiError) {
-	return nil, nil
+	var relatedMetricsResponse metrics_explorer.RelatedMetricsResponse
+	nameScores := map[string]float64{}
+	attributeScores := map[string]float64{}
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		nameScores, err = receiver.reader.GetNameSimilarityMetrics(ctx, params.CurrentMetricName, params.Start, params.End)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		attributeScores, err = receiver.reader.GetAttributeKeyValueScoreForMetrics(ctx, params.CurrentMetricName, params.Start, params.End)
+		return err
+	})
+
+	// Wait for both goroutines to finish
+	if err := g.Wait(); err != nil {
+		return nil, &model.ApiError{Typ: "Error", Err: err}
+	}
+	finalScores := make(map[string]float64)
+
+	// Add name similarity scores
+	for metric, score := range nameScores {
+		finalScores[metric] = score * .5 // Weight by x
+	}
+
+	// Add attribute similarity scores
+	for metric, score := range attributeScores {
+		if _, exists := finalScores[metric]; exists {
+			finalScores[metric] += score * .5 // Weight by y
+		} else {
+			finalScores[metric] = score * .5 // If not already present, just add it
+		}
+	}
+
+	// Sort the final scores
+	type metricScore struct {
+		Name  string
+		Score float64
+	}
+
+	var sortedScores []metricScore
+	for name, score := range finalScores {
+		sortedScores = append(sortedScores, metricScore{Name: name, Score: score})
+	}
+
+	sort.Slice(sortedScores, func(i, j int) bool {
+		return sortedScores[i].Score > sortedScores[j].Score // Sort descending
+	})
+
+	// Create a final sorted map
+	finalSortedMap := make(map[string]float64)
+	var metricNames []string
+	for _, item := range sortedScores {
+		finalSortedMap[item.Name] = item.Score
+		metricNames = append(metricNames, item.Name)
+	}
+
+	dashboardsInfo, err := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, metricName := range sortedScores {
+		dashboards := make([]metrics_explorer.Dashboard, 0)
+
+		for _, dashInfo := range dashboardsInfo[metricName.Name] {
+			dashboards = append(dashboards, metrics_explorer.Dashboard{
+				DashboardName: dashInfo["dashboard_title"],
+				DashboardID:   dashInfo["dashboard_id"],
+				WidgetID:      dashInfo["widget_id"],
+				WidgetName:    dashInfo["widget_title"],
+			})
+		}
+
+		relatedMetric := metrics_explorer.RelatedMetrics{
+			Name:       metricName.Name,
+			Dashboards: dashboards,
+		}
+
+		relatedMetricsResponse.RelatedMetrics = append(relatedMetricsResponse.RelatedMetrics, relatedMetric)
+	}
+
+	return &relatedMetricsResponse, nil
+
 }
