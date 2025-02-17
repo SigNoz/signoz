@@ -4,7 +4,7 @@ import './Integrations.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, List, Typography } from 'antd';
-import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
+import { useGetAllIntegrations } from 'hooks/integrations/useGetAllIntegrations';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { IntegrationsProps } from 'types/api/integrations/types';

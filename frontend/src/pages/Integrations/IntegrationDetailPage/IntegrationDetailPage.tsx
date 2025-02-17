@@ -5,8 +5,8 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
-import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
+import { useGetIntegration } from 'hooks/integrations/useGetIntegration';
+import { useGetIntegrationStatus } from 'hooks/integrations/useGetIntegrationStatus';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
 import { isCloudUser } from 'utils/app';
