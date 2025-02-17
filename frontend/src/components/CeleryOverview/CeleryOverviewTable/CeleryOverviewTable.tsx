@@ -15,6 +15,7 @@ import {
 	Typography,
 } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import logEvent from 'api/common/logEvent';
 import {
 	getQueueOverview,
 	QueueOverviewResponse,
@@ -458,6 +459,7 @@ export default function CeleryOverviewTable({
 
 	const handleRowClick = (record: RowData): void => {
 		onRowClick(record);
+		logEvent('MQ Overview Page: Right Panel', { ...record });
 	};
 
 	const getFilteredData = useCallback(
@@ -480,6 +482,22 @@ export default function CeleryOverviewTable({
 		getFilteredData,
 		tableData,
 	]);
+
+	const prevTableDataRef = useRef<string>();
+
+	useEffect(() => {
+		if (tableData.length > 0) {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(`MQ Overview Page: List rendered`, {
+					dataRender: tableData.length,
+				});
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(tableData)]);
 
 	return (
 		<div className="celery-overview-table-container">

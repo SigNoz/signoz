@@ -2,6 +2,7 @@ import './ValueInfo.styles.scss';
 
 import { FileSearchOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Row } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -113,6 +114,9 @@ export default function ValueInfo({
 		return 'red';
 	};
 
+	const mqAnalyticsTitle =
+		'MQ Overview Page: Right drawer navigation to trace page';
+
 	return (
 		<Card className="value-info-card">
 			<Row gutter={16}>
@@ -133,7 +137,15 @@ export default function ValueInfo({
 						icon={<FileSearchOutlined />}
 						className="trace-button"
 						disabled={isLoading}
-						onClick={(): void => navigateToTrace(filters ?? [])}
+						onClick={(): void => {
+							logEvent(mqAnalyticsTitle, {
+								filters,
+								minTime,
+								maxTime,
+								source: 'request rate',
+							});
+							navigateToTrace(filters ?? []);
+						}}
 					>
 						View Traces
 					</Button>
@@ -155,7 +167,13 @@ export default function ValueInfo({
 						icon={<FileSearchOutlined />}
 						className="trace-button"
 						disabled={isLoading}
-						onClick={(): void =>
+						onClick={(): void => {
+							logEvent(mqAnalyticsTitle, {
+								filters,
+								minTime,
+								maxTime,
+								source: 'error rate',
+							});
 							navigateToTrace([
 								...(filters ?? []),
 								{
@@ -171,8 +189,8 @@ export default function ValueInfo({
 									op: '=',
 									value: 'true',
 								},
-							])
-						}
+							]);
+						}}
 					>
 						View Traces
 					</Button>
@@ -194,7 +212,15 @@ export default function ValueInfo({
 						icon={<FileSearchOutlined />}
 						className="trace-button"
 						disabled={isLoading}
-						onClick={(): void => navigateToTrace(filters ?? [])}
+						onClick={(): void => {
+							logEvent(mqAnalyticsTitle, {
+								filters,
+								minTime,
+								maxTime,
+								source: 'average latency',
+							});
+							navigateToTrace(filters ?? []);
+						}}
 					>
 						View Traces
 					</Button>
