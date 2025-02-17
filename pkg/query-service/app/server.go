@@ -91,7 +91,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	var err error
-	if err := dao.InitDao(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := dao.InitDao(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
 		return nil, err
 	}
 

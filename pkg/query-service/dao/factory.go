@@ -2,14 +2,15 @@ package dao
 
 import (
 	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/dao/sqlite"
 )
 
 var db ModelDao
 
-func InitDao(inputDB *sqlx.DB) error {
+func InitDao(inputDB *sqlx.DB, bundb *bun.DB) error {
 	var err error
-	db, err = sqlite.InitDB(inputDB)
+	db, err = sqlite.InitDB(inputDB, bundb)
 	if err != nil {
 		return err
 	}

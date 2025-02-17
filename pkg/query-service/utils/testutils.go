@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/factory/providertest"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
@@ -17,7 +18,7 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
 )
 
-func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
+func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string, bundb *bun.DB) {
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
 		t.Fatalf("could not create temp file for test db: %v", err)
@@ -59,14 +60,14 @@ func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string) {
 
 	testDB = sqlstore.SQLxDB()
 
-	return testDB, testDBFilePath
+	return testDB, testDBFilePath, sqlstore.BunDB()
 }
 
 func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
-	testDB, _ := NewTestSqliteDB(t)
+	testDB, _, bundb := NewTestSqliteDB(t)
 
 	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao(testDB)
+	dao.InitDao(testDB, bundb)
 	dashboards.InitDB(testDB)
 
 	return testDB

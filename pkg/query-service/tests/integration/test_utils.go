@@ -176,7 +176,7 @@ func createTestUser() (*model.User, *model.ApiError) {
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgId:    org.Id,
-			GroupId:  group.Id,
+			GroupId:  group.ID,
 		},
 		true,
 	)

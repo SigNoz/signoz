@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	basedao "go.signoz.io/signoz/pkg/query-service/dao"
 	basedsql "go.signoz.io/signoz/pkg/query-service/dao/sqlite"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -29,8 +30,8 @@ func (m *modelDao) checkFeature(key string) error {
 }
 
 // InitDB creates and extends base model DB repository
-func InitDB(inputDB *sqlx.DB) (*modelDao, error) {
-	dao, err := basedsql.InitDB(inputDB)
+func InitDB(inputDB *sqlx.DB, bundb *bun.DB) (*modelDao, error) {
+	dao, err := basedsql.InitDB(inputDB, bundb)
 	if err != nil {
 		return nil, err
 	}

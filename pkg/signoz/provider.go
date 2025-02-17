@@ -7,6 +7,7 @@ import (
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlmigration"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/sqlstore/postgressqlstore"
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
 	"go.signoz.io/signoz/pkg/telemetrystore"
 	"go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore"
@@ -46,7 +47,7 @@ func NewProviderConfig() ProviderConfig {
 		),
 		SQLStoreProviderFactories: factory.MustNewNamedMap(
 			sqlitesqlstore.NewFactory(),
-			// postgressqlstore.NewFactory(),
+			postgressqlstore.NewFactory(),
 		),
 		SQLMigrationProviderFactories: factory.MustNewNamedMap(
 			sqlmigration.NewAddDataMigrationsFactory(),
