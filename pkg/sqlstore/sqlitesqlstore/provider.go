@@ -3,7 +3,6 @@ package sqlitesqlstore
 import (
 	"context"
 	"database/sql"
-	"log/slog"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -11,7 +10,6 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstorehook"
 )
 
 type provider struct {
@@ -45,9 +43,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}
 	settings.Logger().InfoContext(ctx, "connected to sqlite", "path", config.Sqlite.Path)
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
-
-	bundb := bun.NewDB(sqldb, sqlitedialect.New())
-	bundb.AddQueryHook(sqlstorehook.NewLogging(settings.Logger(), slog.LevelDebug))
 
 	return &provider{
 		settings: settings,
