@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/rs/cors"
@@ -517,50 +516,6 @@ func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}
 		}
 	}
 	return data, true
-}
-
-func getActiveLogs(path string, r *http.Request) {
-	// if path == "/api/v1/dashboards/{uuid}" {
-	// 	telemetry.GetInstance().AddActiveMetricsUser()
-	// }
-	if path == "/api/v1/logs" {
-		hasFilters := len(r.URL.Query().Get("q"))
-		if hasFilters > 0 {
-			telemetry.GetInstance().AddActiveLogsUser()
-		}
-
-	}
-
-}
-
-func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := baseauth.AttachJwtToContext(r.Context(), r)
-		r = r.WithContext(ctx)
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-
-		queryRangeData, metadataExists := extractQueryRangeData(path, r)
-		getActiveLogs(path, r)
-
-		lrw := NewLoggingResponseWriter(w)
-		next.ServeHTTP(lrw, r)
-
-		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-		if metadataExists {
-			for key, value := range queryRangeData {
-				data[key] = value
-			}
-		}
-
-		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := baseauth.GetEmailFromJwt(r.Context())
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
-			}
-		}
-
-	})
 }
 
 // initListeners initialises listeners of the server
