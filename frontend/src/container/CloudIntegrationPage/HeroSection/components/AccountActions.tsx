@@ -3,7 +3,7 @@ import './AccountActions.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
-import { useAwsAccounts } from 'hooks/integrations/aws/useAwsAccounts';
+import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
