@@ -5310,19 +5310,17 @@ func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Conte
 	return dataPoints, uint64(lastRecievedTimestamp), nil // Convert to uint64 before returning
 }
 
-func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError) {
+func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError) {
 	query := fmt.Sprintf(`SELECT 
-     uniq(arrayJoin(arrayMap(x -> x.2, arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels))))) AS cardinality,
     count(DISTINCT fingerprint) AS timeSeriesCount
 FROM %s.%s
 WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
 	var timeSeriesCount uint64
-	var cardinality uint64
-	err := r.db.QueryRow(ctx, query, metricName).Scan(&timeSeriesCount, &cardinality)
+	err := r.db.QueryRow(ctx, query, metricName).Scan(&timeSeriesCount)
 	if err != nil {
-		return 0, 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	return timeSeriesCount, cardinality, nil
+	return timeSeriesCount, nil
 }
 
 func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError) {

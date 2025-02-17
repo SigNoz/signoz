@@ -96,7 +96,6 @@ type MetricDetailsDTO struct {
 	Description      string      `json:"description"`
 	Type             string      `json:"type"`
 	Unit             string      `json:"unit"`
-	Cardinality      uint64      `json:"cardinality"`
 	DataPoints       uint64      `json:"dataPoints"`
 	TimeSeriesTotal  uint64      `json:"timeSeriesTotal"`
 	TimeSeriesActive uint64      `json:"timeSeriesActive"`
