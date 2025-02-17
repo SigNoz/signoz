@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -25,7 +26,7 @@ import {
 	createFiltersFromData,
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
-import { useNavigateToTraces } from '../useNavigateToTraces';
+import { useNavigateToExplorer } from '../useNavigateToExplorer';
 import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
 
 interface TabData {
@@ -145,15 +146,15 @@ function CeleryTaskLatencyGraph({
 		[handleSetTimeStamp],
 	);
 
-	const navigateToTraces = useNavigateToTraces();
+	const navigateToExplorer = useNavigateToExplorer();
 
 	const goToTraces = useCallback(() => {
 		const { start, end } = getStartAndEndTimesInMilliseconds(selectedTimeStamp);
 		const filters = createFiltersFromData({
 			[entityData?.entity as string]: entityData?.value,
 		});
-		navigateToTraces(filters, start, end, true);
-	}, [entityData, navigateToTraces, selectedTimeStamp]);
+		navigateToExplorer(filters, DataSource.TRACES, start, end, true);
+	}, [entityData, navigateToExplorer, selectedTimeStamp]);
 
 	return (
 		<Card

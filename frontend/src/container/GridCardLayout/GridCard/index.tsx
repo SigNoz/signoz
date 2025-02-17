@@ -248,12 +248,26 @@ function GridCardGraph({
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
-	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE ||
-		widget.panelTypes === PANEL_TYPES.LIST ||
-		widget.panelTypes === PANEL_TYPES.PIE
-			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
-			: headerMenuList;
+	const currentDataSource = updatedQuery.builder.queryData[0].dataSource;
+
+	const menuList = ((): MenuItemKeys[] => {
+		// First filter out CreateAlerts for specific panel types
+		let filteredMenu =
+			widget.panelTypes === PANEL_TYPES.TABLE ||
+			widget.panelTypes === PANEL_TYPES.LIST ||
+			widget.panelTypes === PANEL_TYPES.PIE
+				? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
+				: headerMenuList;
+
+		// Then add view option based on data source
+		if (currentDataSource === DataSource.LOGS) {
+			filteredMenu = [...filteredMenu, MenuItemKeys.ViewLogs];
+		} else if (currentDataSource === DataSource.TRACES) {
+			filteredMenu = [...filteredMenu, MenuItemKeys.ViewTraces];
+		}
+
+		return filteredMenu;
+	})();
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
