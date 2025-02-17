@@ -5,7 +5,7 @@ import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSecti
 import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
 import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/types';
 import dayjs from 'dayjs';
-import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
+import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo, useState } from 'react';
 
