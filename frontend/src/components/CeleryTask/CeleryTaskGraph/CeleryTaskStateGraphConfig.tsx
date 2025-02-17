@@ -2,6 +2,7 @@
 import './CeleryTaskGraph.style.scss';
 
 import { Col, Row } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Dispatch, SetStateAction, useMemo } from 'react';
@@ -44,11 +45,15 @@ function CeleryTaskStateGraphConfig({
 		{ label: 'Successful', key: CeleryTaskState.Successful },
 	];
 
+	const urlQuery = useUrlQuery();
+
 	const handleTabClick = (key: CeleryTaskState): void => {
 		setBarState(key as CeleryTaskState);
+		logEvent('MQ Celery: State graph tab clicked', {
+			taskName: urlQuery.get(QueryParams.taskName),
+			graphState: key,
+		});
 	};
-
-	const urlQuery = useUrlQuery();
 
 	const selectedFilters = useMemo(
 		() =>
