@@ -57,3 +57,18 @@ func ParseSummaryListMetricsParams(r *http.Request) (*metrics_explorer.SummaryLi
 
 	return listMetricsParams, nil
 }
+
+func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetricsRequest, *model.ApiError) {
+	var treeMapMetricParams *metrics_explorer.TreeMapMetricsRequest
+
+	// parse the request body
+	if err := json.NewDecoder(r.Body).Decode(&treeMapMetricParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+
+	if treeMapMetricParams.Limit == 0 {
+		treeMapMetricParams.Limit = 10
+	}
+
+	return treeMapMetricParams, nil
+}
