@@ -11,11 +11,6 @@ interface ClickToShowButtonProps {
 	isButtonEnabled?: boolean;
 }
 
-interface ButtonPosition {
-	left: number;
-	top: number;
-}
-
 export const useGraphClickToShowButton = ({
 	graphRef,
 	onClickHandler,
@@ -37,30 +32,6 @@ export const useGraphClickToShowButton = ({
 				element.style.display = 'none';
 			}
 		});
-	};
-
-	const calculateButtonPosition = (
-		mouseX: number,
-		mouseY: number,
-		buttonElement: HTMLButtonElement,
-		graphBounds: DOMRect,
-	): ButtonPosition => {
-		let left = mouseX - buttonElement.getBoundingClientRect().width - 10;
-		let top = mouseY - 10;
-		const buttonBounds = buttonElement.getBoundingClientRect();
-
-		// Adjust position to keep button within graph boundaries
-		if (left < 0) {
-			left = mouseX + 10;
-		}
-		if (top + buttonBounds.height > graphBounds.height) {
-			top = mouseY - buttonBounds.height - 10;
-		}
-
-		return {
-			left: Math.max(10, left),
-			top: Math.max(10, top),
-		};
 	};
 
 	const cleanup = useCallback((): void => {
@@ -89,24 +60,33 @@ export const useGraphClickToShowButton = ({
 		newButton.textContent = buttonText;
 		newButton.className = buttonClassName;
 		newButton.style.position = 'absolute';
-		newButton.style.visibility = 'hidden';
 		newButton.style.zIndex = '9999';
 
 		const graphBounds = graphRef.current?.getBoundingClientRect();
 		if (!graphBounds) return;
 
+		// Use simpler positioning like the original implementation
+		const left = mouseX;
+		const top = mouseY;
+
+		// Add the button to the graph container
 		graphRef.current?.appendChild(newButton);
 
-		const { left, top } = calculateButtonPosition(
-			mouseX,
-			mouseY,
-			newButton,
-			graphBounds,
+		// Apply position after adding to DOM
+		const buttonBounds = newButton.getBoundingClientRect();
+
+		// Ensure button stays within graph boundaries
+		const finalLeft = Math.min(
+			Math.max(0, left),
+			graphBounds.width - buttonBounds.width,
+		);
+		const finalTop = Math.min(
+			Math.max(0, top),
+			graphBounds.height - buttonBounds.height,
 		);
 
-		newButton.style.left = `${left}px`;
-		newButton.style.top = `${top}px`;
-		newButton.style.visibility = 'visible';
+		newButton.style.left = `${finalLeft}px`;
+		newButton.style.top = `${finalTop}px`;
 
 		newButton.onclick = (e: MouseEvent): void => {
 			e.stopPropagation();
