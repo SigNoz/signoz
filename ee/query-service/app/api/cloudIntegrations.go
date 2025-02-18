@@ -183,7 +183,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	if apiErr != nil {
 		return nil, basemodel.WrapApiError(apiErr, "couldn't get viewer group for creating integration user")
 	}
-	newUser.GroupId = viewerGroup.Id
+	newUser.GroupId = viewerGroup.ID
 
 	passwordHash, err := auth.PasswordHash(uuid.NewString())
 	if err != nil {

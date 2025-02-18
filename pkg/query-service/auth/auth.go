@@ -421,7 +421,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 		Password:          hash,
 		CreatedAt:         time.Now().Unix(),
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
+		GroupId:           group.ID,
 		OrgId:             org.Id,
 	}
 
@@ -499,7 +499,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		Password:          hash,
 		CreatedAt:         time.Now().Unix(),
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
+		GroupId:           group.ID,
 		OrgId:             invite.OrgId,
 	}
 

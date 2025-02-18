@@ -7,10 +7,12 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"sync"
 
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
@@ -43,12 +45,12 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, bundb *bun.DB, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
 
-	repo := NewLicenseRepo(db)
+	repo := NewLicenseRepo(db, bundb)
 	m := &Manager{
 		repo: &repo,
 	}
@@ -282,15 +284,41 @@ func (lm *Manager) GetFeatureFlags() (basemodel.FeatureSet, error) {
 }
 
 func (lm *Manager) InitFeatures(features basemodel.FeatureSet) error {
-	return lm.repo.InitFeatures(features)
+	featureStatus := make([]types.FeatureStatus, len(features))
+	for i, f := range features {
+		featureStatus[i] = types.FeatureStatus{
+			Name:       f.Name,
+			Active:     f.Active,
+			Usage:      int(f.Usage),
+			UsageLimit: int(f.UsageLimit),
+			Route:      f.Route,
+		}
+	}
+	return lm.repo.InitFeatures(featureStatus)
 }
 
 func (lm *Manager) UpdateFeatureFlag(feature basemodel.Feature) error {
-	return lm.repo.UpdateFeature(feature)
+	return lm.repo.UpdateFeature(types.FeatureStatus{
+		Name:       feature.Name,
+		Active:     feature.Active,
+		Usage:      int(feature.Usage),
+		UsageLimit: int(feature.UsageLimit),
+		Route:      feature.Route,
+	})
 }
 
 func (lm *Manager) GetFeatureFlag(key string) (basemodel.Feature, error) {
-	return lm.repo.GetFeature(key)
+	featureStatus, err := lm.repo.GetFeature(key)
+	if err != nil {
+		return basemodel.Feature{}, err
+	}
+	return basemodel.Feature{
+		Name:       featureStatus.Name,
+		Active:     featureStatus.Active,
+		Usage:      int64(featureStatus.Usage),
+		UsageLimit: int64(featureStatus.UsageLimit),
+		Route:      featureStatus.Route,
+	}, nil
 }
 
 // GetRepo return the license repo

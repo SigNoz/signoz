@@ -30,11 +30,11 @@ type Site struct {
 type FeatureStatus struct {
 	bun.BaseModel `bun:"table:feature_status"`
 
-	Name       string `bun:"name,pk,type:text"`
-	Active     bool   `bun:"active"`
-	Usage      int    `bun:"usage,default:0"`
-	UsageLimit int    `bun:"usage_limit,default:0"`
-	Route      string `bun:"route,type:text"`
+	Name       string `bun:"name,pk,type:text" json:"name"`
+	Active     bool   `bun:"active" json:"active"`
+	Usage      int    `bun:"usage,default:0" json:"usage"`
+	UsageLimit int    `bun:"usage_limit,default:0" json:"usage_limit"`
+	Route      string `bun:"route,type:text" json:"route"`
 }
 
 type LicenseV3 struct {

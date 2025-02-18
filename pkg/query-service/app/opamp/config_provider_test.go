@@ -166,7 +166,7 @@ type testbed struct {
 
 func newTestbed(t *testing.T) *testbed {
 	testDB := utils.NewQueryServiceDBForTests(t)
-	_, err := model.InitDB(testDB)
+	_, err := model.InitDB(testDB.SQLxDB())
 	if err != nil {
 		t.Fatalf("could not init opamp model: %v", err)
 	}
