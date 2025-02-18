@@ -2,12 +2,12 @@ package auth
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type Group struct {
@@ -48,15 +48,19 @@ func InitAuthCache(ctx context.Context) error {
 	return nil
 }
 
-func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
-	accessJwt, err := ExtractJwtFromRequest(r)
-	if err != nil {
-		return nil, err
+func GetUserFromReqContext(ctx context.Context) (*model.UserPayload, error) {
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("no claims found in context")
 	}
 
-	user, err := validateUser(accessJwt)
-	if err != nil {
-		return nil, err
+	user := &model.UserPayload{
+		User: model.User{
+			Id:      claims.UserID,
+			GroupId: claims.GroupID,
+			Email:   claims.Email,
+			OrgId:   claims.OrgID,
+		},
 	}
 	return user, nil
 }

@@ -17,6 +17,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -98,6 +99,17 @@ func main() {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
 
+	// Read the jwt secret key
+	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
+
+	if len(jwtSecret) == 0 {
+		zap.L().Warn("No JWT secret key is specified.")
+	} else {
+		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
+
 	serverOptions := &app.ServerOptions{
 		Config:                     config,
 		HTTPHostPort:               constants.HTTPHostPort,
@@ -114,15 +126,7 @@ func main() {
 		UseLogsNewSchema:           useLogsNewSchema,
 		UseTraceNewSchema:          useTraceNewSchema,
 		SigNoz:                     signoz,
-	}
-
-	// Read the jwt secret key
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
-
-	if len(auth.JwtSecret) == 0 {
-		zap.L().Warn("No JWT secret key is specified.")
-	} else {
-		zap.L().Info("JWT secret key set successfully.")
+		Jwt:                        jwt,
 	}
 
 	server, err := app.NewServer(serverOptions)

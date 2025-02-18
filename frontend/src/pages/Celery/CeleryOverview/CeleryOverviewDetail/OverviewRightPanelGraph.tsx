@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Card } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
 import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
 import { QueryParams } from 'constants/query';
@@ -9,7 +10,7 @@ import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -123,6 +124,26 @@ export default function OverviewRightPanelGraph({
 		},
 	});
 
+	const [requestRateStatus, setRequestRateStatus] = useState<boolean | null>(
+		null,
+	);
+	const [errorRateStatus, setErrorRateStatus] = useState<boolean | null>(null);
+	const [avgLatencyStatus, setAvgLatencyStatus] = useState<boolean | null>(null);
+
+	useEffect(() => {
+		if (
+			requestRateStatus !== null &&
+			errorRateStatus !== null &&
+			avgLatencyStatus !== null
+		) {
+			logEvent('MQ Overview Page: Right Drawer - graphs', {
+				requestRate: requestRateStatus,
+				errorRate: errorRateStatus,
+				avgLatency: avgLatencyStatus,
+			});
+		}
+	}, [requestRateStatus, errorRateStatus, avgLatencyStatus]);
+
 	return (
 		<Card className="overview-right-panel-graph-card">
 			<div className="request-rate-card">
@@ -130,7 +151,9 @@ export default function OverviewRightPanelGraph({
 					type="default"
 					size="small"
 					id="Celery_request_rate_button"
-					onClick={(): void => goToTraces(requestRateWidget)}
+					onClick={(): void => {
+						goToTraces(requestRateWidget);
+					}}
 				>
 					View Traces
 				</Button>
@@ -140,6 +163,9 @@ export default function OverviewRightPanelGraph({
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_request_rate')}
 					customSeries={getCustomSeries}
+					dataAvailable={(isDataAvailable: boolean): void => {
+						setRequestRateStatus(isDataAvailable);
+					}}
 				/>
 			</div>
 			<div className="error-rate-card">
@@ -157,6 +183,9 @@ export default function OverviewRightPanelGraph({
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_error_rate')}
 					customSeries={getCustomSeries}
+					dataAvailable={(isDataAvailable: boolean): void => {
+						setErrorRateStatus(isDataAvailable);
+					}}
 				/>
 			</div>
 			<div className="avg-latency-card">
@@ -173,6 +202,9 @@ export default function OverviewRightPanelGraph({
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_avg_latency')}
+					dataAvailable={(isDataAvailable: boolean): void => {
+						setAvgLatencyStatus(isDataAvailable);
+					}}
 				/>
 			</div>
 		</Card>

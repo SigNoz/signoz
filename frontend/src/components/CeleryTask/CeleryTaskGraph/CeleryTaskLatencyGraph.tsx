@@ -1,6 +1,7 @@
 import './CeleryTaskGraph.style.scss';
 
 import { Col, Row } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
@@ -40,8 +41,10 @@ export enum CeleryTaskGraphState {
 
 function CeleryTaskLatencyGraph({
 	queryEnabled,
+	checkIfDataExists,
 }: {
 	queryEnabled: boolean;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -61,6 +64,10 @@ function CeleryTaskLatencyGraph({
 
 	const handleTabClick = (key: CeleryTaskGraphState): void => {
 		setGraphState(key as CeleryTaskGraphState);
+		logEvent('MQ Celery: Task latency graph tab clicked', {
+			taskName: urlQuery.get(QueryParams.taskName),
+			graphState: key,
+		});
 	};
 
 	const onDragSelect = useCallback(
@@ -195,6 +202,7 @@ function CeleryTaskLatencyGraph({
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p99_latency')}
 							isQueryEnabled={queryEnabled}
+							dataAvailable={checkIfDataExists}
 						/>
 					</>
 				)}
@@ -215,6 +223,7 @@ function CeleryTaskLatencyGraph({
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p95_latency')}
 							isQueryEnabled={queryEnabled}
+							dataAvailable={checkIfDataExists}
 						/>
 					</>
 				)}
@@ -234,6 +243,7 @@ function CeleryTaskLatencyGraph({
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p90_latency')}
 							isQueryEnabled={queryEnabled}
+							dataAvailable={checkIfDataExists}
 						/>
 					</>
 				)}
@@ -243,3 +253,7 @@ function CeleryTaskLatencyGraph({
 }
 
 export default CeleryTaskLatencyGraph;
+
+CeleryTaskLatencyGraph.defaultProps = {
+	checkIfDataExists: undefined,
+};

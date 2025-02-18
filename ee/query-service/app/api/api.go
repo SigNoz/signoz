@@ -20,6 +20,7 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type APIHandlerOptions struct {
@@ -41,6 +42,7 @@ type APIHandlerOptions struct {
 	FluxInterval      time.Duration
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	JWT               *authtypes.JWT
 }
 
 type APIHandler struct {

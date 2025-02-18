@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -45,14 +45,9 @@ func (r *Repo) insertPipeline(
 		))
 	}
 
-	jwt, ok := auth.ExtractJwtFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return nil, model.UnauthorizedError(err)
-	}
-
-	claims, err := auth.ParseJWT(jwt)
-	if err != nil {
-		return nil, model.UnauthorizedError(err)
+		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}
 
 	insertRow := &Pipeline{
@@ -66,7 +61,7 @@ func (r *Repo) insertPipeline(
 		Config:      postable.Config,
 		RawConfig:   string(rawConfig),
 		Creator: Creator{
-			CreatedBy: claims["email"].(string),
+			CreatedBy: claims.Email,
 			CreatedAt: time.Now(),
 		},
 	}
