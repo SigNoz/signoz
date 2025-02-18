@@ -5778,9 +5778,6 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 		return result, nil
 	}
 
-	// Build a comma-separated quoted list of candidate metrics.
-	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
-
 	// --- STEP 1: Get the extracted labels for the target metric ---
 	extractedLabelsQuery := fmt.Sprintf(`
 		SELECT 
@@ -5793,11 +5790,8 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 		  AND NOT startsWith(kv.1, '__')
 	`, signozMetricDBName, signozTSTableNameV41Week)
 
-	type LabelPair struct {
-		Key   string
-		Value string
-	}
-	var targetLabels []LabelPair
+	var targetKeys []string
+	var targetValues []string
 	rows, err = r.db.Query(ctx, extractedLabelsQuery, target, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -5808,26 +5802,30 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 		if err := rows.Scan(&key, &value); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		targetLabels = append(targetLabels, LabelPair{Key: key, Value: value})
+		targetKeys = append(targetKeys, key)
+		targetValues = append(targetValues, value)
 	}
-	// Create a set for quick lookup (using "key|value" as composite key)
-	targetLabelSet := make(map[string]struct{})
-	for _, lab := range targetLabels {
-		composite := lab.Key + "|" + lab.Value
-		targetLabelSet[composite] = struct{}{}
-	}
+
+	targetKeysList := "'" + strings.Join(targetKeys, "', '") + "'"
+	targetValuesList := "'" + strings.Join(targetValues, "', '") + "'"
 
 	// --- STEP 2: Get labels for candidate metrics ---
 	candidateLabelsQuery := fmt.Sprintf(`
-		SELECT 
-			metric_name,
-			kv.1 AS label_key,
-			kv.2 AS label_value
-		FROM %s.%s
-		ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
-		WHERE metric_name IN (%s)
-		  AND unix_milli BETWEEN ? AND ?
-	`, signozMetricDBName, signozTSTableNameV41Week, metricsList)
+		WITH 
+    arrayDistinct([%s]) AS filter_keys,     
+    arrayDistinct([%s]) AS filter_values
+SELECT 
+    metric_name,
+    SUM(arrayExists(kv -> 
+        has(filter_keys, kv.1) AND has(filter_values, kv.2), 
+        JSONExtractKeysAndValues(labels, 'String')
+    ))::UInt64 AS total_matches
+FROM %s.%s
+WHERE rand() %% 100 < 10
+AND unix_milli BETWEEN ? AND ?
+GROUP BY metric_name
+ORDER BY total_matches DESC
+	`, targetKeysList, targetValuesList, signozMetricDBName, signozTSTableNameV41Week)
 
 	rows, err = r.db.Query(ctx, candidateLabelsQuery, start, end)
 	if err != nil {
@@ -5835,65 +5833,27 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 	}
 	defer rows.Close()
 
-	// Group the candidate labels by metric name.
-	candidateLabelsMap := make(map[string][]LabelPair)
+	attributeMap := make(map[string]uint64)
 	for rows.Next() {
-		var metric, key, value string
-		if err := rows.Scan(&metric, &key, &value); err != nil {
+		var metric string
+		var matches uint64
+		if err := rows.Scan(&metric, &matches); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		candidateLabelsMap[metric] = append(candidateLabelsMap[metric], LabelPair{Key: key, Value: value})
-	}
-
-	// --- STEP 3: Compute matching pairs and common attributes for each candidate ---
-	// We'll also determine the min and max matching counts.
-	minMatches := int(^uint(0) >> 1) // initialize with max int value
-	maxMatches := 0
-
-	type matchData struct {
-		Count  int
-		Common []string
-	}
-	candidateMatches := make(map[string]matchData)
-
-	for metric, labels := range candidateLabelsMap {
-		count := 0
-		commonSet := make(map[string]struct{})
-		for _, lab := range labels {
-			composite := lab.Key + "|" + lab.Value
-			if _, exists := targetLabelSet[composite]; exists {
-				count++
-				commonSet[lab.Key] = struct{}{}
-			}
-		}
-		if count < minMatches {
-			minMatches = count
-		}
-		if count > maxMatches {
-			maxMatches = count
-		}
-		var common []string
-		for k := range commonSet {
-			common = append(common, k)
-		}
-		candidateMatches[metric] = matchData{
-			Count:  count,
-			Common: common,
+		if _, ok := result[metric]; ok {
+			attributeMap[metric] = matches
 		}
 	}
+
+	normalizeMap := utils.NormalizeMap(attributeMap)
 
 	// --- STEP 4: Compute similarity scores and update result map ---
-	for metric, data := range candidateMatches {
-		var similarity float64
-		if maxMatches == minMatches {
-			similarity = 1.0
-		} else {
-			similarity = float64(data.Count-minMatches) / float64(maxMatches-minMatches)
-		}
-		if entry, exists := result[metric]; exists {
-			entry.AttributeSimilarity = similarity
-			entry.CommonAttributes = data.Common
-			result[metric] = entry
+	for metric, data := range normalizeMap {
+		if _, ok := result[metric]; ok {
+			result[metric] = metrics_explorer.RelatedMetricsScore{
+				NameSimilarity:      result[metric].NameSimilarity,
+				AttributeSimilarity: data,
+			}
 		}
 	}
 

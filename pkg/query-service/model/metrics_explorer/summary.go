@@ -125,7 +125,6 @@ var AvailableColumnFilterMap = map[string]bool{
 type RelatedMetricsScore struct {
 	AttributeSimilarity float64
 	NameSimilarity      float64
-	CommonAttributes    []string
 }
 
 type RelatedMetricsRequest struct {
@@ -139,8 +138,7 @@ type RelatedMetricsResponse struct {
 }
 
 type RelatedMetrics struct {
-	Name             string      `json:"name"`
-	Dashboards       []Dashboard `json:"dashboards"`
-	Alerts           []Alert     `json:"alerts"`
-	CommonAttributes []string    `json:"common_attributes"`
+	Name       string      `json:"name"`
+	Dashboards []Dashboard `json:"dashboards"`
+	Alerts     []Alert     `json:"alerts"`
 }

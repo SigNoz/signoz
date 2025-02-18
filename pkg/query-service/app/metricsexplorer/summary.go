@@ -263,9 +263,6 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 			Name:       ms.Name,
 			Dashboards: dashboardsList,
 		}
-		if _, ok := relatedMetricsMap[ms.Name]; ok {
-			relatedMetric.CommonAttributes = relatedMetricsMap[ms.Name].CommonAttributes
-		}
 
 		relatedMetricsResponse.RelatedMetrics = append(relatedMetricsResponse.RelatedMetrics, relatedMetric)
 	}
