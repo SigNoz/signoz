@@ -1143,7 +1143,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1291,7 +1291,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -5680,6 +5680,29 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 	}
 	return response, nil
 }
+func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
+	var rows driver.Rows
+	var response []string
+	query := fmt.Sprintf("SELECT DISTINCT type FROM %s.%s WHERE unit ILIKE $1 AND unit IS NOT NULL ORDER BY type", signozMetricDBName, signozTSTableNameV41Day)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+
+	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	if err != nil {
+		zap.L().Error("Error while executing query", zap.Error(err))
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+
+	var attributeKey string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		response = append(response, attributeKey)
+	}
+	return response, nil
+}
 
 func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError) {
 	query := fmt.Sprintf("SELECT COUNT(*) AS data_points, MAX(unix_milli) AS last_received_time FROM %s.%s WHERE metric_name = ?", signozMetricDBName, signozSampleTableName)
@@ -5694,7 +5717,7 @@ func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Conte
 
 func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError) {
 	query := fmt.Sprintf(`SELECT 
-    count(DISTINCT fingerprint) AS timeSeriesCount
+    uniq(fingerprint) AS timeSeriesCount
 FROM %s.%s
 WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
 	var timeSeriesCount uint64
@@ -5753,7 +5776,7 @@ ORDER BY valueCount DESC;
 
 func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
 	milli := time.Now().Add(-duration).UnixMilli()
-	query := fmt.Sprintf("SELECT count(DISTINCT fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV4, metricName)
+	query := fmt.Sprintf("SELECT uniq(fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV4, metricName)
 	var timeSeries uint64
 	// Using QueryRow instead of Select since we're only expecting a single value
 	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
@@ -5772,28 +5795,23 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
 
-	orderByClauseFirstQuery := ""
 	firstQueryLimit := req.Limit
 	dataPointsOrder := false
-
-	if len(req.OrderBy) > 0 {
-		orderPartsFirstQuery := []string{}
-		for _, order := range req.OrderBy {
-			if order.ColumnName == "datapoints" {
-				dataPointsOrder = true
-				orderPartsFirstQuery = append(orderPartsFirstQuery, fmt.Sprintf("timeSeries %s", order.Order))
-				if req.Limit < 50 {
-					firstQueryLimit = 50
-				}
-			} else {
-				orderPartsFirstQuery = append(orderPartsFirstQuery, fmt.Sprintf("%s %s", order.ColumnName, order.Order))
-			}
+	var orderByClauseFirstQuery string
+	if req.OrderBy.ColumnName == "samples" {
+		dataPointsOrder = true
+		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY timeSeries %s", req.OrderBy.Order)
+		if req.Limit < 50 {
+			firstQueryLimit = 50
 		}
-		orderByClauseFirstQuery = "ORDER BY " + strings.Join(orderPartsFirstQuery, ", ")
+	} else if req.OrderBy.ColumnName == "metric_type" {
+		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY type %s", req.OrderBy.Order)
+	} else {
+		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY %s %s", req.OrderBy.ColumnName, req.OrderBy.Order)
 	}
 
-	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
-	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
+	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
 
 	metricsQuery := fmt.Sprintf(
 		`SELECT 
@@ -5801,7 +5819,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS type,
 		    ANY_VALUE(t.unit),
-		    COUNT(DISTINCT t.fingerprint) AS timeSeries
+		    uniq(t.fingerprint) AS timeseries
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
 		%s
@@ -5811,7 +5829,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		signozMetricDBName, tsTable, whereClause, orderByClauseFirstQuery, firstQueryLimit, req.Offset)
 
 	args = append(args, start, end)
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 8)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
@@ -5842,7 +5860,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
 	if dataPointsOrder {
-		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY s.samples %s", req.OrderBy[0].Order)
+		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY s.samples %s", req.OrderBy.Order)
 	} else {
 		orderByClauseFirstQuery = ""
 	}
@@ -5871,7 +5889,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		) AS s
 		%s
 		LIMIT %d OFFSET %d;`,
-		countExp, signozMetricDBName, sampleTable, signozMetricDBName, tsTable,
+		countExp, signozMetricDBName, sampleTable, signozMetricDBName, localTsTable,
 		whereClause, metricsList, metricsList, orderByClauseFirstQuery,
 		req.Limit, req.Offset)
 
@@ -5932,7 +5950,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	if len(conditions) > 0 {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
-	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.EndD)
 
 	// Construct the query without backticks
 	query := fmt.Sprintf(`
@@ -5943,8 +5961,8 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 		FROM (
 			SELECT 
 					metric_name,
-					uniqExact(fingerprint) AS total_value,
-					(SELECT uniqExact(fingerprint) 
+					uniq(fingerprint) AS total_value,
+					(SELECT uniq(fingerprint) 
 					 FROM %s.%s 
 					 WHERE unix_milli BETWEEN ? AND ?) AS total_time_series
 				FROM %s.%s
@@ -5966,7 +5984,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 		start, end, // For main query
 	)
 
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 8)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query, args...)
 	if err != nil {
 		zap.L().Error("Error executing cardinality query", zap.Error(err), zap.String("query", query))
@@ -6003,15 +6021,15 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	}
 
 	// Determine time range and tables to use
-	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
-	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
+	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
 
 	// Construct the metrics query
 	queryLimit := 50 + req.Limit
 	metricsQuery := fmt.Sprintf(
 		`SELECT 
 		    t.metric_name AS metric_name,
-		    COUNT(DISTINCT t.fingerprint) AS timeSeries
+		    uniq(t.fingerprint) AS timeSeries
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
 		%s
@@ -6022,7 +6040,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	)
 
 	args = append(args, start, end)
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 8)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 
 	// Execute the metrics query
 	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
@@ -6090,7 +6108,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		LIMIT %d;`,
 		countExp, signozMetricDBName, sampleTable, // Total samples
 		countExp, signozMetricDBName, sampleTable, // Inner select samples
-		signozMetricDBName, tsTable, whereClause, metricsList, // Subquery conditions
+		signozMetricDBName, localTsTable, whereClause, metricsList, // Subquery conditions
 		metricsList, req.Limit, // Final conditions
 	)
 

@@ -64,7 +64,7 @@ func (h *provider) clickHouseSettings(ctx context.Context, query string, args ..
 	}
 
 	if ctx.Value("clickhouse_max_threads") != nil {
-		settings["max_threads"] = ctx.Value("clickhouse_max_threads")
+		settings["max_threads"] = ctx.Value("clickhouse_max_threads").(int)
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))

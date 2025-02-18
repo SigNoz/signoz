@@ -5,27 +5,27 @@ import (
 )
 
 type SummaryListMetricsRequest struct {
-	Offset    int          `json:"offset"`
-	Limit     int          `json:"limit"`
-	OrderBy   []v3.OrderBy `json:"orderBy"`
-	StartDate int64        `json:"startDate"`
-	EndDate   int64        `json:"endDate"`
-	Filters   v3.FilterSet `json:"filters"`
+	Offset  int          `json:"offset"`
+	Limit   int          `json:"limit"`
+	OrderBy v3.OrderBy   `json:"orderBy"`
+	Start   int64        `json:"start"`
+	EndD    int64        `json:"end"`
+	Filters v3.FilterSet `json:"filters"`
 }
 
 type TreeMapType string
 
 const (
-	CardinalityTreeMap TreeMapType = "cardinality"
-	DataPointsTreeMap  TreeMapType = "datapoints"
+	TimeSeriesTeeMap TreeMapType = "timeseries"
+	SamplesTreeMap   TreeMapType = "samples"
 )
 
 type TreeMapMetricsRequest struct {
-	Limit     int          `json:"limit"`
-	Treemap   TreeMapType  `json:"treemap"`
-	StartDate int64        `json:"startDate"`
-	EndDate   int64        `json:"endDate"`
-	Filters   v3.FilterSet `json:"filters"`
+	Limit   int          `json:"limit"`
+	Treemap TreeMapType  `json:"treemap"`
+	Start   int64        `json:"start"`
+	EndD    int64        `json:"end"`
+	Filters v3.FilterSet `json:"filters"`
 }
 
 type MetricDetail struct {
@@ -45,8 +45,8 @@ type TreeMapResponseItem struct {
 }
 
 type TreeMap struct {
-	Cardinality []TreeMapResponseItem `json:"cardinality"`
-	DataPoints  []TreeMapResponseItem `json:"dataPoints"`
+	TimeSeries []TreeMapResponseItem `json:"timeseries"`
+	Samples    []TreeMapResponseItem `json:"samples"`
 }
 
 type SummaryListMetricsResponse struct {
@@ -86,7 +86,7 @@ type MetricDetailsDTO struct {
 	Description      string      `json:"description"`
 	Type             string      `json:"type"`
 	Unit             string      `json:"unit"`
-	DataPoints       uint64      `json:"dataPoints"`
+	Samples          uint64      `json:"samples"`
 	TimeSeriesTotal  uint64      `json:"timeSeriesTotal"`
 	TimeSeriesActive uint64      `json:"timeSeriesActive"`
 	LastReceived     uint64      `json:"lastReceived"`
@@ -119,5 +119,6 @@ type FilterKeyResponse struct {
 
 var AvailableColumnFilterMap = map[string]bool{
 	"metric_name": true,
-	"unit":        true,
+	"metric_unit": true,
+	"metric_type": true,
 }
