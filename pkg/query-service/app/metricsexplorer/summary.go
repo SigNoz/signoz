@@ -109,18 +109,17 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 
 	// Call 3: GetTotalTimeSeriesForMetricName
 	g.Go(func() error {
-		totalSeries, cardinality, err := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
+		totalSeries, err := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
 		if err != nil {
 			return err
 		}
 		metricDetailsDTO.TimeSeriesTotal = totalSeries
-		metricDetailsDTO.Cardinality = cardinality
 		return nil
 	})
 
 	// Call 4: GetActiveTimeSeriesForMetricName
 	g.Go(func() error {
-		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 30*time.Minute)
+		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 120*time.Minute)
 		if err != nil {
 			return err
 		}
