@@ -256,10 +256,9 @@ function WidgetGraphComponent({
 
 	const createFilterFromData = (
 		data: Record<string, unknown>,
-	): TagFilterItem[] => {
-		const uuidv4 = v4();
-		return Object.entries(data ?? {}).map(([key, value]) => ({
-			id: uuidv4,
+	): TagFilterItem[] =>
+		Object.entries(data ?? {}).map(([key, value]) => ({
+			id: v4(),
 			key: {
 				key,
 				dataType: DataTypes.String,
@@ -271,7 +270,6 @@ function WidgetGraphComponent({
 			op: '=',
 			value: value?.toString() ?? '',
 		}));
-	};
 
 	const handleGraphClick = useGraphClickToShowButton({
 		graphRef,
