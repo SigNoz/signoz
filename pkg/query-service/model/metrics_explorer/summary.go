@@ -33,8 +33,8 @@ type MetricDetail struct {
 	Description  string `json:"description"`
 	Type         string `json:"type"`
 	Unit         string `json:"unit"`
-	TimeSeries   uint64 `json:"cardinality"`
-	DataPoints   uint64 `json:"dataPoints"`
+	TimeSeries   uint64 `json:"timeseries"`
+	Samples      uint64 `json:"samples"`
 	LastReceived int64  `json:"lastReceived"`
 }
 
