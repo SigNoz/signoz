@@ -7,6 +7,7 @@ import logEvent from 'api/common/logEvent';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -37,6 +38,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
@@ -61,7 +63,6 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
@@ -97,7 +98,7 @@ function LogsExplorerViews({
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
@@ -485,7 +486,7 @@ function LogsExplorerViews({
 						widgetId,
 					});
 
-					history.push(dashboardEditView);
+					safeNavigate(dashboardEditView);
 				},
 				onError: handleAxisError,
 			});
@@ -494,7 +495,7 @@ function LogsExplorerViews({
 			getUpdatedQueryForExport,
 			exportDefaultQuery,
 			options.selectColumns,
-			history,
+			safeNavigate,
 			notifications,
 			panelType,
 			updateDashboard,
@@ -679,10 +680,10 @@ function LogsExplorerViews({
 					typeof log.timestamp === 'string'
 						? dayjs(log.timestamp)
 								.tz(timezone.value)
-								.format('YYYY-MM-DD HH:mm:ss.SSS')
+								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
 						: dayjs(log.timestamp / 1e6)
 								.tz(timezone.value)
-								.format('YYYY-MM-DD HH:mm:ss.SSS');
+								.format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
 
 				return FlatLogData({
 					timestamp,

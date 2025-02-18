@@ -42,6 +42,8 @@ type HostListResponse struct {
 	Total                    int              `json:"total"`
 	SentAnyHostMetricsData   bool             `json:"sentAnyHostMetricsData"`
 	IsSendingK8SAgentMetrics bool             `json:"isSendingK8SAgentMetrics"`
+	ClusterNames             []string         `json:"clusterNames"`
+	NodeNames                []string         `json:"nodeNames"`
 }
 
 func (r *HostListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -114,6 +116,47 @@ type PodListResponse struct {
 	Total   int             `json:"total"`
 }
 
+func (r *PodListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].PodCPU > r.Records[j].PodCPU
+		})
+	case "cpu_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].PodCPURequest > r.Records[j].PodCPURequest
+		})
+	case "cpu_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].PodCPULimit > r.Records[j].PodCPULimit
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].PodMemory > r.Records[j].PodMemory
+		})
+	case "memory_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].PodMemoryRequest > r.Records[j].PodMemoryRequest
+		})
+	case "memory_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].PodMemoryLimit > r.Records[j].PodMemoryLimit
+		})
+	case "restarts":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].RestartCount > r.Records[j].RestartCount
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
+}
+
 type PodListRecord struct {
 	PodUID           string            `json:"podUID,omitempty"`
 	PodCPU           float64           `json:"podCPU"`
@@ -151,6 +194,35 @@ type NodeListResponse struct {
 	Total   int              `json:"total"`
 }
 
+func (r *NodeListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].NodeCPUUsage > r.Records[j].NodeCPUUsage
+		})
+	case "cpu_allocatable":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].NodeCPUAllocatable > r.Records[j].NodeCPUAllocatable
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].NodeMemoryUsage > r.Records[j].NodeMemoryUsage
+		})
+	case "memory_allocatable":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].NodeMemoryAllocatable > r.Records[j].NodeMemoryAllocatable
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
+}
+
 type NodeCountByCondition struct {
 	Ready    int `json:"ready"`
 	NotReady int `json:"notReady"`
@@ -183,6 +255,31 @@ type NamespaceListResponse struct {
 	Total   int                   `json:"total"`
 }
 
+func (r *NamespaceListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUUsage > r.Records[j].CPUUsage
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryUsage > r.Records[j].MemoryUsage
+		})
+	case "pod_phase":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CountByPhase.Pending > r.Records[j].CountByPhase.Pending
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
+}
+
 type NamespaceListRecord struct {
 	NamespaceName string            `json:"namespaceName"`
 	CPUUsage      float64           `json:"cpuUsage"`
@@ -205,6 +302,35 @@ type ClusterListResponse struct {
 	Type    ResponseType        `json:"type"`
 	Records []ClusterListRecord `json:"records"`
 	Total   int                 `json:"total"`
+}
+
+func (r *ClusterListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUUsage > r.Records[j].CPUUsage
+		})
+	case "cpu_allocatable":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUAllocatable > r.Records[j].CPUAllocatable
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryUsage > r.Records[j].MemoryUsage
+		})
+	case "memory_allocatable":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryAllocatable > r.Records[j].MemoryAllocatable
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
 }
 
 type ClusterListRecord struct {
@@ -230,6 +356,55 @@ type DeploymentListResponse struct {
 	Type    ResponseType           `json:"type"`
 	Records []DeploymentListRecord `json:"records"`
 	Total   int                    `json:"total"`
+}
+
+func (r *DeploymentListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUUsage > r.Records[j].CPUUsage
+		})
+	case "cpu_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPURequest > r.Records[j].CPURequest
+		})
+	case "cpu_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPULimit > r.Records[j].CPULimit
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryUsage > r.Records[j].MemoryUsage
+		})
+	case "memory_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryRequest > r.Records[j].MemoryRequest
+		})
+	case "memory_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryLimit > r.Records[j].MemoryLimit
+		})
+	case "desired_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].DesiredPods > r.Records[j].DesiredPods
+		})
+	case "available_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].AvailablePods > r.Records[j].AvailablePods
+		})
+	case "restarts":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Restarts > r.Records[j].Restarts
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
 }
 
 type DeploymentListRecord struct {
@@ -262,6 +437,55 @@ type DaemonSetListResponse struct {
 	Total   int                   `json:"total"`
 }
 
+func (r *DaemonSetListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUUsage > r.Records[j].CPUUsage
+		})
+	case "cpu_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPURequest > r.Records[j].CPURequest
+		})
+	case "cpu_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPULimit > r.Records[j].CPULimit
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryUsage > r.Records[j].MemoryUsage
+		})
+	case "memory_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryRequest > r.Records[j].MemoryRequest
+		})
+	case "memory_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryLimit > r.Records[j].MemoryLimit
+		})
+	case "restarts":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Restarts > r.Records[j].Restarts
+		})
+	case "desired_nodes":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].DesiredNodes > r.Records[j].DesiredNodes
+		})
+	case "available_nodes":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].AvailableNodes > r.Records[j].AvailableNodes
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
+}
+
 type DaemonSetListRecord struct {
 	DaemonSetName  string            `json:"daemonSetName"`
 	CPUUsage       float64           `json:"cpuUsage"`
@@ -292,6 +516,55 @@ type StatefulSetListResponse struct {
 	Total   int                     `json:"total"`
 }
 
+func (r *StatefulSetListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUUsage > r.Records[j].CPUUsage
+		})
+	case "cpu_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPURequest > r.Records[j].CPURequest
+		})
+	case "cpu_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPULimit > r.Records[j].CPULimit
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryUsage > r.Records[j].MemoryUsage
+		})
+	case "memory_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryRequest > r.Records[j].MemoryRequest
+		})
+	case "memory_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryLimit > r.Records[j].MemoryLimit
+		})
+	case "restarts":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Restarts > r.Records[j].Restarts
+		})
+	case "desired_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].DesiredPods > r.Records[j].DesiredPods
+		})
+	case "available_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].AvailablePods > r.Records[j].AvailablePods
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
+}
+
 type StatefulSetListRecord struct {
 	StatefulSetName string            `json:"statefulSetName"`
 	CPUUsage        float64           `json:"cpuUsage"`
@@ -320,6 +593,63 @@ type JobListResponse struct {
 	Type    ResponseType    `json:"type"`
 	Records []JobListRecord `json:"records"`
 	Total   int             `json:"total"`
+}
+
+func (r *JobListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "cpu":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPUUsage > r.Records[j].CPUUsage
+		})
+	case "cpu_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPURequest > r.Records[j].CPURequest
+		})
+	case "cpu_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].CPULimit > r.Records[j].CPULimit
+		})
+	case "memory":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryUsage > r.Records[j].MemoryUsage
+		})
+	case "memory_request":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryRequest > r.Records[j].MemoryRequest
+		})
+	case "memory_limit":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].MemoryLimit > r.Records[j].MemoryLimit
+		})
+	case "restarts":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].Restarts > r.Records[j].Restarts
+		})
+	case "desired_successful_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].DesiredSuccessfulPods > r.Records[j].DesiredSuccessfulPods
+		})
+	case "active_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].ActivePods > r.Records[j].ActivePods
+		})
+	case "failed_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].FailedPods > r.Records[j].FailedPods
+		})
+	case "successful_pods":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].SuccessfulPods > r.Records[j].SuccessfulPods
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
 }
 
 type JobListRecord struct {
@@ -354,6 +684,43 @@ type VolumeListResponse struct {
 	Total   int                `json:"total"`
 }
 
+func (r *VolumeListResponse) SortBy(orderBy *v3.OrderBy) {
+	switch orderBy.ColumnName {
+	case "available":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].VolumeAvailable > r.Records[j].VolumeAvailable
+		})
+	case "capacity":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].VolumeCapacity > r.Records[j].VolumeCapacity
+		})
+	case "usage":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].VolumeUsage > r.Records[j].VolumeUsage
+		})
+	case "inodes":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].VolumeInodes > r.Records[j].VolumeInodes
+		})
+	case "inodes_free":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].VolumeInodesFree > r.Records[j].VolumeInodesFree
+		})
+	case "inodes_used":
+		sort.Slice(r.Records, func(i, j int) bool {
+			return r.Records[i].VolumeInodesUsed > r.Records[j].VolumeInodesUsed
+		})
+	}
+
+	// the default is descending
+	if orderBy.Order == v3.DirectionAsc {
+		// reverse the list
+		for i, j := 0, len(r.Records)-1; i < j; i, j = i+1, j-1 {
+			r.Records[i], r.Records[j] = r.Records[j], r.Records[i]
+		}
+	}
+}
+
 type VolumeListRecord struct {
 	PersistentVolumeClaimName string            `json:"persistentVolumeClaimName"`
 	VolumeAvailable           float64           `json:"volumeAvailable"`
@@ -363,4 +730,27 @@ type VolumeListRecord struct {
 	VolumeInodesUsed          float64           `json:"volumeInodesUsed"`
 	VolumeUsage               float64           `json:"volumeUsage"`
 	Meta                      map[string]string `json:"meta"`
+}
+
+type PodOnboardingStatus struct {
+	ClusterName        string `json:"clusterName"`
+	NodeName           string `json:"nodeName"`
+	NamespaceName      string `json:"namespaceName"`
+	PodName            string `json:"podName"`
+	HasClusterName     bool   `json:"hasClusterName"`
+	HasNodeName        bool   `json:"hasNodeName"`
+	HasNamespaceName   bool   `json:"hasNamespaceName"`
+	HasDeploymentName  bool   `json:"hasDeploymentName"`
+	HasStatefulsetName bool   `json:"hasStatefulsetName"`
+	HasDaemonsetName   bool   `json:"hasDaemonsetName"`
+	HasCronjobName     bool   `json:"hasCronjobName"`
+	HasJobName         bool   `json:"hasJobName"`
+}
+
+type OnboardingStatus struct {
+	DidSendPodMetrics           bool                  `json:"didSendPodMetrics"`
+	DidSendNodeMetrics          bool                  `json:"didSendNodeMetrics"`
+	DidSendClusterMetrics       bool                  `json:"didSendClusterMetrics"`
+	IsSendingOptionalPodMetrics bool                  `json:"isSendingOptionalPodMetrics"`
+	IsSendingRequiredMetadata   []PodOnboardingStatus `json:"isSendingRequiredMetadata"`
 }

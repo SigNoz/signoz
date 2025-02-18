@@ -59,8 +59,15 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, params *metric
 		}
 		response.FilterValues = filterValues
 		return &response, nil
-	case "unit":
+	case "metric_unit":
 		attributes, err := receiver.reader.GetAllMetricFilterUnits(ctx, params)
+		if err != nil {
+			return nil, err
+		}
+		response.FilterValues = attributes
+		return &response, nil
+	case "metric_type":
+		attributes, err := receiver.reader.GetAllMetricFilterTypes(ctx, params)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +109,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		if err != nil {
 			return err
 		}
-		metricDetailsDTO.DataPoints = dataPoints
+		metricDetailsDTO.Samples = dataPoints
 		metricDetailsDTO.LastReceived = lastReceived
 		return nil
 	})
@@ -183,19 +190,19 @@ func (receiver *SummaryService) ListMetricsWithSummary(ctx context.Context, para
 func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *metrics_explorer.TreeMapMetricsRequest) (*metrics_explorer.TreeMap, *model.ApiError) {
 	var response metrics_explorer.TreeMap
 	switch params.Treemap {
-	case metrics_explorer.CardinalityTreeMap:
+	case metrics_explorer.TimeSeriesTeeMap:
 		cardinality, apiError := receiver.reader.GetMetricsTimeSeriesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		response.Cardinality = *cardinality
+		response.TimeSeries = *cardinality
 		return &response, nil
-	case metrics_explorer.DataPointsTreeMap:
+	case metrics_explorer.SamplesTreeMap:
 		dataPoints, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		response.DataPoints = *dataPoints
+		response.Samples = *dataPoints
 		return &response, nil
 	default:
 		return nil, nil

@@ -5,7 +5,9 @@ import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ShowButton from 'container/LogsContextList/ShowButton';
+import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -109,6 +111,7 @@ function ContextLogRenderer({
 				data={logTorender}
 				linesPerRow={1}
 				fontSize={options.fontSize}
+				selectedFields={convertKeysToColumnFields(defaultLogsSelectedColumns)}
 			/>
 		),
 		[log.id, options.fontSize],

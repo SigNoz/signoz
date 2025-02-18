@@ -1,3 +1,4 @@
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 import React from 'react';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
@@ -10,7 +11,7 @@ function CreatedAtComponent({ record }: { record: Record }): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	return (
 		<ColumnDataStyle>
-			{formatTimezoneAdjustedTimestamp(record, 'MMMM DD, YYYY hh:mm A (UTC Z)')}
+			{formatTimezoneAdjustedTimestamp(record, DATE_TIME_FORMATS.UTC_MONTH_FULL)}
 		</ColumnDataStyle>
 	);
 }

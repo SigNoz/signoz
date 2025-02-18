@@ -2,6 +2,7 @@ import './TimezonePicker.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -126,7 +127,6 @@ function TimezonePicker({
 	setIsOpen,
 	isOpenedFromFooter,
 }: TimezonePickerProps): JSX.Element {
-	console.log({ isOpenedFromFooter });
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
@@ -157,6 +157,12 @@ function TimezonePicker({
 			updateTimezone(timezone);
 			handleCloseTimezonePicker();
 			setIsOpen(false);
+			logEvent('DateTimePicker: New Timezone Selected', {
+				timezone: {
+					name: timezone.name,
+					offset: timezone.offset,
+				},
+			});
 		},
 		[handleCloseTimezonePicker, setIsOpen, updateTimezone],
 	);

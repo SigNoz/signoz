@@ -6,11 +6,9 @@ import { Button, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import SettingsDrawer from 'container/NewDashboard/DashboardDescription/SettingsDrawer';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -19,9 +17,10 @@ export default function DashboardEmptyState(): JSX.Element {
 		selectedDashboard,
 		isDashboardLocked,
 		handleToggleDashboardSlider,
+		setSelectedRowWidgetId,
 	} = useDashboard();
 
-	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	let permissions: ComponentTypes[] = ['add_panel'];
 
 	if (isDashboardLocked) {
@@ -31,11 +30,12 @@ export default function DashboardEmptyState(): JSX.Element {
 	const userRole: ROLES | null =
 		selectedDashboard?.created_by === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
-			: role;
+			: user.role;
 
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onEmptyWidgetHandler = useCallback(() => {
+		setSelectedRowWidgetId(null);
 		handleToggleDashboardSlider(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
 			dashboardId: selectedDashboard?.uuid,

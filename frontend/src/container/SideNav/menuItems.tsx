@@ -82,6 +82,13 @@ const menuItems: SidebarItem[] = [
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
 	},
+	// TODO - Enable this when the metrics explorer feature is read for release
+	// {
+	// 	key: ROUTES.METRICS_EXPLORER,
+	// 	label: 'Metrics',
+	// 	icon: <BarChart2 size={16} />,
+	// 	isNew: true,
+	// },
 	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',
@@ -94,7 +101,7 @@ const menuItems: SidebarItem[] = [
 		icon: <LayoutGrid size={16} />,
 	},
 	{
-		key: ROUTES.MESSAGING_QUEUES,
+		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
 	},

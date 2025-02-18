@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/factory/servicetest"
 	"go.uber.org/zap"
 )
 
 func TestRegistryWith2HttpServers(t *testing.T) {
-	http1, err := newHttpService("http1")
+	http1, err := servicetest.NewHttpService("http1")
 	require.NoError(t, err)
 
-	http2, err := newHttpService("http2")
+	http2, err := servicetest.NewHttpService("http2")
 	require.NoError(t, err)
 
 	registry, err := New(zap.NewNop(), http1, http2)
@@ -34,10 +35,10 @@ func TestRegistryWith2HttpServers(t *testing.T) {
 }
 
 func TestRegistryWith2HttpServersWithoutWait(t *testing.T) {
-	http1, err := newHttpService("http1")
+	http1, err := servicetest.NewHttpService("http1")
 	require.NoError(t, err)
 
-	http2, err := newHttpService("http2")
+	http2, err := servicetest.NewHttpService("http2")
 	require.NoError(t, err)
 
 	registry, err := New(zap.NewNop(), http1, http2)

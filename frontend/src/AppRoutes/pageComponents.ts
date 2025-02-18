@@ -43,7 +43,10 @@ export const TraceFilter = Loadable(
 );
 
 export const TraceDetail = Loadable(
-	() => import(/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetail'),
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
+		),
 );
 
 export const UsageExplorerPage = Loadable(
@@ -145,6 +148,11 @@ export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
 
+export const CustomDomainSettings = Loadable(
+	() =>
+		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
+);
+
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
@@ -180,7 +188,7 @@ export const PasswordReset = Loadable(
 export const SomethingWentWrong = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
+			/* webpackChunkName: "ErrorBoundaryFallback" */ 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback'
 		),
 );
 
@@ -224,7 +232,7 @@ export const InstalledIntegrations = Loadable(
 		),
 );
 
-export const MessagingQueues = Loadable(
+export const MessagingQueuesMainPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
 );
@@ -241,4 +249,23 @@ export const InfrastructureMonitoring = Loadable(
 		import(
 			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
 		),
+);
+
+export const CeleryTask = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryTask" */ 'pages/Celery/CeleryTask/CeleryTask'
+		),
+);
+
+export const CeleryOverview = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "CeleryOverview" */ 'pages/Celery/CeleryOverview/CeleryOverview'
+		),
+);
+
+export const MetricsExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "MetricsExplorer" */ 'pages/MetricsExplorer'),
 );

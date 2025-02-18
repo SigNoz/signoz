@@ -1,3 +1,4 @@
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
@@ -16,7 +17,7 @@ export const getFormattedDate = (epochTimestamp: number): string => {
 	const date = dayjs.unix(epochTimestamp);
 
 	// Format the date as "18 Nov 2013"
-	return date.format('DD MMM YYYY');
+	return date.format(DATE_TIME_FORMATS.MONTH_DATE_SHORT);
 };
 
 export const getFormattedDateWithMinutes = (epochTimestamp: number): string => {
@@ -24,7 +25,7 @@ export const getFormattedDateWithMinutes = (epochTimestamp: number): string => {
 	const date = dayjs.unix(epochTimestamp);
 
 	// Format the date as "18 Nov 2013"
-	return date.format('DD MMM YYYY HH:mm');
+	return date.format(DATE_TIME_FORMATS.MONTH_DATETIME_SHORT);
 };
 
 export const getRemainingDays = (billingEndDate: number): number => {
@@ -132,4 +133,22 @@ export const epochToTimeString = (epochMs: number): string => {
 		hour12: false,
 	};
 	return date.toLocaleTimeString('en-US', options);
+};
+
+/**
+ * Converts nanoseconds to milliseconds
+ * @param timestamp - The timestamp to convert
+ * @returns The timestamp in milliseconds
+ */
+export const normalizeTimeToMs = (timestamp: number | string): number => {
+	let ts = timestamp;
+	if (typeof timestamp === 'string') {
+		ts = Math.trunc(parseInt(timestamp, 10));
+	}
+	ts = Number(ts);
+
+	// Check if timestamp is in nanoseconds (19+ digits)
+	const isNanoSeconds = ts.toString().length >= 19;
+
+	return isNanoSeconds ? Math.floor(ts / 1_000_000) : ts;
 };

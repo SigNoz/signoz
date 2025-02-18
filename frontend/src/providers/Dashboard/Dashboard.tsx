@@ -9,14 +9,15 @@ import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useAxiosError from 'hooks/useAxiosError';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
+import { useAppContext } from 'providers/App/App';
 import {
 	createContext,
 	PropsWithChildren,
@@ -36,7 +37,6 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
@@ -69,6 +69,11 @@ const DashboardContext = createContext<IDashboardContext>({
 	updateLocalStorageDashboardVariables: () => {},
 	variablesToGetUpdated: [],
 	setVariablesToGetUpdated: () => {},
+	dashboardQueryRangeCalled: false,
+	setDashboardQueryRangeCalled: () => {},
+	selectedRowWidgetId: '',
+	setSelectedRowWidgetId: () => {},
+	isDashboardFetching: false,
 });
 
 interface Props {
@@ -79,11 +84,21 @@ interface Props {
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
+
+	const [selectedRowWidgetId, setSelectedRowWidgetId] = useState<string | null>(
+		null,
+	);
+
+	const [
+		dashboardQueryRangeCalled,
+		setDashboardQueryRangeCalled,
+	] = useState<boolean>(false);
 
 	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
@@ -131,7 +146,7 @@ export function DashboardProvider({
 		params.set('order', sortOrder.order as string);
 		params.set('page', sortOrder.pagination || '1');
 		params.set('search', sortOrder.search || '');
-		history.replace({ search: params.toString() });
+		safeNavigate({ search: params.toString() });
 	}
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -157,7 +172,7 @@ export function DashboardProvider({
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
 
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn } = useAppContext();
 
 	const dashboardId =
 		(isDashboardPage
@@ -178,6 +193,8 @@ export function DashboardProvider({
 
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
+
+	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
 
 	const mergeDBWithLocalStorage = (
 		data: Dashboard,
@@ -243,10 +260,16 @@ export function DashboardProvider({
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
-			queryFn: () =>
-				getDashboard({
-					uuid: dashboardId,
-				}),
+			queryFn: async () => {
+				setIsDashboardFetching(true);
+				try {
+					return await getDashboard({
+						uuid: dashboardId,
+					});
+				} finally {
+					setIsDashboardFetching(false);
+				}
+			},
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
 				const updatedDashboardData = transformDashboardVariables(data);
@@ -407,6 +430,11 @@ export function DashboardProvider({
 			updateLocalStorageDashboardVariables,
 			variablesToGetUpdated,
 			setVariablesToGetUpdated,
+			dashboardQueryRangeCalled,
+			setDashboardQueryRangeCalled,
+			selectedRowWidgetId,
+			setSelectedRowWidgetId,
+			isDashboardFetching,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -424,6 +452,11 @@ export function DashboardProvider({
 			currentDashboard,
 			variablesToGetUpdated,
 			setVariablesToGetUpdated,
+			dashboardQueryRangeCalled,
+			setDashboardQueryRangeCalled,
+			selectedRowWidgetId,
+			setSelectedRowWidgetId,
+			isDashboardFetching,
 		],
 	);
 

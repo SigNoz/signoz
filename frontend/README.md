@@ -6,7 +6,7 @@
 
 **Building image**
 
-``docker-compose up`
+``docker compose up`
 / This will also run
 
 or
@@ -19,7 +19,7 @@ docker tag signoz/frontend:latest 7296823551/signoz:latest
 ```
 
 ```
-docker-compose up
+docker compose up
 ```
 
 ## Without Docker

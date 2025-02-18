@@ -1,5 +1,6 @@
 import './GridCardLayout.styles.scss';
 
+import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
@@ -14,8 +15,8 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import {
@@ -26,17 +27,16 @@ import {
 	LockKeyhole,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -45,6 +45,7 @@ import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
+import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
 interface GraphLayoutProps {
@@ -54,6 +55,7 @@ interface GraphLayoutProps {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { handle } = props;
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
 		layouts,
@@ -62,6 +64,10 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setPanelMap,
 		setSelectedDashboard,
 		isDashboardLocked,
+		dashboardQueryRangeCalled,
+		setDashboardQueryRangeCalled,
+		setSelectedRowWidgetId,
+		isDashboardFetching,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -69,9 +75,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const { widgets, variables } = data || {};
 
-	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { user } = useAppContext();
 
 	const isDarkMode = useIsDarkMode();
 
@@ -111,7 +115,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const userRole: ROLES | null =
 		selectedDashboard?.created_by === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
-			: role;
+			: user.role;
 
 	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
 		permissions,
@@ -120,12 +124,31 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const [deleteWidget, editWidget] = useComponentPermission(
 		['delete_widget', 'edit_widget'],
-		role,
+		user.role,
 	);
 
 	useEffect(() => {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
+
+	useEffect(() => {
+		setDashboardQueryRangeCalled(false);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			// Send Sentry event if query_range is not called within expected timeframe (2 mins) when there are widgets
+			if (!dashboardQueryRangeCalled && data?.widgets?.length) {
+				Sentry.captureEvent({
+					message: `Dashboard query range not called within expected timeframe even when there are ${data?.widgets?.length} widgets`,
+					level: 'warning',
+				});
+			}
+		}, 120000);
+
+		return (): void => clearTimeout(timeoutId);
+	}, [dashboardQueryRangeCalled, data?.widgets?.length]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -154,14 +177,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			onSuccess: (updatedDashboard) => {
+				setSelectedRowWidgetId(null);
 				if (updatedDashboard.payload) {
 					if (updatedDashboard.payload.data.layout)
 						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
 					setSelectedDashboard(updatedDashboard.payload);
 					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				}
-
-				featureResponse.refetch();
 			},
 			onError: () => {
 				notifications.error({
@@ -173,7 +195,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const widgetActions = !isDashboardLocked
 		? [...ViewMenuAction, ...EditMenuAction]
-		: [...ViewMenuAction];
+		: [...ViewMenuAction, MenuItemKeys.CreateAlerts];
 
 	const handleLayoutChange = (layout: Layout[]): void => {
 		const filterLayout = removeUndefinedValuesFromLayout(layout);
@@ -194,13 +216,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, pathname, urlQuery],
+		[dispatch, pathname, safeNavigate, urlQuery],
 	);
 
 	useEffect(() => {
@@ -211,7 +233,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			!isEqual(layouts, dashboardLayout) &&
 			!isDashboardLocked &&
 			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading
+			!updateDashboardMutation.isLoading &&
+			!isDashboardFetching
 		) {
 			onSaveHandler();
 		}
@@ -258,7 +281,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				form.setFieldValue('title', '');
 				setIsSettingsModalOpen(false);
 				setCurrentSelectRowId(null);
-				featureResponse.refetch();
 			},
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onError: () => {
@@ -421,7 +443,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				setIsDeleteModalOpen(false);
 				setCurrentSelectRowId(null);
-				featureResponse.refetch();
 			},
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onError: () => {

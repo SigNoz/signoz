@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,
@@ -92,8 +93,8 @@ func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context,
 	org.Id = uuid.NewString()
 	org.CreatedAt = time.Now().Unix()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?);`,
-		org.Id, org.Name, org.CreatedAt)
+		`INSERT INTO organizations (id, name, created_at,is_anonymous,has_opted_updates) VALUES (?, ?, ?, ?, ?);`,
+		org.Id, org.Name, org.CreatedAt, org.IsAnonymous, org.HasOptedUpdates)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -436,12 +437,13 @@ func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) CreateGroup(ctx context.Context,
-	group *model.Group) (*model.Group, *model.ApiError) {
+	group *types.Group) (*types.Group, *model.ApiError) {
 
-	group.Id = uuid.NewString()
+	group.ID = uuid.NewString()
 
-	q := `INSERT INTO groups (id, name) VALUES (?, ?);`
-	if _, err := mds.db.ExecContext(ctx, q, group.Id, group.Name); err != nil {
+	if _, err := mds.bundb.NewInsert().
+		Model(group).
+		Exec(ctx); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -478,10 +480,14 @@ func (mds *ModelDaoSqlite) GetGroup(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetGroupByName(ctx context.Context,
-	name string) (*model.Group, *model.ApiError) {
+	name string) (*types.Group, *model.ApiError) {
 
-	groups := []model.Group{}
-	if err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE name=?`, name); err != nil {
+	groups := []types.Group{}
+	err := mds.bundb.NewSelect().
+		Model(&groups).
+		Where("name = ?", name).
+		Scan(ctx)
+	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 

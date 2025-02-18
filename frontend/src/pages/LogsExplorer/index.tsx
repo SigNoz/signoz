@@ -6,16 +6,25 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
+import {
+	defaultLogsSelectedColumns,
+	defaultOptionsQuery,
+	URL_OPTIONS,
+} from 'container/OptionsMenu/constants';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isNull } from 'lodash-es';
+import useUrlQueryData from 'hooks/useUrlQueryData';
+import { isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
@@ -73,6 +82,95 @@ function LogsExplorer(): JSX.Element {
 		}
 	}, [currentQuery.builder.queryData, currentQuery.builder.queryData.length]);
 
+	const {
+		queryData: optionsQueryData,
+		redirectWithQuery: redirectWithOptionsData,
+	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+
+	// Get and parse stored columns from localStorage
+	const logListOptionsFromLocalStorage = useMemo(() => {
+		const data = getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS);
+
+		if (!data) return null;
+
+		try {
+			return JSON.parse(data);
+		} catch {
+			return null;
+		}
+	}, []);
+
+	// Check if the columns have the required columns (timestamp, body)
+	const hasRequiredColumns = useCallback(
+		(columns?: Array<{ key: string }> | null): boolean => {
+			if (!columns?.length) return false;
+
+			const hasTimestamp = columns.some((col) => col.key === 'timestamp');
+			const hasBody = columns.some((col) => col.key === 'body');
+
+			return hasTimestamp && hasBody;
+		},
+		[],
+	);
+
+	// Merge the columns with the required columns (timestamp, body) if missing
+	const mergeWithRequiredColumns = useCallback(
+		(columns: BaseAutocompleteData[]): BaseAutocompleteData[] => [
+			// Add required columns (timestamp, body) if missing
+			...(!hasRequiredColumns(columns) ? defaultLogsSelectedColumns : []),
+			...columns,
+		],
+		[hasRequiredColumns],
+	);
+
+	// Migrate the options query to the new format
+	const migrateOptionsQuery = useCallback(
+		(query: OptionsQuery): OptionsQuery => {
+			// Skip if already migrated
+			if (query.version) return query;
+
+			if (logListOptionsFromLocalStorage?.version) {
+				return logListOptionsFromLocalStorage;
+			}
+
+			// Case 1: we have localStorage columns
+			if (logListOptionsFromLocalStorage?.selectColumns?.length > 0) {
+				return {
+					...query,
+					version: 1,
+					selectColumns: mergeWithRequiredColumns(
+						logListOptionsFromLocalStorage.selectColumns,
+					),
+				};
+			}
+
+			// Case 2: No query columns in localStorage in but query has columns
+			if (query.selectColumns.length > 0) {
+				return {
+					...query,
+					version: 1,
+					selectColumns: mergeWithRequiredColumns(query.selectColumns),
+				};
+			}
+
+			// Case 3: No columns anywhere, use defaults
+			return {
+				...query,
+				version: 1,
+				selectColumns: defaultLogsSelectedColumns,
+			};
+		},
+		[mergeWithRequiredColumns, logListOptionsFromLocalStorage],
+	);
+
+	useEffect(() => {
+		const migratedQuery = migrateOptionsQuery(optionsQueryData);
+		// Only redirect if the query was actually modified
+		if (!isEqual(migratedQuery, optionsQueryData)) {
+			redirectWithOptionsData(migratedQuery);
+		}
+	}, [migrateOptionsQuery, optionsQueryData, redirectWithOptionsData]);
+
 	const isMultipleQueries = useMemo(
 		() =>
 			currentQuery.builder.queryData?.length > 1 ||
@@ -117,6 +215,7 @@ function LogsExplorer(): JSX.Element {
 				{showFilters && (
 					<section className={cx('log-quick-filter-left-section')}>
 						<QuickFilters
+							source={QuickFiltersSource.LOGS_EXPLORER}
 							config={LogsQuickFiltersConfig}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 						/>

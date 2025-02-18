@@ -10,10 +10,11 @@ import {
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
@@ -40,8 +41,10 @@ function ServiceOverview({
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 
-	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnable =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	const { queries } = useResourceAttribute();
 
@@ -83,6 +86,8 @@ function ServiceOverview({
 
 	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
 
+	const { safeNavigate } = useSafeNavigate();
+
 	return (
 		<>
 			<GraphControlsPanel
@@ -94,6 +99,7 @@ function ServiceOverview({
 					apmToTraceQuery: apmToLogQuery,
 					isViewLogsClicked: true,
 					stepInterval,
+					safeNavigate,
 				})}
 				onViewTracesClick={onViewTracePopupClick({
 					servicename,
@@ -101,6 +107,7 @@ function ServiceOverview({
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
 					stepInterval,
+					safeNavigate,
 				})}
 			/>
 			<Card data-testid="service_latency">

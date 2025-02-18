@@ -52,8 +52,14 @@ func buildSingleFilterCondition(key string, op v3.FilterOperator, fmtVal string,
 	var keyCondition string
 	if isJSONKey {
 		keyCondition = fmt.Sprintf("JSONExtractString(labels, '%s')", key)
-	} else {
-		keyCondition = key // Assuming normal column access
+	} else { // Assuming normal column access
+		if key == "metric_unit" {
+			key = "unit"
+		}
+		if key == "metric_type" {
+			key = "type"
+		}
+		keyCondition = key
 	}
 
 	switch op {
@@ -100,34 +106,40 @@ var (
 	oneWeekInMilliseconds  = oneDayInMilliseconds * 7
 )
 
-func WhichTSTableToUse(start, end int64) (int64, int64, string) {
+func WhichTSTableToUse(start, end int64) (int64, int64, string, string) {
 
 	var tableName string
+	var localTableName string
 	if end-start < sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
 		start = start - (start % (time.Hour.Milliseconds() * 1))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_TABLENAME
+		localTableName = constants.SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME
 	} else if end-start < oneDayInMilliseconds {
 		// adjust the start time to nearest 6 hours
 		start = start - (start % (time.Hour.Milliseconds() * 6))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME
+		localTableName = constants.SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME
 	} else if end-start < oneWeekInMilliseconds {
 		// adjust the start time to nearest 1 day
 		start = start - (start % (time.Hour.Milliseconds() * 24))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME
+		localTableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
 	} else {
 		if constants.UseMetricsPreAggregation() {
 			// adjust the start time to nearest 1 week
 			start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
 			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_TABLENAME
+			localTableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
 		} else {
 			// continue to use the 1 day table
 			start = start - (start % (time.Hour.Milliseconds() * 24))
 			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME
+			localTableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
 		}
 	}
 
-	return start, end, tableName
+	return start, end, tableName, localTableName
 }
 
 func WhichSampleTableToUse(start, end int64) (string, string) {

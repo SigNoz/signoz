@@ -2,12 +2,16 @@
 import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	PANEL_GROUP_TYPES,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
@@ -16,14 +20,14 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
-import { defaultTo, isUndefined } from 'lodash-es';
+import { defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
+import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -39,7 +43,6 @@ import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
-import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
@@ -59,16 +62,23 @@ import {
 	getDefaultWidgetData,
 	getIsQueryModified,
 	handleQueryChange,
+	placeWidgetAtBottom,
+	placeWidgetBetweenRows,
 } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
 		setSelectedDashboard,
 		setToScrollWidgetId,
+		selectedRowWidgetId,
+		setSelectedRowWidgetId,
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
+
+	const { featureFlags } = useAppContext();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -85,9 +95,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		[currentQuery, stagedQuery],
 	);
 
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -322,7 +329,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
 		updatedQuery.builder.queryData[0].pageSize = 10;
-		redirectWithQueryBuilderData(updatedQuery);
+
+		// If stagedQuery exists, don't re-run the query (e.g. when clicking on Add to Dashboard from logs and traces explorer)
+		if (!stagedQuery) {
+			redirectWithQueryBuilderData(updatedQuery);
+		}
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
@@ -365,20 +376,36 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			return;
 		}
 
-		const widgetId = query.get('widgetId');
+		const widgetId = query.get('widgetId') || '';
 		let updatedLayout = selectedDashboard.data.layout || [];
-		if (isNewDashboard) {
-			updatedLayout = [
-				{
-					i: widgetId || '',
-					w: 6,
-					x: 0,
-					h: 6,
-					y: 0,
-				},
-				...updatedLayout,
-			];
+
+		if (isNewDashboard && isEmpty(selectedRowWidgetId)) {
+			const newLayoutItem = placeWidgetAtBottom(widgetId, updatedLayout);
+			updatedLayout = [...updatedLayout, newLayoutItem];
 		}
+
+		if (isNewDashboard && selectedRowWidgetId) {
+			// Find the next row by looking through remaining layout items
+			const currentIndex = updatedLayout.findIndex(
+				(e) => e.i === selectedRowWidgetId,
+			);
+			const nextRowIndex = updatedLayout.findIndex(
+				(item, index) =>
+					index > currentIndex &&
+					widgets?.find((w) => w.id === item.i)?.panelTypes ===
+						PANEL_GROUP_TYPES.ROW,
+			);
+			const nextRowId = nextRowIndex !== -1 ? updatedLayout[nextRowIndex].i : null;
+
+			const newLayoutItem = placeWidgetBetweenRows(
+				widgetId,
+				updatedLayout,
+				selectedRowWidgetId,
+				nextRowId,
+			);
+			updatedLayout = newLayoutItem;
+		}
+
 		const dashboard: Dashboard = {
 			...selectedDashboard,
 			uuid: selectedDashboard.uuid,
@@ -444,10 +471,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 		updateDashboardMutation.mutateAsync(dashboard, {
 			onSuccess: () => {
+				setSelectedRowWidgetId(null);
 				setSelectedDashboard(dashboard);
 				setToScrollWidgetId(selectedWidget?.id || '');
-				featureResponse.refetch();
-				history.push({
+				safeNavigate({
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
@@ -457,17 +484,20 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedDashboard,
 		query,
 		isNewDashboard,
-		preWidgets,
+		selectedRowWidgetId,
+		afterWidgets,
 		selectedWidget,
 		selectedTime.enum,
 		graphType,
 		currentQuery,
-		afterWidgets,
+		preWidgets,
 		updateDashboardMutation,
 		handleError,
+		widgets,
 		setSelectedDashboard,
 		setToScrollWidgetId,
-		featureResponse,
+		setSelectedRowWidgetId,
+		safeNavigate,
 		dashboardId,
 	]);
 
@@ -476,12 +506,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			setDiscardModal(true);
 			return;
 		}
-		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, isQueryModified]);
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, isQueryModified, safeNavigate]);
 
 	const discardChanges = useCallback(() => {
-		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId]);
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, safeNavigate]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		setIsLoadingPanelData(true);
@@ -512,9 +542,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const isQueryBuilderActive = useIsFeatureDisabled(
-		FeatureKeys.QUERY_BUILDER_PANELS,
-	);
+	const isQueryBuilderActive =
+		!featureFlags?.find((flag) => flag.name === FeatureKeys.QUERY_BUILDER_PANELS)
+			?.active || false;
 
 	const isNewTraceLogsAvailable =
 		isQueryBuilderActive &&
@@ -609,18 +639,16 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					</Flex>
 				</div>
 				{isSaveDisabled && (
-					<Tooltip title={MESSAGE.PANEL}>
-						<Button
-							type="primary"
-							data-testid="new-widget-save"
-							loading={updateDashboardMutation.isLoading}
-							disabled={isSaveDisabled}
-							onClick={onSaveDashboard}
-							className="save-btn"
-						>
-							Save Changes
-						</Button>
-					</Tooltip>
+					<Button
+						type="primary"
+						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
+						disabled={isSaveDisabled}
+						onClick={onSaveDashboard}
+						className="save-btn"
+					>
+						Save Changes
+					</Button>
 				)}
 				{!isSaveDisabled && (
 					<Button

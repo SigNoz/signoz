@@ -52,7 +52,7 @@ ee/query-service/tests/test-deploy/data/
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
 bin/
-
+.local/
 */query-service/queries.active
 
 # e2e
@@ -70,3 +70,9 @@ vendor/
 
 # git-town
 .git-branches.toml
+
+# goreleaser
+dist/
+
+# ignore user_scripts that is fetched by init-clickhouse
+deploy/common/clickhouse/user_scripts/

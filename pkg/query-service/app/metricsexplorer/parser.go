@@ -42,13 +42,9 @@ func ParseSummaryListMetricsParams(r *http.Request) (*metrics_explorer.SummaryLi
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
-	if len(listMetricsParams.OrderBy) > 1 {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: more than 1 order")}
-	} else if len(listMetricsParams.OrderBy) == 0 {
-		var defaultOrderBy v3.OrderBy
-		defaultOrderBy.ColumnName = "timeSeries" // DEFAULT ORDER BY
-		defaultOrderBy.Order = v3.DirectionDesc
-		listMetricsParams.OrderBy = append(listMetricsParams.OrderBy, defaultOrderBy)
+	if listMetricsParams.OrderBy.ColumnName == "" || listMetricsParams.OrderBy.Order == "" {
+		listMetricsParams.OrderBy.ColumnName = "timeseries" // DEFAULT ORDER BY
+		listMetricsParams.OrderBy.Order = v3.DirectionDesc
 	}
 
 	if listMetricsParams.Limit == 0 {

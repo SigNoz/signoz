@@ -1,11 +1,12 @@
 import './RangePickerModal.styles.scss';
 
 import { DatePicker } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { LexicalContext } from 'container/TopNav/DateTimeSelectionV2/config';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -53,22 +54,29 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 		}
 		onCustomDateHandler(date_time, LexicalContext.CUSTOM_DATE_PICKER);
 	};
-
 	const { timezone } = useTimezone();
+
+	const rangeValue: [Dayjs, Dayjs] = useMemo(
+		() => [
+			dayjs(minTime / 1000_000).tz(timezone.value),
+			dayjs(maxTime / 1000_000).tz(timezone.value),
+		],
+		[maxTime, minTime, timezone.value],
+	);
+
 	return (
 		<div className="custom-date-picker">
 			<RangePicker
 				disabledDate={disabledDate}
 				allowClear
 				showTime
-				format="YYYY-MM-DD hh:mm A"
+				format={(date: Dayjs): string =>
+					date.tz(timezone.value).format(DATE_TIME_FORMATS.ISO_DATETIME)
+				}
 				onOk={onModalOkHandler}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(selectedTime === 'custom' && {
-					defaultValue: [
-						dayjs(minTime / 1000000).tz(timezone.value),
-						dayjs(maxTime / 1000000).tz(timezone.value),
-					],
+					value: rangeValue,
 				})}
 			/>
 		</div>

@@ -1,0 +1,7 @@
+version: "3.9"	
+services:	
+ web:	
+  build: .	
+  image: signoz/frontend:latest	
+  ports:	
+   - "3301:3301"	

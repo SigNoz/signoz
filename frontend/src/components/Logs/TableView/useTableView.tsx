@@ -4,6 +4,7 @@ import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { unescapeString } from 'container/LogDetailedView/utils';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -48,7 +49,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
-			.filter((e) => e.name !== 'id')
+			.filter((e) => !['id', 'body', 'timestamp'].includes(e.name))
 			.map(({ name }) => ({
 				title: name,
 				dataIndex: name,
@@ -76,58 +77,85 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 		return [
 			{
-				title: 'timestamp',
-				dataIndex: 'timestamp',
-				key: 'timestamp',
-				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
-					const date =
-						typeof field === 'string'
-							? formatTimezoneAdjustedTimestamp(field, 'YYYY-MM-DD HH:mm:ss.SSS')
-							: formatTimezoneAdjustedTimestamp(
-									field / 1e6,
-									'YYYY-MM-DD HH:mm:ss.SSS',
-							  );
-					return {
-						children: (
-							<div className="table-timestamp">
-								<LogStateIndicator
-									type={getLogIndicatorTypeForTable(item)}
-									fontSize={fontSize}
-								/>
-								<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
-									{date}
-								</Typography.Paragraph>
-							</div>
-						),
-					};
-				},
-			},
-			...(appendTo === 'center' ? fieldColumns : []),
-			{
-				title: 'body',
-				dataIndex: 'body',
-				key: 'body',
-				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
-					props: {
-						style: defaultTableStyle,
-					},
+				// We do not need any title and data index for the log state indicator
+				title: '',
+				dataIndex: '',
+				key: 'state-indicator',
+				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
 					children: (
-						<TableBodyContent
-							dangerouslySetInnerHTML={{
-								__html: convert.toHtml(
-									dompurify.sanitize(unescapeString(field), {
-										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-									}),
-								),
-							}}
-							fontSize={fontSize}
-							linesPerRow={linesPerRow}
-							isDarkMode={isDarkMode}
-						/>
+						<div className={cx('state-indicator', fontSize)}>
+							<LogStateIndicator
+								type={getLogIndicatorTypeForTable(item)}
+								fontSize={fontSize}
+							/>
+						</div>
 					),
 				}),
 			},
+			...(fields.some((field) => field.name === 'timestamp')
+				? [
+						{
+							title: 'timestamp',
+							dataIndex: 'timestamp',
+							key: 'timestamp',
+							// https://github.com/ant-design/ant-design/discussions/36886
+							render: (
+								field: string | number,
+							): ColumnTypeRender<Record<string, unknown>> => {
+								const date =
+									typeof field === 'string'
+										? formatTimezoneAdjustedTimestamp(
+												field,
+												DATE_TIME_FORMATS.ISO_DATETIME_MS,
+										  )
+										: formatTimezoneAdjustedTimestamp(
+												field / 1e6,
+												DATE_TIME_FORMATS.ISO_DATETIME_MS,
+										  );
+								return {
+									children: (
+										<div className="table-timestamp">
+											<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
+												{date}
+											</Typography.Paragraph>
+										</div>
+									),
+								};
+							},
+						},
+				  ]
+				: []),
+			...(appendTo === 'center' ? fieldColumns : []),
+			...(fields.some((field) => field.name === 'body')
+				? [
+						{
+							title: 'body',
+							dataIndex: 'body',
+							key: 'body',
+							render: (
+								field: string | number,
+							): ColumnTypeRender<Record<string, unknown>> => ({
+								props: {
+									style: defaultTableStyle,
+								},
+								children: (
+									<TableBodyContent
+										dangerouslySetInnerHTML={{
+											__html: convert.toHtml(
+												dompurify.sanitize(unescapeString(field as string), {
+													FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+												}),
+											),
+										}}
+										fontSize={fontSize}
+										linesPerRow={linesPerRow}
+										isDarkMode={isDarkMode}
+									/>
+								),
+							}),
+						},
+				  ]
+				: []),
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
 	}, [

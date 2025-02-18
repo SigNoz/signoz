@@ -7,6 +7,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
+import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { useTimezone } from 'providers/Timezone';
 import { useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
@@ -60,6 +61,7 @@ function HorizontalTimelineGraph({
 				{
 					gap: 10,
 					stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
+					values: uPlotXAxisValuesFormat,
 				},
 				{ show: false },
 			],

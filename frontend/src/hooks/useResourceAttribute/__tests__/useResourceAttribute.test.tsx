@@ -5,6 +5,12 @@ import { Router } from 'react-router-dom';
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 describe('useResourceAttribute component hook', () => {
 	it('should not change other query params except for resourceAttribute', async () => {
 		const history = createMemoryHistory({

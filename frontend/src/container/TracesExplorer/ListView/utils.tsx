@@ -1,10 +1,12 @@
 import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { Link } from 'react-router-dom';
 import { ILog } from 'types/api/logs/log';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -60,8 +62,14 @@ export const getListColumns = (
 			render: (value, item): JSX.Element => {
 				const date =
 					typeof value === 'string'
-						? formatTimezoneAdjustedTimestamp(value, 'YYYY-MM-DD HH:mm:ss.SSS')
-						: formatTimezoneAdjustedTimestamp(value / 1e6, 'YYYY-MM-DD HH:mm:ss.SSS');
+						? formatTimezoneAdjustedTimestamp(
+								value,
+								DATE_TIME_FORMATS.ISO_DATETIME_MS,
+						  )
+						: formatTimezoneAdjustedTimestamp(
+								value / 1e6,
+								DATE_TIME_FORMATS.ISO_DATETIME_MS,
+						  );
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 						<Typography.Text>{date}</Typography.Text>
@@ -96,7 +104,7 @@ export const getListColumns = (
 					);
 				}
 
-				if (key === 'durationNano') {
+				if (key === 'durationNano' || key === 'duration_nano') {
 					return (
 						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 							<Typography data-testid={key}>{getMs(value)}ms</Typography>
@@ -106,7 +114,9 @@ export const getListColumns = (
 
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-						<Typography data-testid={key}>{value}</Typography>
+						<Typography data-testid={key}>
+							<LineClampedText text={value} lines={3} />
+						</Typography>
 					</BlockLink>
 				);
 			},
