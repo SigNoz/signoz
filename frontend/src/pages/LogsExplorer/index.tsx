@@ -94,10 +94,7 @@ function LogsExplorer(): JSX.Element {
 		if (!data) return null;
 
 		try {
-			const parsed = JSON.parse(data);
-			const hasValidColumns = Array.isArray(parsed?.selectColumns);
-
-			return hasValidColumns ? parsed.selectColumns : null;
+			return JSON.parse(data);
 		} catch {
 			return null;
 		}
@@ -132,16 +129,11 @@ function LogsExplorer(): JSX.Element {
 			// Skip if already migrated
 			if (query.version) return query;
 
-			// Case 1: query has columns
-			if (query.selectColumns.length > 0) {
-				return {
-					...query,
-					version: 1,
-					selectColumns: mergeWithRequiredColumns(query.selectColumns),
-				};
+			if (logListOptionsFromLocalStorage?.version) {
+				return logListOptionsFromLocalStorage;
 			}
 
-			// Case 2: No query columns in but we have localStorage columns
+			// Case 1: we have localStorage columns
 			if (logListOptionsFromLocalStorage?.selectColumns?.length > 0) {
 				return {
 					...query,
@@ -152,6 +144,15 @@ function LogsExplorer(): JSX.Element {
 				};
 			}
 
+			// Case 2: No query columns in localStorage in but query has columns
+			if (query.selectColumns.length > 0) {
+				return {
+					...query,
+					version: 1,
+					selectColumns: mergeWithRequiredColumns(query.selectColumns),
+				};
+			}
+
 			// Case 3: No columns anywhere, use defaults
 			return {
 				...query,
@@ -159,7 +160,7 @@ function LogsExplorer(): JSX.Element {
 				selectColumns: defaultLogsSelectedColumns,
 			};
 		},
-		[mergeWithRequiredColumns, logListOptionsFromLocalStorage?.selectColumns],
+		[mergeWithRequiredColumns, logListOptionsFromLocalStorage],
 	);
 
 	useEffect(() => {
