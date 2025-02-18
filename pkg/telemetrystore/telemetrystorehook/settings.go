@@ -63,6 +63,10 @@ func (h *provider) clickHouseSettings(ctx context.Context, query string, args ..
 		settings["timeout_before_checking_execution_speed"] = h.settings.TimeoutBeforeCheckingExecutionSpeed
 	}
 
+	if ctx.Value("clickhouse_max_threads") != nil {
+		settings["max_threads"] = ctx.Value("clickhouse_max_threads")
+	}
+
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx, query, args
 }
