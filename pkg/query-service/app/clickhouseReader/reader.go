@@ -5683,7 +5683,7 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
 	var rows driver.Rows
 	var response []string
-	query := fmt.Sprintf("SELECT DISTINCT type FROM %s.%s WHERE unit ILIKE $1 AND unit IS NOT NULL ORDER BY type", signozMetricDBName, signozTSTableNameV41Day)
+	query := fmt.Sprintf("SELECT DISTINCT type FROM %s.%s WHERE type ILIKE $1 AND type IS NOT NULL ORDER BY type", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -5732,8 +5732,8 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 	query := fmt.Sprintf(`
 SELECT 
     kv.1 AS key,
-    arrayMap(x -> trim(BOTH '\"' FROM x), groupUniqArray(kv.2)) AS values,
-    length(groupUniqArray(kv.2)) AS valueCount
+    arrayMap(x -> trim(BOTH '\"' FROM x), groupUniqArray(10000)(kv.2)) AS values,
+    length(groupUniqArray(10000)(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
 WHERE metric_name = ?
@@ -5800,7 +5800,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	var orderByClauseFirstQuery string
 	if req.OrderBy.ColumnName == "samples" {
 		dataPointsOrder = true
-		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY timeSeries %s", req.OrderBy.Order)
+		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY timeseries %s", req.OrderBy.Order)
 		if req.Limit < 50 {
 			firstQueryLimit = 50
 		}
@@ -5819,7 +5819,8 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS type,
 		    ANY_VALUE(t.unit),
-		    uniq(t.fingerprint) AS timeseries
+		    uniq(t.fingerprint) AS timeseries,
+			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
 		%s
@@ -5842,7 +5843,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 
 	for rows.Next() {
 		var metric metrics_explorer.MetricDetail
-		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.Type, &metric.Unit, &metric.TimeSeries); err != nil {
+		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.Type, &metric.Unit, &metric.TimeSeries, &response.Total); err != nil {
 			zap.L().Error("Error scanning metric row", zap.Error(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
@@ -5923,7 +5924,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	var filteredMetrics []metrics_explorer.MetricDetail
 	for i := range response.Metrics {
 		if samples, exists := samplesMap[response.Metrics[i].MetricName]; exists {
-			response.Metrics[i].DataPoints = samples
+			response.Metrics[i].Samples = samples
 			if lastReceived, exists := lastReceivedMap[response.Metrics[i].MetricName]; exists {
 				response.Metrics[i].LastReceived = lastReceived
 			}
@@ -5934,7 +5935,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 
 	if dataPointsOrder {
 		sort.Slice(response.Metrics, func(i, j int) bool {
-			return response.Metrics[i].DataPoints > response.Metrics[j].DataPoints
+			return response.Metrics[i].Samples > response.Metrics[j].Samples
 		})
 	}
 
