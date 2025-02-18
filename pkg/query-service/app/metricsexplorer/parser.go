@@ -66,5 +66,9 @@ func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetric
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
+	if treeMapMetricParams.Limit == 0 {
+		treeMapMetricParams.Limit = 10
+	}
+
 	return treeMapMetricParams, nil
 }
