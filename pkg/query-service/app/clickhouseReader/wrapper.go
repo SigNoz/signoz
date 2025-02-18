@@ -65,6 +65,10 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 		settings["optimize_read_in_order"] = 0
 	}
 
+	if ctx.Value("clickhouse_max_threads") != nil {
+		settings["max_threads"] = ctx.Value("clickhouse_max_threads")
+	}
+
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }

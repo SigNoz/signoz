@@ -5,22 +5,12 @@ import (
 )
 
 type SummaryListMetricsRequest struct {
-	Offset    int              `json:"offset"`
-	Limit     int              `json:"limit"`
-	OrderBy   []v3.OrderBy     `json:"orderBy"`
-	StartDate int64            `json:"startDate"`
-	EndDate   int64            `json:"endDate"`
-	Filters   SummaryFilterSet `json:"filters"`
-}
-
-type SummaryFilterItems struct {
-	v3.FilterItem
-	FilterTypeKey FilterTypeKey `json:"filterTypeKey"`
-}
-
-type SummaryFilterSet struct {
-	v3.FilterSet
-	Items []SummaryFilterItems `json:"items"`
+	Offset    int          `json:"offset"`
+	Limit     int          `json:"limit"`
+	OrderBy   []v3.OrderBy `json:"orderBy"`
+	StartDate int64        `json:"startDate"`
+	EndDate   int64        `json:"endDate"`
+	Filters   v3.FilterSet `json:"filters"`
 }
 
 type TreeMapType string
@@ -31,11 +21,11 @@ const (
 )
 
 type TreeMapMetricsRequest struct {
-	Limit     int              `json:"limit"`
-	Treemap   TreeMapType      `json:"treemap"`
-	StartDate int64            `json:"startDate"`
-	EndDate   int64            `json:"endDate"`
-	Filters   SummaryFilterSet `json:"filters"`
+	Limit     int          `json:"limit"`
+	Treemap   TreeMapType  `json:"treemap"`
+	StartDate int64        `json:"startDate"`
+	EndDate   int64        `json:"endDate"`
+	Filters   v3.FilterSet `json:"filters"`
 }
 
 type MetricDetail struct {
@@ -43,15 +33,15 @@ type MetricDetail struct {
 	Description  string `json:"description"`
 	Type         string `json:"type"`
 	Unit         string `json:"unit"`
-	Cardinality  uint64 `json:"cardinality"`
+	TimeSeries   uint64 `json:"cardinality"`
 	DataPoints   uint64 `json:"dataPoints"`
 	LastReceived int64  `json:"lastReceived"`
 }
 
 type TreeMapResponseItem struct {
-	RelativePercentage float64 `json:"percentage"`
-	TotalValue         uint64  `json:"total_value"`
-	MetricName         string  `json:"metric_name"`
+	Percentage float64 `json:"percentage"`
+	TotalValue uint64  `json:"total_value"`
+	MetricName string  `json:"metric_name"`
 }
 
 type TreeMap struct {
@@ -125,20 +115,6 @@ type FilterValueResponse struct {
 type FilterKeyResponse struct {
 	MetricColumns []string          `json:"metricColumns"`
 	AttributeKeys []v3.AttributeKey `json:"attributeKeys"`
-}
-
-type FilterTypeKey string
-
-const (
-	FilterKeyMetricName FilterTypeKey = "metric_name"
-	FilterKeyType       FilterTypeKey = "type"
-	FilterKeyAttributes FilterTypeKey = "attributes"
-	FilterKeyUnit       FilterTypeKey = "unit"
-)
-
-var AvailableColumnFilter = []string{
-	string(FilterKeyMetricName),
-	string(FilterKeyUnit),
 }
 
 var AvailableColumnFilterMap = map[string]bool{
