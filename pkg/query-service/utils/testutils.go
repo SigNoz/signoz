@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/factory/providertest"
+	"go.signoz.io/signoz/pkg/factory/factorytest"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/sqlmigration"
@@ -25,14 +25,14 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
-	sqlStore, err = sqlitesqlstore.New(context.Background(), providertest.NewSettings(), sqlstore.Config{Provider: "sqlite", Sqlite: sqlstore.SqliteConfig{Path: testDBFilePath}})
+	sqlStore, err = sqlitesqlstore.New(context.Background(), factorytest.NewSettings(), sqlstore.Config{Provider: "sqlite", Sqlite: sqlstore.SqliteConfig{Path: testDBFilePath}})
 	if err != nil {
 		t.Fatalf("could not create test db sqlite store: %v", err)
 	}
 
 	sqlmigrations, err := sqlmigration.New(
 		context.Background(),
-		providertest.NewSettings(),
+		factorytest.NewSettings(),
 		sqlmigration.Config{},
 		factory.MustNewNamedMap(
 			sqlmigration.NewAddDataMigrationsFactory(),
@@ -51,7 +51,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 		t.Fatalf("could not create test db sql migrations: %v", err)
 	}
 
-	err = sqlmigrator.New(context.Background(), providertest.NewSettings(), sqlStore, sqlmigrations, sqlmigrator.Config{}).Migrate(context.Background())
+	err = sqlmigrator.New(context.Background(), factorytest.NewSettings(), sqlStore, sqlmigrations, sqlmigrator.Config{}).Migrate(context.Background())
 	if err != nil {
 		t.Fatalf("could not migrate test db sql migrations: %v", err)
 	}
