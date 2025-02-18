@@ -9,21 +9,25 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
+	"github.com/uptrace/bun"
 
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
 // Repo is license repo. stores license keys in a secured DB
 type Repo struct {
-	db *sqlx.DB
+	db    *sqlx.DB
+	bundb *bun.DB
 }
 
 // NewLicenseRepo initiates a new license repo
-func NewLicenseRepo(db *sqlx.DB) Repo {
+func NewLicenseRepo(db *sqlx.DB, bundb *bun.DB) Repo {
 	return Repo{
-		db: db,
+		db:    db,
+		bundb: bundb,
 	}
 }
 
@@ -165,24 +169,25 @@ func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 	return nil
 }
 
-func (r *Repo) CreateFeature(req *basemodel.Feature) *basemodel.ApiError {
+func (r *Repo) CreateFeature(req *types.FeatureStatus) *basemodel.ApiError {
 
-	_, err := r.db.Exec(
-		`INSERT INTO feature_status (name, active, usage, usage_limit, route)
-		VALUES (?, ?, ?, ?, ?);`,
-		req.Name, req.Active, req.Usage, req.UsageLimit, req.Route)
+	_, err := r.bundb.NewInsert().
+		Model(req).
+		Exec(context.Background())
 	if err != nil {
 		return &basemodel.ApiError{Typ: basemodel.ErrorInternal, Err: err}
 	}
 	return nil
 }
 
-func (r *Repo) GetFeature(featureName string) (basemodel.Feature, error) {
+func (r *Repo) GetFeature(featureName string) (types.FeatureStatus, error) {
+	var feature types.FeatureStatus
 
-	var feature basemodel.Feature
+	err := r.bundb.NewSelect().
+		Model(&feature).
+		Where("name = ?", featureName).
+		Scan(context.Background())
 
-	err := r.db.Get(&feature,
-		`SELECT * FROM feature_status WHERE name = ?;`, featureName)
 	if err != nil {
 		return feature, err
 	}
@@ -205,18 +210,19 @@ func (r *Repo) GetAllFeatures() ([]basemodel.Feature, error) {
 	return feature, nil
 }
 
-func (r *Repo) UpdateFeature(req basemodel.Feature) error {
+func (r *Repo) UpdateFeature(req types.FeatureStatus) error {
 
-	_, err := r.db.Exec(
-		`UPDATE feature_status SET active = ?, usage = ?, usage_limit = ?, route = ? WHERE name = ?;`,
-		req.Active, req.Usage, req.UsageLimit, req.Route, req.Name)
+	_, err := r.bundb.NewUpdate().
+		Model(&req).
+		Where("name = ?", req.Name).
+		Exec(context.Background())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
+func (r *Repo) InitFeatures(req []types.FeatureStatus) error {
 	// get a feature by name, if it doesn't exist, create it. If it does exist, update it.
 	for _, feature := range req {
 		currentFeature, err := r.GetFeature(feature.Name)
@@ -229,7 +235,7 @@ func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
 		} else if err != nil {
 			return err
 		}
-		feature.Usage = currentFeature.Usage
+		feature.Usage = int(currentFeature.Usage)
 		if feature.Usage >= feature.UsageLimit && feature.UsageLimit != -1 {
 			feature.Active = false
 		}

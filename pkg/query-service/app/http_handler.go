@@ -2285,13 +2285,13 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErr, "Failed to get admin group")
 		return
 	}
-	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.Id)
+	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to get admin group users")
 		return
 	}
 
-	if user.GroupId == adminGroup.Id && len(adminUsers) == 1 {
+	if user.GroupId == adminGroup.ID && len(adminUsers) == 1 {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("cannot delete the last admin user")}, nil)
@@ -2403,7 +2403,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.Id)
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return

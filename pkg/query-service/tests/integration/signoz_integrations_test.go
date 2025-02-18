@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/http/middleware"
@@ -23,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.uber.org/zap"
 )
 
@@ -546,7 +546,7 @@ func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(expectation *model.
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
+func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *IntegrationsTestBed {
 	if testDB == nil {
 		testDB = utils.NewQueryServiceDBForTests(t)
 	}
@@ -557,7 +557,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
