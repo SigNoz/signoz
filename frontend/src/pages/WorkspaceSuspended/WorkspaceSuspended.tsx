@@ -19,15 +19,12 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
-import AppReducer from 'types/reducer/app';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 function WorkspaceSuspended(): JSX.Element {
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isAdmin = role === 'ADMIN';
+	const { user } = useAppContext();
+	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
 
@@ -64,7 +61,7 @@ function WorkspaceSuspended(): JSX.Element {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
 			const shouldSuspendWorkspace =
 				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicenseV3.state === LicenseState.DEFAULTED;
 
 			if (!shouldSuspendWorkspace) {
 				history.push(ROUTES.APPLICATION);

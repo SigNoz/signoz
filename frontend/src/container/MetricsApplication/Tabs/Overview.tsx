@@ -8,17 +8,18 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -68,8 +69,10 @@ function Application(): JSX.Element {
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 
-	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -288,6 +291,7 @@ function Application(): JSX.Element {
 			},
 		],
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -315,6 +319,7 @@ function Application(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
 							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -344,6 +349,7 @@ function Application(): JSX.Element {
 								timestamp: selectedTimeStamp,
 								apmToTraceQuery,
 								stepInterval,
+								safeNavigate,
 							})}
 						>
 							View Traces

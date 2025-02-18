@@ -9,11 +9,15 @@ import (
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
+	"go.signoz.io/signoz/pkg/config"
+	"go.signoz.io/signoz/pkg/config/envprovider"
+	"go.signoz.io/signoz/pkg/config/fileprovider"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -41,7 +45,7 @@ func main() {
 	var useLogsNewSchema bool
 	var useTraceNewSchema bool
 	// the url used to build link in the alert messages in slack and other systems
-	var ruleRepoURL, cacheConfigPath, fluxInterval string
+	var ruleRepoURL, cacheConfigPath, fluxInterval, fluxIntervalForTraceDetail string
 	var cluster string
 
 	var preferSpanMetrics bool
@@ -59,6 +63,7 @@ func main() {
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(the interval to exclude data from being cached to avoid incorrect cache for data in motion)")
+	flag.StringVar(&fluxIntervalForTraceDetail, "flux-interval-trace-detail", "2m", "(the interval to exclude data from being cached to avoid incorrect cache for trace data in motion)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	// Allow using the consistent naming with the signoz collector
 	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
@@ -74,37 +79,54 @@ func main() {
 	logger := loggerMgr.Sugar()
 	version.PrintVersion()
 
-	serverOptions := &app.ServerOptions{
-		HTTPHostPort:      constants.HTTPHostPort,
-		PromConfigPath:    promConfigPath,
-		SkipTopLvlOpsPath: skipTopLvlOpsPath,
-		PreferSpanMetrics: preferSpanMetrics,
-		PrivateHostPort:   constants.PrivateHostPort,
-		DisableRules:      disableRules,
-		RuleRepoURL:       ruleRepoURL,
-		MaxIdleConns:      maxIdleConns,
-		MaxOpenConns:      maxOpenConns,
-		DialTimeout:       dialTimeout,
-		CacheConfigPath:   cacheConfigPath,
-		FluxInterval:      fluxInterval,
-		Cluster:           cluster,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
+		Uris: []string{"env:"},
+		ProviderFactories: []config.ProviderFactory{
+			envprovider.NewFactory(),
+			fileprovider.NewFactory(),
+		},
+	}, signoz.DeprecatedFlags{
+		MaxIdleConns: maxIdleConns,
+		MaxOpenConns: maxOpenConns,
+		DialTimeout:  dialTimeout,
+	})
+	if err != nil {
+		zap.L().Fatal("Failed to create config", zap.Error(err))
+	}
+
+	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
+	if err != nil {
+		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
 
 	// Read the jwt secret key
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
+	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
 
-	if len(auth.JwtSecret) == 0 {
+	if len(jwtSecret) == 0 {
 		zap.L().Warn("No JWT secret key is specified.")
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
-		zap.L().Error("Failed to migrate", zap.Error(err))
-	} else {
-		zap.L().Info("Migration successful")
+	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
+
+	serverOptions := &app.ServerOptions{
+		Config:                     config,
+		HTTPHostPort:               constants.HTTPHostPort,
+		PromConfigPath:             promConfigPath,
+		SkipTopLvlOpsPath:          skipTopLvlOpsPath,
+		PreferSpanMetrics:          preferSpanMetrics,
+		PrivateHostPort:            constants.PrivateHostPort,
+		DisableRules:               disableRules,
+		RuleRepoURL:                ruleRepoURL,
+		CacheConfigPath:            cacheConfigPath,
+		FluxInterval:               fluxInterval,
+		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		Cluster:                    cluster,
+		UseLogsNewSchema:           useLogsNewSchema,
+		UseTraceNewSchema:          useTraceNewSchema,
+		SigNoz:                     signoz,
+		Jwt:                        jwt,
 	}
 
 	server, err := app.NewServer(serverOptions)

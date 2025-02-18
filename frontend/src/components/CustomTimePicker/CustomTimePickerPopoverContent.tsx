@@ -2,6 +2,7 @@ import './CustomTimePicker.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
@@ -81,6 +82,12 @@ function CustomTimePickerPopoverContent({
 	const handleTimezoneHintClick = (): void => {
 		setActiveView('timezone');
 		setIsOpenedFromFooter(true);
+		logEvent(
+			'DateTimePicker: Timezone picker opened from time range picker footer',
+			{
+				page: pathname,
+			},
+		);
 	};
 
 	if (activeView === 'timezone') {

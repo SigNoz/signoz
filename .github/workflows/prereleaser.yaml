@@ -1,0 +1,36 @@
+name: prereleaser
+
+on:
+  # schedule every wednesday 9:30 AM UTC (3pm IST)
+  schedule:
+    - cron: '30 9 * * 3'
+
+  # allow manual triggering of the workflow by a maintainer
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Type of the release"
+        type: choice
+        required: true
+        options:
+          - 'patch'
+          - 'minor'
+          - 'major'
+
+jobs:
+  verify:
+    uses: signoz/primus.workflows/.github/workflows/github-verify.yaml@main
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      GITHUB_TEAM_NAME: releaser
+      GITHUB_MEMBER_NAME: ${{ github.actor }}
+  signoz:
+    if: ${{ always() && (needs.verify.result == 'success' || github.event.name == 'schedule') }}
+    uses: signoz/primus.workflows/.github/workflows/releaser.yaml@main
+    secrets: inherit
+    needs: [verify]
+    with:
+      PRIMUS_REF: main
+      PROJECT_NAME: signoz
+      RELEASE_TYPE: ${{ inputs.release_type || 'minor' }}

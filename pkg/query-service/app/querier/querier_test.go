@@ -1352,7 +1352,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	}
 	testName := "name"
 
-	options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
+	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 
 	// iterate over test data, create reader and run test
 	for _, tc := range testCases {
@@ -1384,6 +1384,8 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				"",
 				true,
 				true,
+				time.Duration(time.Second),
+				nil,
 			)
 
 			q := &querier{

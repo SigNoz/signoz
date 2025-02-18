@@ -11,6 +11,7 @@ export interface GetWidgetQueryBuilderProps {
 	yAxisUnit?: Widgets['yAxisUnit'];
 	id?: Widgets['id'];
 	fillSpans?: Widgets['fillSpans'];
+	columnUnits?: Widgets['columnUnits'];
 }
 
 export interface NavigateToTraceProps {
@@ -20,6 +21,7 @@ export interface NavigateToTraceProps {
 	maxTime: number;
 	selectedTraceTags: string;
 	apmToTraceQuery: Query;
+	safeNavigate: (path: string) => void;
 }
 
 export interface DatabaseCallsRPSProps extends DatabaseCallProps {

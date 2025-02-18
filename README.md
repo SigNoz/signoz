@@ -17,9 +17,9 @@
   
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Documentation</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.de-de.md"><b>ReadMe in German</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>ReadMe in German</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
   <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
@@ -219,12 +219,18 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 - [Nityananda Gohain](https://github.com/nityanandagohain)
 - [Srikanth Chekuri](https://github.com/srikanthccv)
 - [Vishal Sharma](https://github.com/makeavish)
+- [Shivanshu Raj Shrivastava](https://github.com/shivanshuraj1333)
+- [Ekansh Gupta](https://github.com/eKuG)
+- [Aniket Agarwal](https://github.com/aniketio-ctrl)
 
 #### Frontend
 
 - [Yunus M](https://github.com/YounixM)
 - [Vikrant Gupta](https://github.com/vikrantgupta25)
 - [Sagar Rajput](https://github.com/SagarRajput-7)
+- [Shaheer Kochai](https://github.com/ahmadshaheer)
+- [Amlan Kumar Nandy](https://github.com/amlannandy)
+- [Sahil Khan](https://github.com/sawhil)
 
 #### DevOps
 

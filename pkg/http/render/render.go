@@ -66,7 +66,7 @@ func Error(rw http.ResponseWriter, cause error) {
 	body, err := json.Marshal(&response{
 		Status: StatusError.s,
 		Error: &responseerror{
-			Code:    c,
+			Code:    c.String(),
 			Url:     u,
 			Message: m,
 			Errors:  rea,

@@ -22,13 +22,14 @@ type Timeout struct {
 	maxTimeout time.Duration
 }
 
-func NewTimeout(logger *zap.Logger, excluded map[string]struct{}, defaultTimeout time.Duration, maxTimeout time.Duration) *Timeout {
+func NewTimeout(logger *zap.Logger, excludedRoutes []string, defaultTimeout time.Duration, maxTimeout time.Duration) *Timeout {
 	if logger == nil {
 		panic("cannot build timeout, logger is empty")
 	}
 
-	if excluded == nil {
-		excluded = make(map[string]struct{})
+	excluded := make(map[string]struct{}, len(excludedRoutes))
+	for _, route := range excludedRoutes {
+		excluded[route] = struct{}{}
 	}
 
 	if defaultTimeout.Seconds() == 0 {

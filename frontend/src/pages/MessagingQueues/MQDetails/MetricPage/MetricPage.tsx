@@ -1,11 +1,12 @@
 import './MetricPage.styles.scss';
 
 import { Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -28,6 +29,7 @@ interface CollapsibleMetricSectionProps {
 	graphCount: Widgets[];
 	isCollapsed: boolean;
 	onToggle: () => void;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }
 
 function CollapsibleMetricSection({
@@ -36,6 +38,7 @@ function CollapsibleMetricSection({
 	graphCount,
 	isCollapsed,
 	onToggle,
+	checkIfDataExists,
 }: CollapsibleMetricSectionProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -63,6 +66,7 @@ function CollapsibleMetricSection({
 							<MetricPageGridGraph
 								key={`graph-${widgetData.id}`}
 								widgetData={widgetData}
+								checkIfDataExists={checkIfDataExists}
 							/>
 						))}
 					</div>
@@ -71,6 +75,10 @@ function CollapsibleMetricSection({
 		</div>
 	);
 }
+
+CollapsibleMetricSection.defaultProps = {
+	checkIfDataExists: undefined,
+};
 
 function MetricPage(): JSX.Element {
 	const [collapsedSections, setCollapsedSections] = useState<{
@@ -114,9 +122,27 @@ function MetricPage(): JSX.Element {
 		},
 	];
 
+	const [renderedGraphCount, setRenderedGraphCount] = useState(0);
+	const hasLoggedRef = useRef(false);
+
+	const checkIfDataExists = (isDataAvailable: boolean): void => {
+		if (isDataAvailable) {
+			const newCount = renderedGraphCount + 1;
+			setRenderedGraphCount(newCount);
+
+			// Only log when first graph has rendered and we haven't logged yet
+			if (newCount === 1 && !hasLoggedRef.current) {
+				logEvent('MQ Kafka: Metric view', {
+					graphRendered: true,
+				});
+				hasLoggedRef.current = true;
+			}
+		}
+	};
+
 	return (
 		<div className="metric-page">
-			<MetricColumnGraphs />
+			<MetricColumnGraphs checkIfDataExists={checkIfDataExists} />
 			{metricSections.map(({ key, title, description, graphCount }) => (
 				<CollapsibleMetricSection
 					key={key}
@@ -125,6 +151,7 @@ function MetricPage(): JSX.Element {
 					graphCount={graphCount}
 					isCollapsed={collapsedSections[key]}
 					onToggle={(): void => toggleCollapse(key)}
+					checkIfDataExists={checkIfDataExists}
 				/>
 			))}
 		</div>

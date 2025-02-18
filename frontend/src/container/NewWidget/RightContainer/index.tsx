@@ -4,7 +4,7 @@ import './RightContainer.styles.scss';
 
 import { Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
 	ItemsProps,
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
@@ -212,7 +212,8 @@ function RightContainer({
 						defaultValue={yAxisUnit}
 						onSelect={setYAxisUnit}
 						fieldLabel={
-							selectedGraphType === 'Value' || selectedGraphType === 'Pie'
+							selectedGraphType === PanelDisplay.VALUE ||
+							selectedGraphType === PanelDisplay.PIE
 								? 'Unit'
 								: 'Y Axis Unit'
 						}

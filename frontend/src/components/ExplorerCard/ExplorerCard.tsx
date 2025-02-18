@@ -18,7 +18,9 @@ import {
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
@@ -29,6 +31,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ExploreHeaderToolTip, SaveButtonText } from './constants';
@@ -83,7 +86,20 @@ function ExplorerCard({
 
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
+	const { options } = useOptionsMenu({
+		storageKey:
+			sourcepage === DataSource.TRACES
+				? LOCALSTORAGE.TRACES_LIST_OPTIONS
+				: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: sourcepage,
+		aggregateOperator: StringOperators.NOOP,
+	});
+
+	const isQueryUpdated = isStagedQueryUpdated(
+		viewsData?.data?.data,
+		viewKey,
+		options,
+	);
 
 	const { mutateAsync: updateViewAsync } = useUpdateView({
 		compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),

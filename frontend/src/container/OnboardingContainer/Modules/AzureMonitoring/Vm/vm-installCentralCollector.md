@@ -22,6 +22,7 @@ receivers:
   azureeventhub:
     connection: <Primary Connection String>
     format: "azure"
+    apply_semantic_conventions: true
   azuremonitor:
     subscription_id: "<Subscription ID>"
     tenant_id: "<AD Tenant ID>"

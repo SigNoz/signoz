@@ -31,6 +31,7 @@ import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -51,25 +52,39 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
 import { ErrorResponse } from 'types/api';
-import { LimitProps } from 'types/api/ingestionKeys/limits/types';
+import {
+	AddLimitProps,
+	LimitProps,
+	UpdateLimitProps,
+} from 'types/api/ingestionKeys/limits/types';
 import {
 	IngestionKeyProps,
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
-import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
 const { Option } = Select;
 
 const BYTES = 1073741824;
+
+const COUNT_MULTIPLIER = {
+	thousand: 1000,
+	million: 1000000,
+	billion: 1000000000,
+};
+
+const SIGNALS_CONFIG = [
+	{ name: 'logs', usesSize: true, usesCount: false },
+	{ name: 'traces', usesSize: true, usesCount: false },
+	{ name: 'metrics', usesSize: false, usesCount: true },
+];
 
 // Using any type here because antd's DatePicker expects its own internal Dayjs type
 // which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
@@ -77,8 +92,6 @@ const BYTES = 1073741824;
 export const disabledDate = (current: any): boolean =>
 	// Disable all dates before today
 	current && current < dayjs().endOf('day');
-
-const SIGNALS = ['logs', 'traces', 'metrics'];
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -103,8 +116,33 @@ export const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
 	{ value: '0', label: 'No Expiry' },
 ];
 
+const countToUnit = (count: number): { value: number; unit: string } => {
+	if (
+		count >= COUNT_MULTIPLIER.billion ||
+		count / COUNT_MULTIPLIER.million >= 1000
+	) {
+		return { value: count / COUNT_MULTIPLIER.billion, unit: 'billion' };
+	}
+	if (
+		count >= COUNT_MULTIPLIER.million ||
+		count / COUNT_MULTIPLIER.thousand >= 1000
+	) {
+		return { value: count / COUNT_MULTIPLIER.million, unit: 'million' };
+	}
+	if (count >= COUNT_MULTIPLIER.thousand) {
+		return { value: count / COUNT_MULTIPLIER.thousand, unit: 'thousand' };
+	}
+	// Default to million for small numbers
+	return { value: count / COUNT_MULTIPLIER.million, unit: 'million' };
+};
+
+const countFromUnit = (value: number, unit: string): number =>
+	value *
+	(COUNT_MULTIPLIER[unit as keyof typeof COUNT_MULTIPLIER] ||
+		COUNT_MULTIPLIER.million);
+
 function MultiIngestionSettings(): JSX.Element {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 	const { notifications } = useNotifications();
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isDeleteLimitModalOpen, setIsDeleteLimitModalOpen] = useState(false);
@@ -183,7 +221,6 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const showEditModal = (apiKey: IngestionKeyProps): void => {
 		setActiveAPIKey(apiKey);
-
 		handleFormReset();
 		setUpdatedTags(apiKey.tags || []);
 
@@ -401,7 +438,7 @@ function MultiIngestionSettings(): JSX.Element {
 		date: string,
 		formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
 	): string =>
-		formatTimezoneAdjustedTimestamp(date, 'MMM DD,YYYY, hh:mm a (UTC Z)');
+		formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.UTC_MONTH_COMPACT);
 
 	const showDeleteLimitModal = (
 		APIKey: IngestionKeyProps,
@@ -426,44 +463,90 @@ function MultiIngestionSettings(): JSX.Element {
 		addEditLimitForm.resetFields();
 	};
 
+	/* eslint-disable sonarjs/cognitive-complexity */
 	const handleAddLimit = (
 		APIKey: IngestionKeyProps,
 		signalName: string,
 	): void => {
-		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
+		const {
+			dailyLimit,
+			secondsLimit,
+			dailyCount,
+			dailyCountUnit,
+			secondsCount,
+			secondsCountUnit,
+		} = addEditLimitForm.getFieldsValue();
 
-		const payload = {
+		const payload: AddLimitProps = {
 			keyID: APIKey.id,
 			signal: signalName,
 			config: {},
 		};
 
-		if (!isUndefined(dailyLimit)) {
-			payload.config = {
-				day: {
+		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signalName);
+		if (!signalCfg) return;
+
+		// Only set size if usesSize is true
+		if (signalCfg.usesSize) {
+			if (!isUndefined(dailyLimit)) {
+				payload.config.day = {
+					...payload.config.day,
 					size: gbToBytes(dailyLimit),
-				},
-			};
-		}
-
-		if (!isUndefined(secondsLimit)) {
-			payload.config = {
-				...payload.config,
-				second: {
+				};
+			}
+			if (!isUndefined(secondsLimit)) {
+				payload.config.second = {
+					...payload.config.second,
 					size: gbToBytes(secondsLimit),
-				},
-			};
+				};
+			}
 		}
 
-		if (isUndefined(dailyLimit) && isUndefined(secondsLimit)) {
-			// No need to save as no limit is provided, close the edit view and reset active signal and api key
+		// Only set count if usesCount is true
+		if (signalCfg.usesCount) {
+			if (!isUndefined(dailyCount)) {
+				payload.config.day = {
+					...payload.config.day,
+					count: countFromUnit(dailyCount, dailyCountUnit || 'million'),
+				};
+			}
+			if (!isUndefined(secondsCount)) {
+				payload.config.second = {
+					...payload.config.second,
+					count: countFromUnit(secondsCount, secondsCountUnit || 'million'),
+				};
+			}
+		}
+
+		// If neither size nor count was given, skip
+		const noSizeProvided =
+			isUndefined(dailyLimit) && isUndefined(secondsLimit) && signalCfg.usesSize;
+		const noCountProvided =
+			isUndefined(dailyCount) && isUndefined(secondsCount) && signalCfg.usesCount;
+
+		if (
+			signalCfg.usesSize &&
+			signalCfg.usesCount &&
+			noSizeProvided &&
+			noCountProvided
+		) {
+			// Both size and count are effectively empty
 			setActiveSignal(null);
 			setActiveAPIKey(null);
 			setIsEditAddLimitOpen(false);
 			setUpdatedTags([]);
 			hideAddViewModal();
 			setHasCreateLimitForIngestionKeyError(false);
+			return;
+		}
 
+		if (!signalCfg.usesSize && !signalCfg.usesCount) {
+			// Edge case: If there's no count or size usage at all
+			setActiveSignal(null);
+			setActiveAPIKey(null);
+			setIsEditAddLimitOpen(false);
+			setUpdatedTags([]);
+			hideAddViewModal();
 			return;
 		}
 
@@ -474,44 +557,73 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: IngestionKeyProps,
 		signal: LimitProps,
 	): void => {
-		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
-		const payload = {
+		const {
+			dailyLimit,
+			secondsLimit,
+			dailyCount,
+			dailyCountUnit,
+			secondsCount,
+			secondsCountUnit,
+		} = addEditLimitForm.getFieldsValue();
+
+		const payload: UpdateLimitProps = {
 			limitID: signal.id,
 			signal: signal.signal,
 			config: {},
 		};
 
-		if (isUndefined(dailyLimit) && isUndefined(secondsLimit)) {
-			showDeleteLimitModal(APIKey, signal);
+		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signal.signal);
+		if (!signalCfg) return;
 
+		const noSizeProvided =
+			isUndefined(dailyLimit) && isUndefined(secondsLimit) && signalCfg.usesSize;
+		const noCountProvided =
+			isUndefined(dailyCount) && isUndefined(secondsCount) && signalCfg.usesCount;
+
+		// If the user cleared out all fields, remove the limit
+		if (noSizeProvided && noCountProvided) {
+			showDeleteLimitModal(APIKey, signal);
 			return;
 		}
 
-		if (!isUndefined(dailyLimit)) {
-			payload.config = {
-				day: {
+		if (signalCfg.usesSize) {
+			if (!isUndefined(dailyLimit)) {
+				payload.config.day = {
+					...payload.config.day,
 					size: gbToBytes(dailyLimit),
-				},
-			};
+				};
+			}
+			if (!isUndefined(secondsLimit)) {
+				payload.config.second = {
+					...payload.config.second,
+					size: gbToBytes(secondsLimit),
+				};
+			}
 		}
 
-		if (!isUndefined(secondsLimit)) {
-			payload.config = {
-				...payload.config,
-				second: {
-					size: gbToBytes(secondsLimit),
-				},
-			};
+		if (signalCfg.usesCount) {
+			if (!isUndefined(dailyCount)) {
+				payload.config.day = {
+					...payload.config.day,
+					count: countFromUnit(dailyCount, dailyCountUnit || 'million'),
+				};
+			}
+			if (!isUndefined(secondsCount)) {
+				payload.config.second = {
+					...payload.config.second,
+					count: countFromUnit(secondsCount, secondsCountUnit || 'million'),
+				};
+			}
 		}
 
 		updateLimitForIngestionKey(payload);
 	};
+	/* eslint-enable sonarjs/cognitive-complexity */
 
 	const bytesToGb = (size: number | undefined): number => {
 		if (!size) {
 			return 0;
 		}
-
 		return size / BYTES;
 	};
 
@@ -519,6 +631,12 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: IngestionKeyProps,
 		signal: LimitProps,
 	): void => {
+		const dayCount = signal?.config?.day?.count;
+		const secondCount = signal?.config?.second?.count;
+
+		const dayCountConverted = countToUnit(dayCount || 0);
+		const secondCountConverted = countToUnit(secondCount || 0);
+
 		setActiveAPIKey(APIKey);
 		setActiveSignal({
 			...signal,
@@ -526,11 +644,14 @@ function MultiIngestionSettings(): JSX.Element {
 				...signal.config,
 				day: {
 					...signal.config?.day,
-					enabled: !isNil(signal?.config?.day?.size),
+					enabled:
+						!isNil(signal?.config?.day?.size) || !isNil(signal?.config?.day?.count),
 				},
 				second: {
 					...signal.config?.second,
-					enabled: !isNil(signal?.config?.second?.size),
+					enabled:
+						!isNil(signal?.config?.second?.size) ||
+						!isNil(signal?.config?.second?.count),
 				},
 			},
 		});
@@ -538,15 +659,22 @@ function MultiIngestionSettings(): JSX.Element {
 		addEditLimitForm.setFieldsValue({
 			dailyLimit: bytesToGb(signal?.config?.day?.size || 0),
 			secondsLimit: bytesToGb(signal?.config?.second?.size || 0),
-			enableDailyLimit: !isNil(signal?.config?.day?.size),
-			enableSecondLimit: !isNil(signal?.config?.second?.size),
+			enableDailyLimit:
+				!isNil(signal?.config?.day?.size) || !isNil(signal?.config?.day?.count),
+			enableSecondLimit:
+				!isNil(signal?.config?.second?.size) ||
+				!isNil(signal?.config?.second?.count),
+			dailyCount: dayCountConverted.value,
+			dailyCountUnit: dayCountConverted.unit,
+			secondsCount: secondCountConverted.value,
+			secondsCountUnit: secondCountConverted.unit,
 		});
 
 		setIsEditAddLimitOpen(true);
 	};
 
 	const onDeleteLimitHandler = (): void => {
-		if (activeSignal && activeSignal?.id) {
+		if (activeSignal && activeSignal.id) {
 			deleteLimitForKey(activeSignal.id);
 		}
 	};
@@ -563,23 +691,24 @@ function MultiIngestionSettings(): JSX.Element {
 					APIKey.created_at,
 					formatTimezoneAdjustedTimestamp,
 				);
-				const formattedDateAndTime =
-					APIKey &&
-					APIKey?.expires_at &&
-					getFormattedTime(APIKey?.expires_at, formatTimezoneAdjustedTimestamp);
+
+				const expiresOn =
+					!APIKey?.expires_at || APIKey?.expires_at === '0001-01-01T00:00:00Z'
+						? 'No Expiry'
+						: getFormattedTime(APIKey?.expires_at, formatTimezoneAdjustedTimestamp);
 
 				const updatedOn = getFormattedTime(
 					APIKey?.updated_at,
 					formatTimezoneAdjustedTimestamp,
 				);
 
-				const limits: { [key: string]: LimitProps } = {};
-
-				APIKey.limits?.forEach((limit: LimitProps) => {
-					limits[limit.signal] = limit;
+				// Convert array of limits to a dictionary for quick access
+				const limitsDict: Record<string, LimitProps> = {};
+				APIKey.limits?.forEach((limitItem: LimitProps) => {
+					limitsDict[limitItem.signal] = limitItem;
 				});
 
-				const hasLimits = (signal: string): boolean => !!limits[signal];
+				const hasLimits = (signalName: string): boolean => !!limitsDict[signalName];
 
 				const items: CollapseProps['items'] = [
 					{
@@ -615,11 +744,9 @@ function MultiIngestionSettings(): JSX.Element {
 										onClick={(e): void => {
 											e.stopPropagation();
 											e.preventDefault();
-
 											showEditModal(APIKey);
 										}}
 									/>
-
 									<Button
 										className="periscope-btn ghost"
 										icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
@@ -671,18 +798,23 @@ function MultiIngestionSettings(): JSX.Element {
 
 									<div className="limits-data">
 										<div className="signals">
-											{SIGNALS.map((signal) => {
-												const hasValidDayLimit = !isNil(limits[signal]?.config?.day?.size);
-												const hasValidSecondLimit = !isNil(
-													limits[signal]?.config?.second?.size,
-												);
+											{SIGNALS_CONFIG.map((signalCfg) => {
+												const signalName = signalCfg.name;
+												const limit = limitsDict[signalName];
+
+												const hasValidDayLimit =
+													limit?.config?.day?.size !== undefined ||
+													limit?.config?.day?.count !== undefined;
+												const hasValidSecondLimit =
+													limit?.config?.second?.size !== undefined ||
+													limit?.config?.second?.count !== undefined;
 
 												return (
-													<div className="signal" key={signal}>
+													<div className="signal" key={signalName}>
 														<div className="header">
-															<div className="signal-name">{signal}</div>
+															<div className="signal-name">{signalName}</div>
 															<div className="actions">
-																{hasLimits(signal) ? (
+																{hasLimits(signalName) ? (
 																	<>
 																		<Button
 																			className="periscope-btn ghost"
@@ -691,10 +823,9 @@ function MultiIngestionSettings(): JSX.Element {
 																			onClick={(e): void => {
 																				e.stopPropagation();
 																				e.preventDefault();
-																				enableEditLimitMode(APIKey, limits[signal]);
+																				enableEditLimitMode(APIKey, limit);
 																			}}
 																		/>
-
 																		<Button
 																			className="periscope-btn ghost"
 																			icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
@@ -702,7 +833,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			onClick={(e): void => {
 																				e.stopPropagation();
 																				e.preventDefault();
-																				showDeleteLimitModal(APIKey, limits[signal]);
+																				showDeleteLimitModal(APIKey, limit);
 																			}}
 																		/>
 																	</>
@@ -713,14 +844,12 @@ function MultiIngestionSettings(): JSX.Element {
 																		shape="round"
 																		icon={<PlusIcon size={14} />}
 																		disabled={!!(activeAPIKey?.id === APIKey.id && activeSignal)}
-																		// eslint-disable-next-line sonarjs/no-identical-functions
 																		onClick={(e): void => {
 																			e.stopPropagation();
 																			e.preventDefault();
-
 																			enableEditLimitMode(APIKey, {
-																				id: signal,
-																				signal,
+																				id: signalName,
+																				signal: signalName,
 																				config: {},
 																			});
 																		}}
@@ -733,7 +862,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 														<div className="signal-limit-values">
 															{activeAPIKey?.id === APIKey.id &&
-															activeSignal?.signal === signal &&
+															activeSignal?.signal === signalName &&
 															isEditAddLimitOpen ? (
 																<Form
 																	name="edit-ingestion-key-limit-form"
@@ -741,8 +870,8 @@ function MultiIngestionSettings(): JSX.Element {
 																	form={addEditLimitForm}
 																	autoComplete="off"
 																	initialValues={{
-																		dailyLimit: bytesToGb(limits[signal]?.config?.day?.size),
-																		secondsLimit: bytesToGb(limits[signal]?.config?.second?.size),
+																		dailyLimit: bytesToGb(limit?.config?.day?.size || 0),
+																		secondsLimit: bytesToGb(limit?.config?.second?.size || 0),
 																	}}
 																	className="edit-ingestion-key-limit-form"
 																>
@@ -757,16 +886,20 @@ function MultiIngestionSettings(): JSX.Element {
 																								size="small"
 																								checked={activeSignal?.config?.day?.enabled}
 																								onChange={(value): void => {
-																									setActiveSignal({
-																										...activeSignal,
-																										config: {
-																											...activeSignal.config,
-																											day: {
-																												...activeSignal.config?.day,
-																												enabled: value,
-																											},
-																										},
-																									});
+																									setActiveSignal((prev) =>
+																										prev
+																											? {
+																													...prev,
+																													config: {
+																														...prev.config,
+																														day: {
+																															...prev.config?.day,
+																															enabled: value,
+																														},
+																													},
+																											  }
+																											: null,
+																									);
 																								}}
 																							/>
 																						</Form.Item>
@@ -776,50 +909,87 @@ function MultiIngestionSettings(): JSX.Element {
 																					Add a limit for data ingested daily
 																				</div>
 																			</div>
-																			<div className="size">
-																				{activeSignal?.config?.day?.enabled ? (
-																					<Form.Item name="dailyLimit" key="dailyLimit">
-																						<InputNumber
-																							disabled={!activeSignal?.config?.day?.enabled}
-																							key="dailyLimit"
-																							addonAfter={
-																								<Select defaultValue="GiB" disabled>
-																									<Option value="TiB"> TiB</Option>
-																									<Option value="GiB"> GiB</Option>
-																									<Option value="MiB"> MiB </Option>
-																									<Option value="KiB"> KiB </Option>
-																								</Select>
-																							}
-																						/>
-																					</Form.Item>
-																				) : (
-																					<div className="no-limit">
-																						<Infinity size={16} /> NO LIMIT
-																					</div>
-																				)}
-																			</div>
+																			{signalCfg.usesSize && (
+																				<div className="size">
+																					{activeSignal?.config?.day?.enabled ? (
+																						<Form.Item name="dailyLimit" key="dailyLimit">
+																							<InputNumber
+																								disabled={!activeSignal?.config?.day?.enabled}
+																								addonAfter={
+																									<Select defaultValue="GiB" disabled>
+																										<Option value="TiB">TiB</Option>
+																										<Option value="GiB">GiB</Option>
+																										<Option value="MiB">MiB</Option>
+																										<Option value="KiB">KiB</Option>
+																									</Select>
+																								}
+																							/>
+																						</Form.Item>
+																					) : (
+																						<div className="no-limit">
+																							<Infinity size={16} /> NO LIMIT
+																						</div>
+																					)}
+																				</div>
+																			)}
+																			{signalCfg.usesCount && (
+																				<div className="count">
+																					{activeSignal?.config?.day?.enabled ? (
+																						<Form.Item name="dailyCount" key="dailyCount">
+																							<InputNumber
+																								placeholder="Enter max # of samples/day"
+																								addonAfter={
+																									<Form.Item
+																										name="dailyCountUnit"
+																										noStyle
+																										initialValue="million"
+																									>
+																										<Select
+																											style={{
+																												width: 90,
+																											}}
+																										>
+																											<Option value="thousand">Thousand</Option>
+																											<Option value="million">Million</Option>
+																											<Option value="billion">Billion</Option>
+																										</Select>
+																									</Form.Item>
+																								}
+																							/>
+																						</Form.Item>
+																					) : (
+																						<div className="no-limit">
+																							<Infinity size={16} /> NO LIMIT
+																						</div>
+																					)}
+																				</div>
+																			)}
 																		</div>
 
 																		<div className="second-limit">
 																			<div className="heading">
 																				<div className="title">
-																					Per Second limit{' '}
+																					Per Second limit
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableSecondLimit">
 																							<Switch
 																								size="small"
 																								checked={activeSignal?.config?.second?.enabled}
 																								onChange={(value): void => {
-																									setActiveSignal({
-																										...activeSignal,
-																										config: {
-																											...activeSignal.config,
-																											second: {
-																												...activeSignal.config?.second,
-																												enabled: value,
-																											},
-																										},
-																									});
+																									setActiveSignal((prev) =>
+																										prev
+																											? {
+																													...prev,
+																													config: {
+																														...prev.config,
+																														second: {
+																															...prev.config?.second,
+																															enabled: value,
+																														},
+																													},
+																											  }
+																											: null,
+																									);
 																								}}
 																							/>
 																						</Form.Item>
@@ -829,37 +999,68 @@ function MultiIngestionSettings(): JSX.Element {
 																					Add a limit for data ingested every second
 																				</div>
 																			</div>
-
-																			<div className="size">
-																				{activeSignal?.config?.second?.enabled ? (
-																					<Form.Item name="secondsLimit" key="secondsLimit">
-																						<InputNumber
-																							key="secondsLimit"
-																							disabled={!activeSignal?.config?.second?.enabled}
-																							addonAfter={
-																								<Select defaultValue="GiB" disabled>
-																									<Option value="TiB"> TiB</Option>
-																									<Option value="GiB"> GiB</Option>
-																									<Option value="MiB"> MiB </Option>
-																									<Option value="KiB"> KiB </Option>
-																								</Select>
-																							}
-																						/>
-																					</Form.Item>
-																				) : (
-																					<div className="no-limit">
-																						<Infinity size={16} /> NO LIMIT
-																					</div>
-																				)}
-																			</div>
+																			{signalCfg.usesSize && (
+																				<div className="size">
+																					{activeSignal?.config?.second?.enabled ? (
+																						<Form.Item name="secondsLimit" key="secondsLimit">
+																							<InputNumber
+																								disabled={!activeSignal?.config?.second?.enabled}
+																								addonAfter={
+																									<Select defaultValue="GiB" disabled>
+																										<Option value="TiB">TiB</Option>
+																										<Option value="GiB">GiB</Option>
+																										<Option value="MiB">MiB</Option>
+																										<Option value="KiB">KiB</Option>
+																									</Select>
+																								}
+																							/>
+																						</Form.Item>
+																					) : (
+																						<div className="no-limit">
+																							<Infinity size={16} /> NO LIMIT
+																						</div>
+																					)}
+																				</div>
+																			)}
+																			{signalCfg.usesCount && (
+																				<div className="count">
+																					{activeSignal?.config?.second?.enabled ? (
+																						<Form.Item name="secondsCount" key="secondsCount">
+																							<InputNumber
+																								placeholder="Enter max # of samples/s"
+																								addonAfter={
+																									<Form.Item
+																										name="secondsCountUnit"
+																										noStyle
+																										initialValue="million"
+																									>
+																										<Select
+																											style={{
+																												width: 90,
+																											}}
+																										>
+																											<Option value="thousand">Thousand</Option>
+																											<Option value="million">Million</Option>
+																											<Option value="billion">Billion</Option>
+																										</Select>
+																									</Form.Item>
+																								}
+																							/>
+																						</Form.Item>
+																					) : (
+																						<div className="no-limit">
+																							<Infinity size={16} /> NO LIMIT
+																						</div>
+																					)}
+																				</div>
+																			)}
 																		</div>
 																	</div>
 
 																	{activeAPIKey?.id === APIKey.id &&
-																		activeSignal.signal === signal &&
+																		activeSignal.signal === signalName &&
 																		!isLoadingLimitForKey &&
 																		hasCreateLimitForIngestionKeyError &&
-																		createLimitForIngestionKeyError &&
 																		createLimitForIngestionKeyError?.error && (
 																			<div className="error">
 																				{createLimitForIngestionKeyError?.error}
@@ -867,17 +1068,17 @@ function MultiIngestionSettings(): JSX.Element {
 																		)}
 
 																	{activeAPIKey?.id === APIKey.id &&
-																		activeSignal.signal === signal &&
+																		activeSignal.signal === signalName &&
 																		!isLoadingLimitForKey &&
 																		hasUpdateLimitForIngestionKeyError &&
-																		updateLimitForIngestionKeyError && (
+																		updateLimitForIngestionKeyError?.error && (
 																			<div className="error">
 																				{updateLimitForIngestionKeyError?.error}
 																			</div>
 																		)}
 
 																	{activeAPIKey?.id === APIKey.id &&
-																		activeSignal.signal === signal &&
+																		activeSignal.signal === signalName &&
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
 																				<Button
@@ -891,10 +1092,10 @@ function MultiIngestionSettings(): JSX.Element {
 																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
 																					}
 																					onClick={(): void => {
-																						if (!hasLimits(signal)) {
-																							handleAddLimit(APIKey, signal);
+																						if (!hasLimits(signalName)) {
+																							handleAddLimit(APIKey, signalName);
 																						} else {
-																							handleUpdateLimit(APIKey, limits[signal]);
+																							handleUpdateLimit(APIKey, limitsDict[signalName]);
 																						}
 																					}}
 																				>
@@ -916,55 +1117,99 @@ function MultiIngestionSettings(): JSX.Element {
 																</Form>
 															) : (
 																<div className="signal-limit-view-mode">
+																	{/* DAILY limit usage/limit */}
 																	<div className="signal-limit-value">
 																		<div className="limit-type">
-																			Daily <Minus size={16} />{' '}
+																			Daily <Minus size={16} />
 																		</div>
-
 																		<div className="limit-value">
-																			{hasValidDayLimit ? (
-																				<>
-																					{getYAxisFormattedValue(
-																						(limits[signal]?.metric?.day?.size || 0).toString(),
-																						'bytes',
-																					)}{' '}
-																					/{' '}
-																					{getYAxisFormattedValue(
-																						(limits[signal]?.config?.day?.size || 0).toString(),
-																						'bytes',
-																					)}
-																				</>
-																			) : (
-																				<>
-																					<Infinity size={16} /> NO LIMIT
-																				</>
-																			)}
+																			{/* Size (if usesSize) */}
+																			{signalCfg.usesSize &&
+																				(hasValidDayLimit &&
+																				limit?.config?.day?.size !== undefined ? (
+																					<>
+																						{getYAxisFormattedValue(
+																							(limit?.metric?.day?.size || 0).toString(),
+																							'bytes',
+																						)}{' '}
+																						/{' '}
+																						{getYAxisFormattedValue(
+																							(limit?.config?.day?.size || 0).toString(),
+																							'bytes',
+																						)}
+																					</>
+																				) : (
+																					<>
+																						<Infinity size={16} /> NO LIMIT
+																					</>
+																				))}
+
+																			{/* Count (if usesCount) */}
+																			{signalCfg.usesCount &&
+																				(limit?.config?.day?.count !== undefined ? (
+																					<div style={{ marginTop: 4 }}>
+																						{countToUnit(
+																							limit?.metric?.day?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{countToUnit(limit?.metric?.day?.count || 0).unit} /{' '}
+																						{countToUnit(
+																							limit?.config?.day?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{countToUnit(limit?.config?.day?.count || 0).unit}
+																					</div>
+																				) : (
+																					<>
+																						<Infinity size={16} /> NO LIMIT
+																					</>
+																				))}
 																		</div>
 																	</div>
 
+																	{/* SECOND limit usage/limit */}
 																	<div className="signal-limit-value">
 																		<div className="limit-type">
 																			Seconds <Minus size={16} />
 																		</div>
-
 																		<div className="limit-value">
-																			{hasValidSecondLimit ? (
-																				<>
-																					{getYAxisFormattedValue(
-																						(limits[signal]?.metric?.second?.size || 0).toString(),
-																						'bytes',
-																					)}{' '}
-																					/{' '}
-																					{getYAxisFormattedValue(
-																						(limits[signal]?.config?.second?.size || 0).toString(),
-																						'bytes',
-																					)}
-																				</>
-																			) : (
-																				<>
-																					<Infinity size={16} /> NO LIMIT
-																				</>
-																			)}
+																			{/* Size (if usesSize) */}
+																			{signalCfg.usesSize &&
+																				(hasValidSecondLimit &&
+																				limit?.config?.second?.size !== undefined ? (
+																					<>
+																						{getYAxisFormattedValue(
+																							(limit?.metric?.second?.size || 0).toString(),
+																							'bytes',
+																						)}{' '}
+																						/{' '}
+																						{getYAxisFormattedValue(
+																							(limit?.config?.second?.size || 0).toString(),
+																							'bytes',
+																						)}
+																					</>
+																				) : (
+																					<>
+																						<Infinity size={16} /> NO LIMIT
+																					</>
+																				))}
+
+																			{/* Count (if usesCount) */}
+																			{signalCfg.usesCount &&
+																				(limit?.config?.second?.count !== undefined ? (
+																					<div style={{ marginTop: 4 }}>
+																						{countToUnit(
+																							limit?.metric?.second?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{countToUnit(limit?.metric?.second?.count || 0).unit} /{' '}
+																						{countToUnit(
+																							limit?.config?.second?.count || 0,
+																						).value.toFixed(2)}{' '}
+																						{countToUnit(limit?.config?.second?.count || 0).unit}
+																					</div>
+																				) : (
+																					<>
+																						<Infinity size={16} /> NO LIMIT
+																					</>
+																				))}
 																		</div>
 																	</div>
 																</div>
@@ -989,7 +1234,7 @@ function MultiIngestionSettings(): JSX.Element {
 							<div className="ingestion-key-last-used-at">
 								<CalendarClock size={14} />
 								Expires on <Minus size={12} />
-								<Typography.Text>{formattedDateAndTime}</Typography.Text>
+								<Typography.Text>{expiresOn}</Typography.Text>
 							</div>
 						</div>
 					</div>
@@ -1034,7 +1279,6 @@ function MultiIngestionSettings(): JSX.Element {
 							className="learn-more"
 							rel="noreferrer"
 						>
-							{' '}
 							Learn more <ArrowUpRight size={14} />
 						</a>
 					</Typography.Text>

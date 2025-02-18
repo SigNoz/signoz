@@ -17,6 +17,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.ORG_SETTINGS]: 'Organization Settings',
 	[ROUTES.INGESTION_SETTINGS]: 'Ingestion Settings',
 	[ROUTES.MY_SETTINGS]: 'My Settings',
+	[ROUTES.CUSTOM_DOMAIN_SETTINGS]: 'Custom Domain Settings',
 	[ROUTES.ERROR_DETAIL]: 'Exceptions',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
@@ -28,7 +29,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 	[ROUTES.WORKSPACE_SUSPENDED]: 'Workspace Suspended',
-	[ROUTES.MESSAGING_QUEUES]: 'Messaging Queues',
+	[ROUTES.MESSAGING_QUEUES_OVERVIEW]: 'Messaging Queues',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

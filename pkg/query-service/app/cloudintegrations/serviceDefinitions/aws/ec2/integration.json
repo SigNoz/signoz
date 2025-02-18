@@ -1,0 +1,515 @@
+{
+  "id": "ec2",
+  "title": "EC2",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_EC2_CPUCreditBalance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditBalance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditBalance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditBalance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditUsage_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditUsage_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditUsage_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUCreditUsage_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditBalance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditBalance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditBalance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditBalance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditsCharged_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditsCharged_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditsCharged_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUSurplusCreditsCharged_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSByteBalance__count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSByteBalance__max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSByteBalance__min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSByteBalance__sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSIOBalance__count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSIOBalance__max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSIOBalance__min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSIOBalance__sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadBytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadBytes_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadBytes_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadBytes_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadOps_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadOps_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadOps_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSReadOps_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteBytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteBytes_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteBytes_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteBytes_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteOps_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteOps_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteOps_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_EBSWriteOps_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_MetadataNoToken_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_MetadataNoToken_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_MetadataNoToken_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_MetadataNoToken_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkIn_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkIn_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkIn_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkIn_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkOut_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkOut_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkOut_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkOut_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsIn_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsIn_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsIn_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsIn_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsOut_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsOut_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsOut_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_NetworkPacketsOut_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_AttachedEBS_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_AttachedEBS_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_AttachedEBS_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_AttachedEBS_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_Instance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_Instance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_Instance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_Instance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_System_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_System_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_System_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_System_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_EC2_StatusCheckFailed_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": []
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/EC2"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "EC2 Overview",
+        "description": "Overview of EC2",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

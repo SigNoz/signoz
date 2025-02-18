@@ -35,6 +35,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -43,12 +45,13 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/resource"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
-	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/app/traces/tracedetail"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/metrics"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
@@ -158,30 +161,25 @@ type ClickHouseReader struct {
 	traceLocalTableName  string
 	traceResourceTableV3 string
 	traceSummaryTable    string
+
+	fluxIntervalForTraceDetail time.Duration
+	cache                      cache.Cache
 }
 
 // NewTraceReader returns a TraceReader for the database
 func NewReader(
 	localDB *sqlx.DB,
+	db driver.Conn,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
+	fluxIntervalForTraceDetail time.Duration,
+	cache cache.Cache,
 ) *ClickHouseReader {
-
-	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
-	db, err := initialize(options)
-
-	if err != nil {
-		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
-	}
-
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema)
+	options := NewOptions(primaryNamespace, archiveNamespace)
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -193,34 +191,14 @@ func NewReaderFromClickhouseConnection(
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
+	fluxIntervalForTraceDetail time.Duration,
+	cache cache.Cache,
 ) *ClickHouseReader {
 	alertManager, err := am.New()
 	if err != nil {
 		zap.L().Error("failed to initialize alert manager", zap.Error(err))
 		zap.L().Error("check if the alert manager URL is correctly set and valid")
 		os.Exit(1)
-	}
-
-	regex := os.Getenv("ClickHouseOptimizeReadInOrderRegex")
-	var regexCompiled *regexp.Regexp
-	if regex != "" {
-		regexCompiled, err = regexp.Compile(regex)
-		if err != nil {
-			zap.L().Error("Incorrect regex for ClickHouseOptimizeReadInOrderRegex")
-			os.Exit(1)
-		}
-	}
-
-	wrap := clickhouseConnWrapper{
-		conn: db,
-		settings: ClickhouseQuerySettings{
-			MaxExecutionTime:                    os.Getenv("ClickHouseMaxExecutionTime"),
-			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
-			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
-			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
-			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
-			OptimizeReadInOrderRegexCompiled:    regexCompiled,
-		},
 	}
 
 	logsTableName := options.primary.LogsTable
@@ -238,7 +216,7 @@ func NewReaderFromClickhouseConnection(
 	}
 
 	return &ClickHouseReader{
-		db:                      wrap,
+		db:                      db,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
 		alertManager:            alertManager,
@@ -278,6 +256,9 @@ func NewReaderFromClickhouseConnection(
 		traceTableName:       traceTableName,
 		traceResourceTableV3: options.primary.TraceResourceTableV3,
 		traceSummaryTable:    options.primary.TraceSummaryTable,
+
+		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
+		cache:                      cache,
 	}
 }
 
@@ -425,28 +406,6 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 	}
 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
 	return conf, nil
-}
-
-func initialize(options *Options) (clickhouse.Conn, error) {
-
-	db, err := connect(options.getPrimary())
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to primary db: %v", err)
-	}
-
-	return db, nil
-}
-
-func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
-	if cfg.Encoding != EncodingJSON && cfg.Encoding != EncodingProto {
-		return nil, fmt.Errorf("unknown encoding %q, supported: %q, %q", cfg.Encoding, EncodingJSON, EncodingProto)
-	}
-
-	return cfg.Connector(cfg)
-}
-
-func (r *ClickHouseReader) GetConn() clickhouse.Conn {
-	return r.db
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
@@ -1207,23 +1166,23 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	if traceSummary.NumSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
 			zap.Uint64("Count", traceSummary.NumSpans))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":            traceSummary.NumSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
 		}
 		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
 	}
 
-	userEmail, err := auth.GetEmailFromJwt(ctx)
-	if err == nil {
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if ok {
 		data := map[string]interface{}{
 			"traceSize": traceSummary.NumSpans,
 		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
 	}
 
 	var startTime, endTime, durationNano uint64
@@ -1309,13 +1268,13 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
 				"spansRenderLimit": params.SpansRenderLimit,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
 		}
 	} else {
 		for i, item := range searchSpanResponses {
@@ -1349,23 +1308,23 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	if countSpans > uint64(params.MaxSpansInTrace) {
 		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
 			zap.Uint64("Count", countSpans))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":            countSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
 		}
 		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
 	}
 
-	userEmail, err := auth.GetEmailFromJwt(ctx)
-	if err == nil {
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if ok {
 		data := map[string]interface{}{
 			"traceSize": countSpans,
 		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
 	}
 
 	var startTime, endTime, durationNano uint64
@@ -1422,13 +1381,13 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
 				"spansRenderLimit": params.SpansRenderLimit,
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
 		}
 	} else {
 		for i, item := range searchSpanResponses {
@@ -1441,6 +1400,388 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
+}
+
+func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
+	var traceSummary model.TraceSummary
+	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE trace_id=$1", r.TraceDB, r.traceSummaryTable)
+	err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return []model.SpanItemV2{}, nil
+		}
+		zap.L().Error("Error in processing trace summary sql query", zap.Error(err))
+		return nil, model.ExecutionError(fmt.Errorf("error in processing trace summary sql query: %w", err))
+	}
+
+	var searchScanResponses []model.SpanItemV2
+	queryStartTime := time.Now()
+	err = r.db.Select(ctx, &searchScanResponses, traceDetailsQuery, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
+	zap.L().Info(traceDetailsQuery)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, model.ExecutionError(fmt.Errorf("error in processing trace data sql query: %w", err))
+	}
+	zap.L().Info("trace details query took: ", zap.Duration("duration", time.Since(queryStartTime)), zap.String("traceID", traceID))
+
+	return searchScanResponses, nil
+}
+
+func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx context.Context, traceID string) (*model.GetWaterfallSpansForTraceWithMetadataCache, error) {
+	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
+	cacheStatus, err := r.cache.Retrieve(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), cachedTraceData, false)
+	if err != nil {
+		zap.L().Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", zap.Error(err), zap.String("traceID", traceID))
+		return nil, err
+	}
+
+	if cacheStatus != cache.RetrieveStatusHit {
+		return nil, errors.Errorf("cache status for getWaterfallSpansForTraceWithMetadata : %s, traceID: %s", cacheStatus, traceID)
+	}
+
+	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
+		zap.L().Info("the trace end time falls under the flux interval, skipping getWaterfallSpansForTraceWithMetadata cache", zap.String("traceID", traceID))
+		return nil, errors.Errorf("the trace end time falls under the flux interval, skipping getWaterfallSpansForTraceWithMetadata cache, traceID: %s", traceID)
+	}
+
+	zap.L().Info("cache is successfully hit, applying cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
+	return cachedTraceData, nil
+}
+
+func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Context, traceID string, req *model.GetWaterfallSpansForTraceWithMetadataParams) (*model.GetWaterfallSpansForTraceWithMetadataResponse, *model.ApiError) {
+	response := new(model.GetWaterfallSpansForTraceWithMetadataResponse)
+	var startTime, endTime, durationNano, totalErrorSpans, totalSpans uint64
+	var spanIdToSpanNodeMap = map[string]*model.Span{}
+	var traceRoots []*model.Span
+	var serviceNameToTotalDurationMap = map[string]uint64{}
+	var serviceNameIntervalMap = map[string][]tracedetail.Interval{}
+	var hasMissingSpans bool
+
+	claims, claimsPresent := authtypes.ClaimsFromContext(ctx)
+	cachedTraceData, err := r.GetWaterfallSpansForTraceWithMetadataCache(ctx, traceID)
+	if err == nil {
+		startTime = cachedTraceData.StartTime
+		endTime = cachedTraceData.EndTime
+		durationNano = cachedTraceData.DurationNano
+		spanIdToSpanNodeMap = cachedTraceData.SpanIdToSpanNodeMap
+		serviceNameToTotalDurationMap = cachedTraceData.ServiceNameToTotalDurationMap
+		traceRoots = cachedTraceData.TraceRoots
+		totalSpans = cachedTraceData.TotalSpans
+		totalErrorSpans = cachedTraceData.TotalErrorSpans
+		hasMissingSpans = cachedTraceData.HasMissingSpans
+
+		if claimsPresent {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, claims.Email, true, false)
+		}
+	}
+
+	if err != nil {
+		zap.L().Info("cache miss for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
+
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		if err != nil {
+			return nil, err
+		}
+		if len(searchScanResponses) == 0 {
+			return response, nil
+		}
+		totalSpans = uint64(len(searchScanResponses))
+
+		if claimsPresent {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, map[string]interface{}{"traceSize": totalSpans}, claims.Email, true, false)
+		}
+
+		processingBeforeCache := time.Now()
+		for _, item := range searchScanResponses {
+			ref := []model.OtelSpanRef{}
+			err := json.Unmarshal([]byte(item.References), &ref)
+			if err != nil {
+				zap.L().Error("getWaterfallSpansForTraceWithMetadata: error unmarshalling references", zap.Error(err), zap.String("traceID", traceID))
+				return nil, model.BadRequest(fmt.Errorf("getWaterfallSpansForTraceWithMetadata: error unmarshalling references %w", err))
+			}
+
+			// merge attributes_number and attributes_bool to attributes_string
+			for k, v := range item.Attributes_bool {
+				item.Attributes_string[k] = fmt.Sprintf("%v", v)
+			}
+			for k, v := range item.Attributes_number {
+				item.Attributes_string[k] = fmt.Sprintf("%v", v)
+			}
+			for k, v := range item.Resources_string {
+				item.Attributes_string[k] = v
+			}
+
+			jsonItem := model.Span{
+				SpanID:           item.SpanID,
+				TraceID:          item.TraceID,
+				ServiceName:      item.ServiceName,
+				Name:             item.Name,
+				Kind:             int32(item.Kind),
+				DurationNano:     item.DurationNano,
+				HasError:         item.HasError,
+				StatusMessage:    item.StatusMessage,
+				StatusCodeString: item.StatusCodeString,
+				SpanKind:         item.SpanKind,
+				References:       ref,
+				Events:           item.Events,
+				TagMap:           item.Attributes_string,
+				Children:         make([]*model.Span, 0),
+			}
+
+			// metadata calculation
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
+			if startTime == 0 || startTimeUnixNano < startTime {
+				startTime = startTimeUnixNano
+			}
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
+			}
+			if durationNano == 0 || jsonItem.DurationNano > durationNano {
+				durationNano = jsonItem.DurationNano
+			}
+
+			if jsonItem.HasError {
+				totalErrorSpans = totalErrorSpans + 1
+			}
+
+			// convert start timestamp to millis because right now frontend is expecting it in millis
+			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
+
+			// collect the intervals for service for execution time calculation
+			serviceNameIntervalMap[jsonItem.ServiceName] =
+				append(serviceNameIntervalMap[jsonItem.ServiceName], tracedetail.Interval{StartTime: jsonItem.TimeUnixNano, Duration: jsonItem.DurationNano / 1000000, Service: jsonItem.ServiceName})
+
+			// append to the span node map
+			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
+		}
+
+		// traverse through the map and append each node to the children array of the parent node
+		// and add the missing spans
+		for _, spanNode := range spanIdToSpanNodeMap {
+			hasParentSpanNode := false
+			for _, reference := range spanNode.References {
+				if reference.RefType == "CHILD_OF" && reference.SpanId != "" {
+					hasParentSpanNode = true
+
+					if parentNode, exists := spanIdToSpanNodeMap[reference.SpanId]; exists {
+						parentNode.Children = append(parentNode.Children, spanNode)
+					} else {
+						// insert the missing span
+						missingSpan := model.Span{
+							SpanID:           reference.SpanId,
+							TraceID:          spanNode.TraceID,
+							ServiceName:      "",
+							Name:             "Missing Span",
+							TimeUnixNano:     spanNode.TimeUnixNano,
+							Kind:             0,
+							DurationNano:     spanNode.DurationNano,
+							HasError:         false,
+							StatusMessage:    "",
+							StatusCodeString: "",
+							SpanKind:         "",
+							Children:         make([]*model.Span, 0),
+						}
+						missingSpan.Children = append(missingSpan.Children, spanNode)
+						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
+						traceRoots = append(traceRoots, &missingSpan)
+						hasMissingSpans = true
+					}
+				}
+			}
+			if !hasParentSpanNode && !tracedetail.ContainsWaterfallSpan(traceRoots, spanNode) {
+				traceRoots = append(traceRoots, spanNode)
+			}
+		}
+
+		// sort the trace roots to add missing spans at the right order
+		sort.Slice(traceRoots, func(i, j int) bool {
+			if traceRoots[i].TimeUnixNano == traceRoots[j].TimeUnixNano {
+				return traceRoots[i].Name < traceRoots[j].Name
+			}
+			return traceRoots[i].TimeUnixNano < traceRoots[j].TimeUnixNano
+		})
+
+		serviceNameToTotalDurationMap = tracedetail.CalculateServiceTime(serviceNameIntervalMap)
+
+		traceCache := model.GetWaterfallSpansForTraceWithMetadataCache{
+			StartTime:                     startTime,
+			EndTime:                       endTime,
+			DurationNano:                  durationNano,
+			TotalSpans:                    totalSpans,
+			TotalErrorSpans:               totalErrorSpans,
+			SpanIdToSpanNodeMap:           spanIdToSpanNodeMap,
+			ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
+			TraceRoots:                    traceRoots,
+			HasMissingSpans:               hasMissingSpans,
+		}
+
+		zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
+		cacheErr := r.cache.Store(ctx, fmt.Sprintf("getWaterfallSpansForTraceWithMetadata-%v", traceID), &traceCache, time.Minute*5)
+		if cacheErr != nil {
+			zap.L().Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID), zap.Error(err))
+		}
+	}
+
+	processingPostCache := time.Now()
+	selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint := tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
+	zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID))
+
+	response.Spans = selectedSpans
+	response.UncollapsedSpans = uncollapsedSpans
+	response.StartTimestampMillis = startTime / 1000000
+	response.EndTimestampMillis = endTime / 1000000
+	response.TotalSpansCount = totalSpans
+	response.TotalErrorSpansCount = totalErrorSpans
+	response.RootServiceName = rootServiceName
+	response.RootServiceEntryPoint = rootServiceEntryPoint
+	response.ServiceNameToTotalDurationMap = serviceNameToTotalDurationMap
+	response.HasMissingSpans = hasMissingSpans
+	return response, nil
+}
+
+func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, traceID string) (*model.GetFlamegraphSpansForTraceCache, error) {
+	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
+	cacheStatus, err := r.cache.Retrieve(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), cachedTraceData, false)
+	if err != nil {
+		zap.L().Debug("error in retrieving getFlamegraphSpansForTrace cache", zap.Error(err), zap.String("traceID", traceID))
+		return nil, err
+	}
+
+	if cacheStatus != cache.RetrieveStatusHit {
+		return nil, errors.Errorf("cache status for getFlamegraphSpansForTrace : %s, traceID: %s", cacheStatus, traceID)
+	}
+
+	if time.Since(time.UnixMilli(int64(cachedTraceData.EndTime))) < r.fluxIntervalForTraceDetail {
+		zap.L().Info("the trace end time falls under the flux interval, skipping getFlamegraphSpansForTrace cache", zap.String("traceID", traceID))
+		return nil, errors.Errorf("the trace end time falls under the flux interval, skipping getFlamegraphSpansForTrace cache, traceID: %s", traceID)
+	}
+
+	zap.L().Info("cache is successfully hit, applying cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
+	return cachedTraceData, nil
+}
+
+func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, *model.ApiError) {
+	trace := new(model.GetFlamegraphSpansForTraceResponse)
+	var startTime, endTime, durationNano uint64
+	var spanIdToSpanNodeMap = map[string]*model.FlamegraphSpan{}
+	// map[traceID][level]span
+	var selectedSpans = [][]*model.FlamegraphSpan{}
+	var traceRoots []*model.FlamegraphSpan
+
+	// get the trace tree from cache!
+	cachedTraceData, err := r.GetFlamegraphSpansForTraceCache(ctx, traceID)
+
+	if err == nil {
+		startTime = cachedTraceData.StartTime
+		endTime = cachedTraceData.EndTime
+		durationNano = cachedTraceData.DurationNano
+		selectedSpans = cachedTraceData.SelectedSpans
+		traceRoots = cachedTraceData.TraceRoots
+	}
+
+	if err != nil {
+		zap.L().Info("cache miss for getFlamegraphSpansForTrace", zap.String("traceID", traceID))
+
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,references, resource_string_service$$name, name FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		if err != nil {
+			return nil, err
+		}
+		if len(searchScanResponses) == 0 {
+			return trace, nil
+		}
+
+		processingBeforeCache := time.Now()
+		for _, item := range searchScanResponses {
+			ref := []model.OtelSpanRef{}
+			err := json.Unmarshal([]byte(item.References), &ref)
+			if err != nil {
+				zap.L().Error("Error unmarshalling references", zap.Error(err))
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error in unmarshalling references: %w", err)}
+			}
+
+			jsonItem := model.FlamegraphSpan{
+				SpanID:       item.SpanID,
+				TraceID:      item.TraceID,
+				ServiceName:  item.ServiceName,
+				Name:         item.Name,
+				DurationNano: item.DurationNano,
+				HasError:     item.HasError,
+				References:   ref,
+				Children:     make([]*model.FlamegraphSpan, 0),
+			}
+
+			// metadata calculation
+			startTimeUnixNano := uint64(item.TimeUnixNano.UnixNano())
+			if startTime == 0 || startTimeUnixNano < startTime {
+				startTime = startTimeUnixNano
+			}
+			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
+				endTime = (startTimeUnixNano + jsonItem.DurationNano)
+			}
+			if durationNano == 0 || jsonItem.DurationNano > durationNano {
+				durationNano = jsonItem.DurationNano
+			}
+
+			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
+			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
+		}
+
+		// traverse through the map and append each node to the children array of the parent node
+		// and add missing spans
+		for _, spanNode := range spanIdToSpanNodeMap {
+			hasParentSpanNode := false
+			for _, reference := range spanNode.References {
+				if reference.RefType == "CHILD_OF" && reference.SpanId != "" {
+					hasParentSpanNode = true
+					if parentNode, exists := spanIdToSpanNodeMap[reference.SpanId]; exists {
+						parentNode.Children = append(parentNode.Children, spanNode)
+					} else {
+						// insert the missing spans
+						missingSpan := model.FlamegraphSpan{
+							SpanID:       reference.SpanId,
+							TraceID:      spanNode.TraceID,
+							ServiceName:  "",
+							Name:         "Missing Span",
+							TimeUnixNano: spanNode.TimeUnixNano,
+							DurationNano: spanNode.DurationNano,
+							HasError:     false,
+							Children:     make([]*model.FlamegraphSpan, 0),
+						}
+						missingSpan.Children = append(missingSpan.Children, spanNode)
+						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
+						traceRoots = append(traceRoots, &missingSpan)
+					}
+				}
+			}
+			if !hasParentSpanNode && !tracedetail.ContainsFlamegraphSpan(traceRoots, spanNode) {
+				traceRoots = append(traceRoots, spanNode)
+			}
+		}
+
+		selectedSpans = tracedetail.GetSelectedSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
+		traceCache := model.GetFlamegraphSpansForTraceCache{
+			StartTime:     startTime,
+			EndTime:       endTime,
+			DurationNano:  durationNano,
+			SelectedSpans: selectedSpans,
+			TraceRoots:    traceRoots,
+		}
+
+		zap.L().Info("getFlamegraphSpansForTrace: processing pre cache", zap.Duration("duration", time.Since(processingBeforeCache)), zap.String("traceID", traceID))
+		cacheErr := r.cache.Store(ctx, fmt.Sprintf("getFlamegraphSpansForTrace-%v", traceID), &traceCache, time.Minute*5)
+		if cacheErr != nil {
+			zap.L().Debug("failed to store cache for getFlamegraphSpansForTrace", zap.String("traceID", traceID), zap.Error(err))
+		}
+	}
+
+	processingPostCache := time.Now()
+	selectedSpansForRequest := tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, startTime, endTime)
+	zap.L().Info("getFlamegraphSpansForTrace: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID))
+
+	trace.Spans = selectedSpansForRequest
+	trace.StartTimestampMillis = startTime / 1000000
+	trace.EndTimestampMillis = endTime / 1000000
+	return trace, nil
 }
 
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
@@ -2642,7 +2983,7 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	var totalLogLines uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, int(interval.Minutes()))
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTableV2, int(interval.Minutes()))
 
 	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
@@ -3125,9 +3466,9 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
 	}
 
@@ -3167,9 +3508,9 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
 	}
 
@@ -3259,9 +3600,9 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		userEmail, err := auth.GetEmailFromJwt(ctx)
-		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, claims.Email, true, false)
 		}
 	}
 
@@ -3456,11 +3797,16 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name IN $2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
+	names := []string{req.AggregateAttribute}
+	if _, ok := metrics.MetricsUnderTransition[req.AggregateAttribute]; ok {
+		names = append(names, metrics.MetricsUnderTransition[req.AggregateAttribute])
+	}
+
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -3558,27 +3904,46 @@ func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (
 }
 
 func (r *ClickHouseReader) GetLatestReceivedMetric(
-	ctx context.Context, metricNames []string,
+	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
+	// at least 1 metric name must be specified.
+	// this query can be too slow otherwise.
 	if len(metricNames) < 1 {
-		return nil, nil
+		return nil, model.BadRequest(fmt.Errorf("atleast 1 metric name must be specified"))
 	}
 
 	quotedMetricNames := []string{}
 	for _, m := range metricNames {
-		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
+		quotedMetricNames = append(quotedMetricNames, utils.ClickHouseFormattedValue(m))
 	}
 	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
 
+	whereClauseParts := []string{
+		fmt.Sprintf(`metric_name in (%s)`, commaSeparatedMetricNames),
+	}
+
+	if labelValues != nil {
+		for label, val := range labelValues {
+			whereClauseParts = append(
+				whereClauseParts,
+				fmt.Sprintf(`JSONExtractString(labels, '%s') = '%s'`, label, val),
+			)
+		}
+	}
+
+	if len(whereClauseParts) < 1 {
+		return nil, nil
+	}
+
+	whereClause := strings.Join(whereClauseParts, " AND ")
+
 	query := fmt.Sprintf(`
-		SELECT metric_name, labels, unix_milli
+		SELECT metric_name, anyLast(labels), max(unix_milli)
 		from %s.%s
-		where metric_name in (
-			%s
-		)
-		order by unix_milli desc
+		where %s
+		group by metric_name
 		limit 1
-		`, signozMetricDBName, signozTSTableNameV4, commaSeparatedMetricNames,
+		`, signozMetricDBName, signozTSTableNameV4, whereClause,
 	)
 
 	rows, err := r.db.Query(ctx, query)
@@ -4200,9 +4565,26 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		var t time.Time
 		for idx, v := range vars {
 			if columnNames[idx] == "timestamp" {
-				t = time.Unix(0, int64(*v.(*uint64)))
+				switch v := v.(type) {
+				case *uint64:
+					t = time.Unix(0, int64(*v))
+				case *time.Time:
+					t = *v
+				}
 			} else if columnNames[idx] == "timestamp_datetime" {
 				t = *v.(*time.Time)
+			} else if columnNames[idx] == "events" {
+				var events []map[string]interface{}
+				eventsFromDB, ok := v.(*[]string)
+				if !ok {
+					continue
+				}
+				for _, event := range *eventsFromDB {
+					var eventMap map[string]interface{}
+					json.Unmarshal([]byte(event), &eventMap)
+					events = append(events, eventMap)
+				}
+				row[columnNames[idx]] = events
 			} else {
 				row[columnNames[idx]] = v
 			}

@@ -141,9 +141,9 @@ Depending upon your area of expertise & interest, you can choose one or more to 
 
 # 3. Develop Frontend 🌚
 
-**Need to Update: [https://github.com/SigNoz/signoz/tree/develop/frontend](https://github.com/SigNoz/signoz/tree/develop/frontend)**
+**Need to Update: [https://github.com/SigNoz/signoz/tree/main/frontend](https://github.com/SigNoz/signoz/tree/main/frontend)**
 
-Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/develop/frontend/README.md) sections for more info on how to setup SigNoz frontend locally (with and without Docker).
+Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/main/frontend/README.md) sections for more info on how to setup SigNoz frontend locally (with and without Docker).
 
 ## 3.1 Contribute to Frontend with Docker installation of SigNoz
 
@@ -151,14 +151,14 @@ Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/
   ```
   git clone https://github.com/SigNoz/signoz.git && cd signoz
   ```
-- Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+- Comment out `frontend` service section at [`deploy/docker/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/main/deploy/docker/docker-compose.yaml#L68)
 
 ![develop-frontend](https://user-images.githubusercontent.com/52788043/179009217-6692616b-17dc-4d27-b587-9d007098d739.jpeg)
 
 
 - run `cd deploy` to move to deploy directory,
 - Install signoz locally **without** the frontend,
-    - Add / Uncomment the below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
+    - Add / Uncomment the below configuration to query-service section at [`deploy/docker/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/main/deploy/docker/docker-compose.yaml#L47)
     ```
     ports:
       - "8080:8080"
@@ -167,9 +167,10 @@ Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/
     
   - Next run,
     ```
-    sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
+    cd deploy/docker
+    sudo docker compose up -d
     ```
-- `cd ../frontend` and change baseURL in file [`frontend/src/constants/env.ts#L2`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts#L2) and for that, you need to create a `.env` file in the `frontend` directory with the following environment variable (`FRONTEND_API_ENDPOINT`) matching your configuration.
+- `cd ../frontend` and change baseURL in file [`frontend/src/constants/env.ts#L2`](https://github.com/SigNoz/signoz/blob/main/frontend/src/constants/env.ts#L2) and for that, you need to create a `.env` file in the `frontend` directory with the following environment variable (`FRONTEND_API_ENDPOINT`) matching your configuration.
 
     If you have backend api exposed via frontend nginx:
     ```
@@ -185,11 +186,6 @@ Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/
   yarn install
   yarn dev
   ```
-
-### Important Notes:
-The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
-
- **[`^top^`](#contributing-guidelines)**
 
 ## 3.2 Contribute to Frontend without installing SigNoz backend
 
@@ -216,7 +212,7 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 # 4. Contribute to Backend (Query-Service) 🌑
 
-**Need to Update: [https://github.com/SigNoz/signoz/tree/develop/pkg/query-service](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)**
+**Need to Update: [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](https://github.com/SigNoz/signoz/tree/main/pkg/query-service)**
 
 ## 4.1 Prerequisites
 
@@ -242,13 +238,13 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
     git clone https://github.com/SigNoz/signoz.git && cd signoz
     ```
 - run `sudo make dev-setup` to configure local setup to run query-service,
-- Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+- Comment out `frontend` service section at [`deploy/docker/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/main/deploy/docker/docker-compose.yaml#L68)
 <img width="982" alt="develop-frontend" src="https://user-images.githubusercontent.com/52788043/179043977-012be8b0-a2ed-40d1-b2e6-2ab72d7989c0.png">
 
-- Comment out `query-service` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L41`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L41)
+- Comment out `query-service` section at [`deploy/docker/docker-compose.yaml#L41`,](https://github.com/SigNoz/signoz/blob/main/deploy/docker/docker-compose.yaml#L41)
 <img width="1068" alt="Screenshot 2022-07-14 at 22 48 07" src="https://user-images.githubusercontent.com/52788043/179044151-a65ba571-db0b-4a16-b64b-ca3fadcf3af0.png">
 
-- add below configuration to `clickhouse` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
+- add below configuration to `clickhouse` section at [`deploy/docker/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/main/deploy/docker/docker-compose.yaml)
   ```
   ports:
     - 9001:9000
@@ -258,9 +254,9 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 - run `cd pkg/query-service/` to move to `query-service` directory,
 - Then, you need to create a `.env` file with the following environment variable 
     ```
-    SIGNOZ_LOCAL_DB_PATH="./signoz.db"
+    SIGNOZ_SQLSTORE_SQLITE_PATH="./signoz.db"
     ```
-to set your local environment with the right `RELATIONAL_DATASOURCE_PATH` as mentioned in [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go#L38)
+to set your local environment with the right `RELATIONAL_DATASOURCE_PATH` as mentioned in [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/main/pkg/query-service/constants/constants.go#L38)
 
 - Now, install SigNoz locally **without** the `frontend` and `query-service`,
   - If you are using `x86_64` processors (All Intel/AMD processors) run `sudo make run-x86`
@@ -294,13 +290,10 @@ docker pull signoz/query-service:develop
 ```
 
 ### Important Note:
-The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
-
-
 
 **Query Service should now be available at** [`http://localhost:8080`](http://localhost:8080)
 
-If you want to see how the frontend plays with query service, you can run the frontend also in your local env with the baseURL changed to `http://localhost:8080` in file [`frontend/src/constants/env.ts`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts) as the `query-service` is now running at port `8080`.
+If you want to see how the frontend plays with query service, you can run the frontend also in your local env with the baseURL changed to `http://localhost:8080` in file [`frontend/src/constants/env.ts`](https://github.com/SigNoz/signoz/blob/main/frontend/src/constants/env.ts) as the `query-service` is now running at port `8080`.
 
 <!-- Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
 

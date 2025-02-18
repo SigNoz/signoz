@@ -1240,8 +1240,8 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true)
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1339,8 +1339,8 @@ func TestThresholdRuleNoData(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true)
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1447,8 +1447,8 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true)
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1572,8 +1572,8 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true)
+		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{

@@ -17,10 +17,9 @@ import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import history from 'lib/history';
 import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
 // #TODO: Lucide will be removing brand icons like GitHub in the future. In that case, we can use Simple Icons. https://simpleicons.org/
 // See more: https://github.com/lucide-icons/lucide/issues/94
@@ -34,13 +33,13 @@ function ImportJSON({
 	uploadedGrafana,
 	onModalHandler,
 }: ImportJSONProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [isUploadJSONError, setIsUploadJSONError] = useState<boolean>(false);
 	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
 		false,
 	);
-	const [isFeatureAlert, setIsFeatureAlert] = useState<boolean>(false);
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
@@ -99,7 +98,7 @@ function ImportJSON({
 			});
 
 			if (response.statusCode === 200) {
-				history.push(
+				safeNavigate(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
 					}),
@@ -107,15 +106,6 @@ function ImportJSON({
 				logEvent('Dashboard List: New dashboard imported successfully', {
 					dashboardId: response.payload?.uuid,
 					dashboardName: response.payload?.data?.title,
-				});
-			} else if (response.error === 'feature usage exceeded') {
-				setIsFeatureAlert(true);
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
 				});
 			} else {
 				setIsCreateDashboardError(true);
@@ -130,8 +120,6 @@ function ImportJSON({
 			setDashboardCreating(false);
 		} catch (error) {
 			setDashboardCreating(false);
-			setIsFeatureAlert(false);
-
 			setIsCreateDashboardError(true);
 			notifications.error({
 				message: error instanceof Error ? error.message : t('error_loading_json'),
@@ -149,7 +137,6 @@ function ImportJSON({
 	const onCancelHandler = (): void => {
 		setIsUploadJSONError(false);
 		setIsCreateDashboardError(false);
-		setIsFeatureAlert(false);
 		onModalHandler();
 	};
 
@@ -239,12 +226,6 @@ function ImportJSON({
 						>
 							{t('import_and_next')} &nbsp; <MoveRight size={14} />
 						</Button>
-
-						{isFeatureAlert && (
-							<Typography.Text type="danger">
-								{MESSAGE.CREATE_DASHBOARD}
-							</Typography.Text>
-						)}
 					</div>
 				</div>
 			}

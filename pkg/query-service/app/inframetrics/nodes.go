@@ -2,11 +2,14 @@ package inframetrics
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -19,7 +22,7 @@ var (
 
 	nodeAttrsToEnrich = []string{"k8s_node_name", "k8s_node_uid", "k8s_cluster_name"}
 
-	k8sNodeUIDAttrKey = "k8s_node_uid"
+	k8sNodeGroupAttrKey = "k8s_node_name"
 
 	queryNamesForNodes = map[string][]string{
 		"cpu":                {"A"},
@@ -60,6 +63,20 @@ func (n *NodesRepo) GetNodeAttributeKeys(ctx context.Context, req v3.FilterAttri
 	}
 
 	return attributeKeysResponse, nil
+}
+
+func (n *NodesRepo) DidSendNodeMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(nodeMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(didSendNodeMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := n.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func (n *NodesRepo) GetNodeAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
@@ -125,7 +142,7 @@ func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeLis
 			}
 		}
 
-		nodeUID := stringData[k8sNodeUIDAttrKey]
+		nodeUID := stringData[k8sNodeGroupAttrKey]
 		if _, ok := nodeAttrs[nodeUID]; !ok {
 			nodeAttrs[nodeUID] = map[string]string{}
 		}
@@ -220,7 +237,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 	}
 
 	if req.GroupBy == nil {
-		req.GroupBy = []v3.AttributeKey{{Key: k8sNodeUIDAttrKey}}
+		req.GroupBy = []v3.AttributeKey{{Key: k8sNodeGroupAttrKey}}
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
@@ -306,7 +323,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 				NodeMemoryAllocatable: -1,
 			}
 
-			if nodeUID, ok := row.Data[k8sNodeUIDAttrKey].(string); ok {
+			if nodeUID, ok := row.Data[k8sNodeGroupAttrKey].(string); ok {
 				record.NodeUID = nodeUID
 			}
 
@@ -335,7 +352,7 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 			}
 
 			record.Meta = map[string]string{}
-			if _, ok := nodeAttrs[record.NodeUID]; ok {
+			if _, ok := nodeAttrs[record.NodeUID]; ok && record.NodeUID != "" {
 				record.Meta = nodeAttrs[record.NodeUID]
 			}
 
@@ -354,5 +371,6 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, req model.NodeListRequest) 
 	resp.Total = len(allNodeGroups)
 	resp.Records = records
 
+	resp.SortBy(req.OrderBy)
 	return resp, nil
 }

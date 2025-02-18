@@ -1,0 +1,95 @@
+##################### SigNoz Configuration Example #####################
+# 
+# Do not modify this file
+#
+
+##################### Instrumentation #####################
+instrumentation:
+  logs:
+    # The log level to use.
+    level: info
+  traces:
+    # Whether to enable tracing.
+    enabled: false
+    processors:
+      batch:
+        exporter:
+          otlp:
+            endpoint: localhost:4317
+  metrics:
+    # Whether to enable metrics.
+    enabled: true
+    readers:
+      pull:
+        exporter:
+          prometheus:
+            host: "0.0.0.0"
+            port: 9090
+
+##################### Web #####################
+web:
+  # Whether to enable the web frontend
+  enabled: true
+  # The prefix to serve web on
+  prefix: /
+  # The directory containing the static build files.
+  directory: /etc/signoz/web
+
+##################### Cache #####################
+cache:
+  # specifies the caching provider to use.
+  provider: memory
+  # memory: Uses in-memory caching.
+  memory:
+    # Time-to-live for cache entries in memory. Specify the duration in ns
+    ttl: 60000000000
+    # The interval at which the cache will be cleaned up
+    cleanupInterval: 1m
+  # redis: Uses Redis as the caching backend.
+  redis:
+    # The hostname or IP address of the Redis server.
+    host: localhost
+    # The port on which the Redis server is running. Default is usually 6379.
+    port: 6379
+    # The password for authenticating with the Redis server, if required.
+    password: 
+    # The Redis database number to use
+    db: 0
+
+##################### SQLStore #####################
+sqlstore:
+  # specifies the SQLStore provider to use.
+  provider: sqlite
+  # The maximum number of open connections to the database.
+  max_open_conns: 100
+  sqlite:
+    # The path to the SQLite database file.
+    path: /var/lib/signoz/signoz.db
+
+
+##################### APIServer #####################
+apiserver:
+  timeout:
+    default: 60s
+    max: 600s
+    excluded_routes:
+      - /api/v1/logs/tail
+      - /api/v3/logs/livetail
+  logging:
+    excluded_routes:
+      - /api/v1/health
+
+
+##################### TelemetryStore #####################
+telemetrystore:
+  # specifies the telemetrystore provider to use.
+  provider: clickhouse
+  clickhouse:
+    # The DSN to use for ClickHouse.
+    dsn: http://localhost:9000
+  # Maximum number of idle connections in the connection pool.
+  max_idle_conns: 50
+  # Maximum number of open connections to the database.
+  max_open_conns: 100
+  # Maximum time to wait for a connection to be established.
+  dial_timeout: 5s

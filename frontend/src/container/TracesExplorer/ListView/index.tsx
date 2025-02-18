@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -7,16 +8,18 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
+import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -32,12 +35,19 @@ interface ListViewProps {
 }
 
 function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
-	const { stagedQuery, panelType } = useQueryBuilder();
+	const {
+		stagedQuery,
+		panelType: panelTypeFromQueryBuilder,
+	} = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
+
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+		loading: timeRangeUpdateLoading,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
@@ -55,34 +65,51 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,
 	);
+	const paginationConfig =
+		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
+
+	const queryKey = useMemo(
+		() => [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+			panelType,
+			paginationConfig,
+			options?.selectColumns,
+		],
+		[
+			stagedQuery,
+			panelType,
+			globalSelectedTime,
+			paginationConfig,
+			options?.selectColumns,
+			maxTime,
+			minTime,
+		],
+	);
 
 	const { data, isFetching, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
-			graphType: panelType || PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: globalSelectedTime,
+			graphType: panelType,
+			selectedTime: 'GLOBAL_TIME' as const,
+			globalSelectedInterval: globalSelectedTime as CustomTimeType,
 			params: {
 				dataSource: 'traces',
 			},
 			tableParams: {
-				pagination: paginationQueryData,
+				pagination: paginationConfig,
 				selectColumns: options?.selectColumns,
 			},
 		},
 		DEFAULT_ENTITY_VERSION,
 		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				globalSelectedTime,
-				maxTime,
-				minTime,
-				stagedQuery,
-				panelType,
-				paginationQueryData,
-				options?.selectColumns,
-			],
+			queryKey,
 			enabled:
+				// don't make api call while the time range state in redux is loading
+				!timeRangeUpdateLoading &&
 				!!stagedQuery &&
 				panelType === PANEL_TYPES.LIST &&
 				!!options?.selectColumns?.length,
@@ -119,12 +146,24 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 		[columns, onDragColumns],
 	);
 
-	const isDataPresent =
+	const isDataAbsent =
 		!isLoading &&
 		!isFetching &&
 		!isError &&
 		transformedQueryTableData.length === 0;
 
+	useEffect(() => {
+		if (
+			!isLoading &&
+			!isFetching &&
+			!isError &&
+			transformedQueryTableData.length !== 0
+		) {
+			logEvent('Traces Explorer: Data present', {
+				panelType,
+			});
+		}
+	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
 	return (
 		<Container>
 			{transformedQueryTableData.length !== 0 && (
@@ -142,11 +181,11 @@ function ListView({ isFilterApplied }: ListViewProps): JSX.Element {
 				<TracesLoading />
 			)}
 
-			{isDataPresent && !isFilterApplied && (
+			{isDataAbsent && !isFilterApplied && (
 				<NoLogs dataSource={DataSource.TRACES} />
 			)}
 
-			{isDataPresent && isFilterApplied && (
+			{isDataAbsent && isFilterApplied && (
 				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
 			)}
 

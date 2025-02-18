@@ -24,7 +24,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { cloneDeep, isEmpty, set } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -61,6 +61,7 @@ function TracesExplorer(): JSX.Element {
 	const currentPanelType = useGetPanelTypesQueryParam();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const { safeNavigate } = useSafeNavigate();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
 
@@ -197,7 +198,7 @@ function TracesExplorer(): JSX.Element {
 						widgetId,
 					});
 
-					history.push(dashboardEditView);
+					safeNavigate(dashboardEditView);
 				},
 				onError: (error) => {
 					if (axios.isAxiosError(error)) {

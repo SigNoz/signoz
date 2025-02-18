@@ -5,6 +5,7 @@ import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/Gr
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramChartOptions';
+import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -18,6 +19,7 @@ function HistogramPanelWrapper({
 	graphVisibility,
 	isFullViewMode,
 	onToggleModelHandler,
+	onClickHandler,
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
@@ -67,6 +69,7 @@ function HistogramPanelWrapper({
 				setGraphsVisibilityStates: setGraphVisibility,
 				graphsVisibilityStates: graphVisibility,
 				mergeAllQueries: widget.mergeAllActiveQueries,
+				onClickHandler: onClickHandler || _noop,
 			}),
 		[
 			containerDimensions,
@@ -78,6 +81,7 @@ function HistogramPanelWrapper({
 			widget.id,
 			widget.mergeAllActiveQueries,
 			widget.panelTypes,
+			onClickHandler,
 		],
 	);
 
