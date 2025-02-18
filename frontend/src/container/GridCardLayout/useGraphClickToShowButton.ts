@@ -66,7 +66,6 @@ export const useGraphClickToShowButton = ({
 		const graphBounds = graphRef.current?.getBoundingClientRect();
 		if (!graphBounds) return;
 
-		// Use simpler positioning like the original implementation
 		const left = mouseX;
 		const top = mouseY;
 
