@@ -31,7 +31,7 @@ func InitAuthCache(ctx context.Context) error {
 		if err != nil {
 			return errors.Wrapf(err.Err, "failed to get group %s", groupName)
 		}
-		*dest = group.Id
+		*dest = group.ID
 		return nil
 	}
 

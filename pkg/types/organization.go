@@ -31,8 +31,8 @@ type Invite struct {
 
 type Group struct {
 	bun.BaseModel `bun:"table:groups"`
-	ID            string `bun:"id,pk,type:text"`
-	Name          string `bun:"name,type:text,notnull,unique"`
+	ID            string `bun:"id,pk,type:text" json:"id"`
+	Name          string `bun:"name,type:text,notnull,unique" json:"name"`
 }
 
 type User struct {
