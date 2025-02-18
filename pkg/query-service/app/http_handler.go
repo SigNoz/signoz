@@ -49,6 +49,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
@@ -2243,10 +2244,10 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
-	_, apiErr = dao.DB().EditUser(ctx, &model.User{
-		Id:                old.Id,
+	_, apiErr = dao.DB().EditUser(ctx, &types.User{
+		ID:                old.ID,
 		Name:              old.Name,
-		OrgId:             old.OrgId,
+		OrgID:             old.OrgID,
 		Email:             old.Email,
 		Password:          old.Password,
 		CreatedAt:         old.CreatedAt,
@@ -2291,7 +2292,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.GroupId == adminGroup.ID && len(adminUsers) == 1 {
+	if user.GroupID == adminGroup.ID && len(adminUsers) == 1 {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("cannot delete the last admin user")}, nil)
@@ -2352,7 +2353,7 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	group, err := dao.DB().GetGroup(context.Background(), user.GroupId)
+	group, err := dao.DB().GetGroup(context.Background(), user.GroupID)
 	if err != nil {
 		RespondError(w, err, "Failed to get group")
 		return
@@ -2388,7 +2389,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if user.GroupId == auth.AuthCacheObj.AdminGroupId {
+	if user.GroupID == auth.AuthCacheObj.AdminGroupId {
 		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
 		if apiErr != nil {
 			RespondError(w, apiErr, "Failed to fetch adminUsers")
@@ -2403,7 +2404,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.ID)
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID, newGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return
@@ -3520,7 +3521,7 @@ func (aH *APIHandler) getUserPreference(
 	user := common.GetUserFromContext(r.Context())
 
 	preference, apiErr := preferences.GetUserPreference(
-		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
+		r.Context(), preferenceId, user.User.OrgID, user.User.ID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3543,7 +3544,7 @@ func (aH *APIHandler) updateUserPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3557,7 +3558,7 @@ func (aH *APIHandler) getAllUserPreferences(
 ) {
 	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetAllUserPreferences(
-		r.Context(), user.User.OrgId, user.User.Id,
+		r.Context(), user.User.OrgID, user.User.ID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3573,7 +3574,7 @@ func (aH *APIHandler) getOrgPreference(
 	preferenceId := mux.Vars(r)["preferenceId"]
 	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId, user.User.OrgId,
+		r.Context(), preferenceId, user.User.OrgID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3596,7 +3597,7 @@ func (aH *APIHandler) updateOrgPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgID)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3610,7 +3611,7 @@ func (aH *APIHandler) getAllOrgPreferences(
 ) {
 	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetAllOrgPreferences(
-		r.Context(), user.User.OrgId,
+		r.Context(), user.User.OrgID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)

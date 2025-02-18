@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -88,13 +87,13 @@ func (mds *ModelDaoSqlite) GetInvites(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context,
-	org *model.Organization) (*model.Organization, *model.ApiError) {
+	org *types.Organization) (*types.Organization, *model.ApiError) {
 
-	org.Id = uuid.NewString()
-	org.CreatedAt = time.Now().Unix()
-	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO organizations (id, name, created_at,is_anonymous,has_opted_updates) VALUES (?, ?, ?, ?, ?);`,
-		org.Id, org.Name, org.CreatedAt, org.IsAnonymous, org.HasOptedUpdates)
+	org.ID = uuid.NewString()
+	org.CreatedAt = time.Now()
+	_, err := mds.bundb.NewInsert().
+		Model(org).
+		Exec(ctx)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -103,14 +102,18 @@ func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetOrg(ctx context.Context,
-	id string) (*model.Organization, *model.ApiError) {
+	id string) (*types.Organization, *model.ApiError) {
 
-	orgs := []model.Organization{}
-	err := mds.db.Select(&orgs, `SELECT * FROM organizations WHERE id=?;`, id)
+	orgs := []types.Organization{}
 
-	if err != nil {
+	if err := mds.bundb.NewSelect().
+		Model(&orgs).
+		Where("id = ?", id).
+		Scan(ctx); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+
+	// TODO(nitya): remove for multitenancy
 	if len(orgs) > 1 {
 		return nil, &model.ApiError{
 			Typ: model.ErrorInternal,
@@ -125,11 +128,14 @@ func (mds *ModelDaoSqlite) GetOrg(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetOrgByName(ctx context.Context,
-	name string) (*model.Organization, *model.ApiError) {
+	name string) (*types.Organization, *model.ApiError) {
 
-	orgs := []model.Organization{}
+	orgs := []types.Organization{}
 
-	if err := mds.db.Select(&orgs, `SELECT * FROM organizations WHERE name=?;`, name); err != nil {
+	if err := mds.bundb.NewSelect().
+		Model(&orgs).
+		Where("name = ?", name).
+		Scan(ctx); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -145,9 +151,11 @@ func (mds *ModelDaoSqlite) GetOrgByName(ctx context.Context,
 	return &orgs[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]model.Organization, *model.ApiError) {
-	orgs := []model.Organization{}
-	err := mds.db.Select(&orgs, `SELECT * FROM organizations`)
+func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError) {
+	var orgs []types.Organization
+	err := mds.bundb.NewSelect().
+		Model(&orgs).
+		Scan(ctx)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -155,24 +163,31 @@ func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]model.Organization, *
 	return orgs, nil
 }
 
-func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *model.Organization) *model.ApiError {
+func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *types.Organization) *model.ApiError {
+	_, err := mds.bundb.NewUpdate().
+		Model(org).
+		Column("name").
+		Column("has_opted_updates").
+		Column("is_anonymous").
+		Where("id = ?", org.ID).
+		Exec(ctx)
 
-	q := `UPDATE organizations SET name=?,has_opted_updates=?,is_anonymous=? WHERE id=?;`
-
-	_, err := mds.db.ExecContext(ctx, q, org.Name, org.HasOptedUpdates, org.IsAnonymous, org.Id)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	telemetry.GetInstance().SetTelemetryAnonymous(org.IsAnonymous)
-	telemetry.GetInstance().SetDistinctId(org.Id)
+	telemetry.GetInstance().SetDistinctId(org.ID)
 
 	return nil
 }
 
 func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiError {
+	_, err := mds.bundb.NewDelete().
+		Model(&types.Organization{}).
+		Where("id = ?", id).
+		Exec(ctx)
 
-	_, err := mds.db.ExecContext(ctx, `DELETE from organizations where id=?;`, id)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -180,14 +195,10 @@ func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiE
 }
 
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
-	user *model.User, isFirstUser bool) (*model.User, *model.ApiError) {
-
-	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO users (id, name, email, password, created_at, profile_picture_url, group_id, org_id)
-		 VALUES (?, ?, ?, ?, ?, ?, ?,?);`,
-		user.Id, user.Name, user.Email, user.Password, user.CreatedAt,
-		user.ProfilePictureURL, user.GroupId, user.OrgId,
-	)
+	user *types.User, isFirstUser bool) (*types.User, *model.ApiError) {
+	_, err := mds.bundb.NewInsert().
+		Model(user).
+		Exec(ctx)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -210,11 +221,15 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) EditUser(ctx context.Context,
-	update *model.User) (*model.User, *model.ApiError) {
+	update *types.User) (*types.User, *model.ApiError) {
+	_, err := mds.bundb.NewUpdate().
+		Model(update).
+		Column("name").
+		Column("org_id").
+		Column("email").
+		Where("id = ?", update.ID).
+		Exec(ctx)
 
-	_, err := mds.db.ExecContext(ctx,
-		`UPDATE users SET name=?,org_id=?,email=? WHERE id=?;`, update.Name,
-		update.OrgId, update.Email, update.Id)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -241,8 +256,11 @@ func (mds *ModelDaoSqlite) UpdateUserGroup(ctx context.Context, userId, groupId 
 }
 
 func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.ApiError {
+	result, err := mds.bundb.NewDelete().
+		Model(&types.User{}).
+		Where("id = ?", id).
+		Exec(ctx)
 
-	result, err := mds.db.ExecContext(ctx, `DELETE from users where id=?;`, id)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -262,9 +280,9 @@ func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.Api
 }
 
 func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
-	id string) (*model.UserPayload, *model.ApiError) {
+	id string) (*types.GettableUser, *model.ApiError) {
 
-	users := []model.UserPayload{}
+	users := []types.GettableUser{}
 	query := `select
 				u.id,
 				u.name,
@@ -303,7 +321,7 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
-	email string) (*model.UserPayload, *model.ApiError) {
+	email string) (*types.GettableUser, *model.ApiError) {
 
 	if email == "" {
 		return nil, &model.ApiError{
@@ -312,7 +330,7 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 		}
 	}
 
-	users := []model.UserPayload{}
+	users := []types.GettableUser{}
 	query := `select
 				u.id,
 				u.name,
@@ -347,13 +365,13 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 }
 
 // GetUsers fetches total user count
-func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserPayload, *model.ApiError) {
+func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]types.GettableUser, *model.ApiError) {
 	return mds.GetUsersWithOpts(ctx, 0)
 }
 
 // GetUsersWithOpts fetches users and supports additional search options
-func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]model.UserPayload, *model.ApiError) {
-	users := []model.UserPayload{}
+func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]types.GettableUser, *model.ApiError) {
+	users := []types.GettableUser{}
 
 	query := `select
 				u.id,
@@ -383,9 +401,9 @@ func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]m
 }
 
 func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
-	orgId string) ([]model.UserPayload, *model.ApiError) {
+	orgId string) ([]types.GettableUser, *model.ApiError) {
 
-	users := []model.UserPayload{}
+	users := []types.GettableUser{}
 	query := `select
 				u.id,
 				u.name,
@@ -410,9 +428,9 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
-	groupId string) ([]model.UserPayload, *model.ApiError) {
+	groupId string) ([]types.GettableUser, *model.ApiError) {
 
-	users := []model.UserPayload{}
+	users := []types.GettableUser{}
 	query := `select
 				u.id,
 				u.name,
@@ -459,9 +477,9 @@ func (mds *ModelDaoSqlite) DeleteGroup(ctx context.Context, id string) *model.Ap
 }
 
 func (mds *ModelDaoSqlite) GetGroup(ctx context.Context,
-	id string) (*model.Group, *model.ApiError) {
+	id string) (*types.Group, *model.ApiError) {
 
-	groups := []model.Group{}
+	groups := []types.Group{}
 	if err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE id=?`, id); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -505,9 +523,9 @@ func (mds *ModelDaoSqlite) GetGroupByName(ctx context.Context,
 	return &groups[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]model.Group, *model.ApiError) {
+func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]types.Group, *model.ApiError) {
 
-	groups := []model.Group{}
+	groups := []types.Group{}
 	if err := mds.db.Select(&groups, "SELECT * FROM groups"); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -555,51 +573,51 @@ func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context,
 }
 
 // CreateUserFlags inserts user specific flags
-func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (model.UserFlag, *model.ApiError) {
+func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (types.UserFlags, *model.ApiError) {
 
-	if len(flags) == 0 {
-		// nothing to do as flags are empty. In this method, we only append the flags
-		// but not set them to empty
-		return flags, nil
-	}
+	// if len(flags) == 0 {
+	// 	// nothing to do as flags are empty. In this method, we only append the flags
+	// 	// but not set them to empty
+	// 	return flags, nil
+	// }
 
-	// fetch existing flags
-	userPayload, apiError := mds.GetUser(ctx, userId)
-	if apiError != nil {
-		return nil, apiError
-	}
+	// // fetch existing flags
+	// userPayload, apiError := mds.GetUser(ctx, userId)
+	// if apiError != nil {
+	// 	return nil, apiError
+	// }
 
-	for k, v := range userPayload.Flags {
-		if _, ok := flags[k]; !ok {
-			// insert only missing keys as we want to retain the
-			// flags in the db that are not part of this request
-			flags[k] = v
-		}
-	}
+	// for k, v := range userPayload.Flags {
+	// 	if _, ok := flags[k]; !ok {
+	// 		// insert only missing keys as we want to retain the
+	// 		// flags in the db that are not part of this request
+	// 		flags[k] = v
+	// 	}
+	// }
 
-	// append existing flags with new ones
+	// // append existing flags with new ones
 
-	// write the updated flags
-	flagsBytes, err := json.Marshal(flags)
-	if err != nil {
-		return nil, model.InternalError(err)
-	}
+	// // write the updated flags
+	// flagsBytes, err := json.Marshal(flags)
+	// if err != nil {
+	// 	return nil, model.InternalError(err)
+	// }
 
-	if len(userPayload.Flags) == 0 {
-		q := `INSERT INTO user_flags (user_id, flags) VALUES (?, ?);`
+	// if len(userPayload.Flags) == 0 {
+	// 	q := `INSERT INTO user_flags (user_id, flags) VALUES (?, ?);`
 
-		if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	} else {
-		q := `UPDATE user_flags SET flags = ? WHERE user_id = ?;`
+	// 	if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
+	// 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	// 	}
+	// } else {
+	// 	q := `UPDATE user_flags SET flags = ? WHERE user_id = ?;`
 
-		if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
+	// 	if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
+	// 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	// 	}
+	// }
 
-	return flags, nil
+	return types.UserFlags{}, nil
 }
 
 func (mds *ModelDaoSqlite) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError) {

@@ -18,6 +18,7 @@ import (
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -154,7 +155,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
-) (*basemodel.User, *basemodel.ApiError) {
+) (*types.User, *basemodel.ApiError) {
 	cloudIntegrationUserId := fmt.Sprintf("%s-integration", cloudProvider)
 
 	integrationUserResult, apiErr := ah.AppDao().GetUser(ctx, cloudIntegrationUserId)
@@ -171,19 +172,19 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newUser := &basemodel.User{
-		Id:        cloudIntegrationUserId,
+	newUser := &types.User{
+		ID:        cloudIntegrationUserId,
 		Name:      fmt.Sprintf("%s integration", cloudProvider),
 		Email:     fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
-		CreatedAt: time.Now().Unix(),
-		OrgId:     orgId,
+		CreatedAt: int(time.Now().Unix()),
+		OrgID:     orgId,
 	}
 
 	viewerGroup, apiErr := dao.DB().GetGroupByName(ctx, baseconstants.ViewerGroup)
 	if apiErr != nil {
 		return nil, basemodel.WrapApiError(apiErr, "couldn't get viewer group for creating integration user")
 	}
-	newUser.GroupId = viewerGroup.ID
+	newUser.GroupID = viewerGroup.ID
 
 	passwordHash, err := auth.PasswordHash(uuid.NewString())
 	if err != nil {

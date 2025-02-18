@@ -29,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -462,8 +463,8 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-func parseUserRequest(r *http.Request) (*model.User, error) {
-	var req model.User
+func parseUserRequest(r *http.Request) (*types.User, error) {
+	var req types.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

@@ -25,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/exp/maps"
 )
@@ -150,10 +151,10 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser() (*model.User, *model.ApiError) {
+func createTestUser() (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{
+	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
 		Name: "test",
 	})
 	if apiErr != nil {
@@ -170,13 +171,13 @@ func createTestUser() (*model.User, *model.ApiError) {
 	userId := uuid.NewString()
 	return dao.DB().CreateUser(
 		ctx,
-		&model.User{
-			Id:       userId,
+		&types.User{
+			ID:       userId,
 			Name:     "test",
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
-			OrgId:    org.Id,
-			GroupId:  group.ID,
+			OrgID:    org.ID,
+			GroupID:  group.ID,
 		},
 		true,
 	)

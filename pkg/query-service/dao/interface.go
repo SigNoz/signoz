@@ -17,22 +17,22 @@ type Queries interface {
 	GetInviteFromToken(ctx context.Context, token string) (*model.InvitationObject, *model.ApiError)
 	GetInvites(ctx context.Context) ([]model.InvitationObject, *model.ApiError)
 
-	GetUser(ctx context.Context, id string) (*model.UserPayload, *model.ApiError)
-	GetUserByEmail(ctx context.Context, email string) (*model.UserPayload, *model.ApiError)
-	GetUsers(ctx context.Context) ([]model.UserPayload, *model.ApiError)
-	GetUsersWithOpts(ctx context.Context, limit int) ([]model.UserPayload, *model.ApiError)
+	GetUser(ctx context.Context, id string) (*types.GettableUser, *model.ApiError)
+	GetUserByEmail(ctx context.Context, email string) (*types.GettableUser, *model.ApiError)
+	GetUsers(ctx context.Context) ([]types.GettableUser, *model.ApiError)
+	GetUsersWithOpts(ctx context.Context, limit int) ([]types.GettableUser, *model.ApiError)
 
-	GetGroup(ctx context.Context, id string) (*model.Group, *model.ApiError)
+	GetGroup(ctx context.Context, id string) (*types.Group, *model.ApiError)
 	GetGroupByName(ctx context.Context, name string) (*types.Group, *model.ApiError)
-	GetGroups(ctx context.Context) ([]model.Group, *model.ApiError)
+	GetGroups(ctx context.Context) ([]types.Group, *model.ApiError)
 
-	GetOrgs(ctx context.Context) ([]model.Organization, *model.ApiError)
-	GetOrgByName(ctx context.Context, name string) (*model.Organization, *model.ApiError)
-	GetOrg(ctx context.Context, id string) (*model.Organization, *model.ApiError)
+	GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError)
+	GetOrgByName(ctx context.Context, name string) (*types.Organization, *model.ApiError)
+	GetOrg(ctx context.Context, id string) (*types.Organization, *model.ApiError)
 
 	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
-	GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserPayload, *model.ApiError)
-	GetUsersByGroup(ctx context.Context, groupId string) ([]model.UserPayload, *model.ApiError)
+	GetUsersByOrg(ctx context.Context, orgId string) ([]types.GettableUser, *model.ApiError)
+	GetUsersByGroup(ctx context.Context, groupId string) ([]types.GettableUser, *model.ApiError)
 
 	GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError)
 
@@ -45,16 +45,16 @@ type Mutations interface {
 	CreateInviteEntry(ctx context.Context, req *model.InvitationObject) *model.ApiError
 	DeleteInvitation(ctx context.Context, email string) *model.ApiError
 
-	CreateUser(ctx context.Context, user *model.User, isFirstUser bool) (*model.User, *model.ApiError)
-	EditUser(ctx context.Context, update *model.User) (*model.User, *model.ApiError)
+	CreateUser(ctx context.Context, user *types.User, isFirstUser bool) (*types.User, *model.ApiError)
+	EditUser(ctx context.Context, update *types.User) (*types.User, *model.ApiError)
 	DeleteUser(ctx context.Context, id string) *model.ApiError
 
-	UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (model.UserFlag, *model.ApiError)
+	UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (types.UserFlags, *model.ApiError)
 
 	CreateGroup(ctx context.Context, group *types.Group) (*types.Group, *model.ApiError)
 	DeleteGroup(ctx context.Context, id string) *model.ApiError
 
-	CreateOrg(ctx context.Context, org *model.Organization) (*model.Organization, *model.ApiError)
+	CreateOrg(ctx context.Context, org *types.Organization) (*types.Organization, *model.ApiError)
 	EditOrg(ctx context.Context, org *model.Organization) *model.ApiError
 	DeleteOrg(ctx context.Context, id string) *model.ApiError
 
