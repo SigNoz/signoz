@@ -315,6 +315,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
+	api.MetricExplorerRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
