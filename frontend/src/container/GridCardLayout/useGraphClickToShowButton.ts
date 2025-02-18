@@ -1,6 +1,7 @@
 import './GridCardLayout.styles.scss';
 
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { isUndefined } from 'lodash-es';
 import { useCallback, useEffect, useRef } from 'react';
 
 interface ClickToShowButtonProps {
@@ -115,7 +116,12 @@ export const useGraphClickToShowButton = ({
 		(xValue, yValue, mouseX, mouseY, metric) => {
 			cleanup();
 
-			if (isButtonEnabled && xValue && metric && Object.keys(metric).length > 0) {
+			if (
+				isButtonEnabled &&
+				!isUndefined(xValue) &&
+				metric &&
+				Object.keys(metric).length > 0
+			) {
 				hideTooltips();
 				createButton(xValue, yValue, mouseX, mouseY, metric);
 			}
