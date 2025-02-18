@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/http/middleware"
@@ -20,6 +19,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.uber.org/zap"
 )
 
@@ -344,7 +344,7 @@ type CloudIntegrationsTestBed struct {
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegrationsTestBed {
+func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudIntegrationsTestBed {
 	if testDB == nil {
 		testDB = utils.NewQueryServiceDBForTests(t)
 	}
@@ -355,7 +355,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *CloudIntegratio
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{

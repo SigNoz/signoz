@@ -9,6 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
@@ -19,8 +20,8 @@ type ModelDaoSqlite struct {
 }
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(db *sqlx.DB, bundb *bun.DB) (*ModelDaoSqlite, error) {
-	mds := &ModelDaoSqlite{db: db, bundb: bundb}
+func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
+	mds := &ModelDaoSqlite{db: sqlStore.SQLxDB(), bundb: sqlStore.BunDB()}
 
 	ctx := context.Background()
 	if err := mds.initializeOrgPreferences(ctx); err != nil {

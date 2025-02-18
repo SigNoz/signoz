@@ -5,9 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/factory/providertest"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
@@ -18,7 +16,7 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
 )
 
-func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string, bundb *bun.DB) {
+func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath string) {
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
 		t.Fatalf("could not create temp file for test db: %v", err)
@@ -27,7 +25,7 @@ func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string, bund
 	t.Cleanup(func() { os.Remove(testDBFilePath) })
 	testDBFile.Close()
 
-	sqlstore, err := sqlitesqlstore.New(context.Background(), providertest.NewSettings(), sqlstore.Config{Provider: "sqlite", Sqlite: sqlstore.SqliteConfig{Path: testDBFilePath}})
+	sqlStore, err = sqlitesqlstore.New(context.Background(), providertest.NewSettings(), sqlstore.Config{Provider: "sqlite", Sqlite: sqlstore.SqliteConfig{Path: testDBFilePath}})
 	if err != nil {
 		t.Fatalf("could not create test db sqlite store: %v", err)
 	}
@@ -53,22 +51,19 @@ func NewTestSqliteDB(t *testing.T) (testDB *sqlx.DB, testDBFilePath string, bund
 		t.Fatalf("could not create test db sql migrations: %v", err)
 	}
 
-	err = sqlmigrator.New(context.Background(), providertest.NewSettings(), sqlstore, sqlmigrations, sqlmigrator.Config{}).Migrate(context.Background())
+	err = sqlmigrator.New(context.Background(), providertest.NewSettings(), sqlStore, sqlmigrations, sqlmigrator.Config{}).Migrate(context.Background())
 	if err != nil {
 		t.Fatalf("could not migrate test db sql migrations: %v", err)
 	}
 
-	testDB = sqlstore.SQLxDB()
-
-	return testDB, testDBFilePath, sqlstore.BunDB()
+	return sqlStore, testDBFilePath
 }
 
-func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
-	testDB, _, bundb := NewTestSqliteDB(t)
+func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
+	sqlStore, _ := NewTestSqliteDB(t)
 
-	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao(testDB, bundb)
-	dashboards.InitDB(testDB)
+	dao.InitDao(sqlStore)
+	dashboards.InitDB((sqlStore).SQLxDB())
 
-	return testDB
+	return sqlStore
 }
