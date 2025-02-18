@@ -8,3 +8,24 @@ type Service interface {
 	// Stops a service.
 	Stop(context.Context) error
 }
+
+type NamedService interface {
+	Named
+	Service
+}
+
+type namedService struct {
+	name Name
+	Service
+}
+
+func (s *namedService) Name() Name {
+	return s.name
+}
+
+func NewNamedService(name Name, service Service) NamedService {
+	return &namedService{
+		name:    name,
+		Service: service,
+	}
+}
