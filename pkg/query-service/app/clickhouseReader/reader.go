@@ -5584,7 +5584,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 		start, end, // For main query
 	)
 
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 4)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 8)
 	rows, err := r.db.Query(valueCtx, query, args...)
 	if err != nil {
 		zap.L().Error("Error executing cardinality query", zap.Error(err), zap.String("query", query))
@@ -5611,81 +5611,129 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 }
 
 func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
-	conditions, _ := utils.BuildFilterConditions(&req.Filters, "")
 	var args []interface{}
 
+	// Build the filter conditions
+	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
 	whereClause := ""
-	if len(conditions) > 0 {
+	if conditions != nil {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
 
+	// Determine time range and tables to use
 	start, end, tsTable := utils.WhichTSTableToUse(req.StartDate, req.EndDate)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.StartDate, req.EndDate)
 
-	query := fmt.Sprintf(`
-WITH 
-    total AS (
-        SELECT %s AS total_samples
-        FROM %s.%s
-        WHERE unix_milli BETWEEN ? AND ?
-    ),
-    valid_metrics AS (
-        SELECT DISTINCT fingerprint 
-        FROM %s.%s
-        WHERE unix_milli BETWEEN ? AND ? %s
-    ),
-    s AS (
-        SELECT 
-            metric_name,
-            %s AS samples
-        FROM %s.%s
-        WHERE unix_milli BETWEEN ? AND ?
-          AND fingerprint IN (SELECT fingerprint FROM valid_metrics)
-        GROUP BY metric_name
-    )
-SELECT 
-    s.metric_name,
-    COALESCE(s.samples, 0) AS total_value,
-    COALESCE((s.samples * 100.0 / total.total_samples), 0) AS relative_percentage
-FROM s, total
-ORDER BY relative_percentage DESC
-LIMIT %d;
-`,
-		// total CTE: distributed samples table
-		countExp, signozMetricDBName, sampleTable,
-		// valid_metrics CTE: time-series table (with filters)
-		signozMetricDBName, tsTable, whereClause,
-		// s CTE: distributed samples table
-		countExp, signozMetricDBName, sampleTable,
-		req.Limit,
-	)
-	args = append(args,
-		start, end, // for total
-		start, end, // for valid_metrics
-		start, end, // for s
+	// Construct the metrics query
+	queryLimit := 50 + req.Limit
+	metricsQuery := fmt.Sprintf(
+		`SELECT 
+		    t.metric_name AS metric_name,
+		    COUNT(DISTINCT t.fingerprint) AS timeSeries
+		FROM %s.%s AS t
+		WHERE unix_milli BETWEEN ? AND ?
+		%s
+		GROUP BY t.metric_name
+		ORDER BY timeSeries DESC
+		LIMIT %d;`,
+		signozMetricDBName, tsTable, whereClause, queryLimit,
 	)
 
-	// Limit the query to use only 2 threads to prevent overuse of resources.
-	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 4)
-	rows, err := r.db.Query(valueCtx, query, args...)
+	args = append(args, start, end)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", 8)
+
+	// Execute the metrics query
+	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
 	if err != nil {
-		zap.L().Error("Error executing metrics datapoints percentage query", zap.Error(err), zap.String("query", query))
+		zap.L().Error("Error executing metrics query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
 
+	// Process the query results
+	var metricNames []string
+	for rows.Next() {
+		var metricName string
+		var timeSeries uint64
+		if err := rows.Scan(&metricName, &timeSeries); err != nil {
+			zap.L().Error("Error scanning metric row", zap.Error(err))
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		metricNames = append(metricNames, metricName)
+	}
+	if err := rows.Err(); err != nil {
+		zap.L().Error("Error iterating over metric rows", zap.Error(err))
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+
+	// If no metrics found, return early
+	if len(metricNames) == 0 {
+		return nil, nil
+	}
+
+	// Format metric names for query
+	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
+
+	// Construct the sample percentage query
+	sampleQuery := fmt.Sprintf(
+		`WITH TotalSamples AS (
+			SELECT %s AS total_samples
+			FROM %s.%s
+			WHERE unix_milli BETWEEN ? AND ?
+		)
+		SELECT 
+			s.samples,
+			s.metric_name,
+			COALESCE((s.samples * 100.0 / t.total_samples), 0) AS percentage
+		FROM 
+		(
+			SELECT 
+				metric_name,
+				%s AS samples
+			FROM %s.%s
+			WHERE fingerprint IN 
+			(
+				SELECT fingerprint 
+				FROM %s.%s
+				WHERE unix_milli BETWEEN ? AND ?
+				%s
+				AND metric_name IN (%s)
+				GROUP BY fingerprint
+			)
+			AND metric_name IN (%s)
+			GROUP BY metric_name
+		) AS s
+		JOIN TotalSamples t ON 1 = 1
+		ORDER BY percentage DESC
+		LIMIT %d;`,
+		countExp, signozMetricDBName, sampleTable, // Total samples
+		countExp, signozMetricDBName, sampleTable, // Inner select samples
+		signozMetricDBName, tsTable, whereClause, metricsList, // Subquery conditions
+		metricsList, req.Limit, // Final conditions
+	)
+
+	args = append(args, start, end)
+
+	// Execute the sample percentage query
+	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
+	if err != nil {
+		zap.L().Error("Error executing samples query", zap.Error(err))
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	// Process the results into a response slice
 	var heatmap []metrics_explorer.TreeMapResponseItem
 	for rows.Next() {
 		var item metrics_explorer.TreeMapResponseItem
-		if err := rows.Scan(&item.MetricName, &item.TotalValue, &item.Percentage); err != nil {
+		if err := rows.Scan(&item.TotalValue, &item.MetricName, &item.Percentage); err != nil {
 			zap.L().Error("Error scanning row", zap.Error(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		heatmap = append(heatmap, item)
 	}
-
 	if err := rows.Err(); err != nil {
-		zap.L().Error("Error iterating over rows", zap.Error(err))
+		zap.L().Error("Error iterating over sample rows", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
