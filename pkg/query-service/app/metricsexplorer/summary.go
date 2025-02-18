@@ -204,88 +204,71 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 
 func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *metrics_explorer.RelatedMetricsRequest) (*metrics_explorer.RelatedMetricsResponse, *model.ApiError) {
 	var relatedMetricsResponse metrics_explorer.RelatedMetricsResponse
-	nameScores := map[string]float64{}
-	attributeScores := map[string]float64{}
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		var err error
-		nameScores, err = receiver.reader.GetNameSimilarityMetrics(ctx, params.CurrentMetricName, params.Start, params.End)
-		return err
-	})
-	g.Go(func() error {
-		var err error
-		attributeScores, err = receiver.reader.GetAttributeKeyValueScoreForMetrics(ctx, params.CurrentMetricName, params.Start, params.End)
-		return err
-	})
 
-	// Wait for both goroutines to finish
-	if err := g.Wait(); err != nil {
+	relatedMetricsMap, err := receiver.reader.GetRelatedMetrics(ctx, params.CurrentMetricName, params.Start, params.End)
+	if err != nil {
 		return nil, &model.ApiError{Typ: "Error", Err: err}
 	}
+
+	// Combine the name and attribute similarity scores using weights.
+	// Here we're using 0.5 for each, but adjust as needed.
 	finalScores := make(map[string]float64)
-
-	// Add name similarity scores
-	for metric, score := range nameScores {
-		finalScores[metric] = score * .5 // Weight by x
+	for metric, scores := range relatedMetricsMap {
+		finalScores[metric] = scores.NameSimilarity*0.5 + scores.AttributeSimilarity*0.5
 	}
 
-	// Add attribute similarity scores
-	for metric, score := range attributeScores {
-		if _, exists := finalScores[metric]; exists {
-			finalScores[metric] += score * .5 // Weight by y
-		} else {
-			finalScores[metric] = score * .5 // If not already present, just add it
-		}
-	}
-
-	// Sort the final scores
 	type metricScore struct {
 		Name  string
 		Score float64
 	}
-
 	var sortedScores []metricScore
-	for name, score := range finalScores {
-		sortedScores = append(sortedScores, metricScore{Name: name, Score: score})
+	for metric, score := range finalScores {
+		sortedScores = append(sortedScores, metricScore{
+			Name:  metric,
+			Score: score,
+		})
 	}
 
 	sort.Slice(sortedScores, func(i, j int) bool {
-		return sortedScores[i].Score > sortedScores[j].Score // Sort descending
+		return sortedScores[i].Score > sortedScores[j].Score
 	})
 
-	// Create a final sorted map
-	finalSortedMap := make(map[string]float64)
+	// Extract metric names for retrieving dashboard information
 	var metricNames []string
-	for _, item := range sortedScores {
-		finalSortedMap[item.Name] = item.Score
-		metricNames = append(metricNames, item.Name)
+	for _, ms := range sortedScores {
+		metricNames = append(metricNames, ms.Name)
 	}
 
 	dashboardsInfo, err := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
 	if err != nil {
-		return nil, err
+		return nil, &model.ApiError{Typ: "Error", Err: err}
 	}
 
-	for _, metricName := range sortedScores {
-		dashboards := make([]metrics_explorer.Dashboard, 0)
+	// Build the final response using the sorted order
+	for _, ms := range sortedScores {
+		var dashboardsList []metrics_explorer.Dashboard
 
-		for _, dashInfo := range dashboardsInfo[metricName.Name] {
-			dashboards = append(dashboards, metrics_explorer.Dashboard{
-				DashboardName: dashInfo["dashboard_title"],
-				DashboardID:   dashInfo["dashboard_id"],
-				WidgetID:      dashInfo["widget_id"],
-				WidgetName:    dashInfo["widget_title"],
-			})
+		if dashEntries, ok := dashboardsInfo[ms.Name]; ok {
+			for _, dashInfo := range dashEntries {
+				dashboardsList = append(dashboardsList, metrics_explorer.Dashboard{
+					DashboardName: dashInfo["dashboard_title"],
+					DashboardID:   dashInfo["dashboard_id"],
+					WidgetID:      dashInfo["widget_id"],
+					WidgetName:    dashInfo["widget_title"],
+				})
+			}
 		}
 
 		relatedMetric := metrics_explorer.RelatedMetrics{
-			Name:       metricName.Name,
-			Dashboards: dashboards,
+			Name:       ms.Name,
+			Dashboards: dashboardsList,
+		}
+		if _, ok := relatedMetricsMap[ms.Name]; ok {
+			relatedMetric.CommonAttributes = relatedMetricsMap[ms.Name].CommonAttributes
 		}
 
 		relatedMetricsResponse.RelatedMetrics = append(relatedMetricsResponse.RelatedMetrics, relatedMetric)
 	}
 
 	return &relatedMetricsResponse, nil
-
 }

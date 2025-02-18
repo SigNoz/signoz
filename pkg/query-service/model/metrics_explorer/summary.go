@@ -122,6 +122,12 @@ var AvailableColumnFilterMap = map[string]bool{
 	"unit":        true,
 }
 
+type RelatedMetricsScore struct {
+	AttributeSimilarity float64
+	NameSimilarity      float64
+	CommonAttributes    []string
+}
+
 type RelatedMetricsRequest struct {
 	CurrentMetricName string `json:"currentMetricName"`
 	Start             int64  `json:"start"`
