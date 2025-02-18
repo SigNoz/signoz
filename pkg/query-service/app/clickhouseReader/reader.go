@@ -6152,7 +6152,7 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 		  AND unix_milli BETWEEN ? AND ?
 		GROUP BY metric_name
 		ORDER BY name_similarity DESC
-		LIMIT 30 BY metric_name; 
+		LIMIT 30; 
 	`, signozMetricDBName, signozTSTableNameV41Week)
 
 	rows, err := r.db.Query(ctx, query, target, target, target, start, end)
@@ -6226,6 +6226,7 @@ WHERE rand() %% 100 < 10
 AND unix_milli BETWEEN ? AND ?
 GROUP BY metric_name
 ORDER BY total_matches DESC
+LIMIT 30
 	`, targetKeysList, targetValuesList, signozMetricDBName, signozTSTableNameV41Week)
 
 	rows, err = r.db.Query(ctx, candidateLabelsQuery, start, end)
