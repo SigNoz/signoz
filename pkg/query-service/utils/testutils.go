@@ -63,7 +63,7 @@ func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	sqlStore, _ := NewTestSqliteDB(t)
 
 	dao.InitDao(sqlStore)
-	dashboards.InitDB((sqlStore).SQLxDB())
+	dashboards.InitDB(sqlStore.SQLxDB())
 
 	return sqlStore
 }
