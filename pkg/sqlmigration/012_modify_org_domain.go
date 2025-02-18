@@ -27,11 +27,6 @@ func (migration *modifyOrgDomain) Register(migrations *migrate.Migrations) error
 }
 
 func (migration *modifyOrgDomain) Up(ctx context.Context, db *bun.DB) error {
-	// only run this for old sqlite db
-	if db.Dialect().Name().String() != "sqlite" {
-		return nil
-	}
-
 	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -44,12 +39,10 @@ func (migration *modifyOrgDomain) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// cannot add not null constraint to the column
 	if _, err := tx.ExecContext(ctx, `ALTER TABLE org_domains ADD COLUMN updated_at INTEGER`); err != nil {
 		return err
 	}
 
-	// update the new column with the value of the old column
 	if _, err := tx.ExecContext(ctx, `UPDATE org_domains SET updated_at = CAST(updated_at_old AS INTEGER)`); err != nil {
 		return err
 	}
