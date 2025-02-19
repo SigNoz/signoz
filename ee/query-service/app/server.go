@@ -374,6 +374,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
 	apiHandler.RegisterWebSocketPaths(r, am)
 	apiHandler.RegisterMessagingQueuesRoutes(r, am)
+	apiHandler.RegisterThirdPartyApiRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
