@@ -5500,7 +5500,6 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
-
 	if apiErr != nil {
 		zap.L().Error(apiErr.Err.Error())
 		RespondError(w, apiErr, nil)
@@ -5508,7 +5507,6 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
-
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		zap.L().Error(err.Error())
 		RespondError(w, apiErr, nil)
