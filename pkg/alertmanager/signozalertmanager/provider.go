@@ -19,17 +19,8 @@ type provider struct {
 	stateStore  alertmanagertypes.StateStore
 }
 
-func NewService(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore) (factory.NamedService, error) {
-	alertmanager, err := New(ctx, providerSettings, config, sqlstore)
-	if err != nil {
-		return nil, err
-	}
-
-	return factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager), nil
-}
-
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("internal"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
+	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
 		return New(ctx, settings, config, sqlstore)
 	})
 }
