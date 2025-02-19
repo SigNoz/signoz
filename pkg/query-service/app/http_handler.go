@@ -2601,8 +2601,6 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 	spanEvaluation := kafkaRouter.PathPrefix("/span").Subrouter()
 
 	spanEvaluation.HandleFunc("/evaluation", am.ViewAccess(aH.getProducerConsumerEval)).Methods(http.MethodPost)
-
-	// for other messaging queues, add SubRouters here
 }
 
 // RegisterThirdPartyApiRoutes adds third-party-api integration routes
