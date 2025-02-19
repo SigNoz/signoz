@@ -1143,7 +1143,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1291,7 +1291,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -6141,11 +6141,12 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	return &heatmap, nil
 }
 
-func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string, start, end int64) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
+func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
 	// First query: Compute name similarity and get candidate metric names.
 	query := fmt.Sprintf(`
 		SELECT 
 			metric_name,
+			any(type) as type,
 			1 - (levenshteinDistance(?, metric_name) / greatest(NULLIF(length(?), 0), NULLIF(length(metric_name), 0))) AS name_similarity
 		FROM %s.%s
 		WHERE metric_name != ?
@@ -6155,7 +6156,7 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 		LIMIT 30; 
 	`, signozMetricDBName, signozTSTableNameV41Week)
 
-	rows, err := r.db.Query(ctx, query, target, target, target, start, end)
+	rows, err := r.db.Query(ctx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, req.Start, req.End)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6166,11 +6167,13 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 	for rows.Next() {
 		var metric string
 		var sim float64
-		if err := rows.Scan(&metric, &sim); err != nil {
+		var metricType string
+		if err := rows.Scan(&metric, &metricType, &sim); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		result[metric] = metrics_explorer.RelatedMetricsScore{
 			NameSimilarity: sim,
+			MetricType:     metricType,
 		}
 		metricNames = append(metricNames, metric)
 	}
@@ -6181,55 +6184,100 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, target string,
 
 	// --- STEP 1: Get the extracted labels for the target metric ---
 	extractedLabelsQuery := fmt.Sprintf(`
-		SELECT 
-			kv.1 AS label_key,
-			kv.2 AS label_value
-		FROM %s.%s
-		ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
-		WHERE metric_name = ?
-		  AND unix_milli BETWEEN ? AND ?
-		  AND NOT startsWith(kv.1, '__')
+SELECT 
+    kv.1 AS label_key,
+    arraySlice(
+        arrayDistinct(
+            groupArray(replaceRegexpAll(kv.2, '^"(.*)"$', '\\1'))
+        ),
+        1,
+        10
+    ) AS label_values
+FROM %s.%s
+ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
+WHERE metric_name = ?
+  AND NOT startsWith(kv.1, '__')
+  AND unix_milli between ? and ?
+GROUP BY label_key
+LIMIT 50
 	`, signozMetricDBName, signozTSTableNameV41Week)
 
 	var targetKeys []string
 	var targetValues []string
-	rows, err = r.db.Query(ctx, extractedLabelsQuery, target, start, end)
+	rows, err = r.db.Query(ctx, extractedLabelsQuery, req.CurrentMetricName, req.Start, req.End)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var key, value string
+		var key string
+		var value []string
 		if err := rows.Scan(&key, &value); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		targetKeys = append(targetKeys, key)
-		targetValues = append(targetValues, value)
+		targetValues = append(targetValues, value...)
 	}
 
 	targetKeysList := "'" + strings.Join(targetKeys, "', '") + "'"
 	targetValuesList := "'" + strings.Join(targetValues, "', '") + "'"
 
+	var priorityList []string
+	for _, f := range req.Filters.Items {
+		priorityList = append(priorityList, fmt.Sprintf("tuple('%s', '%s')", f.Key.Key, f.Value))
+	}
+	priorityListString := strings.Join(priorityList, ", ")
+
 	// --- STEP 2: Get labels for candidate metrics ---
 	candidateLabelsQuery := fmt.Sprintf(`
-		WITH 
+WITH 
     arrayDistinct([%s]) AS filter_keys,     
-    arrayDistinct([%s]) AS filter_values
+    arrayDistinct([%s]) AS filter_values,
+    [%s] AS priority_pairs_input,
+    %d AS priority_multiplier
 SELECT 
     metric_name,
-    SUM(arrayExists(kv -> 
-        has(filter_keys, kv.1) AND has(filter_values, kv.2), 
-        JSONExtractKeysAndValues(labels, 'String')
-    ))::UInt64 AS total_matches
-FROM %s.%s
-WHERE rand() %% 100 < 10
-AND unix_milli BETWEEN ? AND ?
-GROUP BY metric_name
-ORDER BY total_matches DESC
-LIMIT 30
-	`, targetKeysList, targetValuesList, signozMetricDBName, signozTSTableNameV41Week)
+	any(type) as type,
+    SUM(
+        arraySum(
+            kv -> if(has(filter_keys, kv.1) AND has(filter_values, kv.2), 1, 0),
+            JSONExtractKeysAndValues(labels, 'String')
+        )
+    )::UInt64 AS raw_match_count,
+    SUM(
+        arraySum(
+            kv ->
+                if(
+                    arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
+                    priority_multiplier,
+                    0
+                ),
+            JSONExtractKeysAndValues(labels, 'String')
+        )
+    )::UInt64 AS weighted_match_count,
+toJSONString(
+    arrayDistinct(
+        arrayFlatten(
+            groupArray(
+                arrayFilter(
+                    kv -> arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
+                    JSONExtractKeysAndValues(labels, 'String')
+                )
+            )
+        )
+    )
+) AS priority_pairs
 
-	rows, err = r.db.Query(ctx, candidateLabelsQuery, start, end)
+FROM %s.%s
+WHERE rand() %% 100 < 50
+AND unix_milli between ? and ?
+GROUP BY metric_name
+ORDER BY weighted_match_count DESC, raw_match_count DESC
+LIMIT 30
+`, targetKeysList, targetValuesList, priorityListString, 2,
+		signozMetricDBName, signozTSTableNameV41Week)
+
+	rows, err = r.db.Query(ctx, candidateLabelsQuery, req.Start, req.End)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6238,12 +6286,29 @@ LIMIT 30
 	attributeMap := make(map[string]uint64)
 	for rows.Next() {
 		var metric string
-		var matches uint64
-		if err := rows.Scan(&metric, &matches); err != nil {
+		var metricType string
+		var weightedMatchCount, rawMatchCount uint64
+		var priorityPairsJSON string // Scan into a string
+
+		if err := rows.Scan(&metric, &metricType, &rawMatchCount, &weightedMatchCount, &priorityPairsJSON); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
+		attributeMap[metric] = weightedMatchCount + (rawMatchCount)/10
+		var priorityPairs [][]string
+		if err := json.Unmarshal([]byte(priorityPairsJSON), &priorityPairs); err != nil {
+			priorityPairs = [][]string{}
+		}
 		if _, ok := result[metric]; ok {
-			attributeMap[metric] = matches
+			result[metric] = metrics_explorer.RelatedMetricsScore{
+				NameSimilarity: result[metric].NameSimilarity,
+				Filters:        priorityPairs,
+				MetricType:     metricType,
+			}
+		} else {
+			result[metric] = metrics_explorer.RelatedMetricsScore{
+				Filters:    priorityPairs,
+				MetricType: metricType,
+			}
 		}
 	}
 
@@ -6255,6 +6320,8 @@ LIMIT 30
 			result[metric] = metrics_explorer.RelatedMetricsScore{
 				NameSimilarity:      result[metric].NameSimilarity,
 				AttributeSimilarity: data,
+				Filters:             result[metric].Filters,
+				MetricType:          result[metric].MetricType,
 			}
 		}
 	}

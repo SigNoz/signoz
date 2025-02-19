@@ -71,17 +71,8 @@ func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetric
 
 func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetricsRequest, *model.ApiError) {
 	var relatedMetricParams metrics_explorer.RelatedMetricsRequest
-	relatedMetricParams.CurrentMetricName = r.URL.Query().Get("currentMetricName")
-	start, err := strconv.ParseInt(r.URL.Query().Get("start"), 10, 64)
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("start param should be of type int64: %v", err)}
+	if err := json.NewDecoder(r.Body).Decode(&relatedMetricParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
-	end, err := strconv.ParseInt(r.URL.Query().Get("end"), 10, 64)
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("end param should be of type int64: %v", err)}
-	}
-	relatedMetricParams.Start = start
-	relatedMetricParams.End = end
-
 	return &relatedMetricParams, nil
 }
