@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"math"
 	"net/http"
 	"strconv"
@@ -1007,4 +1010,31 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	}
 
 	return queryRangeParams, nil
+}
+
+// ParseKafkaQueueBody parse for messaging queue params
+func ParseKafkaQueueBody(r *http.Request) (*kafka.MessagingQueue, *model.ApiError) {
+	messagingQueue := new(kafka.MessagingQueue)
+	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return messagingQueue, nil
+}
+
+// ParseQueueBody parses for any queue
+func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError) {
+	queue := new(queues2.QueueListRequest)
+	if err := json.NewDecoder(r.Body).Decode(queue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return queue, nil
+}
+
+// ParseRequestBody for third party APIs
+func ParseRequestBody(r *http.Request) (*thirdPartyApi.ThirdPartyApis, *model.ApiError) {
+	thirdPartApis := new(thirdPartyApi.ThirdPartyApis)
+	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return thirdPartApis, nil
 }

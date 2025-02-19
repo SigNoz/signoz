@@ -678,6 +678,21 @@ func Test_buildTracesQuery(t *testing.T) {
 			want: "SELECT  toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
 				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) having value > 10 order by value ASC",
 		},
+		{
+			name: "Test timestamp as aggregate attribute key",
+			args: args{
+				panelType: v3.PanelTypeTable,
+				start:     1680066360726210000,
+				end:       1680066458000000000,
+				mq: &v3.BuilderQuery{
+					AggregateOperator:  v3.AggregateOperatorMax,
+					Filters:            &v3.FilterSet{},
+					AggregateAttribute: v3.AttributeKey{Key: "timestamp", IsColumn: false, Type: v3.AttributeKeyTypeTag},
+				},
+			},
+			want: "SELECT  max(toUnixTimestamp64Nano(timestamp)) as value from signoz_traces.distributed_signoz_index_v3 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND " +
+				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) order by value DESC",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
