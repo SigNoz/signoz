@@ -67,6 +67,10 @@ function HostMetricTraces({
 						aggregateAttribute: {
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
+						filters: {
+							items: [],
+							op: 'AND',
+						},
 					},
 				],
 			},
