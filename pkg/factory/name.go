@@ -2,8 +2,11 @@ package factory
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 )
+
+var _ slog.LogValuer = (Name{})
 
 var (
 	// nameRegex is a regex that matches a valid name.
@@ -13,6 +16,10 @@ var (
 
 type Name struct {
 	name string
+}
+
+func (n Name) LogValue() slog.Value {
+	return slog.StringValue(n.name)
 }
 
 func (n Name) String() string {

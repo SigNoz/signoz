@@ -61,6 +61,7 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddLicensesFactory(),
 			sqlmigration.NewAddPatsFactory(),
 			sqlmigration.NewModifyDatetimeFactory(),
+			sqlmigration.NewModifyOrgDomainFactory(),
 			sqlmigration.NewUpdateOrganizationFactory(),
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
