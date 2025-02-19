@@ -160,7 +160,7 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	err = api.alertmanager.UpdateChannelByRecevier(ctx, claims.OrgID, receiver)
+	err = api.alertmanager.UpdateChannelByReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return

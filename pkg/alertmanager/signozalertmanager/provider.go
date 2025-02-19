@@ -106,7 +106,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 	return channel, nil
 }
 
-func (provider *provider) UpdateChannelByRecevier(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err

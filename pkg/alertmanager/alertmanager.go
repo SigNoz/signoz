@@ -28,7 +28,7 @@ type Alertmanager interface {
 	GetChannelByID(context.Context, string, int) (*alertmanagertypes.Channel, error)
 
 	// UpdateChannel updates a channel for the organization.
-	UpdateChannelByRecevier(context.Context, string, alertmanagertypes.Receiver) error
+	UpdateChannelByReceiver(context.Context, string, alertmanagertypes.Receiver) error
 
 	// CreateChannel creates a channel for the organization.
 	CreateChannel(context.Context, string, alertmanagertypes.Receiver) error

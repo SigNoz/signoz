@@ -57,6 +57,7 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := provider.client.Do(req)
 	if err != nil {
@@ -80,10 +81,16 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
 	url := provider.config.Legacy.URL.JoinPath(alertsPath)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	body, err := json.Marshal(alerts)
 	if err != nil {
 		return err
 	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := provider.client.Do(req)
 	if err != nil {
@@ -112,6 +119,7 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := provider.client.Do(req)
 	if err != nil {
@@ -158,7 +166,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 	return channel, nil
 }
 
-func (provider *provider) UpdateChannelByRecevier(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -181,6 +189,7 @@ func (provider *provider) UpdateChannelByRecevier(ctx context.Context, orgID str
 		if err != nil {
 			return err
 		}
+		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := provider.client.Do(req)
 		if err != nil {
@@ -226,6 +235,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 		if err != nil {
 			return err
 		}
+		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := provider.client.Do(req)
 		if err != nil {
@@ -277,6 +287,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		if err != nil {
 			return err
 		}
+		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := provider.client.Do(req)
 		if err != nil {
