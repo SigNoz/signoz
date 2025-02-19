@@ -57,7 +57,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 			continue
 		}
 
-		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), alertmanagerserver.Config{}, orgID, service.stateStore)
+		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config.Config, orgID, service.stateStore)
 		if err != nil {
 			service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
 			continue
