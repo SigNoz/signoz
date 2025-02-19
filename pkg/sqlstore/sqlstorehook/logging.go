@@ -23,7 +23,7 @@ func NewLoggingFactory() factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore
 func NewLogging(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config) (sqlstore.SQLStoreHook, error) {
 	return &logging{
 		logger: factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlstore/sqlstorehook").Logger(),
-		level:  slog.LevelInfo,
+		level:  slog.LevelDebug,
 	}, nil
 }
 

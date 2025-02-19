@@ -184,7 +184,7 @@ func createTestUser() (*types.User, *model.ApiError) {
 }
 
 func AuthenticatedRequestForTest(
-	user *model.User,
+	user *types.User,
 	path string,
 	postData interface{},
 ) (*http.Request, error) {

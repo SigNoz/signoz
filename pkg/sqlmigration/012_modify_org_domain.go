@@ -27,6 +27,11 @@ func (migration *modifyOrgDomain) Register(migrations *migrate.Migrations) error
 }
 
 func (migration *modifyOrgDomain) Up(ctx context.Context, db *bun.DB) error {
+	// only run this for old sqlite db
+	if db.Dialect().Name().String() != "sqlite" {
+		return nil
+	}
+
 	// begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {

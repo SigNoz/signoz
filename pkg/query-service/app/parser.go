@@ -567,8 +567,8 @@ func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
 	return &req, nil
 }
 
-func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
-	var req model.Organization
+func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
+	var req types.Organization
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

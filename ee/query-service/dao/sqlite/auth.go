@@ -14,11 +14,12 @@ import (
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
-func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*basemodel.User, basemodel.BaseApiError) {
+func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*types.User, basemodel.BaseApiError) {
 	// get auth domain from email domain
 	domain, apierr := m.GetDomainByEmail(ctx, email)
 	if apierr != nil {
@@ -42,15 +43,15 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 		return nil, apiErr
 	}
 
-	user := &basemodel.User{
-		Id:                uuid.NewString(),
+	user := &types.User{
+		ID:                uuid.NewString(),
 		Name:              "",
 		Email:             email,
 		Password:          hash,
-		CreatedAt:         time.Now().Unix(),
+		CreatedAt:         int(time.Now().Unix()),
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.ID,
-		OrgId:             domain.OrgId,
+		GroupID:           group.ID,
+		OrgID:             domain.OrgId,
 	}
 
 	user, apiErr = m.CreateUser(ctx, user, false)
@@ -73,7 +74,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		return "", model.BadRequestStr("invalid user email received from the auth provider")
 	}
 
-	user := &basemodel.User{}
+	user := &types.User{}
 
 	if userPayload == nil {
 		newUser, apiErr := m.createUserForSAMLRequest(ctx, email)
@@ -95,7 +96,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
 		redirectUri,
 		tokenStore.AccessJwt,
-		user.Id,
+		user.ID,
 		tokenStore.RefreshJwt), nil
 }
 

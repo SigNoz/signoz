@@ -71,7 +71,28 @@ func (migration *updateOrganization) Down(ctx context.Context, db *bun.DB) error
 	return nil
 }
 
+func getColumnType(ctx context.Context, tx bun.Tx, table string, column string) (string, error) {
+	var columnType string
+	query := `SELECT data_type FROM information_schema.columns WHERE table_name = '` + table + `' AND column_name = '` + column + `'`
+	err := tx.QueryRowContext(ctx, query).Scan(&columnType)
+	if err != nil {
+		return "", err
+	}
+
+	return columnType, nil
+}
+
 func migrateIntToTimestamp(ctx context.Context, tx bun.Tx, table string, column string) error {
+	columnType, err := getColumnType(ctx, tx, table, column)
+	if err != nil {
+		return err
+	}
+
+	if columnType != "bigint" {
+		return nil
+	}
+
+	// if the columns is integer then do this
 	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
 		return err
 	}
@@ -82,7 +103,7 @@ func migrateIntToTimestamp(ctx context.Context, tx bun.Tx, table string, column 
 	}
 
 	// copy data from old column to new column, converting from int (unix timestamp) to timestamp
-	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = to_timestamp(`+column+`_old)`); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = to_timestamp(cast(`+column+`_old as INTEGER))`); err != nil {
 		return err
 	}
 
@@ -95,6 +116,15 @@ func migrateIntToTimestamp(ctx context.Context, tx bun.Tx, table string, column 
 }
 
 func migrateIntToBoolean(ctx context.Context, tx bun.Tx, table string, column string) error {
+	columnType, err := getColumnType(ctx, tx, table, column)
+	if err != nil {
+		return err
+	}
+
+	if columnType != "bigint" {
+		return nil
+	}
+
 	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
 		return err
 	}

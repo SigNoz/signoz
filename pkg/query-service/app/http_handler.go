@@ -2439,7 +2439,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Id = id
+	req.ID = id
 	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
 		RespondError(w, apiErr, "Failed to update org in the DB")
 		return

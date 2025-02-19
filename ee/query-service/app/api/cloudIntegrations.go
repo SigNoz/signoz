@@ -46,7 +46,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgId, cloudProvider)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), currentUser.OrgID, cloudProvider)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't provision PAT for cloud integration:",
@@ -125,7 +125,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 	for _, p := range allPats {
-		if p.UserID == integrationUser.Id && p.Name == integrationPATName {
+		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
 			return p.Token, nil
 		}
 	}
@@ -137,7 +137,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	newPAT := model.PAT{
 		Token:     generatePATToken(),
-		UserID:    integrationUser.Id,
+		UserID:    integrationUser.ID,
 		Name:      integrationPATName,
 		Role:      baseconstants.ViewerGroup,
 		ExpiresAt: 0,

@@ -55,7 +55,7 @@ type Mutations interface {
 	DeleteGroup(ctx context.Context, id string) *model.ApiError
 
 	CreateOrg(ctx context.Context, org *types.Organization) (*types.Organization, *model.ApiError)
-	EditOrg(ctx context.Context, org *model.Organization) *model.ApiError
+	EditOrg(ctx context.Context, org *types.Organization) *model.ApiError
 	DeleteOrg(ctx context.Context, id string) *model.ApiError
 
 	CreateResetPasswordEntry(ctx context.Context, req *model.ResetPasswordEntry) *model.ApiError

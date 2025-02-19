@@ -283,27 +283,17 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 	id string) (*types.GettableUser, *model.ApiError) {
 
 	users := []types.GettableUser{}
-	query := `select
-				u.id,
-				u.name,
-				u.email,
-				u.password,
-				u.created_at,
-				u.profile_picture_url,
-				u.org_id,
-				u.group_id,
-				g.name as role,
-				o.name as organization,
-				COALESCE((select uf.flags
-					from user_flags uf
-					where u.id = uf.user_id), '') as flags
-			from users u, groups g, organizations o
-			where
-				g.id=u.group_id and
-				o.id = u.org_id and
-				u.id=?;`
+	query := mds.bundb.NewSelect().
+		Table("users").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
+		ColumnExpr("g.name as role").
+		ColumnExpr("o.name as organization").
+		ColumnExpr("COALESCE((select uf.flags from user_flags uf where users.id = uf.user_id), NULL) as flags").
+		Join("JOIN groups g ON g.id = users.group_id").
+		Join("JOIN organizations o ON o.id = users.org_id").
+		Where("users.id = ?", id)
 
-	if err := mds.db.Select(&users, query, id); err != nil {
+	if err := query.Scan(ctx, &users); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if len(users) > 1 {
@@ -331,26 +321,19 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 	}
 
 	users := []types.GettableUser{}
-	query := `select
-				u.id,
-				u.name,
-				u.email,
-				u.password,
-				u.created_at,
-				u.profile_picture_url,
-				u.org_id,
-				u.group_id,
-				g.name as role,
-				o.name as organization
-			from users u, groups g, organizations o
-			where
-				g.id=u.group_id and
-				o.id = u.org_id and
-				u.email=?;`
+	query := mds.bundb.NewSelect().
+		Table("users").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
+		ColumnExpr("g.name as role").
+		ColumnExpr("o.name as organization").
+		Join("JOIN groups g ON g.id = users.group_id").
+		Join("JOIN organizations o ON o.id = users.org_id").
+		Where("users.email = ?", email)
 
-	if err := mds.db.Select(&users, query, email); err != nil {
+	if err := query.Scan(ctx, &users); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+
 	if len(users) > 1 {
 		return nil, &model.ApiError{
 			Typ: model.ErrorInternal,
@@ -373,26 +356,18 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]types.GettableUser, 
 func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]types.GettableUser, *model.ApiError) {
 	users := []types.GettableUser{}
 
-	query := `select
-				u.id,
-				u.name,
-				u.email,
-				u.password,
-				u.created_at,
-				u.profile_picture_url,
-				u.org_id,
-				u.group_id,
-				g.name as role,
-				o.name as organization
-			from users u, groups g, organizations o
-			where
-				g.id = u.group_id and
-				o.id = u.org_id`
+	query := mds.bundb.NewSelect().
+		Table("users").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
+		ColumnExpr("g.name as role").
+		ColumnExpr("o.name as organization").
+		Join("JOIN groups g ON g.id = users.group_id").
+		Join("JOIN organizations o ON o.id = users.org_id")
 
 	if limit > 0 {
-		query = fmt.Sprintf("%s LIMIT %d", query, limit)
+		query.Limit(limit)
 	}
-	err := mds.db.Select(&users, query)
+	err := query.Scan(ctx, &users)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -404,24 +379,18 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 	orgId string) ([]types.GettableUser, *model.ApiError) {
 
 	users := []types.GettableUser{}
-	query := `select
-				u.id,
-				u.name,
-				u.email,
-				u.password,
-				u.created_at,
-				u.profile_picture_url,
-				u.org_id,
-				u.group_id,
-				g.name as role,
-				o.name as organization
-			from users u, groups g, organizations o
-			where
-				u.group_id = g.id and
-				u.org_id = o.id and
-				u.org_id=?;`
 
-	if err := mds.db.Select(&users, query, orgId); err != nil {
+	query := mds.bundb.NewSelect().
+		Table("users").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
+		ColumnExpr("g.name as role").
+		ColumnExpr("o.name as organization").
+		Join("JOIN groups g ON g.id = users.group_id").
+		Join("JOIN organizations o ON o.id = users.org_id").
+		Where("users.org_id = ?", orgId)
+
+	err := query.Scan(ctx, &users)
+	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return users, nil
@@ -431,24 +400,18 @@ func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
 	groupId string) ([]types.GettableUser, *model.ApiError) {
 
 	users := []types.GettableUser{}
-	query := `select
-				u.id,
-				u.name,
-				u.email,
-				u.password,
-				u.created_at,
-				u.profile_picture_url,
-				u.org_id,
-				u.group_id,
-				g.name as role,
-				o.name as organization
-			from users u, groups g, organizations o
-			where
-				u.group_id = g.id and
-				o.id = u.org_id and
-				u.group_id=?;`
 
-	if err := mds.db.Select(&users, query, groupId); err != nil {
+	query := mds.bundb.NewSelect().
+		Table("users").
+		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
+		ColumnExpr("g.name as role").
+		ColumnExpr("o.name as organization").
+		Join("JOIN groups g ON g.id = users.group_id").
+		Join("JOIN organizations o ON o.id = users.org_id").
+		Where("users.group_id = ?", groupId)
+
+	err := query.Scan(ctx, &users)
+	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return users, nil
