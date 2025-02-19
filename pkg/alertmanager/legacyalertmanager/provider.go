@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.signoz.io/signoz/pkg/alertmanager"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerbatcher"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
@@ -27,6 +28,7 @@ type provider struct {
 	settings    factory.ScopedProviderSettings
 	client      *http.Client
 	configStore alertmanagertypes.ConfigStore
+	batcher     *alertmanagerbatcher.Batcher
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -46,7 +48,23 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			Timeout: 30 * time.Second,
 		},
 		configStore: configStore,
+		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
 	}, nil
+}
+
+func (provider *provider) Start(ctx context.Context) error {
+	go provider.batcher.Start(ctx)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case alerts := <-provider.batcher.C(ctx):
+			if err := provider.PutAlerts(ctx, "", alerts); err != nil {
+				provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
+			}
+		}
+	}
 }
 
 func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
@@ -308,4 +326,8 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}
 
 	return nil
+}
+
+func (provider *provider) Stop(ctx context.Context) error {
+	return provider.batcher.Stop(ctx)
 }
