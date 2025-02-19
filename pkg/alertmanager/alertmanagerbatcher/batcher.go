@@ -11,6 +11,7 @@ import (
 
 // Notifier is responsible for dispatching alert notifications to an alertmanager.
 type Batcher struct {
+	C chan alertmanagertypes.PostableAlerts
 	// logger
 	logger *slog.Logger
 
@@ -21,18 +22,19 @@ type Batcher struct {
 	config Config
 
 	// more channel to signal the sender goroutine to send alerts
-	more      chan struct{}
-	mtx       sync.RWMutex
-	batchChan chan alertmanagertypes.PostableAlerts
+	moreC chan struct{}
+	stopC chan struct{}
+	mtx   sync.RWMutex
 }
 
 func New(logger *slog.Logger, config Config) *Batcher {
 	batcher := &Batcher{
-		logger:    logger,
-		queue:     make(alertmanagertypes.PostableAlerts, config.Capacity),
-		config:    config,
-		more:      make(chan struct{}, 1),
-		batchChan: make(chan alertmanagertypes.PostableAlerts, config.Size),
+		logger: logger,
+		queue:  make(alertmanagertypes.PostableAlerts, config.Capacity),
+		config: config,
+		moreC:  make(chan struct{}, 1),
+		stopC:  make(chan struct{}),
+		C:      make(chan alertmanagertypes.PostableAlerts, config.Size),
 	}
 
 	return batcher
@@ -40,24 +42,26 @@ func New(logger *slog.Logger, config Config) *Batcher {
 
 // Start dispatches notifications continuously.
 func (n *Batcher) Start(ctx context.Context) error {
-	n.logger.InfoContext(ctx, "starting alertmanager batcher")
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-n.more:
+	go func() {
+		n.logger.InfoContext(ctx, "starting alertmanager batcher")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-n.stopC:
+				return
+			case <-n.moreC:
+			}
+			alerts := n.nextBatch()
+			n.C <- alerts
+			// If the queue still has items left, kick off the next iteration.
+			if n.queueLen() > 0 {
+				n.setMore()
+			}
 		}
-		alerts := n.nextBatch()
-		n.batchChan <- alerts
-		// If the queue still has items left, kick off the next iteration.
-		if n.queueLen() > 0 {
-			n.setMore()
-		}
-	}
-}
+	}()
 
-func (n *Batcher) C(ctx context.Context) chan alertmanagertypes.PostableAlerts {
-	return n.batchChan
+	return nil
 }
 
 func (n *Batcher) queueLen() int {
@@ -115,15 +119,14 @@ func (n *Batcher) setMore() {
 	// If we cannot send on the channel, it means the signal already exists
 	// and has not been consumed yet.
 	select {
-	case n.more <- struct{}{}:
+	case n.moreC <- struct{}{}:
 	default:
 	}
 }
 
 // Stop shuts down the notification handler.
-func (n *Batcher) Stop(ctx context.Context) error {
+func (n *Batcher) Stop(ctx context.Context) {
 	n.logger.InfoContext(ctx, "Stopping alertmanager batcher")
-	close(n.more)
-	close(n.batchChan)
-	return nil
+	close(n.moreC)
+	close(n.stopC)
 }

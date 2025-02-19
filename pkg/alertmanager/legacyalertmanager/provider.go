@@ -53,14 +53,18 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	go provider.batcher.Start(ctx)
+	err := provider.batcher.Start(ctx)
+	if err != nil {
+		return err
+	}
+	defer provider.batcher.Stop(ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case alerts := <-provider.batcher.C(ctx):
-			if err := provider.PutAlerts(ctx, "", alerts); err != nil {
+		case alerts := <-provider.batcher.C:
+			if err := provider.putAlerts(ctx, "", alerts); err != nil {
 				provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
 			}
 		}
@@ -96,7 +100,12 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 	return alerts, nil
 }
 
-func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+func (provider *provider) PutAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
+	provider.batcher.Send(ctx, alerts...)
+	return nil
+}
+
+func (provider *provider) putAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
 	url := provider.config.Legacy.URL.JoinPath(alertsPath)
 
 	body, err := json.Marshal(alerts)
@@ -329,5 +338,5 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
-	return provider.batcher.Stop(ctx)
+	return nil
 }
