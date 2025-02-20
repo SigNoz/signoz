@@ -76,7 +76,7 @@ func (provider *provider) Start(ctx context.Context) error {
 	return nil
 }
 
-func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
 	url := provider.url.JoinPath(alertsPath)
 	url.RawQuery = params.RawQuery
 
@@ -101,7 +101,7 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 		return nil, fmt.Errorf("bad response status %v", resp.Status)
 	}
 
-	var alerts alertmanagertypes.GettableAlerts
+	var alerts alertmanagertypes.DeprecatedGettableAlerts
 	if err := json.Unmarshal([]byte(gjson.GetBytes(body, "data").Raw), &alerts); err != nil {
 		return nil, err
 	}

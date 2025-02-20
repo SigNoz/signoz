@@ -41,10 +41,49 @@ type (
 	GettableAlerts = models.GettableAlerts
 )
 
+type DeprecatedGettableAlert struct {
+	*model.Alert
+	Status      types.AlertStatus `json:"status"`
+	Receivers   []string          `json:"receivers"`
+	Fingerprint string            `json:"fingerprint"`
+}
+
+type DeprecatedGettableAlerts = []*DeprecatedGettableAlert
+
 // An alias for the GettableAlertsParams type from the alertmanager package.
 type GettableAlertsParams struct {
 	alert.GetAlertsParams
 	RawQuery string
+}
+
+func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts) DeprecatedGettableAlerts {
+	deprecatedGettableAlerts := make(DeprecatedGettableAlerts, 0, len(gettableAlerts))
+
+	for _, gettableAlert := range gettableAlerts {
+		receivers := make([]string, 0, len(gettableAlert.Receivers))
+		for _, receiver := range gettableAlert.Receivers {
+			receivers = append(receivers, *receiver.Name)
+		}
+
+		deprecatedGettableAlerts = append(deprecatedGettableAlerts, &DeprecatedGettableAlert{
+			Alert: &model.Alert{
+				Labels:       v2.APILabelSetToModelLabelSet(gettableAlert.Labels),
+				Annotations:  v2.APILabelSetToModelLabelSet(gettableAlert.Annotations),
+				StartsAt:     time.Time(*gettableAlert.StartsAt),
+				EndsAt:       time.Time(*gettableAlert.EndsAt),
+				GeneratorURL: string(gettableAlert.GeneratorURL),
+			},
+			Status: types.AlertStatus{
+				State:       types.AlertState(*gettableAlert.Status.State),
+				SilencedBy:  gettableAlert.Status.SilencedBy,
+				InhibitedBy: gettableAlert.Status.InhibitedBy,
+			},
+			Fingerprint: *gettableAlert.Fingerprint,
+			Receivers:   receivers,
+		})
+	}
+
+	return deprecatedGettableAlerts
 }
 
 // Converts a slice of Alert to a slice of PostableAlert.

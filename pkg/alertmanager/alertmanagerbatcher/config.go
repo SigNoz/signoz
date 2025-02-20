@@ -10,7 +10,7 @@ type Config struct {
 
 func NewConfig() Config {
 	return Config{
-		Capacity: 1000,
+		Capacity: 10000,
 		Size:     64,
 	}
 }

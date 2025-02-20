@@ -74,13 +74,18 @@ func (service *Service) SyncServers(ctx context.Context) error {
 	return nil
 }
 
-func (service *Service) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+func (service *Service) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return server.GetAlerts(ctx, params)
+	alerts, err := server.GetAlerts(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return alertmanagertypes.NewDeprecatedGettableAlertsFromGettableAlerts(alerts), nil
 }
 
 func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {

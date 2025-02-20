@@ -68,7 +68,7 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return provider.service.Stop(ctx)
 }
 
-func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
 	return provider.service.GetAlerts(ctx, orgID, params)
 }
 

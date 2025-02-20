@@ -15,7 +15,7 @@ var (
 type Alertmanager interface {
 	factory.Service
 	// GetAlerts gets the alerts from the alertmanager per organization.
-	GetAlerts(context.Context, string, alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error)
+	GetAlerts(context.Context, string, alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error)
 
 	// PutAlerts puts the alerts into the alertmanager per organization.
 	PutAlerts(context.Context, string, alertmanagertypes.PostableAlerts) error
