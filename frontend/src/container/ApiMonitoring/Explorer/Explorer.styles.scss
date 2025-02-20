@@ -1,0 +1,263 @@
+.api-monitoring-page {
+	display: flex;
+	height: 100%;
+
+	.api-quick-filter-left-section {
+		width: 0%;
+		flex-shrink: 0;
+	}
+
+	.api-module-right-section {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+
+		.api-monitoring-list-header {
+			width: 100%;
+			padding: 8px;
+			display: flex;
+
+
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.query-builder-search-v2 {
+			width: 80%;
+		}
+	}
+
+	.api-monitoring-domain-list-table {
+		.ant-table {
+			.ant-table-thead>tr>th {
+				padding: 12px;
+				font-weight: 500;
+				font-size: 12px;
+				line-height: 18px;
+
+				background: var(--bg-ink-500);
+				border-bottom: none;
+
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 600;
+				line-height: 18px;
+				/* 163.636% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+
+				&::before {
+					background-color: transparent;
+				}
+			}
+
+			.ant-table-thead>tr>th:has(.hostname-column-header) {
+				background: var(--bg-ink-400);
+			}
+
+			.ant-table-cell {
+				padding: 12px;
+				font-size: 13px;
+				line-height: 20px;
+				color: var(--bg-vanilla-100);
+				background: var(--bg-ink-500);
+				border-bottom: none;
+			}
+
+			.ant-table-cell:has(.hostname-column-value) {
+				background: var(--bg-ink-400);
+			}
+
+			.hostname-column-value {
+				color: var(--bg-vanilla-100);
+				font-family: 'Geist Mono';
+				font-style: normal;
+				font-weight: 600;
+				line-height: 20px;
+				/* 142.857% */
+				letter-spacing: -0.07px;
+			}
+
+			.status-cell {
+				.active-tag {
+					color: var(--bg-forest-500);
+					padding: 4px 8px;
+					border-radius: 4px;
+					font-size: 12px;
+					font-weight: 500;
+				}
+			}
+
+			.progress-container {
+				.ant-progress-bg {
+					height: 8px !important;
+					border-radius: 4px;
+				}
+			}
+
+			.ant-table-tbody>tr:hover>td {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.ant-table-cell:first-child {
+				text-align: justify;
+			}
+
+			.ant-table-cell:nth-child(2) {
+				padding-left: 16px;
+				padding-right: 16px;
+			}
+
+			.ant-table-cell:nth-child(n + 3) {
+				padding-right: 24px;
+			}
+
+			.column-header-right {
+				text-align: right;
+			}
+
+			.ant-table-tbody>tr>td {
+				border-bottom: none;
+			}
+
+			.ant-table-thead>tr>th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				background-color: transparent;
+			}
+
+			.ant-empty-normal {
+				visibility: hidden;
+			}
+		}
+
+		.ant-pagination {
+			position: fixed;
+			bottom: 0;
+			width: calc(100% - 64px);
+			background: var(--bg-ink-500);
+			padding: 16px;
+			margin: 0;
+
+			// this is to offset intercom icon till we improve the design
+			padding-right: 72px;
+
+			.ant-pagination-item {
+				border-radius: 4px;
+
+				&-active {
+					background: var(--bg-robin-500);
+					border-color: var(--bg-robin-500);
+
+					a {
+						color: var(--bg-ink-500) !important;
+					}
+				}
+			}
+		}
+
+		.ant-table-expanded-row {
+			&:hover {
+				background: var(--bg-ink-500);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-ink-500) !important;
+			}
+
+			.ant-table .ant-table-thead>tr>th {
+				padding: 4px 16px !important;
+			}
+		}
+
+		.expanded-table-container {
+			border: 1px solid var(--bg-ink-400);
+			overflow-x: auto;
+			padding-left: 48px;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+				height: 0.1rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--bg-ink-200);
+			}
+
+			&::-webkit-scrollbar-thumb:hover {
+				background: var(--bg-ink-100);
+			}
+
+			.ant-table-expanded-row {
+				background: var(--bg-ink-500);
+
+				&:hover {
+					background: var(--bg-ink-500);
+				}
+
+				.ant-table-cell {
+					background: var(--bg-ink-500);
+				}
+			}
+
+			.expanded-table-footer {
+				display: flex;
+				justify-content: flex-start;
+				gap: 8px;
+				padding: 8px;
+				padding-left: 42px;
+				margin-top: 8px;
+
+				.periscope-btn {
+					font-size: 10px;
+
+					display: flex;
+					align-items: center;
+					gap: 4px;
+				}
+
+				.view-all-text {
+					font-size: 10px;
+					color: var(--bg-vanilla-400);
+				}
+			}
+		}
+	}
+
+	&.filter-visible {
+		.api-quick-filter-left-section {
+			width: 260px;
+		}
+
+		.api-module-right-section {
+			width: calc(100% - 260px);
+		}
+	}
+}
+
+.no-filtered-domains-message-container {
+	height: 30vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+
+	.no-filtered-domains-message-content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+
+		width: fit-content;
+		padding: 24px;
+	}
+
+	.no-filtered-domains-message {
+		margin-top: 8px;
+	}
+}
