@@ -1143,7 +1143,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1291,7 +1291,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -6370,6 +6370,7 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 }
 
 func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_explorer.InspectMetricsRequest) (*metrics_explorer.InspectMetricsResponse, *model.ApiError) {
+	start, end, _, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	query := fmt.Sprintf(`SELECT
                 fingerprint,
                 labels,
@@ -6392,15 +6393,14 @@ func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_e
                 metric_name  = ?
                 AND unix_milli >= ?
                 AND unix_milli < ?
-                ORDER BY fingerprint DESC, unix_milli DESC`, signozMetricDBName, signozTSLocalTableNameV4)
+                ORDER BY fingerprint DESC, unix_milli DESC`, signozMetricDBName, localTsTable)
 
-	rows, err := r.db.Query(ctx, query, req.MetricName, req.Start, req.End, req.MetricName, req.Start, req.End)
+	rows, err := r.db.Query(ctx, query, req.MetricName, start, end, req.MetricName, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
 
-	// Create a map to group points by fingerprint.
 	seriesMap := make(map[uint64]*v3.Series)
 
 	for rows.Next() {
@@ -6413,43 +6413,45 @@ func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_e
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 
-		// Unmarshal the JSON labels into a map.
 		var labelsMap map[string]string
 		if err := json.Unmarshal([]byte(labelsJSON), &labelsMap); err != nil {
 			return nil, &model.ApiError{Typ: "JsonUnmarshalError", Err: err}
 		}
 
-		// Convert labelsMap into a slice of single-key maps.
-		var labelsArray []map[string]string
+		// Filter out keys starting with "__"
+		filteredLabelsMap := make(map[string]string)
 		for k, v := range labelsMap {
+			if !strings.HasPrefix(k, "__") {
+				filteredLabelsMap[k] = v
+			}
+		}
+
+		var labelsArray []map[string]string
+		for k, v := range filteredLabelsMap {
 			labelsArray = append(labelsArray, map[string]string{k: v})
 		}
 
 		// Check if we already have a Series for this fingerprint.
 		series, exists := seriesMap[fingerprint]
 		if !exists {
-			// Initialize a new Series with the parsed labels and labelsArray.
 			series = &v3.Series{
-				Labels:      labelsMap,
+				Labels:      filteredLabelsMap,
 				LabelsArray: labelsArray,
 				Points:      []v3.Point{},
 			}
 			seriesMap[fingerprint] = series
 		}
 
-		// Append the current point to the Series.
 		series.Points = append(series.Points, v3.Point{
 			Timestamp: unixMilli,
 			Value:     perSeriesValue,
 		})
 	}
 
-	// Check for any error encountered during iteration.
 	if err = rows.Err(); err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
-	// Convert the map to a slice to build the response.
 	var seriesList []v3.Series
 	for _, s := range seriesMap {
 		seriesList = append(seriesList, *s)
