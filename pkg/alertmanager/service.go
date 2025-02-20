@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"go.signoz.io/signoz/pkg/alertmanager/server"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"
 	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
@@ -24,7 +24,7 @@ type Service struct {
 	settings factory.ScopedProviderSettings
 
 	// Map of organization id to alertmanager server
-	servers map[string]*server.Server
+	servers map[string]*alertmanagerserver.Server
 
 	// Mutex to protect the servers map
 	serversMtx sync.RWMutex
@@ -36,7 +36,7 @@ func New(ctx context.Context, settings factory.ScopedProviderSettings, config Co
 		stateStore:  stateStore,
 		configStore: configStore,
 		settings:    settings,
-		servers:     make(map[string]*server.Server),
+		servers:     make(map[string]*alertmanagerserver.Server),
 		serversMtx:  sync.RWMutex{},
 	}
 
@@ -57,7 +57,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 			continue
 		}
 
-		service.servers[orgID], err = server.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), server.Config{}, orgID, service.stateStore)
+		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config.Config, orgID, service.stateStore)
 		if err != nil {
 			service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
 			continue
@@ -127,7 +127,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	return config, nil
 }
 
-func (service *Service) getServer(orgID string) (*server.Server, error) {
+func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
 	server, ok := service.servers[orgID]
 	if !ok {
 		return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for org %s", orgID)

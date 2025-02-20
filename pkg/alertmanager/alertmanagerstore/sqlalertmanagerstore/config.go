@@ -45,7 +45,7 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 }
 
 // Set implements alertmanagertypes.ConfigStore.
-func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config) error {
+func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config, cb func(context.Context) error) error {
 	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -71,6 +71,12 @@ func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config) 
 			Set("data = EXCLUDED.data").
 			Set("updated_at = EXCLUDED.updated_at").
 			Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	if cb != nil {
+		if err = cb(ctx); err != nil {
 			return err
 		}
 	}
