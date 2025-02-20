@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	ErrCodeAlertmanagerChannelNotFound = errors.MustNewCode("alertmanager_channel_not_found")
+	ErrCodeAlertmanagerChannelNotFound     = errors.MustNewCode("alertmanager_channel_not_found")
+	ErrCodeAlertmanagerChannelNameMismatch = errors.MustNewCode("alertmanager_channel_name_mismatch")
 )
 
 var (
@@ -151,4 +152,20 @@ func GetChannelByID(channels Channels, id int) (*Channel, error) {
 	}
 
 	return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+}
+
+func (c *Channel) Update(receiver Receiver) error {
+	channel := NewChannelFromReceiver(receiver, c.OrgID)
+	if channel == nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", c.ID)
+	}
+
+	if c.Name != channel.Name {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
+	}
+
+	c.Data = channel.Data
+	c.UpdatedAt = time.Now()
+
+	return nil
 }

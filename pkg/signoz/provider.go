@@ -62,6 +62,7 @@ func NewProviderConfig() ProviderConfig {
 			sqlmigration.NewAddPatsFactory(),
 			sqlmigration.NewModifyDatetimeFactory(),
 			sqlmigration.NewModifyOrgDomainFactory(),
+			sqlmigration.NewModifyNotificationChannelsFactory(),
 		),
 		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
 			clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),

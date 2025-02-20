@@ -23,6 +23,9 @@ import (
 
 type (
 	// An alias for the Alert type from the alertmanager package.
+	AlertModel = models.Alert
+
+	// An alias for the Alert type from the alertmanager package.
 	Alert = types.Alert
 
 	// An alias for the PostableAlert type from the alertmanager package.

@@ -260,13 +260,28 @@ func (c *Config) DeleteReceiver(name string) error {
 
 type ConfigStore interface {
 	// Set creates or updates a config.
-	Set(context.Context, *Config, func(context.Context) error) error
+	Set(context.Context, *Config) error
 
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
 
 	// ListOrgs returns the list of orgs
 	ListOrgs(context.Context) ([]string, error)
+
+	// CreateChannel creates a new channel.
+	CreateChannel(context.Context, *Channel, func(context.Context) error) error
+
+	// GetChannelByID returns the channel for the given id.
+	GetChannelByID(context.Context, string, int) (*Channel, error)
+
+	// UpdateChannel updates a channel.
+	UpdateChannel(context.Context, string, *Channel, func(context.Context) error) error
+
+	// DeleteChannelByID deletes a channel.
+	DeleteChannelByID(context.Context, string, int, func(context.Context) error) error
+
+	// ListChannels returns the list of channels.
+	ListChannels(context.Context, string) ([]*Channel, error)
 }
 
 // MarshalSecretValue if set to true will expose Secret type
