@@ -147,3 +147,14 @@ type RelatedMetrics struct {
 	Alerts     []Alert          `json:"alerts"`
 	Query      *v3.BuilderQuery `json:"query"`
 }
+
+type InspectMetricsRequest struct {
+	MetricName string       `json:"metricName"`
+	Filters    v3.FilterSet `json:"filters"`
+	Start      int64        `json:"start"`
+	End        int64        `json:"end"`
+}
+
+type InspectMetricsResponse struct {
+	Series *[]v3.Series `json:"series,omitempty"`
+}
