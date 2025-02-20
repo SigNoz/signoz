@@ -714,3 +714,17 @@ func init() {
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
 
 const MaxResultRowsForCHQuery = 1_000_000
+
+var ChDataTypeMap = map[string]string{
+	"string":  "String",
+	"bool":    "Bool",
+	"int64":   "Float64",
+	"float64": "Float64",
+}
+
+var MaterializedDataTypeMap = map[string]string{
+	"string":  "string",
+	"bool":    "bool",
+	"int64":   "number",
+	"float64": "number",
+}
