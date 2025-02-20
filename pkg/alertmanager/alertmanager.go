@@ -22,4 +22,19 @@ type Alertmanager interface {
 
 	// TestReceiver sends a test alert to a receiver.
 	TestReceiver(context.Context, string, alertmanagertypes.Receiver) error
+
+	// ListChannels lists all channels for the organization.
+	ListChannels(context.Context, string) ([]*alertmanagertypes.Channel, error)
+
+	// GetChannelByID gets a channel for the organization.
+	GetChannelByID(context.Context, string, int) (*alertmanagertypes.Channel, error)
+
+	// UpdateChannel updates a channel for the organization.
+	UpdateChannelByReceiver(context.Context, string, alertmanagertypes.Receiver) error
+
+	// CreateChannel creates a channel for the organization.
+	CreateChannel(context.Context, string, alertmanagertypes.Receiver) error
+
+	// DeleteChannelByID deletes a channel for the organization.
+	DeleteChannelByID(context.Context, string, int) error
 }

@@ -15,13 +15,11 @@ import (
 )
 
 type API struct {
-	configStore  alertmanagertypes.ConfigStore
 	alertmanager Alertmanager
 }
 
-func NewAPI(configStore alertmanagertypes.ConfigStore, alertmanager Alertmanager) *API {
+func NewAPI(alertmanager Alertmanager) *API {
 	return &API{
-		configStore:  configStore,
 		alertmanager: alertmanager,
 	}
 }
@@ -83,7 +81,7 @@ func (api *API) TestReceiver(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) GetChannels(req *http.Request, rw http.ResponseWriter) {
+func (api *API) ListChannels(req *http.Request, rw http.ResponseWriter) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -93,20 +91,13 @@ func (api *API) GetChannels(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	config, err := api.configStore.Get(ctx, claims.OrgID)
+	channels, err := api.alertmanager.ListChannels(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	channels := config.Channels()
-
-	channelList := make([]*alertmanagertypes.Channel, 0, len(channels))
-	for _, channel := range channels {
-		channelList = append(channelList, channel)
-	}
-
-	render.Success(rw, http.StatusOK, channelList)
+	render.Success(rw, http.StatusOK, channels)
 }
 
 func (api *API) GetChannelByID(req *http.Request, rw http.ResponseWriter) {
@@ -137,14 +128,7 @@ func (api *API) GetChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	config, err := api.configStore.Get(ctx, claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, id)
+	channel, err := api.alertmanager.GetChannelByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -176,19 +160,7 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	config, err := api.configStore.Get(ctx, claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = config.UpdateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = api.configStore.Set(ctx, config)
+	err = api.alertmanager.UpdateChannelByReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -225,26 +197,39 @@ func (api *API) DeleteChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	config, err := api.configStore.Get(ctx, claims.OrgID)
+	err = api.alertmanager.DeleteChannelByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, id)
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (api *API) CreateChannel(req *http.Request, rw http.ResponseWriter) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	defer req.Body.Close() //nolint:errcheck
+
+	receiver, err := alertmanagertypes.NewReceiver(string(body))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = config.DeleteReceiver(channel.Name)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	err = api.configStore.Set(ctx, config)
+	err = api.alertmanager.CreateChannel(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return
