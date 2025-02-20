@@ -1,26 +1,24 @@
-package registry
+package factory
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"go.signoz.io/signoz/pkg/factory"
-	"go.uber.org/zap"
 )
 
 type Registry struct {
-	services []factory.Service
-	logger   *zap.Logger
+	services NamedMap[NamedService]
+	logger   *slog.Logger
 	startCh  chan error
 	stopCh   chan error
 }
 
 // New creates a new registry of services. It needs at least one service in the input.
-func New(logger *zap.Logger, services ...factory.Service) (*Registry, error) {
+func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, error) {
 	if logger == nil {
 		return nil, fmt.Errorf("cannot build registry, logger is required")
 	}
@@ -29,17 +27,23 @@ func New(logger *zap.Logger, services ...factory.Service) (*Registry, error) {
 		return nil, fmt.Errorf("cannot build registry, at least one service is required")
 	}
 
+	m, err := NewNamedMap(services...)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Registry{
-		logger:   logger.Named("go.signoz.io/pkg/registry"),
-		services: services,
+		logger:   logger.With("pkg", "go.signoz.io/pkg/factory"),
+		services: m,
 		startCh:  make(chan error, 1),
 		stopCh:   make(chan error, len(services)),
 	}, nil
 }
 
 func (r *Registry) Start(ctx context.Context) error {
-	for _, s := range r.services {
-		go func(s factory.Service) {
+	for _, s := range r.services.GetInOrder() {
+		go func(s NamedService) {
+			r.logger.InfoContext(ctx, "starting service", "service", s.Name())
 			err := s.Start(ctx)
 			r.startCh <- err
 		}(s)
@@ -54,11 +58,11 @@ func (r *Registry) Wait(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		r.logger.Info("caught context error, exiting", zap.Any("context", ctx))
+		r.logger.InfoContext(ctx, "caught context error, exiting", "error", ctx.Err())
 	case s := <-interrupt:
-		r.logger.Info("caught interrupt signal, exiting", zap.Any("context", ctx), zap.Any("signal", s))
+		r.logger.InfoContext(ctx, "caught interrupt signal, exiting", "signal", s)
 	case err := <-r.startCh:
-		r.logger.Info("caught service error, exiting", zap.Any("context", ctx), zap.Error(err))
+		r.logger.ErrorContext(ctx, "caught service error, exiting", "error", err)
 		return err
 	}
 
@@ -66,15 +70,16 @@ func (r *Registry) Wait(ctx context.Context) error {
 }
 
 func (r *Registry) Stop(ctx context.Context) error {
-	for _, s := range r.services {
-		go func(s factory.Service) {
+	for _, s := range r.services.GetInOrder() {
+		go func(s NamedService) {
+			r.logger.InfoContext(ctx, "stopping service", "service", s.Name())
 			err := s.Stop(ctx)
 			r.stopCh <- err
 		}(s)
 	}
 
-	errs := make([]error, len(r.services))
-	for i := 0; i < len(r.services); i++ {
+	errs := make([]error, len(r.services.GetInOrder()))
+	for i := 0; i < len(r.services.GetInOrder()); i++ {
 		err := <-r.stopCh
 		if err != nil {
 			errs = append(errs, err)
