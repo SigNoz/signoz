@@ -3117,17 +3117,17 @@ func (r *ClickHouseReader) UpdateLogFieldV2(ctx context.Context, field *model.Up
 
 	colname := utils.GetClickhouseColumnNameV2(field.Type, field.DataType, field.Name)
 
-	dataType := strings.ToLower(field.DataType)
-	if dataType == "int64" || dataType == "float64" {
-		dataType = "number"
-	}
+	field.DataType = strings.ToLower(field.DataType)
+	dataType := constants.MaterializedDataTypeMap[field.DataType]
+	chDataType := constants.ChDataTypeMap[field.DataType]
+
 	attrColName := fmt.Sprintf("%s_%s", field.Type, dataType)
 	for _, table := range []string{r.logsLocalTableV2, r.logsTableV2} {
 		q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s DEFAULT %s['%s'] CODEC(ZSTD(1))"
 		query := fmt.Sprintf(q,
 			r.logsDB, table,
 			r.cluster,
-			colname, field.DataType,
+			colname, chDataType,
 			attrColName,
 			field.Name,
 		)
@@ -3356,20 +3356,8 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 	field.DataType = strings.ToLower(field.DataType)
 
 	// dataType and chDataType of the materialized column
-	var dataTypeMap = map[string]string{
-		"string":  "string",
-		"bool":    "bool",
-		"int64":   "number",
-		"float64": "number",
-	}
-	var chDataTypeMap = map[string]string{
-		"string":  "String",
-		"bool":    "Bool",
-		"int64":   "Float64",
-		"float64": "Float64",
-	}
-	chDataType := chDataTypeMap[field.DataType]
-	dataType := dataTypeMap[field.DataType]
+	chDataType := constants.ChDataTypeMap[field.DataType]
+	dataType := constants.MaterializedDataTypeMap[field.DataType]
 
 	// typeName: tag => attributes, resource => resources
 	typeName := field.Type
