@@ -311,8 +311,8 @@ func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explore
 		Filters:    filters,
 	}
 
-	if scores.MetricType == "Sum" && !scores.IsMonotonic && scores.Temporality == v3.Cumulative {
-		scores.MetricType = "Gauge"
+	if scores.MetricType == v3.MetricTypeSum && !scores.IsMonotonic && scores.Temporality == v3.Cumulative {
+		scores.MetricType = v3.MetricTypeGauge
 	}
 
 	switch scores.MetricType {
