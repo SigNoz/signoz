@@ -29,7 +29,7 @@ const interceptorsResponse = (
 		const duration =
 			new Date().getTime() - (value.config as any).metadata.startTime;
 
-		if (duration > RESPONSE_TIMEOUT_THRESHOLD) {
+		if (duration > RESPONSE_TIMEOUT_THRESHOLD && value.config.url !== '/event') {
 			eventEmitter.emit(Events.SLOW_API_WARNING, true, {
 				duration,
 				url: value.config.url,
