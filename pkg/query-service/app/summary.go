@@ -135,7 +135,7 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 	}
 	result, apiError := aH.SummaryService.GetInspectMetrics(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting heatmap data", zap.Error(apiError.Err))
+		zap.L().Error("error getting inspect metrics data", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
