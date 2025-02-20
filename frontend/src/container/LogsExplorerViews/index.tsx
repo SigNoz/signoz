@@ -95,7 +95,9 @@ function LogsExplorerViews({
 	selectedView: SELECTED_VIEWS;
 	showFrequencyChart: boolean;
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	listQueryKeyRef: MutableRefObject<any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
@@ -307,9 +309,6 @@ function LogsExplorerViews({
 			if (!query) return null;
 
 			const paginateData = getPaginationQueryData({
-				filters: params.filters,
-				listItemId: params.log ? params.log.id : null,
-				orderByTimestamp,
 				page: params.page,
 				pageSize: params.pageSize,
 			});
@@ -358,7 +357,7 @@ function LogsExplorerViews({
 
 			return data;
 		},
-		[orderByTimestamp, listQuery, activeLogId],
+		[listQuery, activeLogId],
 	);
 
 	const handleEndReached = useCallback(

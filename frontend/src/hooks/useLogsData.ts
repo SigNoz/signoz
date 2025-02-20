@@ -101,9 +101,6 @@ export const useLogsData = ({
 		if (!query) return null;
 
 		const paginateData = getPaginationQueryData({
-			filters: params.filters,
-			listItemId: params.log ? params.log.id : null,
-			orderByTimestamp,
 			page: params.page,
 			pageSize: params.pageSize,
 		});
