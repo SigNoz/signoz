@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"io"
 	"math"
 	"net/http"
@@ -127,6 +128,8 @@ type APIHandler struct {
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
 
+	SummaryService *metricsexplorer.SummaryService
+
 	pvcsRepo *inframetrics.PvcsRepo
 
 	JWT *authtypes.JWT
@@ -215,6 +218,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
+	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, querierv2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -244,6 +249,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
 		JWT:                           opts.JWT,
+		SummaryService:                summaryService,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -604,6 +610,24 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+}
+
+func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddleware) {
+	router.HandleFunc("/api/v1/metrics/filters/keys",
+		am.ViewAccess(ah.FilterKeysSuggestion)).
+		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics/filters/values",
+		am.ViewAccess(ah.FilterValuesSuggestion)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
+		am.ViewAccess(ah.GetMetricsDetails)).
+		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics",
+		am.ViewAccess(ah.ListMetrics)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/treemap",
+		am.ViewAccess(ah.GetTreeMap)).
+		Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {

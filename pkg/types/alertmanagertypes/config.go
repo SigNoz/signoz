@@ -260,7 +260,7 @@ func (c *Config) DeleteReceiver(name string) error {
 
 type ConfigStore interface {
 	// Set creates or updates a config.
-	Set(context.Context, *Config) error
+	Set(context.Context, *Config, func(context.Context) error) error
 
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
