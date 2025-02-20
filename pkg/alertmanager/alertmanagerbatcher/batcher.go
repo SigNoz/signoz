@@ -9,9 +9,11 @@ import (
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
-// Notifier is responsible for dispatching alert notifications to an alertmanager.
+// Batcher is responsible for batching alerts and broadcasting them on a channel.
 type Batcher struct {
+	// C is the channel on which alerts are sent to alertmanager
 	C chan alertmanagertypes.PostableAlerts
+
 	// logger
 	logger *slog.Logger
 
@@ -23,14 +25,21 @@ type Batcher struct {
 
 	// more channel to signal the sender goroutine to send alerts
 	moreC chan struct{}
+
+	// stop channel to signal the sender goroutine to stop
 	stopC chan struct{}
-	mtx   sync.RWMutex
+
+	// mutex to synchronize access to the queue
+	queueMtx sync.RWMutex
+
+	// wait group to wait for all goroutines to finish
+	goroutinesWg sync.WaitGroup
 }
 
 func New(logger *slog.Logger, config Config) *Batcher {
 	batcher := &Batcher{
 		logger: logger,
-		queue:  make(alertmanagertypes.PostableAlerts, config.Capacity),
+		queue:  make(alertmanagertypes.PostableAlerts, 0, config.Capacity),
 		config: config,
 		moreC:  make(chan struct{}, 1),
 		stopC:  make(chan struct{}),
@@ -41,22 +50,28 @@ func New(logger *slog.Logger, config Config) *Batcher {
 }
 
 // Start dispatches notifications continuously.
-func (n *Batcher) Start(ctx context.Context) error {
+func (batcher *Batcher) Start(ctx context.Context) error {
+	batcher.goroutinesWg.Add(1)
 	go func() {
-		n.logger.InfoContext(ctx, "starting alertmanager batcher")
+		defer batcher.goroutinesWg.Done()
+
+		batcher.logger.InfoContext(ctx, "starting alertmanager batcher")
 		for {
 			select {
-			case <-ctx.Done():
+			case <-batcher.stopC:
+				for batcher.queueLen() > 0 {
+					alerts := batcher.next()
+					batcher.C <- alerts
+				}
+				close(batcher.C)
 				return
-			case <-n.stopC:
-				return
-			case <-n.moreC:
+			case <-batcher.moreC:
 			}
-			alerts := n.nextBatch()
-			n.C <- alerts
+			alerts := batcher.next()
+			batcher.C <- alerts
 			// If the queue still has items left, kick off the next iteration.
-			if n.queueLen() > 0 {
-				n.setMore()
+			if batcher.queueLen() > 0 {
+				batcher.setMore()
 			}
 		}
 	}()
@@ -64,69 +79,68 @@ func (n *Batcher) Start(ctx context.Context) error {
 	return nil
 }
 
-func (n *Batcher) queueLen() int {
-	n.mtx.RLock()
-	defer n.mtx.RUnlock()
+// Add queues the given notification requests for processing.
+func (batcher *Batcher) Add(ctx context.Context, alerts ...*alertmanagertypes.PostableAlert) {
+	batcher.queueMtx.Lock()
+	defer batcher.queueMtx.Unlock()
 
-	return len(n.queue)
+	// Queue capacity should be significantly larger than a single alert
+	// batch could be.
+	if d := len(alerts) - batcher.config.Capacity; d > 0 {
+		alerts = alerts[d:]
+		batcher.logger.WarnContext(ctx, "alert batch larger than queue capacity, dropping alerts", "num_dropped", d, "capacity", batcher.config.Capacity)
+	}
+
+	// If the queue is full, remove the oldest alerts in favor
+	// of newer ones.
+	if d := (len(batcher.queue) + len(alerts)) - batcher.config.Capacity; d > 0 {
+		batcher.queue = batcher.queue[d:]
+		batcher.logger.WarnContext(ctx, "alert batch queue full, dropping alerts", "num_dropped", d)
+	}
+
+	batcher.queue = append(batcher.queue, alerts...)
+
+	// Notify sending goroutine that there are alerts to be processed.
+	batcher.setMore()
 }
 
-func (n *Batcher) nextBatch() alertmanagertypes.PostableAlerts {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
+// Stop shuts down the batcher.
+func (batcher *Batcher) Stop(ctx context.Context) {
+	batcher.logger.InfoContext(ctx, "Stopping alertmanager batcher")
+	close(batcher.stopC)
+	batcher.goroutinesWg.Wait()
+}
+
+func (batcher *Batcher) queueLen() int {
+	batcher.queueMtx.RLock()
+	defer batcher.queueMtx.RUnlock()
+
+	return len(batcher.queue)
+}
+
+func (batcher *Batcher) next() alertmanagertypes.PostableAlerts {
+	batcher.queueMtx.Lock()
+	defer batcher.queueMtx.Unlock()
 
 	var alerts alertmanagertypes.PostableAlerts
 
-	if len(n.queue) > n.config.Size {
-		alerts = append(make(alertmanagertypes.PostableAlerts, 0, n.config.Size), n.queue[:n.config.Size]...)
-		n.queue = n.queue[n.config.Size:]
+	if len(batcher.queue) > batcher.config.Size {
+		alerts = append(make(alertmanagertypes.PostableAlerts, 0, batcher.config.Size), batcher.queue[:batcher.config.Size]...)
+		batcher.queue = batcher.queue[batcher.config.Size:]
 	} else {
-		alerts = append(make(alertmanagertypes.PostableAlerts, 0, len(n.queue)), n.queue...)
-		n.queue = n.queue[:0]
+		alerts = append(make(alertmanagertypes.PostableAlerts, 0, len(batcher.queue)), batcher.queue...)
+		batcher.queue = batcher.queue[:0]
 	}
 
 	return alerts
 }
 
-// Send queues the given notification requests for processing.
-// Panics if called on a handler that is not running.
-func (n *Batcher) Send(ctx context.Context, alerts ...*alertmanagertypes.PostableAlert) {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
-
-	// Queue capacity should be significantly larger than a single alert
-	// batch could be.
-	if d := len(alerts) - n.config.Capacity; d > 0 {
-		alerts = alerts[d:]
-		n.logger.WarnContext(ctx, "Alert batch larger than queue capacity, dropping alerts", "num_dropped", d)
-	}
-
-	// If the queue is full, remove the oldest alerts in favor
-	// of newer ones.
-	if d := (len(n.queue) + len(alerts)) - n.config.Capacity; d > 0 {
-		n.queue = n.queue[d:]
-
-		n.logger.WarnContext(ctx, "Alert notification queue full, dropping alerts", "num_dropped", d)
-	}
-	n.queue = append(n.queue, alerts...)
-
-	// Notify sending goroutine that there are alerts to be processed.
-	n.setMore()
-}
-
 // setMore signals that the alert queue has items.
-func (n *Batcher) setMore() {
+func (batcher *Batcher) setMore() {
 	// If we cannot send on the channel, it means the signal already exists
 	// and has not been consumed yet.
 	select {
-	case n.moreC <- struct{}{}:
+	case batcher.moreC <- struct{}{}:
 	default:
 	}
-}
-
-// Stop shuts down the notification handler.
-func (n *Batcher) Stop(ctx context.Context) {
-	n.logger.InfoContext(ctx, "Stopping alertmanager batcher")
-	close(n.moreC)
-	close(n.stopC)
 }

@@ -57,18 +57,14 @@ func (provider *provider) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer provider.batcher.Stop(ctx)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case alerts := <-provider.batcher.C:
-			if err := provider.putAlerts(ctx, "", alerts); err != nil {
-				provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
-			}
+	for alerts := range provider.batcher.C {
+		if err := provider.putAlerts(ctx, "", alerts); err != nil {
+			provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
 		}
 	}
+
+	return nil
 }
 
 func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
@@ -101,7 +97,7 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 }
 
 func (provider *provider) PutAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
-	provider.batcher.Send(ctx, alerts...)
+	provider.batcher.Add(ctx, alerts...)
 	return nil
 }
 
@@ -164,47 +160,25 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 }
 
 func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	channels := config.Channels()
-	channelList := make([]*alertmanagertypes.Channel, 0, len(channels))
-	for _, channel := range channels {
-		channelList = append(channelList, channel)
-	}
-
-	return channelList, nil
+	return provider.configStore.ListChannels(ctx, orgID)
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
-	if err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
-	config, err := provider.configStore.Get(ctx, orgID)
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	err = config.UpdateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
+	err = channel.Update(receiver)
 	if err != nil {
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config, func(ctx context.Context) error {
+	err = provider.configStore.UpdateChannel(ctx, orgID, channel, func(ctx context.Context) error {
 		url := provider.config.Legacy.URL.JoinPath(routesPath)
 
 		body, err := json.Marshal(receiver)
@@ -240,17 +214,9 @@ func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID str
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
+	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
 
-	err = config.CreateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
-	if err != nil {
-		return err
-	}
-
-	err = provider.configStore.Set(ctx, config, func(ctx context.Context) error {
+	err := provider.configStore.CreateChannel(ctx, channel, func(ctx context.Context) error {
 		url := provider.config.Legacy.URL.JoinPath(routesPath)
 
 		body, err := json.Marshal(receiver)
@@ -286,23 +252,12 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
+	err := provider.configStore.DeleteChannelByID(ctx, orgID, channelID, func(ctx context.Context) error {
+		channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
+		if err != nil {
+			return err
+		}
 
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
-	if err != nil {
-		return err
-	}
-
-	err = config.DeleteReceiver(channel.Name)
-	if err != nil {
-		return err
-	}
-
-	err = provider.configStore.Set(ctx, config, func(ctx context.Context) error {
 		url := provider.config.Legacy.URL.JoinPath(routesPath)
 
 		body, err := json.Marshal(map[string]string{"name": channel.Name})
@@ -338,5 +293,6 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
+	provider.batcher.Stop(ctx)
 	return nil
 }

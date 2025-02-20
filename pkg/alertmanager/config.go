@@ -39,7 +39,13 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return Config{
 		Config:   alertmanagerserver.NewConfig(),
-		Provider: "signoz",
+		Provider: "legacy",
+		Legacy: Legacy{
+			URL: &url.URL{
+				Scheme: "http",
+				Host:   "alertmanager:9093",
+			},
+		},
 		Signoz: Signoz{
 			PollInterval: 15 * time.Second,
 		},

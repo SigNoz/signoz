@@ -147,6 +147,24 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
+	vars := mux.Vars(req)
+	if vars == nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required in path"))
+		return
+	}
+
+	idString, ok := vars["id"]
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required in path"))
+		return
+	}
+
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid integer"))
+		return
+	}
+
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		render.Error(rw, err)
@@ -160,7 +178,7 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	err = api.alertmanager.UpdateChannelByReceiver(ctx, claims.OrgID, receiver)
+	err = api.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
 	if err != nil {
 		render.Error(rw, err)
 		return

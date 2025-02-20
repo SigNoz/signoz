@@ -106,7 +106,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 	return channel, nil
 }
 
-func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID str
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config, nil)
+	err = provider.configStore.Set(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config, nil)
+	err = provider.configStore.Set(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config, nil)
+	err = provider.configStore.Set(ctx, config)
 	if err != nil {
 		return err
 	}
