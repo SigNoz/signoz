@@ -29,7 +29,6 @@ interface LogsContextListProps {
 	className?: string;
 	isEdit: boolean;
 	query: Query;
-	log: ILog;
 	order: string;
 	filters: TagFilter | null;
 }
@@ -38,7 +37,6 @@ function LogsContextList({
 	className,
 	isEdit,
 	query,
-	log,
 	order,
 	filters,
 }: LogsContextListProps): JSX.Element {
@@ -46,8 +44,6 @@ function LogsContextList({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [page, setPage] = useState<number>(1);
 
-	const firstLog = useMemo(() => logs[0], [logs]);
-	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
 	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
@@ -62,22 +58,14 @@ function LogsContextList({
 		pageSize,
 	]);
 
-	const currentStagedQueryData = useMemo(() => {
-		if (!query || query.builder.queryData.length !== 1) return null;
-
-		return query.builder.queryData[0];
-	}, [query]);
-
 	const initialLogsRequest = useMemo(
 		() =>
 			getRequestData({
-				stagedQueryData: currentStagedQueryData,
 				query,
-				log,
 				orderByTimestamp,
 				page,
 			}),
-		[currentStagedQueryData, page, log, query, orderByTimestamp],
+		[page, query, orderByTimestamp],
 	);
 
 	const [requestData, setRequestData] = useState<Query | null>(
@@ -119,12 +107,9 @@ function LogsContextList({
 	const handleShowNextLines = useCallback(() => {
 		if (isDisabledFetch) return;
 
-		const log = order === ORDERBY_FILTERS.ASC ? firstLog : lastLog;
-
 		const newRequestData = getRequestData({
-			stagedQueryData: currentStagedQueryData,
 			query,
-			log,
+
 			orderByTimestamp,
 			page: page + 1,
 			pageSize: LOGS_MORE_PAGE_SIZE,
@@ -132,24 +117,13 @@ function LogsContextList({
 
 		setPage((prevPage) => prevPage + 1);
 		setRequestData(newRequestData);
-	}, [
-		query,
-		firstLog,
-		lastLog,
-		page,
-		order,
-		currentStagedQueryData,
-		isDisabledFetch,
-		orderByTimestamp,
-	]);
+	}, [query, page, isDisabledFetch, orderByTimestamp]);
 
 	useEffect(() => {
 		if (!isEdit) return;
 
 		const newRequestData = getRequestData({
-			stagedQueryData: currentStagedQueryData,
 			query,
-			log,
 			orderByTimestamp,
 			page: 1,
 		});
