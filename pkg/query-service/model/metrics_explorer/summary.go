@@ -5,11 +5,11 @@ import (
 )
 
 type SummaryListMetricsRequest struct {
-	Offset    int          `json:"offset"`
-	Limit     int          `json:"limit"`
-	OrderBy   v3.OrderBy `json:"orderBy"`
-	Start int64        `json:"start"`
-	EndD   int64        `json:"end"`
+	Offset  int          `json:"offset"`
+	Limit   int          `json:"limit"`
+	OrderBy v3.OrderBy   `json:"orderBy"`
+	Start   int64        `json:"start"`
+	EndD    int64        `json:"end"`
 	Filters v3.FilterSet `json:"filters"`
 }
 
@@ -21,10 +21,10 @@ const (
 )
 
 type TreeMapMetricsRequest struct {
-	Limit     int          `json:"limit"`
-	Treemap   TreeMapType  `json:"treemap"`
-	Start int64        `json:"start"`
-	EndD   int64        `json:"end"`
+	Limit   int          `json:"limit"`
+	Treemap TreeMapType  `json:"treemap"`
+	Start   int64        `json:"start"`
+	EndD    int64        `json:"end"`
 	Filters v3.FilterSet `json:"filters"`
 }
 
@@ -126,12 +126,17 @@ var AvailableColumnFilterMap = map[string]bool{
 type RelatedMetricsScore struct {
 	AttributeSimilarity float64
 	NameSimilarity      float64
+	Filters             [][]string
+	MetricType          v3.MetricType
+	Temporality         v3.Temporality
+	IsMonotonic         bool
 }
 
 type RelatedMetricsRequest struct {
-	CurrentMetricName string `json:"currentMetricName"`
-	Start             int64  `json:"start"`
-	End               int64  `json:"end"`
+	CurrentMetricName string       `json:"currentMetricName"`
+	Start             int64        `json:"start"`
+	End               int64        `json:"end"`
+	Filters           v3.FilterSet `json:"filters"`
 }
 
 type RelatedMetricsResponse struct {
@@ -139,7 +144,8 @@ type RelatedMetricsResponse struct {
 }
 
 type RelatedMetrics struct {
-	Name       string      `json:"name"`
-	Dashboards []Dashboard `json:"dashboards"`
-	Alerts     []Alert     `json:"alerts"`
+	Name       string           `json:"name"`
+	Dashboards []Dashboard      `json:"dashboards"`
+	Alerts     []Alert          `json:"alerts"`
+	Query      *v3.BuilderQuery `json:"query"`
 }

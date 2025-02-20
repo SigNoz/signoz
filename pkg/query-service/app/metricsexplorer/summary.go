@@ -212,16 +212,14 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *metrics_explorer.RelatedMetricsRequest) (*metrics_explorer.RelatedMetricsResponse, *model.ApiError) {
 	var relatedMetricsResponse metrics_explorer.RelatedMetricsResponse
 
-	relatedMetricsMap, err := receiver.reader.GetRelatedMetrics(ctx, params.CurrentMetricName, params.Start, params.End)
+	relatedMetricsMap, err := receiver.reader.GetRelatedMetrics(ctx, params)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "Error", Err: err}
 	}
 
-	// Combine the name and attribute similarity scores using weights.
-	// Here we're using 0.5 for each, but adjust as needed.
 	finalScores := make(map[string]float64)
 	for metric, scores := range relatedMetricsMap {
-		finalScores[metric] = scores.NameSimilarity*0.5 + scores.AttributeSimilarity*0.5
+		finalScores[metric] = scores.NameSimilarity*0.7 + scores.AttributeSimilarity*0.3
 	}
 
 	type metricScore struct {
@@ -269,10 +267,71 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		relatedMetric := metrics_explorer.RelatedMetrics{
 			Name:       ms.Name,
 			Dashboards: dashboardsList,
+			Query:      getQueryRangeForRelateMetricsList(ms.Name, relatedMetricsMap[ms.Name]),
 		}
 
 		relatedMetricsResponse.RelatedMetrics = append(relatedMetricsResponse.RelatedMetrics, relatedMetric)
 	}
 
 	return &relatedMetricsResponse, nil
+}
+
+func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explorer.RelatedMetricsScore) *v3.BuilderQuery {
+	var filterItems []v3.FilterItem
+	for _, pair := range scores.Filters {
+		if len(pair) < 2 {
+			continue // Skip invalid filter pairs.
+		}
+		filterItem := v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      pair[0], // Default type, or you can use v3.AttributeKeyTypeUnspecified.
+				IsColumn: false,
+				IsJSON:   false,
+			},
+			Value:    pair[1],
+			Operator: v3.FilterOperatorEqual, // Using "=" as the operator.
+		}
+		filterItems = append(filterItems, filterItem)
+	}
+
+	// If there are any filters, combine them with an "AND" operator.
+	var filters *v3.FilterSet
+	if len(filterItems) > 0 {
+		filters = &v3.FilterSet{
+			Operator: "AND",
+			Items:    filterItems,
+		}
+	}
+
+	// Create the BuilderQuery. Here we set the QueryName to the metric name.
+	query := v3.BuilderQuery{
+		QueryName:  metricName,
+		DataSource: v3.DataSourceMetrics,
+		Expression: metricName, // Using metric name as expression
+		Filters:    filters,
+	}
+
+	if scores.MetricType == "Sum" && !scores.IsMonotonic && scores.Temporality == v3.Cumulative {
+		scores.MetricType = "Gauge"
+	}
+
+	switch scores.MetricType {
+	case v3.MetricTypeGauge:
+		query.TimeAggregation = v3.TimeAggregationAvg
+		query.SpaceAggregation = v3.SpaceAggregationAvg
+	case v3.MetricTypeSum:
+		query.TimeAggregation = v3.TimeAggregationRate
+		query.SpaceAggregation = v3.SpaceAggregationSum
+	case v3.MetricTypeHistogram:
+		query.SpaceAggregation = v3.SpaceAggregationPercentile95
+	}
+
+	query.AggregateAttribute = v3.AttributeKey{
+		Key:  metricName,
+		Type: v3.AttributeKeyType(scores.MetricType),
+	}
+
+	query.StepInterval = 60
+
+	return &query
 }
