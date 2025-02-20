@@ -173,11 +173,13 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	)
 
 	newUser := &types.User{
-		ID:        cloudIntegrationUserId,
-		Name:      fmt.Sprintf("%s integration", cloudProvider),
-		Email:     fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
-		CreatedAt: int(time.Now().Unix()),
-		OrgID:     orgId,
+		ID:    cloudIntegrationUserId,
+		Name:  fmt.Sprintf("%s integration", cloudProvider),
+		Email: fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
+		AuditableModel: types.AuditableModel{
+			CreatedAt: time.Now(),
+		},
+		OrgID: orgId,
 	}
 
 	viewerGroup, apiErr := dao.DB().GetGroupByName(ctx, baseconstants.ViewerGroup)

@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
@@ -520,16 +521,16 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 	return &req, nil
 }
 
-func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
-	var req model.ApdexSettings
+func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
+	var req types.ApdexSettings
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 	return &req, nil
 }
 
-func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
-	var req model.IngestionKey
+func parseInsertIngestionKeyRequest(r *http.Request) (*types.IngestionKey, error) {
+	var req types.IngestionKey
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

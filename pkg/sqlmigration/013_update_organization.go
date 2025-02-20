@@ -35,21 +35,38 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
-	// add columns created_by, updated_at and updated_by to organizations table
-	if _, err := tx.NewAddColumn().Table("organizations").ColumnExpr("created_by text").IfNotExists().Exec(ctx); err != nil {
+	// add org id
+	if _, err := tx.NewAddColumn().Table("groups").ColumnExpr("org_id text").IfNotExists().Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := tx.NewAddColumn().Table("organizations").ColumnExpr("updated_at timestamp").IfNotExists().Exec(ctx); err != nil {
-		return err
+	// organization, users table already have created_at column
+	for _, table := range []string{"groups", "ingestion_keys"} {
+		if _, err := tx.NewAddColumn().Table(table).ColumnExpr("created_at text").IfNotExists().Exec(ctx); err != nil {
+			return err
+		}
 	}
 
-	if _, err := tx.NewAddColumn().Table("organizations").ColumnExpr("updated_by text").IfNotExists().Exec(ctx); err != nil {
-		return err
+	// add created_by, updated_at and updated_by to organizations, users, groups, ingestion_keys table
+	for _, table := range []string{"organizations", "users", "groups", "ingestion_keys"} {
+		if _, err := tx.NewAddColumn().Table(table).ColumnExpr("created_by text").IfNotExists().Exec(ctx); err != nil {
+			return err
+		}
+
+		if _, err := tx.NewAddColumn().Table(table).ColumnExpr("updated_at timestamp").IfNotExists().Exec(ctx); err != nil {
+			return err
+		}
+
+		if _, err := tx.NewAddColumn().Table(table).ColumnExpr("updated_by text").IfNotExists().Exec(ctx); err != nil {
+			return err
+		}
 	}
 
-	if err := migrateIntToTimestamp(ctx, tx, "organizations", "created_at"); err != nil {
-		return err
+	// since organizations, users has created_at as integer instead of timestamp
+	for _, table := range []string{"organizations", "users", "invites"} {
+		if err := migrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
+			return err
+		}
 	}
 
 	if err := migrateIntToBoolean(ctx, tx, "organizations", "is_anonymous"); err != nil {

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"io"
 	"math"
 	"net/http"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -2118,7 +2119,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 	var resp []*model.InvitationResponseObject
 	for _, inv := range invites {
 
-		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
+		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgID)
 		if apiErr != nil {
 			RespondError(w, apiErr, nil)
 		}
@@ -2126,7 +2127,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 			Name:         inv.Name,
 			Email:        inv.Email,
 			Token:        inv.Token,
-			CreatedAt:    inv.CreatedAt,
+			CreatedAt:    inv.CreatedAt.Unix(),
 			Role:         inv.Role,
 			Organization: org.Name,
 		})
@@ -2270,12 +2271,14 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &types.User{
-		ID:                old.ID,
-		Name:              old.Name,
-		OrgID:             old.OrgID,
-		Email:             old.Email,
-		Password:          old.Password,
-		CreatedAt:         old.CreatedAt,
+		ID:       old.ID,
+		Name:     old.Name,
+		OrgID:    old.OrgID,
+		Email:    old.Email,
+		Password: old.Password,
+		AuditableModel: types.AuditableModel{
+			CreatedAt: old.CreatedAt,
+		},
 		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {

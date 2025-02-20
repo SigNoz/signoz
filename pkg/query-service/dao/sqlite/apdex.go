@@ -3,24 +3,20 @@ package sqlite
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 const defaultApdexThreshold = 0.5
 
-func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError) {
-	var apdexSettings []model.ApdexSettings
+func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []string) ([]types.ApdexSettings, *model.ApiError) {
+	var apdexSettings []types.ApdexSettings
 
-	query, args, err := sqlx.In("SELECT * FROM apdex_settings WHERE service_name IN (?)", services)
-	if err != nil {
-		return nil, &model.ApiError{
-			Err: err,
-		}
-	}
-	query = mds.db.Rebind(query)
-
-	err = mds.db.Select(&apdexSettings, query, args...)
+	err := mds.bundb.NewSelect().
+		Model(&apdexSettings).
+		Where("service_name IN (?)", bun.In(services)).
+		Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{
 			Err: err,
@@ -38,7 +34,7 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []stri
 		}
 
 		if !found {
-			apdexSettings = append(apdexSettings, model.ApdexSettings{
+			apdexSettings = append(apdexSettings, types.ApdexSettings{
 				ServiceName: service,
 				Threshold:   defaultApdexThreshold,
 			})
@@ -48,9 +44,9 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []stri
 	return apdexSettings, nil
 }
 
-func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, apdexSettings *model.ApdexSettings) *model.ApiError {
+func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, apdexSettings *types.ApdexSettings) *model.ApiError {
 
-	_, err := mds.db.NamedExec(`
+	_, err := mds.bundb.Exec(`
 	INSERT OR REPLACE INTO apdex_settings (
 		service_name,
 		threshold,

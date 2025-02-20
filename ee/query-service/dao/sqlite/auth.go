@@ -44,11 +44,13 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 	}
 
 	user := &types.User{
-		ID:                uuid.NewString(),
-		Name:              "",
-		Email:             email,
-		Password:          hash,
-		CreatedAt:         int(time.Now().Unix()),
+		ID:       uuid.NewString(),
+		Name:     "",
+		Email:    email,
+		Password: hash,
+		AuditableModel: types.AuditableModel{
+			CreatedAt: time.Now(),
+		},
 		ProfilePictureURL: "", // Currently unused
 		GroupID:           group.ID,
 		OrgID:             domain.OrgId,

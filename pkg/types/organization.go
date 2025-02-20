@@ -7,10 +7,10 @@ import (
 )
 
 type AuditableModel struct {
-	CreatedAt time.Time `bun:"created_at,notnull" json:"createdAt"`
-	CreatedBy string    `bun:"created_by,notnull" json:"createdBy"`
-	UpdatedAt time.Time `bun:"updated_at,notnull" json:"updatedAt"`
-	UpdatedBy string    `bun:"updated_by,notnull" json:"updatedBy"`
+	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
+	CreatedBy string    `bun:"created_by" json:"createdBy"`
+	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
+	UpdatedBy string    `bun:"updated_by" json:"updatedBy"`
 }
 
 // TODO: check constraints are not working
@@ -27,19 +27,20 @@ type Organization struct {
 type Invite struct {
 	bun.BaseModel `bun:"table:invites"`
 
-	OrgID     string    `bun:"org_id,type:text,notnull"`
-	ID        int       `bun:"id,pk,autoincrement"`
-	Name      string    `bun:"name,type:text,notnull"`
-	Email     string    `bun:"email,type:text,notnull,unique"`
-	Token     string    `bun:"token,type:text,notnull"`
-	CreatedAt time.Time `bun:"created_at,notnull"`
-	Role      string    `bun:"role,type:text,notnull"`
+	OrgID     string    `bun:"org_id,type:text,notnull" json:"orgId"`
+	ID        int       `bun:"id,pk,autoincrement" json:"id"`
+	Name      string    `bun:"name,type:text,notnull" json:"name"`
+	Email     string    `bun:"email,type:text,notnull,unique" json:"email"`
+	Token     string    `bun:"token,type:text,notnull" json:"token"`
+	CreatedAt time.Time `bun:"created_at,notnull" json:"createdAt"`
+	Role      string    `bun:"role,type:text,notnull" json:"role"`
 }
 
 type Group struct {
 	bun.BaseModel `bun:"table:groups"`
 
-	OrgID string `bun:"org_id,type:text,notnull"`
+	AuditableModel
+	OrgID string `bun:"org_id,type:text"`
 	ID    string `bun:"id,pk,type:text" json:"id"`
 	Name  string `bun:"name,type:text,notnull,unique" json:"name"`
 }
@@ -52,12 +53,13 @@ type GettableUser struct {
 }
 
 type User struct {
-	bun.BaseModel     `bun:"table:users"`
+	bun.BaseModel `bun:"table:users"`
+
+	AuditableModel
 	ID                string `bun:"id,pk,type:text" json:"id"`
 	Name              string `bun:"name,type:text,notnull" json:"name"`
 	Email             string `bun:"email,type:text,notnull,unique" json:"email"`
 	Password          string `bun:"password,type:text,notnull" json:"-"`
-	CreatedAt         int    `bun:"created_at,notnull" json:"createdAt"`
 	ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
 	GroupID           string `bun:"group_id,type:text,notnull" json:"groupId"`
 	OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
@@ -65,9 +67,9 @@ type User struct {
 
 type ResetPasswordRequest struct {
 	bun.BaseModel `bun:"table:reset_password_request"`
-	ID            int    `bun:"id,pk,autoincrement"`
-	Token         string `bun:"token,type:text,notnull"`
-	UserID        string `bun:"user_id,type:text,notnull"`
+	ID            int    `bun:"id,pk,autoincrement" json:"id"`
+	Token         string `bun:"token,type:text,notnull" json:"token"`
+	UserID        string `bun:"user_id,type:text,notnull" json:"userId"`
 }
 
 type UserFlags struct {
@@ -78,19 +80,19 @@ type UserFlags struct {
 
 type ApdexSettings struct {
 	bun.BaseModel      `bun:"table:apdex_settings"`
-	ServiceName        string  `bun:"service_name,pk,type:text"`
-	Threshold          float64 `bun:"threshold,type:float,notnull"`
-	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
+	ServiceName        string  `bun:"service_name,pk,type:text" json:"serviceName"`
+	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
+	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`
 }
 
 type IngestionKey struct {
 	bun.BaseModel `bun:"table:ingestion_keys"`
 
 	AuditableModel
-	OrgID        string `bun:"org_id,type:text,notnull"`
-	KeyId        string `bun:"key_id,pk,type:text"`
-	Name         string `bun:"name,type:text"`
-	IngestionKey string `bun:"ingestion_key,type:text,notnull"`
-	IngestionURL string `bun:"ingestion_url,type:text,notnull"`
-	DataRegion   string `bun:"data_region,type:text,notnull"`
+	OrgID        string `bun:"org_id,type:text,notnull" json:"orgId"`
+	KeyId        string `bun:"key_id,pk,type:text" json:"keyId"`
+	Name         string `bun:"name,type:text" json:"name"`
+	IngestionKey string `bun:"ingestion_key,type:text,notnull" json:"ingestionKey"`
+	IngestionURL string `bun:"ingestion_url,type:text,notnull" json:"ingestionURL"`
+	DataRegion   string `bun:"data_region,type:text,notnull" json:"dataRegion"`
 }

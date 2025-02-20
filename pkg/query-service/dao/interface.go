@@ -13,9 +13,9 @@ type ModelDao interface {
 }
 
 type Queries interface {
-	GetInviteFromEmail(ctx context.Context, email string) (*model.InvitationObject, *model.ApiError)
-	GetInviteFromToken(ctx context.Context, token string) (*model.InvitationObject, *model.ApiError)
-	GetInvites(ctx context.Context) ([]model.InvitationObject, *model.ApiError)
+	GetInviteFromEmail(ctx context.Context, email string) (*types.Invite, *model.ApiError)
+	GetInviteFromToken(ctx context.Context, token string) (*types.Invite, *model.ApiError)
+	GetInvites(ctx context.Context) ([]types.Invite, *model.ApiError)
 
 	GetUser(ctx context.Context, id string) (*types.GettableUser, *model.ApiError)
 	GetUserByEmail(ctx context.Context, email string) (*types.GettableUser, *model.ApiError)
@@ -30,19 +30,19 @@ type Queries interface {
 	GetOrgByName(ctx context.Context, name string) (*types.Organization, *model.ApiError)
 	GetOrg(ctx context.Context, id string) (*types.Organization, *model.ApiError)
 
-	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
+	GetResetPasswordEntry(ctx context.Context, token string) (*types.ResetPasswordRequest, *model.ApiError)
 	GetUsersByOrg(ctx context.Context, orgId string) ([]types.GettableUser, *model.ApiError)
 	GetUsersByGroup(ctx context.Context, groupId string) ([]types.GettableUser, *model.ApiError)
 
-	GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError)
+	GetApdexSettings(ctx context.Context, services []string) ([]types.ApdexSettings, *model.ApiError)
 
-	GetIngestionKeys(ctx context.Context) ([]model.IngestionKey, *model.ApiError)
+	GetIngestionKeys(ctx context.Context) ([]types.IngestionKey, *model.ApiError)
 
 	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError)
 }
 
 type Mutations interface {
-	CreateInviteEntry(ctx context.Context, req *model.InvitationObject) *model.ApiError
+	CreateInviteEntry(ctx context.Context, req *types.Invite) *model.ApiError
 	DeleteInvitation(ctx context.Context, email string) *model.ApiError
 
 	CreateUser(ctx context.Context, user *types.User, isFirstUser bool) (*types.User, *model.ApiError)
@@ -58,13 +58,13 @@ type Mutations interface {
 	EditOrg(ctx context.Context, org *types.Organization) *model.ApiError
 	DeleteOrg(ctx context.Context, id string) *model.ApiError
 
-	CreateResetPasswordEntry(ctx context.Context, req *model.ResetPasswordEntry) *model.ApiError
+	CreateResetPasswordEntry(ctx context.Context, req *types.ResetPasswordRequest) *model.ApiError
 	DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError
 
 	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
 	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
 
-	SetApdexSettings(ctx context.Context, set *model.ApdexSettings) *model.ApiError
+	SetApdexSettings(ctx context.Context, set *types.ApdexSettings) *model.ApiError
 
-	InsertIngestionKey(ctx context.Context, ingestionKey *model.IngestionKey) *model.ApiError
+	InsertIngestionKey(ctx context.Context, ingestionKey *types.IngestionKey) *model.ApiError
 }

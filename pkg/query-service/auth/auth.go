@@ -86,13 +86,13 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "failed to query admin user from the DB")
 	}
 
-	inv := &model.InvitationObject{
+	inv := &types.Invite{
 		Name:      req.Name,
 		Email:     req.Email,
 		Token:     token,
-		CreatedAt: time.Now().Unix(),
+		CreatedAt: time.Now(),
 		Role:      req.Role,
-		OrgId:     au.OrgID,
+		OrgID:     au.OrgID,
 	}
 
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
@@ -187,13 +187,13 @@ func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.Gettabl
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	inv := &model.InvitationObject{
+	inv := &types.Invite{
 		Name:      req.Name,
 		Email:     req.Email,
 		Token:     token,
-		CreatedAt: time.Now().Unix(),
+		CreatedAt: time.Now(),
 		Role:      req.Role,
-		OrgId:     au.OrgID,
+		OrgID:     au.OrgID,
 	}
 
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
@@ -273,7 +273,7 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 
 	// TODO(Ahsan): This is not the best way to add org name in the invite response. We should
 	// either include org name in the invite table or do a join query.
-	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
+	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgID)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
 	}
@@ -281,13 +281,13 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 		Name:         inv.Name,
 		Email:        inv.Email,
 		Token:        inv.Token,
-		CreatedAt:    inv.CreatedAt,
+		CreatedAt:    inv.CreatedAt.Unix(),
 		Role:         inv.Role,
 		Organization: org.Name,
 	}, nil
 }
 
-func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.InvitationObject, error) {
+func ValidateInvite(ctx context.Context, req *RegisterRequest) (*types.Invite, error) {
 	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")
@@ -304,14 +304,14 @@ func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 	return invitation, nil
 }
 
-func CreateResetPasswordToken(ctx context.Context, userId string) (*model.ResetPasswordEntry, error) {
+func CreateResetPasswordToken(ctx context.Context, userId string) (*types.ResetPasswordRequest, error) {
 	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate reset password token")
 	}
 
-	req := &model.ResetPasswordEntry{
-		UserId: userId,
+	req := &types.ResetPasswordRequest{
+		UserID: userId,
 		Token:  token,
 	}
 	if apiErr := dao.DB().CreateResetPasswordEntry(ctx, req); err != nil {
@@ -335,7 +335,7 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
 
-	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, entry.UserId); apiErr != nil {
+	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, entry.UserID); apiErr != nil {
 		return apiErr.Err
 	}
 
@@ -417,11 +417,13 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 	}
 
 	user := &types.User{
-		ID:                uuid.NewString(),
-		Name:              req.Name,
-		Email:             req.Email,
-		Password:          hash,
-		CreatedAt:         int(time.Now().Unix()),
+		ID:       uuid.NewString(),
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: hash,
+		AuditableModel: types.AuditableModel{
+			CreatedAt: time.Now(),
+		},
 		ProfilePictureURL: "", // Currently unused
 		GroupID:           group.ID,
 		OrgID:             org.ID,
@@ -461,7 +463,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		return &userPayload.User, nil
 	}
 
-	if invite.OrgId == "" {
+	if invite.OrgID == "" {
 		zap.L().Error("failed to find org in the invite")
 		return nil, model.InternalError(fmt.Errorf("invalid invite, org not found"))
 	}
@@ -495,14 +497,16 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	user := &types.User{
-		ID:                uuid.NewString(),
-		Name:              req.Name,
-		Email:             req.Email,
-		Password:          hash,
-		CreatedAt:         int(time.Now().Unix()),
+		ID:       uuid.NewString(),
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: hash,
+		AuditableModel: types.AuditableModel{
+			CreatedAt: time.Now(),
+		},
 		ProfilePictureURL: "", // Currently unused
 		GroupID:           group.ID,
-		OrgID:             invite.OrgId,
+		OrgID:             invite.OrgID,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.

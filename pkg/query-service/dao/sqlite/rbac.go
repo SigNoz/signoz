@@ -13,12 +13,12 @@ import (
 )
 
 func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,
-	req *model.InvitationObject) *model.ApiError {
+	req *types.Invite) *model.ApiError {
 
-	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO invites (email, name, token, role, created_at, org_id)
-		VALUES (?, ?, ?, ?, ?, ?);`,
-		req.Email, req.Name, req.Token, req.Role, req.CreatedAt, req.OrgId)
+	_, err := mds.bundb.NewInsert().
+		Model(req).
+		Exec(ctx)
+
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -26,7 +26,10 @@ func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *model.ApiError {
-	_, err := mds.db.ExecContext(ctx, `DELETE from invites where email=?;`, email)
+	_, err := mds.bundb.NewDelete().
+		Model(&types.Invite{}).
+		Where("email = ?", email).
+		Exec(ctx)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -34,11 +37,13 @@ func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *
 }
 
 func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string,
-) (*model.InvitationObject, *model.ApiError) {
+) (*types.Invite, *model.ApiError) {
 
-	invites := []model.InvitationObject{}
-	err := mds.db.Select(&invites,
-		`SELECT * FROM invites WHERE email=?;`, email)
+	invites := []types.Invite{}
+	err := mds.bundb.NewSelect().
+		Model(&invites).
+		Where("email = ?", email).
+		Scan(ctx)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -56,11 +61,13 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string,
 }
 
 func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string,
-) (*model.InvitationObject, *model.ApiError) {
+) (*types.Invite, *model.ApiError) {
 
-	invites := []model.InvitationObject{}
-	err := mds.db.Select(&invites,
-		`SELECT * FROM invites WHERE token=?;`, token)
+	invites := []types.Invite{}
+	err := mds.bundb.NewSelect().
+		Model(&invites).
+		Where("token = ?", token).
+		Scan(ctx)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -75,11 +82,13 @@ func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string,
 	return &invites[0], nil
 }
 
+// TODO(nitya): should have org id
 func (mds *ModelDaoSqlite) GetInvites(ctx context.Context,
-) ([]model.InvitationObject, *model.ApiError) {
-
-	invites := []model.InvitationObject{}
-	err := mds.db.Select(&invites, "SELECT * FROM invites")
+) ([]types.Invite, *model.ApiError) {
+	invites := []types.Invite{}
+	err := mds.bundb.NewSelect().
+		Model(&invites).
+		Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -239,8 +248,13 @@ func (mds *ModelDaoSqlite) EditUser(ctx context.Context,
 func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash,
 	userId string) *model.ApiError {
 
-	q := `UPDATE users SET password=? WHERE id=?;`
-	if _, err := mds.db.ExecContext(ctx, q, passwordHash, userId); err != nil {
+	_, err := mds.bundb.NewUpdate().
+		Model(&types.User{}).
+		Set("password = ?", passwordHash).
+		Where("id = ?", userId).
+		Exec(ctx)
+
+	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -248,8 +262,13 @@ func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash,
 
 func (mds *ModelDaoSqlite) UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError {
 
-	q := `UPDATE users SET group_id=? WHERE id=?;`
-	if _, err := mds.db.ExecContext(ctx, q, groupId, userId); err != nil {
+	_, err := mds.bundb.NewUpdate().
+		Model(&types.User{}).
+		Set("group_id = ?", groupId).
+		Where("id = ?", userId).
+		Exec(ctx)
+
+	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -433,7 +452,12 @@ func (mds *ModelDaoSqlite) CreateGroup(ctx context.Context,
 
 func (mds *ModelDaoSqlite) DeleteGroup(ctx context.Context, id string) *model.ApiError {
 
-	if _, err := mds.db.ExecContext(ctx, `DELETE from groups where id=?;`, id); err != nil {
+	_, err := mds.bundb.NewDelete().
+		Model(&types.Group{}).
+		Where("id = ?", id).
+		Exec(ctx)
+
+	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -443,7 +467,10 @@ func (mds *ModelDaoSqlite) GetGroup(ctx context.Context,
 	id string) (*types.Group, *model.ApiError) {
 
 	groups := []types.Group{}
-	if err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE id=?`, id); err != nil {
+	if err := mds.bundb.NewSelect().
+		Model(&groups).
+		Where("id = ?", id).
+		Scan(ctx); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -486,10 +513,13 @@ func (mds *ModelDaoSqlite) GetGroupByName(ctx context.Context,
 	return &groups[0], nil
 }
 
+// TODO(nitya): should have org id
 func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]types.Group, *model.ApiError) {
 
 	groups := []types.Group{}
-	if err := mds.db.Select(&groups, "SELECT * FROM groups"); err != nil {
+	if err := mds.bundb.NewSelect().
+		Model(&groups).
+		Scan(ctx); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -497,10 +527,11 @@ func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]types.Group, *model
 }
 
 func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context,
-	req *model.ResetPasswordEntry) *model.ApiError {
+	req *types.ResetPasswordRequest) *model.ApiError {
 
-	q := `INSERT INTO reset_password_request (user_id, token) VALUES (?, ?);`
-	if _, err := mds.db.ExecContext(ctx, q, req.UserId, req.Token); err != nil {
+	if _, err := mds.bundb.NewInsert().
+		Model(req).
+		Exec(ctx); err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -508,7 +539,11 @@ func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context,
 
 func (mds *ModelDaoSqlite) DeleteResetPasswordEntry(ctx context.Context,
 	token string) *model.ApiError {
-	_, err := mds.db.ExecContext(ctx, `DELETE from reset_password_request where token=?;`, token)
+	_, err := mds.bundb.NewDelete().
+		Model(&types.ResetPasswordRequest{}).
+		Where("token = ?", token).
+		Exec(ctx)
+
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -516,12 +551,14 @@ func (mds *ModelDaoSqlite) DeleteResetPasswordEntry(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context,
-	token string) (*model.ResetPasswordEntry, *model.ApiError) {
+	token string) (*types.ResetPasswordRequest, *model.ApiError) {
 
-	entries := []model.ResetPasswordEntry{}
+	entries := []types.ResetPasswordRequest{}
 
-	q := `SELECT user_id,token FROM reset_password_request WHERE token=?;`
-	if err := mds.db.Select(&entries, q, token); err != nil {
+	if err := mds.bundb.NewSelect().
+		Model(&entries).
+		Where("token = ?", token).
+		Scan(ctx); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if len(entries) > 1 {

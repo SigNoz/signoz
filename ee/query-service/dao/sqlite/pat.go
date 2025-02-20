@@ -46,7 +46,7 @@ func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basem
 			Id:                createdByUser.ID,
 			Name:              createdByUser.Name,
 			Email:             createdByUser.Email,
-			CreatedAt:         int64(createdByUser.CreatedAt),
+			CreatedAt:         createdByUser.CreatedAt.Unix(),
 			ProfilePictureURL: createdByUser.ProfilePictureURL,
 			NotFound:          false,
 		}
@@ -99,7 +99,7 @@ func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApi
 				Id:                createdByUser.ID,
 				Name:              createdByUser.Name,
 				Email:             createdByUser.Email,
-				CreatedAt:         int64(createdByUser.CreatedAt),
+				CreatedAt:         createdByUser.CreatedAt.Unix(),
 				ProfilePictureURL: createdByUser.ProfilePictureURL,
 				NotFound:          false,
 			}
@@ -115,7 +115,7 @@ func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApi
 				Id:                updatedByUser.ID,
 				Name:              updatedByUser.Name,
 				Email:             updatedByUser.Email,
-				CreatedAt:         int64(updatedByUser.CreatedAt),
+				CreatedAt:         updatedByUser.CreatedAt.Unix(),
 				ProfilePictureURL: updatedByUser.ProfilePictureURL,
 				NotFound:          false,
 			}
