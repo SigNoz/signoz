@@ -8,6 +8,7 @@ import {
 	AllAlertChannels,
 	AllErrors,
 	APIKeys,
+	ApiMonitoring,
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
@@ -455,6 +456,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER_VIEWS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.API_MONITORING,
+		exact: true,
+		component: ApiMonitoring,
+		key: 'API_MONITORING',
 		isPrivate: true,
 	},
 ];
