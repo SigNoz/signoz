@@ -447,3 +447,7 @@ func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explore
 
 	return &query
 }
+
+func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *metrics_explorer.InspectMetricsRequest) (*metrics_explorer.InspectMetricsResponse, *model.ApiError) {
+	return receiver.reader.GetInspectMetrics(ctx, params)
+}
