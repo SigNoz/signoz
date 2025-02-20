@@ -13,7 +13,7 @@ import (
 
 func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_ALERTMANAGER_PROVIDER", "legacy")
-	t.Setenv("SIGNOZ_ALERTMANAGER_LEGACY_URL", "http://localhost:9093/api")
+	t.Setenv("SIGNOZ_ALERTMANAGER_LEGACY_API__URL", "http://localhost:9093/api")
 
 	conf, err := config.New(
 		context.Background(),
@@ -38,7 +38,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	expected := &Config{
 		Provider: "legacy",
 		Legacy: Legacy{
-			URL: "http://localhost:9093/api",
+			ApiURL: "http://localhost:9093/api",
 		},
 		Signoz: def.Signoz,
 	}

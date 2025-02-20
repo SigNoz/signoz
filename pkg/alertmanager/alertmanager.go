@@ -26,6 +26,9 @@ type Alertmanager interface {
 	// ListChannels lists all channels for the organization.
 	ListChannels(context.Context, string) ([]*alertmanagertypes.Channel, error)
 
+	// ListAllChannels lists all channels for all organizations. It is used by the legacy alertmanager only.
+	ListAllChannels(context.Context) ([]*alertmanagertypes.Channel, error)
+
 	// GetChannelByID gets a channel for the organization.
 	GetChannelByID(context.Context, string, int) (*alertmanagertypes.Channel, error)
 

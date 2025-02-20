@@ -14,6 +14,7 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
@@ -196,6 +197,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		JWT:                           serverOptions.Jwt,
+		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 	})
 	if err != nil {
 		return nil, err
@@ -278,7 +280,6 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 }
 
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
-
 	r := NewRouter()
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)

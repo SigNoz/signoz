@@ -30,8 +30,8 @@ type Signoz struct {
 }
 
 type Legacy struct {
-	// URL is the URL of the legacy alertmanager.
-	URL string `mapstructure:"url"`
+	// ApiURL is the URL of the legacy signoz alertmanager.
+	ApiURL string `mapstructure:"api_url"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -42,7 +42,7 @@ func newConfig() factory.Config {
 	return Config{
 		Provider: "legacy",
 		Legacy: Legacy{
-			URL: "http://alertmanager:9093/api",
+			ApiURL: "http://alertmanager:9093/api",
 		},
 		Signoz: Signoz{
 			PollInterval: 15 * time.Second,
@@ -53,13 +53,13 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	if c.Provider == "legacy" {
-		if c.Legacy.URL == "" {
-			return errors.New("url is required")
+		if c.Legacy.ApiURL == "" {
+			return errors.New("api_url is required")
 		}
 
-		_, err := url.Parse(c.Legacy.URL)
+		_, err := url.Parse(c.Legacy.ApiURL)
 		if err != nil {
-			return fmt.Errorf("url %q is invalid: %w", c.Legacy.URL, err)
+			return fmt.Errorf("api_url %q is invalid: %w", c.Legacy.ApiURL, err)
 		}
 	}
 

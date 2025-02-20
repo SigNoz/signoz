@@ -55,7 +55,6 @@ func (batcher *Batcher) Start(ctx context.Context) error {
 	go func() {
 		defer batcher.goroutinesWg.Done()
 
-		batcher.logger.InfoContext(ctx, "starting alertmanager batcher")
 		for {
 			select {
 			case <-batcher.stopC:
@@ -106,7 +105,6 @@ func (batcher *Batcher) Add(ctx context.Context, alerts ...*alertmanagertypes.Po
 
 // Stop shuts down the batcher.
 func (batcher *Batcher) Stop(ctx context.Context) {
-	batcher.logger.InfoContext(ctx, "Stopping alertmanager batcher")
 	close(batcher.stopC)
 	batcher.goroutinesWg.Wait()
 }

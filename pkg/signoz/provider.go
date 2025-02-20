@@ -1,6 +1,9 @@
 package signoz
 
 import (
+	"go.signoz.io/signoz/pkg/alertmanager"
+	"go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager"
+	"go.signoz.io/signoz/pkg/alertmanager/signozalertmanager"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/cache/memorycache"
 	"go.signoz.io/signoz/pkg/cache/rediscache"
@@ -33,6 +36,9 @@ type ProviderConfig struct {
 
 	// Map of all telemetrystore provider factories
 	TelemetryStoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]]
+
+	// Map of all alertmanager provider factories
+	AlertmanagerProviderFactories factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]]
 }
 
 func NewProviderConfig() ProviderConfig {
@@ -68,4 +74,11 @@ func NewProviderConfig() ProviderConfig {
 			clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
 		),
 	}
+}
+
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+	return factory.MustNewNamedMap(
+		legacyalertmanager.NewFactory(sqlstore),
+		signozalertmanager.NewFactory(sqlstore),
+	)
 }

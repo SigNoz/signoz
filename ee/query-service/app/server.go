@@ -267,7 +267,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		JWT:                           serverOptions.Jwt,
 	}
 
-	apiHandler, err := api.NewAPIHandler(apiOpts)
+	apiHandler, err := api.NewAPIHandler(apiOpts, serverOptions.SigNoz)
 	if err != nil {
 		return nil, err
 	}

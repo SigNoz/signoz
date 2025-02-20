@@ -6,6 +6,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
+	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
@@ -17,6 +18,7 @@ type provider struct {
 	settings    factory.ScopedProviderSettings
 	configStore alertmanagertypes.ConfigStore
 	stateStore  alertmanagertypes.StateStore
+	stopC       chan struct{}
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -42,6 +44,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		config:      config,
 		configStore: configStore,
 		stateStore:  stateStore,
+		stopC:       make(chan struct{}),
 	}, nil
 }
 
@@ -50,7 +53,7 @@ func (provider *provider) Start(ctx context.Context) error {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ctx.Done():
+		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
 			if err := provider.service.SyncServers(ctx); err != nil {
@@ -61,6 +64,7 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
+	close(provider.stopC)
 	return provider.service.Stop(ctx)
 }
 
@@ -89,6 +93,10 @@ func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*al
 	}
 
 	return channelList, nil
+}
+
+func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "not supported by provider signoz")
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {

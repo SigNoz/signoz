@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/tidwall/gjson"
 	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerbatcher"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
@@ -43,7 +44,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 
-	url, err := url.Parse(config.Legacy.URL)
+	url, err := url.Parse(config.Legacy.ApiURL)
 	if err != nil {
 		return nil, err
 	}
@@ -96,8 +97,12 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 		return nil, err
 	}
 
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("bad response status %v", resp.Status)
+	}
+
 	var alerts alertmanagertypes.GettableAlerts
-	if err := json.Unmarshal(body, &alerts); err != nil {
+	if err := json.Unmarshal([]byte(gjson.GetBytes(body, "data").Raw), &alerts); err != nil {
 		return nil, err
 	}
 
@@ -169,6 +174,10 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 
 func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
 	return provider.configStore.ListChannels(ctx, orgID)
+}
+
+func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
+	return provider.configStore.ListAllChannels(ctx)
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {

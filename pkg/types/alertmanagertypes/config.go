@@ -282,6 +282,9 @@ type ConfigStore interface {
 
 	// ListChannels returns the list of channels.
 	ListChannels(context.Context, string) ([]*Channel, error)
+
+	// ListAllChannels returns the list of channels for all organizations.
+	ListAllChannels(context.Context) ([]*Channel, error)
 }
 
 // MarshalSecretValue if set to true will expose Secret type

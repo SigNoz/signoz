@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
+	"go.signoz.io/signoz/pkg/alertmanager"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
@@ -20,6 +21,7 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/signoz"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
@@ -51,7 +53,7 @@ type APIHandler struct {
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
+func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
@@ -67,6 +69,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		FluxInterval:                  opts.FluxInterval,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
+		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 	})
 
 	if err != nil {
