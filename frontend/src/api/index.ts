@@ -25,8 +25,9 @@ const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
 const interceptorsResponse = (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => {
-	if (value.config.metadata) {
-		const duration = new Date().getTime() - value.config.metadata.startTime;
+	if ((value.config as any)?.metadata) {
+		const duration =
+			new Date().getTime() - (value.config as any).metadata.startTime;
 		if (duration > RESPONSE_TIMEOUT_THRESHOLD) {
 			eventEmitter.emit(Events.SLOW_API_WARNING, true);
 
