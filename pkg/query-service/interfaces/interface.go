@@ -115,6 +115,8 @@ type Reader interface {
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
+
+	GetTemporalitySwitchPoints(ctx context.Context, metricName string, startTime int64, endTime int64) ([]v3.TemporalityChangePoint, error)
 }
 
 type Querier interface {

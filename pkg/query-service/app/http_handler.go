@@ -652,6 +652,9 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRange
 				} else {
 					query.Temporality = v3.Unspecified
 				}
+				if len(aH.temporalityMap[query.AggregateAttribute.Key]) > 1 {
+					query.MultipleTemporalities = true
+				}
 			}
 			// we don't have temporality for this metric
 			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
@@ -678,6 +681,9 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRange
 					query.Temporality = v3.Cumulative
 				} else {
 					query.Temporality = v3.Unspecified
+				}
+				if len(nameToTemporality[query.AggregateAttribute.Key]) > 1 {
+					query.MultipleTemporalities = true
 				}
 				aH.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
 			}
