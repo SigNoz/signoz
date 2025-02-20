@@ -5,6 +5,18 @@
 	.api-quick-filter-left-section {
 		width: 0%;
 		flex-shrink: 0;
+
+		.api-quick-filters-header {
+			padding: 12px;
+			border-bottom: 1px solid var(--bg-slate-400);
+
+			display: flex;
+			align-items: center;
+			gap: 6px;
+
+			font-size: 14px;
+			line-height: 18px;
+		}
 	}
 
 	.api-module-right-section {
