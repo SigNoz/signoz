@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.signoz.io/signoz/pkg/alertmanager"
@@ -29,6 +30,7 @@ type provider struct {
 	client      *http.Client
 	configStore alertmanagertypes.ConfigStore
 	batcher     *alertmanagerbatcher.Batcher
+	url         *url.URL
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -41,6 +43,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 
+	url, err := url.Parse(config.Legacy.URL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &provider{
 		config:   config,
 		settings: settings,
@@ -49,6 +56,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		},
 		configStore: configStore,
 		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
+		url:         url,
 	}, nil
 }
 
@@ -68,7 +76,7 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
-	url := provider.config.Legacy.URL.JoinPath(alertsPath)
+	url := provider.url.JoinPath(alertsPath)
 	url.RawQuery = params.RawQuery
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
@@ -102,7 +110,7 @@ func (provider *provider) PutAlerts(ctx context.Context, _ string, alerts alertm
 }
 
 func (provider *provider) putAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
-	url := provider.config.Legacy.URL.JoinPath(alertsPath)
+	url := provider.url.JoinPath(alertsPath)
 
 	body, err := json.Marshal(alerts)
 	if err != nil {
@@ -131,7 +139,7 @@ func (provider *provider) putAlerts(ctx context.Context, _ string, alerts alertm
 }
 
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
-	url := provider.config.Legacy.URL.JoinPath(testReceiverPath)
+	url := provider.url.JoinPath(testReceiverPath)
 
 	body, err := json.Marshal(receiver)
 	if err != nil {
@@ -179,7 +187,7 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 	}
 
 	err = provider.configStore.UpdateChannel(ctx, orgID, channel, func(ctx context.Context) error {
-		url := provider.config.Legacy.URL.JoinPath(routesPath)
+		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(receiver)
 		if err != nil {
@@ -217,7 +225,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
 
 	err := provider.configStore.CreateChannel(ctx, channel, func(ctx context.Context) error {
-		url := provider.config.Legacy.URL.JoinPath(routesPath)
+		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(receiver)
 		if err != nil {
@@ -258,7 +266,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 			return err
 		}
 
-		url := provider.config.Legacy.URL.JoinPath(routesPath)
+		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(map[string]string{"name": channel.Name})
 		if err != nil {

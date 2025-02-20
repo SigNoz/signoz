@@ -1,6 +1,8 @@
 package alertmanager
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -9,9 +11,6 @@ import (
 )
 
 type Config struct {
-	// Config is the config for the alertmanager server.
-	alertmanagerserver.Config `mapstructure:",squash"`
-
 	// Provider is the provider for the alertmanager service.
 	Provider string `mapstructure:"provider"`
 
@@ -25,11 +24,14 @@ type Config struct {
 type Signoz struct {
 	// PollInterval is the interval at which the alertmanager is synced.
 	PollInterval time.Duration `mapstructure:"poll_interval"`
+
+	// Config is the config for the alertmanager server.
+	alertmanagerserver.Config `mapstructure:",squash"`
 }
 
 type Legacy struct {
 	// URL is the URL of the legacy alertmanager.
-	URL *url.URL `mapstructure:"url"`
+	URL string `mapstructure:"url"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -38,20 +40,28 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return Config{
-		Config:   alertmanagerserver.NewConfig(),
 		Provider: "legacy",
 		Legacy: Legacy{
-			URL: &url.URL{
-				Scheme: "http",
-				Host:   "alertmanager:9093",
-			},
+			URL: "http://alertmanager:9093/api",
 		},
 		Signoz: Signoz{
 			PollInterval: 15 * time.Second,
+			Config:       alertmanagerserver.NewConfig(),
 		},
 	}
 }
 
 func (c Config) Validate() error {
+	if c.Provider == "legacy" {
+		if c.Legacy.URL == "" {
+			return errors.New("url is required")
+		}
+
+		_, err := url.Parse(c.Legacy.URL)
+		if err != nil {
+			return fmt.Errorf("url %q is invalid: %w", c.Legacy.URL, err)
+		}
+	}
+
 	return nil
 }

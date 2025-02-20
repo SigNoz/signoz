@@ -34,7 +34,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		service: alertmanager.New(
 			ctx,
 			settings,
-			config,
+			config.Signoz.Config,
 			stateStore,
 			configStore,
 		),

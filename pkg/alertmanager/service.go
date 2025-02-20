@@ -12,7 +12,7 @@ import (
 
 type Service struct {
 	// config is the config for the alertmanager service
-	config Config
+	config alertmanagerserver.Config
 
 	// stateStore is the state store for the alertmanager service
 	stateStore alertmanagertypes.StateStore
@@ -30,7 +30,7 @@ type Service struct {
 	serversMtx sync.RWMutex
 }
 
-func New(ctx context.Context, settings factory.ScopedProviderSettings, config Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore) *Service {
+func New(ctx context.Context, settings factory.ScopedProviderSettings, config alertmanagerserver.Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore) *Service {
 	service := &Service{
 		config:      config,
 		stateStore:  stateStore,
@@ -57,7 +57,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 			continue
 		}
 
-		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config.Config, orgID, service.stateStore)
+		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore)
 		if err != nil {
 			service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
 			continue
