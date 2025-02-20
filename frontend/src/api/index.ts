@@ -28,8 +28,13 @@ const interceptorsResponse = (
 	if ((value.config as any)?.metadata) {
 		const duration =
 			new Date().getTime() - (value.config as any).metadata.startTime;
+
 		if (duration > RESPONSE_TIMEOUT_THRESHOLD) {
-			eventEmitter.emit(Events.SLOW_API_WARNING, true);
+			eventEmitter.emit(Events.SLOW_API_WARNING, true, {
+				duration,
+				url: value.config.url,
+				threshold: RESPONSE_TIMEOUT_THRESHOLD,
+			});
 
 			console.warn(
 				`[API Warning] Request to ${value.config.url} took ${duration}ms`,

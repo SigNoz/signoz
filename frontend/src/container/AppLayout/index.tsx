@@ -8,6 +8,7 @@ import { Flex } from 'antd';
 import manageCreditCardApi from 'api/billing/manage';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
@@ -380,10 +381,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	]);
 
 	// Listen for API warnings
-	const handleWarning = (isSlow: boolean): void => {
+	const handleWarning = (
+		isSlow: boolean,
+		data: { duration: number; url: string; threshold: number },
+	): void => {
 		const dontShowSlowApiWarning = getLocalStorageApi(
 			LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING,
 		);
+
+		logEvent(`Slow API Warning`, {
+			duration: `${data.duration}ms`,
+			url: data.url,
+			threshold: data.threshold,
+		});
 
 		const isDontShowSlowApiWarning = dontShowSlowApiWarning === 'true';
 
@@ -438,6 +448,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 									className="upgrade-link"
 									onClick={(): void => {
 										notifications.destroy('slow-api-warning');
+
+										logEvent(`Slow API Banner: Upgrade clicked`, {});
+
 										handleUpgrade();
 									}}
 								>
