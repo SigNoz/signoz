@@ -36,40 +36,8 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := db.NewCreateTable().
-		Model(&struct {
-			bun.BaseModel      `bun:"table:apdex_settings_new"`
-			OrgID              string  `bun:"org_id,pk,type:text"`
-			ServiceName        string  `bun:"service_name,pk,type:text"`
-			Threshold          float64 `bun:"threshold,type:float,notnull"`
-			ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
-		}{}).
-		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
-		IfNotExists().
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	// get org id from organizations table
-	var orgID string
-	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && !strings.Contains(err.Error(), "no rows in result set") {
-		return err
-	}
-
-	if orgID != "" {
-		// copy old data
-		if _, err := tx.ExecContext(ctx, `INSERT INTO apdex_settings_new (org_id, service_name, threshold, exclude_status_codes) SELECT ?, service_name, threshold, exclude_status_codes FROM apdex_settings`, orgID); err != nil {
-			return err
-		}
-	}
-
-	// drop old table
-	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS apdex_settings`); err != nil {
-		return err
-	}
-
-	// rename new table to old table
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE apdex_settings_new RENAME TO apdex_settings`); err != nil {
+	// update apdex settings table
+	if err := updateApdexSettings(ctx, tx); err != nil {
 		return err
 	}
 
@@ -78,7 +46,7 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// add org id
+	// add org id to groups table
 	if _, err := tx.ExecContext(ctx, `ALTER TABLE groups ADD COLUMN org_id TEXT`); err != nil && !strings.Contains(err.Error(), "duplicate") {
 		return err
 	}
@@ -132,6 +100,47 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 }
 
 func (migration *updateOrganization) Down(ctx context.Context, db *bun.DB) error {
+	return nil
+}
+
+func updateApdexSettings(ctx context.Context, tx bun.Tx) error {
+	if _, err := tx.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel      `bun:"table:apdex_settings_new"`
+			OrgID              string  `bun:"org_id,pk,type:text"`
+			ServiceName        string  `bun:"service_name,pk,type:text"`
+			Threshold          float64 `bun:"threshold,type:float,notnull"`
+			ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// get org id from organizations table
+	var orgID string
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && !strings.Contains(err.Error(), "no rows in result set") {
+		return err
+	}
+
+	if orgID != "" {
+		// copy old data
+		if _, err := tx.ExecContext(ctx, `INSERT INTO apdex_settings_new (org_id, service_name, threshold, exclude_status_codes) SELECT ?, service_name, threshold, exclude_status_codes FROM apdex_settings`, orgID); err != nil {
+			return err
+		}
+	}
+
+	// drop old table
+	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS apdex_settings`); err != nil {
+		return err
+	}
+
+	// rename new table to old table
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE apdex_settings_new RENAME TO apdex_settings`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -214,7 +223,7 @@ func migrateIntToBoolean(ctx context.Context, tx bun.Tx, table string, column st
 		return err
 	}
 
-	// copy data from old column to new column, converting from int (unix timestamp) to timestamp
+	// copy data from old column to new column, converting from int to boolean
 	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = CASE WHEN `+column+`_old = 1 THEN true ELSE false END`); err != nil {
 		return err
 	}
