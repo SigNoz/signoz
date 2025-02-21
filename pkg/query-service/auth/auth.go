@@ -64,7 +64,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("failed to org id from context")
+		return nil, errors.New("failed to extract OrgID from context")
 	}
 	// Check if an invite already exists
 	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
