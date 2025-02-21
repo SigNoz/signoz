@@ -2105,8 +2105,13 @@ func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 // listPendingInvites is used to list the pending invites.
 func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request) {
 
-	ctx := context.Background()
-	invites, err := dao.DB().GetInvites(ctx)
+	ctx := r.Context()
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+	invites, err := dao.DB().GetInvites(ctx, claims.OrgID)
 	if err != nil {
 		RespondError(w, err, nil)
 		return

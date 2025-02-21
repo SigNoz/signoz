@@ -62,8 +62,12 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.New("User already exists with the same email")
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("failed to org id from context")
+	}
 	// Check if an invite already exists
-	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, claims.OrgID, req.Email)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
 	}
@@ -74,11 +78,6 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 
 	if err := validateInviteRequest(req); err != nil {
 		return nil, errors.Wrap(err, "invalid invite request")
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.Wrap(err, "failed to extract admin user id")
 	}
 
 	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
@@ -174,7 +173,7 @@ func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.Gettabl
 	}
 
 	// Check if an invite already exists
-	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, au.OrgID, req.Email)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
 	}
@@ -252,7 +251,12 @@ func RevokeInvite(ctx context.Context, email string) error {
 		return ErrorInvalidInviteToken
 	}
 
-	if err := dao.DB().DeleteInvitation(ctx, email); err != nil {
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return errors.New("failed to org id from context")
+	}
+
+	if err := dao.DB().DeleteInvitation(ctx, claims.OrgID, email); err != nil {
 		return errors.Wrap(err.Err, "failed to write to DB")
 	}
 	return nil
@@ -262,7 +266,12 @@ func RevokeInvite(ctx context.Context, email string) error {
 func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObject, error) {
 	zap.L().Debug("GetInvite method invoked for token", zap.String("token", token))
 
-	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("failed to org id from context")
+	}
+
+	inv, apiErr := dao.DB().GetInviteFromToken(ctx, claims.OrgID, token)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
 	}
@@ -288,7 +297,12 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 }
 
 func ValidateInvite(ctx context.Context, req *RegisterRequest) (*types.Invite, error) {
-	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("failed to org id from context")
+	}
+
+	invitation, err := dao.DB().GetInviteFromEmail(ctx, claims.OrgID, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")
 	}
@@ -516,7 +530,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		return nil, apiErr
 	}
 
-	apiErr = dao.DB().DeleteInvitation(ctx, user.Email)
+	apiErr = dao.DB().DeleteInvitation(ctx, user.OrgID, user.Email)
 	if apiErr != nil {
 		zap.L().Error("delete invitation failed", zap.Error(apiErr.Err))
 		return nil, apiErr

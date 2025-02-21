@@ -12,9 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/types"
 )
 
-func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,
-	req *types.Invite) *model.ApiError {
-
+func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context, req *types.Invite) *model.ApiError {
 	_, err := mds.bundb.NewInsert().
 		Model(req).
 		Exec(ctx)
@@ -25,9 +23,10 @@ func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,
 	return nil
 }
 
-func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *model.ApiError {
+func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, orgID string, email string) *model.ApiError {
 	_, err := mds.bundb.NewDelete().
 		Model(&types.Invite{}).
+		Where("org_id = ?", orgID).
 		Where("email = ?", email).
 		Exec(ctx)
 	if err != nil {
@@ -36,12 +35,13 @@ func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *
 	return nil
 }
 
-func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string,
+func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, orgID string, email string,
 ) (*types.Invite, *model.ApiError) {
 
 	invites := []types.Invite{}
 	err := mds.bundb.NewSelect().
 		Model(&invites).
+		Where("org_id = ?", orgID).
 		Where("email = ?", email).
 		Scan(ctx)
 
@@ -60,12 +60,13 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string,
 	return &invites[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string,
+func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, orgID string, token string,
 ) (*types.Invite, *model.ApiError) {
 
 	invites := []types.Invite{}
 	err := mds.bundb.NewSelect().
 		Model(&invites).
+		Where("org_id = ?", orgID).
 		Where("token = ?", token).
 		Scan(ctx)
 
@@ -82,12 +83,11 @@ func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string,
 	return &invites[0], nil
 }
 
-// TODO(nitya): should have org id
-func (mds *ModelDaoSqlite) GetInvites(ctx context.Context,
-) ([]types.Invite, *model.ApiError) {
+func (mds *ModelDaoSqlite) GetInvites(ctx context.Context, orgID string) ([]types.Invite, *model.ApiError) {
 	invites := []types.Invite{}
 	err := mds.bundb.NewSelect().
 		Model(&invites).
+		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
