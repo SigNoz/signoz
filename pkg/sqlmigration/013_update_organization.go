@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/uptrace/bun"
