@@ -6,13 +6,18 @@ import './AppLayout.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Flex } from 'antd';
 import manageCreditCardApi from 'api/billing/manage';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
@@ -24,7 +29,14 @@ import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
@@ -41,7 +53,9 @@ import {
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
+import { USER_ROLES } from 'types/roles';
 import { isCloudUser } from 'utils/app';
+import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
 	getFormattedDateWithMinutes,
@@ -71,6 +85,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		showPaymentFailedWarning,
 		setShowPaymentFailedWarning,
 	] = useState<boolean>(false);
+
+	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
+	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
@@ -261,22 +278,25 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (!isLoggedIn) {
 			setShowTrialExpiryBanner(false);
 			setShowPaymentFailedWarning(false);
+			setShowSlowApiWarning(false);
 		}
 	}, [isLoggedIn]);
 
-	const handleUpgrade = (): void => {
-		if (user.role === 'ADMIN') {
+	const handleUpgrade = useCallback((): void => {
+		if (user.role === USER_ROLES.ADMIN) {
 			history.push(ROUTES.BILLING);
 		}
-	};
+	}, [user.role]);
 
-	const handleFailedPayment = (): void => {
-		manageCreditCard({
-			licenseKey: activeLicenseV3?.key || '',
-			successURL: window.location.origin,
-			cancelURL: window.location.origin,
-		});
-	};
+	const handleFailedPayment = useCallback((): void => {
+		if (activeLicenseV3?.key) {
+			manageCreditCard({
+				licenseKey: activeLicenseV3?.key || '',
+				successURL: window.location.origin,
+				cancelURL: window.location.origin,
+			});
+		}
+	}, [activeLicenseV3?.key, manageCreditCard]);
 
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
@@ -360,6 +380,107 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		licenses,
 	]);
 
+	// Listen for API warnings
+	const handleWarning = (
+		isSlow: boolean,
+		data: { duration: number; url: string; threshold: number },
+	): void => {
+		const dontShowSlowApiWarning = getLocalStorageApi(
+			LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING,
+		);
+
+		logEvent(`Slow API Warning`, {
+			duration: `${data.duration}ms`,
+			url: data.url,
+			threshold: data.threshold,
+		});
+
+		const isDontShowSlowApiWarning = dontShowSlowApiWarning === 'true';
+
+		if (isDontShowSlowApiWarning) {
+			setShowSlowApiWarning(false);
+		} else {
+			setShowSlowApiWarning(isSlow);
+		}
+	};
+
+	useEffect(() => {
+		eventEmitter.on(Events.SLOW_API_WARNING, handleWarning);
+
+		return (): void => {
+			eventEmitter.off(Events.SLOW_API_WARNING, handleWarning);
+		};
+	}, []);
+
+	const isTrialUser = useMemo(
+		(): boolean =>
+			(!isFetchingLicenses &&
+				licenses &&
+				licenses.onTrial &&
+				!licenses.trialConvertedToSubscription) ||
+			false,
+		[licenses, isFetchingLicenses],
+	);
+
+	const handleDismissSlowApiWarning = (): void => {
+		setShowSlowApiWarning(false);
+
+		setLocalStorageApi(LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING, 'true');
+	};
+
+	useEffect(() => {
+		if (
+			showSlowApiWarning &&
+			isTrialUser &&
+			!licenses?.trialConvertedToSubscription &&
+			!slowApiWarningShown
+		) {
+			setSlowApiWarningShown(true);
+
+			notifications.info({
+				message: (
+					<div>
+						Our systems are taking longer than expected for your trial workspace.
+						Please{' '}
+						{user.role === USER_ROLES.ADMIN ? (
+							<span>
+								<a
+									className="upgrade-link"
+									onClick={(): void => {
+										notifications.destroy('slow-api-warning');
+
+										logEvent(`Slow API Banner: Upgrade clicked`, {});
+
+										handleUpgrade();
+									}}
+								>
+									upgrade
+								</a>
+								your workspace for a smoother experience.
+							</span>
+						) : (
+							'contact your administrator for upgrading to a paid plan for a smoother experience.'
+						)}
+					</div>
+				),
+				duration: 60000,
+				placement: 'topRight',
+				onClose: handleDismissSlowApiWarning,
+				key: 'slow-api-warning',
+			});
+		}
+	}, [
+		showSlowApiWarning,
+		notifications,
+		isTrialUser,
+		licenses?.trialConvertedToSubscription,
+		user.role,
+		isLoadingManageBilling,
+		handleFailedPayment,
+		slowApiWarningShown,
+		handleUpgrade,
+	]);
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
@@ -370,7 +491,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<div className="trial-expiry-banner">
 					You are in free trial period. Your free trial will end on{' '}
 					<span>{getFormattedDate(licenses?.trialEnd || Date.now())}.</span>
-					{user.role === 'ADMIN' ? (
+					{user.role === USER_ROLES.ADMIN ? (
 						<span>
 							{' '}
 							Please{' '}
@@ -384,6 +505,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</div>
 			)}
+
 			{!showTrialExpiryBanner && showPaymentFailedWarning && (
 				<div className="payment-failed-banner">
 					Your bill payment has failed. Your workspace will get suspended on{' '}
@@ -393,18 +515,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						)}
 						.
 					</span>
-					{user.role === 'ADMIN' ? (
+					{user.role === USER_ROLES.ADMIN ? (
 						<span>
 							{' '}
 							Please{' '}
-							<a
-								className="upgrade-link"
-								onClick={(): void => {
-									if (!isLoadingManageBilling) {
-										handleFailedPayment();
-									}
-								}}
-							>
+							<a className="upgrade-link" onClick={handleFailedPayment}>
 								pay the bill
 							</a>
 							to continue using SigNoz features.
