@@ -121,7 +121,7 @@ func updateApdexSettings(ctx context.Context, tx bun.Tx) error {
 
 	// get org id from organizations table
 	var orgID string
-	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && err != sql.ErrNoRows {
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
 
