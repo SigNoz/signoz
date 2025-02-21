@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 
 	"github.com/uptrace/bun"
@@ -120,7 +121,7 @@ func updateApdexSettings(ctx context.Context, tx bun.Tx) error {
 
 	// get org id from organizations table
 	var orgID string
-	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && !strings.Contains(err.Error(), "no rows in result set") {
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
