@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -35,20 +36,55 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel      `bun:"table:apdex_settings_new"`
+			OrgID              string  `bun:"org_id,pk,type:text"`
+			ServiceName        string  `bun:"service_name,pk,type:text"`
+			Threshold          float64 `bun:"threshold,type:float,notnull"`
+			ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// get org id from organizations table
+	var orgID string
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil {
+		return err
+	}
+
+	// copy old data
+	if _, err := tx.ExecContext(ctx, `INSERT INTO apdex_settings_new (org_id, service_name, threshold, exclude_status_codes) SELECT ?, service_name, threshold, exclude_status_codes FROM apdex_settings`, orgID); err != nil {
+		return err
+	}
+
+	// drop old table
+	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS apdex_settings`); err != nil {
+		return err
+	}
+
+	// rename new table to old table
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE apdex_settings_new RENAME TO apdex_settings`); err != nil {
+		return err
+	}
+
 	// drop user_flags table
 	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS user_flags`); err != nil {
 		return err
 	}
 
 	// add org id
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE groups ADD COLUMN org_id TEXT`); err != nil {
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE groups ADD COLUMN org_id TEXT`); err != nil && !strings.Contains(err.Error(), "duplicate") {
 		return err
 	}
 
 	// organization, users table already have created_at column
 	for _, table := range []string{"groups"} {
 		query := `ALTER TABLE ` + table + ` ADD COLUMN created_at TEXT`
-		if _, err := tx.ExecContext(ctx, query); err != nil {
+		if _, err := tx.ExecContext(ctx, query); err != nil && !strings.Contains(err.Error(), "duplicate") {
 			return err
 		}
 	}
@@ -56,17 +92,17 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	// add created_by, updated_at and updated_by to organizations, users, groups table
 	for _, table := range []string{"organizations", "users", "groups"} {
 		query := `ALTER TABLE ` + table + ` ADD COLUMN created_by TEXT`
-		if _, err := tx.ExecContext(ctx, query); err != nil {
+		if _, err := tx.ExecContext(ctx, query); err != nil && !strings.Contains(err.Error(), "duplicate") {
 			return err
 		}
 
 		query = `ALTER TABLE ` + table + ` ADD COLUMN updated_at TIMESTAMP`
-		if _, err := tx.ExecContext(ctx, query); err != nil {
+		if _, err := tx.ExecContext(ctx, query); err != nil && !strings.Contains(err.Error(), "duplicate") {
 			return err
 		}
 
 		query = `ALTER TABLE ` + table + ` ADD COLUMN updated_by TEXT`
-		if _, err := tx.ExecContext(ctx, query); err != nil {
+		if _, err := tx.ExecContext(ctx, query); err != nil && !strings.Contains(err.Error(), "duplicate") {
 			return err
 		}
 	}

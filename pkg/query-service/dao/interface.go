@@ -34,7 +34,7 @@ type Queries interface {
 	GetUsersByOrg(ctx context.Context, orgId string) ([]types.GettableUser, *model.ApiError)
 	GetUsersByGroup(ctx context.Context, groupId string) ([]types.GettableUser, *model.ApiError)
 
-	GetApdexSettings(ctx context.Context, services []string) ([]types.ApdexSettings, *model.ApiError)
+	GetApdexSettings(ctx context.Context, orgID string, services []string) ([]types.ApdexSettings, *model.ApiError)
 
 	GetIngestionKeys(ctx context.Context) ([]model.IngestionKey, *model.ApiError)
 
@@ -62,7 +62,7 @@ type Mutations interface {
 	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
 	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
 
-	SetApdexSettings(ctx context.Context, set *types.ApdexSettings) *model.ApiError
+	SetApdexSettings(ctx context.Context, orgID string, set *types.ApdexSettings) *model.ApiError
 
 	InsertIngestionKey(ctx context.Context, ingestionKey *model.IngestionKey) *model.ApiError
 }
