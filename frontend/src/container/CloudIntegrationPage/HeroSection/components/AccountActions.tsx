@@ -177,6 +177,12 @@ function AccountActions(): JSX.Element {
 	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
 		false,
 	);
+	const openAccountSettings = (): void => {
+		setIsAccountSettingsModalOpen(true);
+		logEvent(TELEMETRY_EVENTS.ACCOUNT_SETTINGS_VIEWED, {
+			cloud_account_id: activeAccount?.cloud_account_id,
+		});
+	};
 
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
@@ -215,7 +221,7 @@ function AccountActions(): JSX.Element {
 					}
 				}}
 				onIntegrationModalOpen={startAccountConnectionAttempt}
-				onAccountSettingsModalOpen={(): void => setIsAccountSettingsModalOpen(true)}
+				onAccountSettingsModalOpen={openAccountSettings}
 			/>
 
 			{isIntegrationModalOpen && (
