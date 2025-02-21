@@ -11,7 +11,8 @@ import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { uniqBy } from 'lodash-es';
+import { useCallback, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -27,7 +28,6 @@ function ContextLogRenderer({
 }: ContextLogRendererProps): JSX.Element {
 	const [prevLogPage, setPrevLogPage] = useState<number>(1);
 	const [afterLogPage, setAfterLogPage] = useState<number>(1);
-	const [logs, setLogs] = useState<ILog[]>([log]);
 
 	const { initialDataSource, stagedQuery } = useQueryBuilder();
 
@@ -73,20 +73,10 @@ function ContextLogRenderer({
 		fontSize: options.fontSize,
 	});
 
-	useEffect(() => {
-		setLogs((prev) => [...previousLogs, ...prev]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [previousLogs]);
-
-	useEffect(() => {
-		setLogs((prev) => [...prev, ...afterLogs]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [afterLogs]);
-
-	useEffect(() => {
-		setLogs([log]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filters]);
+	const logsToRender = useMemo(
+		() => uniqBy([...previousLogs, log, ...afterLogs], 'id'),
+		[previousLogs, log, afterLogs],
+	);
 
 	const lengthMultipier = useMemo(() => {
 		switch (options.fontSize) {
@@ -137,9 +127,9 @@ function ContextLogRenderer({
 				<Virtuoso
 					className="virtuoso-list"
 					initialTopMostItemIndex={0}
-					data={logs}
+					data={logsToRender}
 					itemContent={getItemContent}
-					style={{ height: `calc(${logs.length} * ${lengthMultipier}px)` }}
+					style={{ height: `calc(${logsToRender.length} * ${lengthMultipier}px)` }}
 				/>
 			</OverlayScrollbar>
 			{isAfterLogsFetching && (
