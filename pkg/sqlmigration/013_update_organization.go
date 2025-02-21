@@ -52,13 +52,15 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 
 	// get org id from organizations table
 	var orgID string
-	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM organizations LIMIT 1`).Scan(&orgID); err != nil && !strings.Contains(err.Error(), "no rows in result set") {
 		return err
 	}
 
-	// copy old data
-	if _, err := tx.ExecContext(ctx, `INSERT INTO apdex_settings_new (org_id, service_name, threshold, exclude_status_codes) SELECT ?, service_name, threshold, exclude_status_codes FROM apdex_settings`, orgID); err != nil {
-		return err
+	if orgID != "" {
+		// copy old data
+		if _, err := tx.ExecContext(ctx, `INSERT INTO apdex_settings_new (org_id, service_name, threshold, exclude_status_codes) SELECT ?, service_name, threshold, exclude_status_codes FROM apdex_settings`, orgID); err != nil {
+			return err
+		}
 	}
 
 	// drop old table
