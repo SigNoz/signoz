@@ -35,6 +35,11 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
+	// drop user_flags table
+	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS user_flags`); err != nil {
+		return err
+	}
+
 	// add org id
 	if _, err := tx.ExecContext(ctx, `ALTER TABLE groups ADD COLUMN org_id TEXT`); err != nil {
 		return err

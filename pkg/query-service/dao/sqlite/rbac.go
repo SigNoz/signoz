@@ -307,7 +307,6 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
 		ColumnExpr("o.name as organization").
-		ColumnExpr("COALESCE((select uf.flags from user_flags uf where users.id = uf.user_id), NULL) as flags").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.id = ?", id)
@@ -570,54 +569,6 @@ func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context,
 		return nil, nil
 	}
 	return &entries[0], nil
-}
-
-// CreateUserFlags inserts user specific flags
-func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (types.UserFlags, *model.ApiError) {
-
-	// if len(flags) == 0 {
-	// 	// nothing to do as flags are empty. In this method, we only append the flags
-	// 	// but not set them to empty
-	// 	return flags, nil
-	// }
-
-	// // fetch existing flags
-	// userPayload, apiError := mds.GetUser(ctx, userId)
-	// if apiError != nil {
-	// 	return nil, apiError
-	// }
-
-	// for k, v := range userPayload.Flags {
-	// 	if _, ok := flags[k]; !ok {
-	// 		// insert only missing keys as we want to retain the
-	// 		// flags in the db that are not part of this request
-	// 		flags[k] = v
-	// 	}
-	// }
-
-	// // append existing flags with new ones
-
-	// // write the updated flags
-	// flagsBytes, err := json.Marshal(flags)
-	// if err != nil {
-	// 	return nil, model.InternalError(err)
-	// }
-
-	// if len(userPayload.Flags) == 0 {
-	// 	q := `INSERT INTO user_flags (user_id, flags) VALUES (?, ?);`
-
-	// 	if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
-	// 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	// 	}
-	// } else {
-	// 	q := `UPDATE user_flags SET flags = ? WHERE user_id = ?;`
-
-	// 	if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
-	// 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	// 	}
-	// }
-
-	return types.UserFlags{}, nil
 }
 
 func (mds *ModelDaoSqlite) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError) {

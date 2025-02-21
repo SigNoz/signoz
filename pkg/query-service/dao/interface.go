@@ -49,8 +49,6 @@ type Mutations interface {
 	EditUser(ctx context.Context, update *types.User) (*types.User, *model.ApiError)
 	DeleteUser(ctx context.Context, id string) *model.ApiError
 
-	UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (types.UserFlags, *model.ApiError)
-
 	CreateGroup(ctx context.Context, group *types.Group) (*types.Group, *model.ApiError)
 	DeleteGroup(ctx context.Context, id string) *model.ApiError
 

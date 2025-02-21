@@ -47,9 +47,8 @@ type Group struct {
 
 type GettableUser struct {
 	User
-	Role         string    `json:"role"`
-	Organization string    `json:"organization"`
-	Flags        UserFlags `json:"flags,omitempty"`
+	Role         string `json:"role"`
+	Organization string `json:"organization"`
 }
 
 type User struct {
@@ -72,14 +71,8 @@ type ResetPasswordRequest struct {
 	UserID        string `bun:"user_id,type:text,notnull" json:"userId"`
 }
 
-type UserFlags struct {
-	bun.BaseModel `bun:"table:user_flags"`
-	UserID        *string `bun:"user_id,pk,type:text,notnull" json:"userId,omitempty"`
-	Flags         *string `bun:"flags,type:text" json:"flags,omitempty"`
-}
-
 type ApdexSettings struct {
-	bun.BaseModel      `bun:"table:apdex_settings"`
+	OrgID              string  `bun:"org_id,pk,type:text" json:"orgId"`
 	ServiceName        string  `bun:"service_name,pk,type:text" json:"serviceName"`
 	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
 	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`

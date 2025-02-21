@@ -599,8 +599,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.editUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/user/{id}/flags", am.SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
-
 	router.HandleFunc("/api/v1/rbac/role/{id}", am.SelfAccess(aH.getRole)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.editRole)).Methods(http.MethodPut)
 
@@ -2333,37 +2331,6 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
-}
-
-// addUserFlag patches a user flags with the changes
-func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
-	// read user id from path var
-	userId := mux.Vars(r)["id"]
-
-	// read input into user flag
-	defer r.Body.Close()
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("failed read user flags from http request for userId ", zap.String("userId", userId), zap.Error(err))
-		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
-		return
-	}
-	flags := make(map[string]string, 0)
-
-	err = json.Unmarshal(b, &flags)
-	if err != nil {
-		zap.L().Error("failed parsing user flags for userId ", zap.String("userId", userId), zap.Error(err))
-		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
-		return
-	}
-
-	newflags, apiError := dao.DB().UpdateUserFlags(r.Context(), userId, flags)
-	if !apiError.IsNil() {
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	aH.Respond(w, newflags)
 }
 
 func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
