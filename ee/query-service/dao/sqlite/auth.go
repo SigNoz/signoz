@@ -48,7 +48,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 		Name:     "",
 		Email:    email,
 		Password: hash,
-		AuditableModel: types.AuditableModel{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused

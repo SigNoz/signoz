@@ -6,18 +6,21 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type AuditableModel struct {
+type TimeAuditable struct {
 	CreatedAt time.Time `bun:"created_at" json:"createdAt"`
-	CreatedBy string    `bun:"created_by" json:"createdBy"`
 	UpdatedAt time.Time `bun:"updated_at" json:"updatedAt"`
-	UpdatedBy string    `bun:"updated_by" json:"updatedBy"`
+}
+
+type UserAuditable struct {
+	CreatedBy string `bun:"created_by" json:"createdBy"`
+	UpdatedBy string `bun:"updated_by" json:"updatedBy"`
 }
 
 // TODO: check constraints are not working
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations"`
 
-	AuditableModel
+	TimeAuditable
 	ID              string `bun:"id,pk,type:text" json:"id"`
 	Name            string `bun:"name,type:text,notnull" json:"name"`
 	IsAnonymous     bool   `bun:"is_anonymous,notnull,default:0,CHECK(is_anonymous IN (0,1))" json:"isAnonymous"`
@@ -39,7 +42,7 @@ type Invite struct {
 type Group struct {
 	bun.BaseModel `bun:"table:groups"`
 
-	AuditableModel
+	TimeAuditable
 	OrgID string `bun:"org_id,type:text"`
 	ID    string `bun:"id,pk,type:text" json:"id"`
 	Name  string `bun:"name,type:text,notnull,unique" json:"name"`
@@ -54,7 +57,7 @@ type GettableUser struct {
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
-	AuditableModel
+	TimeAuditable
 	ID                string `bun:"id,pk,type:text" json:"id"`
 	Name              string `bun:"name,type:text,notnull" json:"name"`
 	Email             string `bun:"email,type:text,notnull,unique" json:"email"`

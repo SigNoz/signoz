@@ -67,7 +67,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.New("failed to org id from context")
 	}
 	// Check if an invite already exists
-	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, claims.OrgID, req.Email)
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
 	}
@@ -173,7 +173,7 @@ func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.Gettabl
 	}
 
 	// Check if an invite already exists
-	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, au.OrgID, req.Email)
+	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "Failed to check existing invite")
 	}
@@ -266,12 +266,7 @@ func RevokeInvite(ctx context.Context, email string) error {
 func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObject, error) {
 	zap.L().Debug("GetInvite method invoked for token", zap.String("token", token))
 
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("failed to org id from context")
-	}
-
-	inv, apiErr := dao.DB().GetInviteFromToken(ctx, claims.OrgID, token)
+	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
 	}
@@ -297,12 +292,7 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 }
 
 func ValidateInvite(ctx context.Context, req *RegisterRequest) (*types.Invite, error) {
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("failed to org id from context")
-	}
-
-	invitation, err := dao.DB().GetInviteFromEmail(ctx, claims.OrgID, req.Email)
+	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")
 	}
@@ -384,6 +374,7 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 
 type RegisterRequest struct {
 	Name            string `json:"name"`
+	OrgID           string `json:"orgId"`
 	OrgName         string `json:"orgName"`
 	Email           string `json:"email"`
 	Password        string `json:"password"`
@@ -409,7 +400,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 
 	// modify this to use bun
 	org, apierr := dao.DB().CreateOrg(ctx,
-		&types.Organization{Name: req.OrgName, AuditableModel: types.AuditableModel{CreatedBy: req.Email}, IsAnonymous: req.IsAnonymous, HasOptedUpdates: req.HasOptedUpdates})
+		&types.Organization{Name: req.OrgName, IsAnonymous: req.IsAnonymous, HasOptedUpdates: req.HasOptedUpdates})
 	if apierr != nil {
 		zap.L().Error("CreateOrg failed", zap.Error(apierr.ToError()))
 		return nil, apierr
@@ -435,7 +426,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hash,
-		AuditableModel: types.AuditableModel{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused
@@ -515,7 +506,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hash,
-		AuditableModel: types.AuditableModel{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused

@@ -176,7 +176,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		ID:    cloudIntegrationUserId,
 		Name:  fmt.Sprintf("%s integration", cloudProvider),
 		Email: fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
-		AuditableModel: types.AuditableModel{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},
 		OrgID: orgId,

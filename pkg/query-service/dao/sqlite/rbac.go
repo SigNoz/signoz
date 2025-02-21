@@ -35,13 +35,13 @@ func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, orgID string, e
 	return nil
 }
 
-func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, orgID string, email string,
+// TODO: Make this work with org id
+func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string,
 ) (*types.Invite, *model.ApiError) {
 
 	invites := []types.Invite{}
 	err := mds.bundb.NewSelect().
 		Model(&invites).
-		Where("org_id = ?", orgID).
 		Where("email = ?", email).
 		Scan(ctx)
 
@@ -60,13 +60,13 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, orgID string,
 	return &invites[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, orgID string, token string,
+func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string,
 ) (*types.Invite, *model.ApiError) {
+	// This won't take org id because it's a public facing API
 
 	invites := []types.Invite{}
 	err := mds.bundb.NewSelect().
 		Model(&invites).
-		Where("org_id = ?", orgID).
 		Where("token = ?", token).
 		Scan(ctx)
 

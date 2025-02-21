@@ -2279,7 +2279,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		OrgID:    old.OrgID,
 		Email:    old.Email,
 		Password: old.Password,
-		AuditableModel: types.AuditableModel{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: old.CreatedAt,
 		},
 		ProfilePictureURL: old.ProfilePictureURL,
