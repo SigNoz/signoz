@@ -40,6 +40,7 @@ function LogsPanelComponent({
 
 	const handleChangePageSize = (value: number): void => {
 		setPageSize(value);
+		setOffset(0);
 		setRequestData((prev) => {
 			const newQueryData = { ...prev.query };
 			newQueryData.builder.queryData[0].pageSize = value;
@@ -49,7 +50,7 @@ function LogsPanelComponent({
 				tableParams: {
 					pagination: {
 						limit: 0,
-						offset,
+						offset: 0,
 					},
 				},
 			};
@@ -97,10 +98,6 @@ function LogsPanelComponent({
 	);
 
 	const handleRequestData = (newOffset: number): void => {
-		if (newOffset < 0) {
-			return;
-		}
-
 		setOffset(newOffset);
 		setRequestData((prev) => ({
 			...prev,
