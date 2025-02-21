@@ -12,6 +12,8 @@ import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 
+import logEvent from '../../../../api/common/logEvent';
+import { TELEMETRY_EVENTS } from '../../constants';
 import { CloudAccount } from '../../ServicesSection/types';
 import { RegionSelector } from './RegionSelector';
 import RemoveIntegrationAccount from './RemoveIntegrationAccount';
@@ -50,6 +52,11 @@ function AccountSettingsModal({
 		urlQuery.delete('cloudAccountId');
 		handleClose();
 		history.replace({ search: urlQuery.toString() });
+
+		logEvent(TELEMETRY_EVENTS.ACCOUNT_REMOVED, {
+			id: account?.id,
+			cloud_account_id: account?.cloud_account_id,
+		});
 	};
 
 	const renderRegionSelector = useCallback(() => {
