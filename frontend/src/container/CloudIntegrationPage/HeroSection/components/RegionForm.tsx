@@ -50,13 +50,16 @@ export function RegionForm({
 		enabled: !!accountId && modalState === ModalStateEnum.WAITING,
 		onSuccess: (data: AccountStatusResponse) => {
 			if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
+				setModalState(ModalStateEnum.SUCCESS);
 				logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTED, {
 					cloud_account_id: data?.data?.cloud_account_id,
 					status: data?.data?.status,
 				});
-				setModalState(ModalStateEnum.SUCCESS);
 			} else if (Date.now() - startTimeRef.current >= errorTimeout) {
 				setModalState(ModalStateEnum.ERROR);
+				logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTION_ATTEMPT_TIMED_OUT, {
+					id: accountId,
+				});
 			}
 		},
 		onError: () => {
