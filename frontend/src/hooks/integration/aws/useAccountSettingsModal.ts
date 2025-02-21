@@ -14,6 +14,9 @@ import {
 import { AccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
+import logEvent from '../../../api/common/logEvent';
+import { TELEMETRY_EVENTS } from '../../../container/CloudIntegrationPage/constants';
+
 interface UseAccountSettingsModalProps {
 	onClose: () => void;
 	account: CloudAccount;
@@ -84,8 +87,14 @@ export function useAccountSettingsModal({
 				{ accountId: account?.id, payload },
 				{
 					onSuccess: (response) => {
-						setActiveAccount(response.data);
+						const newActiveAccount = response?.data;
+						setActiveAccount(newActiveAccount);
 						onClose();
+
+						logEvent(TELEMETRY_EVENTS.ACCOUNT_SETTINGS_UPDATED, {
+							cloud_account_id: newActiveAccount?.cloud_account_id,
+							enabled_regions: newActiveAccount?.config?.regions,
+						});
 					},
 				},
 			);
