@@ -3,12 +3,14 @@ import './AccountActions.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
+import logEvent from 'api/common/logEvent';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { TELEMETRY_EVENTS } from '../../constants';
 import { CloudAccount } from '../../ServicesSection/types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
@@ -167,9 +169,25 @@ function AccountActions(): JSX.Element {
 	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+	const startAccountConnectionAttempt = (): void => {
+		setIsIntegrationModalOpen(true);
+		logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTION_ATTEMPT_STARTED, {});
+	};
+
 	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
 		false,
 	);
+
+	// log telemetry event when an account is viewed.
+	useEffect(() => {
+		if (activeAccount) {
+			logEvent(TELEMETRY_EVENTS.ACCOUNT_VIEWED, {
+				cloud_account_id: activeAccount?.cloud_account_id,
+				status: activeAccount?.status,
+				enabled_regions: activeAccount?.config?.regions,
+			});
+		}
+	}, [activeAccount]);
 
 	const selectOptions: SelectProps['options'] = useMemo(
 		() =>
@@ -196,7 +214,7 @@ function AccountActions(): JSX.Element {
 						navigate({ search: urlQuery.toString() });
 					}
 				}}
-				onIntegrationModalOpen={(): void => setIsIntegrationModalOpen(true)}
+				onIntegrationModalOpen={startAccountConnectionAttempt}
 				onAccountSettingsModalOpen={(): void => setIsAccountSettingsModalOpen(true)}
 			/>
 

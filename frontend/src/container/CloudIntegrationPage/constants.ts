@@ -1,4 +1,4 @@
-export const AWS_INTEGRATION_TELEMETRY_EVENTS = {
+export const TELEMETRY_EVENTS = {
 	ACCOUNT_VIEWED: 'AWS Integration: Account: Viewed',
 	ACCOUNT_CONNECTION_ATTEMPT_STARTED:
 		'AWS Integration: Account: Connection Attempt: Started',
