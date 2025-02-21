@@ -281,7 +281,7 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	for _, f := range telemetryCollectionStrategy.AWSMetrics.CloudwatchMetricsStreamFilters {
 		metricStreamNamespaces = append(metricStreamNamespaces, f.Namespace)
 	}
-	require.Equal([]string{"AWS/EC2", "AWS/RDS"}, metricStreamNamespaces)
+	require.Equal([]string{"AWS/EC2", "CWAgent", "AWS/RDS"}, metricStreamNamespaces)
 
 	require.NotNil(telemetryCollectionStrategy.AWSLogs)
 	logGroupPrefixes := []string{}
