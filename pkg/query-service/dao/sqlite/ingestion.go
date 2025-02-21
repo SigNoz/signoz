@@ -4,14 +4,11 @@ import (
 	"context"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
 )
 
-func (mds *ModelDaoSqlite) GetIngestionKeys(ctx context.Context) ([]types.IngestionKey, *model.ApiError) {
-	ingestion_keys := []types.IngestionKey{}
-	err := mds.bundb.NewSelect().
-		Model(&ingestion_keys).
-		Scan(ctx)
+func (mds *ModelDaoSqlite) GetIngestionKeys(ctx context.Context) ([]model.IngestionKey, *model.ApiError) {
+	ingestion_keys := []model.IngestionKey{}
+	err := mds.db.Select(&ingestion_keys, `SELECT * FROM ingestion_keys`)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -19,11 +16,21 @@ func (mds *ModelDaoSqlite) GetIngestionKeys(ctx context.Context) ([]types.Ingest
 	return ingestion_keys, nil
 }
 
-func (mds *ModelDaoSqlite) InsertIngestionKey(ctx context.Context, ingestion_key *types.IngestionKey) *model.ApiError {
-	_, err := mds.bundb.NewInsert().
-		Model(ingestion_key).
-		Column("ingestion_key", "name", "key_id", "ingestion_url", "data_region").
-		Exec(ctx)
+func (mds *ModelDaoSqlite) InsertIngestionKey(ctx context.Context, ingestion_key *model.IngestionKey) *model.ApiError {
+	_, err := mds.db.ExecContext(ctx, `
+	INSERT INTO ingestion_keys (
+		ingestion_key,
+		name,
+		key_id,
+		ingestion_url,
+		data_region
+	) VALUES (
+		?,
+		?,
+		?,
+		?,
+		?
+	)`, ingestion_key.IngestionKey, ingestion_key.Name, ingestion_key.KeyId, ingestion_key.IngestionURL, ingestion_key.DataRegion)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}

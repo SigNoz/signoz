@@ -77,15 +77,3 @@ type ApdexSettings struct {
 	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
 	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`
 }
-
-type IngestionKey struct {
-	bun.BaseModel `bun:"table:ingestion_keys"`
-
-	AuditableModel
-	OrgID        string `bun:"org_id,type:text,notnull" json:"orgId"`
-	KeyId        string `bun:"key_id,pk,type:text" json:"keyId"`
-	Name         string `bun:"name,type:text" json:"name"`
-	IngestionKey string `bun:"ingestion_key,type:text,notnull" json:"ingestionKey"`
-	IngestionURL string `bun:"ingestion_url,type:text,notnull" json:"ingestionURL"`
-	DataRegion   string `bun:"data_region,type:text,notnull" json:"dataRegion"`
-}

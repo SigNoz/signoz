@@ -53,8 +53,8 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// add created_by, updated_at and updated_by to organizations, users, groups, ingestion_keys table
-	for _, table := range []string{"organizations", "users", "groups", "ingestion_keys"} {
+	// add created_by, updated_at and updated_by to organizations, users, groups table
+	for _, table := range []string{"organizations", "users", "groups"} {
 		query := `ALTER TABLE ` + table + ` ADD COLUMN created_by TEXT`
 		if _, err := tx.ExecContext(ctx, query); err != nil {
 			return err
