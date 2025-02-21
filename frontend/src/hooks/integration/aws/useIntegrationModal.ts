@@ -20,6 +20,8 @@ import {
 } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
+import logEvent from '../../../api/common/logEvent';
+import { TELEMETRY_EVENTS } from '../../../container/CloudIntegrationPage/constants';
 import { useConnectionParams } from './useConnectionParams';
 import { useGenerateConnectionUrl } from './useGenerateConnectionUrl';
 
@@ -117,6 +119,9 @@ export function useIntegrationModal({
 		(payload: GenerateConnectionUrlPayload): void => {
 			generateUrl(payload, {
 				onSuccess: (data: ConnectionUrlResponse) => {
+					logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTION_ATTEMPT_REDIRECTED_TO_AWS, {
+						id: data.account_id,
+					});
 					window.open(data.connection_url, '_blank');
 					setModalState(ModalStateEnum.WAITING);
 					setAccountId(data.account_id);
