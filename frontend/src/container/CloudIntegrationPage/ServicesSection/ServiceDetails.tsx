@@ -59,6 +59,13 @@ function ServiceDetails(): JSX.Element | null {
 	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
 		false,
 	);
+	const openServiceConfigModal = (): void => {
+		setIsConfigureServiceModalOpen(true);
+		logEvent(TELEMETRY_EVENTS.SERVICE_SETTINGS_OPENED, {
+			cloud_account_id: cloudAccountId,
+			service_id: serviceId,
+		});
+	};
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
@@ -86,8 +93,8 @@ function ServiceDetails(): JSX.Element | null {
 	useEffect(() => {
 		if (serviceId) {
 			logEvent(TELEMETRY_EVENTS.SERVICE_VIEWED, {
-				service_id: serviceId,
 				cloud_account_id: cloudAccountId,
+				service_id: serviceId,
 			});
 		}
 	}, [cloudAccountId, serviceId]);
@@ -131,7 +138,7 @@ function ServiceDetails(): JSX.Element | null {
 						(isAnySignalConfigured ? (
 							<Button
 								className="configure-button configure-button--default"
-								onClick={(): void => setIsConfigureServiceModalOpen(true)}
+								onClick={openServiceConfigModal}
 							>
 								Configure ({enabledSignals}/{totalSupportedSignals})
 							</Button>
@@ -139,7 +146,7 @@ function ServiceDetails(): JSX.Element | null {
 							<Button
 								type="primary"
 								className="configure-button configure-button--primary"
-								onClick={(): void => setIsConfigureServiceModalOpen(true)}
+								onClick={openServiceConfigModal}
 							>
 								Enable Service
 							</Button>
