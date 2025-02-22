@@ -1,4 +1,4 @@
-package providertest
+package factorytest
 
 import (
 	"go.signoz.io/signoz/pkg/factory"
