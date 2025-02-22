@@ -219,7 +219,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
-	summaryService := metricsexplorer.NewSummaryService(opts.Reader, querierv2)
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,

@@ -3,6 +3,7 @@ package metricsexplorer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"go.uber.org/zap"
@@ -12,16 +13,17 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 	"golang.org/x/sync/errgroup"
 )
 
 type SummaryService struct {
-	reader    interfaces.Reader
-	querierV2 interfaces.Querier
+	reader       interfaces.Reader
+	alertManager *rules.Manager
 }
 
-func NewSummaryService(reader interfaces.Reader, querierV2 interfaces.Querier) *SummaryService {
-	return &SummaryService{reader: reader, querierV2: querierV2}
+func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager) *SummaryService {
+	return &SummaryService{reader: reader, alertManager: alertManager}
 }
 
 func (receiver *SummaryService) FilterKeys(ctx context.Context, params *metrics_explorer.FilterKeyRequest) (*metrics_explorer.FilterKeyResponse, *model.ApiError) {
@@ -102,18 +104,24 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		return nil
 	})
 
-	// Call 2: GetMetricsDataPointsAndLastReceived
 	g.Go(func() error {
-		dataPoints, lastReceived, err := receiver.reader.GetMetricsDataPointsAndLastReceived(ctx, metricName)
+		dataPoints, err := receiver.reader.GetMetricsDataPoints(ctx, metricName)
 		if err != nil {
 			return err
 		}
 		metricDetailsDTO.Samples = dataPoints
+		return nil
+	})
+
+	g.Go(func() error {
+		lastReceived, err := receiver.reader.GetMetricsLastReceived(ctx, metricName)
+		if err != nil {
+			return err
+		}
 		metricDetailsDTO.LastReceived = lastReceived
 		return nil
 	})
 
-	// Call 3: GetTotalTimeSeriesForMetricName
 	g.Go(func() error {
 		totalSeries, err := receiver.reader.GetTotalTimeSeriesForMetricName(ctx, metricName)
 		if err != nil {
@@ -123,7 +131,6 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		return nil
 	})
 
-	// Call 4: GetActiveTimeSeriesForMetricName
 	g.Go(func() error {
 		activeSeries, err := receiver.reader.GetActiveTimeSeriesForMetricName(ctx, metricName, 120*time.Minute)
 		if err != nil {
@@ -133,7 +140,6 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		return nil
 	})
 
-	// Call 5: GetAttributesForMetricName
 	g.Go(func() error {
 		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName)
 		if err != nil {
@@ -145,7 +151,6 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		return nil
 	})
 
-	// Call 6: GetDashboardsWithMetricName
 	g.Go(func() error {
 		data, err := dashboards.GetDashboardsWithMetricName(ctx, metricName)
 		if err != nil {
@@ -169,13 +174,30 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		return nil
 	})
 
+	g.Go(func() error {
+		var metrics []string
+		var metricsAlerts []metrics_explorer.Alert
+		metrics = append(metrics, metricName)
+		data, err := receiver.alertManager.GetAlertDetailsForMetricNames(ctx, metrics)
+		if err != nil {
+			return err
+		}
+		if rulesLists, ok := data[metricName]; ok {
+			for _, rule := range rulesLists {
+				metricsAlerts = append(metricsAlerts, metrics_explorer.Alert{AlertName: rule.AlertName, AlertID: rule.Id})
+			}
+		}
+		metricDetailsDTO.Alerts = metricsAlerts
+		return nil
+	})
+
 	// Wait for all goroutines and handle any errors
 	if err := g.Wait(); err != nil {
-		// Type assert to check if it's already an ApiError
-		if apiErr, ok := err.(*model.ApiError); ok {
+
+		var apiErr *model.ApiError
+		if errors.As(err, &apiErr) {
 			return metrics_explorer.MetricDetailsDTO{}, apiErr
 		}
-		// If it's not an ApiError, wrap it in one
 		return metrics_explorer.MetricDetailsDTO{}, &model.ApiError{Typ: "InternalError", Err: err}
 	}
 

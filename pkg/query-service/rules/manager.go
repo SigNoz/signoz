@@ -829,3 +829,58 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 
 	return alertCount, apiErr
 }
+
+func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]GettableRule, error) {
+	result := make(map[string][]GettableRule)
+
+	rules, err := m.ruleDB.GetStoredRules(ctx)
+	if err != nil {
+		zap.L().Error("Error getting stored rules", zap.Error(err))
+		return nil, err
+	}
+
+	// Process each rule
+	for _, storedRule := range rules {
+		var rule GettableRule
+		err = json.Unmarshal([]byte(storedRule.Data), &rule)
+		if err != nil {
+			zap.L().Error("invalid rule data", zap.Error(err))
+			continue
+		}
+
+		// Set metadata fields
+		rule.Id = fmt.Sprintf("%d", storedRule.Id)
+		rule.CreatedAt = storedRule.CreatedAt
+		rule.CreatedBy = storedRule.CreatedBy
+		rule.UpdatedAt = storedRule.UpdatedAt
+		rule.UpdatedBy = storedRule.UpdatedBy
+
+		// Skip if not metric alert or missing required fields
+		if rule.AlertType != AlertTypeMetric ||
+			rule.RuleCondition == nil ||
+			rule.RuleCondition.CompositeQuery == nil {
+			continue
+		}
+
+		// Check builder queries
+		for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+			if query.AggregateAttribute.Key == "" {
+				continue
+			}
+
+			// Check if this metric name is in the requested list
+			for _, metricName := range metricNames {
+				if query.AggregateAttribute.Key == metricName {
+					// Initialize slice if this is first alert for this metric
+					if result[metricName] == nil {
+						result[metricName] = make([]GettableRule, 0)
+					}
+					result[metricName] = append(result[metricName], rule)
+					break
+				}
+			}
+		}
+	}
+
+	return result, nil
+}
