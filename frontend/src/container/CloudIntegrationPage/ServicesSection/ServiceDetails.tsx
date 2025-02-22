@@ -7,8 +7,10 @@ import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/t
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import logEvent from '../../../api/common/logEvent';
+import { TELEMETRY_EVENTS } from '../constants';
 import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
@@ -79,6 +81,16 @@ function ServiceDetails(): JSX.Element | null {
 		() => !!config?.logs?.enabled || !!config?.metrics?.enabled,
 		[config],
 	);
+
+	// log telemetry event on visiting details of a service.
+	useEffect(() => {
+		if (serviceId) {
+			logEvent(TELEMETRY_EVENTS.SERVICE_VIEWED, {
+				service_id: serviceId,
+				cloud_account_id: cloudAccountId,
+			});
+		}
+	}, [cloudAccountId, serviceId]);
 
 	if (isLoading) {
 		return <Spinner size="large" height="50vh" />;
