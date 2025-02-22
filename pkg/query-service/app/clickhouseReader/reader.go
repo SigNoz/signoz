@@ -6159,7 +6159,8 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_e
 		LIMIT 30; 
 	`, signozMetricDBName, tsTable)
 
-	rows, err := r.db.Query(ctx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, start, end)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6204,7 +6205,7 @@ LIMIT 50
 
 	var targetKeys []string
 	var targetValues []string
-	rows, err = r.db.Query(ctx, extractedLabelsQuery, req.CurrentMetricName, start, end)
+	rows, err = r.db.Query(valueCtx, extractedLabelsQuery, req.CurrentMetricName, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6282,7 +6283,7 @@ LIMIT 30
 `, targetKeysList, targetValuesList, priorityListString, 2,
 		signozMetricDBName, tsTable)
 
-	rows, err = r.db.Query(ctx, candidateLabelsQuery, start, end)
+	rows, err = r.db.Query(valueCtx, candidateLabelsQuery, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
