@@ -6192,18 +6192,12 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_e
 	extractedLabelsQuery := fmt.Sprintf(`
 SELECT 
     kv.1 AS label_key,
-    arraySlice(
-        arrayDistinct(
-            groupArray(replaceRegexpAll(kv.2, '^"(.*)"$', '\\1'))
-        ),
-        1,
-        10
-    ) AS label_values
+    topK(10)(JSONExtractString(kv.2)) AS label_values
 FROM %s.%s
 ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
 WHERE metric_name = ?
-  AND NOT startsWith(kv.1, '__')
   AND unix_milli between ? and ?
+  AND NOT startsWith(kv.1, '__')
 GROUP BY label_key
 LIMIT 50
 	`, signozMetricDBName, tsTable)
