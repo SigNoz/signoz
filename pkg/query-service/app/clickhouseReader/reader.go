@@ -5692,15 +5692,32 @@ func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *met
 	return response, nil
 }
 
-func (r *ClickHouseReader) GetMetricsDataPointsAndLastReceived(ctx context.Context, metricName string) (uint64, uint64, *model.ApiError) {
-	query := fmt.Sprintf("SELECT COUNT(*) AS data_points, MAX(unix_milli) AS last_received_time FROM %s.%s WHERE metric_name = ?", signozMetricDBName, signozSampleTableName)
-	var lastRecievedTimestamp int64 // Changed from uint64 to int64
+func (r *ClickHouseReader) GetMetricsDataPoints(ctx context.Context, metricName string) (uint64, *model.ApiError) {
+	query := fmt.Sprintf(`SELECT 
+    sum(count) as data_points
+FROM %s.%s
+WHERE metric_name = ?
+`, signozMetricDBName, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME)
 	var dataPoints uint64
-	err := r.db.QueryRow(ctx, query, metricName).Scan(&dataPoints, &lastRecievedTimestamp)
+	err := r.db.QueryRow(ctx, query, metricName).Scan(&dataPoints)
 	if err != nil {
-		return 0, 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	return dataPoints, uint64(lastRecievedTimestamp), nil // Convert to uint64 before returning
+	return dataPoints, nil // Convert to uint64 before returning
+}
+
+func (r *ClickHouseReader) GetMetricsLastReceived(ctx context.Context, metricName string) (int64, *model.ApiError) {
+	query := fmt.Sprintf(`SELECT 
+    MAX(unix_milli) AS last_received_time
+FROM %s.%s
+WHERE metric_name = ?
+`, signozMetricDBName, signozSampleTableName)
+	var lastReceived int64
+	err := r.db.QueryRow(ctx, query, metricName).Scan(&lastReceived)
+	if err != nil {
+		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return lastReceived, nil // Convert to uint64 before returning
 }
 
 func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError) {
@@ -5854,33 +5871,48 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		orderByClauseFirstQuery = ""
 	}
 
-	sampleQuery := fmt.Sprintf(
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf(
 		`SELECT 
-		    s.samples,
-		    s.metric_name,
-			s.unix_milli AS lastReceived
-		FROM (
-		    SELECT 
-		        metric_name,
-		        %s AS samples,
-		        max(unix_milli) as unix_milli
-		    FROM %s.%s
-		    WHERE fingerprint IN (
-		        SELECT fingerprint 
-		        FROM %s.%s
-		        WHERE unix_milli BETWEEN ? AND ?
-		        %s
-		        AND metric_name IN (%s)
-		        GROUP BY fingerprint
-		    )
-		    AND metric_name in (%s)
-		    GROUP BY metric_name
-		) AS s
-		%s
-		LIMIT %d OFFSET %d;`,
-		countExp, signozMetricDBName, sampleTable, signozMetricDBName, localTsTable,
-		whereClause, metricsList, metricsList, orderByClauseFirstQuery,
-		req.Limit, req.Offset)
+        s.samples,
+        s.metric_name,
+        s.unix_milli AS lastReceived
+    FROM (
+        SELECT 
+            metric_name,
+            %s AS samples,
+            max(unix_milli) as unix_milli
+        FROM %s.%s
+        `, countExp, signozMetricDBName, sampleTable))
+
+	// Conditionally add the fingerprint subquery if `whereClause` is present
+	if whereClause != "" {
+		sb.WriteString(fmt.Sprintf(
+			`WHERE fingerprint IN (
+            SELECT fingerprint 
+            FROM %s.%s
+            WHERE unix_milli BETWEEN ? AND ?
+            %s
+            AND metric_name IN (%s)
+            GROUP BY fingerprint
+        ) 
+        AND metric_name IN (%s) `,
+			signozMetricDBName, localTsTable, whereClause, metricsList, metricsList))
+	} else {
+		sb.WriteString(fmt.Sprintf(
+			`WHERE metric_name IN (%s) `, metricsList))
+	}
+
+	sb.WriteString(`GROUP BY metric_name ) AS s `)
+
+	if orderByClauseFirstQuery != "" {
+		sb.WriteString(orderByClauseFirstQuery)
+	}
+
+	sb.WriteString(fmt.Sprintf(" LIMIT %d OFFSET %d;", req.Limit, req.Offset))
+
+	sampleQuery := sb.String()
 
 	args = append(args, start, end)
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
