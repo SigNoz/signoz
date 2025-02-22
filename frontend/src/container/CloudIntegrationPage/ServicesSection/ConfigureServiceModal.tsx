@@ -11,6 +11,9 @@ import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceCo
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
+import logEvent from '../../../api/common/logEvent';
+import { TELEMETRY_EVENTS } from '../constants';
+
 interface IConfigureServiceModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -82,6 +85,13 @@ function ConfigureServiceModal({
 							serviceId,
 						]);
 						onClose();
+
+						logEvent(TELEMETRY_EVENTS.SERVICE_SETTINGS_SAVED, {
+							cloud_account_id: cloudAccountId,
+							service_id: serviceId,
+							logs_enabled: values?.logs,
+							metrics_enabled: values?.metrics,
+						});
 					},
 					onError: (error) => {
 						console.error('Failed to update service config:', error);
