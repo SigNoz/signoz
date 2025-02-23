@@ -29,6 +29,7 @@ function LogContext({
 				order={ORDERBY_FILTERS.ASC}
 				filters={filters}
 				isEdit={isEdit}
+				log={log}
 				query={contextQuery}
 			/>
 			<RawLogView
@@ -43,6 +44,7 @@ function LogContext({
 				order={ORDERBY_FILTERS.DESC}
 				filters={filters}
 				isEdit={isEdit}
+				log={log}
 				query={contextQuery}
 			/>
 		</div>
