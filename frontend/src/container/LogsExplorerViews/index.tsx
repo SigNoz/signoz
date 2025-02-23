@@ -40,7 +40,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import {
 	cloneDeep,
 	defaultTo,
@@ -307,7 +307,7 @@ function LogsExplorerViews({
 		): Query | null => {
 			if (!query) return null;
 
-			const paginateData = getPaginationQueryData({
+			const paginateData = getPaginationQueryDataV2({
 				page: params.page,
 				pageSize: params.pageSize,
 			});
