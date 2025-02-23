@@ -81,12 +81,21 @@ export const useContextLogData = ({
 	const initialLogsRequest = useMemo(
 		() =>
 			getRequestData({
+				stagedQueryData: currentStagedQueryData,
 				query,
+				log: lastLog,
 				orderByTimestamp,
 				page,
 				pageSize: initialPageSize,
 			}),
-		[query, orderByTimestamp, page, initialPageSize],
+		[
+			currentStagedQueryData,
+			query,
+			lastLog,
+			orderByTimestamp,
+			page,
+			initialPageSize,
+		],
 	);
 
 	const [requestData, setRequestData] = useState<Query | null>(
@@ -129,7 +138,9 @@ export const useContextLogData = ({
 
 	const handleShowNextLines = useCallback(() => {
 		const newRequestData = getRequestData({
+			stagedQueryData: currentStagedQueryData,
 			query,
+			log: lastLog,
 			orderByTimestamp,
 			page: page + 1,
 			pageSize: LOGS_MORE_PAGE_SIZE,
@@ -152,7 +163,9 @@ export const useContextLogData = ({
 		if (!isEdit) return;
 
 		const newRequestData = getRequestData({
+			stagedQueryData: currentStagedQueryData,
 			query,
+			log: lastLog,
 			orderByTimestamp,
 			page: 1,
 		});
