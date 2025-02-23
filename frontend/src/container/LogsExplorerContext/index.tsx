@@ -90,6 +90,7 @@ function LogsExplorerContext({
 				order={ORDERBY_FILTERS.ASC}
 				filters={filters}
 				isEdit={isEdit}
+				log={log}
 				query={contextQuery}
 			/>
 			<LogContainer>
@@ -106,6 +107,7 @@ function LogsExplorerContext({
 				order={ORDERBY_FILTERS.DESC}
 				filters={filters}
 				isEdit={isEdit}
+				log={log}
 				query={contextQuery}
 			/>
 		</Modal>

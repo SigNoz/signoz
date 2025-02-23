@@ -26,6 +26,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 		const isListWithSingleTimestampOrder =
 			requestData.graphType === PANEL_TYPES.LIST &&
 			requestData.query.builder?.queryData[0]?.orderBy?.length === 1 &&
+			// exclude list with id filter (i.e. context logs)
+			!requestData.query.builder?.queryData[0].filters.items.some(
+				(filter) => filter.key?.key === 'id',
+			) &&
 			requestData.query.builder?.queryData[0].orderBy[0].columnName ===
 				'timestamp';
 
