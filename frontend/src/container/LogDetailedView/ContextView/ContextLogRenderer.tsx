@@ -112,11 +112,16 @@ function ContextLogRenderer({
 		(logId: string): void => {
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 
+			urlQuery.set(
+				QueryParams.compositeQuery,
+				encodeURIComponent(JSON.stringify(query)),
+			);
+
 			const link = `${pathname}?${urlQuery.toString()}`;
 
 			window.open(link, '_blank', 'noopener,noreferrer');
 		},
-		[pathname, urlQuery],
+		[pathname, query, urlQuery],
 	);
 
 	const getItemContent = useCallback(
