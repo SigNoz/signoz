@@ -24,6 +24,8 @@
 	}
     &__item {
         width: 100%;
-        cursor: pointer;
+        .raw-log-content {
+            cursor: pointer;
+        }
     }
 }
