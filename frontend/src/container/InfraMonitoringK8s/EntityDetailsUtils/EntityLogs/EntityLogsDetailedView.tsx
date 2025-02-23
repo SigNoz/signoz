@@ -97,7 +97,6 @@ function EntityLogsDetailedView({
 			</div>
 			<EntityLogs
 				timeRange={timeRange}
-				handleChangeLogFilters={handleChangeLogFilters}
 				filters={logFilters}
 				queryKey={queryKey}
 				category={category}
