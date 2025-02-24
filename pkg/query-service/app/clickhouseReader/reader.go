@@ -6141,9 +6141,9 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	return &heatmap, nil
 }
 
-func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
-	// First query: Compute name similarity and get candidate metric names.
+func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+
 	query := fmt.Sprintf(`
 		SELECT 
 			metric_name,
@@ -6156,8 +6156,8 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_e
 		  AND unix_milli BETWEEN ? AND ?
 		GROUP BY metric_name
 		ORDER BY name_similarity DESC
-		LIMIT 30; 
-	`, signozMetricDBName, tsTable)
+		LIMIT 30;`,
+		signozMetricDBName, tsTable)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, start, end)
@@ -6167,7 +6167,6 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_e
 	defer rows.Close()
 
 	result := make(map[string]metrics_explorer.RelatedMetricsScore)
-	var metricNames []string
 	for rows.Next() {
 		var metric string
 		var sim float64
@@ -6183,33 +6182,36 @@ func (r *ClickHouseReader) GetRelatedMetrics(ctx context.Context, req *metrics_e
 			Temporality:    temporality,
 			IsMonotonic:    isMonotonic,
 		}
-		metricNames = append(metricNames, metric)
 	}
 
-	if len(metricNames) == 0 {
-		return result, nil
-	}
+	return result, nil
+}
 
+func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+
+	// Get target labels
 	extractedLabelsQuery := fmt.Sprintf(`
-SELECT 
-    kv.1 AS label_key,
-    topK(10)(JSONExtractString(kv.2)) AS label_values
-FROM %s.%s
-ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
-WHERE metric_name = ?
-  AND unix_milli between ? and ?
-  AND NOT startsWith(kv.1, '__')
-GROUP BY label_key
-LIMIT 50
-	`, signozMetricDBName, tsTable)
+		SELECT 
+			kv.1 AS label_key,
+			topK(10)(JSONExtractString(kv.2)) AS label_values
+		FROM %s.%s
+		ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
+		WHERE metric_name = ?
+		  AND unix_milli between ? and ?
+		  AND NOT startsWith(kv.1, '__')
+		GROUP BY label_key
+		LIMIT 50`, signozMetricDBName, tsTable)
 
-	var targetKeys []string
-	var targetValues []string
-	rows, err = r.db.Query(valueCtx, extractedLabelsQuery, req.CurrentMetricName, start, end)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, extractedLabelsQuery, req.CurrentMetricName, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
+
+	var targetKeys []string
+	var targetValues []string
 	for rows.Next() {
 		var key string
 		var value []string
@@ -6225,62 +6227,61 @@ LIMIT 50
 
 	var priorityList []string
 	for _, f := range req.Filters.Items {
-		if f.Operator == v3.FilterOperatorEqual { //currently only supporting for equal
+		if f.Operator == v3.FilterOperatorEqual {
 			priorityList = append(priorityList, fmt.Sprintf("tuple('%s', '%s')", f.Key.Key, f.Value))
 		}
 	}
 	priorityListString := strings.Join(priorityList, ", ")
 
-	//Get labels for candidate metrics ---
-	// we use rand() %%100< 10 to sample 10 percent
 	candidateLabelsQuery := fmt.Sprintf(`
-WITH 
-    arrayDistinct([%s]) AS filter_keys,     
-    arrayDistinct([%s]) AS filter_values,
-    [%s] AS priority_pairs_input,
-    %d AS priority_multiplier
-SELECT 
-    metric_name,
-	any(type) as type,
-	any(temporality) as temporality,
-	any(is_monotonic) as monotonic,
-    SUM(
-        arraySum(
-            kv -> if(has(filter_keys, kv.1) AND has(filter_values, kv.2), 1, 0),
-            JSONExtractKeysAndValues(labels, 'String')
-        )
-    )::UInt64 AS raw_match_count,
-    SUM(
-        arraySum(
-            kv ->
-                if(
-                    arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
-                    priority_multiplier,
-                    0
-                ),
-            JSONExtractKeysAndValues(labels, 'String')
-        )
-    )::UInt64 AS weighted_match_count,
-toJSONString(
-    arrayDistinct(
-        arrayFlatten(
-            groupArray(
-                arrayFilter(
-                    kv -> arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
-                    JSONExtractKeysAndValues(labels, 'String')
-                )
-            )
-        )
-    )
-) AS priority_pairs
+		WITH 
+			arrayDistinct([%s]) AS filter_keys,     
+			arrayDistinct([%s]) AS filter_values,
+			[%s] AS priority_pairs_input,
+			%d AS priority_multiplier
+		SELECT 
+			metric_name,
+			any(type) as type,
+			any(temporality) as temporality,
+			any(is_monotonic) as monotonic,
+			SUM(
+				arraySum(
+					kv -> if(has(filter_keys, kv.1) AND has(filter_values, kv.2), 1, 0),
+					JSONExtractKeysAndValues(labels, 'String')
+				)
+			)::UInt64 AS raw_match_count,
+			SUM(
+				arraySum(
+					kv ->
+						if(
+							arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
+							priority_multiplier,
+							0
+						),
+					JSONExtractKeysAndValues(labels, 'String')
+				)
+			)::UInt64 AS weighted_match_count,
+		toJSONString(
+			arrayDistinct(
+				arrayFlatten(
+					groupArray(
+						arrayFilter(
+							kv -> arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
+							JSONExtractKeysAndValues(labels, 'String')
+						)
+					)
+				)
+			)
+		) AS priority_pairs
 
-FROM %s.%s
-WHERE rand() %% 100 < 10
-AND unix_milli between ? and ?
-GROUP BY metric_name
-ORDER BY weighted_match_count DESC, raw_match_count DESC
-LIMIT 30
-`, targetKeysList, targetValuesList, priorityListString, 2,
+		FROM %s.%s
+		WHERE rand() %% 100 < 10
+		AND unix_milli between ? and ?
+		GROUP BY metric_name
+		ORDER BY weighted_match_count DESC, raw_match_count DESC
+		LIMIT 30
+		`,
+		targetKeysList, targetValuesList, priorityListString, 2,
 		signozMetricDBName, tsTable)
 
 	rows, err = r.db.Query(valueCtx, candidateLabelsQuery, start, end)
@@ -6289,50 +6290,43 @@ LIMIT 30
 	}
 	defer rows.Close()
 
+	result := make(map[string]metrics_explorer.RelatedMetricsScore)
 	attributeMap := make(map[string]uint64)
+
 	for rows.Next() {
 		var metric string
 		var metricType v3.MetricType
 		var temporality v3.Temporality
 		var isMonotonic bool
 		var weightedMatchCount, rawMatchCount uint64
-		var priorityPairsJSON string // Scan into a string
+		var priorityPairsJSON string
 
 		if err := rows.Scan(&metric, &metricType, &temporality, &isMonotonic, &rawMatchCount, &weightedMatchCount, &priorityPairsJSON); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
+
 		attributeMap[metric] = weightedMatchCount + (rawMatchCount)/10
 		var priorityPairs [][]string
 		if err := json.Unmarshal([]byte(priorityPairsJSON), &priorityPairs); err != nil {
 			priorityPairs = [][]string{}
 		}
-		if _, ok := result[metric]; ok {
-			result[metric] = metrics_explorer.RelatedMetricsScore{
-				NameSimilarity: result[metric].NameSimilarity,
-				Filters:        priorityPairs,
-				MetricType:     metricType,
-				Temporality:    temporality,
-				IsMonotonic:    isMonotonic,
-			}
-		} else {
-			result[metric] = metrics_explorer.RelatedMetricsScore{
-				Filters:    priorityPairs,
-				MetricType: metricType,
-			}
+
+		result[metric] = metrics_explorer.RelatedMetricsScore{
+			AttributeSimilarity: float64(attributeMap[metric]), // Will be normalized later
+			Filters:             priorityPairs,
+			MetricType:          metricType,
+			Temporality:         temporality,
+			IsMonotonic:         isMonotonic,
 		}
 	}
 
+	// Normalize the attribute similarity scores
 	normalizeMap := utils.NormalizeMap(attributeMap)
-
-	// --- STEP 4: Compute similarity scores and update result map ---
-	for metric, data := range normalizeMap {
-		if _, ok := result[metric]; ok {
-			result[metric] = metrics_explorer.RelatedMetricsScore{
-				NameSimilarity:      result[metric].NameSimilarity,
-				AttributeSimilarity: data,
-				Filters:             result[metric].Filters,
-				MetricType:          result[metric].MetricType,
-			}
+	for metric := range result {
+		if score, exists := normalizeMap[metric]; exists {
+			metricScore := result[metric]
+			metricScore.AttributeSimilarity = score
+			result[metric] = metricScore
 		}
 	}
 

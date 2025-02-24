@@ -3,6 +3,7 @@ package metricsexplorer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sort"
 	"time"
 
@@ -210,16 +211,45 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 }
 
 func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *metrics_explorer.RelatedMetricsRequest) (*metrics_explorer.RelatedMetricsResponse, *model.ApiError) {
-	var relatedMetricsResponse metrics_explorer.RelatedMetricsResponse
-
-	relatedMetricsMap, err := receiver.reader.GetRelatedMetrics(ctx, params)
+	// Get name similarity scores
+	nameSimilarityScores, err := receiver.reader.GetNameSimilarity(ctx, params)
 	if err != nil {
-		return nil, &model.ApiError{Typ: "Error", Err: err}
+		return nil, err
 	}
 
+	attrCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
+	attrSimilarityScores, err := receiver.reader.GetAttributeSimilarity(attrCtx, params)
+	if err != nil {
+		// If we hit a deadline exceeded error, proceed with only name similarity
+		if errors.Is(err.Err, context.DeadlineExceeded) {
+			zap.L().Warn("Attribute similarity calculation timed out, proceeding with name similarity only")
+			attrSimilarityScores = make(map[string]metrics_explorer.RelatedMetricsScore)
+		} else {
+			return nil, err
+		}
+	}
+
+	// Combine scores and compute final scores
 	finalScores := make(map[string]float64)
-	for metric, scores := range relatedMetricsMap {
-		finalScores[metric] = scores.NameSimilarity*0.7 + scores.AttributeSimilarity*0.3
+	relatedMetricsMap := make(map[string]metrics_explorer.RelatedMetricsScore)
+
+	// Combine the scores from both sources
+	for metric, nameScore := range nameSimilarityScores {
+		if attrScore, exists := attrSimilarityScores[metric]; exists {
+			relatedMetricsMap[metric] = metrics_explorer.RelatedMetricsScore{
+				NameSimilarity:      nameScore.NameSimilarity,
+				AttributeSimilarity: attrScore.AttributeSimilarity,
+				Filters:             attrScore.Filters,
+				MetricType:          attrScore.MetricType,
+				Temporality:         attrScore.Temporality,
+				IsMonotonic:         attrScore.IsMonotonic,
+			}
+		} else {
+			relatedMetricsMap[metric] = nameScore
+		}
+		finalScores[metric] = nameScore.NameSimilarity*0.7 + relatedMetricsMap[metric].AttributeSimilarity*0.3
 	}
 
 	type metricScore struct {
@@ -238,42 +268,17 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		return sortedScores[i].Score > sortedScores[j].Score
 	})
 
-	// Extract metric names for retrieving dashboard information
-	var metricNames []string
+	// Build response
+	var response metrics_explorer.RelatedMetricsResponse
 	for _, ms := range sortedScores {
-		metricNames = append(metricNames, ms.Name)
-	}
-
-	dashboardsInfo, err := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
-	if err != nil {
-		return nil, &model.ApiError{Typ: "Error", Err: err}
-	}
-
-	// Build the final response using the sorted order
-	for _, ms := range sortedScores {
-		var dashboardsList []metrics_explorer.Dashboard
-
-		if dashEntries, ok := dashboardsInfo[ms.Name]; ok {
-			for _, dashInfo := range dashEntries {
-				dashboardsList = append(dashboardsList, metrics_explorer.Dashboard{
-					DashboardName: dashInfo["dashboard_title"],
-					DashboardID:   dashInfo["dashboard_id"],
-					WidgetID:      dashInfo["widget_id"],
-					WidgetName:    dashInfo["widget_title"],
-				})
-			}
-		}
-
 		relatedMetric := metrics_explorer.RelatedMetrics{
-			Name:       ms.Name,
-			Dashboards: dashboardsList,
-			Query:      getQueryRangeForRelateMetricsList(ms.Name, relatedMetricsMap[ms.Name]),
+			Name:  ms.Name,
+			Query: getQueryRangeForRelateMetricsList(ms.Name, relatedMetricsMap[ms.Name]),
 		}
-
-		relatedMetricsResponse.RelatedMetrics = append(relatedMetricsResponse.RelatedMetrics, relatedMetric)
+		response.RelatedMetrics = append(response.RelatedMetrics, relatedMetric)
 	}
 
-	return &relatedMetricsResponse, nil
+	return &response, nil
 }
 
 func getQueryRangeForRelateMetricsList(metricName string, scores metrics_explorer.RelatedMetricsScore) *v3.BuilderQuery {
