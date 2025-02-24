@@ -7,6 +7,7 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import LoadingContainer from 'container/InfraMonitoringK8s/LoadingContainer';
+import { INITIAL_PAGE_SIZE } from 'container/LogsContextList/configs';
 import LogsError from 'container/LogsError/LogsError';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
@@ -21,10 +22,8 @@ import { isArray } from 'lodash-es';
 import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { v4 } from 'uuid';
 
 import {
 	EntityDetailsEmptyContainer,
@@ -123,16 +122,19 @@ export default function Events({
 			filters,
 		);
 
-		basePayload.query.builder.queryData[0].pageSize = 10;
+		basePayload.query.builder.queryData[0].pageSize = INITIAL_PAGE_SIZE;
+		basePayload.query.builder.queryData[0].offset =
+			(page - 1) * INITIAL_PAGE_SIZE;
 		basePayload.query.builder.queryData[0].orderBy = [
 			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
+			{ columnName: 'id', order: ORDERBY_FILTERS.DESC },
 		];
 
 		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, filters]);
+	}, [timeRange.startTime, timeRange.endTime, filters, page]);
 
 	const { data: eventsData, isLoading, isFetching, isError } = useQuery({
-		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters],
+		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters, page],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
 	});
@@ -189,61 +191,12 @@ export default function Events({
 
 	const handlePrev = (): void => {
 		if (!formattedEntityEvents.length) return;
-
 		setPage(page - 1);
-
-		const firstEvent = formattedEntityEvents[0];
-
-		const newItems = [
-			...filters.items.filter((item) => item.key?.key !== 'id'),
-			{
-				id: v4(),
-				key: {
-					key: 'id',
-					type: '',
-					dataType: DataTypes.String,
-					isColumn: true,
-				},
-				op: '>',
-				value: firstEvent.id,
-			},
-		];
-
-		const newFilters = {
-			op: 'AND',
-			items: newItems,
-		} as IBuilderQuery['filters'];
-
-		handleChangeEventFilters(newFilters);
 	};
 
 	const handleNext = (): void => {
 		if (!formattedEntityEvents.length) return;
-
 		setPage(page + 1);
-		const lastEvent = formattedEntityEvents[formattedEntityEvents.length - 1];
-
-		const newItems = [
-			...filters.items.filter((item) => item.key?.key !== 'id'),
-			{
-				id: v4(),
-				key: {
-					key: 'id',
-					type: '',
-					dataType: DataTypes.String,
-					isColumn: true,
-				},
-				op: '<',
-				value: lastEvent.id,
-			},
-		];
-
-		const newFilters = {
-			op: 'AND',
-			items: newItems,
-		} as IBuilderQuery['filters'];
-
-		handleChangeEventFilters(newFilters);
 	};
 
 	const handleExpandRowIcon = ({
