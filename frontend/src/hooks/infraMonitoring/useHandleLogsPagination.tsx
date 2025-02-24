@@ -142,18 +142,29 @@ export const useHandleLogsPagination = ({
 		setIsPaginating(true);
 	}, [logs]);
 
-	const queryPayload = useMemo(() => {
-		const newPayload = { ...basePayload };
-		newPayload.query.builder.queryData[0].pageSize = DEFAULT_PER_PAGE_VALUE;
-		newPayload.query.builder.queryData[0].offset =
-			(currentPage - 1) * DEFAULT_PER_PAGE_VALUE;
-		newPayload.query.builder.queryData[0].orderBy = [
-			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
-			{ columnName: 'id', order: ORDERBY_FILTERS.DESC },
-		];
-
-		return newPayload;
-	}, [basePayload, currentPage]);
+	const queryPayload = useMemo(
+		() => ({
+			...basePayload,
+			query: {
+				...basePayload.query,
+				builder: {
+					...basePayload.query.builder,
+					queryData: [
+						{
+							...basePayload.query.builder.queryData[0],
+							pageSize: DEFAULT_PER_PAGE_VALUE,
+							offset: (currentPage - 1) * DEFAULT_PER_PAGE_VALUE,
+							orderBy: [
+								{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
+								{ columnName: 'id', order: ORDERBY_FILTERS.DESC },
+							],
+						},
+					],
+				},
+			},
+		}),
+		[basePayload, currentPage],
+	);
 
 	return {
 		logs,
