@@ -4,11 +4,12 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useClickOutside from 'hooks/useClickOutside';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -106,6 +107,51 @@ export function onGraphClickHandler(
 		const id = `${type}_button`;
 
 		const buttonElement = document.getElementById(id);
+
+		if (xValue) {
+			if (buttonElement) {
+				buttonElement.style.display = 'block';
+				buttonElement.style.left = `${mouseX}px`;
+				buttonElement.style.top = `${mouseY}px`;
+				setSelectedTimeStamp(Math.floor(xValue * 1_000));
+			}
+		} else if (buttonElement && buttonElement.style.display === 'block') {
+			buttonElement.style.display = 'none';
+		}
+	};
+}
+
+export function useGraphClickHandler(
+	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
+): (
+	xValue: number,
+	yValue: number,
+	mouseX: number,
+	mouseY: number,
+	type: string,
+) => Promise<void> {
+	const buttonRef = useRef<HTMLElement | null>(null);
+
+	useClickOutside({
+		ref: buttonRef,
+		onClickOutside: () => {
+			if (buttonRef.current) {
+				buttonRef.current.style.display = 'none';
+			}
+		},
+		eventType: 'mousedown',
+	});
+
+	return async (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		type: string,
+	): Promise<void> => {
+		const id = `${type}_button`;
+		const buttonElement = document.getElementById(id);
+		buttonRef.current = buttonElement;
 
 		if (xValue) {
 			if (buttonElement) {
