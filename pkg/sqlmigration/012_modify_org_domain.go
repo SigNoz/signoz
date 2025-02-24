@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
 )
@@ -28,7 +29,7 @@ func (migration *modifyOrgDomain) Register(migrations *migrate.Migrations) error
 
 func (migration *modifyOrgDomain) Up(ctx context.Context, db *bun.DB) error {
 	// only run this for old sqlite db
-	if db.Dialect().Name().String() != "sqlite" {
+	if db.Dialect().Name() != dialect.SQLite {
 		return nil
 	}
 

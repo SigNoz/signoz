@@ -87,17 +87,25 @@ func WrapIfNotExists(ctx context.Context, db *bun.DB, table string, column strin
 	}
 }
 
-func GetColumnType(ctx context.Context, tx bun.Tx, table string, column string) (string, error) {
+func GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
 	var columnType string
-	var query string
+	var err error
 
-	if tx.Dialect().Name() == dialect.SQLite {
-		query = `SELECT type FROM pragma_table_info('` + table + `') WHERE name = '` + column + `'`
+	if bun.Dialect().Name() == dialect.SQLite {
+		err = bun.NewSelect().
+			ColumnExpr("type").
+			TableExpr("pragma_table_info(?)", table).
+			Where("name = ?", column).
+			Scan(ctx, &columnType)
 	} else {
-		query = `SELECT data_type FROM information_schema.columns WHERE table_name = '` + table + `' AND column_name = '` + column + `'`
+		err = bun.NewSelect().
+			ColumnExpr("data_type").
+			TableExpr("information_schema.columns").
+			Where("table_name = ?", table).
+			Where("column_name = ?", column).
+			Scan(ctx, &columnType)
 	}
 
-	err := tx.QueryRowContext(ctx, query).Scan(&columnType)
 	if err != nil {
 		return "", err
 	}
@@ -105,8 +113,8 @@ func GetColumnType(ctx context.Context, tx bun.Tx, table string, column string) 
 	return columnType, nil
 }
 
-func MigrateIntToTimestamp(ctx context.Context, tx bun.Tx, table string, column string) error {
-	columnType, err := GetColumnType(ctx, tx, table, column)
+func MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+	columnType, err := GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
 	}
@@ -117,36 +125,36 @@ func MigrateIntToTimestamp(ctx context.Context, tx bun.Tx, table string, column 
 	}
 
 	// if the columns is integer then do this
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
+	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
 		return err
 	}
 
 	// add new timestamp column
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` TIMESTAMP`); err != nil {
+	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` TIMESTAMP`); err != nil {
 		return err
 	}
 
 	// copy data from old column to new column, converting from int (unix timestamp) to timestamp
-	if tx.Dialect().Name() == dialect.SQLite {
-		if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = datetime(`+column+`_old, 'unixepoch')`); err != nil {
+	if bun.Dialect().Name() == dialect.SQLite {
+		if _, err := bun.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = datetime(`+column+`_old, 'unixepoch')`); err != nil {
 			return err
 		}
 	} else {
-		if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = to_timestamp(cast(`+column+`_old as INTEGER))`); err != nil {
+		if _, err := bun.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = to_timestamp(cast(`+column+`_old as INTEGER))`); err != nil {
 			return err
 		}
 	}
 
 	// drop old column
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
+	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func MigrateIntToBoolean(ctx context.Context, tx bun.Tx, table string, column string) error {
-	columnType, err := GetColumnType(ctx, tx, table, column)
+func MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+	columnType, err := GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
 	}
@@ -155,22 +163,22 @@ func MigrateIntToBoolean(ctx context.Context, tx bun.Tx, table string, column st
 		return nil
 	}
 
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
+	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
 		return err
 	}
 
 	// add new boolean column
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` BOOLEAN`); err != nil {
+	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` BOOLEAN`); err != nil {
 		return err
 	}
 
 	// copy data from old column to new column, converting from int to boolean
-	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = CASE WHEN `+column+`_old = 1 THEN true ELSE false END`); err != nil {
+	if _, err := bun.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = CASE WHEN `+column+`_old = 1 THEN true ELSE false END`); err != nil {
 		return err
 	}
 
 	// drop old column
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
+	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
 		return err
 	}
 
