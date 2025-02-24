@@ -68,3 +68,11 @@ func ParseTreeMapMetricsParams(r *http.Request) (*metrics_explorer.TreeMapMetric
 
 	return treeMapMetricParams, nil
 }
+
+func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetricsRequest, *model.ApiError) {
+	var relatedMetricParams metrics_explorer.RelatedMetricsRequest
+	if err := json.NewDecoder(r.Body).Decode(&relatedMetricParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return &relatedMetricParams, nil
+}
