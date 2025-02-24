@@ -839,46 +839,65 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 		return nil, err
 	}
 
-	// Process each rule
+	metricRulesMap := make(map[string][]GettableRule)
+
 	for _, storedRule := range rules {
 		var rule GettableRule
-		err = json.Unmarshal([]byte(storedRule.Data), &rule)
-		if err != nil {
-			zap.L().Error("invalid rule data", zap.Error(err))
+		if err := json.Unmarshal([]byte(storedRule.Data), &rule); err != nil {
+			zap.L().Error("Invalid rule data", zap.Error(err))
 			continue
 		}
 
-		// Set metadata fields
+		if rule.AlertType != AlertTypeMetric || rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
+			continue
+		}
+
 		rule.Id = fmt.Sprintf("%d", storedRule.Id)
 		rule.CreatedAt = storedRule.CreatedAt
 		rule.CreatedBy = storedRule.CreatedBy
 		rule.UpdatedAt = storedRule.UpdatedAt
 		rule.UpdatedBy = storedRule.UpdatedBy
 
-		// Skip if not metric alert or missing required fields
-		if rule.AlertType != AlertTypeMetric ||
-			rule.RuleCondition == nil ||
-			rule.RuleCondition.CompositeQuery == nil {
-			continue
+		for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+			if query.AggregateAttribute.Key != "" {
+				metricRulesMap[query.AggregateAttribute.Key] = append(metricRulesMap[query.AggregateAttribute.Key], rule)
+			}
 		}
 
-		// Check builder queries
-		for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
-			if query.AggregateAttribute.Key == "" {
-				continue
-			}
-
-			// Check if this metric name is in the requested list
-			for _, metricName := range metricNames {
-				if query.AggregateAttribute.Key == metricName {
-					// Initialize slice if this is first alert for this metric
-					if result[metricName] == nil {
-						result[metricName] = make([]GettableRule, 0)
+		for _, query := range rule.RuleCondition.CompositeQuery.PromQueries {
+			if query.Query != "" {
+				for _, metricName := range metricNames {
+					if strings.Contains(query.Query, metricName) {
+						metricRulesMap[metricName] = append(metricRulesMap[metricName], rule)
 					}
-					result[metricName] = append(result[metricName], rule)
-					break
 				}
 			}
+		}
+
+		for _, query := range rule.RuleCondition.CompositeQuery.ClickHouseQueries {
+			if query.Query != "" {
+				for _, metricName := range metricNames {
+					if strings.Contains(query.Query, metricName) {
+						metricRulesMap[metricName] = append(metricRulesMap[metricName], rule)
+					}
+				}
+			}
+		}
+	}
+
+	for _, metricName := range metricNames {
+		if rules, exists := metricRulesMap[metricName]; exists {
+			seen := make(map[string]bool)
+			uniqueRules := make([]GettableRule, 0)
+
+			for _, rule := range rules {
+				if !seen[rule.Id] {
+					seen[rule.Id] = true
+					uniqueRules = append(uniqueRules, rule)
+				}
+			}
+
+			result[metricName] = uniqueRules
 		}
 	}
 

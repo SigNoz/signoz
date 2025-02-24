@@ -19,11 +19,11 @@ import (
 
 type SummaryService struct {
 	reader       interfaces.Reader
-	alertManager *rules.Manager
+	rulesManager *rules.Manager
 }
 
 func NewSummaryService(reader interfaces.Reader, alertManager *rules.Manager) *SummaryService {
-	return &SummaryService{reader: reader, alertManager: alertManager}
+	return &SummaryService{reader: reader, rulesManager: alertManager}
 }
 
 func (receiver *SummaryService) FilterKeys(ctx context.Context, params *metrics_explorer.FilterKeyRequest) (*metrics_explorer.FilterKeyResponse, *model.ApiError) {
@@ -178,7 +178,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		var metrics []string
 		var metricsAlerts []metrics_explorer.Alert
 		metrics = append(metrics, metricName)
-		data, err := receiver.alertManager.GetAlertDetailsForMetricNames(ctx, metrics)
+		data, err := receiver.rulesManager.GetAlertDetailsForMetricNames(ctx, metrics)
 		if err != nil {
 			return err
 		}
@@ -216,14 +216,18 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 		if apiError != nil {
 			return nil, apiError
 		}
-		response.TimeSeries = *cardinality
+		if cardinality != nil {
+			response.TimeSeries = *cardinality
+		}
 		return &response, nil
 	case metrics_explorer.SamplesTreeMap:
 		dataPoints, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		response.Samples = *dataPoints
+		if dataPoints != nil {
+			response.Samples = *dataPoints
+		}
 		return &response, nil
 	default:
 		return nil, nil

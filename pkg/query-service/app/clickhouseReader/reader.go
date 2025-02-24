@@ -6095,8 +6095,10 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	// Format metric names for query
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
 
-	// Construct the sample percentage query
-	sampleQuery := fmt.Sprintf(
+	// Build query using string builder for better performance
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf(
 		`WITH TotalSamples AS (
 			SELECT %s AS total_samples
 			FROM %s.%s
@@ -6111,9 +6113,15 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 			SELECT 
 				metric_name,
 				%s AS samples
-			FROM %s.%s
-			WHERE fingerprint IN 
-			(
+			FROM %s.%s`,
+		countExp, signozMetricDBName, sampleTable, // Total samples
+		countExp, signozMetricDBName, sampleTable, // Inner select samples
+	))
+
+	// Conditionally add the fingerprint subquery if whereClause is present
+	if whereClause != "" {
+		sb.WriteString(fmt.Sprintf(
+			` WHERE fingerprint IN (
 				SELECT fingerprint 
 				FROM %s.%s
 				WHERE unix_milli BETWEEN ? AND ?
@@ -6121,18 +6129,27 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 				AND metric_name IN (%s)
 				GROUP BY fingerprint
 			)
-			AND metric_name IN (%s)
+			AND metric_name IN (%s)`,
+			signozMetricDBName, localTsTable, whereClause, metricsList,
+			metricsList,
+		))
+	} else {
+		sb.WriteString(fmt.Sprintf(
+			` WHERE metric_name IN (%s)`,
+			metricsList,
+		))
+	}
+
+	sb.WriteString(`
 			GROUP BY metric_name
 		) AS s
 		JOIN TotalSamples t ON 1 = 1
 		ORDER BY percentage DESC
-		LIMIT %d;`,
-		countExp, signozMetricDBName, sampleTable, // Total samples
-		countExp, signozMetricDBName, sampleTable, // Inner select samples
-		signozMetricDBName, localTsTable, whereClause, metricsList, // Subquery conditions
-		metricsList, req.Limit, // Final conditions
-	)
+		LIMIT ?;`)
 
+	sampleQuery := sb.String()
+
+	// Add start and end time to args
 	args = append(args, start, end)
 
 	// Execute the sample percentage query
