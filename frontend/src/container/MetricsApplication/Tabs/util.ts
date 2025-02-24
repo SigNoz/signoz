@@ -94,33 +94,6 @@ export function onViewTracePopupClick({
 	};
 }
 
-export function onGraphClickHandler(
-	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
-) {
-	return async (
-		xValue: number,
-		yValue: number,
-		mouseX: number,
-		mouseY: number,
-		type: string,
-	): Promise<void> => {
-		const id = `${type}_button`;
-
-		const buttonElement = document.getElementById(id);
-
-		if (xValue) {
-			if (buttonElement) {
-				buttonElement.style.display = 'block';
-				buttonElement.style.left = `${mouseX}px`;
-				buttonElement.style.top = `${mouseY}px`;
-				setSelectedTimeStamp(Math.floor(xValue * 1_000));
-			}
-		} else if (buttonElement && buttonElement.style.display === 'block') {
-			buttonElement.style.display = 'none';
-		}
-	};
-}
-
 export function useGraphClickHandler(
 	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
 ): (
