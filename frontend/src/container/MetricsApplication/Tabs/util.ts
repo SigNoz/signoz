@@ -57,6 +57,18 @@ export function generateExplorerPath(
 }
 
 // TODO(@rahul-signoz): update the name of this function once we have view logs button in every panel
+
+/**
+ * Handles click events for viewing trace/logs popup
+ * @param selectedTraceTags - Selected trace tags
+ * @param servicename - Name of the service
+ * @param timestamp - Timestamp in seconds
+ * @param apmToTraceQuery - Query object
+ * @param isViewLogsClicked - Whether this is for viewing logs vs traces
+ * @param stepInterval - Time interval in seconds
+ * @param safeNavigate - Navigation function
+ 
+ */
 export function onViewTracePopupClick({
 	selectedTraceTags,
 	servicename,
