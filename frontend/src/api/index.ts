@@ -6,7 +6,9 @@ import loginApi from 'api/user/login';
 import afterLogin from 'AppRoutes/utils';
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
+import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, {
 	apiAlertManager,
@@ -18,13 +20,40 @@ import apiV1, {
 } from './apiV1';
 import { Logout } from './utils';
 
+const RESPONSE_TIMEOUT_THRESHOLD = 5000; // 5 seconds
+
 const interceptorsResponse = (
 	value: AxiosResponse<any>,
-): Promise<AxiosResponse<any>> => Promise.resolve(value);
+): Promise<AxiosResponse<any>> => {
+	if ((value.config as any)?.metadata) {
+		const duration =
+			new Date().getTime() - (value.config as any).metadata.startTime;
+
+		if (duration > RESPONSE_TIMEOUT_THRESHOLD && value.config.url !== '/event') {
+			eventEmitter.emit(Events.SLOW_API_WARNING, true, {
+				duration,
+				url: value.config.url,
+				threshold: RESPONSE_TIMEOUT_THRESHOLD,
+			});
+
+			console.warn(
+				`[API Warning] Request to ${value.config.url} took ${duration}ms`,
+			);
+		}
+	}
+
+	return Promise.resolve(value);
+};
 
 const interceptorsRequestResponse = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
+	// Attach metadata safely (not sent with the request)
+	Object.defineProperty(value, 'metadata', {
+		value: { startTime: new Date().getTime() },
+		enumerable: false, // Prevents it from being included in the request
+	});
+
 	const token = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) || '';
 
 	if (value && value.headers) {

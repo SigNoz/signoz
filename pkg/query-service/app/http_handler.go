@@ -4242,19 +4242,21 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 		return nil, nil
 	}
 
-	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
-	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
-	if len(metricsNamespaceParts) < 2 {
-		return nil, model.InternalError(fmt.Errorf(
-			"unexpected metric namespace: %s", metricsNamespace,
-		))
+	expectedLabelValues := map[string]string{
+		"cloud_provider":   "aws",
+		"cloud_account_id": cloudAccountId,
 	}
 
-	expectedLabelValues := map[string]string{
-		"cloud_provider":    "aws",
-		"cloud_account_id":  cloudAccountId,
-		"service_namespace": metricsNamespaceParts[0],
-		"service_name":      metricsNamespaceParts[1],
+	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
+	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
+
+	if len(metricsNamespaceParts) >= 2 {
+		expectedLabelValues["service_namespace"] = metricsNamespaceParts[0]
+		expectedLabelValues["service_name"] = metricsNamespaceParts[1]
+	} else {
+		// metrics for single word namespaces like "CWAgent" do not
+		// have the service_namespace label populated
+		expectedLabelValues["service_name"] = metricsNamespaceParts[0]
 	}
 
 	metricNamesCollectedBySvc := []string{}
