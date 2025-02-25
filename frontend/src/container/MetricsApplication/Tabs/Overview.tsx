@@ -30,6 +30,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -226,8 +227,8 @@ function Application(): JSX.Element {
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
-			const endTime = timestamp;
-			const startTime = timestamp - stepInterval;
+			const endTime = secondsToMilliseconds(timestamp);
+			const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, startTime.toString());
