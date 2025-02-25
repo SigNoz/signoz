@@ -124,6 +124,9 @@ export function formatTime(seconds: number): string {
 export const nanoToMilli = (nanoseconds: number): number =>
 	nanoseconds / 1_000_000;
 
+export const secondsToMilliseconds = (seconds: number): number =>
+	seconds * 1_000;
+
 export const epochToTimeString = (epochMs: number): string => {
 	console.log({ epochMs });
 	const date = new Date(epochMs);

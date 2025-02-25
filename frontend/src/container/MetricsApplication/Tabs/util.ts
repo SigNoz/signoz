@@ -16,6 +16,7 @@ import {
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
+import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 export const dbSystemTags: Tags[] = [
@@ -66,8 +67,8 @@ export function onViewTracePopupClick({
 	safeNavigate,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
-		const endTime = timestamp * 1_000;
-		const startTime = (timestamp - (stepInterval || 60)) * 1_000;
+		const endTime = secondsToMilliseconds(timestamp);
+		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
 
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, startTime.toString());
