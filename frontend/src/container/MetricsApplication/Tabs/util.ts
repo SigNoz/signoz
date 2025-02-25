@@ -66,8 +66,8 @@ export function onViewTracePopupClick({
 	safeNavigate,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
-		const endTime = timestamp;
-		const startTime = timestamp - (stepInterval || 60);
+		const endTime = timestamp * 1_000;
+		const startTime = (timestamp - (stepInterval || 60)) * 1_000;
 
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, startTime.toString());
@@ -112,7 +112,7 @@ export function onGraphClickHandler(
 				buttonElement.style.display = 'block';
 				buttonElement.style.left = `${mouseX}px`;
 				buttonElement.style.top = `${mouseY}px`;
-				setSelectedTimeStamp(Math.floor(xValue * 1_000));
+				setSelectedTimeStamp(Math.floor(xValue));
 			}
 		} else if (buttonElement && buttonElement.style.display === 'block') {
 			buttonElement.style.display = 'none';
