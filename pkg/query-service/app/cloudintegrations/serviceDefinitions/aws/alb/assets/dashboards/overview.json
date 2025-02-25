@@ -1,0 +1,1738 @@
+{
+  "description": "Overview of Application Load Balancers",
+  "image": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE0Ljk0OTQgMTMuOTQyQzE2LjIzMTggMTIuNDI1OCAxNy4zMjY4IDkuNzAyMiAxNi4xOTU2IDYuNTc0ODdDMTUuNjQ0MyA1LjA1MjQ1IDE1LjAyMTkgNC4yMDI0OSAxNC4yOTY5IDMuNjYyNTJDMTMuODU1NyAzLjMzMzc5IDEyLjA5MzMgMi41MDYzMyA5Ljc1OTY1IDIuODY3NTZDOC4wNTM0OSAzLjEzMjU1IDUuNzc0ODcgNC4yMDg3NCA0LjI5MzY5IDUuOTU5OUMyLjg1NzUyIDcuNjYxMDYgMS43NDg4MyA5LjAwNDc0IDEuNjk3NTggMTAuMzA5N0MxLjYzMTMzIDExLjk4ODMgMi44OTYyNyAxMy40MzA4IDMuMDUwMDEgMTMuNjY0NUMzLjMyMzc0IDE0LjA3OTUgNS4xOTExNSAxNi40NTE4IDguNjk5NzEgMTYuNTczMUMxMS43OTcgMTYuNjc5MyAxMy44MTQ0IDE1LjI4NDQgMTQuOTQ5NCAxMy45NDJaIiBmaWxsPSIjNDAzRDNFIi8+CjxwYXRoIGQ9Ik00LjU1MzYzIDIuNzM3NDdDMi45Mzc0NiAzLjg5MTE2IDEuMTIxMzEgNi4yNTEwMyAxLjQ0NzU0IDkuNTYwODZDMS42MDYyOCAxMS4xNzIgMi4wMDI1MSAxMi4xNDk1IDIuNTcxMjMgMTIuODUwN0MyLjkxNzQ2IDEzLjI3ODIgNC40MTk4OCAxNC41NDkzIDYuNzczNTEgMTQuNzM2OEM5LjE0NTg4IDE0LjkyNTYgMTAuOTQ5NSAxNC4zOTQ0IDEyLjgzMzIgMTMuMDg0NEMxNi42NjE3IDEwLjQyMDggMTYuMDk4IDYuMzkzNTMgMTUuOTM0MyA1LjkyNDhDMTUuNzcwNSA1LjQ1NjA3IDE0LjU0NDQgMi42OTYyMiAxMS4xNzMzIDEuNzE1MDJDOC4xOTg0NCAwLjg1MDA2OCA1Ljk4MzU1IDEuNzE1MDIgNC41NTM2MyAyLjczNzQ3WiIgZmlsbD0iIzVFNjM2NyIvPgo8cGF0aCBkPSJNNy4zOTM1MyAyLjk2MTA5QzUuNjE3MzcgMi44OTczNCAzLjkxOTk2IDQuMjg4NTIgMy43NTYyMiA2LjAwNTkzQzMuNTkyNDggNy43MjIwOSA0LjY1NDkyIDkuMDI5NTIgNi4zMDk4MyA5LjI5NTc2QzcuOTY0NzUgOS41NjA3NCA5Ljg3ODM5IDguNTU1OCAxMC4yNjM0IDYuNDUwOTFDMTAuNjYwOSA0LjI4MjI3IDkuMDg5NjkgMy4wMjIzNCA3LjM5MzUzIDIuOTYxMDlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNy45NDIxNyA1LjkwMTE1QzcuOTQyMTcgNS45MDExNSA4LjM2OTY1IDUuODEyNCA4LjQ1NDY1IDUuMTgyNDRDOC41MzgzOSA0LjU2MjQ3IDguMjMwOTEgNC4wMzM3NSA3LjUxMzQ1IDMuODQzNzZDNi43MzM0OSAzLjYzNzUyIDYuMjA0NzcgNC4wNjYyNSA2LjA2NzI3IDQuNTE3NDdDNS44NzYwMyA1LjE0NDk0IDYuMTU4NTIgNS40NDM2NyA2LjE1ODUyIDUuNDQzNjdDNi4xNTg1MiA1LjQ0MzY3IDUuMzkzNTYgNS42Mjc0MSA1LjMzMjMxIDYuNTI5ODdDNS4yNzQ4MSA3LjM4MTA3IDUuODU2MDMgNy44Mzg1NSA2LjQzOTc1IDcuOTc4NTRDNy4xNjA5NiA4LjE1MjI4IDcuOTc4NDIgNy45NTQ3OSA4LjE3ODQxIDcuMDM0ODRDOC4zNDQ2NSA2LjI3NzM4IDcuOTQyMTcgNS45MDExNSA3Ljk0MjE3IDUuOTAxMTVaIiBmaWxsPSIjMzAzMDMwIi8+CjxwYXRoIGQ9Ik02LjczOTgzIDQuNzUzNjJDNi42NzEwOSA1LjAxMjM1IDYuODA4NTggNS4yNjIzNCA3LjA3ODU3IDUuMzMxMDlDNy4zNjk4IDUuNDA0ODMgNy42MzQ3OSA1LjMwODU5IDcuNzA2MDMgNS4wMTExQzcuNzY4NTMgNC43NDczNyA3LjY0MzU0IDQuNTE0ODggNy4zMzYwNSA0LjQzOTg4QzcuMDgzNTcgNC4zNzczOSA2LjgxNDgzIDQuNDcxMTMgNi43Mzk4MyA0Ljc1MzYyWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTYuOTU5NzggNi4wMzk3NEM2LjYzMjMgNS45Mzg0OSA2LjE5OTgyIDYuMDY0NzMgNi4xMzEwNyA2LjUwNDcxQzYuMDYyMzMgNi45NDQ2OSA2LjMyNjA2IDcuMTY5NjggNi42NzEwNCA3LjIzMjE3QzcuMDE2MDMgNy4yOTQ2NyA3LjM0MjI2IDcuMTEzNDMgNy40MDYwMSA2Ljc2MDk1QzcuNDY4NSA2LjQwOTcyIDcuMjg2MDEgNi4xMzk3MyA2Ljk1OTc4IDYuMDM5NzRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K",
+  "layout": [
+    {
+      "h": 5,
+      "i": "e13232f0-6308-4466-94c0-629cae762ff0",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 5,
+      "i": "9b99d70a-f12a-4df7-9a68-660a0ab55e42",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 5,
+      "i": "5a9ec75f-3bcd-4829-94e6-452caa2cc0d2",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 5
+    },
+    {
+      "h": 5,
+      "i": "e16fb999-491b-4cfa-b9aa-d558f2132b6b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 5
+    },
+    {
+      "h": 5,
+      "i": "2be35406-693a-435b-a844-2df239be0b60",
+      "w": 6,
+      "x": 0,
+      "y": 10
+    },
+    {
+      "h": 5,
+      "i": "480ecee2-1271-4dfd-a7bb-9f9845957c6e",
+      "w": 6,
+      "x": 6,
+      "y": 10
+    },
+    {
+      "h": 5,
+      "i": "2243e542-0bbc-4e2a-a4dd-2e121abc9b95",
+      "w": 6,
+      "x": 0,
+      "y": 15
+    },
+    {
+      "h": 5,
+      "i": "3bb56361-9a67-47ce-b186-ccee02e15f51",
+      "w": 6,
+      "x": 6,
+      "y": 15
+    },
+    {
+      "h": 5,
+      "i": "36cbc321-6c02-4d13-895e-955d71d376b4",
+      "w": 6,
+      "x": 0,
+      "y": 20
+    }
+  ],
+  "panelMap": {},
+  "tags": [],
+  "title": "Application Load Balancer Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "Account": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Account",
+      "id": "d5ef5880-68b1-4097-b4e5-9ce74200831f",
+      "key": "d5ef5880-68b1-4097-b4e5-9ce74200831f",
+      "modificationUUID": "9974ddda-3bc1-401d-b04a-364ea9a23866",
+      "multiSelect": false,
+      "name": "Account",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_account_id') as cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApplicationELB_ConsumedLCUs_max'\nGROUP BY cloud_account_id",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "Region": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Region",
+      "id": "bad33abd-ab38-493b-b23e-131659b6d03c",
+      "key": "bad33abd-ab38-493b-b23e-131659b6d03c",
+      "modificationUUID": "1aa1ef37-260c-4ca9-8aa9-f2ffb289c9e3",
+      "multiSelect": false,
+      "name": "Region",
+      "order": 1,
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_region') as cloud_region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_ApplicationELB_ConsumedLCUs_max'\n    and JSONExtractString(labels, 'cloud_account_id') IN {{.Account}}\nGROUP BY cloud_region\n",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The time elapsed, after the request leaves the load balancer until the target starts to send the response headers.\n\nSee TargetResponseTime at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "9b99d70a-f12a-4df7-9a68-660a0ab55e42",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_TargetResponseTime_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_TargetResponseTime_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "b780a1f6",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "773dc227",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "9586fe9e-fbf6-4633-a485-a5a023b2a6f4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Target Response Time",
+      "yAxisUnit": "s"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of requests processed over IPv4 and IPv6. This metric is only incremented for requests where the load balancer node was able to choose a target. Requests that are rejected before a target is chosen are not reflected in this metric.\n\nSee RequestCount at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "e13232f0-6308-4466-94c0-629cae762ff0",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_RequestCount_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_RequestCount_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "1b931812",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "0d07f9d7",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "b52c9491-e720-48c7-a2d3-06816bc58d27",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Requests",
+      "yAxisUnit": "opm"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of HTTP 5XX response codes generated by the targets. This does not include any response codes generated by the load balancer.\n\nSee HTTPCode_Target_5XX_Count at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "5a9ec75f-3bcd-4829-94e6-452caa2cc0d2",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "f7bc2d4b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "039989af",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "349ba026-b912-4a46-b55b-c7e611c72958",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Target 5XX",
+      "yAxisUnit": "opm"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of HTTP 5XX server error codes that originate from the load balancer. This count does not include any response codes generated by the targets.\n\nSee HTTPCode_ELB_5XX_Count at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "e16fb999-491b-4cfa-b9aa-d558f2132b6b",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_HTTPCode_ELB_5XX_Count_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_HTTPCode_ELB_5XX_Count_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "31d42d0f",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "a9cc164d",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "7349ee78-f274-410d-9781-41e5426849d9",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Loadbalancer 5XX",
+      "yAxisUnit": "opm"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The total number of concurrent TCP connections active from clients to the load balancer and from the load balancer to targets.\n\nSee ActiveConnectionCount at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "2be35406-693a-435b-a844-2df239be0b60",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_ActiveConnectionCount_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_ActiveConnectionCount_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "f8462a3a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "a82a642d",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "9ee822f2-0759-4df4-a4ea-c4344bfd0ce4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Active Connections",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of connections that were not successfully established between the load balancer and target. This metric does not apply if the target is a Lambda function. This metric is not incremented for unsuccessful health check connections.\n\nSee TargetConnectionErrorCount at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "480ecee2-1271-4dfd-a7bb-9f9845957c6e",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_TargetConnectionErrorCount_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_TargetConnectionErrorCount_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "78e8cd79",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "8506e24a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "2104e6fc-2701-4b8b-8b3e-a051234469f9",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Target Connection Errors",
+      "yAxisUnit": "cpm"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of load balancer capacity units (LCU) used by your load balancer. You pay for the number of LCUs that you use per hour. When LCU reservation is active, ConsumedLCUs will report 0 if usage is below the reserved capacity, and will report values above 0 if usage exceeds the reserved LCUs\n\nSee ConsumedLCUs at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "2243e542-0bbc-4e2a-a4dd-2e121abc9b95",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_ConsumedLCUs_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_ConsumedLCUs_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "0222efad",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "730563a4",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ceb19abf-c0a0-4b33-92bc-c5ea428e9698",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Consumed LCUs",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The total number of bytes processed by the load balancer over IPv4 and IPv6 (HTTP header and HTTP payload). This count includes traffic to and from clients and Lambda functions, and traffic from an Identity Provider (IdP) if user authentication is enabled.\n\nSee ProcessedBytes at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "3bb56361-9a67-47ce-b186-ccee02e15f51",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_ProcessedBytes_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_ProcessedBytes_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "d1d3efce",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "2bd05e68",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ce91664b-df45-440b-9f6f-8ceb1630c14f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Processed Bytes",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The maximum number of load balancer capacity units (LCU) used by your load balancer at a given point in time. Only applicable when using LCU Reservation.\n\nSee PeakLCUs at https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html",
+      "fillSpans": false,
+      "id": "36cbc321-6c02-4d13-895e-955d71d376b4",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_ApplicationELB_PeakLCUs_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_ApplicationELB_PeakLCUs_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "122133ba",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "52e12ea7",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "LoadBalancer--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "LoadBalancer",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{LoadBalancer}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "004aa0ff-270b-45cf-9136-8a90cf5c26a7",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Peak LCUs",
+      "yAxisUnit": "none"
+    }
+  ]
+}
