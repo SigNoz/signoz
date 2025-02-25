@@ -221,6 +221,13 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
+	/**
+	 *
+	 * @param timestamp - The timestamp in seconds
+	 * @param apmToTraceQuery - query object
+	 * @param isViewLogsClicked - Whether this is for viewing logs vs traces
+	 * @returns A callback function that handles the navigation when executed
+	 */
 	const onErrorTrackHandler = useCallback(
 		(
 			timestamp: number,
