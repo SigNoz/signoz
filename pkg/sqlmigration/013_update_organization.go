@@ -9,9 +9,12 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
-type updateOrganization struct{}
+type updateOrganization struct {
+	store sqlstore.SQLStore
+}
 
 func NewUpdateOrganizationFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("update_organization"), newUpdateOrganization)
@@ -71,14 +74,14 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 
 	// since organizations, users has created_at as integer instead of timestamp
 	for _, table := range []string{"organizations", "users", "invites"} {
-		if err := MigrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
+		if err := db.Dialect().MigrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
 			return err
 		}
 	}
 
 	// migrate is_anonymous and has_opted_updates to boolean from int
 	for _, column := range []string{"is_anonymous", "has_opted_updates"} {
-		if err := MigrateIntToBoolean(ctx, tx, "organizations", column); err != nil {
+		if err := db.Dialect().MigrateIntToBoolean(ctx, tx, "organizations", column); err != nil {
 			return err
 		}
 	}

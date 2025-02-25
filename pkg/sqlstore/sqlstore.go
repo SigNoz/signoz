@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
@@ -15,8 +16,16 @@ type SQLStore interface {
 	BunDB() *bun.DB
 	// SQLxDB returns an instance of sqlx.DB.
 	SQLxDB() *sqlx.DB
+	// Returns the dialect of the database.
+	Dialect() SQLDialect
 }
 
 type SQLStoreHook interface {
 	bun.QueryHook
+}
+
+type SQLDialect interface {
+	MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error
+	MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error
+	GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error)
 }
