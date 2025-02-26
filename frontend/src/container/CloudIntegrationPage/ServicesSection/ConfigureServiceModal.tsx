@@ -12,7 +12,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
 import logEvent from '../../../api/common/logEvent';
-import { TELEMETRY_EVENTS } from '../constants';
 
 interface IConfigureServiceModalProps {
 	isOpen: boolean;
@@ -86,11 +85,11 @@ function ConfigureServiceModal({
 						]);
 						onClose();
 
-						logEvent(TELEMETRY_EVENTS.SERVICE_SETTINGS_SAVED, {
-							cloud_account_id: cloudAccountId,
-							service_id: serviceId,
-							logs_enabled: values?.logs,
-							metrics_enabled: values?.metrics,
+						logEvent('AWS Integration: Service settings saved', {
+							cloudAccountId,
+							serviceId,
+							logsEnabled: values?.logs,
+							metricsEnabled: values?.metrics,
 						});
 					},
 					onError: (error) => {

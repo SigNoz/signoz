@@ -21,7 +21,6 @@ import {
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
-import { TELEMETRY_EVENTS } from '../../../container/CloudIntegrationPage/constants';
 import { useConnectionParams } from './useConnectionParams';
 import { useGenerateConnectionUrl } from './useGenerateConnectionUrl';
 
@@ -119,7 +118,7 @@ export function useIntegrationModal({
 		(payload: GenerateConnectionUrlPayload): void => {
 			generateUrl(payload, {
 				onSuccess: (data: ConnectionUrlResponse) => {
-					logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTION_ATTEMPT_REDIRECTED_TO_AWS, {
+					logEvent('AWS Integration: Account connection attempt redirected to AWS', {
 						id: data.account_id,
 					});
 					window.open(data.connection_url, '_blank');

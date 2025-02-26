@@ -6,7 +6,6 @@ import { AccountStatusResponse } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../../api/common/logEvent';
-import { TELEMETRY_EVENTS } from '../../constants';
 import { ModalStateEnum, RegionFormProps } from '../types';
 import AlertMessage from './AlertMessage';
 import {
@@ -51,13 +50,13 @@ export function RegionForm({
 		onSuccess: (data: AccountStatusResponse) => {
 			if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
 				setModalState(ModalStateEnum.SUCCESS);
-				logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTED, {
-					cloud_account_id: data?.data?.cloud_account_id,
+				logEvent('AWS Integration: Account connected', {
+					cloudAccountId: data?.data?.cloud_account_id,
 					status: data?.data?.status,
 				});
 			} else if (Date.now() - startTimeRef.current >= errorTimeout) {
 				setModalState(ModalStateEnum.ERROR);
-				logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTION_ATTEMPT_TIMED_OUT, {
+				logEvent('AWS Integration: Account connection attempt timed Out', {
 					id: accountId,
 				});
 			}

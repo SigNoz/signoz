@@ -10,7 +10,6 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { TELEMETRY_EVENTS } from '../../constants';
 import { CloudAccount } from '../../ServicesSection/types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
@@ -171,7 +170,7 @@ function AccountActions(): JSX.Element {
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
 	const startAccountConnectionAttempt = (): void => {
 		setIsIntegrationModalOpen(true);
-		logEvent(TELEMETRY_EVENTS.ACCOUNT_CONNECTION_ATTEMPT_STARTED, {});
+		logEvent('AWS Integration: Account connection attempt started', {});
 	};
 
 	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
@@ -179,18 +178,18 @@ function AccountActions(): JSX.Element {
 	);
 	const openAccountSettings = (): void => {
 		setIsAccountSettingsModalOpen(true);
-		logEvent(TELEMETRY_EVENTS.ACCOUNT_SETTINGS_VIEWED, {
-			cloud_account_id: activeAccount?.cloud_account_id,
+		logEvent('AWS Integration: Account settings viewed', {
+			cloudAccountId: activeAccount?.cloud_account_id,
 		});
 	};
 
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
 		if (activeAccount) {
-			logEvent(TELEMETRY_EVENTS.ACCOUNT_VIEWED, {
-				cloud_account_id: activeAccount?.cloud_account_id,
+			logEvent('AWS Integration: Account viewed', {
+				cloudAccountId: activeAccount?.cloud_account_id,
 				status: activeAccount?.status,
-				enabled_regions: activeAccount?.config?.regions,
+				enabledRegions: activeAccount?.config?.regions,
 			});
 		}
 	}, [activeAccount]);

@@ -15,7 +15,6 @@ import { AccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
-import { TELEMETRY_EVENTS } from '../../../container/CloudIntegrationPage/constants';
 
 interface UseAccountSettingsModalProps {
 	onClose: () => void;
@@ -91,9 +90,9 @@ export function useAccountSettingsModal({
 						setActiveAccount(newActiveAccount);
 						onClose();
 
-						logEvent(TELEMETRY_EVENTS.ACCOUNT_SETTINGS_UPDATED, {
-							cloud_account_id: newActiveAccount?.cloud_account_id,
-							enabled_regions: newActiveAccount?.config?.regions,
+						logEvent('AWS Integration: Account settings Updated', {
+							cloudAccountId: newActiveAccount?.cloud_account_id,
+							enabledRegions: newActiveAccount?.config?.regions,
 						});
 					},
 				},

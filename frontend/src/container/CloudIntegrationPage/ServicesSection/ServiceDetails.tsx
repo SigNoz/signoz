@@ -10,7 +10,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useMemo, useState } from 'react';
 
 import logEvent from '../../../api/common/logEvent';
-import { TELEMETRY_EVENTS } from '../constants';
 import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
@@ -61,9 +60,9 @@ function ServiceDetails(): JSX.Element | null {
 	);
 	const openServiceConfigModal = (): void => {
 		setIsConfigureServiceModalOpen(true);
-		logEvent(TELEMETRY_EVENTS.SERVICE_SETTINGS_OPENED, {
-			cloud_account_id: cloudAccountId,
-			service_id: serviceId,
+		logEvent('AWS Integration: Service settings viewed', {
+			cloudAccountId,
+			serviceId,
 		});
 	};
 
@@ -92,9 +91,9 @@ function ServiceDetails(): JSX.Element | null {
 	// log telemetry event on visiting details of a service.
 	useEffect(() => {
 		if (serviceId) {
-			logEvent(TELEMETRY_EVENTS.SERVICE_VIEWED, {
-				cloud_account_id: cloudAccountId,
-				service_id: serviceId,
+			logEvent('AWS Integration: Service viewed', {
+				cloudAccountId,
+				serviceId,
 			});
 		}
 	}, [cloudAccountId, serviceId]);
