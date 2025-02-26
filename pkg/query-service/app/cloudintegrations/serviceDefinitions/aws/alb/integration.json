@@ -1,6 +1,6 @@
 {
   "id": "alb",
-  "title": "Application Load Balancer",
+  "title": "Application ELB",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supported_signals": {
