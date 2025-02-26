@@ -56,7 +56,7 @@ export function RegionForm({
 				});
 			} else if (Date.now() - startTimeRef.current >= errorTimeout) {
 				setModalState(ModalStateEnum.ERROR);
-				logEvent('AWS Integration: Account connection attempt timed Out', {
+				logEvent('AWS Integration: Account connection attempt timed out', {
 					id: accountId,
 				});
 			}

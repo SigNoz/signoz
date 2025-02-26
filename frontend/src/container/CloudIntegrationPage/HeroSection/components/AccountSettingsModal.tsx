@@ -52,7 +52,7 @@ function AccountSettingsModal({
 		handleClose();
 		history.replace({ search: urlQuery.toString() });
 
-		logEvent("AWS Integration: Account removed'", {
+		logEvent('AWS Integration: Account removed', {
 			id: account?.id,
 			cloudAccountId: account?.cloud_account_id,
 		});
