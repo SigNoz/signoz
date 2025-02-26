@@ -12,6 +12,10 @@ interface SafeNavigateParams {
 	search?: string;
 }
 
+interface UseSafeNavigateProps {
+	enableSameURLCheck?: boolean;
+}
+
 const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
 	if (url1.pathname !== url2.pathname) return false;
 
@@ -78,7 +82,9 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 
 	return newKeys.length > 0;
 };
-export const useSafeNavigate = (): {
+export const useSafeNavigate = (
+	{ enableSameURLCheck }: UseSafeNavigateProps = { enableSameURLCheck: true },
+): {
 	safeNavigate: (
 		to: string | SafeNavigateParams,
 		options?: NavigateOptions,
@@ -108,7 +114,7 @@ export const useSafeNavigate = (): {
 			const urlsAreSame = areUrlsEffectivelySame(currentUrl, targetUrl);
 			const isDefaultParamsNavigation = isDefaultNavigation(currentUrl, targetUrl);
 
-			if (urlsAreSame) {
+			if (enableSameURLCheck && urlsAreSame) {
 				return;
 			}
 
@@ -129,7 +135,7 @@ export const useSafeNavigate = (): {
 				);
 			}
 		},
-		[navigate, location.pathname, location.search],
+		[navigate, location.pathname, location.search, enableSameURLCheck],
 	);
 
 	return { safeNavigate };
