@@ -65,11 +65,6 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		isError: isDeploymentsDataError,
 	} = useGetDeploymentsData();
 
-	useEffect(() => {
-		console.log('status', status);
-		console.log('ingestionData', ingestionData);
-	}, [status, ingestionData]);
-
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
 		notifications.success({

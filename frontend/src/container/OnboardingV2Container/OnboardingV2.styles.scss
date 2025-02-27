@@ -715,6 +715,8 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
+				white-space: normal;
+				height: auto !important;
 				gap: 8px;
 			}
 		}

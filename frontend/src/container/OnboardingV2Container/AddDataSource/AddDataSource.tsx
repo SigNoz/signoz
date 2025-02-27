@@ -183,13 +183,6 @@ function OnboardingAddDataSource(): JSX.Element {
 		setDocsUrl(updatedUrl);
 	};
 
-	const resetState = (): void => {
-		setSelectedDataSource(null);
-		setSelectedFramework(null);
-		setSelectedEnvironment(null);
-		setHasMoreQuestions(true);
-	};
-
 	const handleSelectDataSource = (dataSource: Entity): void => {
 		setSelectedDataSource(dataSource);
 		setSelectedFramework(null);
@@ -349,7 +342,6 @@ function OnboardingAddDataSource(): JSX.Element {
 		setCurrentStep(step);
 
 		if (step === 1) {
-			resetState();
 			setSetupStepItems([
 				{
 					...setupStepItemsBase[0],
@@ -361,9 +353,7 @@ function OnboardingAddDataSource(): JSX.Element {
 				},
 				...setupStepItemsBase.slice(2),
 			]);
-		}
-
-		if (step === 2) {
+		} else if (step === 2) {
 			setSetupStepItems([
 				{
 					...setupStepItemsBase[0],
@@ -377,9 +367,7 @@ function OnboardingAddDataSource(): JSX.Element {
 				},
 				...setupStepItemsBase.slice(2),
 			]);
-		}
-
-		if (step === 3) {
+		} else if (step === 3) {
 			switch (selectedDataSource?.module) {
 				case 'apm':
 					history.push(ROUTES.APPLICATION);
@@ -726,7 +714,6 @@ function OnboardingAddDataSource(): JSX.Element {
 												},
 											);
 
-											handleFilterByCategory('All');
 											handleUpdateCurrentStep(1);
 										}}
 									>
