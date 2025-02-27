@@ -89,7 +89,7 @@ type MetricDetailsDTO struct {
 	Samples          uint64      `json:"samples"`
 	TimeSeriesTotal  uint64      `json:"timeSeriesTotal"`
 	TimeSeriesActive uint64      `json:"timeSeriesActive"`
-	LastReceived     uint64      `json:"lastReceived"`
+	LastReceived     int64       `json:"lastReceived"`
 	Attributes       []Attribute `json:"attributes"`
 	Metadata         Metadata    `json:"metadata"`
 	Alerts           []Alert     `json:"alerts"`
