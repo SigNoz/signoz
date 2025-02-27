@@ -829,3 +829,77 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 
 	return alertCount, apiErr
 }
+
+func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]GettableRule, error) {
+	result := make(map[string][]GettableRule)
+
+	rules, err := m.ruleDB.GetStoredRules(ctx)
+	if err != nil {
+		zap.L().Error("Error getting stored rules", zap.Error(err))
+		return nil, err
+	}
+
+	metricRulesMap := make(map[string][]GettableRule)
+
+	for _, storedRule := range rules {
+		var rule GettableRule
+		if err := json.Unmarshal([]byte(storedRule.Data), &rule); err != nil {
+			zap.L().Error("Invalid rule data", zap.Error(err))
+			continue
+		}
+
+		if rule.AlertType != AlertTypeMetric || rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
+			continue
+		}
+
+		rule.Id = fmt.Sprintf("%d", storedRule.Id)
+		rule.CreatedAt = storedRule.CreatedAt
+		rule.CreatedBy = storedRule.CreatedBy
+		rule.UpdatedAt = storedRule.UpdatedAt
+		rule.UpdatedBy = storedRule.UpdatedBy
+
+		for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+			if query.AggregateAttribute.Key != "" {
+				metricRulesMap[query.AggregateAttribute.Key] = append(metricRulesMap[query.AggregateAttribute.Key], rule)
+			}
+		}
+
+		for _, query := range rule.RuleCondition.CompositeQuery.PromQueries {
+			if query.Query != "" {
+				for _, metricName := range metricNames {
+					if strings.Contains(query.Query, metricName) {
+						metricRulesMap[metricName] = append(metricRulesMap[metricName], rule)
+					}
+				}
+			}
+		}
+
+		for _, query := range rule.RuleCondition.CompositeQuery.ClickHouseQueries {
+			if query.Query != "" {
+				for _, metricName := range metricNames {
+					if strings.Contains(query.Query, metricName) {
+						metricRulesMap[metricName] = append(metricRulesMap[metricName], rule)
+					}
+				}
+			}
+		}
+	}
+
+	for _, metricName := range metricNames {
+		if rules, exists := metricRulesMap[metricName]; exists {
+			seen := make(map[string]bool)
+			uniqueRules := make([]GettableRule, 0)
+
+			for _, rule := range rules {
+				if !seen[rule.Id] {
+					seen[rule.Id] = true
+					uniqueRules = append(uniqueRules, rule)
+				}
+			}
+
+			result[metricName] = uniqueRules
+		}
+	}
+
+	return result, nil
+}
