@@ -74,7 +74,8 @@ services:
         tar -xvzf histogram-quantile.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
     deploy:
-      restart: on-failure
+      restart:
+        condition: on-failure
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
