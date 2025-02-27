@@ -59,6 +59,9 @@ export const getListColumns = (
 			key: 'date',
 			title: 'Timestamp',
 			width: 145,
+			sorter: (a, b): number =>
+				new Date(a.date).getTime() - new Date(b.date).getTime(),
+			sortDirections: ['ascend', 'descend'],
 			render: (value, item): JSX.Element => {
 				const date =
 					typeof value === 'string'
@@ -80,48 +83,56 @@ export const getListColumns = (
 	];
 
 	const columns: ColumnsType<RowData> =
-		selectedColumns.map(({ dataType, key, type }) => ({
-			title: key,
-			dataIndex: key,
-			key: `${key}-${dataType}-${type}`,
-			width: 145,
-			render: (value, item): JSX.Element => {
-				if (value === '') {
+		selectedColumns.map(({ dataType, key, type }) => {
+			const isDurationKey = key === 'durationNano' || key === 'duration_nano';
+
+			return {
+				title: key,
+				dataIndex: key,
+				key: `${key}-${dataType}-${type}`,
+				width: 145,
+				sorter: isDurationKey
+					? (a, b): number => Number(a[key]) - Number(b[key])
+					: undefined,
+				sortDirections: isDurationKey ? ['ascend', 'descend'] : undefined,
+				render: (value, item): JSX.Element => {
+					if (value === '') {
+						return (
+							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+								<Typography data-testid={key}>N/A</Typography>
+							</BlockLink>
+						);
+					}
+
+					if (key === 'httpMethod' || key === 'responseStatusCode') {
+						return (
+							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+								<Tag data-testid={key} color="magenta">
+									{value}
+								</Tag>
+							</BlockLink>
+						);
+					}
+
+					if (isDurationKey) {
+						return (
+							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
+								<Typography data-testid={key}>{getMs(value)}ms</Typography>
+							</BlockLink>
+						);
+					}
+
 					return (
 						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-							<Typography data-testid={key}>N/A</Typography>
+							<Typography data-testid={key}>
+								<LineClampedText text={value} lines={3} />
+							</Typography>
 						</BlockLink>
 					);
-				}
-
-				if (key === 'httpMethod' || key === 'responseStatusCode') {
-					return (
-						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-							<Tag data-testid={key} color="magenta">
-								{value}
-							</Tag>
-						</BlockLink>
-					);
-				}
-
-				if (key === 'durationNano' || key === 'duration_nano') {
-					return (
-						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-							<Typography data-testid={key}>{getMs(value)}ms</Typography>
-						</BlockLink>
-					);
-				}
-
-				return (
-					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-						<Typography data-testid={key}>
-							<LineClampedText text={value} lines={3} />
-						</Typography>
-					</BlockLink>
-				);
-			},
-			responsive: ['md'],
-		})) || [];
+				},
+				responsive: ['md'],
+			};
+		}) || [];
 
 	return [...initialColumns, ...columns];
 };
