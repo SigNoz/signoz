@@ -26,6 +26,7 @@ export interface AccountStatusResponse {
 	status: 'success';
 	data: {
 		id: string;
+		cloud_account_id: string;
 		status: {
 			integration: {
 				last_heartbeat_ts_ms: number | null;
