@@ -36,8 +36,11 @@ export function BlockLink({
 export const transformDataWithDate = (
 	data: QueryDataV3[],
 ): Omit<ILog, 'timestamp'>[] =>
-	data[0]?.list?.map(({ data, timestamp }) => ({ ...data, date: timestamp })) ||
-	[];
+	data[0]?.list?.map(({ data, timestamp }) => ({
+		...data,
+		date: timestamp,
+		numericTimestamp: new Date(timestamp).getTime(),
+	})) || [];
 
 export const getTraceLink = (record: RowData): string =>
 	`${ROUTES.TRACE}/${record.traceID}${formUrlParams({
@@ -60,7 +63,7 @@ export const getListColumns = (
 			title: 'Timestamp',
 			width: 145,
 			sorter: (a, b): number =>
-				new Date(a.date).getTime() - new Date(b.date).getTime(),
+				Number(a.numericTimestamp) - Number(b.numericTimestamp),
 			sortDirections: ['ascend', 'descend'],
 			render: (value, item): JSX.Element => {
 				const date =
