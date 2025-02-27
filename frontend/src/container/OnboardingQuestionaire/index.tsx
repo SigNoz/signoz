@@ -122,7 +122,7 @@ function OnboardingQuestionaire(): JSX.Element {
 			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
 			if (isOnboardingV3Enabled) {
-				history.push(ROUTES.GET_STARTED_V3);
+				history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 			} else {
 				history.push(ROUTES.GET_STARTED);
 			}

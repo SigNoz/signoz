@@ -393,7 +393,7 @@ export default function Onboarding(): JSX.Element {
 							resetProgress();
 
 							if (isOnboardingV3Enabled) {
-								history.push(ROUTES.GET_STARTED_V3);
+								history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 							} else {
 								history.push(ROUTES.GET_STARTED);
 							}

@@ -31,7 +31,7 @@ export const getStartedMenuItem = {
 };
 
 export const getStartedV3MenuItem = {
-	key: ROUTES.GET_STARTED_V3,
+	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
 	icon: <RocketOutlined rotate={45} />,
 };

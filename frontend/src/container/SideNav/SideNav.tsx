@@ -137,7 +137,7 @@ function SideNav(): JSX.Element {
 		});
 
 		const onboaringRoute = isOnboardingV3Enabled
-			? ROUTES.GET_STARTED_V3
+			? ROUTES.GET_STARTED_WITH_CLOUD
 			: ROUTES.GET_STARTED;
 
 		if (isCtrlMetaKey(event)) {
@@ -285,7 +285,7 @@ function SideNav(): JSX.Element {
 					(item) =>
 						item.key !== ROUTES.GET_STARTED &&
 						item.key !== ROUTES.ONBOARDING &&
-						item.key !== ROUTES.GET_STARTED_V3,
+						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
 				);
 			}
 

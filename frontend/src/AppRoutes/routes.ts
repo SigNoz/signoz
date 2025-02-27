@@ -74,11 +74,11 @@ const routes: AppRoutes[] = [
 		key: 'GET_STARTED',
 	},
 	{
-		path: ROUTES.GET_STARTED_V3,
+		path: ROUTES.GET_STARTED_WITH_CLOUD,
 		exact: false,
 		component: OnboardingV2,
 		isPrivate: true,
-		key: 'GET_STARTED_V3',
+		key: 'GET_STARTED_WITH_CLOUD',
 	},
 	{
 		path: ROUTES.ONBOARDING,
