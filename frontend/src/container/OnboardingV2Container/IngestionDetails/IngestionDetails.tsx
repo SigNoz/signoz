@@ -1,4 +1,5 @@
 import { Skeleton, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import { AxiosError } from 'axios';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
@@ -31,6 +32,13 @@ function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 	// Construct and return the masked key
 	return key.slice(0, visibleStart) + maskedSection + key.slice(-visibleEnd);
 }
+
+const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
+	BASE: 'Onboarding V3',
+	INGESTION_KEY_COPIED: 'Ingestion key copied',
+	INGESTION_URL_COPIED: 'Ingestion URL copied',
+	REGION_COPIED: 'Region copied',
+};
 
 export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
@@ -147,11 +155,16 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 													<Copy
 														size={14}
 														className="copy-btn"
-														onClick={(): void =>
+														onClick={(): void => {
+															logEvent(
+																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.REGION_COPIED}`,
+																{},
+															);
+
 															handleCopyKey(
 																deploymentsData?.data?.data?.cluster.region.name || '',
-															)
-														}
+															);
+														}}
 													/>
 												</Typography.Text>
 											</div>
@@ -167,7 +180,13 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 											<Copy
 												size={14}
 												className="copy-btn"
-												onClick={(): void => handleCopyKey(firstIngestionKey?.ingestionKey)}
+												onClick={(): void => {
+													logEvent(
+														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
+														{},
+													);
+													handleCopyKey(firstIngestionKey?.ingestionKey);
+												}}
 											/>
 										</Typography.Text>
 									</div>

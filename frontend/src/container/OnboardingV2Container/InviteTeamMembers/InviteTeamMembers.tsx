@@ -33,6 +33,14 @@ interface InviteTeamMembersProps {
 	onClose: () => void;
 }
 
+const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
+	BASE: 'Onboarding V3',
+	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Send invites clicked',
+	INVITE_TEAM_MEMBER_SUCCESS: 'Invite team members success',
+	INVITE_TEAM_MEMBER_PARTIAL_SUCCESS: 'Invite team members partial success',
+	INVITE_TEAM_MEMBER_FAILED: 'Invite team members failed',
+};
+
 function InviteTeamMembers({
 	isLoading,
 	teamMembers,
@@ -145,6 +153,15 @@ function InviteTeamMembers({
 				inviteUsersResponse.successful_invites,
 			);
 
+			logEvent(
+				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_SUCCESS}`,
+				{
+					teamMembers: teamMembersToInvite,
+					successfulInvites,
+					failedInvites: inviteUsersResponse?.failed_invites || [],
+				},
+			);
+
 			setDisableNextButton(true);
 
 			setError(null);
@@ -160,6 +177,15 @@ function InviteTeamMembers({
 		} else if (inviteUsersResponse?.status === 'partial_success') {
 			const successfulInvites = parseInviteUsersSuccessResponse(
 				inviteUsersResponse.successful_invites,
+			);
+
+			logEvent(
+				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_PARTIAL_SUCCESS}`,
+				{
+					teamMembers: teamMembersToInvite,
+					successfulInvites,
+					failedInvites: inviteUsersResponse?.failed_invites || [],
+				},
 			);
 
 			setInviteUsersSuccessResponse(successfulInvites);
@@ -178,17 +204,16 @@ function InviteTeamMembers({
 		inviteUsers,
 		{
 			onSuccess: (response: SuccessResponse<InviteUsersResponse>): void => {
-				logEvent('User Onboarding: Invite Team Members Sent', {
-					teamMembers: teamMembersToInvite,
-				});
-
 				handleInviteUsersSuccess(response);
 			},
 			onError: (error: AxiosError): void => {
-				logEvent('User Onboarding: Invite Team Members Failed', {
-					teamMembers: teamMembersToInvite,
-					error,
-				});
+				logEvent(
+					`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_FAILED}`,
+					{
+						teamMembers: teamMembersToInvite,
+						error,
+					},
+				);
 
 				handleError(error);
 			},
@@ -198,6 +223,13 @@ function InviteTeamMembers({
 	const handleNext = (): void => {
 		if (validateAllUsers()) {
 			setTeamMembers(teamMembersToInvite || []);
+
+			logEvent(
+				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_BUTTON_CLICKED}`,
+				{
+					teamMembers: teamMembersToInvite,
+				},
+			);
 
 			setHasInvalidEmails(false);
 			setError(null);

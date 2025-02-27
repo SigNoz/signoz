@@ -12,6 +12,7 @@ import {
 	Steps,
 	Typography,
 } from 'antd';
+import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -85,7 +86,20 @@ const setupStepItemsBase = [
 	},
 ];
 
-const ONBOARDING_V2_SCREEN = 'Onboarding V2';
+const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
+	BASE: 'Onboarding V3',
+	STARTED: 'Started',
+	DATA_SOURCE_SELECTED: 'Datasource selected',
+	FRAMEWORK_SELECTED: 'Framework selected',
+	ENVIRONMENT_SELECTED: 'Environment selected',
+	CONFIGURED_PRODUCT: 'Configure clicked',
+	BACK_BUTTON_CLICKED: 'Back clicked',
+	CONTINUE_BUTTON_CLICKED: 'Continue clicked',
+	GET_HELP_BUTTON_CLICKED: 'Get help clicked',
+	GET_EXPERT_ASSISTANCE_BUTTON_CLICKED: 'Get expert assistance clicked',
+	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Invite team member clicked',
+	CLOSE_ONBOARDING_CLICKED: 'Close onboarding clicked',
+};
 
 function OnboardingAddDataSource(): JSX.Element {
 	const [groupedDataSources, setGroupedDataSources] = useState<{
@@ -141,6 +155,13 @@ function OnboardingAddDataSource(): JSX.Element {
 		}, 100);
 	};
 
+	useEffect(() => {
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.STARTED}`,
+			{},
+		);
+	}, []);
+
 	const updateUrl = (url: string, selectedEnvironment: string | null): void => {
 		if (!url || url === '') {
 			return;
@@ -174,6 +195,13 @@ function OnboardingAddDataSource(): JSX.Element {
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
 
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+			{
+				dataSource: dataSource.label,
+			},
+		);
+
 		if (dataSource.question) {
 			setHasMoreQuestions(true);
 
@@ -191,6 +219,14 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const handleSelectFramework = (option: any): void => {
 		setSelectedFramework(option);
+
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.FRAMEWORK_SELECTED}`,
+			{
+				dataSource: selectedDataSource?.label,
+				framework: option.label,
+			},
+		);
 
 		if (option.question) {
 			setHasMoreQuestions(true);
@@ -211,6 +247,15 @@ function OnboardingAddDataSource(): JSX.Element {
 	const handleSelectEnvironment = (selectedEnvironment: any): void => {
 		setSelectedEnvironment(selectedEnvironment);
 		setHasMoreQuestions(false);
+
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.ENVIRONMENT_SELECTED}`,
+			{
+				dataSource: selectedDataSource?.label,
+				framework: selectedFramework?.label,
+				environment: selectedEnvironment?.label,
+			},
+		);
 
 		updateUrl(docsUrl, selectedEnvironment?.key);
 
@@ -352,6 +397,15 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleShowInviteTeamMembersModal = (): void => {
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_BUTTON_CLICKED}`,
+			{
+				dataSource: selectedDataSource?.label,
+				framework: selectedFramework?.label,
+				environment: selectedEnvironment?.label,
+				currentPage: setupStepItems[currentStep]?.title || '',
+			},
+		);
 		setShowInviteTeamMembersModal(true);
 	};
 
@@ -365,7 +419,16 @@ function OnboardingAddDataSource(): JSX.Element {
 								size={14}
 								color="#fff"
 								className="onboarding-header-container-close-icon"
-								onClick={(): void => history.push(ROUTES.APPLICATION)}
+								onClick={(): void => {
+									logEvent(
+										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CLOSE_ONBOARDING_CLICKED}`,
+										{
+											currentPage: setupStepItems[currentStep]?.title || '',
+										},
+									);
+
+									history.push(ROUTES.APPLICATION);
+								}}
 							/>
 							<Typography.Text>Get Started (2/4)</Typography.Text>
 						</div>
@@ -376,9 +439,9 @@ function OnboardingAddDataSource(): JSX.Element {
 									dataSource: selectedDataSource?.dataSource,
 									framework: selectedFramework?.label,
 									environment: selectedEnvironment?.label,
-									screen: ONBOARDING_V2_SCREEN,
+									currentPage: setupStepItems[currentStep]?.title || '',
 								}}
-								eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
+								eventName={`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.GET_HELP_BUTTON_CLICKED}`}
 								message=""
 								buttonText="Get Help"
 								className="periscope-btn get-help-btn outlined"
@@ -596,7 +659,18 @@ function OnboardingAddDataSource(): JSX.Element {
 													type="primary"
 													disabled={!selectedDataSource}
 													shape="round"
-													onClick={(): void => handleUpdateCurrentStep(2)}
+													onClick={(): void => {
+														logEvent(
+															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONFIGURED_PRODUCT}`,
+															{
+																dataSource: selectedDataSource?.label,
+																framework: selectedFramework?.label,
+																environment: selectedEnvironment?.label,
+															},
+														);
+
+														handleUpdateCurrentStep(2);
+													}}
 												>
 													Next: Configure your product
 												</Button>
@@ -642,6 +716,16 @@ function OnboardingAddDataSource(): JSX.Element {
 										type="default"
 										shape="round"
 										onClick={(): void => {
+											logEvent(
+												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BACK_BUTTON_CLICKED}`,
+												{
+													dataSource: selectedDataSource?.label,
+													framework: selectedFramework?.label,
+													environment: selectedEnvironment?.label,
+													currentPage: setupStepItems[currentStep]?.title || '',
+												},
+											);
+
 											handleFilterByCategory('All');
 											handleUpdateCurrentStep(1);
 										}}
@@ -652,6 +736,16 @@ function OnboardingAddDataSource(): JSX.Element {
 										type="primary"
 										shape="round"
 										onClick={(): void => {
+											logEvent(
+												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONTINUE_BUTTON_CLICKED}`,
+												{
+													dataSource: selectedDataSource?.label,
+													framework: selectedFramework?.label,
+													environment: selectedEnvironment?.label,
+													currentPage: setupStepItems[currentStep]?.title || '',
+												},
+											);
+
 											handleFilterByCategory('All');
 											handleUpdateCurrentStep(3);
 										}}
@@ -686,9 +780,9 @@ function OnboardingAddDataSource(): JSX.Element {
 											dataSource: selectedDataSource?.dataSource,
 											framework: selectedFramework?.label,
 											environment: selectedEnvironment?.label,
-											screen: ONBOARDING_V2_SCREEN,
+											currentPage: setupStepItems[currentStep]?.title || '',
 										}}
-										eventName="Onboarding V2: Facing Issues Sending Data to SigNoz"
+										eventName={`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.GET_EXPERT_ASSISTANCE_BUTTON_CLICKED}`}
 										message=""
 										buttonText="Get Expert Assistance"
 										className="periscope-btn get-help-btn rounded-btn outlined"
