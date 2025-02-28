@@ -603,7 +603,7 @@ func (t *Temporality) Scan(src interface{}) error {
 	}
 	s, ok := src.(string)
 	if !ok {
-		return fmt.Errorf("failed to scan MetricType: %v", src)
+		return fmt.Errorf("failed to scan Temporality: %v", src)
 	}
 	*t = Temporality(s)
 	return nil

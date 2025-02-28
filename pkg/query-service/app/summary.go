@@ -115,7 +115,7 @@ func (aH *APIHandler) GetRelatedMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 	result, apiError := aH.SummaryService.GetRelatedMetrics(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting heatmap data", zap.Error(apiError.Err))
+		zap.L().Error("error getting related metrics", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
