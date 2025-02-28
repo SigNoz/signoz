@@ -1,4 +1,5 @@
 import { Col, Row, Select } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
 import {
 	ChangeEvent,
@@ -8,7 +9,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { isCloudUser } from 'utils/app';
 
 import {
 	Input,
@@ -39,6 +39,9 @@ function Retention({
 		initialValue,
 	);
 	const interacted = useRef(false);
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
 	useEffect(() => {
 		if (!interacted.current) setSelectedValue(initialValue);
 	}, [initialValue]);
@@ -90,8 +93,6 @@ function Retention({
 	if (hide) {
 		return null;
 	}
-
-	const isCloudUserVal = isCloudUser();
 
 	return (
 		<RetentionContainer>

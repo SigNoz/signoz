@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -28,7 +29,7 @@ import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
+import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -82,7 +83,10 @@ function SideNav(): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser: isCloudUserVal,
+		isEECloudUser: isEECloudUserVal,
+	} = useGetTenantLicense();
 
 	const { t } = useTranslation('');
 
@@ -266,7 +270,7 @@ function SideNav(): JSX.Element {
 		let updatedUserManagementItems: UserManagementMenuItems[] = [
 			manageLicenseMenuItem,
 		];
-		if (isCloudUserVal || isEECloudUser()) {
+		if (isCloudUserVal || isEECloudUserVal) {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
 					?.active || false;
@@ -318,6 +322,7 @@ function SideNav(): JSX.Element {
 		featureFlags,
 		isCloudUserVal,
 		isCurrentVersionError,
+		isEECloudUserVal,
 		isLatestVersion,
 		licenses?.licenses,
 		onClickVersionHandler,

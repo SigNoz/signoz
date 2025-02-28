@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CreditCard, HelpCircle, X } from 'lucide-react';
@@ -16,7 +17,6 @@ import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
-import { isCloudUser } from 'utils/app';
 
 export interface LaunchChatSupportProps {
 	eventName: string;
@@ -38,7 +38,7 @@ function LaunchChatSupport({
 	onHoverText = '',
 	intercomMessageDisabled = false,
 }: LaunchChatSupportProps): JSX.Element | null {
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { notifications } = useNotifications();
 	const {
 		licenses,
@@ -77,7 +77,6 @@ function LaunchChatSupport({
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
-			const isCloudUserVal = isCloudUser();
 			if (featureFlags && featureFlags.length > 0) {
 				isChatSupportEnabled =
 					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
@@ -99,6 +98,7 @@ function LaunchChatSupport({
 	}, [
 		featureFlags,
 		featureFlagsFetchError,
+		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
 		licenses,

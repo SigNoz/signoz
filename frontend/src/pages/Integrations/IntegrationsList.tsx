@@ -5,10 +5,10 @@ import './Integrations.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { IntegrationsProps } from 'types/api/integrations/types';
-import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport, INTEGRATION_TYPES } from './utils';
 
@@ -43,6 +43,8 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 		isError,
 		refetch,
 	} = useGetAllIntegrations();
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const filteredDataList = useMemo(() => {
 		let integrationsList: IntegrationsProps[] = [];
@@ -90,7 +92,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 							</Button>
 							<div
 								className="contact-support"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								<Typography.Link className="text">Contact Support </Typography.Link>
 
