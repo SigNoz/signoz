@@ -1415,7 +1415,7 @@ func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 	}
 	testName := "name"
 
-	options := clickhouseReader.NewOptions("", 0, 0, 0, "", "archiveNamespace")
+	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 
 	// iterate over test data, create reader and run test
 	for _, tc := range testCases {

@@ -13,6 +13,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
@@ -29,6 +30,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -219,14 +221,21 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
+	/**
+	 *
+	 * @param timestamp - The timestamp in seconds
+	 * @param apmToTraceQuery - query object
+	 * @param isViewLogsClicked - Whether this is for viewing logs vs traces
+	 * @returns A callback function that handles the navigation when executed
+	 */
 	const onErrorTrackHandler = useCallback(
 		(
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
-			const endTime = timestamp;
-			const startTime = timestamp - stepInterval;
+			const endTime = secondsToMilliseconds(timestamp);
+			const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, startTime.toString());
@@ -290,6 +299,7 @@ function Application(): JSX.Element {
 			},
 		],
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -317,6 +327,7 @@ function Application(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
 							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -346,6 +357,7 @@ function Application(): JSX.Element {
 								timestamp: selectedTimeStamp,
 								apmToTraceQuery,
 								stepInterval,
+								safeNavigate,
 							})}
 						>
 							View Traces

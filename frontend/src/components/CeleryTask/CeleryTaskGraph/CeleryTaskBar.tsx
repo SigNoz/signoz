@@ -3,14 +3,12 @@ import './CeleryTaskGraph.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { themeColors } from 'constants/theme';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import getLabelName from 'lib/getLabelName';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { isEmpty } from 'lodash-es';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,11 +16,14 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { QueryData } from 'types/api/widgets/getQuery';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
-import { paths } from '../CeleryUtils';
+import {
+	applyCeleryFilterOnWidgetData,
+	getFiltersFromQueryParams,
+} from '../CeleryUtils';
+import { useGetGraphCustomSeries } from '../useGetGraphCustomSeries';
 import {
 	celeryAllStateWidgetData,
 	celeryFailedStateWidgetData,
@@ -41,10 +42,12 @@ import {
 function CeleryTaskBar({
 	onClick,
 	queryEnabled,
+	checkIfDataExists,
 }: {
 	onClick?: (task: CaptureDataProps) => void;
 
 	queryEnabled: boolean;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -75,9 +78,25 @@ function CeleryTaskBar({
 
 	const [barState, setBarState] = useState<CeleryTaskState>(CeleryTaskState.All);
 
+	const selectedFilters = useMemo(
+		() =>
+			getFiltersFromQueryParams(
+				QueryParams.taskName,
+				urlQuery,
+				'celery.task_name',
+			),
+		[urlQuery],
+	);
+
 	const celeryAllStateData = useMemo(
 		() => celeryAllStateWidgetData(minTime, maxTime),
 		[minTime, maxTime],
+	);
+
+	const celeryAllStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryAllStateData),
+		[selectedFilters, celeryAllStateData],
 	);
 
 	const celeryFailedStateData = useMemo(
@@ -85,14 +104,32 @@ function CeleryTaskBar({
 		[minTime, maxTime],
 	);
 
+	const celeryFailedStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryFailedStateData),
+		[selectedFilters, celeryFailedStateData],
+	);
+
 	const celeryRetryStateData = useMemo(
 		() => celeryRetryStateWidgetData(minTime, maxTime),
 		[minTime, maxTime],
 	);
 
+	const celeryRetryStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celeryRetryStateData),
+		[selectedFilters, celeryRetryStateData],
+	);
+
 	const celerySuccessStateData = useMemo(
 		() => celerySuccessStateWidgetData(minTime, maxTime),
 		[minTime, maxTime],
+	);
+
+	const celerySuccessStateFilteredData = useMemo(
+		() =>
+			applyCeleryFilterOnWidgetData(selectedFilters || [], celerySuccessStateData),
+		[selectedFilters, celerySuccessStateData],
 	);
 
 	const onGraphClick = (
@@ -114,57 +151,25 @@ function CeleryTaskBar({
 			string,
 		];
 
-		onClick?.({
-			entity,
-			value,
-			timeRange: [start, end],
-			widgetData,
-		});
+		if (!isEmpty(entity) || !isEmpty(value)) {
+			onClick?.({
+				entity,
+				value,
+				timeRange: [start, end],
+				widgetData,
+			});
+		}
 	};
 
-	const getGraphSeries = (color: string, label: string): any => ({
+	const { getCustomSeries } = useGetGraphCustomSeries({
+		isDarkMode,
 		drawStyle: 'bars',
-		paths,
-		lineInterpolation: 'spline',
-		show: true,
-		label,
-		fill: `${color}90`,
-		stroke: color,
-		width: 2,
-		spanGaps: true,
-		points: {
-			size: 5,
-			show: false,
-			stroke: color,
+		colorMapping: {
+			SUCCESS: Color.BG_FOREST_500,
+			FAILURE: Color.BG_CHERRY_500,
+			RETRY: Color.BG_AMBER_400,
 		},
 	});
-
-	const customSeries = (data: QueryData[]): uPlot.Series[] => {
-		const configurations: uPlot.Series[] = [
-			{ label: 'Timestamp', stroke: 'purple' },
-		];
-		for (let i = 0; i < data.length; i += 1) {
-			const { metric = {}, queryName = '', legend = '' } = data[i] || {};
-			const label = getLabelName(metric, queryName || '', legend || '');
-			let color = generateColor(
-				label,
-				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-			);
-			if (label === 'SUCCESS') {
-				color = Color.BG_FOREST_500;
-			}
-			if (label === 'FAILURE') {
-				color = Color.BG_CHERRY_500;
-			}
-
-			if (label === 'RETRY') {
-				color = Color.BG_AMBER_400;
-			}
-			const series = getGraphSeries(color, label);
-			configurations.push(series);
-		}
-		return configurations;
-	};
 
 	return (
 		<Card
@@ -176,50 +181,51 @@ function CeleryTaskBar({
 			<div className="celery-task-graph-grid-content">
 				{barState === CeleryTaskState.All && (
 					<GridCard
-						widget={celeryAllStateData}
+						widget={celeryAllStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
 						onClickHandler={(...args): void =>
 							onGraphClick(celerySlowestTasksTableWidgetData, ...args)
 						}
-						customSeries={customSeries}
+						customSeries={getCustomSeries}
+						dataAvailable={checkIfDataExists}
 					/>
 				)}
 				{barState === CeleryTaskState.Failed && (
 					<GridCard
-						widget={celeryFailedStateData}
+						widget={celeryFailedStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
 						onClickHandler={(...args): void =>
 							onGraphClick(celeryFailedTasksTableWidgetData, ...args)
 						}
-						customSeries={customSeries}
+						customSeries={getCustomSeries}
 					/>
 				)}
 				{barState === CeleryTaskState.Retry && (
 					<GridCard
-						widget={celeryRetryStateData}
+						widget={celeryRetryStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
 						onClickHandler={(...args): void =>
 							onGraphClick(celeryRetryTasksTableWidgetData, ...args)
 						}
-						customSeries={customSeries}
+						customSeries={getCustomSeries}
 					/>
 				)}
 				{barState === CeleryTaskState.Successful && (
 					<GridCard
-						widget={celerySuccessStateData}
+						widget={celerySuccessStateFilteredData}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
 						onClickHandler={(...args): void =>
 							onGraphClick(celerySuccessTasksTableWidgetData, ...args)
 						}
-						customSeries={customSeries}
+						customSeries={getCustomSeries}
 					/>
 				)}
 			</div>
@@ -229,6 +235,7 @@ function CeleryTaskBar({
 
 CeleryTaskBar.defaultProps = {
 	onClick: (): void => {},
+	checkIfDataExists: undefined,
 };
 
 export default CeleryTaskBar;

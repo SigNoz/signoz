@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -36,26 +36,6 @@ type SavedView struct {
 // InitWithDSN sets up setting up the connection pool global variable.
 func InitWithDSN(inputDB *sqlx.DB) error {
 	db = inputDB
-
-	tableSchema := `CREATE TABLE IF NOT EXISTS saved_views (
-		uuid TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		category TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		created_by TEXT,
-		updated_at datetime NOT NULL,
-		updated_by TEXT,
-		source_page TEXT NOT NULL,
-		tags TEXT,
-		data TEXT NOT NULL,
-		extra_data TEXT
-	);`
-
-	_, err := db.Exec(tableSchema)
-	if err != nil {
-		return fmt.Errorf("error in creating saved views table: %s", err.Error())
-	}
-
 	telemetry.GetInstance().SetSavedViewsInfoCallback(GetSavedViewsInfo)
 
 	return nil
@@ -145,13 +125,13 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
-	email, err := auth.GetEmailFromJwt(ctx)
-	if err != nil {
-		return "", err
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("error in getting email from context")
 	}
 
-	createBy := email
-	updatedBy := email
+	createBy := claims.Email
+	updatedBy := claims.Email
 
 	_, err = db.Exec(
 		"INSERT INTO saved_views (uuid, name, category, created_at, created_by, updated_at, updated_by, source_page, tags, data, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -206,13 +186,13 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
 	}
 
-	email, err := auth.GetEmailFromJwt(ctx)
-	if err != nil {
-		return err
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return fmt.Errorf("error in getting email from context")
 	}
 
 	updatedAt := time.Now()
-	updatedBy := email
+	updatedBy := claims.Email
 
 	_, err = db.Exec("UPDATE saved_views SET updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ? WHERE uuid = ?",
 		updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData, uuid_)

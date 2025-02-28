@@ -202,6 +202,11 @@ function K8sStatefulSetsList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedStatefulSetsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sStatefulSetsList(
 		query as K8sStatefulSetsListPayload,
 		{
@@ -240,6 +245,11 @@ function K8sStatefulSetsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sStatefulSetsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -250,6 +260,11 @@ function K8sStatefulSetsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s statefulSets list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -261,7 +276,7 @@ function K8sStatefulSetsList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -275,25 +290,35 @@ function K8sStatefulSetsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s statefulSets list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s statefulSets list page visited', {});
 	}, []);
 
 	const selectedStatefulSetData = useMemo(() => {
 		if (!selectedStatefulSetUID) return null;
+		if (groupBy.length > 0) {
+			return (
+				nestedStatefulSetsData.find(
+					(statefulSet) => statefulSet.statefulSetName === selectedStatefulSetUID,
+				) || null
+			);
+		}
 		return (
 			statefulSetsData.find(
 				(statefulSet) => statefulSet.statefulSetName === selectedStatefulSetUID,
 			) || null
 		);
-	}, [selectedStatefulSetUID, statefulSetsData]);
+	}, [
+		selectedStatefulSetUID,
+		groupBy.length,
+		statefulSetsData,
+		nestedStatefulSetsData,
+	]);
 
 	const handleRowClick = (record: K8sStatefulSetsRowData): void => {
 		if (groupBy.length === 0) {
@@ -346,6 +371,10 @@ function K8sStatefulSetsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedStatefulSetUID(record.statefulsetUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -428,6 +457,8 @@ function K8sStatefulSetsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s statefulSets list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
@@ -442,6 +473,16 @@ function K8sStatefulSetsList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s statefulSets list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -470,10 +511,7 @@ function K8sStatefulSetsList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

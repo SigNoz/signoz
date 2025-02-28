@@ -17,6 +17,7 @@ export default function DashboardEmptyState(): JSX.Element {
 		selectedDashboard,
 		isDashboardLocked,
 		handleToggleDashboardSlider,
+		setSelectedRowWidgetId,
 	} = useDashboard();
 
 	const { user } = useAppContext();
@@ -34,6 +35,7 @@ export default function DashboardEmptyState(): JSX.Element {
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onEmptyWidgetHandler = useCallback(() => {
+		setSelectedRowWidgetId(null);
 		handleToggleDashboardSlider(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
 			dashboardId: selectedDashboard?.uuid,

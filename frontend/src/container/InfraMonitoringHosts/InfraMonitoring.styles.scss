@@ -11,6 +11,7 @@
 	}
 
 	.hosts-list-controls {
+		flex: 1;
 		padding: 8px;
 
 		display: flex;
@@ -49,6 +50,43 @@
 
 	.clickable-row {
 		cursor: pointer;
+	}
+
+	.hosts-list-content {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		height: calc(100vh - 110px);
+
+		.hosts-quick-filters-container {
+			width: 280px;
+			min-width: 280px;
+			border-right: 1px solid var(--bg-slate-400);
+			height: 100%;
+
+			.hosts-quick-filters-container-header {
+				padding: 8px;
+				border-bottom: 1px solid var(--bg-slate-400);
+
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			}
+		}
+	}
+
+	.hosts-list-table-container {
+		flex: 1;
+
+		.hosts-list-table-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			.quick-filters-toggle-container {
+				padding: 0 8px;
+			}
+		}
 	}
 
 	.hosts-list-table {
@@ -158,13 +196,13 @@
 		.ant-pagination {
 			position: fixed;
 			bottom: 0;
-			width: calc(100% - 64px);
+			width: calc(100% - 364px);
 			background: var(--bg-ink-500);
 			padding: 16px;
 			margin: 0;
 
 			// this is to offset intercom icon till we improve the design
-			padding-right: 72px;
+			right: 20px;
 
 			.ant-pagination-item {
 				border-radius: 4px;
@@ -214,6 +252,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
+	flex: 1;
 
 	.hosts-list-loading-state-item {
 		height: 48px;
@@ -222,6 +261,7 @@
 }
 
 .no-filtered-hosts-message-container {
+	flex: 1;
 	height: 30vh;
 	display: flex;
 	flex-direction: column;
@@ -246,6 +286,7 @@
 .hosts-empty-state-container {
 	padding: 16px;
 	height: 40vh;
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;

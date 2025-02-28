@@ -25,8 +25,11 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/exp/maps"
 )
+
+var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
 
 func NewMockClickhouseReader(
 	t *testing.T, testDB *sqlx.DB, featureFlags interfaces.FeatureLookup,
@@ -40,7 +43,7 @@ func NewMockClickhouseReader(
 	require.Nil(t, err, "could not init mock clickhouse")
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
 		mockDB,
-		clickhouseReader.NewOptions("", 10, 10, 10*time.Second, ""),
+		clickhouseReader.NewOptions("", ""),
 		testDB,
 		"",
 		featureFlags,
@@ -173,7 +176,7 @@ func createTestUser() (*model.User, *model.ApiError) {
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgId:    org.Id,
-			GroupId:  group.Id,
+			GroupId:  group.ID,
 		},
 		true,
 	)
@@ -184,7 +187,7 @@ func AuthenticatedRequestForTest(
 	path string,
 	postData interface{},
 ) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user)
+	userJwt, err := auth.GenerateJWTForUser(user, jwt)
 	if err != nil {
 		return nil, err
 	}

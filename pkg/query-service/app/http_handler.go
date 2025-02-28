@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"io"
 	"math"
 	"net/http"
@@ -31,6 +32,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
@@ -49,6 +51,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 
@@ -56,7 +59,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
-	"go.signoz.io/signoz/pkg/query-service/integrations/signozio"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
@@ -97,10 +99,6 @@ type APIHandler struct {
 	temporalityMap map[string]map[v3.Temporality]bool
 	temporalityMux sync.Mutex
 
-	maxIdleConns int
-	maxOpenConns int
-	dialTimeout  time.Duration
-
 	IntegrationsController *integrations.Controller
 
 	CloudIntegrationsController *cloudintegrations.Controller
@@ -130,7 +128,11 @@ type APIHandler struct {
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
 
+	SummaryService *metricsexplorer.SummaryService
+
 	pvcsRepo *inframetrics.PvcsRepo
+
+	JWT *authtypes.JWT
 }
 
 type APIHandlerOpts struct {
@@ -141,10 +143,6 @@ type APIHandlerOpts struct {
 	SkipConfig *model.SkipConfig
 
 	PreferSpanMetrics bool
-
-	MaxIdleConns int
-	MaxOpenConns int
-	DialTimeout  time.Duration
 
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
@@ -174,6 +172,8 @@ type APIHandlerOpts struct {
 	UseLogsNewSchema bool
 
 	UseTraceNewSchema bool
+
+	JWT *authtypes.JWT
 }
 
 // NewAPIHandler returns an APIHandler
@@ -218,6 +218,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
+	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -225,9 +227,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
-		maxIdleConns:                  opts.MaxIdleConns,
-		maxOpenConns:                  opts.MaxOpenConns,
-		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
@@ -249,6 +248,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
+		JWT:                           opts.JWT,
+		SummaryService:                summaryService,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -459,6 +460,9 @@ func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMid
 	jobsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getJobAttributeKeys)).Methods(http.MethodGet)
 	jobsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getJobAttributeValues)).Methods(http.MethodGet)
 	jobsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getJobList)).Methods(http.MethodPost)
+
+	infraOnboardingSubRouter := router.PathPrefix("/api/v1/infra_onboarding").Subrouter()
+	infraOnboardingSubRouter.HandleFunc("/k8s/status", am.ViewAccess(aH.getK8sInfraOnboardingStatus)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *AuthMiddleware) {
@@ -551,7 +555,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/configs", am.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -607,6 +610,24 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+}
+
+func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddleware) {
+	router.HandleFunc("/api/v1/metrics/filters/keys",
+		am.ViewAccess(ah.FilterKeysSuggestion)).
+		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics/filters/values",
+		am.ViewAccess(ah.FilterValuesSuggestion)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
+		am.ViewAccess(ah.GetMetricsDetails)).
+		Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/metrics",
+		am.ViewAccess(ah.ListMetrics)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/treemap",
+		am.ViewAccess(ah.GetTreeMap)).
+		Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1036,8 +1057,16 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
 	if err != nil {
 		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
+	} else {
+		allDashboards = append(allDashboards, installedIntegrationDashboards...)
 	}
-	allDashboards = append(allDashboards, installedIntegrationDashboards...)
+
+	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
+	} else {
+		allDashboards = append(allDashboards, cloudIntegrationDashboards...)
+	}
 
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
@@ -1193,12 +1222,24 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-			r.Context(), uuid,
-		)
-		if apiError != nil {
-			RespondError(w, apiError, nil)
-			return
+		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
+			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
+				r.Context(), uuid,
+			)
+			if apiError != nil {
+				RespondError(w, apiError, nil)
+				return
+			}
+
+		} else {
+			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+				r.Context(), uuid,
+			)
+			if apiError != nil {
+				RespondError(w, apiError, nil)
+				return
+			}
+
 		}
 
 	}
@@ -1606,9 +1647,9 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if ok {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, claims.Email, true, false)
 	}
 }
 
@@ -1618,9 +1659,9 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err == nil {
-		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if ok {
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1724,9 +1765,9 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if ok {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, claims.Email, true, false)
 	}
 
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
@@ -1980,16 +2021,6 @@ func (aH *APIHandler) CheckFeature(f string) bool {
 	return err == nil
 }
 
-func (aH *APIHandler) getConfigs(w http.ResponseWriter, r *http.Request) {
-
-	configs, err := signozio.FetchDynamicConfigs()
-	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
-		return
-	}
-	aH.Respond(w, configs)
-}
-
 // getHealth is used to check the health of the service.
 // 'live' query param can be used to check liveliness of
 // the service by checking the database connection.
@@ -2160,7 +2191,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	// 	req.RefreshToken = c.Value
 	// }
 
-	resp, err := auth.Login(context.Background(), req)
+	resp, err := auth.Login(context.Background(), req, aH.JWT)
 	if aH.HandleError(w, err, http.StatusUnauthorized) {
 		return
 	}
@@ -2279,13 +2310,13 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErr, "Failed to get admin group")
 		return
 	}
-	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.Id)
+	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to get admin group users")
 		return
 	}
 
-	if user.GroupId == adminGroup.Id && len(adminUsers) == 1 {
+	if user.GroupId == adminGroup.ID && len(adminUsers) == 1 {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("cannot delete the last admin user")}, nil)
@@ -2397,7 +2428,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.Id)
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return
@@ -2442,11 +2473,11 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"isAnonymous":      req.IsAnonymous,
 		"organizationName": req.Name,
 	}
-	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	if err != nil {
-		zap.L().Error("failed to get user email from jwt", zap.Error(err))
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		zap.L().Error("failed to get user email from jwt")
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, claims.Email, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -2594,21 +2625,19 @@ func (aH *APIHandler) RegisterMessagingQueuesRoutes(router *mux.Router, am *Auth
 	spanEvaluation := kafkaRouter.PathPrefix("/span").Subrouter()
 
 	spanEvaluation.HandleFunc("/evaluation", am.ViewAccess(aH.getProducerConsumerEval)).Methods(http.MethodPost)
+}
 
-	// -------------------------------------------------
-	// Celery-specific routes
-	celeryRouter := messagingQueuesRouter.PathPrefix("/celery").Subrouter()
+// RegisterThirdPartyApiRoutes adds third-party-api integration routes
+func (aH *APIHandler) RegisterThirdPartyApiRoutes(router *mux.Router, am *AuthMiddleware) {
 
-	// Celery overview routes
-	celeryRouter.HandleFunc("/overview", am.ViewAccess(aH.getCeleryOverview)).Methods(http.MethodPost)
+	// Main messaging queues router
+	thirdPartyApiRouter := router.PathPrefix("/api/v1/third-party-apis").Subrouter()
 
-	// Celery tasks routes
-	celeryRouter.HandleFunc("/tasks", am.ViewAccess(aH.getCeleryTasks)).Methods(http.MethodPost)
+	// Domain Overview route
+	overviewRouter := thirdPartyApiRouter.PathPrefix("/overview").Subrouter()
 
-	// Celery performance routes
-	celeryRouter.HandleFunc("/performance", am.ViewAccess(aH.getCeleryPerformance)).Methods(http.MethodPost)
-
-	// for other messaging queues, add SubRouters here
+	overviewRouter.HandleFunc("/list", am.ViewAccess(aH.getDomainList)).Methods(http.MethodPost)
+	overviewRouter.HandleFunc("/domain", am.ViewAccess(aH.getDomainInfo)).Methods(http.MethodPost)
 }
 
 // not using md5 hashing as the plain string would work
@@ -3487,24 +3516,6 @@ func (aH *APIHandler) getProducerConsumerEval(
 	aH.Respond(w, resp)
 }
 
-// ParseKafkaQueueBody parse for messaging queue params
-func ParseKafkaQueueBody(r *http.Request) (*kafka.MessagingQueue, *model.ApiError) {
-	messagingQueue := new(kafka.MessagingQueue)
-	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
-	}
-	return messagingQueue, nil
-}
-
-// ParseQueueBody parses for any queue
-func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError) {
-	queue := new(queues2.QueueListRequest)
-	if err := json.NewDecoder(r.Body).Decode(queue); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
-	}
-	return queue, nil
-}
-
 // Preferences
 
 func (aH *APIHandler) getUserPreference(
@@ -3758,7 +3769,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 		}
 
 		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-			ctx, connectionTests.Metrics,
+			ctx, connectionTests.Metrics, nil,
 		)
 
 		resultLock.Lock()
@@ -3947,7 +3958,7 @@ func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *Au
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
-		"/{cloudProvider}/agent-check-in", am.EditAccess(aH.CloudIntegrationsAgentCheckIn),
+		"/{cloudProvider}/agent-check-in", am.ViewAccess(aH.CloudIntegrationsAgentCheckIn),
 	).Methods(http.MethodPost)
 
 	subRouter.HandleFunc(
@@ -4124,12 +4135,229 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
 		r.Context(), cloudProvider, serviceId, cloudAccountId,
 	)
-
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
+
+	// Add connection status for the 2 signals.
+	if cloudAccountId != nil {
+		connStatus, apiErr := aH.calculateCloudIntegrationServiceConnectionStatus(
+			r.Context(), cloudProvider, *cloudAccountId, resp,
+		)
+		if apiErr != nil {
+			RespondError(w, apiErr, nil)
+			return
+		}
+		resp.ConnectionStatus = connStatus
+	}
+
 	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
+	ctx context.Context,
+	cloudProvider string,
+	cloudAccountId string,
+	svcDetails *cloudintegrations.CloudServiceDetails,
+) (*cloudintegrations.CloudServiceConnectionStatus, *model.ApiError) {
+	if cloudProvider != "aws" {
+		// TODO(Raj): Make connection check generic for all providers in a follow up change
+		return nil, model.BadRequest(
+			fmt.Errorf("unsupported cloud provider: %s", cloudProvider),
+		)
+	}
+
+	telemetryCollectionStrategy := svcDetails.TelemetryCollectionStrategy
+	if telemetryCollectionStrategy == nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
+		))
+	}
+
+	result := &cloudintegrations.CloudServiceConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
+
+	var wg sync.WaitGroup
+
+	// Calculate metrics connection status
+	if telemetryCollectionStrategy.AWSMetrics != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			metricsConnStatus, apiErr := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
+				ctx, cloudAccountId, telemetryCollectionStrategy.AWSMetrics, svcDetails.DataCollected.Metrics,
+			)
+
+			resultLock.Lock()
+			defer resultLock.Unlock()
+
+			if apiErr != nil {
+				errors = append(errors, apiErr)
+			} else {
+				result.Metrics = metricsConnStatus
+			}
+		}()
+	}
+
+	// Calculate logs connection status
+	if telemetryCollectionStrategy.AWSLogs != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
+				ctx, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
+			)
+
+			resultLock.Lock()
+			defer resultLock.Unlock()
+
+			if apiErr != nil {
+				errors = append(errors, apiErr)
+			} else {
+				result.Logs = logsConnStatus
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return result, nil
+
+}
+func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
+	ctx context.Context,
+	cloudAccountId string,
+	strategy *cloudintegrations.AWSMetricsCollectionStrategy,
+	metricsCollectedBySvc []cloudintegrations.CollectedMetric,
+) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
+	if strategy == nil || len(strategy.CloudwatchMetricsStreamFilters) < 1 {
+		return nil, nil
+	}
+
+	expectedLabelValues := map[string]string{
+		"cloud_provider":   "aws",
+		"cloud_account_id": cloudAccountId,
+	}
+
+	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
+	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
+
+	if len(metricsNamespaceParts) >= 2 {
+		expectedLabelValues["service_namespace"] = metricsNamespaceParts[0]
+		expectedLabelValues["service_name"] = metricsNamespaceParts[1]
+	} else {
+		// metrics for single word namespaces like "CWAgent" do not
+		// have the service_namespace label populated
+		expectedLabelValues["service_name"] = metricsNamespaceParts[0]
+	}
+
+	metricNamesCollectedBySvc := []string{}
+	for _, cm := range metricsCollectedBySvc {
+		metricNamesCollectedBySvc = append(metricNamesCollectedBySvc, cm.Name)
+	}
+
+	statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
+		ctx, metricNamesCollectedBySvc, expectedLabelValues,
+	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	if statusForLastReceivedMetric != nil {
+		return &cloudintegrations.SignalConnectionStatus{
+			LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+			LastReceivedFrom:     "signoz-aws-integration",
+		}, nil
+	}
+
+	return nil, nil
+}
+
+func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
+	ctx context.Context,
+	cloudAccountId string,
+	strategy *cloudintegrations.AWSLogsCollectionStrategy,
+) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
+	if strategy == nil || len(strategy.CloudwatchLogsSubscriptions) < 1 {
+		return nil, nil
+	}
+
+	logGroupNamePrefix := strategy.CloudwatchLogsSubscriptions[0].LogGroupNamePrefix
+	if len(logGroupNamePrefix) < 1 {
+		return nil, nil
+	}
+
+	logsConnTestFilter := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "cloud.account.id",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+				Operator: "=",
+				Value:    cloudAccountId,
+			},
+			{
+				Key: v3.AttributeKey{
+					Key:      "aws.cloudwatch.log_group_name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeResource,
+				},
+				Operator: "like",
+				Value:    logGroupNamePrefix + "%",
+			},
+		},
+	}
+
+	// TODO(Raj): Receive this as a param from UI in the future.
+	lookbackSeconds := int64(30 * 60)
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnTestFilter,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, _, err := aH.querier.QueryRange(
+		ctx, qrParams,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		return &cloudintegrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     "signoz-aws-integration",
+		}, nil
+	}
+
+	return nil, nil
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
@@ -4791,8 +5019,8 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
 
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
-			if err == nil {
+			claims, ok := authtypes.ClaimsFromContext(r.Context())
+			if ok {
 				queryInfoResult := telemetry.GetInstance().CheckQueryInfo(queryRangeParams)
 				if queryInfoResult.LogsUsed || queryInfoResult.MetricsUsed || queryInfoResult.TracesUsed {
 
@@ -4832,7 +5060,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"filterApplied":         queryInfoResult.FilterApplied,
 							"dashboardId":           dashboardID,
 							"widgetId":              widgetID,
-						}, userEmail, true, false)
+						}, claims.Email, true, false)
 					}
 					if alertMatched {
 						var alertID string
@@ -4859,7 +5087,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"aggregateAttributeKey": queryInfoResult.AggregateAttributeKey,
 							"filterApplied":         queryInfoResult.FilterApplied,
 							"alertId":               alertID,
-						}, userEmail, true, false)
+						}, claims.Email, true, false)
 					}
 				}
 			}
@@ -5294,13 +5522,78 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, results)
 }
 
-func (aH *APIHandler) getCeleryOverview(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
+	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := thirdPartyApi.BuildDomainList(thirdPartyQueryRequest)
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+
+	if !thirdPartyQueryRequest.ShowIp {
+		result = thirdPartyApi.FilterResponse(result)
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
 }
 
-func (aH *APIHandler) getCeleryTasks(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery tasks logic for both state and list types
-}
+func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
+	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 
-func (aH *APIHandler) getCeleryPerformance(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement celery performance logic for error, rate, and latency types
+	if apiErr != nil {
+		zap.L().Error(apiErr.Err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	queryRangeParams, err := thirdPartyApi.BuildDomainInfo(thirdPartyQueryRequest)
+
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	var result []*v3.Result
+	var errQuriesByName map[string]error
+
+	result, errQuriesByName, err = aH.querierV2.QueryRange(r.Context(), queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+
+	if !thirdPartyQueryRequest.ShowIp {
+		result = thirdPartyApi.FilterResponse(result)
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
 }

@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -41,9 +42,16 @@ function GridCardGraph({
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
+	customErrorMessage,
+	start,
+	end,
+	analyticsEvent,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
+	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
+		false,
+	);
 	const {
 		toScrollWidgetId,
 		setToScrollWidgetId,
@@ -178,6 +186,8 @@ function GridCardGraph({
 			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval,
+			start,
+			end,
 		},
 		version || DEFAULT_ENTITY_VERSION,
 		{
@@ -207,6 +217,16 @@ function GridCardGraph({
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
+				if (customErrorMessage) {
+					setIsInternalServerError(
+						String(error.message).includes('API responded with 500'),
+					);
+					if (analyticsEvent) {
+						logEvent(analyticsEvent, {
+							error: error.message,
+						});
+					}
+				}
 				setDashboardQueryRangeCalled(true);
 			},
 			onSettled: (data) => {
@@ -256,6 +276,7 @@ function GridCardGraph({
 					openTracesButton={openTracesButton}
 					onOpenTraceBtnClick={onOpenTraceBtnClick}
 					customSeries={customSeries}
+					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 				/>
 			)}
 		</div>
@@ -269,6 +290,7 @@ GridCardGraph.defaultProps = {
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 	version: 'v3',
+	analyticsEvent: undefined,
 };
 
 export default memo(GridCardGraph);

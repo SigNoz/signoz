@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/metrics"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -228,6 +229,18 @@ func ClickHouseFormattedValue(v interface{}) string {
 		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
+}
+
+func ClickHouseFormattedMetricNames(v interface{}) string {
+	if name, ok := v.(string); ok {
+		if newName, ok := metrics.MetricsUnderTransition[name]; ok {
+			return ClickHouseFormattedValue([]interface{}{name, newName})
+		} else {
+			return ClickHouseFormattedValue([]interface{}{name})
+		}
+	}
+
+	return ClickHouseFormattedValue(v)
 }
 
 func AddBackTickToFormatTag(str string) string {

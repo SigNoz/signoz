@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -28,19 +29,23 @@ func (migration *addSavedViews) Register(migrations *migrate.Migrations) error {
 
 func (migration *addSavedViews) Up(ctx context.Context, db *bun.DB) error {
 	// table:saved_views op:create
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS saved_views (
-		uuid TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		category TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		created_by TEXT,
-		updated_at datetime NOT NULL,
-		updated_by TEXT,
-		source_page TEXT NOT NULL,
-		tags TEXT,
-		data TEXT NOT NULL,
-		extra_data TEXT
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:saved_views"`
+			UUID          string    `bun:"uuid,pk,type:text"`
+			Name          string    `bun:"name,type:text,notnull"`
+			Category      string    `bun:"category,type:text,notnull"`
+			CreatedAt     time.Time `bun:"created_at,notnull"`
+			CreatedBy     string    `bun:"created_by,type:text"`
+			UpdatedAt     time.Time `bun:"updated_at,notnull"`
+			UpdatedBy     string    `bun:"updated_by,type:text"`
+			SourcePage    string    `bun:"source_page,type:text,notnull"`
+			Tags          string    `bun:"tags,type:text"`
+			Data          string    `bun:"data,type:text,notnull"`
+			ExtraData     string    `bun:"extra_data,type:text"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 

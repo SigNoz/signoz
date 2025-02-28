@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/auth"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -267,10 +268,13 @@ func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*Pla
 
 func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error) {
 
-	email, _ := auth.GetEmailFromJwt(ctx)
-	maintenance.CreatedBy = email
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return 0, errors.New("no claims found in context")
+	}
+	maintenance.CreatedBy = claims.Email
 	maintenance.CreatedAt = time.Now()
-	maintenance.UpdatedBy = email
+	maintenance.UpdatedBy = claims.Email
 	maintenance.UpdatedAt = time.Now()
 
 	query := "INSERT INTO planned_maintenance (name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
@@ -298,8 +302,11 @@ func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (strin
 }
 
 func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
-	email, _ := auth.GetEmailFromJwt(ctx)
-	maintenance.UpdatedBy = email
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return "", errors.New("no claims found in context")
+	}
+	maintenance.UpdatedBy = claims.Email
 	maintenance.UpdatedAt = time.Now()
 
 	query := "UPDATE planned_maintenance SET name=$1, description=$2, schedule=$3, alert_ids=$4, updated_at=$5, updated_by=$6 WHERE id=$7"
@@ -616,7 +623,7 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 			}
 		}
 		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
-		if rule.PostableRule.Disabled == false {
+		if !rule.PostableRule.Disabled {
 			alertsInfo.TotalActiveAlerts = alertsInfo.TotalActiveAlerts + 1
 		}
 	}

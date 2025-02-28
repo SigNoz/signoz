@@ -239,7 +239,7 @@ function SideNav(): JSX.Element {
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
-			onClickHandler(ROUTES.MESSAGING_QUEUES, null),
+			onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>

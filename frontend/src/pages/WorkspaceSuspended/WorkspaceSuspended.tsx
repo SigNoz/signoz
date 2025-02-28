@@ -61,7 +61,7 @@ function WorkspaceSuspended(): JSX.Element {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
 			const shouldSuspendWorkspace =
 				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicenseV3.state === LicenseState.DEFAULTED;
 
 			if (!shouldSuspendWorkspace) {
 				history.push(ROUTES.APPLICATION);

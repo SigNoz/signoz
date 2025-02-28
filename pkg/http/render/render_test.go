@@ -68,13 +68,13 @@ func TestError(t *testing.T) {
 		"/already_exists": {
 			name:       "AlreadyExists",
 			statusCode: http.StatusConflict,
-			err:        errors.New(errors.TypeAlreadyExists, "already_exists", "already exists").WithUrl("https://already_exists"),
+			err:        errors.New(errors.TypeAlreadyExists, errors.MustNewCode("already_exists"), "already exists").WithUrl("https://already_exists"),
 			expected:   []byte(`{"status":"error","error":{"code":"already_exists","message":"already exists","url":"https://already_exists"}}`),
 		},
 		"/unauthenticated": {
 			name:       "Unauthenticated",
 			statusCode: http.StatusUnauthorized,
-			err:        errors.New(errors.TypeUnauthenticated, "not_allowed", "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
+			err:        errors.New(errors.TypeUnauthenticated, errors.MustNewCode("not_allowed"), "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
 			expected:   []byte(`{"status":"error","error":{"code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1"},{"message":"a2"}]}}`),
 		},
 	}

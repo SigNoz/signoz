@@ -1,0 +1,48 @@
+.remove-integration-account {
+	display: flex;
+	justify-content: space-between;
+	padding: 16px;
+	border-radius: 4px;
+	border: 1px solid rgba(218, 85, 101, 0.2);
+	background: rgba(218, 85, 101, 0.06);
+	&__header {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__title {
+		color: var(--bg-cherry-500);
+		font-size: 14px;
+		letter-spacing: -0.07px;
+	}
+
+	&__subtitle {
+		color: var(--bg-cherry-300);
+		font-size: 14px;
+		line-height: 22px;
+		letter-spacing: -0.07px;
+	}
+
+	&__button {
+		display: flex;
+		align-items: center;
+		background: var(--bg-cherry-500);
+		border: none;
+		color: var(--bg-vanilla-100);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 13.3px; /* 110.833% */
+		padding: 9px 13px;
+		.ant-btn-icon {
+			margin-inline-end: 4px !important;
+		}
+
+		&:hover {
+			&.ant-btn-default {
+				color: var(--bg-vanilla-300) !important;
+			}
+		}
+	}
+}
+

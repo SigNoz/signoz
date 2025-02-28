@@ -8,7 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -18,6 +17,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	smtpservice "go.signoz.io/signoz/pkg/query-service/utils/smtpService"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -75,17 +75,12 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	jwtAdmin, ok := ExtractJwtFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.Wrap(err, "failed to extract admin jwt token")
+		return nil, errors.Wrap(err, "failed to extract admin user id")
 	}
 
-	adminUser, err := validateUser(jwtAdmin)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to validate admin jwt token")
-	}
-
-	au, apiErr := dao.DB().GetUser(ctx, adminUser.Id)
+	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
 	if apiErr != nil {
 		return nil, errors.Wrap(err, "failed to query admin user from the DB")
 	}
@@ -123,17 +118,12 @@ func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.Bulk
 		FailedInvites:     []model.FailedInvite{},
 	}
 
-	jwtAdmin, ok := ExtractJwtFromContext(ctx)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("failed to extract admin jwt token")
+		return nil, errors.New("failed to extract admin user id")
 	}
 
-	adminUser, err := validateUser(jwtAdmin)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to validate admin jwt token")
-	}
-
-	au, apiErr := dao.DB().GetUser(ctx, adminUser.Id)
+	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query admin user from the DB")
 	}
@@ -431,7 +421,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 		Password:          hash,
 		CreatedAt:         time.Now().Unix(),
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
+		GroupId:           group.ID,
 		OrgId:             org.Id,
 	}
 
@@ -509,7 +499,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		Password:          hash,
 		CreatedAt:         time.Now().Unix(),
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
+		GroupId:           group.ID,
 		OrgId:             invite.OrgId,
 	}
 
@@ -550,16 +540,16 @@ func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.Ap
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
-func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginResponse, error) {
+func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT) (*model.LoginResponse, error) {
 	zap.L().Debug("Login method called for user", zap.String("email", request.Email))
 
-	user, err := authenticateLogin(ctx, request)
+	user, err := authenticateLogin(ctx, request, jwt)
 	if err != nil {
 		zap.L().Error("Failed to authenticate login request", zap.Error(err))
 		return nil, err
 	}
 
-	userjwt, err := GenerateJWTForUser(&user.User)
+	userjwt, err := GenerateJWTForUser(&user.User, jwt)
 	if err != nil {
 		zap.L().Error("Failed to generate JWT against login creds", zap.Error(err))
 		return nil, err
@@ -576,20 +566,36 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 	}, nil
 }
 
-// authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserPayload, error) {
+func claimsToUserPayload(claims authtypes.Claims) (*model.UserPayload, error) {
+	user := &model.UserPayload{
+		User: model.User{
+			Id:      claims.UserID,
+			GroupId: claims.GroupID,
+			Email:   claims.Email,
+			OrgId:   claims.OrgID,
+		},
+	}
+	return user, nil
+}
 
+// authenticateLogin is responsible for querying the DB and validating the credentials.
+func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authtypes.JWT) (*model.UserPayload, error) {
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
-		user, err := validateUser(req.RefreshToken)
+		// parse the refresh token
+		claims, err := jwt.Claims(req.RefreshToken)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to validate refresh token")
+			return nil, errors.Wrap(err, "failed to parse refresh token")
 		}
 
-		if user.OrgId == "" {
+		if claims.OrgID == "" {
 			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
+		user, err := claimsToUserPayload(claims)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to convert claims to user payload")
+		}
 		return user, nil
 	}
 
@@ -618,34 +624,17 @@ func passwordMatch(hash, password string) bool {
 	return err == nil
 }
 
-func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
+func GenerateJWTForUser(user *model.User, jwt *authtypes.JWT) (model.UserJwtObject, error) {
 	j := model.UserJwtObject{}
 	var err error
-	j.AccessJwtExpiry = time.Now().Add(JwtExpiry).Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   j.AccessJwtExpiry,
-		"orgId": user.OrgId,
-	})
-
-	j.AccessJwt, err = token.SignedString([]byte(JwtSecret))
+	j.AccessJwtExpiry = time.Now().Add(jwt.JwtExpiry).Unix()
+	j.AccessJwt, err = jwt.AccessToken(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
-	j.RefreshJwtExpiry = time.Now().Add(JwtRefresh).Unix()
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   j.RefreshJwtExpiry,
-		"orgId": user.OrgId,
-	})
-
-	j.RefreshJwt, err = token.SignedString([]byte(JwtSecret))
+	j.RefreshJwtExpiry = time.Now().Add(jwt.JwtRefresh).Unix()
+	j.RefreshJwt, err = jwt.RefreshToken(user.OrgId, user.Id, user.GroupId, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}

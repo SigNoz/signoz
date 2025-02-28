@@ -33,19 +33,6 @@ func (a *Agents) Count() int {
 func InitDB(qsDB *sqlx.DB) (*sqlx.DB, error) {
 	db = qsDB
 
-	tableSchema := `CREATE TABLE IF NOT EXISTS agents (
-		agent_id TEXT PRIMARY KEY UNIQUE,
-		started_at datetime NOT NULL,
-		terminated_at datetime,
-		current_status TEXT NOT NULL,
-		effective_config TEXT NOT NULL
-	);`
-
-	_, err := db.Exec(tableSchema)
-	if err != nil {
-		return nil, fmt.Errorf("error in creating agents table: %s", err.Error())
-	}
-
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),
 		connections: make(map[types.Connection]map[string]bool),

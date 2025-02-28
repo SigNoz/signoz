@@ -51,14 +51,12 @@ describe('BillingContainer', () => {
 		expect(cost).toBeInTheDocument();
 
 		const dayRemainingInBillingPeriod = await screen.findByText(
-			/11 days_remaining/i,
+			/Please upgrade plan now to retain your data./i,
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 
-		const manageBilling = screen.getByRole('button', {
-			name: 'manage_billing',
-		});
-		expect(manageBilling).toBeInTheDocument();
+		const upgradePlanButton = screen.getByTestId('upgrade-plan-button');
+		expect(upgradePlanButton).toBeInTheDocument();
 
 		const dollar = screen.getByText(/\$1,278.3/i);
 		await waitFor(() => expect(dollar).toBeInTheDocument());

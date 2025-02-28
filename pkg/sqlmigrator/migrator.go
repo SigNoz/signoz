@@ -93,13 +93,15 @@ func (migrator *migrator) Lock(ctx context.Context) error {
 		select {
 		case <-timer.C:
 			err := errors.New("timed out waiting for lock")
-			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout, "dialect", migrator.dialect)
+			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout.String(), "dialect", migrator.dialect)
 			return err
 		case <-ticker.C:
-			if err := migrator.migrator.Lock(ctx); err == nil {
+			var err error
+			if err = migrator.migrator.Lock(ctx); err == nil {
 				migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", "dialect", migrator.dialect)
 				return nil
 			}
+			migrator.settings.Logger().ErrorContext(ctx, "attempt to acquire lock failed", "error", err, "lock_interval", migrator.config.Lock.Interval.String(), "dialect", migrator.dialect)
 		case <-ctx.Done():
 			return ctx.Err()
 		}

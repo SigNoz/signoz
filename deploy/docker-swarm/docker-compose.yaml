@@ -10,7 +10,7 @@ x-common: &common
       max-size: 50m
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
-  <<: *common
+  !!merge <<: *common
   image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
   deploy:
@@ -37,7 +37,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       soft: 262144
       hard: 262144
 x-zookeeper-defaults: &zookeeper-defaults
-  <<: *common
+  !!merge <<: *common
   image: bitnami/zookeeper:3.7.1
   user: root
   deploy:
@@ -53,13 +53,13 @@ x-zookeeper-defaults: &zookeeper-defaults
     timeout: 5s
     retries: 3
 x-db-depend: &db-depend
-  <<: *common
+  !!merge <<: *common
   depends_on:
     - clickhouse
     - schema-migrator
 services:
   init-clickhouse:
-    <<: *common
+    !!merge <<: *common
     image: clickhouse/clickhouse-server:24.1.2-alpine
     command:
       - bash
@@ -73,16 +73,19 @@ services:
         wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
         tar -xvzf histogram-quantile.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    deploy:
+      restart_policy:
+        condition: on-failure
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
-    <<: *zookeeper-defaults
+    !!merge <<: *zookeeper-defaults
     # ports:
     #   - "2181:2181"
     #   - "2888:2888"
     #   - "3888:3888"
     volumes:
-      - ./clickhouse-setup/data/zookeeper-1:/bitnami/zookeeper
+      - zookeeper-1:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       - ALLOW_ANONYMOUS_LOGIN=yes
@@ -90,7 +93,7 @@ services:
       - ZOO_ENABLE_PROMETHEUS_METRICS=yes
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   clickhouse:
-    <<: *clickhouse-defaults
+    !!merge <<: *clickhouse-defaults
     # TODO: needed for clickhouse TCP connectio
     hostname: clickhouse
     # ports:
@@ -103,21 +106,21 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
-      - ./clickhouse-setup/data/clickhouse/:/var/lib/clickhouse/
+      - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   alertmanager:
-    <<: *common
+    !!merge <<: *common
     image: signoz/alertmanager:0.23.7
     command:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
     volumes:
-      - ./clickhouse-setup/data/alertmanager:/data
+      - alertmanager:/data
     depends_on:
       - query-service
   query-service:
-    <<: *db-depend
-    image: signoz/query-service:0.69.0
+    !!merge <<: *db-depend
+    image: signoz/query-service:0.74.0
     command:
       - --config=/root/config/prometheus.yml
       - --use-logs-new-schema=true
@@ -128,7 +131,7 @@ services:
     volumes:
       - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
       - ../common/dashboards:/root/config/dashboards
-      - ./clickhouse-setup/data/signoz/:/var/lib/signoz/
+      - sqlite:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -149,8 +152,8 @@ services:
       timeout: 5s
       retries: 3
   frontend:
-    <<: *common
-    image: signoz/frontend:0.69.0
+    !!merge <<: *common
+    image: signoz/frontend:0.74.0
     depends_on:
       - alertmanager
       - query-service
@@ -159,8 +162,8 @@ services:
     volumes:
       - ../common/signoz/nginx-config.conf:/etc/nginx/conf.d/default.conf
   otel-collector:
-    <<: *db-depend
-    image: signoz/signoz-otel-collector:0.111.24
+    !!merge <<: *db-depend
+    image: signoz/signoz-otel-collector:0.111.29
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -183,8 +186,8 @@ services:
       - schema-migrator
       - query-service
   schema-migrator:
-    <<: *common
-    image: signoz/signoz-schema-migrator:0.111.24
+    !!merge <<: *common
+    image: signoz/signoz-schema-migrator:0.111.29
     deploy:
       restart_policy:
         condition: on-failure
@@ -195,7 +198,15 @@ services:
       - "/signoz-schema-migrator sync --dsn=tcp://clickhouse:9000 --up= && /signoz-schema-migrator async --dsn=tcp://clickhouse:9000 --up="
     depends_on:
       - clickhouse
-
 networks:
   signoz-net:
     name: signoz-net
+volumes:
+  alertmanager:
+    name: signoz-alertmanager
+  clickhouse:
+    name: signoz-clickhouse
+  sqlite:
+    name: signoz-sqlite
+  zookeeper-1:
+    name: signoz-zookeeper-1

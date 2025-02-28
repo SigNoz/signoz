@@ -11,6 +11,7 @@ type GetWaterfallSpansForTraceWithMetadataCache struct {
 	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
 	SpanIdToSpanNodeMap           map[string]*Span  `json:"spanIdToSpanNodeMap"`
 	TraceRoots                    []*Span           `json:"traceRoots"`
+	HasMissingSpans               bool              `json:"hasMissingSpans"`
 }
 
 func (c *GetWaterfallSpansForTraceWithMetadataCache) MarshalBinary() (data []byte, err error) {

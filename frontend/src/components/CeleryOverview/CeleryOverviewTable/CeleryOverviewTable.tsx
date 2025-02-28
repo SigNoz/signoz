@@ -15,6 +15,7 @@ import {
 	Typography,
 } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import logEvent from 'api/common/logEvent';
 import {
 	getQueueOverview,
 	QueueOverviewResponse,
@@ -218,35 +219,44 @@ function getColumns(data: RowData[]): TableColumnsType<RowData> {
 				showTitle: false,
 			},
 			width: 200,
-			sorter: (a: RowData, b: RowData): number =>
-				String(a.error_percentage).localeCompare(String(b.error_percentage)),
+			sorter: (a: RowData, b: RowData): number => {
+				const aValue = Number(a.error_percentage);
+				const bValue = Number(b.error_percentage);
+				return aValue - bValue;
+			},
 			render: ProgressRender,
 		},
 		{
-			title: 'LATENCY (P95)',
+			title: 'LATENCY (P95) in ms',
 			dataIndex: 'p95_latency',
 			key: 'p95_latency',
 			ellipsis: {
 				showTitle: false,
 			},
 			width: 100,
-			sorter: (a: RowData, b: RowData): number =>
-				String(a.p95_latency).localeCompare(String(b.p95_latency)),
+			sorter: (a: RowData, b: RowData): number => {
+				const aValue = Number(a.p95_latency);
+				const bValue = Number(b.p95_latency);
+				return aValue - bValue;
+			},
 			render: (value: number | string): string => {
 				if (!isNumber(value)) return value.toString();
 				return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
 			},
 		},
 		{
-			title: 'THROUGHPUT',
+			title: 'THROUGHPUT (ops/s)',
 			dataIndex: 'throughput',
 			key: 'throughput',
 			ellipsis: {
 				showTitle: false,
 			},
 			width: 100,
-			sorter: (a: RowData, b: RowData): number =>
-				String(a.throughput).localeCompare(String(b.throughput)),
+			sorter: (a: RowData, b: RowData): number => {
+				const aValue = Number(a.throughput);
+				const bValue = Number(b.throughput);
+				return aValue - bValue;
+			},
 			render: (value: number | string): string => {
 				if (!isNumber(value)) return value.toString();
 				return (typeof value === 'string' ? parseFloat(value) : value).toFixed(3);
@@ -400,6 +410,15 @@ export default function CeleryOverviewTable({
 		confirm();
 	};
 
+	// Add defaultSorting state
+	const [sortedInfo, setSortedInfo] = useState<{
+		columnKey: string;
+		order: 'ascend' | 'descend';
+	}>({
+		columnKey: 'error_percentage',
+		order: 'descend',
+	});
+
 	const columns = useMemo(
 		() =>
 			getDraggedColumns<RowData>(
@@ -411,10 +430,15 @@ export default function CeleryOverviewTable({
 						handleSearch,
 						item.key?.toString(),
 					),
+					// Only set defaultSortOrder for error_percentage, but allow sorting for all columns
+					...(item.key === 'error_percentage' && {
+						defaultSortOrder: 'descend',
+					}),
+					sortOrder: sortedInfo.columnKey === item.key ? sortedInfo.order : null,
 				})),
 				draggedColumns,
 			),
-		[tableData, draggedColumns],
+		[tableData, draggedColumns, sortedInfo],
 	);
 	const handleDragColumn = useCallback(
 		(fromIndex: number, toIndex: number) =>
@@ -435,6 +459,7 @@ export default function CeleryOverviewTable({
 
 	const handleRowClick = (record: RowData): void => {
 		onRowClick(record);
+		logEvent('MQ Overview Page: Right Panel', { ...record });
 	};
 
 	const getFilteredData = useCallback(
@@ -458,8 +483,24 @@ export default function CeleryOverviewTable({
 		tableData,
 	]);
 
+	const prevTableDataRef = useRef<string>();
+
+	useEffect(() => {
+		if (tableData.length > 0) {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(`MQ Overview Page: List rendered`, {
+					dataRender: tableData.length,
+				});
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(tableData)]);
+
 	return (
-		<div style={{ width: '100%' }}>
+		<div className="celery-overview-table-container">
 			<Input.Search
 				placeholder="Search across all columns"
 				onChange={(e): void => setSearchText(e.target.value)}
@@ -488,6 +529,12 @@ export default function CeleryOverviewTable({
 					className: 'clickable-row',
 				})}
 				tableLayout="fixed"
+				onChange={(_pagination, _filters, sorter): void => {
+					setSortedInfo({
+						columnKey: (sorter as { columnKey: string }).columnKey,
+						order: (sorter as { order: 'ascend' | 'descend' }).order,
+					});
+				}}
 			/>
 		</div>
 	);

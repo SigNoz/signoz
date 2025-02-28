@@ -15,9 +15,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -85,6 +85,10 @@ func main() {
 			envprovider.NewFactory(),
 			fileprovider.NewFactory(),
 		},
+	}, signoz.DeprecatedFlags{
+		MaxIdleConns: maxIdleConns,
+		MaxOpenConns: maxOpenConns,
+		DialTimeout:  dialTimeout,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -95,6 +99,17 @@ func main() {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
 
+	// Read the jwt secret key
+	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
+
+	if len(jwtSecret) == 0 {
+		zap.L().Warn("No JWT secret key is specified.")
+	} else {
+		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
+
 	serverOptions := &app.ServerOptions{
 		Config:                     config,
 		HTTPHostPort:               constants.HTTPHostPort,
@@ -104,9 +119,6 @@ func main() {
 		PrivateHostPort:            constants.PrivateHostPort,
 		DisableRules:               disableRules,
 		RuleRepoURL:                ruleRepoURL,
-		MaxIdleConns:               maxIdleConns,
-		MaxOpenConns:               maxOpenConns,
-		DialTimeout:                dialTimeout,
 		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
@@ -114,21 +126,7 @@ func main() {
 		UseLogsNewSchema:           useLogsNewSchema,
 		UseTraceNewSchema:          useTraceNewSchema,
 		SigNoz:                     signoz,
-	}
-
-	// Read the jwt secret key
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
-
-	if len(auth.JwtSecret) == 0 {
-		zap.L().Warn("No JWT secret key is specified.")
-	} else {
-		zap.L().Info("JWT secret key set successfully.")
-	}
-
-	if err := migrate.Migrate(signoz.SQLStore.SQLxDB()); err != nil {
-		zap.L().Error("Failed to migrate", zap.Error(err))
-	} else {
-		zap.L().Info("Migration successful")
+		Jwt:                        jwt,
 	}
 
 	server, err := app.NewServer(serverOptions)

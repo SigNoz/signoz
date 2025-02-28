@@ -35,7 +35,7 @@ import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { get, isEmpty, isUndefined } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
@@ -74,7 +74,7 @@ import {
 } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { generatePath, Link } from 'react-router-dom';
+import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import {
 	Dashboard,
@@ -105,7 +105,7 @@ function DashboardsList(): JSX.Element {
 	} = useGetAllDashboard();
 
 	const { user } = useAppContext();
-
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		listSortOrder: sortOrder,
 		setListSortOrder: setSortOrder,
@@ -293,7 +293,7 @@ function DashboardsList(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				history.push(
+				safeNavigate(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
 					}),
@@ -313,7 +313,7 @@ function DashboardsList(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t]);
+	}, [newDashboardState, safeNavigate, t]);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -418,7 +418,7 @@ function DashboardsList(): JSX.Element {
 					if (event.metaKey || event.ctrlKey) {
 						window.open(getLink(), '_blank');
 					} else {
-						history.push(getLink());
+						safeNavigate(getLink());
 					}
 					logEvent('Dashboard List: Clicked on dashboard', {
 						dashboardId: dashboard.id,
@@ -444,10 +444,12 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<Link
-										to={getLink()}
+									<div
 										className="title-link"
-										onClick={(e): void => e.stopPropagation()}
+										onClick={(e): void => {
+											e.stopPropagation();
+											safeNavigate(getLink());
+										}}
 									>
 										<img
 											src={dashboard?.image || Base64Icons[0]}
@@ -460,7 +462,7 @@ function DashboardsList(): JSX.Element {
 										>
 											{dashboard.name}
 										</Typography.Text>
-									</Link>
+									</div>
 								</Tooltip>
 							</div>
 

@@ -12,6 +12,7 @@ export function useNavigateToTraces(): (
 	filters: TagFilterItem[],
 	startTime?: number,
 	endTime?: number,
+	sameTab?: boolean,
 ) => void {
 	const { currentQuery } = useQueryBuilder();
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -38,7 +39,12 @@ export function useNavigateToTraces(): (
 	);
 
 	return useCallback(
-		(filters: TagFilterItem[], startTime?: number, endTime?: number): void => {
+		(
+			filters: TagFilterItem[],
+			startTime?: number,
+			endTime?: number,
+			sameTab?: boolean,
+		): void => {
 			const urlParams = new URLSearchParams();
 			if (startTime && endTime) {
 				urlParams.set(QueryParams.startTime, startTime.toString());
@@ -58,7 +64,7 @@ export function useNavigateToTraces(): (
 				QueryParams.compositeQuery
 			}=${JSONCompositeQuery}`;
 
-			window.open(newTraceExplorerPath, '_blank');
+			window.open(newTraceExplorerPath, sameTab ? '_self' : '_blank');
 		},
 		[minTime, maxTime, prepareQuery],
 	);
