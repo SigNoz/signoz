@@ -23,6 +23,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -367,7 +368,7 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 
 type IntegrationsTestBed struct {
 	t              *testing.T
-	testUser       *model.User
+	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
 }

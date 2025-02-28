@@ -11,7 +11,7 @@ import (
 	saml2 "github.com/russellhaering/gosaml2"
 	"go.signoz.io/signoz/ee/query-service/sso"
 	"go.signoz.io/signoz/ee/query-service/sso/saml"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +33,7 @@ type OrgDomain struct {
 	SamlConfig       *SamlConfig        `json:"samlConfig"`
 	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
 
-	Org *basemodel.Organization
+	Org *types.Organization
 }
 
 func (od *OrgDomain) String() string {

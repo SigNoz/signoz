@@ -54,7 +54,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All the PATs are associated with the user creating the PAT.
-	pat.UserID = user.Id
+	pat.UserID = user.ID
 	pat.CreatedAt = time.Now().Unix()
 	pat.UpdatedAt = time.Now().Unix()
 	pat.LastUsed = 0
@@ -112,7 +112,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.UpdatedByUserID = user.Id
+	req.UpdatedByUserID = user.ID
 	id := mux.Vars(r)["id"]
 	req.UpdatedAt = time.Now().Unix()
 	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
@@ -135,7 +135,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	zap.L().Info("Get PATs for user", zap.String("user_id", user.Id))
+	zap.L().Info("Get PATs for user", zap.String("user_id", user.ID))
 	pats, apierr := ah.AppDao().ListPATs(ctx)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
@@ -157,7 +157,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	zap.L().Info("Revoke PAT with id", zap.String("id", id))
-	if apierr := ah.AppDao().RevokePAT(ctx, id, user.Id); apierr != nil {
+	if apierr := ah.AppDao().RevokePAT(ctx, id, user.ID); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
