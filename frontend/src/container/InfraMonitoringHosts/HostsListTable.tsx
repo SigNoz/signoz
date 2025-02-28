@@ -1,6 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import {
-	Skeleton,
 	Spin,
 	Table,
 	TablePaginationConfig,
@@ -103,6 +102,8 @@ export default function HostsListTable({
 			<HostsEmptyOrIncorrectMetrics
 				noData={!sentAnyHostMetricsData}
 				incorrectData={isSendingIncorrectK8SAgentMetrics}
+				clusterNames={data?.payload?.data?.clusterNames || []}
+				nodeNames={data?.payload?.data?.nodeNames || []}
 			/>
 		);
 	}
@@ -121,31 +122,6 @@ export default function HostsListTable({
 						This query had no results. Edit your query and try again!
 					</Typography.Text>
 				</div>
-			</div>
-		);
-	}
-
-	if (isLoading || isFetching) {
-		return (
-			<div className="hosts-list-loading-state">
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
 			</div>
 		);
 	}
