@@ -23,10 +23,18 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
+import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
+import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
@@ -78,6 +86,8 @@ function WidgetGraphComponent({
 
 	const tableProcessedDataRef = useRef<RowData[]>([]);
 
+	const navigateToExplorerPages = useNavigateToExplorerPages();
+
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
 	const onToggleModal = useCallback(
@@ -88,6 +98,18 @@ function WidgetGraphComponent({
 	);
 
 	const updateDashboardMutation = useUpdateDashboard();
+
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const onNavigateToExplorerPages = (): void => {
+		navigateToExplorerPages({
+			widget,
+			startTime: minTime,
+			endTime: maxTime,
+		});
+	};
 
 	const onDeleteHandler = (): void => {
 		if (!selectedDashboard) return;
@@ -230,6 +252,45 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
+	const currentDataSource = widget?.query?.builder?.queryData?.[0]?.dataSource;
+
+	const createFilterFromData = (
+		data: Record<string, unknown>,
+	): TagFilterItem[] =>
+		Object.entries(data ?? {}).map(([key, value]) => ({
+			id: v4(),
+			key: {
+				key,
+				dataType: DataTypes.String,
+				type: '',
+				isColumn: false,
+				isJSON: false,
+				id: `${key}--string----false`,
+			},
+			op: '=',
+			value: value?.toString() ?? '',
+		}));
+
+	const handleGraphClick = useGraphClickToShowButton({
+		graphRef,
+		onClickHandler: (xValue, _yValue, _mouseX, _mouseY, data) => {
+			const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
+			const filters = createFilterFromData(data ?? {});
+
+			navigateToExplorerPages({
+				widget,
+				startTime: xValue,
+				endTime: xValue + (stepInterval ?? 60),
+				filters,
+			});
+		},
+		buttonText:
+			currentDataSource === DataSource.TRACES ? 'View Traces' : 'View Logs',
+		isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
+			currentDataSource,
+		),
+	});
+
 	return (
 		<div
 			style={{
@@ -299,6 +360,7 @@ function WidgetGraphComponent({
 					isFetchingResponse={isFetchingResponse}
 					tableProcessedDataRef={tableProcessedDataRef}
 					setSearchTerm={setSearchTerm}
+					onNavigateToExplorerPages={onNavigateToExplorerPages}
 				/>
 			</div>
 
@@ -322,7 +384,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={onClickHandler}
+						onClickHandler={onClickHandler ?? handleGraphClick}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
