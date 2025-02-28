@@ -1143,7 +1143,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1291,7 +1291,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -6176,4 +6176,195 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	}
 
 	return &heatmap, nil
+}
+
+func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+
+	query := fmt.Sprintf(`
+		SELECT 
+			metric_name,
+			any(type) as type,
+		    any(temporality) as temporality,
+		    any(is_monotonic) as monotonic,
+			1 - (levenshteinDistance(?, metric_name) / greatest(NULLIF(length(?), 0), NULLIF(length(metric_name), 0))) AS name_similarity
+		FROM %s.%s
+		WHERE metric_name != ?
+		  AND unix_milli BETWEEN ? AND ?
+		GROUP BY metric_name
+		ORDER BY name_similarity DESC
+		LIMIT 30;`,
+		signozMetricDBName, tsTable)
+
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, req.CurrentMetricName, req.CurrentMetricName, req.CurrentMetricName, start, end)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	result := make(map[string]metrics_explorer.RelatedMetricsScore)
+	for rows.Next() {
+		var metric string
+		var sim float64
+		var metricType v3.MetricType
+		var temporality v3.Temporality
+		var isMonotonic bool
+		if err := rows.Scan(&metric, &metricType, &temporality, &isMonotonic, &sim); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		result[metric] = metrics_explorer.RelatedMetricsScore{
+			NameSimilarity: sim,
+			MetricType:     metricType,
+			Temporality:    temporality,
+			IsMonotonic:    isMonotonic,
+		}
+	}
+
+	return result, nil
+}
+
+func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+
+	// Get target labels
+	extractedLabelsQuery := fmt.Sprintf(`
+		SELECT 
+			kv.1 AS label_key,
+			topK(10)(JSONExtractString(kv.2)) AS label_values
+		FROM %s.%s
+		ARRAY JOIN JSONExtractKeysAndValuesRaw(labels) AS kv
+		WHERE metric_name = ?
+		  AND unix_milli between ? and ?
+		  AND NOT startsWith(kv.1, '__')
+		GROUP BY label_key
+		LIMIT 50`, signozMetricDBName, tsTable)
+
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, extractedLabelsQuery, req.CurrentMetricName, start, end)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	var targetKeys []string
+	var targetValues []string
+	for rows.Next() {
+		var key string
+		var value []string
+		if err := rows.Scan(&key, &value); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		targetKeys = append(targetKeys, key)
+		targetValues = append(targetValues, value...)
+	}
+
+	targetKeysList := "'" + strings.Join(targetKeys, "', '") + "'"
+	targetValuesList := "'" + strings.Join(targetValues, "', '") + "'"
+
+	var priorityList []string
+	for _, f := range req.Filters.Items {
+		if f.Operator == v3.FilterOperatorEqual {
+			priorityList = append(priorityList, fmt.Sprintf("tuple('%s', '%s')", f.Key.Key, f.Value))
+		}
+	}
+	priorityListString := strings.Join(priorityList, ", ")
+
+	candidateLabelsQuery := fmt.Sprintf(`
+		WITH 
+			arrayDistinct([%s]) AS filter_keys,     
+			arrayDistinct([%s]) AS filter_values,
+			[%s] AS priority_pairs_input,
+			%d AS priority_multiplier
+		SELECT 
+			metric_name,
+			any(type) as type,
+			any(temporality) as temporality,
+			any(is_monotonic) as monotonic,
+			SUM(
+				arraySum(
+					kv -> if(has(filter_keys, kv.1) AND has(filter_values, kv.2), 1, 0),
+					JSONExtractKeysAndValues(labels, 'String')
+				)
+			)::UInt64 AS raw_match_count,
+			SUM(
+				arraySum(
+					kv ->
+						if(
+							arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
+							priority_multiplier,
+							0
+						),
+					JSONExtractKeysAndValues(labels, 'String')
+				)
+			)::UInt64 AS weighted_match_count,
+		toJSONString(
+			arrayDistinct(
+				arrayFlatten(
+					groupArray(
+						arrayFilter(
+							kv -> arrayExists(pr -> pr.1 = kv.1 AND pr.2 = kv.2, priority_pairs_input),
+							JSONExtractKeysAndValues(labels, 'String')
+						)
+					)
+				)
+			)
+		) AS priority_pairs
+		FROM %s.%s
+		WHERE rand() %% 100 < 10
+		AND unix_milli between ? and ?
+		GROUP BY metric_name
+		ORDER BY weighted_match_count DESC, raw_match_count DESC
+		LIMIT 30
+		`,
+		targetKeysList, targetValuesList, priorityListString, 2,
+		signozMetricDBName, tsTable)
+
+	rows, err = r.db.Query(valueCtx, candidateLabelsQuery, start, end)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	result := make(map[string]metrics_explorer.RelatedMetricsScore)
+	attributeMap := make(map[string]uint64)
+
+	for rows.Next() {
+		var metric string
+		var metricType v3.MetricType
+		var temporality v3.Temporality
+		var isMonotonic bool
+		var weightedMatchCount, rawMatchCount uint64
+		var priorityPairsJSON string
+
+		if err := rows.Scan(&metric, &metricType, &temporality, &isMonotonic, &rawMatchCount, &weightedMatchCount, &priorityPairsJSON); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+
+		attributeMap[metric] = weightedMatchCount + (rawMatchCount)/10
+		var priorityPairs [][]string
+		if err := json.Unmarshal([]byte(priorityPairsJSON), &priorityPairs); err != nil {
+			priorityPairs = [][]string{}
+		}
+
+		result[metric] = metrics_explorer.RelatedMetricsScore{
+			AttributeSimilarity: float64(attributeMap[metric]), // Will be normalized later
+			Filters:             priorityPairs,
+			MetricType:          metricType,
+			Temporality:         temporality,
+			IsMonotonic:         isMonotonic,
+		}
+	}
+
+	// Normalize the attribute similarity scores
+	normalizeMap := utils.NormalizeMap(attributeMap)
+	for metric := range result {
+		if score, exists := normalizeMap[metric]; exists {
+			metricScore := result[metric]
+			metricScore.AttributeSimilarity = score
+			result[metric] = metricScore
+		}
+	}
+
+	return result, nil
 }

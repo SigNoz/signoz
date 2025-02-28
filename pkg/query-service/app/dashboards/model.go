@@ -538,7 +538,7 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 	}
 }
 
-func GetDashboardsWithMetricName(ctx context.Context, metricName string) ([]map[string]string, *model.ApiError) {
+func GetDashboardsWithMetricNames(ctx context.Context, metricNames []string) (map[string][]map[string]string, *model.ApiError) {
 	// Get all dashboards first
 	query := `SELECT uuid, data FROM dashboards`
 
@@ -554,8 +554,13 @@ func GetDashboardsWithMetricName(ctx context.Context, metricName string) ([]map[
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
+	// Initialize result map for each metric
+	result := make(map[string][]map[string]string)
+	// for _, metricName := range metricNames {
+	// 	result[metricName] = []map[string]string{}
+	// }
+
 	// Process the JSON data in Go
-	var result []map[string]string
 	for _, dashboard := range dashboards {
 		var dashData map[string]interface{}
 		if err := json.Unmarshal(dashboard.Data, &dashData); err != nil {
@@ -607,13 +612,18 @@ func GetDashboardsWithMetricName(ctx context.Context, metricName string) ([]map[
 					continue
 				}
 
-				if key, ok := aggregateAttr["key"].(string); ok && strings.TrimSpace(key) == metricName {
-					result = append(result, map[string]string{
-						"dashboard_id":    dashboard.Uuid,
-						"widget_title":    widgetTitle,
-						"widget_id":       widgetID,
-						"dashboard_title": dashTitle,
-					})
+				if key, ok := aggregateAttr["key"].(string); ok {
+					// Check if this metric is in our list of interest
+					for _, metricName := range metricNames {
+						if strings.TrimSpace(key) == metricName {
+							result[metricName] = append(result[metricName], map[string]string{
+								"dashboard_id":    dashboard.Uuid,
+								"widget_title":    widgetTitle,
+								"widget_id":       widgetID,
+								"dashboard_title": dashTitle,
+							})
+						}
+					}
 				}
 			}
 		}

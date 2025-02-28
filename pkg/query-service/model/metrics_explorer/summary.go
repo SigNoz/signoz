@@ -122,3 +122,30 @@ var AvailableColumnFilterMap = map[string]bool{
 	"metric_unit": true,
 	"metric_type": true,
 }
+
+type RelatedMetricsScore struct {
+	AttributeSimilarity float64
+	NameSimilarity      float64
+	Filters             [][]string
+	MetricType          v3.MetricType
+	Temporality         v3.Temporality
+	IsMonotonic         bool
+}
+
+type RelatedMetricsRequest struct {
+	CurrentMetricName string       `json:"currentMetricName"`
+	Start             int64        `json:"start"`
+	End               int64        `json:"end"`
+	Filters           v3.FilterSet `json:"filters"`
+}
+
+type RelatedMetricsResponse struct {
+	RelatedMetrics []RelatedMetrics `json:"related_metrics"`
+}
+
+type RelatedMetrics struct {
+	Name       string           `json:"name"`
+	Query      *v3.BuilderQuery `json:"query"`
+	Dashboards []Dashboard      `json:"dashboards"`
+	Alerts     []Alert          `json:"alerts"`
+}

@@ -830,13 +830,13 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	return alertCount, apiErr
 }
 
-func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]GettableRule, error) {
+func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]GettableRule, *model.ApiError) {
 	result := make(map[string][]GettableRule)
 
 	rules, err := m.ruleDB.GetStoredRules(ctx)
 	if err != nil {
 		zap.L().Error("Error getting stored rules", zap.Error(err))
-		return nil, err
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	metricRulesMap := make(map[string][]GettableRule)
