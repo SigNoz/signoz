@@ -13,7 +13,7 @@ interface SafeNavigateParams {
 }
 
 interface UseSafeNavigateProps {
-	enableSameURLCheck?: boolean;
+	preventSameUrlNavigation?: boolean;
 }
 
 const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
@@ -83,7 +83,9 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	return newKeys.length > 0;
 };
 export const useSafeNavigate = (
-	{ enableSameURLCheck }: UseSafeNavigateProps = { enableSameURLCheck: true },
+	{ preventSameUrlNavigation }: UseSafeNavigateProps = {
+		preventSameUrlNavigation: true,
+	},
 ): {
 	safeNavigate: (
 		to: string | SafeNavigateParams,
@@ -114,7 +116,7 @@ export const useSafeNavigate = (
 			const urlsAreSame = areUrlsEffectivelySame(currentUrl, targetUrl);
 			const isDefaultParamsNavigation = isDefaultNavigation(currentUrl, targetUrl);
 
-			if (enableSameURLCheck && urlsAreSame) {
+			if (preventSameUrlNavigation && urlsAreSame) {
 				return;
 			}
 
@@ -135,7 +137,7 @@ export const useSafeNavigate = (
 				);
 			}
 		},
-		[navigate, location.pathname, location.search, enableSameURLCheck],
+		[navigate, location.pathname, location.search, preventSameUrlNavigation],
 	);
 
 	return { safeNavigate };
