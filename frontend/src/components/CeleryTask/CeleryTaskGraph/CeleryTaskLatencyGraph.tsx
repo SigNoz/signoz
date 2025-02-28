@@ -8,7 +8,7 @@ import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
-import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
+import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -122,6 +122,8 @@ function CeleryTaskLatencyGraph({
 		setSelectedTimeStamp(selectTime);
 	}, []);
 
+	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
+
 	const onGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] => (
 			xValue,
@@ -137,14 +139,9 @@ function CeleryTaskLatencyGraph({
 				value,
 			});
 
-			return onGraphClickHandler(handleSetTimeStamp)(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				type,
-			);
+			return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
 
