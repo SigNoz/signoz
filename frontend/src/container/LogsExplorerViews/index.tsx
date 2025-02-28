@@ -41,7 +41,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import {
 	cloneDeep,
 	defaultTo,
@@ -94,7 +94,9 @@ function LogsExplorerViews({
 	selectedView: SELECTED_VIEWS;
 	showFrequencyChart: boolean;
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	listQueryKeyRef: MutableRefObject<any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
@@ -305,10 +307,7 @@ function LogsExplorerViews({
 		): Query | null => {
 			if (!query) return null;
 
-			const paginateData = getPaginationQueryData({
-				filters: params.filters,
-				listItemId: params.log ? params.log.id : null,
-				orderByTimestamp,
+			const paginateData = getPaginationQueryDataV2({
 				page: params.page,
 				pageSize: params.pageSize,
 			});
@@ -333,7 +332,7 @@ function LogsExplorerViews({
 
 			return data;
 		},
-		[orderByTimestamp, listQuery],
+		[listQuery],
 	);
 
 	const handleEndReached = useCallback(
