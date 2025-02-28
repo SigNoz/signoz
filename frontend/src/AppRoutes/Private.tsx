@@ -1,6 +1,7 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getOrgUser from 'api/user/getOrgUser';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -36,6 +37,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isFetchingLicenses,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
+		featureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -169,6 +171,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			setOrgData(org[0]);
 		}
 	}, [org]);
+
+	// if the feature flag is enabled and the current route is /get-started then redirect to /get-started-with-signoz-cloud
+	useEffect(() => {
+		if (
+			currentRoute?.path === ROUTES.GET_STARTED &&
+			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
+		) {
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+		}
+	}, [currentRoute, featureFlags]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
