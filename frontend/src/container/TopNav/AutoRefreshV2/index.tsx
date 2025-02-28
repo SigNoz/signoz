@@ -26,6 +26,8 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { getMinMax, options } from './config';
 import { ButtonContainer } from './styles';
 
+const DEFAULT_REFRESH_INTERVAL = '30s';
+
 function AutoRefresh({
 	disabled = false,
 	showAutoRefreshBtnPrimary = true,
@@ -67,13 +69,18 @@ function AutoRefresh({
 
 	const params = useUrlQuery();
 
+	const defaultOption = useMemo(
+		() => options.find((option) => option.key === DEFAULT_REFRESH_INTERVAL),
+		[],
+	);
+
 	const [selectedOption, setSelectedOption] = useState<string>(
 		localStorageValue || options[0].key,
 	);
 
 	useEffect(() => {
 		setSelectedOption(localStorageValue || options[0].key);
-	}, [localStorageValue, params]);
+	}, [localStorageValue, params, defaultOption]);
 
 	const getOption = useMemo(
 		() => options.find((option) => option.key === selectedOption),
@@ -127,10 +134,18 @@ function AutoRefresh({
 					DASHBOARD_TIME_IN_DURATION,
 					JSON.stringify(_omit(localStorageData, pathname)),
 				);
+			} else {
+				// When enabling auto-refresh, set to DEFAULT_REFRESH_INTERVAL if no previous preference
+				const refreshInterval = localStorageValue || defaultOption?.key;
+				set(
+					DASHBOARD_TIME_IN_DURATION,
+					JSON.stringify({ ...localStorageData, [pathname]: refreshInterval }),
+				);
+				setSelectedOption(refreshInterval);
 			}
 			setIsAutoRefreshfreshEnabled(checked);
 		},
-		[localStorageData, pathname],
+		[localStorageData, pathname, localStorageValue, defaultOption],
 	);
 
 	if (globalTime.selectedTime === 'custom') {
