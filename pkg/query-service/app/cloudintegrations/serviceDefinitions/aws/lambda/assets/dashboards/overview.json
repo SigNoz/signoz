@@ -1,0 +1,1460 @@
+{
+  "description": "Overview of AWS Lambda functions",
+  "image": "data:image/svg+xml,%3Csvg%20width%3D%22800px%22%20height%3D%22800px%22%20viewBox%3D%220%200%2016%2016%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%3E%3Cpath%20fill%3D%22%23FA7E14%22%20d%3D%22M7.983%208.37c-.053.073-.098.133-.141.194L5.775%2011.5c-.64.91-1.282%201.82-1.924%202.73a.128.128%200%2001-.092.051c-.906-.007-1.813-.017-2.719-.028-.01%200-.02-.003-.04-.006a.455.455%200%2001.025-.053%2013977.496%2013977.496%200%20015.446-8.146c.092-.138.188-.273.275-.413a.165.165%200%2000.018-.124c-.167-.515-.338-1.03-.508-1.543-.073-.22-.15-.44-.218-.66-.022-.072-.059-.094-.134-.093-.57.002-1.136.001-1.704.001-.108%200-.108%200-.108-.103%200-.674%200-1.347-.002-2.021%200-.075.026-.092.099-.092%201.143.002%202.286.002%203.43%200a.113.113%200%2001.076.017.107.107%200%2001.045.061%2018266.184%2018266.184%200%20003.92%209.51c.218.53.438%201.059.654%201.59.026.064.053.076.12.056.6-.178%201.2-.352%201.8-.531.075-.023.102-.008.126.064.204.62.412%201.239.62%201.858l.02.073c-.043.015-.083.032-.124.043l-4.085%201.25c-.065.02-.085%200-.106-.054l-1.25-3.048-1.226-2.984-.183-.449c-.01-.026-.023-.048-.043-.087z%22%2F%3E%3C%2Fsvg%3E",
+  "layout": [
+    {
+      "h": 6,
+      "i": "877bb5c8-331c-492f-b666-2054c2ae39bd",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "b038520d-0756-4e46-a915-12a2f19a0254",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "2516c785-b025-49b3-aeb4-a4735ccb2709",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "6354ea62-e82b-4323-a33d-eef92519e843",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    },
+    {
+      "h": 6,
+      "i": "4119a1e5-32a8-4859-96e9-a5451114782b",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "853d3a92-b396-4064-8762-18d7487989e0",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 12
+    },
+    {
+      "h": 6,
+      "i": "ae6d7c81-d921-4d4c-95ec-6b42d900ea45",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 18
+    }
+  ],
+  "panelMap": {},
+  "tags": [],
+  "title": "AWS Lambda Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "5c57a94c-e7a1-4c20-83a3-3a779b9da48e": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Account",
+      "id": "5c57a94c-e7a1-4c20-83a3-3a779b9da48e",
+      "key": "5c57a94c-e7a1-4c20-83a3-3a779b9da48e",
+      "modificationUUID": "7113f462-0b71-459e-8226-f6292350b34a",
+      "multiSelect": false,
+      "name": "Account",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_account_id') as cloud_account_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_Lambda_Invocations_sum'\nGROUP BY cloud_account_id\n\n",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "8e6124f0-077e-4a45-8a34-c5d5ce1c26c7": {
+      "allSelected": false,
+      "customValue": "",
+      "description": "AWS Region",
+      "id": "8e6124f0-077e-4a45-8a34-c5d5ce1c26c7",
+      "modificationUUID": "d090f070-1d58-4f55-87d2-91778e3fde00",
+      "multiSelect": false,
+      "name": "Region",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'cloud_region') as cloud_region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE \n    metric_name like 'aws_Lambda_Invocations_sum'\n    and JSONExtractString(labels, 'cloud_account_id') IN {{.Account}}\nGROUP BY cloud_region\n",
+      "showALLOption": false,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v4",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of times that your function code is invoked, including successful invocations and invocations that result in a function error. Invocations aren't recorded if the invocation request is throttled or otherwise results in an invocation error. The value of Invocations equals the number of requests billed.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "877bb5c8-331c-492f-b666-2054c2ae39bd",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_Invocations_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_Invocations_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "9efa8bed",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "88dff3bf",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "ddf81767",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "65c19e27-ff29-45fc-a051-b6d9edb1530f",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Invocations",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The amount of time that your function code spends processing an event. The billed duration for an invocation is the value of Duration rounded up to the nearest millisecond. Duration does not include cold start time.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "b038520d-0756-4e46-a915-12a2f19a0254",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_Duration_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_Duration_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "fc46849e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "1d785c45",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "52ec00e5",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ea4397b3-f069-4b69-8375-c11f3699fe4e",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Max Duration",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of invocations that result in a function error. Function errors include exceptions that your code throws and exceptions that the Lambda runtime throws. The runtime returns errors for issues such as timeouts and configuration errors. To calculate the error rate, divide the value of Errors by the value of Invocations. Note that the timestamp on an error metric reflects when the function was invoked, not when the error occurred.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "2516c785-b025-49b3-aeb4-a4735ccb2709",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_Errors_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_Errors_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "83c55fc2",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "ac244309",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "9f7636b0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "c4ee6ded-732c-4c03-b217-e2ed6199d644",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Errors",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of invocation requests that are throttled. When all function instances are processing requests and no concurrency is available to scale up, Lambda rejects additional requests with a TooManyRequestsException error. Throttled requests and other invocation errors don't count as either Invocations or Errors.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "6354ea62-e82b-4323-a33d-eef92519e843",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_Throttles_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_Throttles_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "3a3a113c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "7897e0eb",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "601ca2ce",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6fcf88d1-23c7-4b0f-8741-33fc5d8b3c82",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Throttles",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of events that Lambda successfully queues for processing. This metric provides insight into the number of events that a Lambda function receives. Monitor this metric and set alarms for thresholds to check for issues. For example, to detect an undesirable number of events sent to Lambda, and to quickly diagnose issues resulting from incorrect trigger or function configurations. Mismatches between AsyncEventsReceived and Invocations can indicate a disparity in processing, events being dropped, or a potential queue backlog.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "853d3a92-b396-4064-8762-18d7487989e0",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_AsyncEventsReceived_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_AsyncEventsReceived_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "d780ceba",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "aea1f0ec",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "db127f52",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "e1e444d6-760d-48fe-a4cb-382c07a12611",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Async events received",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The time between when Lambda successfully queues the event and when the function is invoked. The value of this metric increases when events are being retried due to invocation failures or throttling. Monitor this metric and set alarms for thresholds on different statistics for when a queue buildup occurs. To troubleshoot an increase in this metric, look at the Errors metric to identify function errors and the Throttles metric to identify concurrency issues.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "ae6d7c81-d921-4d4c-95ec-6b42d900ea45",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_AsyncEventAge_max--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_AsyncEventAge_max",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "2b06e359",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "9cbcbdf6",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "270bab61",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "6072681e-5551-418d-89aa-1c06bb1a1504",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Max Async Event Age",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "description": "The number of events that are dropped without successfully executing the function. If you configure a dead-letter queue (DLQ) or OnFailure destination, then events are sent there before they're dropped. Events are dropped for various reasons. For example, events can exceed the maximum event age or exhaust the maximum retry attempts, or reserved concurrency might be set to 0. To troubleshoot why events are dropped, look at the Errors metric to identify function errors and the Throttles metric to identify concurrency issues.\n\nSee more at https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "fillSpans": false,
+      "id": "4119a1e5-32a8-4859-96e9-a5451114782b",
+      "isStacked": false,
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "aws_Lambda_AsyncEventsDropped_sum--float64--Gauge--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "aws_Lambda_AsyncEventsDropped_sum",
+                "type": "Gauge"
+              },
+              "aggregateOperator": "max",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "197b664e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "FunctionName--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "FunctionName",
+                      "type": "tag"
+                    },
+                    "op": "!=",
+                    "value": ""
+                  },
+                  {
+                    "id": "553555c0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_account_id--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_account_id",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Account"
+                  },
+                  {
+                    "id": "1fb917ef",
+                    "key": {
+                      "dataType": "string",
+                      "id": "cloud_region--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "cloud_region",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "$Region"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "cloud_account_id--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_account_id",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "cloud_region--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "cloud_region",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "FunctionName--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "FunctionName",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{FunctionName}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "avg",
+              "spaceAggregation": "max",
+              "stepInterval": 60,
+              "timeAggregation": "max"
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "91ac7130-3c35-4220-b9c4-301863e13db1",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": "aws_Lambda_Invocations_sum{cloud_region=\"us-east-2\"}"
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Async events dropped",
+      "yAxisUnit": "none"
+    }
+  ]
+}
