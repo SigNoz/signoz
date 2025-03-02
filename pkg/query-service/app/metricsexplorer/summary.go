@@ -166,13 +166,15 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 				return &model.ApiError{Typ: "MarshallingErr", Err: err}
 			}
 
-			var dashboards []metrics_explorer.Dashboard
+			var dashboards map[string][]metrics_explorer.Dashboard
 			err = json.Unmarshal(jsonData, &dashboards)
 			if err != nil {
 				zap.L().Error("Error unmarshalling data:", zap.Error(err))
 				return &model.ApiError{Typ: "UnMarshallingErr", Err: err}
 			}
-			metricDetailsDTO.Dashboards = dashboards
+			if _, ok := dashboards[metricName]; ok {
+				metricDetailsDTO.Dashboards = dashboards[metricName]
+			}
 		}
 		return nil
 	})
