@@ -696,6 +696,9 @@ function OnboardingAddDataSource(): JSX.Element {
 										src={docsUrl}
 										className="configure-product-docs-section-iframe"
 										referrerPolicy="unsafe-url"
+										loading="lazy"
+										allow="clipboard-write; encrypted-media; web-share"
+										allowFullScreen
 									/>
 								</div>
 
