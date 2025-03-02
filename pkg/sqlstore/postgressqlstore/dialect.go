@@ -16,7 +16,7 @@ func (dialect *PGDialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB
 	}
 
 	// bigint for postgres and INTEGER for sqlite
-	if columnType != "bigint" && columnType != "INTEGER" {
+	if columnType != "bigint" {
 		return nil
 	}
 
@@ -26,16 +26,20 @@ func (dialect *PGDialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB
 	}
 
 	// add new timestamp column
-	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` TIMESTAMP`); err != nil {
+	if _, err := bun.NewAddColumn().Table(table).ColumnExpr(column + " TIMESTAMP").Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := bun.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = to_timestamp(cast(`+column+`_old as INTEGER))`); err != nil {
+	if _, err := bun.NewUpdate().
+		Table(table).
+		Set(column + " = to_timestamp(cast(" + column + "_old as INTEGER))").
+		Where("1=1").
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// drop old column
-	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
+	if _, err := bun.NewDropColumn().Table(table).Column(column + "_old").Exec(ctx); err != nil {
 		return err
 	}
 
@@ -48,7 +52,7 @@ func (dialect *PGDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, 
 		return err
 	}
 
-	if columnType != "bigint" && columnType != "INTEGER" {
+	if columnType != "bigint" {
 		return nil
 	}
 
@@ -57,17 +61,21 @@ func (dialect *PGDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, 
 	}
 
 	// add new boolean column
-	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN `+column+` BOOLEAN`); err != nil {
+	if _, err := bun.NewAddColumn().Table(table).ColumnExpr(column + " BOOLEAN").Exec(ctx); err != nil {
 		return err
 	}
 
 	// copy data from old column to new column, converting from int to boolean
-	if _, err := bun.ExecContext(ctx, `UPDATE `+table+` SET `+column+` = CASE WHEN `+column+`_old = 1 THEN true ELSE false END`); err != nil {
+	if _, err := bun.NewUpdate().
+		Table(table).
+		Set(column + " = CASE WHEN " + column + "_old = 1 THEN true ELSE false END").
+		Where("1=1").
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// drop old column
-	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN `+column+`_old`); err != nil {
+	if _, err := bun.NewDropColumn().Table(table).Column(column + "_old").Exec(ctx); err != nil {
 		return err
 	}
 
@@ -89,4 +97,20 @@ func (dialect *PGDialect) GetColumnType(ctx context.Context, bun bun.IDB, table 
 	}
 
 	return columnType, nil
+}
+
+func (dialect *PGDialect) ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error) {
+	var count int
+	err := bun.NewSelect().
+		ColumnExpr("COUNT(*)").
+		TableExpr("information_schema.columns").
+		Where("table_name = ?", table).
+		Where("column_name = ?", column).
+		Scan(ctx, &count)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }

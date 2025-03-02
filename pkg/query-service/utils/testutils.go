@@ -47,7 +47,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewAddPatsFactory(),
 			sqlmigration.NewModifyDatetimeFactory(),
 			sqlmigration.NewModifyOrgDomainFactory(),
-			sqlmigration.NewUpdateOrganizationFactory(),
+			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
 		),
 	)
 	if err != nil {

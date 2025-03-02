@@ -28,4 +28,5 @@ type SQLDialect interface {
 	MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error
 	MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error
 	GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error)
+	ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -12,16 +11,23 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
+var errDuplicate = "duplicate"
+var errAlreadyExists = "already exists"
+
 type updateOrganization struct {
 	store sqlstore.SQLStore
 }
 
-func NewUpdateOrganizationFactory() factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("update_organization"), newUpdateOrganization)
+func NewUpdateOrganizationFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("update_organization"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newUpdateOrganization(ctx, ps, c, sqlstore)
+	})
 }
 
-func newUpdateOrganization(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
-	return &updateOrganization{}, nil
+func newUpdateOrganization(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
+	return &updateOrganization{
+		store: store,
+	}, nil
 }
 
 func (migration *updateOrganization) Register(migrations *migrate.Migrations) error {
@@ -47,41 +53,51 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// drop user_flags table
-	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS user_flags`); err != nil {
+	if _, err := tx.NewDropTable().IfExists().Table("user_flags").Exec(ctx); err != nil {
 		return err
 	}
 
 	// add org id to groups table
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE groups ADD COLUMN org_id TEXT`); err != nil && !strings.Contains(err.Error(), "duplicate") {
+	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "groups", "org_id"); err != nil {
 		return err
+	} else if !exists {
+		if _, err := tx.NewAddColumn().Table("groups").ColumnExpr("org_id TEXT").Exec(ctx); err != nil {
+			return err
+		}
 	}
 
 	// add created_at to groups table
 	for _, table := range []string{"groups"} {
-		query := `ALTER TABLE ` + table + ` ADD COLUMN created_at TIMESTAMP`
-		if _, err := tx.ExecContext(ctx, query); err != nil && !strings.Contains(err.Error(), "duplicate") {
+		if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, table, "created_at"); err != nil {
 			return err
+		} else if !exists {
+			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("created_at TIMESTAMP").Exec(ctx); err != nil {
+				return err
+			}
 		}
 	}
 
 	// add updated_at to organizations, users, groups table
 	for _, table := range []string{"organizations", "users", "groups"} {
-		query := `ALTER TABLE ` + table + ` ADD COLUMN updated_at TIMESTAMP`
-		if _, err := tx.ExecContext(ctx, query); err != nil && !strings.Contains(err.Error(), "duplicate") {
+		if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, table, "updated_at"); err != nil {
 			return err
+		} else if !exists {
+			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("updated_at TIMESTAMP").Exec(ctx); err != nil {
+				return err
+			}
 		}
 	}
 
 	// since organizations, users has created_at as integer instead of timestamp
 	for _, table := range []string{"organizations", "users", "invites"} {
-		if err := db.Dialect().MigrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
+		if err := migration.store.Dialect().MigrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
 			return err
 		}
 	}
 
 	// migrate is_anonymous and has_opted_updates to boolean from int
 	for _, column := range []string{"is_anonymous", "has_opted_updates"} {
-		if err := db.Dialect().MigrateIntToBoolean(ctx, tx, "organizations", column); err != nil {
+		if err := migration.store.Dialect().MigrateIntToBoolean(ctx, tx, "organizations", column); err != nil {
 			return err
 		}
 	}
@@ -126,7 +142,7 @@ func updateApdexSettings(ctx context.Context, tx bun.Tx) error {
 	}
 
 	// drop old table
-	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS apdex_settings`); err != nil {
+	if _, err := tx.NewDropTable().IfExists().Table("apdex_settings").Exec(ctx); err != nil {
 		return err
 	}
 
