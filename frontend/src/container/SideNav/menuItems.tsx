@@ -30,6 +30,12 @@ export const getStartedMenuItem = {
 	icon: <RocketOutlined rotate={45} />,
 };
 
+export const getStartedV3MenuItem = {
+	key: ROUTES.GET_STARTED_WITH_CLOUD,
+	label: 'Get Started',
+	icon: <RocketOutlined rotate={45} />,
+};
+
 export const inviteMemberMenuItem = {
 	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
 	label: 'Invite Team Member',

@@ -7,12 +7,14 @@ import { Button, Card, Form, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -105,6 +107,11 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
+
+	const { featureFlags } = useAppContext();
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
 
 	const {
 		selectedDataSource,
@@ -384,7 +391,12 @@ export default function Onboarding(): JSX.Element {
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
-							history.push(ROUTES.GET_STARTED);
+
+							if (isOnboardingV3Enabled) {
+								history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+							} else {
+								history.push(ROUTES.GET_STARTED);
+							}
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
