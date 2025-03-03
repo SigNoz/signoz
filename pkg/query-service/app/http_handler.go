@@ -2111,7 +2111,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		RespondError(w, &model.ApiError{Err: errors.New("failed to org id from context"), Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
 		return
 	}
 	invites, err := dao.DB().GetInvites(ctx, claims.OrgID)
