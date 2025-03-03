@@ -67,7 +67,7 @@ export const getMetricsListQuery = (): MetricsListPayload => ({
 		items: [],
 		op: 'and',
 	},
-	orderBy: [{ columnName: 'type', order: 'asc' }],
+	orderBy: { columnName: 'type', order: 'asc' },
 	heatmap: 'cardinality',
 });
 
@@ -184,7 +184,6 @@ export const transformTreemapData = (
 };
 
 const getTreemapTileBackgroundColor = (node: TreemapTile): string => {
-	console.log(node);
 	const size = node.size * 10;
 	if (size > 0.8) {
 		return Color.BG_AMBER_600;

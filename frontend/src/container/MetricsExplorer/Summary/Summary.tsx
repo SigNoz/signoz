@@ -26,7 +26,7 @@ import {
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [orderBy, setOrderBy] = useState<OrderByPayload | null>({
+	const [orderBy, setOrderBy] = useState<OrderByPayload>({
 		columnName: 'type',
 		order: 'asc',
 	});
@@ -61,7 +61,7 @@ function Summary(): JSX.Element {
 			filters: queryFilters,
 			startDate: convertNanoSecondsToISOString(minTime),
 			endDate: convertNanoSecondsToISOString(maxTime),
-			orderBy: [orderBy ?? { columnName: 'type', order: 'asc' }],
+			orderBy,
 		};
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy]);
 
@@ -125,7 +125,7 @@ function Summary(): JSX.Element {
 	};
 
 	const formattedMetricsData = useMemo(
-		() => formatDataForMetricsTable(metricsData?.payload?.data.metrics || []),
+		() => formatDataForMetricsTable(metricsData?.payload?.data?.metrics || []),
 		[metricsData],
 	);
 

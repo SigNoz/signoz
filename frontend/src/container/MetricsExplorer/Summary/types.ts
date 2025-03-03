@@ -11,7 +11,7 @@ export interface MetricsTableProps {
 	pageSize: number;
 	currentPage: number;
 	onPaginationChange: (page: number, pageSize: number) => void;
-	setOrderBy: Dispatch<SetStateAction<OrderByPayload | null>>;
+	setOrderBy: Dispatch<SetStateAction<OrderByPayload>>;
 }
 
 export interface MetricsSearchProps {
