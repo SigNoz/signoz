@@ -9,13 +9,13 @@ import {
 	TREEMAP_HEIGHT,
 	TREEMAP_MARGINS,
 	TREEMAP_SQUARE_PADDING,
-} from '../constants';
-import { TreemapProps, TreemapTile } from '../types';
+} from './constants';
+import { TreemapProps, TreemapTile } from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
 	transformTreemapData,
-} from '../utils';
+} from './utils';
 
 function MetricsTreemap({
 	viewType,

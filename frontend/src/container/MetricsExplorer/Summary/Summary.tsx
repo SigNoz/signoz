@@ -13,7 +13,7 @@ import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import MetricsSearch from './MetricsSearch/MetricsSearch';
+import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
 import { OrderByPayload, TreemapViewType } from './types';
