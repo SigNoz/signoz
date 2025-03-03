@@ -250,6 +250,8 @@
 		"body-parser": "1.20.3",
 		"http-proxy-middleware": "3.0.3",
 		"cross-spawn": "7.0.5",
-		"cookie": "^0.7.1"
+		"cookie": "^0.7.1",
+		"path-to-regexp": "^1.7.0",
+		"react-router/path-to-regexp": "^1.7.0"
 	}
 }
