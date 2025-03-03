@@ -120,21 +120,50 @@ function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
 	);
 }
 
+function ValidateRowValueWrapper({
+	value,
+	children,
+}: {
+	value: string | number | null;
+	children: React.ReactNode;
+}): JSX.Element {
+	if (!value) {
+		return <div>-</div>;
+	}
+	return <div>{children}</div>;
+}
+
 export const formatDataForMetricsTable = (
 	data: MetricsListItemData[],
 ): MetricsListItemRowData[] =>
 	data.map((metric) => ({
 		key: metric.metric_name,
 		metric_name: (
-			<Tooltip title={metric.metric_name}>{metric.metric_name}</Tooltip>
+			<ValidateRowValueWrapper value={metric.metric_name}>
+				<Tooltip title={metric.metric_name}>{metric.metric_name}</Tooltip>
+			</ValidateRowValueWrapper>
 		),
 		description: (
-			<Tooltip title={metric.description}>{metric.description}</Tooltip>
+			<ValidateRowValueWrapper value={metric.description}>
+				<Tooltip title={metric.description}>{metric.description}</Tooltip>
+			</ValidateRowValueWrapper>
 		),
 		type: <MetricTypeRenderer type={metric.type} />,
-		unit: metric.unit,
-		[TreemapViewType.DATAPOINTS]: metric[TreemapViewType.DATAPOINTS],
-		[TreemapViewType.CARDINALITY]: metric[TreemapViewType.CARDINALITY],
+		unit: (
+			<ValidateRowValueWrapper value={metric.unit}>
+				{metric.unit}
+			</ValidateRowValueWrapper>
+		),
+		[TreemapViewType.DATAPOINTS]: (
+			<ValidateRowValueWrapper value={metric[TreemapViewType.DATAPOINTS]}>
+				{metric[TreemapViewType.DATAPOINTS]}
+			</ValidateRowValueWrapper>
+		),
+		[TreemapViewType.CARDINALITY]: (
+			<ValidateRowValueWrapper value={metric[TreemapViewType.CARDINALITY]}>
+				{metric[TreemapViewType.CARDINALITY]}
+			</ValidateRowValueWrapper>
+		),
 	}));
 
 export const transformTreemapData = (

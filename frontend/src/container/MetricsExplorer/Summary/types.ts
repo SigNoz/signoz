@@ -37,9 +37,9 @@ export interface MetricsListItemRowData {
 	metric_name: React.ReactNode;
 	description: React.ReactNode;
 	type: React.ReactNode;
-	unit: string;
-	samples: number;
-	timeseries: number;
+	unit: React.ReactNode;
+	samples: React.ReactNode;
+	timeseries: React.ReactNode;
 }
 
 export enum TreemapViewType {
