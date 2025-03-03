@@ -1,7 +1,10 @@
 import { Select } from 'antd';
-import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
+import { OPERATORS } from 'constants/queryBuilder';
+import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { HardHat } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { TREEMAP_VIEW_OPTIONS } from '../constants';
 import { MetricsSearchProps } from '../types';
@@ -12,6 +15,19 @@ function MetricsSearch({
 	heatmapView,
 	setHeatmapView,
 }: MetricsSearchProps): JSX.Element {
+	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: false, isDisabled: false },
+			having: { isHidden: false, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
+		};
+
+		return config;
+	}, []);
+
 	return (
 		<div className="metrics-search-container">
 			<div className="metrics-search-options">
@@ -27,10 +43,12 @@ function MetricsSearch({
 					hideShareModal
 				/>
 			</div>
-			<QueryBuilderSearchV2
+			<QueryBuilderSearch
 				query={query}
 				onChange={onChange}
 				suffixIcon={<HardHat size={16} />}
+				isMetricsExplorer
+				whereClauseConfig={filterConfigs?.filters}
 			/>
 		</div>
 	);

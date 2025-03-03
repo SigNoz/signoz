@@ -34,7 +34,10 @@ function MetricsTable({
 					order: sorter.order === 'ascend' ? 'asc' : 'desc',
 				});
 			} else {
-				setOrderBy(null);
+				setOrderBy({
+					columnName: 'type',
+					order: 'asc',
+				});
 			}
 		},
 		[setOrderBy],

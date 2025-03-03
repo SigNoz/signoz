@@ -49,6 +49,8 @@ function MetricsTreemap({
 	}
 
 	if (
+		!data ||
+		!data.data ||
 		data?.status === 'error' ||
 		(data?.status === 'success' && !data?.data?.heatmap?.[viewType])
 	) {

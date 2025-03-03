@@ -1,7 +1,10 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
-import { TreemapViewType } from 'container/MetricsExplorer/Summary/types';
+import {
+	OrderByPayload,
+	TreemapViewType,
+} from 'container/MetricsExplorer/Summary/types';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -11,10 +14,7 @@ export interface MetricsListPayload {
 	groupBy?: BaseAutocompleteData[];
 	offset?: number;
 	limit?: number;
-	orderBy?: {
-		columnName: string;
-		order: 'asc' | 'desc';
-	}[];
+	orderBy?: OrderByPayload;
 	heatmap: TreemapViewType;
 }
 
