@@ -11,9 +11,6 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
-var errDuplicate = "duplicate"
-var errAlreadyExists = "already exists"
-
 type updateOrganization struct {
 	store sqlstore.SQLStore
 }
