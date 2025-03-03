@@ -17,7 +17,11 @@ import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
 import { OrderByPayload, TreemapViewType } from './types';
-import { formatDataForMetricsTable, getMetricsListQuery } from './utils';
+import {
+	convertNanoToMilliseconds,
+	formatDataForMetricsTable,
+	getMetricsListQuery,
+} from './utils';
 
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
@@ -56,8 +60,8 @@ function Summary(): JSX.Element {
 			...baseQuery,
 			limit: 1000,
 			filters: queryFilters,
-			start: Math.floor(minTime / 1000000),
-			end: Math.floor(maxTime / 1000000),
+			start: convertNanoToMilliseconds(minTime),
+			end: convertNanoToMilliseconds(maxTime),
 			orderBy,
 		};
 	}, [queryFilters, minTime, maxTime, orderBy]);
@@ -67,8 +71,8 @@ function Summary(): JSX.Element {
 			limit: 100,
 			filters: queryFilters,
 			treemap: heatmapView,
-			start: Math.floor(minTime / 1000000),
-			end: Math.floor(maxTime / 1000000),
+			start: convertNanoToMilliseconds(minTime),
+			end: convertNanoToMilliseconds(maxTime),
 		}),
 		[queryFilters, heatmapView, minTime, maxTime],
 	);
