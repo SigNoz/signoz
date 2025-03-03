@@ -235,3 +235,6 @@ export const getTreemapTileTextStyle = (): React.CSSProperties => ({
 	textAlign: 'center',
 	padding: '4px',
 });
+
+export const convertNanoToMilliseconds = (time: number): number =>
+	Math.floor(time / 1000000);
