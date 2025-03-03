@@ -2,7 +2,6 @@ package querycache
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -53,8 +52,7 @@ func WithFluxInterval(fluxInterval time.Duration) QueryCacheOption {
 // FindMissingTimeRange is a new correct implementation of FindMissingTimeRanges
 // It takes care of any timestamps that were not queried due to rounding in the first version.
 func (q *queryCache) FindMissingTimeRangeV2(start, end int64, step int64, cacheKey string) []MissInterval {
-	x := start + step*1000
-	if (x) > end || q.cache == nil || cacheKey == "" {
+	if (start+step*1000) > end || q.cache == nil || cacheKey == "" {
 		return []MissInterval{{Start: start, End: end}}
 	}
 
@@ -117,9 +115,7 @@ func (q *queryCache) FindMissingTimeRangeV2(start, end int64, step int64, cacheK
 		}
 
 		// Update currentTime, but don't go past the end time
-		x := min(data.End, end)
-		currentTime = max(currentTime, x)
-		fmt.Println(currentTime)
+		currentTime = max(currentTime, min(data.End, end))
 	}
 
 	// Add final missing range if necessary
