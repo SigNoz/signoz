@@ -596,6 +596,19 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+func (t *Temporality) Scan(src interface{}) error {
+	if src == nil {
+		*t = ""
+		return nil
+	}
+	s, ok := src.(string)
+	if !ok {
+		return fmt.Errorf("failed to scan Temporality: %v", src)
+	}
+	*t = Temporality(s)
+	return nil
+}
+
 type TimeAggregation string
 
 const (
@@ -647,6 +660,19 @@ const (
 	MetricTypeSummary              MetricType = "Summary"
 	MetricTypeExponentialHistogram MetricType = "ExponentialHistogram"
 )
+
+func (m *MetricType) Scan(src interface{}) error {
+	if src == nil {
+		*m = ""
+		return nil
+	}
+	s, ok := src.(string)
+	if !ok {
+		return fmt.Errorf("failed to scan MetricType: %v", src)
+	}
+	*m = MetricType(s)
+	return nil
+}
 
 type SpaceAggregation string
 
