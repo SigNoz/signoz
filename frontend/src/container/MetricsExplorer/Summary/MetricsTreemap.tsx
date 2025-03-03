@@ -10,7 +10,7 @@ import {
 	TREEMAP_MARGINS,
 	TREEMAP_SQUARE_PADDING,
 } from './constants';
-import { TreemapProps, TreemapTile } from './types';
+import { TreemapProps, TreemapTile, TreemapViewType } from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
@@ -28,9 +28,9 @@ function MetricsTreemap({
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
-			(viewType === 'cardinality'
-				? data?.data?.heatmap?.cardinality
-				: data?.data?.heatmap?.datapoints) || [];
+			(viewType === TreemapViewType.CARDINALITY
+				? data?.data?.[TreemapViewType.CARDINALITY]
+				: data?.data?.[TreemapViewType.DATAPOINTS]) || [];
 		return transformTreemapData(extracedTreemapData, viewType);
 	}, [data, viewType]);
 
@@ -52,7 +52,7 @@ function MetricsTreemap({
 		!data ||
 		!data.data ||
 		data?.status === 'error' ||
-		(data?.status === 'success' && !data?.data?.heatmap?.[viewType])
+		(data?.status === 'success' && !data?.data?.[viewType])
 	) {
 		return (
 			<Empty
@@ -94,7 +94,10 @@ function MetricsTreemap({
 											left={node.x0 + TREEMAP_MARGINS.LEFT}
 										>
 											{node.depth > 0 && (
-												<Tooltip title={node.data.id} placement="top">
+												<Tooltip
+													title={`${node.data.id}: ${node.data.displayValue}%`}
+													placement="top"
+												>
 													<foreignObject
 														width={nodeWidth}
 														height={nodeHeight}

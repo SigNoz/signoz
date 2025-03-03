@@ -34,19 +34,22 @@ export interface OrderByPayload {
 
 export interface MetricsListItemRowData {
 	key: string;
-	name: React.ReactNode;
+	metric_name: React.ReactNode;
 	description: React.ReactNode;
 	type: React.ReactNode;
 	unit: string;
-	dataPoints: number;
-	cardinality: number;
+	samples: number;
+	timeseries: number;
 }
 
-export type TreemapViewType = 'cardinality' | 'datapoints';
+export enum TreemapViewType {
+	CARDINALITY = 'timeseries',
+	DATAPOINTS = 'samples',
+}
 
 export interface TreemapTile {
 	id: string;
 	size: number;
-	displayValue: number | null;
+	displayValue: number | string | null;
 	parent: string | null;
 }

@@ -25,7 +25,7 @@ import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
 export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 	{
 		title: <div className="metric-name-column-header">METRIC</div>,
-		dataIndex: 'name',
+		dataIndex: 'metric_name',
 		width: 400,
 		sorter: true,
 		className: 'metric-name-column-header',
@@ -50,13 +50,13 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 	},
 	{
 		title: 'DATAPOINTS',
-		dataIndex: 'dataPoints',
+		dataIndex: TreemapViewType.DATAPOINTS,
 		width: 150,
 		sorter: true,
 	},
 	{
 		title: 'CARDINALITY',
-		dataIndex: 'cardinality',
+		dataIndex: TreemapViewType.CARDINALITY,
 		width: 150,
 		sorter: true,
 	},
@@ -68,7 +68,6 @@ export const getMetricsListQuery = (): MetricsListPayload => ({
 		op: 'and',
 	},
 	orderBy: { columnName: 'type', order: 'asc' },
-	heatmap: 'cardinality',
 });
 
 function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
@@ -125,52 +124,35 @@ export const formatDataForMetricsTable = (
 	data: MetricsListItemData[],
 ): MetricsListItemRowData[] =>
 	data.map((metric) => ({
-		key: metric.name,
-		name: <Tooltip title={metric.name}>{metric.name}</Tooltip>,
+		key: metric.metric_name,
+		metric_name: (
+			<Tooltip title={metric.metric_name}>{metric.metric_name}</Tooltip>
+		),
 		description: (
 			<Tooltip title={metric.description}>{metric.description}</Tooltip>
 		),
 		type: <MetricTypeRenderer type={metric.type} />,
 		unit: metric.unit,
-		dataPoints: metric.dataPoints,
-		cardinality: metric.cardinality,
+		[TreemapViewType.DATAPOINTS]: metric[TreemapViewType.DATAPOINTS],
+		[TreemapViewType.CARDINALITY]: metric[TreemapViewType.CARDINALITY],
 	}));
-
-export const convertNanoSecondsToISOString = (nanos: number): string => {
-	const milliseconds = Math.floor(nanos / 1_000_000);
-	const date = new Date(milliseconds);
-	return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
-};
 
 export const transformTreemapData = (
 	data: CardinalityData[] | DatapointsData[],
 	viewType: TreemapViewType,
 ): TreemapTile[] => {
-	let totalSize: number;
-	if (viewType === 'cardinality') {
-		totalSize = (data as CardinalityData[]).reduce(
-			(acc, item) => acc + item.relative_percentage,
-			0,
-		);
-	} else {
-		totalSize = (data as DatapointsData[]).reduce(
-			(acc, item) => acc + item.percentage,
-			0,
-		);
-	}
+	const totalSize = (data as (CardinalityData | DatapointsData)[]).reduce(
+		(acc: number, item: CardinalityData | DatapointsData) =>
+			acc + item.percentage,
+		0,
+	);
 
-	const children = data.map((item) => {
-		const percentage =
-			viewType === 'cardinality'
-				? (item as CardinalityData).relative_percentage
-				: (item as DatapointsData).percentage;
-		return {
-			id: item.metric_name,
-			size: percentage / totalSize,
-			displayValue: percentage,
-			parent: viewType,
-		};
-	});
+	const children = data.map((item) => ({
+		id: item.metric_name,
+		size: Number((item.percentage / totalSize).toFixed(2)),
+		displayValue: Number(item.percentage).toFixed(2),
+		parent: viewType,
+	}));
 
 	return [
 		{
