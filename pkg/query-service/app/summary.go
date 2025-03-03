@@ -102,3 +102,23 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, result)
 
 }
+
+func (aH *APIHandler) GetRelatedMetrics(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, _ := io.ReadAll(r.Body)
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	ctx := r.Context()
+	params, apiError := explorer.ParseRelatedMetricsParams(r)
+	if apiError != nil {
+		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	result, apiError := aH.SummaryService.GetRelatedMetrics(ctx, params)
+	if apiError != nil {
+		zap.L().Error("error getting related metrics", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	aH.Respond(w, result)
+
+}

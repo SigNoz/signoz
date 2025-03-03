@@ -2,7 +2,7 @@ version: "3"
 x-common: &common
   networks:
     - signoz-net
-  restart: on-failure
+  restart: unless-stopped
   logging:
     options:
       max-size: 50m
@@ -79,6 +79,7 @@ services:
         wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
         tar -xvzf histogram-quantile.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    restart: on-failure
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
@@ -188,7 +189,7 @@ services:
         condition: service_healthy
   query-service:
     !!merge <<: *db-depend
-    image: signoz/query-service:${DOCKER_TAG:-0.73.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.75.0}
     container_name: signoz-query-service
     command:
       - --config=/root/config/prometheus.yml
@@ -222,7 +223,7 @@ services:
       retries: 3
   frontend:
     !!merge <<: *common
-    image: signoz/frontend:${DOCKER_TAG:-0.73.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.75.0}
     container_name: signoz-frontend
     depends_on:
       - alertmanager
@@ -277,6 +278,7 @@ services:
       - async
       - --dsn=tcp://clickhouse:9000
       - --up=
+    restart: on-failure
 networks:
   signoz-net:
     name: signoz-net
