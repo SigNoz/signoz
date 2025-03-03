@@ -54,14 +54,13 @@ function Summary(): JSX.Element {
 		const baseQuery = getMetricsListQuery();
 		return {
 			...baseQuery,
-			limit: pageSize,
-			offset: (currentPage - 1) * pageSize,
+			limit: 1000,
 			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
-	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy]);
+	}, [queryFilters, minTime, maxTime, orderBy]);
 
 	const metricsTreemapQuery = useMemo(
 		() => ({
