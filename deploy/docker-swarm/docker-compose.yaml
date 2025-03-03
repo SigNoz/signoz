@@ -73,6 +73,9 @@ services:
         wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
         tar -xvzf histogram-quantile.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    deploy:
+      restart_policy:
+        condition: on-failure
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
@@ -117,7 +120,7 @@ services:
       - query-service
   query-service:
     !!merge <<: *db-depend
-    image: signoz/query-service:0.73.0
+    image: signoz/query-service:0.74.0
     command:
       - --config=/root/config/prometheus.yml
       - --use-logs-new-schema=true
@@ -150,7 +153,7 @@ services:
       retries: 3
   frontend:
     !!merge <<: *common
-    image: signoz/frontend:0.73.0
+    image: signoz/frontend:0.74.0
     depends_on:
       - alertmanager
       - query-service

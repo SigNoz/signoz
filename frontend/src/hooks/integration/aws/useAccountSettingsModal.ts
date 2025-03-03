@@ -14,6 +14,8 @@ import {
 import { AccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
+import logEvent from '../../../api/common/logEvent';
+
 interface UseAccountSettingsModalProps {
 	onClose: () => void;
 	account: CloudAccount;
@@ -84,8 +86,14 @@ export function useAccountSettingsModal({
 				{ accountId: account?.id, payload },
 				{
 					onSuccess: (response) => {
-						setActiveAccount(response.data);
+						const newActiveAccount = response?.data;
+						setActiveAccount(newActiveAccount);
 						onClose();
+
+						logEvent('AWS Integration: Account settings Updated', {
+							cloudAccountId: newActiveAccount?.cloud_account_id,
+							enabledRegions: newActiveAccount?.config?.regions,
+						});
 					},
 				},
 			);
