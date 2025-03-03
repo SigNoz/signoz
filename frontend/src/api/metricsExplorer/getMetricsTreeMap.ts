@@ -1,27 +1,26 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import { TreemapViewType } from 'container/MetricsExplorer/Summary/types';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface MetricsTreeMapPayload {
 	filters: TagFilter;
 	limit?: number;
-	heatmap?: 'cardinality' | 'datapoints';
+	treemap?: TreemapViewType;
 }
 
 export interface MetricsTreeMapResponse {
 	status: string;
 	data: {
-		heatmap: {
-			cardinality: CardinalityData[];
-			datapoints: DatapointsData[];
-		};
+		[TreemapViewType.CARDINALITY]: CardinalityData[];
+		[TreemapViewType.DATAPOINTS]: DatapointsData[];
 	};
 }
 
 export interface CardinalityData {
-	relative_percentage: number;
+	percentage: number;
 	total_value: number;
 	metric_name: string;
 }

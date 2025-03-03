@@ -9,8 +9,8 @@ export const TREEMAP_VIEW_OPTIONS: {
 	value: TreemapViewType;
 	label: string;
 }[] = [
-	{ value: 'cardinality', label: 'Cardinality' },
-	{ value: 'datapoints', label: 'Datapoints' },
+	{ value: TreemapViewType.CARDINALITY, label: 'Cardinality' },
+	{ value: TreemapViewType.DATAPOINTS, label: 'Datapoints' },
 ];
 
 export const TREEMAP_HEIGHT = 300;

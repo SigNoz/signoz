@@ -15,24 +15,23 @@ export interface MetricsListPayload {
 	offset?: number;
 	limit?: number;
 	orderBy?: OrderByPayload;
-	heatmap: TreemapViewType;
 }
 
 export enum MetricType {
-	SUM = 'sum',
-	GAUGE = 'gauge',
-	HISTOGRAM = 'histogram',
-	SUMMARY = 'summary',
-	EXPONENTIAL_HISTOGRAM = 'exponential_histogram',
+	SUM = 'Sum',
+	GAUGE = 'Gauge',
+	HISTOGRAM = 'Histogram',
+	SUMMARY = 'Summary',
+	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
 }
 
 export interface MetricsListItemData {
-	name: string;
+	metric_name: string;
 	description: string;
 	type: MetricType;
 	unit: string;
-	cardinality: number;
-	dataPoints: number;
+	[TreemapViewType.CARDINALITY]: number;
+	[TreemapViewType.DATAPOINTS]: number;
 	lastReceived: string;
 }
 

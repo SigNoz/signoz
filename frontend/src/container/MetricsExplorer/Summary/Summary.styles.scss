@@ -20,6 +20,8 @@
 		margin-right: -16px;
 
 		.ant-table {
+			max-height: 500px;
+			overflow-y: auto;
 			.ant-table-thead > tr > th {
 				padding: 12px;
 				font-weight: 500;

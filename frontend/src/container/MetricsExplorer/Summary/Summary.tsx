@@ -17,11 +17,7 @@ import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
 import { OrderByPayload, TreemapViewType } from './types';
-import {
-	convertNanoSecondsToISOString,
-	formatDataForMetricsTable,
-	getMetricsListQuery,
-} from './utils';
+import { formatDataForMetricsTable, getMetricsListQuery } from './utils';
 
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
@@ -30,7 +26,9 @@ function Summary(): JSX.Element {
 		columnName: 'type',
 		order: 'asc',
 	});
-	const [heatmapView, setHeatmapView] = useState<TreemapViewType>('cardinality');
+	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
+		TreemapViewType.CARDINALITY,
+	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -59,8 +57,8 @@ function Summary(): JSX.Element {
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
 			filters: queryFilters,
-			startDate: convertNanoSecondsToISOString(minTime),
-			endDate: convertNanoSecondsToISOString(maxTime),
+			start: Math.floor(minTime / 1000000),
+			end: Math.floor(maxTime / 1000000),
 			orderBy,
 		};
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy]);
@@ -69,9 +67,11 @@ function Summary(): JSX.Element {
 		() => ({
 			limit: 100,
 			filters: queryFilters,
-			heatmap: heatmapView,
+			treemap: heatmapView,
+			start: Math.floor(minTime / 1000000),
+			end: Math.floor(maxTime / 1000000),
 		}),
-		[queryFilters, heatmapView],
+		[queryFilters, heatmapView, minTime, maxTime],
 	);
 
 	const {
