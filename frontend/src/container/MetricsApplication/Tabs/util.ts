@@ -4,11 +4,12 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useClickOutside from 'hooks/useClickOutside';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -16,6 +17,7 @@ import {
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
+import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 export const dbSystemTags: Tags[] = [
@@ -56,6 +58,18 @@ export function generateExplorerPath(
 }
 
 // TODO(@rahul-signoz): update the name of this function once we have view logs button in every panel
+
+/**
+ * Handles click events for viewing trace/logs popup
+ * @param selectedTraceTags - Selected trace tags
+ * @param servicename - Name of the service
+ * @param timestamp - Timestamp in seconds
+ * @param apmToTraceQuery - Query object
+ * @param isViewLogsClicked - Whether this is for viewing logs vs traces
+ * @param stepInterval - Time interval in seconds
+ * @param safeNavigate - Navigation function
+ 
+ */
 export function onViewTracePopupClick({
 	selectedTraceTags,
 	servicename,
@@ -66,8 +80,8 @@ export function onViewTracePopupClick({
 	safeNavigate,
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
-		const endTime = timestamp;
-		const startTime = timestamp - (stepInterval || 60);
+		const endTime = secondsToMilliseconds(timestamp);
+		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
 
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, startTime.toString());
@@ -93,9 +107,27 @@ export function onViewTracePopupClick({
 	};
 }
 
-export function onGraphClickHandler(
+export function useGraphClickHandler(
 	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
-) {
+): (
+	xValue: number,
+	yValue: number,
+	mouseX: number,
+	mouseY: number,
+	type: string,
+) => Promise<void> {
+	const buttonRef = useRef<HTMLElement | null>(null);
+
+	useClickOutside({
+		ref: buttonRef,
+		onClickOutside: () => {
+			if (buttonRef.current) {
+				buttonRef.current.style.display = 'none';
+			}
+		},
+		eventType: 'mousedown',
+	});
+
 	return async (
 		xValue: number,
 		yValue: number,
@@ -104,15 +136,15 @@ export function onGraphClickHandler(
 		type: string,
 	): Promise<void> => {
 		const id = `${type}_button`;
-
 		const buttonElement = document.getElementById(id);
+		buttonRef.current = buttonElement;
 
 		if (xValue) {
 			if (buttonElement) {
 				buttonElement.style.display = 'block';
 				buttonElement.style.left = `${mouseX}px`;
 				buttonElement.style.top = `${mouseY}px`;
-				setSelectedTimeStamp(Math.floor(xValue * 1_000));
+				setSelectedTimeStamp(Math.floor(xValue));
 			}
 		} else if (buttonElement && buttonElement.style.display === 'block') {
 			buttonElement.style.display = 'none';

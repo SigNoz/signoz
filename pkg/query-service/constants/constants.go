@@ -85,6 +85,8 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
+var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
+
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
 	return GetOrDefaultEnv("USE_METRICS_PRE_AGGREGATION", "true") == "true"
@@ -231,6 +233,9 @@ const (
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
 	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME      = "distributed_top_level_operations"
+	SIGNOZ_TIMESERIES_v4_TABLENAME             = "distributed_time_series_v4"
+	SIGNOZ_TIMESERIES_v4_1WEEK_TABLENAME       = "distributed_time_series_v4_1week"
+	SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME        = "distributed_time_series_v4_6hrs"
 )
 
 // alert related constants
@@ -714,3 +719,17 @@ func init() {
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
 
 const MaxResultRowsForCHQuery = 1_000_000
+
+var ChDataTypeMap = map[string]string{
+	"string":  "String",
+	"bool":    "Bool",
+	"int64":   "Float64",
+	"float64": "Float64",
+}
+
+var MaterializedDataTypeMap = map[string]string{
+	"string":  "string",
+	"bool":    "bool",
+	"int64":   "number",
+	"float64": "number",
+}

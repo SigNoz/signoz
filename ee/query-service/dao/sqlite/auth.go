@@ -49,7 +49,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 		Password:          hash,
 		CreatedAt:         time.Now().Unix(),
 		ProfilePictureURL: "", // Currently unused
-		GroupId:           group.Id,
+		GroupId:           group.ID,
 		OrgId:             domain.OrgId,
 	}
 

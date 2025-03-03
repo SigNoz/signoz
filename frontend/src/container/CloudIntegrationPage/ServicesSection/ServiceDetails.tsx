@@ -7,8 +7,9 @@ import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/t
 import dayjs from 'dayjs';
 import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import logEvent from '../../../api/common/logEvent';
 import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
@@ -57,6 +58,13 @@ function ServiceDetails(): JSX.Element | null {
 	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
 		false,
 	);
+	const openServiceConfigModal = (): void => {
+		setIsConfigureServiceModalOpen(true);
+		logEvent('AWS Integration: Service settings viewed', {
+			cloudAccountId,
+			serviceId,
+		});
+	};
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
@@ -79,6 +87,16 @@ function ServiceDetails(): JSX.Element | null {
 		() => !!config?.logs?.enabled || !!config?.metrics?.enabled,
 		[config],
 	);
+
+	// log telemetry event on visiting details of a service.
+	useEffect(() => {
+		if (serviceId) {
+			logEvent('AWS Integration: Service viewed', {
+				cloudAccountId,
+				serviceId,
+			});
+		}
+	}, [cloudAccountId, serviceId]);
 
 	if (isLoading) {
 		return <Spinner size="large" height="50vh" />;
@@ -119,7 +137,7 @@ function ServiceDetails(): JSX.Element | null {
 						(isAnySignalConfigured ? (
 							<Button
 								className="configure-button configure-button--default"
-								onClick={(): void => setIsConfigureServiceModalOpen(true)}
+								onClick={openServiceConfigModal}
 							>
 								Configure ({enabledSignals}/{totalSupportedSignals})
 							</Button>
@@ -127,7 +145,7 @@ function ServiceDetails(): JSX.Element | null {
 							<Button
 								type="primary"
 								className="configure-button configure-button--primary"
-								onClick={(): void => setIsConfigureServiceModalOpen(true)}
+								onClick={openServiceConfigModal}
 							>
 								Enable Service
 							</Button>

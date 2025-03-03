@@ -308,10 +308,8 @@ describe('Create Alert Channel (Normal User)', () => {
 				render(<CreateAlertChannels preType={ChannelType.MsTeams} />);
 			});
 
-			it('Should check if the selected item in the type dropdown has text "Microsoft Teams (Supported in Paid Plans Only)"', () => {
-				expect(
-					screen.getByText('Microsoft Teams (Supported in Paid Plans Only)'),
-				).toBeInTheDocument();
+			it('Should check if the selected item in the type dropdown has text "Microsoft Teams"', () => {
+				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
 			// TODO[vikrantgupta25]: check with Shaheer

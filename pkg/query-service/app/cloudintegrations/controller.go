@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"golang.org/x/exp/maps"
 )
 
@@ -30,15 +30,15 @@ type Controller struct {
 	serviceConfigRepo serviceConfigRepository
 }
 
-func NewController(db *sqlx.DB) (
+func NewController(sqlStore sqlstore.SQLStore) (
 	*Controller, error,
 ) {
-	accountsRepo, err := newCloudProviderAccountsRepository(db)
+	accountsRepo, err := newCloudProviderAccountsRepository(sqlStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
 	}
 
-	serviceConfigRepo, err := newServiceConfigRepository(db)
+	serviceConfigRepo, err := newServiceConfigRepository(sqlStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider service config repo: %w", err)
 	}

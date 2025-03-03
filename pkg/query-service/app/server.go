@@ -91,7 +91,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	var err error
-	if err := dao.InitDao(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := dao.InitDao(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -163,12 +163,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
+	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
+	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider integrations controller: %w", err)
 	}
@@ -315,6 +315,8 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
+	api.RegisterThirdPartyApiRoutes(r, am)
+	api.MetricExplorerRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

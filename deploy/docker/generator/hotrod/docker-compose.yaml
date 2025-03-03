@@ -8,7 +8,7 @@ x-common: &common
     options:
       max-size: 50m
       max-file: "3"
-  restart: on-failure
+  restart: unless-stopped
 services:
   hotrod:
     <<: *common

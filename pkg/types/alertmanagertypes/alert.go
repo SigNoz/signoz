@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/strfmt"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/api/v2/restapi/operations/alert"
@@ -35,10 +36,33 @@ type (
 
 	// A slice of GettableAlert.
 	GettableAlerts = models.GettableAlerts
-
-	// An alias for the GettableAlertsParams type from the alertmanager package.
-	GettableAlertsParams = alert.GetAlertsParams
 )
+
+// An alias for the GettableAlertsParams type from the alertmanager package.
+type GettableAlertsParams struct {
+	alert.GetAlertsParams
+	RawQuery string
+}
+
+// Converts a slice of Alert to a slice of PostableAlert.
+func NewPostableAlertsFromAlerts(alerts []*types.Alert) PostableAlerts {
+	postableAlerts := make(PostableAlerts, 0, len(alerts))
+	for _, alert := range alerts {
+		start := strfmt.DateTime(alert.StartsAt)
+		end := strfmt.DateTime(alert.EndsAt)
+		postableAlerts = append(postableAlerts, &models.PostableAlert{
+			Annotations: v2.ModelLabelSetToAPILabelSet(alert.Annotations),
+			EndsAt:      end,
+			StartsAt:    start,
+			Alert: models.Alert{
+				GeneratorURL: strfmt.URI(alert.GeneratorURL),
+				Labels:       v2.ModelLabelSetToAPILabelSet(alert.Labels),
+			},
+		})
+	}
+
+	return postableAlerts
+}
 
 // Converts a slice of PostableAlert to a slice of Alert.
 func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
@@ -109,7 +133,10 @@ func NewGettableAlertsParams(req *http.Request) (GettableAlertsParams, error) {
 		return GettableAlertsParams{}, err
 	}
 
-	return params, nil
+	return GettableAlertsParams{
+		GetAlertsParams: params,
+		RawQuery:        req.URL.RawQuery,
+	}, nil
 }
 
 func NewGettableAlertsFromAlertProvider(

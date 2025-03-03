@@ -6,6 +6,16 @@ import (
 )
 
 var (
+	CodeInvalidInput     code = code{"invalid_input"}
+	CodeInternal              = code{"internal"}
+	CodeUnsupported           = code{"unsupported"}
+	CodeNotFound              = code{"not_found"}
+	CodeMethodNotAllowed      = code{"method_not_allowed"}
+	CodeAlreadyExists         = code{"already_exists"}
+	CodeUnauthenticated       = code{"unauthenticated"}
+)
+
+var (
 	codeRegex = regexp.MustCompile(`^[a-z_]+$`)
 )
 
