@@ -6,8 +6,8 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { HardHat } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { TREEMAP_VIEW_OPTIONS } from '../constants';
-import { MetricsSearchProps } from '../types';
+import { TREEMAP_VIEW_OPTIONS } from './constants';
+import { MetricsSearchProps } from './types';
 
 function MetricsSearch({
 	query,

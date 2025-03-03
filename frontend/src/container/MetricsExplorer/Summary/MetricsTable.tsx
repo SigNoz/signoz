@@ -9,8 +9,8 @@ import {
 import { SorterResult } from 'antd/es/table/interface';
 import { useCallback } from 'react';
 
-import { MetricsListItemRowData, MetricsTableProps } from '../types';
-import { metricsTableColumns } from '../utils';
+import { MetricsListItemRowData, MetricsTableProps } from './types';
+import { metricsTableColumns } from './utils';
 
 function MetricsTable({
 	isLoading,
