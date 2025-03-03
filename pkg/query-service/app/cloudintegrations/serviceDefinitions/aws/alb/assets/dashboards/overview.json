@@ -41,6 +41,8 @@
     {
       "h": 5,
       "i": "2be35406-693a-435b-a844-2df239be0b60",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 0,
       "y": 10
@@ -48,6 +50,8 @@
     {
       "h": 5,
       "i": "480ecee2-1271-4dfd-a7bb-9f9845957c6e",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 6,
       "y": 10
@@ -55,6 +59,8 @@
     {
       "h": 5,
       "i": "2243e542-0bbc-4e2a-a4dd-2e121abc9b95",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 0,
       "y": 15
@@ -62,6 +68,8 @@
     {
       "h": 5,
       "i": "3bb56361-9a67-47ce-b186-ccee02e15f51",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 6,
       "y": 15
@@ -69,6 +77,8 @@
     {
       "h": 5,
       "i": "36cbc321-6c02-4d13-895e-955d71d376b4",
+      "moved": false,
+      "static": false,
       "w": 6,
       "x": 0,
       "y": 20
@@ -145,7 +155,7 @@
               "filters": {
                 "items": [
                   {
-                    "id": "b780a1f6",
+                    "id": "b282d9f1",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -158,7 +168,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "773dc227",
+                    "id": "71837c70",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -169,6 +179,32 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "5bfcc581",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TargetGroup--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TargetGroup",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
+                  },
+                  {
+                    "id": "a9e33e08",
+                    "key": {
+                      "dataType": "string",
+                      "id": "AvailabilityZone--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "AvailabilityZone",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -221,7 +257,7 @@
             "query": ""
           }
         ],
-        "id": "9586fe9e-fbf6-4633-a485-a5a023b2a6f4",
+        "id": "601aca8a-36fb-4e6a-b234-39294b9b305b",
         "promql": [
           {
             "disabled": false,
@@ -318,14 +354,14 @@
                 "key": "aws_ApplicationELB_RequestCount_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "1b931812",
+                    "id": "448b551a",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -338,7 +374,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "0d07f9d7",
+                    "id": "a8821216",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -349,6 +385,32 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "f5a62c5a",
+                    "key": {
+                      "dataType": "string",
+                      "id": "AvailabilityZone--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "AvailabilityZone",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
+                  },
+                  {
+                    "id": "25e8abc8",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TargetGroup--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TargetGroup",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -386,9 +448,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -401,7 +463,7 @@
             "query": ""
           }
         ],
-        "id": "b52c9491-e720-48c7-a2d3-06816bc58d27",
+        "id": "7d92a02f-3202-4059-8b88-2d24112a35e6",
         "promql": [
           {
             "disabled": false,
@@ -472,7 +534,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Requests",
-      "yAxisUnit": "opm"
+      "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
@@ -498,14 +560,14 @@
                 "key": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "f7bc2d4b",
+                    "id": "702a8765",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -518,7 +580,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "039989af",
+                    "id": "32985f2d",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -529,6 +591,32 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "e4cf3d8b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "TargetGroup--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "TargetGroup",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
+                  },
+                  {
+                    "id": "234c77fd",
+                    "key": {
+                      "dataType": "string",
+                      "id": "AvailabilityZone--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "AvailabilityZone",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -566,9 +654,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -581,13 +669,13 @@
             "query": ""
           }
         ],
-        "id": "349ba026-b912-4a46-b55b-c7e611c72958",
+        "id": "a1cc5b1c-adb6-4a71-bb6e-99337ef6a9d4",
         "promql": [
           {
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum"
+            "query": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum{TargetGroup=\"\"}"
           }
         ],
         "queryType": "builder"
@@ -652,7 +740,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Target 5XX",
-      "yAxisUnit": "opm"
+      "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
@@ -678,14 +766,14 @@
                 "key": "aws_ApplicationELB_HTTPCode_ELB_5XX_Count_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "31d42d0f",
+                    "id": "5807a1e3",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -698,7 +786,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "a9cc164d",
+                    "id": "0dd63d0c",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -709,6 +797,19 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "31ccfbae",
+                    "key": {
+                      "dataType": "string",
+                      "id": "AvailabilityZone--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "AvailabilityZone",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -746,9 +847,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -761,7 +862,7 @@
             "query": ""
           }
         ],
-        "id": "7349ee78-f274-410d-9781-41e5426849d9",
+        "id": "91d000c1-7697-4219-acb6-a43a5d455834",
         "promql": [
           {
             "disabled": false,
@@ -832,7 +933,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Loadbalancer 5XX",
-      "yAxisUnit": "opm"
+      "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
@@ -858,14 +959,14 @@
                 "key": "aws_ApplicationELB_ActiveConnectionCount_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "f8462a3a",
+                    "id": "72c256c0",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -878,7 +979,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "a82a642d",
+                    "id": "b433c2a1",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -889,6 +990,19 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "8f5e7de0",
+                    "key": {
+                      "dataType": "string",
+                      "id": "AvailabilityZone--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "AvailabilityZone",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -926,9 +1040,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -941,7 +1055,7 @@
             "query": ""
           }
         ],
-        "id": "9ee822f2-0759-4df4-a4ea-c4344bfd0ce4",
+        "id": "74429f26-2fe0-46f2-8b11-23c4f00a260a",
         "promql": [
           {
             "disabled": false,
@@ -1038,14 +1152,14 @@
                 "key": "aws_ApplicationELB_TargetConnectionErrorCount_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "78e8cd79",
+                    "id": "9226a37c",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -1058,7 +1172,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "8506e24a",
+                    "id": "c3ff0c8f",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -1069,6 +1183,28 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "e3317bc2",
+                    "key": {
+                      "dataType": "",
+                      "isColumn": false,
+                      "key": "TargetGroup",
+                      "type": ""
+                    },
+                    "op": "nexists",
+                    "value": ""
+                  },
+                  {
+                    "id": "4e5c2324",
+                    "key": {
+                      "dataType": "",
+                      "isColumn": false,
+                      "key": "AvailabilityZone",
+                      "type": ""
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -1106,9 +1242,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -1121,7 +1257,7 @@
             "query": ""
           }
         ],
-        "id": "2104e6fc-2701-4b8b-8b3e-a051234469f9",
+        "id": "148daebb-8ae4-4a9f-b569-5e0e75f6b52d",
         "promql": [
           {
             "disabled": false,
@@ -1192,7 +1328,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Target Connection Errors",
-      "yAxisUnit": "cpm"
+      "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
@@ -1218,14 +1354,14 @@
                 "key": "aws_ApplicationELB_ConsumedLCUs_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "0222efad",
+                    "id": "20627274",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -1238,7 +1374,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "730563a4",
+                    "id": "cd861e27",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -1286,9 +1422,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -1301,7 +1437,7 @@
             "query": ""
           }
         ],
-        "id": "ceb19abf-c0a0-4b33-92bc-c5ea428e9698",
+        "id": "38594221-7a5b-4d94-8775-26297f6cb882",
         "promql": [
           {
             "disabled": false,
@@ -1398,14 +1534,14 @@
                 "key": "aws_ApplicationELB_ProcessedBytes_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "d1d3efce",
+                    "id": "7d4a3494",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -1418,7 +1554,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "2bd05e68",
+                    "id": "3c307858",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -1429,6 +1565,19 @@
                     },
                     "op": "=",
                     "value": "$Region"
+                  },
+                  {
+                    "id": "fbca8724",
+                    "key": {
+                      "dataType": "string",
+                      "id": "AvailabilityZone--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "AvailabilityZone",
+                      "type": "tag"
+                    },
+                    "op": "nexists",
+                    "value": ""
                   }
                 ],
                 "op": "AND"
@@ -1466,9 +1615,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -1481,7 +1630,7 @@
             "query": ""
           }
         ],
-        "id": "ce91664b-df45-440b-9f6f-8ceb1630c14f",
+        "id": "e71d1223-7441-4a5d-b288-928a2903737d",
         "promql": [
           {
             "disabled": false,
@@ -1585,7 +1734,7 @@
               "filters": {
                 "items": [
                   {
-                    "id": "122133ba",
+                    "id": "a416e862",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -1598,7 +1747,7 @@
                     "value": "$Account"
                   },
                   {
-                    "id": "52e12ea7",
+                    "id": "ed7d0a39",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -1661,7 +1810,7 @@
             "query": ""
           }
         ],
-        "id": "004aa0ff-270b-45cf-9136-8a90cf5c26a7",
+        "id": "c4728417-0c3c-4477-b8bd-0a2de16c342a",
         "promql": [
           {
             "disabled": false,
