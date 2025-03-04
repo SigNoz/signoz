@@ -232,7 +232,7 @@ func TestFindMissingTimeRanges(t *testing.T) {
 	}
 }
 
-func TestFindMissingTimeRangeV2(t *testing.T) {
+func TestFindMissingTimeRangesV2(t *testing.T) {
 	// Initialize the mock cache
 	mockCache := inmemory.New(&inmemory.Options{TTL: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
 
@@ -549,7 +549,7 @@ func TestFindMissingTimeRangeV2(t *testing.T) {
 			}
 
 			// Call FindMissingTimeRanges
-			missingRanges := q.FindMissingTimeRangeV2(tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
+			missingRanges := q.FindMissingTimeRangesV2(tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
 
 			// Verify the missing ranges
 			assert.Equal(t, tc.expectedMiss, missingRanges)
