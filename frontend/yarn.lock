@@ -4751,13 +4751,6 @@
     d3-hierarchy "^1.1.4"
     prop-types "^15.6.1"
 
-"@visx/scale@3.12.0":
-  version "3.12.0"
-  resolved "https://registry.yarnpkg.com/@visx/scale/-/scale-3.12.0.tgz#1b6e8655e9be17ea73c59506b1aba9ad06825679"
-  integrity sha512-+ubijrZ2AwWCsNey0HGLJ0YKNeC/XImEFsr9rM+Uef1CM3PNM43NDdNTrdBejSlzRq0lcfQPWYMYQFSlkLcPOg==
-  dependencies:
-    "@visx/vendor" "3.12.0"
-
 "@visx/scale@3.5.0":
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/@visx/scale/-/scale-3.5.0.tgz#c3db3863bbdd24d44781104ef5ee4cdc8df6f11d"
@@ -4793,31 +4786,6 @@
     classnames "^2.3.1"
     prop-types "^15.5.10"
     react-use-measure "^2.0.4"
-
-"@visx/vendor@3.12.0":
-  version "3.12.0"
-  resolved "https://registry.yarnpkg.com/@visx/vendor/-/vendor-3.12.0.tgz#36de9d513648b37e1569a963881261dce28b1354"
-  integrity sha512-SVO+G0xtnL9dsNpGDcjCgoiCnlB3iLSM9KLz1sLbSrV7RaVXwY3/BTm2X9OWN1jH2a9M+eHt6DJ6sE6CXm4cUg==
-  dependencies:
-    "@types/d3-array" "3.0.3"
-    "@types/d3-color" "3.1.0"
-    "@types/d3-delaunay" "6.0.1"
-    "@types/d3-format" "3.0.1"
-    "@types/d3-geo" "3.1.0"
-    "@types/d3-interpolate" "3.0.1"
-    "@types/d3-scale" "4.0.2"
-    "@types/d3-time" "3.0.0"
-    "@types/d3-time-format" "2.1.0"
-    d3-array "3.2.1"
-    d3-color "3.1.0"
-    d3-delaunay "6.0.2"
-    d3-format "3.1.0"
-    d3-geo "3.1.0"
-    d3-interpolate "3.0.1"
-    d3-scale "4.0.2"
-    d3-time "3.1.0"
-    d3-time-format "4.1.0"
-    internmap "2.0.3"
 
 "@visx/vendor@3.5.0":
   version "3.5.0"
