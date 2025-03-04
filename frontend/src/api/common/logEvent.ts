@@ -8,12 +8,14 @@ const logEvent = async (
 	eventName: string,
 	attributes: Record<string, unknown>,
 	eventType?: 'track' | 'group' | 'identify',
+	rateLimited?: boolean,
 ): Promise<SuccessResponse<EventSuccessPayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/event', {
 			eventName,
 			attributes,
 			eventType: eventType || 'track',
+			rateLimited: rateLimited || false, // TODO: Update this once we have a proper way to handle rate limiting
 		});
 
 		return {
