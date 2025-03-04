@@ -104,17 +104,34 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 }
 
 func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
-	config, err := provider.configStore.Get(ctx, orgID)
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	err = config.UpdateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
+	err = channel.Update(receiver)
 	if err != nil {
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config)
+	err = provider.configStore.UpdateChannel(ctx, orgID, channel, func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		err = config.UpdateReceiver(receiver)
+		if err != nil {
+			return err
+		}
+
+		err = provider.configStore.Set(ctx, config)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
@@ -123,23 +140,29 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
+	err := provider.configStore.DeleteChannelByID(ctx, orgID, channelID, func(ctx context.Context) error {
+		channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
+		if err != nil {
+			return err
+		}
 
-	channels := config.Channels()
-	_, channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
-	if err != nil {
-		return err
-	}
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
 
-	err = config.DeleteReceiver(channel.Name)
-	if err != nil {
-		return err
-	}
+		err = config.DeleteReceiver(channel.Name)
+		if err != nil {
+			return err
+		}
 
-	err = provider.configStore.Set(ctx, config)
+		err = provider.configStore.Set(ctx, config)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
@@ -148,17 +171,26 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
+	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
 
-	err = config.CreateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
-	if err != nil {
-		return err
-	}
+	err := provider.configStore.CreateChannel(ctx, channel, func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
 
-	err = provider.configStore.Set(ctx, config)
+		err = config.CreateReceiver(receiver)
+		if err != nil {
+			return err
+		}
+
+		err = provider.configStore.Set(ctx, config)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}

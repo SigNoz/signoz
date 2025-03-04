@@ -29,6 +29,10 @@ func NewReceiver(input string) (Receiver, error) {
 	return receiver, nil
 }
 
+func newRouteFromReceiver(receiver Receiver) *config.Route {
+	return &config.Route{Receiver: receiver.Name, Continue: true}
+}
+
 func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
 	return receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 }

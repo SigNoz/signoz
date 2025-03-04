@@ -56,16 +56,9 @@ type Config struct {
 
 	// storeableConfig is the representation of the config in the store
 	storeableConfig *StoreableConfig
-
-	// channels is the list of channels
-	channels Channels
-
-	// orgID is the organization ID
-	orgID string
 }
 
 func NewConfig(c *config.Config, orgID string) *Config {
-	channels := NewChannelsFromConfig(c, orgID)
 	raw := string(newRawFromConfig(c))
 	return &Config{
 		alertmanagerConfig: c,
@@ -76,11 +69,10 @@ func NewConfig(c *config.Config, orgID string) *Config {
 			UpdatedAt: time.Now(),
 			OrgID:     orgID,
 		},
-		channels: channels,
 	}
 }
 
-func NewConfigFromStoreableConfigAndChannels(sc *StoreableConfig, channels []*Channel) (*Config, error) {
+func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 	alertmanagerConfig, err := newConfigFromString(sc.Config)
 	if err != nil {
 		return nil, err
@@ -89,13 +81,7 @@ func NewConfigFromStoreableConfigAndChannels(sc *StoreableConfig, channels []*Ch
 	return &Config{
 		alertmanagerConfig: alertmanagerConfig,
 		storeableConfig:    sc,
-		channels:           channels,
-		orgID:              sc.OrgID,
 	}, nil
-}
-
-func NewRouteFromReceiver(receiver Receiver) *config.Route {
-	return &config.Route{Receiver: receiver.Name, Continue: true}
 }
 
 func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID string) (*Config, error) {
@@ -182,44 +168,23 @@ func (c *Config) StoreableConfig() *StoreableConfig {
 	return c.storeableConfig
 }
 
-func (c *Config) Channels() Channels {
-	return c.channels
-}
-
-func (c *Config) OrgID() string {
-	return c.orgID
-}
-
-func (c *Config) CreateReceiver(route *config.Route, receiver config.Receiver) error {
-	if route == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
-	}
-
-	if route.Receiver == "" || receiver.Name == "" {
+func (c *Config) CreateReceiver(receiver config.Receiver) error {
+	if receiver.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
 	}
 
 	// check that receiver name is not already used
 	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
-		if existingReceiver.Name == receiver.Name || existingReceiver.Name == route.Receiver {
+		if existingReceiver.Name == receiver.Name {
 			return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
 		}
 	}
-	// must set continue on route to allow subsequent
-	// routes to work. may have to rethink on this after
-	// adding matchers and filters in upstream
-	route.Continue = true
 
-	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
+	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, newRouteFromReceiver(receiver))
 	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return err
-	}
-
-	channel := NewChannelFromReceiver(receiver, c.orgID)
-	if channel != nil {
-		c.channels = append(c.channels, channel)
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
@@ -238,12 +203,8 @@ func (c *Config) GetReceiver(name string) (Receiver, error) {
 	return Receiver{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
-func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) error {
-	if route == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
-	}
-
-	if route.Receiver == "" || receiver.Name == "" {
+func (c *Config) UpdateReceiver(receiver config.Receiver) error {
+	if receiver.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
 	}
 
@@ -251,23 +212,6 @@ func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) e
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
 			c.alertmanagerConfig.Receivers[i] = receiver
-			_, existingChannel, err := GetChannelByName(c.channels, receiver.Name)
-			if err != nil {
-				return err
-			}
-
-			err = existingChannel.Update(receiver)
-			if err != nil {
-				return err
-			}
-			break
-		}
-	}
-
-	routes := c.alertmanagerConfig.Route.Routes
-	for i, existingRoute := range routes {
-		if existingRoute.Receiver == route.Receiver {
-			c.alertmanagerConfig.Route.Routes[i] = route
 			break
 		}
 	}
@@ -295,10 +239,6 @@ func (c *Config) DeleteReceiver(name string) error {
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == name {
 			c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers[:i], c.alertmanagerConfig.Receivers[i+1:]...)
-			pos, _, err := GetChannelByName(c.channels, name)
-			if err == nil {
-				c.channels = slices.Delete(c.channels, pos, pos+1)
-			}
 			break
 		}
 	}

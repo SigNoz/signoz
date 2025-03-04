@@ -102,7 +102,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
-				err := cfg.CreateReceiver(NewRouteFromReceiver(receiver), receiver)
+				err := cfg.CreateReceiver(receiver)
 				require.NoError(t, err)
 			}
 
@@ -190,7 +190,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
-				err := cfg.CreateReceiver(NewRouteFromReceiver(receiver), receiver)
+				err := cfg.CreateReceiver(receiver)
 				require.NoError(t, err)
 			}
 
