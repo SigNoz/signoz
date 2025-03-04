@@ -5,12 +5,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 type addAlertmanager struct{}
@@ -107,48 +104,6 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		IfNotExists().
 		Exec(ctx); err != nil {
-		return err
-	}
-
-	channels := make([]*alertmanagertypes.Channel, 0)
-	err = tx.
-		NewSelect().
-		Table("notification_channels").
-		Scan(ctx, &channels)
-	if err != nil {
-		return err
-	}
-
-	var rules []string
-	err = tx.
-		NewSelect().
-		Table("rules").
-		ColumnExpr("data").
-		Scan(ctx, &rules)
-	if err != nil {
-		return err
-	}
-
-	defaultConfig := alertmanager.NewConfigFactory().New().(alertmanager.Config)
-
-	cfg, err := alertmanagertypes.NewConfigFromChannels(defaultConfig.Signoz.Global, defaultConfig.Signoz.Route, channels, orgID)
-	if err != nil {
-		return err
-	}
-
-	for _, rule := range rules {
-		receivers := gjson.Get(rule, "preferredChannels").Array()
-		for _, receiver := range receivers {
-			ruleID := gjson.Get(rule, "id").String()
-			err = cfg.CreateRuleIDMatcher(ruleID, []string{receiver.String()})
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	_, err = tx.NewInsert().Model(cfg.StoreableConfig()).Exec(ctx)
-	if err != nil {
 		return err
 	}
 
