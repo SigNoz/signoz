@@ -19,6 +19,7 @@ function MetricsTable({
 	currentPage,
 	onPaginationChange,
 	setOrderBy,
+	totalCount,
 }: MetricsTableProps): JSX.Element {
 	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
 		(
@@ -75,6 +76,7 @@ function MetricsTable({
 					showSizeChanger: true,
 					hideOnSinglePage: false,
 					onChange: onPaginationChange,
+					total: totalCount,
 				}}
 			/>
 		</div>

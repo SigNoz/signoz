@@ -58,13 +58,14 @@ function Summary(): JSX.Element {
 		const baseQuery = getMetricsListQuery();
 		return {
 			...baseQuery,
-			limit: 1000,
+			limit: pageSize,
+			offset: (currentPage - 1) * pageSize,
 			filters: queryFilters,
 			start: convertNanoToMilliseconds(minTime),
 			end: convertNanoToMilliseconds(maxTime),
 			orderBy,
 		};
-	}, [queryFilters, minTime, maxTime, orderBy]);
+	}, [queryFilters, minTime, maxTime, orderBy, pageSize, currentPage]);
 
 	const metricsTreemapQuery = useMemo(
 		() => ({
@@ -153,6 +154,7 @@ function Summary(): JSX.Element {
 					currentPage={currentPage}
 					onPaginationChange={onPaginationChange}
 					setOrderBy={setOrderBy}
+					totalCount={metricsData?.payload?.data.total || 0}
 				/>
 			</div>
 		</Sentry.ErrorBoundary>
