@@ -7,11 +7,13 @@ import { EventSuccessPayloadProps } from 'types/api/events/types';
 const logEvent = async (
 	eventName: string,
 	attributes: Record<string, unknown>,
+	eventType?: 'track' | 'group' | 'identify',
 ): Promise<SuccessResponse<EventSuccessPayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/event', {
 			eventName,
 			attributes,
+			eventType: eventType || 'track',
 		});
 
 		return {
