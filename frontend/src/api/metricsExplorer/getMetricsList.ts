@@ -39,6 +39,7 @@ export interface MetricsListResponse {
 	status: string;
 	data: {
 		metrics: MetricsListItemData[];
+		total?: number;
 	};
 }
 
