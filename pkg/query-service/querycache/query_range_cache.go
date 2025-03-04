@@ -49,6 +49,85 @@ func WithFluxInterval(fluxInterval time.Duration) QueryCacheOption {
 	}
 }
 
+// FindMissingTimeRange is a new correct implementation of FindMissingTimeRanges
+// It takes care of any timestamps that were not queried due to rounding in the first version.
+func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []MissInterval {
+	if q.cache == nil || cacheKey == "" {
+		return []MissInterval{{Start: start, End: end}}
+	}
+
+	// when the window is too small to be queried, we return the entire range as a miss
+	if (start + step*1000) > end {
+		return []MissInterval{{Start: start, End: end}}
+	}
+
+	cachedSeriesDataList := q.getCachedSeriesData(cacheKey)
+
+	// Sort the cached data by start time
+	sort.Slice(cachedSeriesDataList, func(i, j int) bool {
+		return cachedSeriesDataList[i].Start < cachedSeriesDataList[j].Start
+	})
+
+	zap.L().Info("Number of non-overlapping cached series data", zap.Int("count", len(cachedSeriesDataList)))
+
+	// Exclude the flux interval from the cached end time
+
+	// Why do we use `time.Now()` here?
+	// When querying for a range [start, now())
+	// we don't want to use the cached data inside the flux interval period
+	// because the data in the flux interval period might not be fully ingested
+	// and should not be used for caching.
+	// This is not an issue if the end time is before now() - fluxInterval
+	if len(cachedSeriesDataList) > 0 {
+		lastCachedData := cachedSeriesDataList[len(cachedSeriesDataList)-1]
+		lastCachedData.End = int64(
+			math.Min(
+				float64(lastCachedData.End),
+				float64(time.Now().UnixMilli()-q.fluxInterval.Milliseconds()),
+			),
+		)
+	}
+
+	var missingRanges []MissInterval
+	currentTime := start
+
+	// check if start is a complete aggregation window if not then add it as a miss
+	if start%(step*1000) != 0 {
+		nextAggStart := start - (start % (step * 1000)) + (step * 1000)
+		missingRanges = append(missingRanges, MissInterval{Start: start, End: nextAggStart})
+		currentTime = nextAggStart
+	}
+
+	for _, data := range cachedSeriesDataList {
+		// Ignore cached data that ends before the start time
+		if data.End <= start {
+			continue
+		}
+		// Stop processing if we've reached the end time
+		if data.Start >= end {
+			break
+		}
+
+		// Add missing range if there's a gap
+		if currentTime < data.Start {
+			missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: min(data.Start, end)})
+		}
+
+		// Update currentTime, but don't go past the end time
+		currentTime = max(currentTime, min(data.End, end))
+	}
+
+	// Add final missing range if necessary
+	if currentTime < end {
+		missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: end})
+	} else if end%(step*1000) != 0 { // check if end is a complete aggregation window if not then add it as a miss
+		prevAggEnd := end - (end % (step * 1000))
+		missingRanges = append(missingRanges, MissInterval{Start: prevAggEnd, End: end})
+	}
+
+	return missingRanges
+}
+
 func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey string) []MissInterval {
 	if q.cache == nil || cacheKey == "" {
 		return []MissInterval{{Start: start, End: end}}
