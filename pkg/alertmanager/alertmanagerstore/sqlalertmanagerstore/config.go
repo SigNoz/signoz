@@ -3,7 +3,10 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
+	"strconv"
 
+	"github.com/tidwall/gjson"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
@@ -46,11 +49,14 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 
 // Set implements alertmanagertypes.ConfigStore.
 func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config) error {
-	if _, err := store.sqlstore.BunDB().
+	if _, err := store.
+		sqlstore.
+		BunDB().
 		NewInsert().
 		Model(config.StoreableConfig()).
 		On("CONFLICT (org_id) DO UPDATE").
-		Set("config = ?", string(config.StoreableConfig().Config)).
+		Set("config = ?", config.StoreableConfig().Config).
+		Set("hash = ?", config.StoreableConfig().Hash).
 		Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
 		Exec(ctx); err != nil {
 		return err
@@ -216,4 +222,35 @@ func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.
 	}
 
 	return channels, nil
+}
+
+func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string][]string, error) {
+	type matcher struct {
+		bun.BaseModel `bun:"table:rules"`
+		ID            int    `bun:"id,pk"`
+		Data          string `bun:"data"`
+	}
+
+	matchers := []matcher{}
+
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Column("id", "data").
+		Model(&matchers).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	matchersMap := make(map[string][]string)
+	for _, matcher := range matchers {
+		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
+		for _, receiver := range receivers {
+			matchersMap[strconv.Itoa(matcher.ID)] = append(matchersMap[strconv.Itoa(matcher.ID)], receiver.String())
+		}
+	}
+
+	return matchersMap, nil
 }

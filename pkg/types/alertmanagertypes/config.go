@@ -256,14 +256,14 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 	}
 
 	routes := c.alertmanagerConfig.Route.Routes
-	for i, r := range routes {
-		if slices.Contains(receiverNames, r.Receiver) {
+	for i, route := range routes {
+		if slices.Contains(receiverNames, route.Receiver) {
 			matcher, err := labels.NewMatcher(labels.MatchEqual, "ruleId", ruleID)
 			if err != nil {
 				return err
 			}
 
-			c.alertmanagerConfig.Route.Routes[i].Matchers = append(r.Matchers, matcher)
+			c.alertmanagerConfig.Route.Routes[i].Matchers = append(c.alertmanagerConfig.Route.Routes[i].Matchers, matcher)
 		}
 	}
 
@@ -342,7 +342,13 @@ type ConfigStore interface {
 
 	// ListAllChannels returns the list of channels for all organizations.
 	ListAllChannels(context.Context) ([]*Channel, error)
+
+	// GetMatchers gets a list of matchers per organization.
+	// Matchers is an array of ruleId to receiver names.
+	GetMatchers(context.Context, string) (map[string][]string, error)
 }
+
+var ConfigStoreNoopCallback = func(ctx context.Context) error { return nil }
 
 // MarshalSecretValue if set to true will expose Secret type
 // through the marshal interfaces. We need to store the actual value of the secret
