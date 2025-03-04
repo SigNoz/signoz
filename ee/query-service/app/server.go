@@ -23,8 +23,10 @@ import (
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/rules"
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
@@ -185,6 +187,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		lm,
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,
+		serverOptions.SigNoz.Alertmanager,
+		serverOptions.SigNoz.SQLStore,
 	)
 
 	if err != nil {
@@ -537,7 +541,10 @@ func makeRulesManager(
 	disableRules bool,
 	fm baseint.FeatureLookup,
 	useLogsNewSchema bool,
-	useTraceNewSchema bool) (*baserules.Manager, error) {
+	useTraceNewSchema bool,
+	alertmanager alertmanager.Alertmanager,
+	sqlstore sqlstore.SQLStore,
+) (*baserules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -570,6 +577,8 @@ func makeRulesManager(
 		UseLogsNewSchema:    useLogsNewSchema,
 		UseTraceNewSchema:   useTraceNewSchema,
 		PrepareTestRuleFunc: rules.TestNotification,
+		Alertmanager:        alertmanager,
+		SQLStore:            sqlstore,
 	}
 
 	// create Manager

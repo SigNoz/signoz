@@ -148,26 +148,25 @@ func (r *ruleDB) EditRuleTx(ctx context.Context, rule string, id string) (string
 	updatedAt := time.Now()
 	groupName = prepareTaskName(int64(idInt))
 
-	// todo(amol): resolve this error - database locked when using
-	// edit transaction with sqlx
-	// tx, err := r.Begin()
-	//if err != nil {
-	//	return groupName, tx, err
-	//}
-	stmt, err := r.Prepare(`UPDATE rules SET updated_by=$1, updated_at=$2, data=$3 WHERE id=$4;`)
+	tx, err := r.Begin()
+	if err != nil {
+		return groupName, nil, err
+	}
+
+	stmt, err := tx.Prepare(`UPDATE rules SET updated_by=$1, updated_at=$2, data=$3 WHERE id=$4;`)
 	if err != nil {
 		zap.L().Error("Error in preparing statement for UPDATE to rules", zap.Error(err))
-		// tx.Rollback()
+		tx.Rollback()
 		return groupName, nil, err
 	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(userEmail, updatedAt, rule, idInt); err != nil {
 		zap.L().Error("Error in Executing prepared statement for UPDATE to rules", zap.Error(err))
-		// tx.Rollback() // return an error too, we may want to wrap them
+		tx.Rollback()
 		return groupName, nil, err
 	}
-	return groupName, nil, nil
+	return groupName, tx, nil
 }
 
 // DeleteRuleTx deletes a given rule with id and returns
@@ -177,15 +176,14 @@ func (r *ruleDB) DeleteRuleTx(ctx context.Context, id string) (string, Tx, error
 	idInt, _ := strconv.Atoi(id)
 	groupName := prepareTaskName(int64(idInt))
 
-	// commented as this causes db locked error
-	// tx, err := r.Begin()
-	// if err != nil {
-	// 	return groupName, tx, err
-	// }
+	tx, err := r.Begin()
+	if err != nil {
+		return groupName, tx, err
+	}
 
 	stmt, err := r.Prepare(`DELETE FROM rules WHERE id=$1;`)
-
 	if err != nil {
+		tx.Rollback()
 		return groupName, nil, err
 	}
 
@@ -193,11 +191,11 @@ func (r *ruleDB) DeleteRuleTx(ctx context.Context, id string) (string, Tx, error
 
 	if _, err := stmt.Exec(idInt); err != nil {
 		zap.L().Error("Error in Executing prepared statement for DELETE to rules", zap.Error(err))
-		// tx.Rollback()
+		tx.Rollback()
 		return groupName, nil, err
 	}
 
-	return groupName, nil, nil
+	return groupName, tx, nil
 }
 
 func (r *ruleDB) GetStoredRules(ctx context.Context) ([]StoredRule, error) {

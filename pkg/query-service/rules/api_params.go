@@ -67,6 +67,9 @@ type PostableRule struct {
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
+
+	// orgID is the organization ID
+	OrgID string `json:"orgID,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {

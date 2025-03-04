@@ -14,14 +14,19 @@ import (
 
 	"errors"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/jmoiron/sqlx"
 
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type PrepareTaskOptions struct {
@@ -34,6 +39,7 @@ type PrepareTaskOptions struct {
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
+	SQLStore    sqlstore.SQLStore
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
@@ -48,6 +54,7 @@ type PrepareTestRuleOptions struct {
 	FF          interfaces.FeatureLookup
 	ManagerOpts *ManagerOptions
 	NotifyFunc  NotifyFunc
+	SQLStore    sqlstore.SQLStore
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
@@ -96,6 +103,8 @@ type ManagerOptions struct {
 	UseLogsNewSchema    bool
 	UseTraceNewSchema   bool
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
+	Alertmanager        alertmanager.Alertmanager
+	SQLStore            sqlstore.SQLStore
 }
 
 // The Manager manages recording and alerting rules.
@@ -121,6 +130,9 @@ type Manager struct {
 
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+
+	alertmanager alertmanager.Alertmanager
+	sqlstore     sqlstore.SQLStore
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -161,6 +173,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -181,6 +194,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Logger,
 			opts.Reader,
 			opts.ManagerOpts.PqlEngine,
+			WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -235,7 +249,10 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		cache:               o.Cache,
 		prepareTaskFunc:     o.PrepareTaskFunc,
 		prepareTestRuleFunc: o.PrepareTestRuleFunc,
+		alertmanager:        o.Alertmanager,
+		sqlstore:            o.SQLStore,
 	}
+
 	return m, nil
 }
 
@@ -340,7 +357,33 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 		return err
 	}
 
-	taskName, _, err := m.ruleDB.EditRuleTx(ctx, ruleStr, id)
+	taskName, tx, err := m.ruleDB.EditRuleTx(ctx, ruleStr, id)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return errors.New("claims not found in context")
+	}
+
+	cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
+	if err != nil {
+		return err
+	}
+
+	err = cfg.UpdateRuleIDMatcher(id, parsedRule.PreferredChannels)
+	if err != nil {
+		return err
+	}
+
+	err = m.alertmanager.SetConfig(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -371,6 +414,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
+		SQLStore:    m.sqlstore,
 
 		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
 		UseTraceNewSchema: m.opts.UseTraceNewSchema,
@@ -423,8 +467,46 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 		m.deleteTask(taskName)
 	}
 
-	if _, _, err := m.ruleDB.DeleteRuleTx(ctx, id); err != nil {
+	rule, err := m.ruleDB.GetStoredRule(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	ruleResponse := &GettableRule{}
+	if err := json.Unmarshal([]byte(rule.Data), ruleResponse); err != nil {
+		zap.L().Error("failed to unmarshal rule from db", zap.Int("id", rule.Id), zap.Error(err))
+		return err
+	}
+
+	_, tx, err := m.ruleDB.DeleteRuleTx(ctx, id)
+	if err != nil {
 		zap.L().Error("failed to delete the rule from rule db", zap.String("id", id), zap.Error(err))
+		return err
+	}
+	defer tx.Rollback()
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return errors.New("claims not found in context")
+	}
+
+	cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
+	if err != nil {
+		return err
+	}
+
+	err = cfg.DeleteRuleIDMatcher(id)
+	if err != nil {
+		return err
+	}
+
+	err = m.alertmanager.SetConfig(ctx, cfg)
+	if err != nil {
 		return err
 	}
 
@@ -467,7 +549,28 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 			return nil, err
 		}
 	}
+
 	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("claims not found in context")
+	}
+
+	cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cfg.CreateRuleIDMatcher(fmt.Sprintf("%d", lastInsertId), parsedRule.PreferredChannels)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.alertmanager.SetConfig(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -494,6 +597,7 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
+		SQLStore:    m.sqlstore,
 
 		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
 		UseTraceNewSchema: m.opts.UseTraceNewSchema,
@@ -594,12 +698,12 @@ func (m *Manager) TriggeredAlerts() []*NamedAlert {
 }
 
 // NotifyFunc sends notifications about a set of alerts generated by the given expression.
-type NotifyFunc func(ctx context.Context, expr string, alerts ...*Alert)
+type NotifyFunc func(ctx context.Context, orgID string, expr string, alerts ...*Alert)
 
 // prepareNotifyFunc implements the NotifyFunc for a Notifier.
 func (m *Manager) prepareNotifyFunc() NotifyFunc {
-	return func(ctx context.Context, expr string, alerts ...*Alert) {
-		var res []*am.Alert
+	return func(ctx context.Context, orgID string, expr string, alerts ...*Alert) {
+		var res []*alertmanagertypes.PostableAlert
 
 		for _, alert := range alerts {
 			generatorURL := alert.GeneratorURL
@@ -607,23 +711,51 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 				generatorURL = m.opts.RepoURL
 			}
 
-			a := &am.Alert{
-				StartsAt:     alert.FiredAt,
-				Labels:       alert.Labels,
-				Annotations:  alert.Annotations,
-				GeneratorURL: generatorURL,
-				Receivers:    alert.Receivers,
+			a := &alertmanagertypes.PostableAlert{
+				Annotations: alert.Annotations.Map(),
+				StartsAt:    strfmt.DateTime(alert.FiredAt),
+				Alert: alertmanagertypes.AlertModel{
+					Labels:       alert.Labels.Map(),
+					GeneratorURL: strfmt.URI(generatorURL),
+				},
 			}
 			if !alert.ResolvedAt.IsZero() {
-				a.EndsAt = alert.ResolvedAt
+				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
 			} else {
-				a.EndsAt = alert.ValidUntil
+				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
 			}
+
 			res = append(res, a)
 		}
 
 		if len(alerts) > 0 {
-			m.notifier.Send(res...)
+			m.alertmanager.PutAlerts(ctx, orgID, res)
+		}
+	}
+}
+
+func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
+	return func(ctx context.Context, orgID string, expr string, alerts ...*Alert) {
+		for _, alert := range alerts {
+			generatorURL := alert.GeneratorURL
+			if generatorURL == "" {
+				generatorURL = m.opts.RepoURL
+			}
+
+			a := &alertmanagertypes.PostableAlert{
+				Annotations: alert.Annotations.Map(),
+				StartsAt:    strfmt.DateTime(alert.FiredAt),
+				Alert: alertmanagertypes.AlertModel{
+					Labels:       alert.Labels.Map(),
+					GeneratorURL: strfmt.URI(generatorURL),
+				},
+			}
+			if !alert.ResolvedAt.IsZero() {
+				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
+			} else {
+				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
+			}
+			m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
 		}
 	}
 }
@@ -822,7 +954,8 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		Cache:             m.cache,
 		FF:                m.featureFlags,
 		ManagerOpts:       m.opts,
-		NotifyFunc:        m.prepareNotifyFunc(),
+		NotifyFunc:        m.prepareTestNotifyFunc(),
+		SQLStore:          m.sqlstore,
 		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
 		UseTraceNewSchema: m.opts.UseTraceNewSchema,
 	})
