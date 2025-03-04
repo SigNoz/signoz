@@ -9,19 +9,13 @@ import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
-import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { isEqual } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	IBuilderQuery,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-import { v4 } from 'uuid';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	EntityDetailsEmptyContainer,
@@ -33,7 +27,6 @@ interface Props {
 		startTime: number;
 		endTime: number;
 	};
-	handleChangeLogFilters: (filters: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
 	queryKey: string;
 	category: K8sCategory;
@@ -42,86 +35,32 @@ interface Props {
 
 function EntityLogs({
 	timeRange,
-	handleChangeLogFilters,
 	filters,
 	queryKey,
 	category,
 	queryKeyFilters,
 }: Props): JSX.Element {
-	const [logs, setLogs] = useState<ILog[]>([]);
-	const [hasReachedEndOfLogs, setHasReachedEndOfLogs] = useState(false);
-	const [restFilters, setRestFilters] = useState<TagFilterItem[]>([]);
-	const [resetLogsList, setResetLogsList] = useState<boolean>(false);
+	const basePayload = getEntityEventsOrLogsQueryPayload(
+		timeRange.startTime,
+		timeRange.endTime,
+		filters,
+	);
 
-	useEffect(() => {
-		const newRestFilters = filters.items.filter(
-			(item) =>
-				item.key?.key !== 'id' && !queryKeyFilters.includes(item.key?.key ?? ''),
-		);
-
-		const areFiltersSame = isEqual(restFilters, newRestFilters);
-
-		if (!areFiltersSame) {
-			setResetLogsList(true);
-		}
-
-		setRestFilters(newRestFilters);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filters]);
-
-	const queryPayload = useMemo(() => {
-		const basePayload = getEntityEventsOrLogsQueryPayload(
-			timeRange.startTime,
-			timeRange.endTime,
-			filters,
-		);
-
-		basePayload.query.builder.queryData[0].pageSize = 100;
-		basePayload.query.builder.queryData[0].orderBy = [
-			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
-		];
-
-		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, filters]);
-
-	const [isPaginating, setIsPaginating] = useState(false);
-
-	const { data, isLoading, isFetching, isError } = useQuery({
-		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters],
-		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
-		enabled: !!queryPayload,
-		keepPreviousData: isPaginating,
+	const {
+		logs,
+		hasReachedEndOfLogs,
+		isPaginating,
+		currentPage,
+		setIsPaginating,
+		handleNewData,
+		loadMoreLogs,
+		queryPayload,
+	} = useHandleLogsPagination({
+		timeRange,
+		filters,
+		queryKeyFilters,
+		basePayload,
 	});
-
-	useEffect(() => {
-		if (data?.payload?.data?.newResult?.data?.result) {
-			const currentData = data.payload.data.newResult.data.result;
-
-			if (resetLogsList) {
-				const currentLogs: ILog[] =
-					currentData[0].list?.map((item) => ({
-						...item.data,
-						timestamp: item.timestamp,
-					})) || [];
-
-				setLogs(currentLogs);
-
-				setResetLogsList(false);
-			}
-
-			if (currentData.length > 0 && currentData[0].list) {
-				const currentLogs: ILog[] =
-					currentData[0].list.map((item) => ({
-						...item.data,
-						timestamp: item.timestamp,
-					})) || [];
-
-				setLogs((prev) => [...prev, ...currentLogs]);
-			} else {
-				setHasReachedEndOfLogs(true);
-			}
-		}
-	}, [data, restFilters, isPaginating, resetLogsList]);
 
 	const getItemContent = useCallback(
 		(_: number, logToRender: ILog): JSX.Element => (
@@ -149,38 +88,28 @@ function EntityLogs({
 		[],
 	);
 
-	const loadMoreLogs = useCallback(() => {
-		if (!logs.length) return;
+	const { data, isLoading, isFetching, isError } = useQuery({
+		queryKey: [
+			queryKey,
+			timeRange.startTime,
+			timeRange.endTime,
+			filters,
+			currentPage,
+		],
+		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
+		enabled: !!queryPayload,
+		keepPreviousData: isPaginating,
+	});
 
-		setIsPaginating(true);
-		const lastLog = logs[logs.length - 1];
-
-		const newItems = [
-			...filters.items.filter((item) => item.key?.key !== 'id'),
-			{
-				id: v4(),
-				key: {
-					key: 'id',
-					type: '',
-					dataType: DataTypes.String,
-					isColumn: true,
-				},
-				op: '<',
-				value: lastLog.id,
-			},
-		];
-
-		const newFilters = {
-			op: 'AND',
-			items: newItems,
-		} as IBuilderQuery['filters'];
-
-		handleChangeLogFilters(newFilters);
-	}, [logs, filters, handleChangeLogFilters]);
+	useEffect(() => {
+		if (data?.payload?.data?.newResult?.data?.result) {
+			handleNewData(data.payload.data.newResult.data.result);
+		}
+	}, [data, handleNewData]);
 
 	useEffect(() => {
 		setIsPaginating(false);
-	}, [data]);
+	}, [data, setIsPaginating]);
 
 	const renderFooter = useCallback(
 		(): JSX.Element | null => (
