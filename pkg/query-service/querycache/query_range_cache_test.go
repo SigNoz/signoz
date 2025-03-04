@@ -266,8 +266,8 @@ func TestFindMissingTimeRangeV2(t *testing.T) {
 				},
 			},
 			expectedMiss: []querycache.MissInterval{
-				{Start: 1738404000000, End: 1738576800000}, // 01 Feb 2025 10:00:00 - 01 Feb 2025 10:00:59.999
-				{Start: 1738749600000, End: 1738836000000}, // 05 Feb 2025 00:00:00 - 06 Feb 2025 10:00:00
+				{Start: 1738404000000, End: 1738576800000}, // 01 Feb 2025 10:00:00 - 03 Feb 2025 10:00:00
+				{Start: 1738749600000, End: 1738836000000}, // 05 Feb 2025 10:00:00 - 06 Feb 2025 10:00:00
 			},
 		},
 		{
@@ -444,7 +444,7 @@ func TestFindMissingTimeRangeV2(t *testing.T) {
 			},
 		},
 		{
-			name:           "range is not even one step",
+			name:           "cache data is not even one step",
 			requestedStart: 1738576800000,
 			requestedEnd:   1738576800001,
 			step:           60,
@@ -455,7 +455,7 @@ func TestFindMissingTimeRangeV2(t *testing.T) {
 			expectedMiss: []querycache.MissInterval{{Start: 1738576800000, End: 1738576800001}},
 		},
 		{
-			name:           "range is one step",
+			name:           "cache data is exactly one step or aggregation window",
 			requestedStart: 1738576800000,
 			requestedEnd:   1738576860000,
 			step:           60,
@@ -466,7 +466,7 @@ func TestFindMissingTimeRangeV2(t *testing.T) {
 			expectedMiss: nil,
 		},
 		{
-			name:           "start and end is between two whole aggregate interval",
+			name:           "start is between a cache aggregate interval and end outside of cache aggregate interval",
 			requestedStart: 1738576800000, // 03 Feb 2025 10:00:00
 			requestedEnd:   1738749600000, // 05 Mar 2025 10:00:00
 			step:           86400,         // 24 hours
@@ -481,6 +481,58 @@ func TestFindMissingTimeRangeV2(t *testing.T) {
 			expectedMiss: []querycache.MissInterval{
 				{Start: 1738576800000, End: 1738627200000}, // 03 Feb 2025 10:00:00 - 04 Feb 2025 00:00:00
 				{Start: 1738713600000, End: 1738749600000}, // 05 Feb 2025 00:00:00 - 05 Feb 2025 10:00:00
+			},
+		},
+		{
+			name:           "start is the start of aggregate interval and end is between two aggregate intervals",
+			requestedStart: 1738540800000, // 03 Feb 2025 00:00:00
+			requestedEnd:   1738749600000, // 05 Mar 2025 10:00:00
+			step:           86400,         // 24 hours
+			cacheKey:       "testKey13",
+			cachedData: []querycache.CachedSeriesData{
+				{
+					Start: 1738540800000, // 03 Feb 2025 00:00:00
+					End:   1738713600000, // 05 Feb 2025 00:00:00
+					Data:  []*v3.Series{},
+				},
+			},
+			expectedMiss: []querycache.MissInterval{
+				{Start: 1738713600000, End: 1738749600000}, // 05 Feb 2025 00:00:00 - 05 Feb 2025 10:00:00
+			},
+		},
+		{
+			name:           "start lies near the start of aggregation interval and end lies near the end of another aggregation interval",
+			requestedStart: 1738541400000, // 03 Feb 2025 00:10:00
+			requestedEnd:   1738713000000, // 04 Feb 2025 11:50:00
+			step:           86400,         // 24 hours
+			cacheKey:       "testKey13",
+			cachedData: []querycache.CachedSeriesData{
+				{
+					Start: 1738540800000, // 03 Feb 2025 00:00:00
+					End:   1738713600000, // 05 Feb 2025 00:00:00
+					Data:  []*v3.Series{},
+				},
+			},
+			expectedMiss: []querycache.MissInterval{
+				{Start: 1738541400000, End: 1738627200000}, // 03 Feb 2025 00:10:00 - 04 Feb 2025 00:00:00
+				{Start: 1738627200000, End: 1738713000000}, // 04 Feb 2025 00:00:00 - 04 Feb 2025 11:50:00
+			},
+		},
+		{
+			name:           "start is before cache end lies at the end of cache aggregation interval",
+			requestedStart: 1738498255000, // 02 Feb 2025 10:30:00
+			requestedEnd:   1738713600000, // 05 Feb 2025 00:00:00
+			step:           86400,         // 24 hours
+			cacheKey:       "testKey13",
+			cachedData: []querycache.CachedSeriesData{
+				{
+					Start: 1738540800000, // 03 Feb 2025 00:00:00
+					End:   1738713600000, // 05 Feb 2025 00:00:00
+					Data:  []*v3.Series{},
+				},
+			},
+			expectedMiss: []querycache.MissInterval{
+				{Start: 1738498255000, End: 1738540800000}, // 03 Feb 2025 00:10:00 - 03 Feb 2025 00:00:00
 			},
 		},
 	}
