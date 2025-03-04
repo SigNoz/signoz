@@ -48,7 +48,6 @@
 		"@uiw/react-md-editor": "3.23.5",
 		"@visx/group": "3.3.0",
 		"@visx/hierarchy": "3.12.0",
-		"@visx/scale": "3.12.0",
 		"@visx/shape": "3.5.0",
 		"@visx/tooltip": "3.3.0",
 		"@xstate/react": "^3.0.0",
