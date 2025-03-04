@@ -109,93 +109,64 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 		return err
 	}
 
-	err = channel.Update(receiver)
+	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	err = provider.configStore.UpdateChannel(ctx, orgID, channel, func(ctx context.Context) error {
-		config, err := provider.configStore.Get(ctx, orgID)
-		if err != nil {
-			return err
-		}
-
-		err = config.UpdateReceiver(receiver)
-		if err != nil {
-			return err
-		}
-
-		err = provider.configStore.Set(ctx, config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
+	if err := config.UpdateReceiver(receiver); err != nil {
 		return err
 	}
 
-	return nil
+	if err := provider.configStore.Set(ctx, config); err != nil {
+		return err
+	}
+
+	if err := channel.Update(receiver); err != nil {
+		return err
+	}
+
+	return provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.ConfigStoreNoopCallback)
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
-	err := provider.configStore.DeleteChannelByID(ctx, orgID, channelID, func(ctx context.Context) error {
-		channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
-		if err != nil {
-			return err
-		}
-
-		config, err := provider.configStore.Get(ctx, orgID)
-		if err != nil {
-			return err
-		}
-
-		err = config.DeleteReceiver(channel.Name)
-		if err != nil {
-			return err
-		}
-
-		err = provider.configStore.Set(ctx, config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	if err := config.DeleteReceiver(channel.Name); err != nil {
+		return err
+	}
+
+	if err := provider.configStore.Set(ctx, config); err != nil {
+		return err
+	}
+
+	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.ConfigStoreNoopCallback)
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
-	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
-
-	err := provider.configStore.CreateChannel(ctx, channel, func(ctx context.Context) error {
-		config, err := provider.configStore.Get(ctx, orgID)
-		if err != nil {
-			return err
-		}
-
-		err = config.CreateReceiver(receiver)
-		if err != nil {
-			return err
-		}
-
-		err = provider.configStore.Set(ctx, config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	if err := config.CreateReceiver(receiver); err != nil {
+		return err
+	}
+
+	if err := provider.configStore.Set(ctx, config); err != nil {
+		return err
+	}
+
+	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
+	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.ConfigStoreNoopCallback)
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

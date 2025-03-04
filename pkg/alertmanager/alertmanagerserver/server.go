@@ -354,6 +354,10 @@ func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanager
 }
 
 func (server *Server) Hash() string {
+	if server.alertmanagerConfig == nil {
+		return ""
+	}
+
 	return server.alertmanagerConfig.StoreableConfig().Hash
 }
 
