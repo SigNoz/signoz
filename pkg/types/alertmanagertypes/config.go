@@ -11,6 +11,7 @@ import (
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
@@ -354,5 +355,6 @@ var ConfigStoreNoopCallback = func(ctx context.Context) error { return nil }
 // through the marshal interfaces. We need to store the actual value of the secret
 // in the database, so we need to set this to true.
 func init() {
+	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
 }
