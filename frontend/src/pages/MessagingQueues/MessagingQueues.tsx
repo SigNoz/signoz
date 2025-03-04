@@ -8,10 +8,10 @@ import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/Mess
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
-import { isCloudUser } from 'utils/app';
 
 import {
 	KAFKA_SETUP_DOC_LINK,
@@ -34,7 +34,7 @@ function MessagingQueues(): JSX.Element {
 		);
 	};
 
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const getStartedRedirect = (link: string, sourceCard: string): void => {
 		logEvent('Messaging Queues: Get started clicked', {

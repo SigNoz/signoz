@@ -3,11 +3,11 @@ import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -22,7 +22,7 @@ function ServiceTraceTable({
 	const { t: getText } = useTranslation(['services']);
 
 	const { licenses, isFetchingLicenses } = useAppContext();
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {

@@ -10,6 +10,7 @@ import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -24,7 +25,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
+import { extractDomain } from 'utils/app';
 
 import PrivateRoute from './Private';
 import defaultRoutes, {
@@ -54,7 +55,10 @@ function App(): JSX.Element {
 
 	const { hostname, pathname } = window.location;
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser: isCloudUserVal,
+		isEECloudUser: isEECloudUserVal,
+	} = useGetTenantLicense();
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -150,7 +154,7 @@ function App(): JSX.Element {
 
 			let updatedRoutes = defaultRoutes;
 			// if the user is a cloud user
-			if (isCloudUserVal || isEECloudUser()) {
+			if (isCloudUserVal || isEECloudUserVal) {
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
@@ -175,6 +179,7 @@ function App(): JSX.Element {
 		isCloudUserVal,
 		isFetchingLicenses,
 		isFetchingUser,
+		isEECloudUserVal,
 	]);
 
 	useEffect(() => {

@@ -4,6 +4,7 @@ import getOrgUser from 'api/user/getOrgUser';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -13,7 +14,6 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
-import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -55,7 +55,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	);
 	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
 	const currentRoute = mapRoutes.get('current');
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 

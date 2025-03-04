@@ -34,6 +34,7 @@ import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/ut
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { get, isEmpty, isUndefined } from 'lodash-es';
@@ -82,7 +83,6 @@ import {
 	WidgetRow,
 	Widgets,
 } from 'types/api/dashboard/getAll';
-import { isCloudUser } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -110,6 +110,8 @@ function DashboardsList(): JSX.Element {
 		listSortOrder: sortOrder,
 		setListSortOrder: setSortOrder,
 	} = useDashboard();
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [searchString, setSearchString] = useState<string>(
 		sortOrder.search || '',
@@ -694,7 +696,7 @@ function DashboardsList(): JSX.Element {
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
 					</Flex>
-					{isCloudUser() && (
+					{isCloudUserVal && (
 						<div className="integrations-container">
 							<div className="integrations-content">
 								<RequestDashboardBtn />
@@ -735,7 +737,7 @@ function DashboardsList(): JSX.Element {
 							<Button
 								type="text"
 								className="learn-more"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								Contact Support
 							</Button>

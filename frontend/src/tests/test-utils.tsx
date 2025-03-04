@@ -16,6 +16,7 @@ import thunk from 'redux-thunk';
 import store from 'store';
 import {
 	LicenseEvent,
+	LicensePlatform,
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
@@ -115,6 +116,7 @@ export function getAppContextMock(
 			key: 'does-not-matter',
 			state: LicenseState.ACTIVE,
 			status: LicenseStatus.VALID,
+			platform: LicensePlatform.CLOUD,
 		},
 		isFetchingActiveLicenseV3: false,
 		activeLicenseV3FetchError: null,
