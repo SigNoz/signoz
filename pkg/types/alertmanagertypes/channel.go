@@ -8,6 +8,11 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
+	"go.signoz.io/signoz/pkg/errors"
+)
+
+var (
+	ErrCodeAlertmanagerChannelNotFound = errors.MustNewCode("alertmanager_channel_not_found")
 )
 
 var (
@@ -136,4 +141,14 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	}
 
 	return cfg, nil
+}
+
+func GetChannelByID(channels Channels, id int) (*Channel, error) {
+	for _, channel := range channels {
+		if channel.ID == id {
+			return channel, nil
+		}
+	}
+
+	return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
 }

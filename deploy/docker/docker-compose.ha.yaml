@@ -2,7 +2,7 @@ version: "3"
 x-common: &common
   networks:
     - signoz-net
-  restart: on-failure
+  restart: unless-stopped
   logging:
     options:
       max-size: 50m
@@ -79,6 +79,7 @@ services:
         wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
         tar -xvzf histogram-quantile.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    restart: on-failure
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
@@ -188,7 +189,7 @@ services:
         condition: service_healthy
   query-service:
     !!merge <<: *db-depend
-    image: signoz/query-service:${DOCKER_TAG:-0.72.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.75.0}
     container_name: signoz-query-service
     command:
       - --config=/root/config/prometheus.yml
@@ -222,7 +223,7 @@ services:
       retries: 3
   frontend:
     !!merge <<: *common
-    image: signoz/frontend:${DOCKER_TAG:-0.72.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.75.0}
     container_name: signoz-frontend
     depends_on:
       - alertmanager
@@ -234,7 +235,7 @@ services:
   # TODO: support otel-collector multiple replicas. Nginx/Traefik for loadbalancing?
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.28}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.111.29}
     container_name: signoz-otel-collector
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -260,7 +261,7 @@ services:
         condition: service_healthy
   schema-migrator-sync:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.28}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.29}
     container_name: schema-migrator-sync
     command:
       - sync
@@ -271,12 +272,13 @@ services:
         condition: service_healthy
   schema-migrator-async:
     !!merge <<: *db-depend
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.28}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.111.29}
     container_name: schema-migrator-async
     command:
       - async
       - --dsn=tcp://clickhouse:9000
       - --up=
+    restart: on-failure
 networks:
   signoz-net:
     name: signoz-net

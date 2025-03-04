@@ -106,7 +106,7 @@ function CloudAccountSetupModal({
 		// Handle success state first
 		if (modalState === ModalStateEnum.SUCCESS) {
 			return {
-				title: 'AWS Webservice Integration',
+				title: 'AWS Integration',
 				okText: (
 					<div className="cloud-account-setup-success-view__footer-button">
 						Continue

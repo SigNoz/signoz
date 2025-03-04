@@ -378,9 +378,7 @@ describe('Create Alert Channel', () => {
 			});
 
 			it('Should check if the selected item in the type dropdown has text "msteams"', () => {
-				expect(
-					screen.getByText('Microsoft Teams (Supported in Paid Plans Only)'),
-				).toBeInTheDocument();
+				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
 			it('Should check if Webhook URL label and input are displayed properly ', () => {

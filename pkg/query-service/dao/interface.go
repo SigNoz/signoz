@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type ModelDao interface {
@@ -22,7 +23,7 @@ type Queries interface {
 	GetUsersWithOpts(ctx context.Context, limit int) ([]model.UserPayload, *model.ApiError)
 
 	GetGroup(ctx context.Context, id string) (*model.Group, *model.ApiError)
-	GetGroupByName(ctx context.Context, name string) (*model.Group, *model.ApiError)
+	GetGroupByName(ctx context.Context, name string) (*types.Group, *model.ApiError)
 	GetGroups(ctx context.Context) ([]model.Group, *model.ApiError)
 
 	GetOrgs(ctx context.Context) ([]model.Organization, *model.ApiError)
@@ -50,7 +51,7 @@ type Mutations interface {
 
 	UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (model.UserFlag, *model.ApiError)
 
-	CreateGroup(ctx context.Context, group *model.Group) (*model.Group, *model.ApiError)
+	CreateGroup(ctx context.Context, group *types.Group) (*types.Group, *model.ApiError)
 	DeleteGroup(ctx context.Context, id string) *model.ApiError
 
 	CreateOrg(ctx context.Context, org *model.Organization) (*model.Organization, *model.ApiError)

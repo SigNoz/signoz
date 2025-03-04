@@ -537,3 +537,97 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 		LogsPanelsWithAttrContainsOp: logsPanelsWithAttrContains,
 	}
 }
+
+func GetDashboardsWithMetricNames(ctx context.Context, metricNames []string) (map[string][]map[string]string, *model.ApiError) {
+	// Get all dashboards first
+	query := `SELECT uuid, data FROM dashboards`
+
+	type dashboardRow struct {
+		Uuid string          `db:"uuid"`
+		Data json.RawMessage `db:"data"`
+	}
+
+	var dashboards []dashboardRow
+	err := db.Select(&dashboards, query)
+	if err != nil {
+		zap.L().Error("Error in getting dashboards", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	// Initialize result map for each metric
+	result := make(map[string][]map[string]string)
+	// for _, metricName := range metricNames {
+	// 	result[metricName] = []map[string]string{}
+	// }
+
+	// Process the JSON data in Go
+	for _, dashboard := range dashboards {
+		var dashData map[string]interface{}
+		if err := json.Unmarshal(dashboard.Data, &dashData); err != nil {
+			continue
+		}
+
+		dashTitle, _ := dashData["title"].(string)
+		widgets, ok := dashData["widgets"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, w := range widgets {
+			widget, ok := w.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			widgetTitle, _ := widget["title"].(string)
+			widgetID, _ := widget["id"].(string)
+
+			query, ok := widget["query"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			builder, ok := query["builder"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			queryData, ok := builder["queryData"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			for _, qd := range queryData {
+				data, ok := qd.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+					continue
+				}
+
+				aggregateAttr, ok := data["aggregateAttribute"].(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				if key, ok := aggregateAttr["key"].(string); ok {
+					// Check if this metric is in our list of interest
+					for _, metricName := range metricNames {
+						if strings.TrimSpace(key) == metricName {
+							result[metricName] = append(result[metricName], map[string]string{
+								"dashboard_id":    dashboard.Uuid,
+								"widget_title":    widgetTitle,
+								"widget_id":       widgetID,
+								"dashboard_title": dashTitle,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result, nil
+}

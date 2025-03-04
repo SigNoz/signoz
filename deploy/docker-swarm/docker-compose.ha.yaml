@@ -76,6 +76,9 @@ services:
         wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
         tar -xvzf histogram-quantile.tar.gz
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    deploy:
+      restart_policy:
+        condition: on-failure
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
@@ -181,7 +184,7 @@ services:
       - query-service
   query-service:
     !!merge <<: *db-depend
-    image: signoz/query-service:0.72.0
+    image: signoz/query-service:0.75.0
     command:
       - --config=/root/config/prometheus.yml
       - --use-logs-new-schema=true
@@ -214,7 +217,7 @@ services:
       retries: 3
   frontend:
     !!merge <<: *common
-    image: signoz/frontend:0.72.0
+    image: signoz/frontend:0.75.0
     depends_on:
       - alertmanager
       - query-service
@@ -224,7 +227,7 @@ services:
       - ../common/signoz/nginx-config.conf:/etc/nginx/conf.d/default.conf
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:0.111.28
+    image: signoz/signoz-otel-collector:0.111.29
     command:
       - --config=/etc/otel-collector-config.yaml
       - --manager-config=/etc/manager-config.yaml
@@ -248,7 +251,7 @@ services:
       - query-service
   schema-migrator:
     !!merge <<: *common
-    image: signoz/signoz-schema-migrator:0.111.28
+    image: signoz/signoz-schema-migrator:0.111.29
     deploy:
       restart_policy:
         condition: on-failure

@@ -40,7 +40,7 @@ func GetUserFromRequestContext(ctx context.Context, apiHandler *api.APIHandler) 
 			}
 			telemetry.GetInstance().SetPatTokenUser()
 			dao.UpdatePATLastUsed(ctx, patToken, time.Now().Unix())
-			user.User.GroupId = group.Id
+			user.User.GroupId = group.ID
 			user.User.Id = pat.Id
 			return &basemodel.UserPayload{
 				User: user.User,
