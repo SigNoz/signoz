@@ -106,7 +106,7 @@ export const buildDependencyGraph = (
 	Object.keys(dependencies).forEach((node) => {
 		if (!inDegree[node]) inDegree[node] = 0;
 		if (!adjList[node]) adjList[node] = [];
-		dependencies[node].forEach((child) => {
+		dependencies[node]?.forEach((child) => {
 			if (!inDegree[child]) inDegree[child] = 0;
 			inDegree[child]++;
 			adjList[node].push(child);
@@ -126,13 +126,13 @@ export const buildDependencyGraph = (
 		}
 		topologicalOrder.push(current);
 
-		adjList[current].forEach((neighbor) => {
+		adjList[current]?.forEach((neighbor) => {
 			inDegree[neighbor]--;
 			if (inDegree[neighbor] === 0) queue.push(neighbor);
 		});
 	}
 
-	if (topologicalOrder.length !== Object.keys(dependencies).length) {
+	if (topologicalOrder.length !== Object.keys(dependencies)?.length) {
 		console.error('Cycle detected in the dependency graph!');
 	}
 
