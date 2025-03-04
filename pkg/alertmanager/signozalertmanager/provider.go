@@ -32,7 +32,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
-	return &provider{
+	p := &provider{
 		service: alertmanager.New(
 			ctx,
 			settings,
@@ -45,10 +45,17 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		configStore: configStore,
 		stateStore:  stateStore,
 		stopC:       make(chan struct{}),
-	}, nil
+	}
+
+	return p, nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
+	if err := provider.service.SyncServers(ctx); err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+		return err
+	}
+
 	ticker := time.NewTicker(provider.config.Signoz.PollInterval)
 	defer ticker.Stop()
 	for {
@@ -80,19 +87,12 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
+func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	return provider.service.TestAlert(ctx, orgID, alert, receivers)
+}
+
 func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	channels := config.Channels()
-	channelList := make([]*alertmanagertypes.Channel, 0, len(channels))
-	for _, channel := range channels {
-		channelList = append(channelList, channel)
-	}
-
-	return channelList, nil
+	return provider.configStore.ListChannels(ctx, orgID)
 }
 
 func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
@@ -100,18 +100,7 @@ func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagert
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
-	if err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
 func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
@@ -140,7 +129,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}
 
 	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
+	_, channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
 	if err != nil {
 		return err
 	}
@@ -175,4 +164,12 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}
 
 	return nil
+}
+
+func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {
+	return provider.configStore.Set(ctx, config)
+}
+
+func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
+	return provider.configStore.Get(ctx, orgID)
 }

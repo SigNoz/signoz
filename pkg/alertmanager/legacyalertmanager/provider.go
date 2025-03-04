@@ -19,6 +19,11 @@ import (
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
+type postableAlert struct {
+	*alertmanagertypes.PostableAlert
+	Receivers []string `json:"receivers"`
+}
+
 const (
 	alertsPath       string = "/v1/alerts"
 	routesPath       string = "/v1/routes"
@@ -109,15 +114,33 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 	return alerts, nil
 }
 
-func (provider *provider) PutAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
+func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
 	provider.batcher.Add(ctx, alerts...)
 	return nil
 }
 
-func (provider *provider) putAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
+func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	cfg, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	legacyAlerts := make([]postableAlert, len(alerts))
+	for i, alert := range alerts {
+		receivers, err := cfg.ReceiverNamesFromRuleID(alert.Alert.Labels["ruleID"])
+		if err != nil {
+			return err
+		}
+
+		legacyAlerts[i] = postableAlert{
+			PostableAlert: alert,
+			Receivers:     receivers,
+		}
+	}
+
 	url := provider.url.JoinPath(alertsPath)
 
-	body, err := json.Marshal(alerts)
+	body, err := json.Marshal(legacyAlerts)
 	if err != nil {
 		return err
 	}
@@ -147,6 +170,40 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 	url := provider.url.JoinPath(testReceiverPath)
 
 	body, err := json.Marshal(receiver)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := provider.client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close() //nolint:errcheck
+
+	// Any HTTP status 2xx is OK.
+	if resp.StatusCode/100 != 2 {
+		return fmt.Errorf("bad response status %v", resp.Status)
+	}
+
+	return nil
+}
+
+func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	url := provider.url.JoinPath(alertsPath)
+
+	legacyAlert := postableAlert{
+		PostableAlert: alert,
+		Receivers:     receivers,
+	}
+
+	body, err := json.Marshal(legacyAlert)
 	if err != nil {
 		return err
 	}
@@ -309,7 +366,15 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	return nil
 }
 
+func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {
+	return provider.configStore.Set(ctx, config)
+}
+
 func (provider *provider) Stop(ctx context.Context) error {
 	provider.batcher.Stop(ctx)
 	return nil
+}
+
+func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
+	return provider.configStore.Get(ctx, orgID)
 }

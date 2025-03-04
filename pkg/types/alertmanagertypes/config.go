@@ -5,10 +5,12 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
@@ -41,6 +43,7 @@ type StoreableConfig struct {
 
 	ID        uint64    `bun:"id,pk,autoincrement"`
 	Config    string    `bun:"config"`
+	Hash      string    `bun:"hash"`
 	CreatedAt time.Time `bun:"created_at"`
 	UpdatedAt time.Time `bun:"updated_at"`
 	OrgID     string    `bun:"org_id"`
@@ -63,10 +66,12 @@ type Config struct {
 
 func NewConfig(c *config.Config, orgID string) *Config {
 	channels := NewChannelsFromConfig(c, orgID)
+	raw := string(newRawFromConfig(c))
 	return &Config{
 		alertmanagerConfig: c,
 		storeableConfig: &StoreableConfig{
-			Config:    string(newRawFromConfig(c)),
+			Config:    raw,
+			Hash:      fmt.Sprintf("%x", newConfigHash(raw)),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			OrgID:     orgID,
@@ -75,13 +80,11 @@ func NewConfig(c *config.Config, orgID string) *Config {
 	}
 }
 
-func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
+func NewConfigFromStoreableConfigAndChannels(sc *StoreableConfig, channels []*Channel) (*Config, error) {
 	alertmanagerConfig, err := newConfigFromString(sc.Config)
 	if err != nil {
 		return nil, err
 	}
-
-	channels := NewChannelsFromConfig(alertmanagerConfig, sc.OrgID)
 
 	return &Config{
 		alertmanagerConfig: alertmanagerConfig,
@@ -134,6 +137,43 @@ func newRawFromConfig(c *config.Config) []byte {
 	return b
 }
 
+func newConfigHash(s string) [16]byte {
+	return md5.Sum([]byte(s))
+}
+
+func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) {
+	c.alertmanagerConfig.Global = &globalConfig
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+}
+
+func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
+	c.alertmanagerConfig.Route = &config.Route{
+		Receiver:       DefaultReceiverName,
+		GroupByStr:     routeConfig.GroupByStr,
+		GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
+		GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
+		RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
+	}
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+}
+
+func (c *Config) UpdateRouteConfig(routeConfig RouteConfig) {
+	for _, route := range c.alertmanagerConfig.Route.Routes {
+		route.GroupByStr = routeConfig.GroupByStr
+		route.GroupInterval = (*model.Duration)(&routeConfig.GroupInterval)
+		route.GroupWait = (*model.Duration)(&routeConfig.GroupWait)
+		route.RepeatInterval = (*model.Duration)(&routeConfig.RepeatInterval)
+	}
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+}
+
 func (c *Config) AlertmanagerConfig() *config.Config {
 	return c.alertmanagerConfig
 }
@@ -148,14 +188,6 @@ func (c *Config) Channels() Channels {
 
 func (c *Config) OrgID() string {
 	return c.orgID
-}
-
-func (c *Config) Raw() []byte {
-	return newRawFromConfig(c.alertmanagerConfig)
-}
-
-func (c *Config) Hash() [16]byte {
-	return md5.Sum(newRawFromConfig(c.alertmanagerConfig))
 }
 
 func (c *Config) CreateReceiver(route *config.Route, receiver config.Receiver) error {
@@ -187,12 +219,23 @@ func (c *Config) CreateReceiver(route *config.Route, receiver config.Receiver) e
 
 	channel := NewChannelFromReceiver(receiver, c.orgID)
 	if channel != nil {
-		c.channels[channel.Name] = channel
+		c.channels = append(c.channels, channel)
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
 	return nil
+}
+
+func (c *Config) GetReceiver(name string) (Receiver, error) {
+	for _, receiver := range c.alertmanagerConfig.Receivers {
+		if receiver.Name == name {
+			return receiver, nil
+		}
+	}
+
+	return Receiver{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
 func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) error {
@@ -208,10 +251,14 @@ func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) e
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
 			c.alertmanagerConfig.Receivers[i] = receiver
-			channel := NewChannelFromReceiver(receiver, c.orgID)
-			if channel != nil {
-				c.channels[channel.Name] = channel
-				c.channels[channel.Name].UpdatedAt = time.Now()
+			_, existingChannel, err := GetChannelByName(c.channels, receiver.Name)
+			if err != nil {
+				return err
+			}
+
+			err = existingChannel.Update(receiver)
+			if err != nil {
+				return err
 			}
 			break
 		}
@@ -226,6 +273,7 @@ func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) e
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
@@ -247,15 +295,84 @@ func (c *Config) DeleteReceiver(name string) error {
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == name {
 			c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers[:i], c.alertmanagerConfig.Receivers[i+1:]...)
-			delete(c.channels, name)
+			pos, _, err := GetChannelByName(c.channels, name)
+			if err == nil {
+				c.channels = slices.Delete(c.channels, pos, pos+1)
+			}
 			break
 		}
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) error {
+	if c.alertmanagerConfig.Route == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
+	}
+
+	routes := c.alertmanagerConfig.Route.Routes
+	for i, r := range routes {
+		if slices.Contains(receiverNames, r.Receiver) {
+			matcher, err := labels.NewMatcher(labels.MatchEqual, "ruleId", ruleID)
+			if err != nil {
+				return err
+			}
+
+			c.alertmanagerConfig.Route.Routes[i].Matchers = append(r.Matchers, matcher)
+		}
+	}
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) error {
+	err := c.DeleteRuleIDMatcher(ruleID)
+	if err != nil {
+		return err
+	}
+
+	return c.CreateRuleIDMatcher(ruleID, receiverNames)
+}
+
+func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
+	routes := c.alertmanagerConfig.Route.Routes
+	for i, r := range routes {
+		j := slices.IndexFunc(r.Matchers, func(m *labels.Matcher) bool {
+			return m.Name == "ruleId" && m.Value == ruleID
+		})
+		if j != -1 {
+			c.alertmanagerConfig.Route.Routes[i].Matchers = slices.Delete(r.Matchers, j, j+1)
+		}
+	}
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (c *Config) ReceiverNamesFromRuleID(ruleID string) ([]string, error) {
+	receiverNames := make([]string, 0)
+	routes := c.alertmanagerConfig.Route.Routes
+	for _, r := range routes {
+		for _, m := range r.Matchers {
+			if m.Name == "ruleId" && m.Value == ruleID {
+				receiverNames = append(receiverNames, r.Receiver)
+			}
+		}
+	}
+
+	return receiverNames, nil
 }
 
 type ConfigStore interface {

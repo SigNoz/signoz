@@ -33,12 +33,9 @@ func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.
 	return receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, tmpl *template.Template, logger *slog.Logger) error {
-	now := time.Now()
-	testAlert := NewTestAlert(receiver, now, now)
-
-	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, testAlert.Labels.Fingerprint(), now.Unix()))
-	ctx = notify.WithGroupLabels(ctx, testAlert.Labels)
+func TestReceiver(ctx context.Context, receiver Receiver, tmpl *template.Template, logger *slog.Logger, alert *Alert) error {
+	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, alert.Labels.Fingerprint(), time.Now().Unix()))
+	ctx = notify.WithGroupLabels(ctx, alert.Labels)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
 
 	integrations, err := NewReceiverIntegrations(receiver, tmpl, logger)
@@ -46,7 +43,7 @@ func TestReceiver(ctx context.Context, receiver Receiver, tmpl *template.Templat
 		return err
 	}
 
-	if _, err = integrations[0].Notify(ctx, testAlert); err != nil {
+	if _, err = integrations[0].Notify(ctx, alert); err != nil {
 		return err
 	}
 

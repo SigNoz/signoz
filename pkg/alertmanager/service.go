@@ -57,9 +57,18 @@ func (service *Service) SyncServers(ctx context.Context) error {
 			continue
 		}
 
-		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore)
-		if err != nil {
-			service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
+		if _, ok := service.servers[orgID]; !ok {
+			service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore)
+			if err != nil {
+				service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
+				continue
+			}
+		}
+
+		hash := service.servers[orgID].Hash()
+
+		if hash != config.StoreableConfig().Hash {
+			service.settings.Logger().Debug("skipping alertmanager sync for org", "orgID", orgID, "hash", hash)
 			continue
 		}
 
@@ -106,6 +115,15 @@ func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver
 	return server.TestReceiver(ctx, receiver)
 }
 
+func (service *Service) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	server, err := service.getServer(orgID)
+	if err != nil {
+		return err
+	}
+
+	return server.TestAlert(ctx, alert, receivers)
+}
+
 func (service *Service) Stop(ctx context.Context) error {
 	for _, server := range service.servers {
 		server.Stop(ctx)
@@ -126,13 +144,21 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 			return nil, err
 		}
 
-		return config, err
+		config.SetGlobalConfig(service.config.Global)
+		if config.AlertmanagerConfig().Route == nil {
+			config.SetRouteConfig(service.config.Route)
+		} else {
+			config.UpdateRouteConfig(service.config.Route)
+		}
 	}
 
 	return config, nil
 }
 
 func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, ok := service.servers[orgID]
 	if !ok {
 		return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for org %s", orgID)

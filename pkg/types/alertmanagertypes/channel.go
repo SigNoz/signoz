@@ -21,7 +21,7 @@ var (
 	receiverTypeRegex = regexp.MustCompile(`^(.+)_configs`)
 )
 
-type Channels = map[string]*Channel
+type Channels = []*Channel
 
 type GettableChannels = []*Channel
 
@@ -113,7 +113,7 @@ func NewChannelsFromConfig(c *config.Config, orgID string) Channels {
 			continue
 		}
 
-		channels[channel.Name] = channel
+		channels = append(channels, channel)
 	}
 
 	return channels
@@ -144,14 +144,24 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
-func GetChannelByID(channels Channels, id int) (*Channel, error) {
-	for _, channel := range channels {
+func GetChannelByID(channels Channels, id int) (int, *Channel, error) {
+	for i, channel := range channels {
 		if channel.ID == id {
-			return channel, nil
+			return i, channel, nil
 		}
 	}
 
-	return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+}
+
+func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
+	for i, channel := range channels {
+		if channel.Name == name {
+			return i, channel, nil
+		}
+	}
+
+	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with name %s", name)
 }
 
 func (c *Channel) Update(receiver Receiver) error {

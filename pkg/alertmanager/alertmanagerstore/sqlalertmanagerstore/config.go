@@ -36,7 +36,19 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 		return nil, err
 	}
 
-	cfg, err := alertmanagertypes.NewConfigFromStoreableConfig(storeableConfig)
+	var channels []*alertmanagertypes.Channel
+	err = store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&channels).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := alertmanagertypes.NewConfigFromStoreableConfigAndChannels(storeableConfig, channels)
 	if err != nil {
 		return nil, err
 	}
