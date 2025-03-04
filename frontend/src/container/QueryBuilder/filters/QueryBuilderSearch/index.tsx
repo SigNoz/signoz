@@ -75,6 +75,7 @@ function QueryBuilderSearch({
 	placeholder,
 	suffixIcon,
 	isInfraMonitoring,
+	isMetricsExplorer,
 	disableNavigationShortcuts,
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
@@ -113,6 +114,7 @@ function QueryBuilderSearch({
 		isLogsExplorerPage,
 		isInfraMonitoring,
 		entity,
+		isMetricsExplorer,
 	);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -129,6 +131,7 @@ function QueryBuilderSearch({
 		isLogsExplorerPage,
 		isInfraMonitoring,
 		entity,
+		isMetricsExplorer,
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -137,12 +140,12 @@ function QueryBuilderSearch({
 
 	const toggleEditMode = useCallback(
 		(value: boolean) => {
-			// Editing mode is required only in infra monitoring mode
-			if (isInfraMonitoring) {
+			// Editing mode is required only in infra monitoring or metrics explorer
+			if (isInfraMonitoring || isMetricsExplorer) {
 				setIsEditingTag(value);
 			}
 		},
-		[isInfraMonitoring],
+		[isInfraMonitoring, isMetricsExplorer],
 	);
 
 	const onTagRender = ({
@@ -168,7 +171,7 @@ function QueryBuilderSearch({
 			updateTag(value);
 			// Editing starts
 			toggleEditMode(true);
-			if (isInfraMonitoring) {
+			if (isInfraMonitoring || isMetricsExplorer) {
 				setSearchValue(value);
 			} else {
 				handleSearch(value);
@@ -240,8 +243,11 @@ function QueryBuilderSearch({
 	);
 
 	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS && !isInfraMonitoring,
-		[query.dataSource, isInfraMonitoring],
+		() =>
+			query.dataSource === DataSource.METRICS &&
+			!isInfraMonitoring &&
+			!isMetricsExplorer,
+		[query.dataSource, isInfraMonitoring, isMetricsExplorer],
 	);
 
 	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
@@ -291,8 +297,8 @@ function QueryBuilderSearch({
 			};
 		});
 
-		// If in infra monitoring, only run the onChange query when editing is finsished.
-		if (isInfraMonitoring) {
+		// If in infra monitoring or metrics explorer, only run the onChange query when editing is finsished.
+		if (isInfraMonitoring || isMetricsExplorer) {
 			if (!isEditingTag) {
 				onChange(initialTagFilters);
 			}
@@ -498,6 +504,7 @@ interface QueryBuilderSearchProps {
 	isInfraMonitoring?: boolean;
 	disableNavigationShortcuts?: boolean;
 	entity?: K8sCategory | null;
+	isMetricsExplorer?: boolean;
 }
 
 QueryBuilderSearch.defaultProps = {
@@ -508,6 +515,7 @@ QueryBuilderSearch.defaultProps = {
 	isInfraMonitoring: false,
 	disableNavigationShortcuts: false,
 	entity: null,
+	isMetricsExplorer: false,
 };
 
 export interface CustomTagProps {

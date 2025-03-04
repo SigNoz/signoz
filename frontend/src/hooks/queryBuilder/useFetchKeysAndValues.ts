@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { getMetricsListFilterValues } from 'api/metricsExplorer/getMetricsListFilterValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
@@ -10,6 +11,7 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { useGetMetricsListFilterKeys } from 'hooks/metricsExplorer/useGetMetricsListFilterKeys';
 import useDebounceValue from 'hooks/useDebounce';
 import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -50,6 +52,7 @@ export const useFetchKeysAndValues = (
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
 	entity?: K8sCategory | null,
+	isMetricsExplorer?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
@@ -98,10 +101,17 @@ export const useFetchKeysAndValues = (
 
 	const isQueryEnabled = useMemo(
 		() =>
-			query.dataSource === DataSource.METRICS && !isInfraMonitoring
+			query.dataSource === DataSource.METRICS &&
+			!isInfraMonitoring &&
+			!isMetricsExplorer
 				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[isInfraMonitoring, query.aggregateAttribute.dataType, query.dataSource],
+		[
+			isInfraMonitoring,
+			isMetricsExplorer,
+			query.aggregateAttribute.dataType,
+			query.dataSource,
+		],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(
@@ -138,6 +148,14 @@ export const useFetchKeysAndValues = (
 			enabled: isQueryEnabled && shouldUseSuggestions,
 		},
 	);
+
+	const {
+		data: metricsListFilterKeysData,
+		isFetching: isFetchingMetricsListFilterKeys,
+		status: fetchingMetricsListFilterKeysStatus,
+	} = useGetMetricsListFilterKeys({
+		enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
+	});
 
 	/**
 	 * Fetches the options to be displayed based on the selected value
@@ -182,6 +200,16 @@ export const useFetchKeysAndValues = (
 						: tagValue?.toString() ?? '',
 				});
 				payload = response.payload;
+			} else if (isMetricsExplorer) {
+				const response = await getMetricsListFilterValues({
+					searchText: searchKey,
+					filterKey: filterAttributeKey?.key ?? tagKey,
+					filterAttributeKeyDataType:
+						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+					limit: 10,
+				});
+				console.log({ response, filterAttributeKey });
+				payload = response.payload?.data;
 			} else {
 				const response = await getAttributesValues({
 					aggregateOperator: query.aggregateOperator,
@@ -237,6 +265,32 @@ export const useFetchKeysAndValues = (
 			setKeys([]);
 		}
 	}, [data?.payload?.attributeKeys, status]);
+
+	useEffect(() => {
+		if (
+			isMetricsExplorer &&
+			fetchingMetricsListFilterKeysStatus === 'success' &&
+			!isFetchingMetricsListFilterKeys &&
+			metricsListFilterKeysData?.payload?.data?.attributeKeys
+		) {
+			setKeys(metricsListFilterKeysData.payload.data.attributeKeys);
+			setSourceKeys((prevState) =>
+				uniqWith(
+					[
+						...(metricsListFilterKeysData.payload.data.attributeKeys ?? []),
+						...prevState,
+					],
+					isEqual,
+				),
+			);
+		}
+	}, [
+		metricsListFilterKeysData?.payload?.data?.attributeKeys,
+		fetchingMetricsListFilterKeysStatus,
+		isMetricsExplorer,
+		metricsListFilterKeysData,
+		isFetchingMetricsListFilterKeys,
+	]);
 
 	useEffect(() => {
 		if (
