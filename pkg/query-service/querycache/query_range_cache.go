@@ -252,21 +252,19 @@ func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesD
 	}
 }
 
-func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
-
+func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, series ...CachedSeriesData) []CachedSeriesData {
 	if q.cache == nil {
-		return newData
+		return series
 	}
-
 	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
 	var existingData []CachedSeriesData
 	if err := json.Unmarshal(cachedData, &existingData); err != nil {
 		// In case of error, we return the entire range as a miss
-		q.storeMergedData(cacheKey, newData)
-		return newData
+		q.storeMergedData(cacheKey, series)
+		return series
 	}
 
-	allData := append(existingData, newData...)
+	allData := append(existingData, series...)
 
 	sort.Slice(allData, func(i, j int) bool {
 		return allData[i].Start < allData[j].Start
@@ -275,7 +273,7 @@ func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []Cached
 	var mergedData []CachedSeriesData
 	var current *CachedSeriesData
 
-	for _, data := range allData {
+	for _, data := range series {
 		if current == nil {
 			current = &CachedSeriesData{
 				Start: data.Start,
@@ -306,8 +304,15 @@ func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []Cached
 	if current != nil {
 		mergedData = append(mergedData, *current)
 	}
-
-	q.storeMergedData(cacheKey, mergedData)
-
 	return mergedData
+}
+
+func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
+	mergedData := q.MergeWithCachedSeriesDataV2(cacheKey, newData...)
+	q.storeMergedData(cacheKey, mergedData)
+	return mergedData
+}
+
+func (q *queryCache) StoreSeriesInCache(cacheKey string, series []CachedSeriesData) {
+	q.storeMergedData(cacheKey, series)
 }
