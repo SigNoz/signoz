@@ -187,7 +187,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 }
 
 // compareAndSelectConfig compares the existing config with the config derived from channels.
-// If the hash of the config and the channels mismatch, the config dervied from channels is returned.
+// If the hash of the config and the channels mismatch, the config derived from channels is returned.
 func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
 	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
 	if err != nil {

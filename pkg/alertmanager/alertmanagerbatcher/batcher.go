@@ -78,7 +78,7 @@ func (batcher *Batcher) Start(ctx context.Context) error {
 	return nil
 }
 
-// Add queues the given notification requests for processing.
+// Add queues the given alerts for processing.
 func (batcher *Batcher) Add(ctx context.Context, alerts ...*alertmanagertypes.PostableAlert) {
 	batcher.queueMtx.Lock()
 	defer batcher.queueMtx.Unlock()
