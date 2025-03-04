@@ -95,7 +95,7 @@ func (q *queryCache) FindMissingTimeRangeV2(start, end int64, step int64, cacheK
 
 	startAdded := false
 	for _, data := range cachedSeriesDataList {
-		if !startAdded && data.Start >= roundedStart && data.Start < start && data.Start < nearestWholeAggregateInterval && nearestWholeAggregateInterval < end {
+		if !startAdded && data.Start >= roundedStart && data.Start < start {
 			missingRanges = append(missingRanges, MissInterval{Start: start, End: nearestWholeAggregateInterval})
 			startAdded = true
 		}
