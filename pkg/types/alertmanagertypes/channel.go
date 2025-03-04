@@ -105,20 +105,6 @@ func NewReceiverFromChannel(channel *Channel) (Receiver, error) {
 	return receiver, nil
 }
 
-func NewChannelsFromConfig(c *config.Config, orgID string) Channels {
-	channels := Channels{}
-	for _, receiver := range c.Receivers {
-		channel := NewChannelFromReceiver(receiver, orgID)
-		if channel == nil {
-			continue
-		}
-
-		channels = append(channels, channel)
-	}
-
-	return channels
-}
-
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
 	cfg, err := NewDefaultConfig(
 		globalConfig,
@@ -135,7 +121,7 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 			return nil, err
 		}
 
-		err = cfg.CreateReceiver(&config.Route{Receiver: channel.Name, Continue: true}, receiver)
+		err = cfg.CreateReceiver(receiver)
 		if err != nil {
 			return nil, err
 		}

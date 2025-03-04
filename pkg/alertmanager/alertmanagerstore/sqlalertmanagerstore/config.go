@@ -36,19 +36,7 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 		return nil, err
 	}
 
-	var channels []*alertmanagertypes.Channel
-	err = store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(&channels).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg, err := alertmanagertypes.NewConfigFromStoreableConfigAndChannels(storeableConfig, channels)
+	cfg, err := alertmanagertypes.NewConfigFromStoreableConfig(storeableConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -58,36 +46,13 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 
 // Set implements alertmanagertypes.ConfigStore.
 func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config) error {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback() //nolint:errcheck
-
-	if _, err = tx.
+	if _, err := store.sqlstore.BunDB().
 		NewInsert().
 		Model(config.StoreableConfig()).
 		On("CONFLICT (org_id) DO UPDATE").
 		Set("config = ?", string(config.StoreableConfig().Config)).
 		Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
 		Exec(ctx); err != nil {
-		return err
-	}
-
-	channels := config.Channels()
-	if len(channels) != 0 {
-		if _, err = tx.NewInsert().
-			Model(&channels).
-			On("CONFLICT (name) DO UPDATE").
-			Set("data = EXCLUDED.data").
-			Set("updated_at = EXCLUDED.updated_at").
-			Exec(ctx); err != nil {
-			return err
-		}
-	}
-
-	if err = tx.Commit(); err != nil {
 		return err
 	}
 

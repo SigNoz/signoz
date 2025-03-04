@@ -53,21 +53,27 @@ func (service *Service) SyncServers(ctx context.Context) error {
 	for _, orgID := range orgIDs {
 		config, err := service.getConfig(ctx, orgID)
 		if err != nil {
-			service.settings.Logger().Error("failed to get alertmanagerconfig for org", "orgID", orgID, "error", err)
+			service.settings.Logger().Error("failed to get alertmanager config for org", "orgID", orgID, "error", err)
+			continue
+		}
+
+		config, err = service.compareAndSelectConfig(ctx, config)
+		if err != nil {
+			service.settings.Logger().Error("failed to sync config with channels", "orgID", orgID, "error", err)
 			continue
 		}
 
 		if _, ok := service.servers[orgID]; !ok {
 			service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore)
 			if err != nil {
-				service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
+				service.settings.Logger().Error("failed to create alertmanager server", "orgID", orgID, "error", err)
 				continue
 			}
 		}
 
 		hash := service.servers[orgID].Hash()
 
-		if hash != config.StoreableConfig().Hash {
+		if hash == config.StoreableConfig().Hash {
 			service.settings.Logger().Debug("skipping alertmanager sync for org", "orgID", orgID, "hash", hash)
 			continue
 		}
@@ -153,6 +159,28 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	}
 
 	return config, nil
+}
+
+// compareAndSelectConfig compares the existing config with the config derived from channels.
+// If the hash of the config and the channels mismatch, the config dervied from channels is returned.
+func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
+	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := alertmanagertypes.NewConfigFromChannels(service.config.Global, service.config.Route, channels, incomingConfig.StoreableConfig().OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
+		service.settings.Logger().InfoContext(ctx, "mismatch in hash for config and channels, updating config to match channels")
+		return config, nil
+	}
+
+	return incomingConfig, nil
+
 }
 
 func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
