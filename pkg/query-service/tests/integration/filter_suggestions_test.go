@@ -17,9 +17,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -260,7 +260,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 
 type FilterSuggestionsTestBed struct {
 	t              *testing.T
-	testUser       *model.User
+	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
 }

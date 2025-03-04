@@ -23,11 +23,11 @@ import (
 	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -441,7 +441,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
 	t               *testing.T
-	testUser        *model.User
+	testUser        *types.User
 	apiHandler      *app.APIHandler
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server

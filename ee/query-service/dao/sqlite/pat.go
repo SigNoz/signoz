@@ -8,6 +8,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -42,10 +43,10 @@ func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basem
 		}
 	} else {
 		p.CreatedByUser = model.User{
-			Id:                createdByUser.Id,
+			Id:                createdByUser.ID,
 			Name:              createdByUser.Name,
 			Email:             createdByUser.Email,
-			CreatedAt:         createdByUser.CreatedAt,
+			CreatedAt:         createdByUser.CreatedAt.Unix(),
 			ProfilePictureURL: createdByUser.ProfilePictureURL,
 			NotFound:          false,
 		}
@@ -95,10 +96,10 @@ func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApi
 			}
 		} else {
 			pats[i].CreatedByUser = model.User{
-				Id:                createdByUser.Id,
+				Id:                createdByUser.ID,
 				Name:              createdByUser.Name,
 				Email:             createdByUser.Email,
-				CreatedAt:         createdByUser.CreatedAt,
+				CreatedAt:         createdByUser.CreatedAt.Unix(),
 				ProfilePictureURL: createdByUser.ProfilePictureURL,
 				NotFound:          false,
 			}
@@ -111,10 +112,10 @@ func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApi
 			}
 		} else {
 			pats[i].UpdatedByUser = model.User{
-				Id:                updatedByUser.Id,
+				Id:                updatedByUser.ID,
 				Name:              updatedByUser.Name,
 				Email:             updatedByUser.Email,
-				CreatedAt:         updatedByUser.CreatedAt,
+				CreatedAt:         updatedByUser.CreatedAt.Unix(),
 				ProfilePictureURL: updatedByUser.ProfilePictureURL,
 				NotFound:          false,
 			}
@@ -170,8 +171,8 @@ func (m *modelDao) GetPATByID(ctx context.Context, id string) (*model.PAT, basem
 }
 
 // deprecated
-func (m *modelDao) GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError) {
-	users := []basemodel.UserPayload{}
+func (m *modelDao) GetUserByPAT(ctx context.Context, token string) (*types.GettableUser, basemodel.BaseApiError) {
+	users := []types.GettableUser{}
 
 	query := `SELECT
 				u.id,

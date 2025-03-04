@@ -7,14 +7,14 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 )
 
-func GetUserFromRequestContext(ctx context.Context, apiHandler *api.APIHandler) (*basemodel.UserPayload, error) {
+func GetUserFromRequestContext(ctx context.Context, apiHandler *api.APIHandler) (*types.GettableUser, error) {
 	patToken, ok := authtypes.UUIDFromContext(ctx)
 	if ok && patToken != "" {
 		zap.L().Debug("Received a non-zero length PAT token")
@@ -40,9 +40,9 @@ func GetUserFromRequestContext(ctx context.Context, apiHandler *api.APIHandler) 
 			}
 			telemetry.GetInstance().SetPatTokenUser()
 			dao.UpdatePATLastUsed(ctx, patToken, time.Now().Unix())
-			user.User.GroupId = group.ID
-			user.User.Id = pat.Id
-			return &basemodel.UserPayload{
+			user.User.GroupID = group.ID
+			user.User.ID = pat.Id
+			return &types.GettableUser{
 				User: user.User,
 				Role: pat.Role,
 			}, nil

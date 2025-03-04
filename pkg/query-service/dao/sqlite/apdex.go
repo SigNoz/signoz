@@ -3,24 +3,21 @@ package sqlite
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 const defaultApdexThreshold = 0.5
 
-func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError) {
-	var apdexSettings []model.ApdexSettings
+func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, orgID string, services []string) ([]types.ApdexSettings, *model.ApiError) {
+	var apdexSettings []types.ApdexSettings
 
-	query, args, err := sqlx.In("SELECT * FROM apdex_settings WHERE service_name IN (?)", services)
-	if err != nil {
-		return nil, &model.ApiError{
-			Err: err,
-		}
-	}
-	query = mds.db.Rebind(query)
-
-	err = mds.db.Select(&apdexSettings, query, args...)
+	err := mds.bundb.NewSelect().
+		Model(&apdexSettings).
+		Where("org_id = ?", orgID).
+		Where("service_name IN (?)", bun.In(services)).
+		Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{
 			Err: err,
@@ -38,7 +35,7 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []stri
 		}
 
 		if !found {
-			apdexSettings = append(apdexSettings, model.ApdexSettings{
+			apdexSettings = append(apdexSettings, types.ApdexSettings{
 				ServiceName: service,
 				Threshold:   defaultApdexThreshold,
 			})
@@ -48,18 +45,16 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []stri
 	return apdexSettings, nil
 }
 
-func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, apdexSettings *model.ApdexSettings) *model.ApiError {
+func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, orgID string, apdexSettings *types.ApdexSettings) *model.ApiError {
+	// Set the org_id from the parameter since it's required for the foreign key constraint
+	apdexSettings.OrgID = orgID
 
-	_, err := mds.db.NamedExec(`
-	INSERT OR REPLACE INTO apdex_settings (
-		service_name,
-		threshold,
-		exclude_status_codes
-	) VALUES (
-		:service_name,
-		:threshold,
-		:exclude_status_codes
-	)`, apdexSettings)
+	_, err := mds.bundb.NewInsert().
+		Model(apdexSettings).
+		On("CONFLICT (org_id, service_name) DO UPDATE").
+		Set("threshold = EXCLUDED.threshold").
+		Set("exclude_status_codes = EXCLUDED.exclude_status_codes").
+		Exec(ctx)
 	if err != nil {
 		return &model.ApiError{
 			Err: err,
