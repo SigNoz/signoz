@@ -86,22 +86,24 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 	startTime := missStart
 	endTime := missEnd
 
+	stepMs := stepInterval * 1000
+
 	// return empty series if the interval is not complete
-	if missStart+stepInterval*1000 > missEnd {
+	if missStart+stepMs > missEnd {
 		return []*v3.Series{}, missStart, missEnd
 	}
 
 	// if the end time is not a complete aggregation window, then we will have to adjust the end time
 	// to the previous complete aggregation window end
-	endCompleteWindow := missEnd%(stepInterval*1000) == 0
+	endCompleteWindow := missEnd%stepMs == 0
 	if !endCompleteWindow {
-		endTime = missEnd - (missEnd % (stepInterval * 1000))
+		endTime = missEnd - (missEnd % stepMs)
 	}
 
 	// if the start time is not a complete aggregation window, then we will have to adjust the start time
 	// to the next complete aggregation window
-	if missStart%(stepInterval*1000) != 0 {
-		startTime = missStart + stepInterval*1000 - (missStart % (stepInterval * 1000))
+	if missStart%stepMs != 0 {
+		startTime = missStart + stepMs - (missStart % stepMs)
 	}
 
 	for _, series := range seriesList {
@@ -120,7 +122,7 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		}
 
 		// filter the last point if it is not a complete aggregation window
-		if !endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%(stepInterval*1000)) {
+		if !endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs) {
 			// Remove the last point
 			points = points[:len(points)-1]
 		}
