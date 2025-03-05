@@ -532,7 +532,8 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 				},
 			},
 			expectedMiss: []querycache.MissInterval{
-				{Start: 1738541400000, End: 1738627200000}, // 03 Feb 2025 00:10:00 - 04 Feb 2025 00:00:00
+				{Start: 1738411859000, End: 1738454400000}, // 01 Feb 2025 00:10:00 - 02 Feb 2025 00:00:00
+				{Start: 1738454400000, End: 1738540800000}, // 02 Feb 2025 00:00:00 - 03 Feb 2025 00:00:00
 				{Start: 1738627200000, End: 1738713000000}, // 04 Feb 2025 00:00:00 - 04 Feb 2025 11:50:00
 			},
 		},
