@@ -418,8 +418,8 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 			step:           60,
 			cacheKey:       "testKey11",
 			cachedData: []querycache.CachedSeriesData{
-				{Start: 1738404000000, End: 1738404600000, Data: []*v3.Series{}}, // 01 Feb 2025 10:00:00 - 10:10:00
-				{Start: 1738404300000, End: 1738405200000, Data: []*v3.Series{}}, // 01 Feb 2025 10:05:00 - 10:20:00 (overlaps with previous)
+				{Start: 1738404000000, End: 1738405200000, Data: []*v3.Series{}}, // 01 Feb 2025 10:00:00 - 10:20:00
+				{Start: 1738404600000, End: 1738405200000, Data: []*v3.Series{}}, // 01 Feb 2025 10:10:00 - 10:20:00
 				{Start: 1738406100000, End: 1738406700000, Data: []*v3.Series{}}, // 01 Feb 2025 10:35:00 - 10:45:00
 				{Start: 1738407000000, End: 1738407300000, Data: []*v3.Series{}}, // 01 Feb 2025 10:50:00 - 10:55:00
 			},
@@ -444,7 +444,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 			},
 		},
 		{
-			name:           "cache data is not even one step",
+			name:           "requested data is not one step/window",
 			requestedStart: 1738576800000,
 			requestedEnd:   1738576800001,
 			step:           60,
@@ -455,7 +455,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 			expectedMiss: []querycache.MissInterval{{Start: 1738576800000, End: 1738576800001}},
 		},
 		{
-			name:           "cache data is exactly one step or aggregation window",
+			name:           "requested data is exactly one step or aggregation window",
 			requestedStart: 1738576800000,
 			requestedEnd:   1738576860000,
 			step:           60,
@@ -468,7 +468,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 		{
 			name:           "start is between a cache aggregate interval and end outside of cache aggregate interval",
 			requestedStart: 1738576800000, // 03 Feb 2025 10:00:00
-			requestedEnd:   1738749600000, // 05 Mar 2025 10:00:00
+			requestedEnd:   1738749600000, // 05 Feb 2025 10:00:00
 			step:           86400,         // 24 hours
 			cacheKey:       "testKey13",
 			cachedData: []querycache.CachedSeriesData{
@@ -486,7 +486,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 		{
 			name:           "start is the start of aggregate interval and end is between two aggregate intervals",
 			requestedStart: 1738540800000, // 03 Feb 2025 00:00:00
-			requestedEnd:   1738749600000, // 05 Mar 2025 10:00:00
+			requestedEnd:   1738749600000, // 05 Feb 2025 10:00:00
 			step:           86400,         // 24 hours
 			cacheKey:       "testKey13",
 			cachedData: []querycache.CachedSeriesData{
@@ -519,8 +519,8 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 			},
 		},
 		{
-			name:           "start is before cache end lies at the end of cache aggregation interval",
-			requestedStart: 1738498255000, // 02 Feb 2025 10:30:00
+			name:           "start is before cache and end lies at the end of cache aggregation interval",
+			requestedStart: 1738498255000, // 02 Feb 2025 12:10:00
 			requestedEnd:   1738713600000, // 05 Feb 2025 00:00:00
 			step:           86400,         // 24 hours
 			cacheKey:       "testKey13",
