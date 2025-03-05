@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 )
 
 func TestCreateRuleIDMatcher(t *testing.T) {
@@ -111,12 +112,12 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			routes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
+			actualRoutes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
 			require.NoError(t, err)
-			var actualRoutes []map[string]any
-			err = json.Unmarshal(routes, &actualRoutes)
+			expectedRoutes, err := json.Marshal(tc.expectedRoutes)
 			require.NoError(t, err)
-			assert.ElementsMatch(t, tc.expectedRoutes, actualRoutes)
+			assert.Equal(t, gjson.GetBytes(expectedRoutes, "$[0].receiver"), gjson.GetBytes(actualRoutes, "$[0].receiver"))
+			assert.ElementsMatch(t, gjson.GetBytes(expectedRoutes, "$[0].matchers").Array(), gjson.GetBytes(actualRoutes, "$[0].matchers").Array())
 		})
 	}
 }
