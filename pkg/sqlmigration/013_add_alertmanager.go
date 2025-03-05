@@ -82,12 +82,12 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:alertmanager_config"`
-			ID            uint64    `bun:"id"`
-			Config        string    `bun:"config"`
-			Hash          string    `bun:"hash"`
-			CreatedAt     time.Time `bun:"created_at"`
-			UpdatedAt     time.Time `bun:"updated_at"`
-			OrgID         string    `bun:"org_id,unique"`
+			ID            uint64    `bun:"id,pk,autoincrement"`
+			Config        string    `bun:"config,notnull,type:text"`
+			Hash          string    `bun:"hash,notnull,type:text"`
+			CreatedAt     time.Time `bun:"created_at,notnull"`
+			UpdatedAt     time.Time `bun:"updated_at,notnull"`
+			OrgID         string    `bun:"org_id,notnull,unique"`
 		}{}).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		IfNotExists().
@@ -100,11 +100,11 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		Model(&struct {
 			bun.BaseModel `bun:"table:alertmanager_state"`
 			ID            uint64    `bun:"id,pk,autoincrement"`
-			Silences      string    `bun:"silences,nullzero"`
-			NFLog         string    `bun:"nflog,nullzero"`
-			CreatedAt     time.Time `bun:"created_at"`
-			UpdatedAt     time.Time `bun:"updated_at"`
-			OrgID         string    `bun:"org_id,unique"`
+			Silences      string    `bun:"silences,nullzero,type:text"`
+			NFLog         string    `bun:"nflog,nullzero,type:text"`
+			CreatedAt     time.Time `bun:"created_at,notnull"`
+			UpdatedAt     time.Time `bun:"updated_at,notnull"`
+			OrgID         string    `bun:"org_id,notnull,unique"`
 		}{}).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		IfNotExists().
