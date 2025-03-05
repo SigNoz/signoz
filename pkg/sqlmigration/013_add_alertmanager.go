@@ -7,7 +7,9 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
+	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"
 	"go.signoz.io/signoz/pkg/factory"
+	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 type addAlertmanager struct{}
@@ -103,6 +105,18 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		}{}).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		IfNotExists().
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	cfg, err := alertmanagertypes.NewDefaultConfig(alertmanagerserver.NewConfig().Global, alertmanagerserver.NewConfig().Route, orgID)
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.
+		NewInsert().
+		Model(cfg.StoreableConfig()).
 		Exec(ctx); err != nil {
 		return err
 	}
