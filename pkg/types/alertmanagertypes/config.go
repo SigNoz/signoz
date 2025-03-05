@@ -128,6 +128,24 @@ func newConfigHash(s string) [16]byte {
 	return md5.Sum([]byte(s))
 }
 
+func (c *Config) CopyWithReset() (*Config, error) {
+	newConfig, err := NewDefaultConfig(
+		*c.alertmanagerConfig.Global,
+		RouteConfig{
+			GroupByStr:     c.alertmanagerConfig.Route.GroupByStr,
+			GroupInterval:  time.Duration(*c.alertmanagerConfig.Route.GroupInterval),
+			GroupWait:      time.Duration(*c.alertmanagerConfig.Route.GroupWait),
+			RepeatInterval: time.Duration(*c.alertmanagerConfig.Route.RepeatInterval),
+		},
+		c.storeableConfig.OrgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConfig, nil
+}
+
 func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) {
 	c.alertmanagerConfig.Global = &globalConfig
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
@@ -201,7 +219,7 @@ func (c *Config) GetReceiver(name string) (Receiver, error) {
 		}
 	}
 
-	return Receiver{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
+	return Receiver{}, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
 func (c *Config) UpdateReceiver(receiver config.Receiver) error {
@@ -316,9 +334,33 @@ func (c *Config) ReceiverNamesFromRuleID(ruleID string) ([]string, error) {
 	return receiverNames, nil
 }
 
+type storeOptions struct {
+	Cb func(context.Context) error
+}
+
+type StoreOption func(*storeOptions)
+
+func WithCb(cb func(context.Context) error) StoreOption {
+	return func(o *storeOptions) {
+		o.Cb = cb
+	}
+}
+
+func NewStoreOptions(opts ...StoreOption) *storeOptions {
+	o := &storeOptions{
+		Cb: nil,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	return o
+}
+
 type ConfigStore interface {
 	// Set creates or updates a config.
-	Set(context.Context, *Config) error
+	Set(context.Context, *Config, ...StoreOption) error
 
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
@@ -327,16 +369,16 @@ type ConfigStore interface {
 	ListOrgs(context.Context) ([]string, error)
 
 	// CreateChannel creates a new channel.
-	CreateChannel(context.Context, *Channel, func(context.Context) error) error
+	CreateChannel(context.Context, *Channel, ...StoreOption) error
 
 	// GetChannelByID returns the channel for the given id.
 	GetChannelByID(context.Context, string, int) (*Channel, error)
 
 	// UpdateChannel updates a channel.
-	UpdateChannel(context.Context, string, *Channel, func(context.Context) error) error
+	UpdateChannel(context.Context, string, *Channel, ...StoreOption) error
 
 	// DeleteChannelByID deletes a channel.
-	DeleteChannelByID(context.Context, string, int, func(context.Context) error) error
+	DeleteChannelByID(context.Context, string, int, ...StoreOption) error
 
 	// ListChannels returns the list of channels.
 	ListChannels(context.Context, string) ([]*Channel, error)
@@ -348,8 +390,6 @@ type ConfigStore interface {
 	// Matchers is an array of ruleId to receiver names.
 	GetMatchers(context.Context, string) (map[string][]string, error)
 }
-
-var ConfigStoreNoopCallback = func(ctx context.Context) error { return nil }
 
 // MarshalSecretValue if set to true will expose Secret type
 // through the marshal interfaces. We need to store the actual value of the secret

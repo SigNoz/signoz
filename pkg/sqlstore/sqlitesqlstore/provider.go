@@ -15,7 +15,7 @@ import (
 type provider struct {
 	settings factory.ScopedProviderSettings
 	sqldb    *sql.DB
-	bundb    *bun.DB
+	bundb    *sqlstore.BunDB
 	sqlxdb   *sqlx.DB
 }
 
@@ -47,13 +47,13 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return &provider{
 		settings: settings,
 		sqldb:    sqldb,
-		bundb:    sqlstore.NewBunDB(sqldb, sqlitedialect.New(), hooks),
+		bundb:    sqlstore.NewBunDB(settings, sqldb, sqlitedialect.New(), hooks),
 		sqlxdb:   sqlx.NewDb(sqldb, "sqlite3"),
 	}, nil
 }
 
 func (provider *provider) BunDB() *bun.DB {
-	return provider.bundb
+	return provider.bundb.DB
 }
 
 func (provider *provider) SQLDB() *sql.DB {
@@ -62,4 +62,12 @@ func (provider *provider) SQLDB() *sql.DB {
 
 func (provider *provider) SQLxDB() *sqlx.DB {
 	return provider.sqlxdb
+}
+
+func (provider *provider) BunDBCtx(ctx context.Context) bun.IDB {
+	return provider.bundb.BunDBCtx(ctx)
+}
+
+func (provider *provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
+	return provider.bundb.RunInTxCtx(ctx, opts, cb)
 }

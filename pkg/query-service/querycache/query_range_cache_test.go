@@ -501,7 +501,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 			},
 		},
 		{
-			name:           "start lies near the start of aggregation interval and end lies near the end of another aggregation interval",
+			name:           "1. start lies near the start of aggregation interval and end lies near the end of another aggregation interval",
 			requestedStart: 1738541400000, // 03 Feb 2025 00:10:00
 			requestedEnd:   1738713000000, // 04 Feb 2025 11:50:00
 			step:           86400,         // 24 hours
@@ -514,7 +514,24 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 				},
 			},
 			expectedMiss: []querycache.MissInterval{
-				{Start: 1738541400000, End: 1738627200000}, // 03 Feb 2025 00:10:00 - 04 Feb 2025 00:00:00
+				{Start: 1738541400000, End: 1738713000000}, // 03 Feb 2025 00:10:00 - 04 Feb 2025 11:50:00
+			},
+		},
+		{
+			name:           "2. start lies near the start of aggregation interval and end lies near the end of another aggregation interval",
+			requestedStart: 1738411859000, // 01 Feb 2025 00:10:00
+			requestedEnd:   1738713000000, // 04 Feb 2025 11:50:00
+			step:           86400,         // 24 hours
+			cacheKey:       "testKey13",
+			cachedData: []querycache.CachedSeriesData{
+				{
+					Start: 1738540800000, // 03 Feb 2025 00:00:00
+					End:   1738713600000, // 05 Feb 2025 00:00:00
+					Data:  []*v3.Series{},
+				},
+			},
+			expectedMiss: []querycache.MissInterval{
+				{Start: 1738411859000, End: 1738540800000}, // 01 Feb 2025 00:10:00 - 03 Feb 2025 00:00:00
 				{Start: 1738627200000, End: 1738713000000}, // 04 Feb 2025 00:00:00 - 04 Feb 2025 11:50:00
 			},
 		},

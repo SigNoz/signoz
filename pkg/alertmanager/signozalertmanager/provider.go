@@ -109,6 +109,10 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 		return err
 	}
 
+	if err := channel.Update(receiver); err != nil {
+		return err
+	}
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -118,15 +122,9 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 		return err
 	}
 
-	if err := provider.configStore.Set(ctx, config); err != nil {
-		return err
-	}
-
-	if err := channel.Update(receiver); err != nil {
-		return err
-	}
-
-	return provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.ConfigStoreNoopCallback)
+	return provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	}))
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
@@ -144,11 +142,9 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
-	if err := provider.configStore.Set(ctx, config); err != nil {
-		return err
-	}
-
-	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.ConfigStoreNoopCallback)
+	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	}))
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
@@ -161,12 +157,10 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 		return err
 	}
 
-	if err := provider.configStore.Set(ctx, config); err != nil {
-		return err
-	}
-
 	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
-	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.ConfigStoreNoopCallback)
+	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	}))
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

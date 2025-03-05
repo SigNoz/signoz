@@ -58,7 +58,7 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 
 	stepMs := step * 1000
 
-	// when the window is too small to be queried, we return the entire range as a miss
+	// when the window is too small to be cached, we return the entire range as a miss
 	if (start + stepMs) > end {
 		return []MissInterval{{Start: start, End: end}}
 	}
@@ -134,7 +134,21 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 		missingRanges = append(missingRanges, MissInterval{Start: prevAggEnd, End: end})
 	}
 
-	return missingRanges
+	// Merge overlapping or adjacent missing ranges
+	if len(missingRanges) <= 1 {
+		return missingRanges
+	}
+	merged := []MissInterval{missingRanges[0]}
+	for _, curr := range missingRanges[1:] {
+		last := &merged[len(merged)-1]
+		if last.End >= curr.Start {
+			last.End = max(last.End, curr.End)
+		} else {
+			merged = append(merged, curr)
+		}
+	}
+
+	return merged
 }
 
 func (q *queryCache) FindMissingTimeRanges(start, end, step int64, cacheKey string) []MissInterval {
