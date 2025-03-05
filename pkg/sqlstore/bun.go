@@ -28,6 +28,11 @@ func NewBunDB(settings factory.ScopedProviderSettings, sqldb *sql.DB, dialect sc
 }
 
 func (db *BunDB) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
+	tx, ok := txFromContext(ctx)
+	if ok {
+		return cb(ctx)
+	}
+
 	// begin transaction
 	tx, err := db.BeginTx(ctx, opts)
 	if err != nil {

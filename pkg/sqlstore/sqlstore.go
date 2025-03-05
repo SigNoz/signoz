@@ -21,6 +21,7 @@ type SQLStore interface {
 	SQLxDB() *sqlx.DB
 
 	// RunInTxCtx runs the given callback in a transaction. It creates and injects a new context with the transaction.
+	// If a transaction is present in the context, it will be used.
 	RunInTxCtx(ctx context.Context, opts *SQLStoreTxOptions, cb func(ctx context.Context) error) error
 
 	// BunDBCtx returns an instance of bun.IDB for the given context.
