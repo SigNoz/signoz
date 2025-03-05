@@ -77,9 +77,8 @@ func NewRuleDB(db *sqlx.DB, sqlstore sqlstore.SQLStore) RuleDB {
 
 // CreateRule stores a given rule in db and returns task name and error (if any)
 func (r *ruleDB) CreateRule(ctx context.Context, storedRule *StoredRule, cb func(context.Context, int64) error) (int64, error) {
-	var lastInsertId int64
 	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		res, err := r.sqlstore.
+		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewInsert().
 			Model(storedRule).
@@ -88,19 +87,14 @@ func (r *ruleDB) CreateRule(ctx context.Context, storedRule *StoredRule, cb func
 			return err
 		}
 
-		lastInsertId, err = res.LastInsertId()
-		if err != nil {
-			return err
-		}
-
-		return cb(ctx, lastInsertId)
+		return cb(ctx, int64(storedRule.Id))
 	})
 
 	if err != nil {
 		return 0, err
 	}
 
-	return lastInsertId, nil
+	return int64(storedRule.Id), nil
 }
 
 // EditRule stores a given rule string in database and returns task name and error (if any)
