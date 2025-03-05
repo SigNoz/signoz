@@ -3,10 +3,10 @@ import './NoLogs.styles.scss';
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
-import { isCloudUser } from 'utils/app';
 import DOCLINKS from 'utils/docLinks';
 
 export default function NoLogs({
@@ -14,14 +14,15 @@ export default function NoLogs({
 }: {
 	dataSource: DataSource;
 }): JSX.Element {
-	const cloudUser = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
 	const handleLinkClick = (
 		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
 	): void => {
 		e.preventDefault();
 		e.stopPropagation();
 
-		if (cloudUser) {
+		if (isCloudUserVal) {
 			if (dataSource === DataSource.TRACES) {
 				logEvent('Traces Explorer: Navigate to onboarding', {});
 			} else if (dataSource === DataSource.LOGS) {
