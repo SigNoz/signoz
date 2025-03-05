@@ -20,7 +20,6 @@ function getUserDefaults(): IUser {
 		name: '',
 		profilePictureURL: '',
 		createdAt: 0,
-		flags: {},
 		organization: '',
 		orgId: '',
 		role: 'VIEWER',

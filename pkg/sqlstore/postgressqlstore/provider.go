@@ -18,6 +18,7 @@ type provider struct {
 	sqldb    *sql.DB
 	bundb    *bun.DB
 	sqlxdb   *sqlx.DB
+	dialect  *PGDialect
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -59,6 +60,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		sqldb:    sqldb,
 		bundb:    sqlstore.NewBunDB(sqldb, pgdialect.New(), hooks),
 		sqlxdb:   sqlx.NewDb(sqldb, "postgres"),
+		dialect:  &PGDialect{},
 	}, nil
 }
 
@@ -72,4 +74,8 @@ func (provider *provider) SQLDB() *sql.DB {
 
 func (provider *provider) SQLxDB() *sqlx.DB {
 	return provider.sqlxdb
+}
+
+func (provider *provider) Dialect() sqlstore.SQLDialect {
+	return provider.dialect
 }

@@ -86,3 +86,29 @@ func WrapIfNotExists(ctx context.Context, db *bun.DB, table string, column strin
 		return q.Err(ErrNoExecute)
 	}
 }
+
+func GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
+	var columnType string
+	var err error
+
+	if bun.Dialect().Name() == dialect.SQLite {
+		err = bun.NewSelect().
+			ColumnExpr("type").
+			TableExpr("pragma_table_info(?)", table).
+			Where("name = ?", column).
+			Scan(ctx, &columnType)
+	} else {
+		err = bun.NewSelect().
+			ColumnExpr("data_type").
+			TableExpr("information_schema.columns").
+			Where("table_name = ?", table).
+			Where("column_name = ?", column).
+			Scan(ctx, &columnType)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return columnType, nil
+}

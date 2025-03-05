@@ -1,4 +1,3 @@
-import { UserFlags } from 'types/api/user/setFlags';
 import { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
@@ -16,6 +15,5 @@ export interface PayloadProps {
 	profilePictureURL: string;
 	organization: string;
 	role: ROLES;
-	flags: UserFlags;
 	groupId: string;
 }
