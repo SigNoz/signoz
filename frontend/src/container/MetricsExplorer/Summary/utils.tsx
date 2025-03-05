@@ -178,7 +178,7 @@ export const transformTreemapData = (
 
 	const children = data.map((item) => ({
 		id: item.metric_name,
-		size: Number((item.percentage / totalSize).toFixed(2)),
+		size: totalSize > 0 ? Number((item.percentage / totalSize).toFixed(2)) : 0,
 		displayValue: Number(item.percentage).toFixed(2),
 		parent: viewType,
 	}));

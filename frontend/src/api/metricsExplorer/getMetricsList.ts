@@ -57,7 +57,7 @@ export const getMetricsList = async (
 		return {
 			statusCode: 200,
 			error: null,
-			message: 'Success',
+			message: response.data.status,
 			payload: response.data,
 			params: props,
 		};

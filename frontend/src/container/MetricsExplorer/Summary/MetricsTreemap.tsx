@@ -24,7 +24,14 @@ function MetricsTreemap({
 }: TreemapProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
-	const treemapWidth = useMemo(() => windowWidth - 100, [windowWidth]);
+	const treemapWidth = useMemo(
+		() =>
+			Math.max(
+				windowWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT - 70,
+				300,
+			),
+		[windowWidth],
+	);
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
@@ -89,7 +96,7 @@ function MetricsTreemap({
 									return (
 										<Group
 											// eslint-disable-next-line react/no-array-index-key
-											key={`node-${i}`}
+											key={node.data.id || `node-${i}`}
 											top={node.y0 + TREEMAP_MARGINS.TOP}
 											left={node.x0 + TREEMAP_MARGINS.LEFT}
 										>

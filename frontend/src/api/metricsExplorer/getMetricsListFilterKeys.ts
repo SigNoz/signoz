@@ -25,7 +25,7 @@ export const getMetricsListFilterKeys = async (
 		return {
 			statusCode: 200,
 			error: null,
-			message: 'Success',
+			message: response.data.status,
 			payload: response.data,
 		};
 	} catch (error) {

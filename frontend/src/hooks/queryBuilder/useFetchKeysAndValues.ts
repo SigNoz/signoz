@@ -208,7 +208,6 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					limit: 10,
 				});
-				console.log({ response, filterAttributeKey });
 				payload = response.payload?.data;
 			} else {
 				const response = await getAttributesValues({

@@ -45,7 +45,7 @@ function Summary(): JSX.Element {
 				items: [],
 				op: 'and',
 			},
-		[currentQuery?.builder?.queryData],
+		[currentQuery],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
