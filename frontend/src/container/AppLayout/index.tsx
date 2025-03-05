@@ -301,6 +301,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [activeLicenseV3?.key, manageCreditCard]);
 
+	const isHome = (): boolean => routeKey === 'HOME';
+
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
 		routeKey === 'LOGS_EXPLORER' ||
@@ -547,6 +549,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								<ChildrenContainer
 									style={{
 										margin:
+											isHome() ||
 											isLogsView() ||
 											isTracesView() ||
 											isDashboardView() ||
