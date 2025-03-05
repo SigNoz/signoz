@@ -87,7 +87,7 @@ func TestServerPutAlerts(t *testing.T) {
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(&config.Route{Receiver: "test-receiver", Continue: true}, alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
 		Name: "test-receiver",
 		WebhookConfigs: []*config.WebhookConfig{
 			{

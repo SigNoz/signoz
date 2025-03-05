@@ -24,7 +24,15 @@ type migrator struct {
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, sqlstore sqlstore.SQLStore, migrations *migrate.Migrations, config Config) SQLMigrator {
 	return &migrator{
-		migrator: migrate.NewMigrator(sqlstore.BunDB(), migrations, migrate.WithTableName(migrationTableName), migrate.WithLocksTableName(migrationLockTableName)),
+		migrator: migrate.NewMigrator(
+			sqlstore.BunDB(),
+			migrations,
+			migrate.WithTableName(migrationTableName),
+			migrate.WithLocksTableName(migrationLockTableName),
+			// This is to ensure that the migration is marked as applied only on success. If the migration fails, no entry is made in the migration table
+			// and the migration will be retried.
+			migrate.WithMarkAppliedOnSuccess(true),
+		),
 		settings: factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlmigrator"),
 		config:   config,
 		dialect:  sqlstore.BunDB().Dialect().Name().String(),
