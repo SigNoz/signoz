@@ -58,7 +58,7 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 
 	stepMs := step * 1000
 
-	// when the window is too small to be queried, we return the entire range as a miss
+	// when the window is too small to be cached, we return the entire range as a miss
 	if (start + stepMs) > end {
 		return []MissInterval{{Start: start, End: end}}
 	}
