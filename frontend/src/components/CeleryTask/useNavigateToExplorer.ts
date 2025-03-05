@@ -8,8 +8,9 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-export function useNavigateToTraces(): (
+export function useNavigateToExplorer(): (
 	filters: TagFilterItem[],
+	dataSource: DataSource,
 	startTime?: number,
 	endTime?: number,
 	sameTab?: boolean,
@@ -20,13 +21,13 @@ export function useNavigateToTraces(): (
 	);
 
 	const prepareQuery = useCallback(
-		(selectedFilters: TagFilterItem[]): Query => ({
+		(selectedFilters: TagFilterItem[], dataSource: DataSource): Query => ({
 			...currentQuery,
 			builder: {
 				...currentQuery.builder,
 				queryData: currentQuery.builder.queryData.map((item) => ({
 					...item,
-					dataSource: DataSource.TRACES,
+					dataSource,
 					aggregateOperator: MetricAggregateOperator.NOOP,
 					filters: {
 						...item.filters,
@@ -41,6 +42,7 @@ export function useNavigateToTraces(): (
 	return useCallback(
 		(
 			filters: TagFilterItem[],
+			dataSource: DataSource,
 			startTime?: number,
 			endTime?: number,
 			sameTab?: boolean,
@@ -55,16 +57,18 @@ export function useNavigateToTraces(): (
 			}
 
 			const JSONCompositeQuery = encodeURIComponent(
-				JSON.stringify(prepareQuery(filters)),
+				JSON.stringify(prepareQuery(filters, dataSource)),
 			);
 
-			const newTraceExplorerPath = `${
-				ROUTES.TRACES_EXPLORER
-			}?${urlParams.toString()}&${
+			const basePath =
+				dataSource === DataSource.TRACES
+					? ROUTES.TRACES_EXPLORER
+					: ROUTES.LOGS_EXPLORER;
+			const newExplorerPath = `${basePath}?${urlParams.toString()}&${
 				QueryParams.compositeQuery
 			}=${JSONCompositeQuery}`;
 
-			window.open(newTraceExplorerPath, sameTab ? '_self' : '_blank');
+			window.open(newExplorerPath, sameTab ? '_self' : '_blank');
 		},
 		[minTime, maxTime, prepareQuery],
 	);

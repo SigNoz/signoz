@@ -291,6 +291,23 @@
 	}
 }
 
+.view-onclick-show-button {
+	position: absolute;
+	padding: 6px 12px;
+	background: var(--bg-vanilla-100);
+	border: 2px solid var(--bg-vanilla-300);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	box-shadow: none;
+	transition: background-color 0.2s;
+
+	&:hover {
+		background: var(--bg-vanilla-200);
+	}
+}
+
 .lightMode {
 	.fullscreen-grid-container {
 		.react-grid-layout {
@@ -372,6 +389,16 @@
 					}
 				}
 			}
+		}
+	}
+
+	.view-onclick-show-button {
+		background: var(--bg-ink-400);
+		border-color: var(--bg-ink-300);
+		color: var(--bg-vanilla-100);
+
+		&:hover {
+			background: var(--bg-ink-300);
 		}
 	}
 }
