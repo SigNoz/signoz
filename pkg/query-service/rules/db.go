@@ -11,6 +11,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/sqlstore"
@@ -55,6 +56,8 @@ type RuleDB interface {
 }
 
 type StoredRule struct {
+	bun.BaseModel `bun:"rules"`
+
 	Id        int        `json:"id" db:"id" bun:"id,pk,autoincrement"`
 	CreatedAt *time.Time `json:"created_at" db:"created_at" bun:"created_at"`
 	CreatedBy *string    `json:"created_by" db:"created_by" bun:"created_by"`
