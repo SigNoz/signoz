@@ -49,15 +49,17 @@ func WithFluxInterval(fluxInterval time.Duration) QueryCacheOption {
 	}
 }
 
-// FindMissingTimeRange is a new correct implementation of FindMissingTimeRanges
+// FindMissingTimeRangesV2 is a new correct implementation of FindMissingTimeRanges
 // It takes care of any timestamps that were not queried due to rounding in the first version.
 func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []MissInterval {
 	if q.cache == nil || cacheKey == "" {
 		return []MissInterval{{Start: start, End: end}}
 	}
 
+	stepMs := step * 1000
+
 	// when the window is too small to be queried, we return the entire range as a miss
-	if (start + step*1000) > end {
+	if (start + stepMs) > end {
 		return []MissInterval{{Start: start, End: end}}
 	}
 
@@ -92,8 +94,8 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 	currentTime := start
 
 	// check if start is a complete aggregation window if not then add it as a miss
-	if start%(step*1000) != 0 {
-		nextAggStart := start - (start % (step * 1000)) + (step * 1000)
+	if start%stepMs != 0 {
+		nextAggStart := start - (start % stepMs) + stepMs
 		missingRanges = append(missingRanges, MissInterval{Start: start, End: nextAggStart})
 		currentTime = nextAggStart
 	}
@@ -126,9 +128,9 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 	// shows this case.
 	if currentTime < end {
 		missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: end})
-	} else if end%(step*1000) != 0 {
+	} else if end%stepMs != 0 {
 		// check if end is a complete aggregation window if not then add it as a miss
-		prevAggEnd := end - (end % (step * 1000))
+		prevAggEnd := end - (end % stepMs)
 		missingRanges = append(missingRanges, MissInterval{Start: prevAggEnd, End: end})
 	}
 
