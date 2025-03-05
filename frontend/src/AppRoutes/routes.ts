@@ -17,6 +17,7 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
+	Home,
 	InfrastructureMonitoring,
 	IngestionSettings,
 	InstalledIntegrations,
@@ -79,6 +80,13 @@ const routes: AppRoutes[] = [
 		component: OnboardingV2,
 		isPrivate: true,
 		key: 'GET_STARTED_WITH_CLOUD',
+	},
+	{
+		path: ROUTES.HOME,
+		exact: true,
+		component: Home,
+		isPrivate: true,
+		key: 'HOME',
 	},
 	{
 		path: ROUTES.ONBOARDING,
