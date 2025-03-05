@@ -1,6 +1,7 @@
 package sqlstoretest
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -58,4 +59,12 @@ func (provider *Provider) SQLxDB() *sqlx.DB {
 
 func (provider *Provider) Mock() sqlmock.Sqlmock {
 	return provider.mock
+}
+
+func (provider *Provider) BunDBCtx(ctx context.Context) bun.IDB {
+	return provider.bunDB
+}
+
+func (provider *Provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
+	return cb(ctx)
 }
