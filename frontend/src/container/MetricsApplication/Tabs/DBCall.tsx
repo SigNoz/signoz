@@ -34,9 +34,9 @@ import { IServiceName } from './types';
 import {
 	dbSystemTags,
 	handleNonInQueryRange,
-	onGraphClickHandler,
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
+	useGraphClickHandler,
 } from './util';
 
 function DBCall(): JSX.Element {
@@ -160,6 +160,8 @@ function DBCall(): JSX.Element {
 	});
 	const { safeNavigate } = useSafeNavigate();
 
+	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -183,7 +185,7 @@ function DBCall(): JSX.Element {
 						<Graph
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(setSelectedTimeStamp)(
+								onGraphClickHandler(
 									xValue,
 									yValue,
 									mouseX,
@@ -221,7 +223,7 @@ function DBCall(): JSX.Element {
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(setSelectedTimeStamp)(
+								onGraphClickHandler(
 									xValue,
 									yValue,
 									mouseX,

@@ -93,8 +93,8 @@ github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkbj57eGXx8H3ZJ4zhmQXBnrW523ktj8=
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
-github.com/SigNoz/prometheus v1.12.0 h1:+BXeIHyMOOWWa+xjhJ+x80JFva7r1WzWIfIhQ5PUmIE=
-github.com/SigNoz/prometheus v1.12.0/go.mod h1:EqNM27OwmPfqMUk+E+XG1L9rfDFcyXnzzDrg0EPOfxA=
+github.com/SigNoz/prometheus v1.13.0 h1:hsUql1zd83ifXtswO9Qk1rpCgVjE/ItQvgdNocBSqRI=
+github.com/SigNoz/prometheus v1.13.0/go.mod h1:4PC0dxmx6y3kNI2d9oOTvEFTPkH6QnxDxERyqeL1hvI=
 github.com/SigNoz/signoz-otel-collector v0.111.16 h1:535uKH5Oux+35EsI+L3C6pnAP/Ye0PTCbVizXoL+VqE=
 github.com/SigNoz/signoz-otel-collector v0.111.16/go.mod h1:HJ4m0LY1MPsuZmuRF7Ixb+bY8rxgRzI0VXzOedESsjg=
 github.com/SigNoz/zap_otlp v0.1.0 h1:T7rRcFN87GavY8lDGZj0Z3Xv6OhJA6Pj3I9dNPmqvRc=
