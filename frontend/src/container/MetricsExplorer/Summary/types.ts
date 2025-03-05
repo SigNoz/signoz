@@ -37,7 +37,7 @@ export interface MetricsListItemRowData {
 	key: string;
 	metric_name: React.ReactNode;
 	description: React.ReactNode;
-	type: React.ReactNode;
+	metric_type: React.ReactNode;
 	unit: React.ReactNode;
 	samples: React.ReactNode;
 	timeseries: React.ReactNode;

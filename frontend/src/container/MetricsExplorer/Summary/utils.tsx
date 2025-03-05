@@ -40,7 +40,8 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 	},
 	{
 		title: 'TYPE',
-		dataIndex: 'type',
+		dataIndex: 'metric_type',
+		sorter: true,
 		width: 150,
 	},
 	{
@@ -67,7 +68,7 @@ export const getMetricsListQuery = (): MetricsListPayload => ({
 		items: [],
 		op: 'and',
 	},
-	orderBy: { columnName: 'type', order: 'asc' },
+	orderBy: { columnName: 'metric_name', order: 'asc' },
 });
 
 function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
@@ -148,7 +149,7 @@ export const formatDataForMetricsTable = (
 				<Tooltip title={metric.description}>{metric.description}</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		type: <MetricTypeRenderer type={metric.type} />,
+		metric_type: <MetricTypeRenderer type={metric.type} />,
 		unit: (
 			<ValidateRowValueWrapper value={metric.unit}>
 				{metric.unit}
