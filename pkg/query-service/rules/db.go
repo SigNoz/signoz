@@ -126,6 +126,7 @@ func (r *ruleDB) DeleteRule(ctx context.Context, id string, cb func(context.Cont
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
+			Model(&StoredRule{}).
 			Where("id = ?", id).
 			Exec(ctx)
 		if err != nil {
