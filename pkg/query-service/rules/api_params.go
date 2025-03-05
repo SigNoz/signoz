@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
@@ -34,13 +35,15 @@ const (
 )
 
 var (
-	ErrFailedToParseJSON = errors.New("failed to parse json")
-	ErrFailedToParseYAML = errors.New("failed to parse yaml")
-	ErrInvalidDataType   = errors.New("invalid data type")
+	ErrFailedToParseJSON      = errors.New("failed to parse json")
+	ErrFailedToParseYAML      = errors.New("failed to parse yaml")
+	ErrInvalidDataType        = errors.New("invalid data type")
+	ErrRuleConditionRequired  = errors.New("rule condition is required")
+	ErrCompositeQueryRequired = errors.New("composite query is required")
+	ErrCompareOpRequired      = errors.New("compare op is required")
+	ErrTargetRequired         = errors.New("target is required")
+	ErrMatchTypeRequired      = errors.New("match type is required")
 )
-
-// this file contains api request and responses to be
-// served over http
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
@@ -65,8 +68,8 @@ type PostableRule struct {
 	Version string `json:"version,omitempty"`
 
 	// legacy
-	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
-	OldYaml string `json:"yaml,omitempty"`
+	// TODO(srikanthccv): remove this if there are no legacy rules
+	Expr string `yaml:"expr,omitempty" json:"expr,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -97,6 +100,8 @@ func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*P
 	}
 
 	if rule.RuleCondition == nil && rule.Expr != "" {
+		// there should be no legacy rules but just in case
+		zap.L().Info("legacy rule detected", zap.Any("rule", rule))
 		// account for legacy rules
 		rule.RuleType = RuleTypeProm
 		rule.EvalWindow = Duration(5 * time.Minute)
@@ -160,72 +165,16 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
-func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
-	if compositeQuery == nil {
-		return false
-	}
-	if compositeQuery.BuilderQueries == nil && compositeQuery.PromQueries == nil && compositeQuery.ClickHouseQueries == nil {
-		return false
-	}
-	switch compositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		if len(compositeQuery.BuilderQueries) == 0 {
-			return false
-		}
-		for _, query := range compositeQuery.BuilderQueries {
-			if !query.Disabled {
-				return false
-			}
-		}
-	case v3.QueryTypePromQL:
-		if len(compositeQuery.PromQueries) == 0 {
-			return false
-		}
-		for _, query := range compositeQuery.PromQueries {
-			if !query.Disabled {
-				return false
-			}
-		}
-	case v3.QueryTypeClickHouseSQL:
-		if len(compositeQuery.ClickHouseQueries) == 0 {
-			return false
-		}
-		for _, query := range compositeQuery.ClickHouseQueries {
-			if !query.Disabled {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func (r *PostableRule) Validate() error {
 
 	var errs []error
 
 	if r.RuleCondition == nil {
-		// will get panic if we try to access CompositeQuery, so return here
-		return errors.Errorf("rule condition is required")
-	} else {
-		if r.RuleCondition.CompositeQuery == nil {
-			errs = append(errs, errors.Errorf("composite metric query is required"))
-		}
+		return ErrRuleConditionRequired
 	}
 
-	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
-		errs = append(errs, errors.Errorf("all queries are disabled in rule condition"))
-	}
-
-	if r.RuleType == RuleTypeThreshold {
-		if r.RuleCondition.Target == nil {
-			errs = append(errs, errors.Errorf("rule condition missing the threshold"))
-		}
-		if r.RuleCondition.CompareOp == "" {
-			errs = append(errs, errors.Errorf("rule condition missing the compare op"))
-		}
-		if r.RuleCondition.MatchType == "" {
-			errs = append(errs, errors.Errorf("rule condition missing the match option"))
-		}
+	if err := r.RuleCondition.Validate(); err != nil {
+		return err
 	}
 
 	for k, v := range r.Labels {

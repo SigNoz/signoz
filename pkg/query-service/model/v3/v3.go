@@ -549,11 +549,31 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
-		return fmt.Errorf("composite query must contain at least one query type")
+	if err := c.PanelType.Validate(); err != nil {
+		return fmt.Errorf("panel type is invalid: %w", err)
+	}
+
+	if err := c.QueryType.Validate(); err != nil {
+		return fmt.Errorf("query type is invalid: %w", err)
 	}
 
 	if c.QueryType == QueryTypeBuilder {
+		if c.BuilderQueries == nil {
+			return fmt.Errorf("at least one builder query must be provided")
+		}
+
+		// there should be at least one enabled query
+		enabled := false
+		for _, query := range c.BuilderQueries {
+			if !query.Disabled {
+				enabled = true
+				break
+			}
+		}
+		if !enabled {
+			return fmt.Errorf("at least one builder query must be enabled")
+		}
+
 		for name, query := range c.BuilderQueries {
 			if err := query.Validate(c.PanelType); err != nil {
 				return fmt.Errorf("builder query %s is invalid: %w", name, err)
@@ -562,6 +582,22 @@ func (c *CompositeQuery) Validate() error {
 	}
 
 	if c.QueryType == QueryTypeClickHouseSQL {
+		if c.ClickHouseQueries == nil {
+			return fmt.Errorf("at least one clickhouse query must be provided")
+		}
+
+		// there should be at least one enabled query
+		enabled := false
+		for _, query := range c.ClickHouseQueries {
+			if !query.Disabled {
+				enabled = true
+				break
+			}
+		}
+		if !enabled {
+			return fmt.Errorf("at least one clickhouse query must be enabled")
+		}
+
 		for name, query := range c.ClickHouseQueries {
 			if err := query.Validate(); err != nil {
 				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
@@ -570,19 +606,27 @@ func (c *CompositeQuery) Validate() error {
 	}
 
 	if c.QueryType == QueryTypePromQL {
+		if c.PromQueries == nil {
+			return fmt.Errorf("at least one prom query must be provided")
+		}
+
+		// there should be at least one enabled query
+		enabled := false
+		for _, query := range c.PromQueries {
+			if !query.Disabled {
+				enabled = true
+				break
+			}
+		}
+		if !enabled {
+			return fmt.Errorf("at least one prom query must be enabled")
+		}
+
 		for name, query := range c.PromQueries {
 			if err := query.Validate(); err != nil {
 				return fmt.Errorf("prom query %s is invalid: %w", name, err)
 			}
 		}
-	}
-
-	if err := c.PanelType.Validate(); err != nil {
-		return fmt.Errorf("panel type is invalid: %w", err)
-	}
-
-	if err := c.QueryType.Validate(); err != nil {
-		return fmt.Errorf("query type is invalid: %w", err)
 	}
 
 	return nil
