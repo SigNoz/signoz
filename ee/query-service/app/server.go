@@ -46,7 +46,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
@@ -177,8 +176,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath,
-		baseconst.GetAlertManagerApiPrefix(),
+	rm, err := makeRulesManager(
+		serverOptions.PromConfigPath,
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
@@ -533,7 +532,6 @@ func (s *Server) Stop() error {
 
 func makeRulesManager(
 	promConfigPath,
-	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
@@ -545,34 +543,24 @@ func makeRulesManager(
 	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
 ) (*baserules.Manager, error) {
-
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pql engine : %v", err)
 	}
 
-	// notifier opts
-	notifierOpts := basealm.NotifierOptions{
-		QueueCapacity:    10000,
-		Timeout:          1 * time.Second,
-		AlertManagerURLs: []string{alertManagerURL},
-	}
-
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		NotifierOpts: notifierOpts,
-		PqlEngine:    pqle,
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       zap.L(),
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
-		Cache:        cache,
-		EvalDelay:    baseconst.GetEvalDelay(),
-
+		PqlEngine:           pqle,
+		RepoURL:             ruleRepoURL,
+		DBConn:              db,
+		Context:             context.Background(),
+		Logger:              zap.L(),
+		DisableRules:        disableRules,
+		FeatureFlags:        fm,
+		Reader:              ch,
+		Cache:               cache,
+		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		UseLogsNewSchema:    useLogsNewSchema,
 		UseTraceNewSchema:   useTraceNewSchema,

@@ -26,6 +26,7 @@ import (
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
@@ -36,7 +37,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
@@ -152,9 +152,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	<-readerReady
 	rm, err := makeRulesManager(
-		serverOptions.PromConfigPath,
-		constants.GetAlertManagerApiPrefix(),
-		serverOptions.RuleRepoURL, serverOptions.SigNoz.SQLStore.SQLxDB(), reader, c, serverOptions.DisableRules, fm, serverOptions.UseLogsNewSchema, serverOptions.UseTraceNewSchema)
+		serverOptions.RuleRepoURL,
+		serverOptions.SigNoz.SQLStore.SQLxDB(),
+		reader,
+		c,
+		serverOptions.DisableRules,
+		fm,
+		serverOptions.UseLogsNewSchema,
+		serverOptions.UseTraceNewSchema,
+		serverOptions.SigNoz.SQLStore,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -467,8 +474,6 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	_,
-	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
@@ -476,7 +481,9 @@ func makeRulesManager(
 	disableRules bool,
 	fm interfaces.FeatureLookup,
 	useLogsNewSchema bool,
-	useTraceNewSchema bool) (*rules.Manager, error) {
+	useTraceNewSchema bool,
+	sqlstore sqlstore.SQLStore,
+) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -484,16 +491,8 @@ func makeRulesManager(
 		return nil, fmt.Errorf("failed to create pql engine : %v", err)
 	}
 
-	// notifier opts
-	notifierOpts := am.NotifierOptions{
-		QueueCapacity:    10000,
-		Timeout:          1 * time.Second,
-		AlertManagerURLs: []string{alertManagerURL},
-	}
-
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		NotifierOpts:      notifierOpts,
 		PqlEngine:         pqle,
 		RepoURL:           ruleRepoURL,
 		DBConn:            db,
@@ -506,6 +505,7 @@ func makeRulesManager(
 		EvalDelay:         constants.GetEvalDelay(),
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
+		SQLStore:          sqlstore,
 	}
 
 	// create Manager

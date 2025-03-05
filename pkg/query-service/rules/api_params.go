@@ -67,9 +67,6 @@ type PostableRule struct {
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
-
-	// orgID is the organization ID
-	OrgID string `json:"orgID,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
@@ -83,7 +80,6 @@ func parsePostableRule(content []byte, kind RuleDataKind) (*PostableRule, error)
 // parseIntoRule loads the content (data) into PostableRule and also
 // validates the end result
 func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
-
 	rule := &initRule
 
 	var err error
