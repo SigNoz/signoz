@@ -128,6 +128,24 @@ func newConfigHash(s string) [16]byte {
 	return md5.Sum([]byte(s))
 }
 
+func (c *Config) CopyWithReset() (*Config, error) {
+	newConfig, err := NewDefaultConfig(
+		*c.alertmanagerConfig.Global,
+		RouteConfig{
+			GroupByStr:     c.alertmanagerConfig.Route.GroupByStr,
+			GroupInterval:  time.Duration(*c.alertmanagerConfig.Route.GroupInterval),
+			GroupWait:      time.Duration(*c.alertmanagerConfig.Route.GroupWait),
+			RepeatInterval: time.Duration(*c.alertmanagerConfig.Route.RepeatInterval),
+		},
+		c.storeableConfig.OrgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConfig, nil
+}
+
 func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) {
 	c.alertmanagerConfig.Global = &globalConfig
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
@@ -201,7 +219,7 @@ func (c *Config) GetReceiver(name string) (Receiver, error) {
 		}
 	}
 
-	return Receiver{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
+	return Receiver{}, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
 func (c *Config) UpdateReceiver(receiver config.Receiver) error {
