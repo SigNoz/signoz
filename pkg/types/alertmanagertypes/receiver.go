@@ -43,6 +43,9 @@ func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *
 	ctx = notify.WithGroupLabels(ctx, alert.Labels)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
 
+	// We need to create a new config with the same global and route config but empty receivers and routes
+	// This is so that we can call CreateReceiver without worrying about the existing receivers and routes.
+	// CreateReceiver will ensure that any defaults (such as http config in the case of slack) are set. Otherwise the integration will panic.
 	testConfig, err := config.CopyWithReset()
 	if err != nil {
 		return err
