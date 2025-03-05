@@ -117,10 +117,17 @@ func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cache
 		currentTime = max(currentTime, min(data.End, end))
 	}
 
-	// Add final missing range if necessary
+	// while iterating through the cachedSeriesDataList, we might have reached the end
+	// but there might be a case where the last data range is not a complete aggregation window
+	// so we add it manually by first checking if currentTime < end which means it has not reached the end
+	// and then checking if end%(step*1000) != 0 which means it is not a complete aggregation window but currentTime becomes end.
+	// that can happen when currentTime = nextAggStart and no other range match is found in the loop.
+	// The test case "start lies near the start of aggregation interval and end lies near the end of another aggregation interval"
+	// shows this case.
 	if currentTime < end {
 		missingRanges = append(missingRanges, MissInterval{Start: currentTime, End: end})
-	} else if end%(step*1000) != 0 { // check if end is a complete aggregation window if not then add it as a miss
+	} else if end%(step*1000) != 0 {
+		// check if end is a complete aggregation window if not then add it as a miss
 		prevAggEnd := end - (end % (step * 1000))
 		missingRanges = append(missingRanges, MissInterval{Start: prevAggEnd, End: end})
 	}
