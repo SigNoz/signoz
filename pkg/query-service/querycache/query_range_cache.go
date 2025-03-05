@@ -264,6 +264,9 @@ func (q *queryCache) mergeSeries(cachedSeries, missedSeries []*v3.Series) []*v3.
 }
 
 func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesData) {
+	if q.cache == nil {
+		return
+	}
 	mergedDataJSON, err := json.Marshal(mergedData)
 	if err != nil {
 		zap.L().Error("error marshalling merged data", zap.Error(err))
