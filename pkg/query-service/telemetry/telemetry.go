@@ -408,7 +408,24 @@ func createTelemetry() {
 							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
 						}
 					}
-					telemetry.SendIdentityEvent(map[string]interface{}{
+					telemetry.SendIdentifyEvent(map[string]interface{}{
+						"total_logs":                  totalLogs,
+						"total_traces":                totalSpans,
+						"total_metrics":               totalSamples,
+						"total_users":                 userCount,
+						"total_channels":              alertsInfo.TotalChannels,
+						"total_dashboards_with_panel": dashboardsInfo.TotalDashboardsWithPanelAndName,
+						"total_saved_views":           savedViewsInfo.TotalSavedViews,
+						"total_active_alerts":         alertsInfo.TotalActiveAlerts,
+						"total_traces_based_alerts":   alertsInfo.TracesBasedAlerts,
+						"total_logs_based_alerts":     alertsInfo.LogsBasedAlerts,
+						"total_metric_based_alerts":   alertsInfo.MetricBasedAlerts,
+						"total_anomaly_based_alerts":  alertsInfo.AnomalyBasedAlerts,
+						"total_metrics_based_panels":  dashboardsInfo.MetricBasedPanels,
+						"total_logs_based_panels":     dashboardsInfo.LogsBasedPanels,
+						"total_traces_based_panels":   dashboardsInfo.TracesBasedPanels,
+					})
+					telemetry.SendGroupEvent(map[string]interface{}{
 						"total_logs":                  totalLogs,
 						"total_traces":                totalSpans,
 						"total_metrics":               totalSamples,
@@ -433,13 +450,16 @@ func createTelemetry() {
 		}
 
 		if totalLogs > 0 {
-			telemetry.SendIdentityEvent(map[string]interface{}{"sent_logs": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_logs": true})
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_logs": true})
 		}
 		if totalSpans > 0 {
-			telemetry.SendIdentityEvent(map[string]interface{}{"sent_traces": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_traces": true})
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_traces": true})
 		}
 		if totalSamples > 0 {
-			telemetry.SendIdentityEvent(map[string]interface{}{"sent_metrics": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_metrics": true})
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_metrics": true})
 		}
 
 		getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(ctx)
@@ -570,7 +590,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	}
 }
 
-func (a *Telemetry) SendIdentityEvent(data map[string]interface{}) {
+func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}) {
 
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
@@ -581,15 +601,9 @@ func (a *Telemetry) SendIdentityEvent(data map[string]interface{}) {
 		traits.Set(k, v)
 	}
 	if a.saasOperator != nil {
-
 		a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.GetUserEmail(),
 			Traits: traits,
-		})
-		a.saasOperator.Enqueue(analytics.Group{
-			UserId:  a.userEmail,
-			GroupId: a.getCompanyDomain(),
-			Traits:  traits,
 		})
 	}
 	if a.ossOperator != nil {
@@ -597,7 +611,27 @@ func (a *Telemetry) SendIdentityEvent(data map[string]interface{}) {
 			UserId: a.ipAddress,
 			Traits: traits,
 		})
-		// Updating a groups properties
+	}
+}
+
+func (a *Telemetry) SendGroupEvent(data map[string]interface{}) {
+
+	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
+		return
+	}
+	traits := analytics.NewTraits()
+
+	for k, v := range data {
+		traits.Set(k, v)
+	}
+	if a.saasOperator != nil {
+		a.saasOperator.Enqueue(analytics.Group{
+			UserId:  a.GetUserEmail(),
+			GroupId: a.getCompanyDomain(),
+			Traits:  traits,
+		})
+	}
+	if a.ossOperator != nil {
 		a.ossOperator.Enqueue(analytics.Group{
 			UserId:  a.ipAddress,
 			GroupId: a.getCompanyDomain(),

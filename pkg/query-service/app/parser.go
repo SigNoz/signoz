@@ -6,15 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
@@ -66,7 +67,12 @@ func parseRegisterEventRequest(r *http.Request) (*model.RegisterEventParams, err
 	if err != nil {
 		return nil, err
 	}
-	if postData.EventName == "" {
+	// Validate the event type
+	if postData.EventType != model.TrackEvent && postData.EventType != model.GroupEvent && postData.EventType != model.IdentifyEvent {
+		return nil, errors.New("eventType param missing/incorrect in query")
+	}
+
+	if postData.EventType == model.TrackEvent && postData.EventName == "" {
 		return nil, errors.New("eventName param missing in query")
 	}
 

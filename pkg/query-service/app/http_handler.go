@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"io"
 	"math"
 	"net/http"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -1664,7 +1665,16 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if ok {
-		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
+		if request.EventType == model.TrackEvent {
+			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
+		} else if request.EventType == model.GroupEvent {
+			telemetry.GetInstance().SendGroupEvent(request.Attributes)
+		} else if request.EventType == model.IdentifyEvent {
+			telemetry.GetInstance().SendIdentifyEvent(request.Attributes)
+		} else {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("eventType param missing/incorrect in query")}, "eventType param missing/incorrect in query")
+			return
+		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
