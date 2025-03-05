@@ -1,5 +1,9 @@
 import Loadable from 'components/Loadable';
 
+export const Home = Loadable(
+	() => import(/* webpackChunkName: "Home" */ 'pages/Home'),
+);
+
 export const ServicesTablePage = Loadable(
 	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
