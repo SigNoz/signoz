@@ -21,7 +21,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		Enabled:   true,
+		Enabled:   false,
 		Prefix:    "/",
 		Directory: "/etc/signoz/web",
 	}
