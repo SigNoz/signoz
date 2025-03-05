@@ -3,9 +3,11 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"
@@ -112,16 +114,7 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	cfg, err := alertmanagertypes.NewDefaultConfig(alertmanagerserver.NewConfig().Global, alertmanagerserver.NewConfig().Route, orgID)
-	if err != nil {
-		return err
-	}
-
-	if _, err := tx.
-		NewInsert().
-		Model(cfg.StoreableConfig()).
-		On("CONFLICT (org_id) DO NOTHING").
-		Exec(ctx); err != nil {
+	if err := migration.populateAlertmanagerConfig(ctx, tx, orgID); err != nil {
 		return err
 	}
 
@@ -138,6 +131,69 @@ func (migration *addAlertmanager) populateOrgID(ctx context.Context, tx bun.Tx, 
 		Table("notification_channels").
 		Set("org_id = ?", orgID).
 		Where("org_id IS NULL").
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context, tx bun.Tx, orgID string) error {
+	var channels []*alertmanagertypes.Channel
+
+	err := tx.
+		NewSelect().
+		Model(&channels).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	type matcher struct {
+		bun.BaseModel `bun:"table:rules"`
+		ID            int    `bun:"id,pk"`
+		Data          string `bun:"data"`
+	}
+
+	matchers := []matcher{}
+
+	err = tx.
+		NewSelect().
+		Column("id", "data").
+		Model(&matchers).
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	matchersMap := make(map[string][]string)
+	for _, matcher := range matchers {
+		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
+		for _, receiver := range receivers {
+			matchersMap[strconv.Itoa(matcher.ID)] = append(matchersMap[strconv.Itoa(matcher.ID)], receiver.String())
+		}
+	}
+
+	config, err := alertmanagertypes.NewConfigFromChannels(alertmanagerserver.NewConfig().Global, alertmanagerserver.NewConfig().Route, channels, orgID)
+	if err != nil {
+		return err
+	}
+
+	for ruleID, receivers := range matchersMap {
+		err = config.CreateRuleIDMatcher(ruleID, receivers)
+		if err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.
+		NewInsert().
+		Model(config.StoreableConfig()).
+		On("CONFLICT (org_id) DO UPDATE").
+		Set("config = ?", config.StoreableConfig().Config).
+		Set("hash = ?", config.StoreableConfig().Hash).
+		Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
 		Exec(ctx); err != nil {
 		return err
 	}
