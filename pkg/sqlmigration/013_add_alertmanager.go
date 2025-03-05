@@ -3,6 +3,7 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -42,8 +43,10 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		NewDropColumn().
 		Table("notification_channels").
 		ColumnExpr("deleted").
-		Exec(ctx); err != nil && err != ErrNoExecute {
-		return err
+		Exec(ctx); err != nil {
+		if !strings.Contains(err.Error(), "no such column") {
+			return err
+		}
 	}
 
 	if _, err := tx.
@@ -117,6 +120,7 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := tx.
 		NewInsert().
 		Model(cfg.StoreableConfig()).
+		On("CONFLICT (org_id) DO NOTHING").
 		Exec(ctx); err != nil {
 		return err
 	}
