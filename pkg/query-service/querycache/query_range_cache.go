@@ -49,7 +49,7 @@ func WithFluxInterval(fluxInterval time.Duration) QueryCacheOption {
 	}
 }
 
-// FindMissingTimeRange is a new correct implementation of FindMissingTimeRanges
+// FindMissingTimeRangesV2 is a new correct implementation of FindMissingTimeRanges
 // It takes care of any timestamps that were not queried due to rounding in the first version.
 func (q *queryCache) FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []MissInterval {
 	if q.cache == nil || cacheKey == "" {
