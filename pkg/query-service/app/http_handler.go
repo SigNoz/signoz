@@ -217,7 +217,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
-	summaryService := metricsexplorer.NewSummaryService(opts.Reader, querierv2)
+	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -625,6 +625,9 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddlewar
 		Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/metrics/treemap",
 		am.ViewAccess(ah.GetTreeMap)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/related",
+		am.ViewAccess(ah.GetRelatedMetrics)).
 		Methods(http.MethodPost)
 }
 
@@ -4108,19 +4111,21 @@ func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
 		return nil, nil
 	}
 
-	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
-	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
-	if len(metricsNamespaceParts) < 2 {
-		return nil, model.InternalError(fmt.Errorf(
-			"unexpected metric namespace: %s", metricsNamespace,
-		))
+	expectedLabelValues := map[string]string{
+		"cloud_provider":   "aws",
+		"cloud_account_id": cloudAccountId,
 	}
 
-	expectedLabelValues := map[string]string{
-		"cloud_provider":    "aws",
-		"cloud_account_id":  cloudAccountId,
-		"service_namespace": metricsNamespaceParts[0],
-		"service_name":      metricsNamespaceParts[1],
+	metricsNamespace := strategy.CloudwatchMetricsStreamFilters[0].Namespace
+	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
+
+	if len(metricsNamespaceParts) >= 2 {
+		expectedLabelValues["service_namespace"] = metricsNamespaceParts[0]
+		expectedLabelValues["service_name"] = metricsNamespaceParts[1]
+	} else {
+		// metrics for single word namespaces like "CWAgent" do not
+		// have the service_namespace label populated
+		expectedLabelValues["service_name"] = metricsNamespaceParts[0]
 	}
 
 	metricNamesCollectedBySvc := []string{}

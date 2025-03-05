@@ -11,6 +11,8 @@ import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceCo
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 
+import logEvent from '../../../api/common/logEvent';
+
 interface IConfigureServiceModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -82,6 +84,13 @@ function ConfigureServiceModal({
 							serviceId,
 						]);
 						onClose();
+
+						logEvent('AWS Integration: Service settings saved', {
+							cloudAccountId,
+							serviceId,
+							logsEnabled: values?.logs,
+							metricsEnabled: values?.metrics,
+						});
 					},
 					onError: (error) => {
 						console.error('Failed to update service config:', error);

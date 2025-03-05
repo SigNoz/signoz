@@ -978,13 +978,69 @@
 
 .ingestion-setup-details-links {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
 	gap: 8px;
-	margin-bottom: 24px;
+	margin-top: 12px;
 	padding: 12px;
 	border-radius: 4px;
 	background: rgba(113, 144, 249, 0.1);
 	color: var(--bg-robin-300, #95acfb);
+
+	.ingestion-key-url-container {
+		display: flex;
+		gap: 8px;
+		justify-content: space-between;
+		align-items: center;
+
+		.ingestion-key-url-label {
+			font-size: 13px;
+			font-weight: 500;
+			color: var(--bg-robin-300, #95acfb);
+		}
+
+		.ingestion-key-url-value {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			font-size: 13px;
+			font-weight: 500;
+			color: var(--bg-robin-300, #95acfb);
+
+			.copy-key-btn {
+				cursor: pointer;
+			}
+		}
+	}
+
+	.ingestion-data-region-container {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		justify-content: space-between;
+
+		.ingestion-data-region-label {
+			font-size: 13px;
+			font-weight: 500;
+			color: var(--bg-robin-300, #95acfb);
+		}
+
+		.ingestion-data-region-value {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			font-size: 13px;
+			font-weight: 500;
+			color: var(--bg-robin-300, #95acfb);
+
+			.ingestion-data-region-value-text {
+				color: var(--bg-robin-300, #95acfb);
+			}
+
+			.copy-key-btn {
+				cursor: pointer;
+			}
+		}
+	}
 
 	.learn-more {
 		display: inline-flex;

@@ -60,6 +60,10 @@ function SideNav(): JSX.Element {
 
 	const { user, featureFlags, licenses } = useAppContext();
 
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
+
 	const [licenseTag, setLicenseTag] = useState('');
 
 	const userSettingsMenuItem = {
@@ -131,10 +135,15 @@ function SideNav(): JSX.Element {
 			menuRoute: '/get-started',
 			menuLabel: 'Get Started',
 		});
+
+		const onboaringRoute = isOnboardingV3Enabled
+			? ROUTES.GET_STARTED_WITH_CLOUD
+			: ROUTES.GET_STARTED;
+
 		if (isCtrlMetaKey(event)) {
-			openInNewTab('/get-started');
+			openInNewTab(onboaringRoute);
 		} else {
-			history.push(`/get-started`);
+			history.push(onboaringRoute);
 		}
 	};
 
@@ -270,10 +279,13 @@ function SideNav(): JSX.Element {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
 					?.active || false;
+
 			if (!isOnboardingEnabled) {
 				updatedMenuItems = updatedMenuItems.filter(
 					(item) =>
-						item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+						item.key !== ROUTES.GET_STARTED &&
+						item.key !== ROUTES.ONBOARDING &&
+						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
 				);
 			}
 

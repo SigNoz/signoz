@@ -20,6 +20,7 @@ import {
 } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
+import logEvent from '../../../api/common/logEvent';
 import { useConnectionParams } from './useConnectionParams';
 import { useGenerateConnectionUrl } from './useGenerateConnectionUrl';
 
@@ -117,6 +118,9 @@ export function useIntegrationModal({
 		(payload: GenerateConnectionUrlPayload): void => {
 			generateUrl(payload, {
 				onSuccess: (data: ConnectionUrlResponse) => {
+					logEvent('AWS Integration: Account connection attempt redirected to AWS', {
+						id: data.account_id,
+					});
 					window.open(data.connection_url, '_blank');
 					setModalState(ModalStateEnum.WAITING);
 					setAccountId(data.account_id);
