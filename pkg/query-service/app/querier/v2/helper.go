@@ -91,6 +91,19 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		return []*v3.Series{}, missStart, missEnd
 	}
 
+	// if the end time is not a complete aggregation window, then we will have to adjust the end time
+	// to the previous complete aggregation window end
+	endCompleteWindow := missEnd%(stepInterval*1000) == 0
+	if !endCompleteWindow {
+		endTime = missEnd - (missEnd % (stepInterval * 1000))
+	}
+
+	// if the start time is not a complete aggregation window, then we will have to adjust the start time
+	// to the next complete aggregation window
+	if missStart%(stepInterval*1000) != 0 {
+		startTime = missStart + stepInterval*1000 - (missStart % (stepInterval * 1000))
+	}
+
 	for _, series := range seriesList {
 		// Sort the points based on timestamp
 		sort.Slice(series.Points, func(i, j int) bool {
@@ -100,28 +113,26 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		points := make([]v3.Point, len(series.Points))
 		copy(points, series.Points)
 
-		// Filter points that are not a complete aggregation window
+		// Filter the first point that is not a complete aggregation window
 		if series.Points[0].Timestamp != missStart && series.Points[0].Timestamp < missStart {
 			// Remove the first point
 			points = points[1:]
-
-			// Adjust startTime if necessary
-			startTime = missStart + stepInterval*1000 - (missStart % (stepInterval * 1000))
 		}
 
-		if missEnd%(stepInterval*1000) != 0 {
-			endTime = missEnd - (missEnd % (stepInterval * 1000))
-
+		// filter the last point if it is not a complete aggregation window
+		if !endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%(stepInterval*1000)) {
 			// Remove the last point
 			points = points[:len(points)-1]
-
 		}
 
-		filteredSeries = append(filteredSeries, &v3.Series{
-			Labels:      series.Labels,
-			LabelsArray: series.LabelsArray,
-			Points:      points,
-		})
+		// making sure that empty range doesn't doesn't enter the cache
+		if len(points) > 0 {
+			filteredSeries = append(filteredSeries, &v3.Series{
+				Labels:      series.Labels,
+				LabelsArray: series.LabelsArray,
+				Points:      points,
+			})
+		}
 	}
 
 	return filteredSeries, startTime, endTime
@@ -190,12 +201,14 @@ func (q *querier) runBuilderQuery(
 
 			filteredSeries, startTime, endTime := filterSeriesPoints(series, miss.Start, miss.End, builderQuery.StepInterval)
 
-			// for the cache
-			filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
-				Data:  filteredSeries,
-				Start: startTime,
-				End:   endTime,
-			})
+			// making sure that empty range doesn't doesn't enter the cache
+			if len(filteredSeries) > 0 {
+				filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
+					Data:  filteredSeries,
+					Start: startTime,
+					End:   endTime,
+				})
+			}
 
 			// for the actual response
 			missedSeries = append(missedSeries, querycache.CachedSeriesData{
@@ -205,12 +218,17 @@ func (q *querier) runBuilderQuery(
 			})
 		}
 
-		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries...)
-		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries...)
-
-		// store the filtered one in cache
+		filteredMergedSeries, err := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
+		if err != nil {
+			filteredMergedSeries = filteredMissedSeries
+		}
 		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
-		// return the merged one as it is
+
+		mergedSeries, err := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
+		if err != nil {
+			mergedSeries = missedSeries
+		}
+
 		resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
 
 		ch <- channelResult{

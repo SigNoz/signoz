@@ -150,5 +150,5 @@ type QueryCache interface {
 	FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []querycache.MissInterval
 	MergeWithCachedSeriesData(cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
 	StoreSeriesInCache(cacheKey string, series []querycache.CachedSeriesData)
-	MergeWithCachedSeriesDataV2(cacheKey string, series ...querycache.CachedSeriesData) []querycache.CachedSeriesData
+	MergeWithCachedSeriesDataV2(cacheKey string, series []querycache.CachedSeriesData) ([]querycache.CachedSeriesData, error)
 }

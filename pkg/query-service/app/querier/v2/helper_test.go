@@ -159,53 +159,69 @@ func TestFilterSeriesPoints(t *testing.T) {
 			expectedStart: 1609466400000,
 			expectedEnd:   1609477200000,
 		},
-		// {
-		// 	name:         "Filter last point",
-		// 	missStart:    1609466400000, // 01 Jan 2021 02:00:00 UTC
-		// 	missEnd:      1609475400000, // 01 Jan 2021 04:30:00 UTC
-		// 	stepInterval: 3600,          // 1 hour
-		// 	seriesList: []*v3.Series{
-		// 		{
-		// 			Points: []v3.Point{
-		// 				{Timestamp: 1609466400000, Value: 3.0}, // 01 Jan 2021 02:00:00 UTC
-		// 				{Timestamp: 1609470000000, Value: 4.0}, // 01 Jan 2021 03:00:00 UTC
-		// 				{Timestamp: 1609473600000, Value: 5.0}, // 01 Jan 2021 04:00:00 UTC
-		// 			},
-		// 		},
-		// 		{
-		// 			Points: []v3.Point{
-		// 				{Timestamp: 1609466400000, Value: 6.0}, // 01 Jan 2021 02:00:00 UTC
-		// 			},
-		// 		},
-		// 		{
-		// 			Points: []v3.Point{
-		// 				{Timestamp: 1609466400000, Value: 9.0},  // 01 Jan 2021 02:00:00 UTC
-		// 				{Timestamp: 1609470000000, Value: 10.0}, // 01 Jan 2021 03:00:00 UTC
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedPoints: []*v3.Series{
-		// 		{
-		// 			Points: []v3.Point{
-		// 				{Timestamp: 1609466400000, Value: 3.0}, // 01 Jan 2021 02:00:00 UTC
-		// 				{Timestamp: 1609470000000, Value: 4.0}, // 01 Jan 2021 03:00:00 UTC
-		// 			},
-		// 		},
-		// 		{
-		// 			Points: []v3.Point{
-		// 				{Timestamp: 1609466400000, Value: 6.0}, // 01 Jan 2021 02:00:00 UTC
-		// 			},
-		// 		},
-		// 		{
-		// 			Points: []v3.Point{
-		// 				{Timestamp: 1609466400000, Value: 9.0},  // 01 Jan 2021 02:00:00 UTC
-		// 				{Timestamp: 1609470000000, Value: 10.0}, // 01 Jan 2021 03:00:00 UTC
-		// 			},
-		// 		},
-		// 	},
-		// 	expectedStart: 1609466400000,
-		// 	expectedEnd:   1609473600000,
-		// },
+		{
+			name:         "Filter last point",
+			missStart:    1609466400000, // 01 Jan 2021 02:00:00 UTC
+			missEnd:      1609475400000, // 01 Jan 2021 04:30:00 UTC
+			stepInterval: 3600,          // 1 hour
+			seriesList: []*v3.Series{
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609466400000, Value: 3.0}, // 01 Jan 2021 02:00:00 UTC
+						{Timestamp: 1609470000000, Value: 4.0}, // 01 Jan 2021 03:00:00 UTC
+						{Timestamp: 1609473600000, Value: 5.0}, // 01 Jan 2021 04:00:00 UTC
+					},
+				},
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609466400000, Value: 6.0}, // 01 Jan 2021 02:00:00 UTC
+					},
+				},
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609466400000, Value: 9.0},  // 01 Jan 2021 02:00:00 UTC
+						{Timestamp: 1609470000000, Value: 10.0}, // 01 Jan 2021 03:00:00 UTC
+					},
+				},
+			},
+			expectedPoints: []*v3.Series{
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609466400000, Value: 3.0}, // 01 Jan 2021 02:00:00 UTC
+						{Timestamp: 1609470000000, Value: 4.0}, // 01 Jan 2021 03:00:00 UTC
+					},
+				},
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609466400000, Value: 6.0}, // 01 Jan 2021 02:00:00 UTC
+					},
+				},
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609466400000, Value: 9.0},  // 01 Jan 2021 02:00:00 UTC
+						{Timestamp: 1609470000000, Value: 10.0}, // 01 Jan 2021 03:00:00 UTC
+					},
+				},
+			},
+			expectedStart: 1609466400000,
+			expectedEnd:   1609473600000,
+		},
+		{
+			name:         "half range should return empty result",
+			missStart:    1609473600000, // 01 Jan 2021 04:00:00 UTC
+			missEnd:      1609475400000, // 01 Jan 2021 04:30:00 UTC
+			stepInterval: 3600,          // 1 hour
+			seriesList: []*v3.Series{
+				{
+					Points: []v3.Point{
+						{Timestamp: 1609473600000, Value: 1.0}, // 01 Jan 2021 04:00:00 UTC
+					},
+				},
+			},
+			expectedPoints: []*v3.Series{},
+			expectedStart:  1609473600000,
+			expectedEnd:    1609475400000,
+		},
 	}
 
 	for _, tc := range testCases {
