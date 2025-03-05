@@ -24,7 +24,7 @@ func NewAPI(alertmanager Alertmanager) *API {
 	}
 }
 
-func (api *API) GetAlerts(req *http.Request, rw http.ResponseWriter) {
+func (api *API) GetAlerts(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -49,7 +49,7 @@ func (api *API) GetAlerts(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusOK, alerts)
 }
 
-func (api *API) TestReceiver(req *http.Request, rw http.ResponseWriter) {
+func (api *API) TestReceiver(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -81,7 +81,7 @@ func (api *API) TestReceiver(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) ListChannels(req *http.Request, rw http.ResponseWriter) {
+func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -100,7 +100,20 @@ func (api *API) ListChannels(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusOK, channels)
 }
 
-func (api *API) GetChannelByID(req *http.Request, rw http.ResponseWriter) {
+func (api *API) ListAllChannels(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	channels, err := api.alertmanager.ListAllChannels(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, channels)
+}
+
+func (api *API) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -137,13 +150,31 @@ func (api *API) GetChannelByID(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusOK, channel)
 }
 
-func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
+func (api *API) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	vars := mux.Vars(req)
+	if vars == nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required in path"))
+		return
+	}
+
+	idString, ok := vars["id"]
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is required in path"))
+		return
+	}
+
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid integer"))
 		return
 	}
 
@@ -160,7 +191,7 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 		return
 	}
 
-	err = api.alertmanager.UpdateChannelByReceiver(ctx, claims.OrgID, receiver)
+	err = api.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -169,7 +200,7 @@ func (api *API) UpdateChannelByID(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) DeleteChannelByID(req *http.Request, rw http.ResponseWriter) {
+func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -206,7 +237,7 @@ func (api *API) DeleteChannelByID(req *http.Request, rw http.ResponseWriter) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) CreateChannel(req *http.Request, rw http.ResponseWriter) {
+func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 

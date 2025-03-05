@@ -10,91 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewChannelsFromAlertmanagerConfig(t *testing.T) {
-	testCases := []struct {
-		name               string
-		orgID              string
-		alertmanagerConfig *config.Config
-		expectedChannels   Channels
-	}{
-		{
-			name:  "DefaultReceiver",
-			orgID: "1",
-			alertmanagerConfig: &config.Config{
-				Receivers: []config.Receiver{
-					{
-						Name: DefaultReceiverName,
-					},
-				},
-			},
-			expectedChannels: Channels{},
-		},
-		{
-			name:  "OneEmailReceiver",
-			orgID: "1",
-			alertmanagerConfig: &config.Config{
-				Receivers: []config.Receiver{
-					{
-						Name: "email-receiver",
-						EmailConfigs: []*config.EmailConfig{
-							{
-								To: "test@example.com",
-							},
-						},
-					},
-				},
-			},
-			expectedChannels: Channels{
-				"email-receiver": {
-					Name:  "email-receiver",
-					Type:  "email",
-					Data:  `{"name":"email-receiver","email_configs":[{"send_resolved":false,"to":"test@example.com","smarthost":""}]}`,
-					OrgID: "1",
-				},
-			},
-		},
-		{
-			name:  "OneSlackReceiver",
-			orgID: "1",
-			alertmanagerConfig: &config.Config{
-				Receivers: []config.Receiver{
-					{
-						Name: "slack-receiver",
-						SlackConfigs: []*config.SlackConfig{
-							{
-								Channel: "#alerts",
-							},
-						},
-					},
-				},
-			},
-			expectedChannels: Channels{
-				"slack-receiver": {
-					Name:  "slack-receiver",
-					Type:  "slack",
-					Data:  `{"name":"slack-receiver","slack_configs":[{"send_resolved":false,"channel":"#alerts"}]}`,
-					OrgID: "1",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			actualChannels := NewChannelsFromConfig(tc.alertmanagerConfig, tc.orgID)
-			assert.Equal(t, len(tc.expectedChannels), len(actualChannels))
-			for _, channel := range actualChannels {
-				expectedChannel, ok := tc.expectedChannels[channel.Name]
-				assert.True(t, ok)
-				assert.Equal(t, expectedChannel.Name, channel.Name)
-				assert.Equal(t, expectedChannel.Type, channel.Type)
-				assert.Equal(t, expectedChannel.Data, channel.Data)
-				assert.Equal(t, expectedChannel.OrgID, channel.OrgID)
-			}
-		})
-	}
-}
-
 func TestNewConfigFromChannels(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -105,7 +20,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 		{
 			name: "OneEmailChannel",
 			channels: Channels{
-				"email-receiver": {
+				{
 					Name: "email-receiver",
 					Type: "email",
 					Data: `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
@@ -117,7 +32,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 		{
 			name: "OneSlackChannel",
 			channels: Channels{
-				"slack-receiver": {
+				{
 					Name: "slack-receiver",
 					Type: "slack",
 					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
@@ -129,7 +44,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 		{
 			name: "OnePagerdutyChannel",
 			channels: Channels{
-				"pagerduty-receiver": {
+				{
 					Name: "pagerduty-receiver",
 					Type: "pagerduty",
 					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
@@ -141,12 +56,12 @@ func TestNewConfigFromChannels(t *testing.T) {
 		{
 			name: "OnePagerdutyAndOneSlackChannel",
 			channels: Channels{
-				"pagerduty-receiver": {
+				{
 					Name: "pagerduty-receiver",
 					Type: "pagerduty",
 					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
-				"slack-receiver": {
+				{
 					Name: "slack-receiver",
 					Type: "slack",
 					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
