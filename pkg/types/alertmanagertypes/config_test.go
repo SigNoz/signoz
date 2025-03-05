@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -116,8 +117,11 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 			expectedRoutes, err := json.Marshal(tc.expectedRoutes)
 			require.NoError(t, err)
-			assert.Equal(t, gjson.GetBytes(expectedRoutes, "$[0].receiver"), gjson.GetBytes(actualRoutes, "$[0].receiver"))
-			assert.ElementsMatch(t, gjson.GetBytes(expectedRoutes, "$[0].matchers").Array(), gjson.GetBytes(actualRoutes, "$[0].matchers").Array())
+
+			for i := range len(tc.expectedRoutes) {
+				assert.Equal(t, gjson.GetBytes(expectedRoutes, fmt.Sprintf("$[%d].receiver", i)).String(), gjson.GetBytes(actualRoutes, fmt.Sprintf("$[%d].receiver", i)).String())
+				assert.ElementsMatch(t, gjson.GetBytes(expectedRoutes, fmt.Sprintf("$[%d].matchers", i)).Array(), gjson.GetBytes(actualRoutes, fmt.Sprintf("$[%d].matchers", i)).Array())
+			}
 		})
 	}
 }
