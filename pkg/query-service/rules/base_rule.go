@@ -13,6 +13,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.uber.org/zap"
 )
 
@@ -78,6 +79,8 @@ type BaseRule struct {
 	// querying the v4 table on low cardinal temporality column
 	// should be fast but we can still avoid the query if we have the data in memory
 	TemporalityMap map[string]map[v3.Temporality]bool
+
+	sqlstore sqlstore.SQLStore
 }
 
 type RuleOption func(*BaseRule)
@@ -103,6 +106,12 @@ func WithEvalDelay(dur time.Duration) RuleOption {
 func WithLogger(logger *zap.Logger) RuleOption {
 	return func(r *BaseRule) {
 		r.logger = logger
+	}
+}
+
+func WithSQLStore(sqlstore sqlstore.SQLStore) RuleOption {
+	return func(r *BaseRule) {
+		r.sqlstore = sqlstore
 	}
 }
 
@@ -309,6 +318,20 @@ func (r *BaseRule) ActiveAlerts() []*Alert {
 }
 
 func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
+	var orgID string
+	err := r.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Table("organizations").
+		ColumnExpr("id").
+		Limit(1).
+		Scan(ctx, &orgID)
+	if err != nil {
+		r.logger.Error("failed to get org ids", zap.Error(err))
+		return
+	}
+
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if alert.needsSending(ts, resendDelay) {
@@ -322,7 +345,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 			alerts = append(alerts, &anew)
 		}
 	})
-	notifyFunc(ctx, "", alerts...)
+	notifyFunc(ctx, orgID, "", alerts...)
 }
 
 func (r *BaseRule) ForEachActiveAlert(f func(*Alert)) {

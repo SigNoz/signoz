@@ -13,13 +13,11 @@ const getTriggered = async (
 
 		const response = await axios.get(`/alerts?${queryParams}`);
 
-		const amData = JSON.parse(response.data.data);
-
 		return {
 			statusCode: 200,
 			error: null,
 			message: response.data.status,
-			payload: amData.data,
+			payload: response.data.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);

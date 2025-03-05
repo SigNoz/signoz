@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/apiserver"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/config"
@@ -44,6 +45,9 @@ type Config struct {
 
 	// TelemetryStore config
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
+
+	// Alertmanager config
+	Alertmanager alertmanager.Config `mapstructure:"alertmanager"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -63,6 +67,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
+		alertmanager.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -138,17 +143,26 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 	}
 
 	if deprecatedFlags.MaxIdleConns != 50 {
-		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS env variable instead.")
+		fmt.Println("[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead.")
 		config.TelemetryStore.Connection.MaxIdleConns = deprecatedFlags.MaxIdleConns
 	}
 
 	if deprecatedFlags.MaxOpenConns != 100 {
-		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS env variable instead.")
+		fmt.Println("[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead.")
 		config.TelemetryStore.Connection.MaxOpenConns = deprecatedFlags.MaxOpenConns
 	}
 
 	if deprecatedFlags.DialTimeout != 5*time.Second {
-		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT environment variable instead.")
+		fmt.Println("[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.")
 		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
+	}
+
+	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
+		fmt.Println("[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.")
+		config.Alertmanager.Legacy.ApiURL = os.Getenv("ALERTMANAGER_API_PREFIX")
+	}
+
+	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
+		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
 	}
 }

@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
@@ -16,10 +17,12 @@ import (
 )
 
 type SigNoz struct {
+	*factory.Registry
 	Cache          cache.Cache
 	Web            web.Web
 	SQLStore       sqlstore.SQLStore
 	TelemetryStore telemetrystore.TelemetryStore
+	Alertmanager   alertmanager.Alertmanager
 }
 
 func New(
@@ -102,10 +105,32 @@ func New(
 		return nil, err
 	}
 
+	alertmanager, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Alertmanager,
+		NewAlertmanagerProviderFactories(sqlstore),
+		config.Alertmanager.Provider,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	registry, err := factory.NewRegistry(
+		instrumentation.Logger(),
+		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SigNoz{
+		Registry:       registry,
 		Cache:          cache,
 		Web:            web,
 		SQLStore:       sqlstore,
 		TelemetryStore: telemetrystore,
+		Alertmanager:   alertmanager,
 	}, nil
 }

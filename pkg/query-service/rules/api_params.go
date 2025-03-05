@@ -80,7 +80,6 @@ func parsePostableRule(content []byte, kind RuleDataKind) (*PostableRule, error)
 // parseIntoRule loads the content (data) into PostableRule and also
 // validates the end result
 func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
-
 	rule := &initRule
 
 	var err error

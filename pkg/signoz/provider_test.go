@@ -14,3 +14,9 @@ func TestNewProviderConfig(t *testing.T) {
 		NewProviderConfig()
 	})
 }
+
+func TestNewAlertmanagerProviderFactories(t *testing.T) {
+	assert.NotPanics(t, func() {
+		NewAlertmanagerProviderFactories(nil)
+	})
+}

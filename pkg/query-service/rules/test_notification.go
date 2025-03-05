@@ -52,6 +52,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			opts.UseTraceNewSchema,
 			WithSendAlways(),
 			WithSendUnmatched(),
+			WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -70,6 +71,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			opts.ManagerOpts.PqlEngine,
 			WithSendAlways(),
 			WithSendUnmatched(),
+			WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {

@@ -23,6 +23,7 @@ type SDK struct {
 	logger             *slog.Logger
 	sdk                contribsdkconfig.SDK
 	prometheusRegistry *prometheus.Registry
+	startCh            chan struct{}
 }
 
 // New creates a new Instrumentation instance with configured providers.
@@ -96,14 +97,17 @@ func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
 		sdk:                sdk,
 		prometheusRegistry: prometheusRegistry,
 		logger:             NewLogger(cfg),
+		startCh:            make(chan struct{}),
 	}, nil
 }
 
 func (i *SDK) Start(ctx context.Context) error {
+	<-i.startCh
 	return nil
 }
 
 func (i *SDK) Stop(ctx context.Context) error {
+	close(i.startCh)
 	return i.sdk.Shutdown(ctx)
 }
 
