@@ -48,21 +48,23 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 }
 
 // Set implements alertmanagertypes.ConfigStore.
-func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config) error {
-	if _, err := store.
-		sqlstore.
-		BunDB().
-		NewInsert().
-		Model(config.StoreableConfig()).
-		On("CONFLICT (org_id) DO UPDATE").
-		Set("config = ?", config.StoreableConfig().Config).
-		Set("hash = ?", config.StoreableConfig().Hash).
-		Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
-		Exec(ctx); err != nil {
-		return err
-	}
+func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config, opts ...alertmanagertypes.StoreOption) error {
+	return store.wrap(ctx, func(ctx context.Context) error {
+		if _, err := store.
+			sqlstore.
+			BunDBCtx(ctx).
+			NewInsert().
+			Model(config.StoreableConfig()).
+			On("CONFLICT (org_id) DO UPDATE").
+			Set("config = ?", config.StoreableConfig().Config).
+			Set("hash = ?", config.StoreableConfig().Hash).
+			Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	return nil
+		return nil
+	}, opts...)
 }
 
 func (store *config) ListOrgs(ctx context.Context) ([]string, error) {
@@ -82,31 +84,19 @@ func (store *config) ListOrgs(ctx context.Context) ([]string, error) {
 	return orgIDs, nil
 }
 
-func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertypes.Channel, cb func(context.Context) error) error {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback() //nolint:errcheck
-
-	if _, err = tx.NewInsert().
-		Model(channel).
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	if cb != nil {
-		if err = cb(ctx); err != nil {
+func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertypes.Channel, opts ...alertmanagertypes.StoreOption) error {
+	return store.wrap(ctx, func(ctx context.Context) error {
+		if _, err := store.
+			sqlstore.
+			BunDBCtx(ctx).
+			NewInsert().
+			Model(channel).
+			Exec(ctx); err != nil {
 			return err
 		}
-	}
 
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+		return nil
+	}, opts...)
 }
 
 func (store *config) GetChannelByID(ctx context.Context, orgID string, id int) (*alertmanagertypes.Channel, error) {
@@ -130,65 +120,39 @@ func (store *config) GetChannelByID(ctx context.Context, orgID string, id int) (
 	return channel, nil
 }
 
-func (store *config) UpdateChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel, cb func(context.Context) error) error {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback() //nolint:errcheck
-
-	_, err = tx.NewUpdate().
-		Model(channel).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	if cb != nil {
-		if err = cb(ctx); err != nil {
+func (store *config) UpdateChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel, opts ...alertmanagertypes.StoreOption) error {
+	return store.wrap(ctx, func(ctx context.Context) error {
+		if _, err := store.
+			sqlstore.
+			BunDBCtx(ctx).
+			NewUpdate().
+			Model(channel).
+			WherePK().
+			Exec(ctx); err != nil {
 			return err
 		}
-	}
 
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+		return nil
+	}, opts...)
 }
 
-func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id int, cb func(context.Context) error) error {
-	channel := new(alertmanagertypes.Channel)
+func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id int, opts ...alertmanagertypes.StoreOption) error {
+	return store.wrap(ctx, func(ctx context.Context) error {
+		channel := new(alertmanagertypes.Channel)
 
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback() //nolint:errcheck
-
-	_, err = tx.NewDelete().
-		Model(channel).
-		Where("org_id = ?", orgID).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	if cb != nil {
-		if err = cb(ctx); err != nil {
+		if _, err := store.
+			sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(channel).
+			Where("org_id = ?", orgID).
+			Where("id = ?", id).
+			Exec(ctx); err != nil {
 			return err
 		}
-	}
 
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+		return nil
+	}, opts...)
 }
 
 func (store *config) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
@@ -253,4 +217,20 @@ func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string]
 	}
 
 	return matchersMap, nil
+}
+
+func (store *config) wrap(ctx context.Context, fn func(ctx context.Context) error, opts ...alertmanagertypes.StoreOption) error {
+	storeOpts := alertmanagertypes.NewStoreOptions(opts...)
+
+	if storeOpts.Cb == nil {
+		return fn(ctx)
+	}
+
+	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		if err := fn(ctx); err != nil {
+			return err
+		}
+
+		return storeOpts.Cb(ctx)
+	})
 }

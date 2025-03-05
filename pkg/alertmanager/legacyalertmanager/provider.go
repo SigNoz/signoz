@@ -252,7 +252,16 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 		return err
 	}
 
-	err = provider.configStore.UpdateChannel(ctx, orgID, channel, func(ctx context.Context) error {
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	if err := config.UpdateReceiver(receiver); err != nil {
+		return err
+	}
+
+	err = provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(receiver)
@@ -278,8 +287,12 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 			return fmt.Errorf("bad response status %v", resp.Status)
 		}
 
+		if err := provider.configStore.Set(ctx, config); err != nil {
+			return err
+		}
+
 		return nil
-	})
+	}))
 	if err != nil {
 		return err
 	}
@@ -290,7 +303,16 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
 	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
 
-	err := provider.configStore.CreateChannel(ctx, channel, func(ctx context.Context) error {
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	if err := config.CreateReceiver(receiver); err != nil {
+		return err
+	}
+
+	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(receiver)
@@ -316,22 +338,30 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 			return fmt.Errorf("bad response status %v", resp.Status)
 		}
 
+		if err := provider.configStore.Set(ctx, config); err != nil {
+			return err
+		}
+
 		return nil
-	})
+	}))
+}
+
+func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
 
-func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
-	err := provider.configStore.DeleteChannelByID(ctx, orgID, channelID, func(ctx context.Context) error {
-		channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
-		if err != nil {
-			return err
-		}
+	if err := config.DeleteReceiver(channel.Name); err != nil {
+		return err
+	}
 
+	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(map[string]string{"name": channel.Name})
@@ -357,13 +387,12 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 			return fmt.Errorf("bad response status %v", resp.Status)
 		}
 
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+		if err := provider.configStore.Set(ctx, config); err != nil {
+			return err
+		}
 
-	return nil
+		return nil
+	}))
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {
