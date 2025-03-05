@@ -37,6 +37,7 @@ type provider struct {
 	configStore alertmanagertypes.ConfigStore
 	batcher     *alertmanagerbatcher.Batcher
 	url         *url.URL
+	orgID       string
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -73,8 +74,25 @@ func (provider *provider) Start(ctx context.Context) error {
 	}
 
 	for alerts := range provider.batcher.C {
-		if err := provider.putAlerts(ctx, "", alerts); err != nil {
-			provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
+		// For the first time, we need to get the orgID from the config store.
+		// Since this is the legacy alertmanager, we get the first org from the store.
+		if provider.orgID == "" {
+			orgIDs, err := provider.configStore.ListOrgs(ctx)
+			if err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
+				continue
+			}
+
+			if len(orgIDs) == 0 {
+				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", "no orgs found")
+				continue
+			}
+
+			provider.orgID = orgIDs[0]
+		}
+
+		if err := provider.putAlerts(ctx, provider.orgID, alerts); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
 		}
 	}
 
