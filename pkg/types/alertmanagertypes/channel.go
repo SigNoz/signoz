@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	ErrCodeAlertmanagerChannelNotFound = errors.MustNewCode("alertmanager_channel_not_found")
+	ErrCodeAlertmanagerChannelNotFound     = errors.MustNewCode("alertmanager_channel_not_found")
+	ErrCodeAlertmanagerChannelNameMismatch = errors.MustNewCode("alertmanager_channel_name_mismatch")
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 	receiverTypeRegex = regexp.MustCompile(`^(.+)_configs`)
 )
 
-type Channels = map[string]*Channel
+type Channels = []*Channel
 
 type GettableChannels = []*Channel
 
@@ -104,20 +105,6 @@ func NewReceiverFromChannel(channel *Channel) (Receiver, error) {
 	return receiver, nil
 }
 
-func NewChannelsFromConfig(c *config.Config, orgID string) Channels {
-	channels := Channels{}
-	for _, receiver := range c.Receivers {
-		channel := NewChannelFromReceiver(receiver, orgID)
-		if channel == nil {
-			continue
-		}
-
-		channels[channel.Name] = channel
-	}
-
-	return channels
-}
-
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
 	cfg, err := NewDefaultConfig(
 		globalConfig,
@@ -134,7 +121,7 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 			return nil, err
 		}
 
-		err = cfg.CreateReceiver(&config.Route{Receiver: channel.Name, Continue: true}, receiver)
+		err = cfg.CreateReceiver(receiver)
 		if err != nil {
 			return nil, err
 		}
@@ -143,12 +130,38 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
-func GetChannelByID(channels Channels, id int) (*Channel, error) {
-	for _, channel := range channels {
+func GetChannelByID(channels Channels, id int) (int, *Channel, error) {
+	for i, channel := range channels {
 		if channel.ID == id {
-			return channel, nil
+			return i, channel, nil
 		}
 	}
 
-	return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+}
+
+func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
+	for i, channel := range channels {
+		if channel.Name == name {
+			return i, channel, nil
+		}
+	}
+
+	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with name %s", name)
+}
+
+func (c *Channel) Update(receiver Receiver) error {
+	channel := NewChannelFromReceiver(receiver, c.OrgID)
+	if channel == nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", c.ID)
+	}
+
+	if c.Name != channel.Name {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
+	}
+
+	c.Data = channel.Data
+	c.UpdatedAt = time.Now()
+
+	return nil
 }

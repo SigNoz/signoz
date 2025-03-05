@@ -5,10 +5,13 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
@@ -41,6 +44,7 @@ type StoreableConfig struct {
 
 	ID        uint64    `bun:"id,pk,autoincrement"`
 	Config    string    `bun:"config"`
+	Hash      string    `bun:"hash"`
 	CreatedAt time.Time `bun:"created_at"`
 	UpdatedAt time.Time `bun:"updated_at"`
 	OrgID     string    `bun:"org_id"`
@@ -53,25 +57,19 @@ type Config struct {
 
 	// storeableConfig is the representation of the config in the store
 	storeableConfig *StoreableConfig
-
-	// channels is the list of channels
-	channels Channels
-
-	// orgID is the organization ID
-	orgID string
 }
 
 func NewConfig(c *config.Config, orgID string) *Config {
-	channels := NewChannelsFromConfig(c, orgID)
+	raw := string(newRawFromConfig(c))
 	return &Config{
 		alertmanagerConfig: c,
 		storeableConfig: &StoreableConfig{
-			Config:    string(newRawFromConfig(c)),
+			Config:    raw,
+			Hash:      fmt.Sprintf("%x", newConfigHash(raw)),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			OrgID:     orgID,
 		},
-		channels: channels,
 	}
 }
 
@@ -81,18 +79,10 @@ func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 		return nil, err
 	}
 
-	channels := NewChannelsFromConfig(alertmanagerConfig, sc.OrgID)
-
 	return &Config{
 		alertmanagerConfig: alertmanagerConfig,
 		storeableConfig:    sc,
-		channels:           channels,
-		orgID:              sc.OrgID,
 	}, nil
-}
-
-func NewRouteFromReceiver(receiver Receiver) *config.Route {
-	return &config.Route{Receiver: receiver.Name, Continue: true}
 }
 
 func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID string) (*Config, error) {
@@ -134,6 +124,43 @@ func newRawFromConfig(c *config.Config) []byte {
 	return b
 }
 
+func newConfigHash(s string) [16]byte {
+	return md5.Sum([]byte(s))
+}
+
+func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) {
+	c.alertmanagerConfig.Global = &globalConfig
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+}
+
+func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
+	c.alertmanagerConfig.Route = &config.Route{
+		Receiver:       DefaultReceiverName,
+		GroupByStr:     routeConfig.GroupByStr,
+		GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
+		GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
+		RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
+	}
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+}
+
+func (c *Config) UpdateRouteConfig(routeConfig RouteConfig) {
+	for _, route := range c.alertmanagerConfig.Route.Routes {
+		route.GroupByStr = routeConfig.GroupByStr
+		route.GroupInterval = (*model.Duration)(&routeConfig.GroupInterval)
+		route.GroupWait = (*model.Duration)(&routeConfig.GroupWait)
+		route.RepeatInterval = (*model.Duration)(&routeConfig.RepeatInterval)
+	}
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+}
+
 func (c *Config) AlertmanagerConfig() *config.Config {
 	return c.alertmanagerConfig
 }
@@ -142,65 +169,43 @@ func (c *Config) StoreableConfig() *StoreableConfig {
 	return c.storeableConfig
 }
 
-func (c *Config) Channels() Channels {
-	return c.channels
-}
-
-func (c *Config) OrgID() string {
-	return c.orgID
-}
-
-func (c *Config) Raw() []byte {
-	return newRawFromConfig(c.alertmanagerConfig)
-}
-
-func (c *Config) Hash() [16]byte {
-	return md5.Sum(newRawFromConfig(c.alertmanagerConfig))
-}
-
-func (c *Config) CreateReceiver(route *config.Route, receiver config.Receiver) error {
-	if route == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
-	}
-
-	if route.Receiver == "" || receiver.Name == "" {
+func (c *Config) CreateReceiver(receiver config.Receiver) error {
+	if receiver.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
 	}
 
 	// check that receiver name is not already used
 	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
-		if existingReceiver.Name == receiver.Name || existingReceiver.Name == route.Receiver {
+		if existingReceiver.Name == receiver.Name {
 			return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
 		}
 	}
-	// must set continue on route to allow subsequent
-	// routes to work. may have to rethink on this after
-	// adding matchers and filters in upstream
-	route.Continue = true
 
-	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
+	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, newRouteFromReceiver(receiver))
 	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return err
 	}
 
-	channel := NewChannelFromReceiver(receiver, c.orgID)
-	if channel != nil {
-		c.channels[channel.Name] = channel
-	}
-
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
 	return nil
 }
 
-func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) error {
-	if route == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
+func (c *Config) GetReceiver(name string) (Receiver, error) {
+	for _, receiver := range c.alertmanagerConfig.Receivers {
+		if receiver.Name == name {
+			return receiver, nil
+		}
 	}
 
-	if route.Receiver == "" || receiver.Name == "" {
+	return Receiver{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
+}
+
+func (c *Config) UpdateReceiver(receiver config.Receiver) error {
+	if receiver.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
 	}
 
@@ -208,24 +213,12 @@ func (c *Config) UpdateReceiver(route *config.Route, receiver config.Receiver) e
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
 			c.alertmanagerConfig.Receivers[i] = receiver
-			channel := NewChannelFromReceiver(receiver, c.orgID)
-			if channel != nil {
-				c.channels[channel.Name] = channel
-				c.channels[channel.Name].UpdatedAt = time.Now()
-			}
-			break
-		}
-	}
-
-	routes := c.alertmanagerConfig.Route.Routes
-	for i, existingRoute := range routes {
-		if existingRoute.Receiver == route.Receiver {
-			c.alertmanagerConfig.Route.Routes[i] = route
 			break
 		}
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
@@ -247,31 +240,121 @@ func (c *Config) DeleteReceiver(name string) error {
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == name {
 			c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers[:i], c.alertmanagerConfig.Receivers[i+1:]...)
-			delete(c.channels, name)
 			break
 		}
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
 
 	return nil
 }
 
+func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) error {
+	if c.alertmanagerConfig.Route == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
+	}
+
+	routes := c.alertmanagerConfig.Route.Routes
+	for i, route := range routes {
+		if slices.Contains(receiverNames, route.Receiver) {
+			matcher, err := labels.NewMatcher(labels.MatchEqual, "ruleId", ruleID)
+			if err != nil {
+				return err
+			}
+
+			c.alertmanagerConfig.Route.Routes[i].Matchers = append(c.alertmanagerConfig.Route.Routes[i].Matchers, matcher)
+		}
+	}
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) error {
+	err := c.DeleteRuleIDMatcher(ruleID)
+	if err != nil {
+		return err
+	}
+
+	return c.CreateRuleIDMatcher(ruleID, receiverNames)
+}
+
+func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
+	routes := c.alertmanagerConfig.Route.Routes
+	for i, r := range routes {
+		j := slices.IndexFunc(r.Matchers, func(m *labels.Matcher) bool {
+			return m.Name == "ruleId" && m.Value == ruleID
+		})
+		if j != -1 {
+			c.alertmanagerConfig.Route.Routes[i].Matchers = slices.Delete(r.Matchers, j, j+1)
+		}
+	}
+
+	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
+	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (c *Config) ReceiverNamesFromRuleID(ruleID string) ([]string, error) {
+	receiverNames := make([]string, 0)
+	routes := c.alertmanagerConfig.Route.Routes
+	for _, r := range routes {
+		for _, m := range r.Matchers {
+			if m.Name == "ruleId" && m.Value == ruleID {
+				receiverNames = append(receiverNames, r.Receiver)
+			}
+		}
+	}
+
+	return receiverNames, nil
+}
+
 type ConfigStore interface {
 	// Set creates or updates a config.
-	Set(context.Context, *Config, func(context.Context) error) error
+	Set(context.Context, *Config) error
 
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
 
 	// ListOrgs returns the list of orgs
 	ListOrgs(context.Context) ([]string, error)
+
+	// CreateChannel creates a new channel.
+	CreateChannel(context.Context, *Channel, func(context.Context) error) error
+
+	// GetChannelByID returns the channel for the given id.
+	GetChannelByID(context.Context, string, int) (*Channel, error)
+
+	// UpdateChannel updates a channel.
+	UpdateChannel(context.Context, string, *Channel, func(context.Context) error) error
+
+	// DeleteChannelByID deletes a channel.
+	DeleteChannelByID(context.Context, string, int, func(context.Context) error) error
+
+	// ListChannels returns the list of channels.
+	ListChannels(context.Context, string) ([]*Channel, error)
+
+	// ListAllChannels returns the list of channels for all organizations.
+	ListAllChannels(context.Context) ([]*Channel, error)
+
+	// GetMatchers gets a list of matchers per organization.
+	// Matchers is an array of ruleId to receiver names.
+	GetMatchers(context.Context, string) (map[string][]string, error)
 }
+
+var ConfigStoreNoopCallback = func(ctx context.Context) error { return nil }
 
 // MarshalSecretValue if set to true will expose Secret type
 // through the marshal interfaces. We need to store the actual value of the secret
 // in the database, so we need to set this to true.
 func init() {
+	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
 }
