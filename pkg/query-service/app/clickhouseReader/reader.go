@@ -5910,7 +5910,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		sb.WriteString(orderByClauseFirstQuery)
 	}
 
-	sb.WriteString(fmt.Sprintf(" LIMIT %d OFFSET %d;", req.Limit, req.Offset))
+	sb.WriteString(fmt.Sprintf(" LIMIT;", req.Limit, req.Offset))
 
 	sampleQuery := sb.String()
 
