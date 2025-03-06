@@ -64,7 +64,7 @@ func (conf *Conf) Unmarshal(path string, input any) error {
 			mapstructure.StringToSliceHookFunc(","),
 			mapstructure.StringToTimeDurationHookFunc(),
 			mapstructure.TextUnmarshallerHookFunc(),
-			StringToUrlHookFunc(),
+			StringToURLHookFunc(),
 		),
 		Result: input,
 	}
@@ -80,7 +80,7 @@ func (conf *Conf) UnmarshalYaml(path string, input any) error {
 			mapstructure.StringToSliceHookFunc(","),
 			mapstructure.StringToTimeDurationHookFunc(),
 			mapstructure.TextUnmarshallerHookFunc(),
-			StringToUrlHookFunc(),
+			StringToURLHookFunc(),
 		),
 		Result: input,
 	}
@@ -109,7 +109,7 @@ func (conf *Conf) Set(key string, input any) error {
 	return nil
 }
 
-func StringToUrlHookFunc() mapstructure.DecodeHookFunc {
+func StringToURLHookFunc() mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
 		t reflect.Type,
