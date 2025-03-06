@@ -27,6 +27,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/preferences"
 	"go.signoz.io/signoz/pkg/signoz"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
@@ -299,14 +300,14 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	r.Use(middleware.NewLogging(zap.L(), s.serverOptions.Config.APIServer.Logging.ExcludedRoutes).Wrap)
 
 	// add auth middleware
-	getUserFromRequest := func(ctx context.Context) (*model.UserPayload, error) {
+	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
 		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if user.User.OrgId == "" {
+		if user.User.OrgID == "" {
 			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 

@@ -9,13 +9,14 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type AuthMiddleware struct {
-	GetUserFromRequest func(r context.Context) (*model.UserPayload, error)
+	GetUserFromRequest func(r context.Context) (*types.GettableUser, error)
 }
 
-func NewAuthMiddleware(f func(ctx context.Context) (*model.UserPayload, error)) *AuthMiddleware {
+func NewAuthMiddleware(f func(ctx context.Context) (*types.GettableUser, error)) *AuthMiddleware {
 	return &AuthMiddleware{
 		GetUserFromRequest: f,
 	}

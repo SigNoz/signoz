@@ -53,6 +53,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
@@ -594,8 +595,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.editUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
-
-	router.HandleFunc("/api/v1/user/{id}/flags", am.SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/v1/rbac/role/{id}", am.SelfAccess(aH.getRole)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.editRole)).Methods(http.MethodPut)
@@ -1974,8 +1973,13 @@ func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 // listPendingInvites is used to list the pending invites.
 func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request) {
 
-	ctx := context.Background()
-	invites, err := dao.DB().GetInvites(ctx)
+	ctx := r.Context()
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+	invites, err := dao.DB().GetInvites(ctx, claims.OrgID)
 	if err != nil {
 		RespondError(w, err, nil)
 		return
@@ -1986,7 +1990,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 	var resp []*model.InvitationResponseObject
 	for _, inv := range invites {
 
-		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
+		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgID)
 		if apiErr != nil {
 			RespondError(w, apiErr, nil)
 		}
@@ -1994,7 +1998,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 			Name:         inv.Name,
 			Email:        inv.Email,
 			Token:        inv.Token,
-			CreatedAt:    inv.CreatedAt,
+			CreatedAt:    inv.CreatedAt.Unix(),
 			Role:         inv.Role,
 			Organization: org.Name,
 		})
@@ -2137,13 +2141,15 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
-	_, apiErr = dao.DB().EditUser(ctx, &model.User{
-		Id:                old.Id,
-		Name:              old.Name,
-		OrgId:             old.OrgId,
-		Email:             old.Email,
-		Password:          old.Password,
-		CreatedAt:         old.CreatedAt,
+	_, apiErr = dao.DB().EditUser(ctx, &types.User{
+		ID:       old.ID,
+		Name:     old.Name,
+		OrgID:    old.OrgID,
+		Email:    old.Email,
+		Password: old.Password,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: old.CreatedAt,
+		},
 		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {
@@ -2185,7 +2191,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.GroupId == adminGroup.ID && len(adminUsers) == 1 {
+	if user.GroupID == adminGroup.ID && len(adminUsers) == 1 {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("cannot delete the last admin user")}, nil)
@@ -2198,37 +2204,6 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
-}
-
-// addUserFlag patches a user flags with the changes
-func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
-	// read user id from path var
-	userId := mux.Vars(r)["id"]
-
-	// read input into user flag
-	defer r.Body.Close()
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("failed read user flags from http request for userId ", zap.String("userId", userId), zap.Error(err))
-		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
-		return
-	}
-	flags := make(map[string]string, 0)
-
-	err = json.Unmarshal(b, &flags)
-	if err != nil {
-		zap.L().Error("failed parsing user flags for userId ", zap.String("userId", userId), zap.Error(err))
-		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
-		return
-	}
-
-	newflags, apiError := dao.DB().UpdateUserFlags(r.Context(), userId, flags)
-	if !apiError.IsNil() {
-		RespondError(w, apiError, nil)
-		return
-	}
-
-	aH.Respond(w, newflags)
 }
 
 func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
@@ -2246,7 +2221,7 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	group, err := dao.DB().GetGroup(context.Background(), user.GroupId)
+	group, err := dao.DB().GetGroup(context.Background(), user.GroupID)
 	if err != nil {
 		RespondError(w, err, "Failed to get group")
 		return
@@ -2282,7 +2257,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if user.GroupId == auth.AuthCacheObj.AdminGroupId {
+	if user.GroupID == auth.AuthCacheObj.AdminGroupId {
 		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
 		if apiErr != nil {
 			RespondError(w, apiErr, "Failed to fetch adminUsers")
@@ -2297,7 +2272,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.ID)
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID, newGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return
@@ -2331,7 +2306,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Id = id
+	req.ID = id
 	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
 		RespondError(w, apiErr, "Failed to update org in the DB")
 		return
@@ -3394,7 +3369,7 @@ func (aH *APIHandler) getUserPreference(
 	user := common.GetUserFromContext(r.Context())
 
 	preference, apiErr := preferences.GetUserPreference(
-		r.Context(), preferenceId, user.User.OrgId, user.User.Id,
+		r.Context(), preferenceId, user.User.OrgID, user.User.ID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3417,7 +3392,7 @@ func (aH *APIHandler) updateUserPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.Id)
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3431,7 +3406,7 @@ func (aH *APIHandler) getAllUserPreferences(
 ) {
 	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetAllUserPreferences(
-		r.Context(), user.User.OrgId, user.User.Id,
+		r.Context(), user.User.OrgID, user.User.ID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3447,7 +3422,7 @@ func (aH *APIHandler) getOrgPreference(
 	preferenceId := mux.Vars(r)["preferenceId"]
 	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId, user.User.OrgId,
+		r.Context(), preferenceId, user.User.OrgID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3470,7 +3445,7 @@ func (aH *APIHandler) updateOrgPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgId)
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgID)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3484,7 +3459,7 @@ func (aH *APIHandler) getAllOrgPreferences(
 ) {
 	user := common.GetUserFromContext(r.Context())
 	preference, apiErr := preferences.GetAllOrgPreferences(
-		r.Context(), user.User.OrgId,
+		r.Context(), user.User.OrgID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)

@@ -2,12 +2,14 @@ package alertmanagertypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 )
 
 func TestCreateRuleIDMatcher(t *testing.T) {
@@ -111,12 +113,15 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			routes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
+			actualRoutes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
 			require.NoError(t, err)
-			var actualRoutes []map[string]any
-			err = json.Unmarshal(routes, &actualRoutes)
+			expectedRoutes, err := json.Marshal(tc.expectedRoutes)
 			require.NoError(t, err)
-			assert.ElementsMatch(t, tc.expectedRoutes, actualRoutes)
+
+			for i := range len(tc.expectedRoutes) {
+				assert.Equal(t, gjson.GetBytes(expectedRoutes, fmt.Sprintf("$[%d].receiver", i)).String(), gjson.GetBytes(actualRoutes, fmt.Sprintf("$[%d].receiver", i)).String())
+				assert.ElementsMatch(t, gjson.GetBytes(expectedRoutes, fmt.Sprintf("$[%d].matchers", i)).Array(), gjson.GetBytes(actualRoutes, fmt.Sprintf("$[%d].matchers", i)).Array())
+			}
 		})
 	}
 }

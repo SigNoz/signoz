@@ -281,7 +281,7 @@ function Members(): JSX.Element {
 				const { joinedOn } = record;
 				return (
 					<Typography>
-						{dayjs.unix(Number(joinedOn)).format(DATE_TIME_FORMATS.MONTH_DATE_FULL)}
+						{dayjs(joinedOn).format(DATE_TIME_FORMATS.MONTH_DATE_FULL)}
 					</Typography>
 				);
 			},

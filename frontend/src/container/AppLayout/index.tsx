@@ -23,6 +23,7 @@ import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
@@ -54,7 +55,6 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
-import { isCloudUser } from 'utils/app';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
 	getFormattedDate,
@@ -121,6 +121,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
 		{
@@ -354,7 +356,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
-			const isCloudUserVal = isCloudUser();
 			if (featureFlags && featureFlags.length > 0) {
 				isChatSupportEnabled =
 					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
@@ -376,6 +377,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [
 		featureFlags,
 		featureFlagsFetchError,
+		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
 		licenses,
