@@ -33,7 +33,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"slack-receiver"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=\"test-rule\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}},
 		},
 		{
 			name:  "SlackAndEmailReceivers",
@@ -58,7 +58,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"slack-receiver", "email-receiver"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=\"test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=\"test-rule\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}},
 		},
 		{
 			name:  "ReceiverDoesNotExist",
@@ -92,7 +92,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule-1": {"slack-receiver", "does-not-exist"}, "test-rule-2": {"slack-receiver"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=\"test-rule-1\"", "ruleId=\"test-rule-2\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule-1|test-rule-2\""}}},
 		},
 	}
 
@@ -157,7 +157,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true}, {"receiver": "email-receiver", "continue": true}},
 		},
 		{
-			name:  "AlertNameDoesNotExist",
+			name:  "RuleIDDoesNotExist",
 			orgID: "1",
 			receivers: []config.Receiver{
 				{
@@ -180,7 +180,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"email-receiver", "slack-receiver"}},
 			ruleIDsToDelete:   []string{"does-not-exist"},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=\"test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=\"test-rule\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}},
 		},
 	}
 

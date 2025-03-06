@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
@@ -274,15 +274,11 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
 	}
 
-	routes := c.alertmanagerConfig.Route.Routes
-	for i, route := range routes {
-		if slices.Contains(receiverNames, route.Receiver) {
-			matcher, err := labels.NewMatcher(labels.MatchEqual, "ruleId", ruleID)
-			if err != nil {
+	for i := range c.alertmanagerConfig.Route.Routes {
+		if slices.Contains(receiverNames, c.alertmanagerConfig.Route.Routes[i].Receiver) {
+			if err := appendRuleIDToRoute(c.alertmanagerConfig.Route.Routes[i], ruleID); err != nil {
 				return err
 			}
-
-			c.alertmanagerConfig.Route.Routes[i].Matchers = append(c.alertmanagerConfig.Route.Routes[i].Matchers, matcher)
 		}
 	}
 
@@ -304,12 +300,9 @@ func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) erro
 
 func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
 	routes := c.alertmanagerConfig.Route.Routes
-	for i, r := range routes {
-		j := slices.IndexFunc(r.Matchers, func(m *labels.Matcher) bool {
-			return m.Name == "ruleId" && m.Value == ruleID
-		})
-		if j != -1 {
-			c.alertmanagerConfig.Route.Routes[i].Matchers = slices.Delete(r.Matchers, j, j+1)
+	for i := range routes {
+		if err := removeRuleIDFromRoute(c.alertmanagerConfig.Route.Routes[i], ruleID); err != nil {
+			return err
 		}
 	}
 
@@ -323,10 +316,10 @@ func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
 func (c *Config) ReceiverNamesFromRuleID(ruleID string) ([]string, error) {
 	receiverNames := make([]string, 0)
 	routes := c.alertmanagerConfig.Route.Routes
-	for _, r := range routes {
-		for _, m := range r.Matchers {
-			if m.Name == "ruleId" && m.Value == ruleID {
-				receiverNames = append(receiverNames, r.Receiver)
+	for _, route := range routes {
+		for _, matcher := range route.Matchers {
+			if matcher.Name == ruleIDMatcherName && strings.Contains(matcher.Value, ruleID) {
+				receiverNames = append(receiverNames, route.Receiver)
 			}
 		}
 	}
