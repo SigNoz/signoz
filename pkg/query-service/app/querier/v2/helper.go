@@ -235,7 +235,7 @@ func (q *querier) runBuilderQuery(
 
 		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
 
-		resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
+		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
 		ch <- channelResult{
 			Err:    nil,
