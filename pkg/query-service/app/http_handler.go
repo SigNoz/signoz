@@ -1664,15 +1664,13 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if ok {
-		if request.EventType == model.TrackEvent {
+		switch request.EventType {
+		case model.TrackEvent:
 			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
-		} else if request.EventType == model.GroupEvent {
+		case model.GroupEvent:
 			telemetry.GetInstance().SendGroupEvent(request.Attributes)
-		} else if request.EventType == model.IdentifyEvent {
+		case model.IdentifyEvent:
 			telemetry.GetInstance().SendIdentifyEvent(request.Attributes)
-		} else {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("eventType param missing/incorrect in query")}, "eventType param missing/incorrect in query")
-			return
 		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {

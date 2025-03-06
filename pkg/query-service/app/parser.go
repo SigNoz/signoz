@@ -69,7 +69,7 @@ func parseRegisterEventRequest(r *http.Request) (*model.RegisterEventParams, err
 		return nil, err
 	}
 	// Validate the event type
-	if postData.EventType != model.TrackEvent && postData.EventType != model.GroupEvent && postData.EventType != model.IdentifyEvent {
+	if !postData.EventType.IsValid() {
 		return nil, errors.New("eventType param missing/incorrect in query")
 	}
 
