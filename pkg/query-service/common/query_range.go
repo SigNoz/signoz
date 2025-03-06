@@ -141,7 +141,7 @@ func GetSeriesFromCachedDataV2(data []querycache.CachedSeriesData, start, end, s
 			}
 
 			for _, point := range data.Points {
-				if point.Timestamp >= (start-(start%step*1000)) && point.Timestamp <= end {
+				if point.Timestamp >= (start - ((start % (step * 1000)))) && point.Timestamp <= end {
 					series[h].Points = append(series[h].Points, point)
 				}
 			}
