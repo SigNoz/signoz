@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
@@ -48,28 +48,28 @@ func InitAuthCache(ctx context.Context) error {
 	return nil
 }
 
-func GetUserFromReqContext(ctx context.Context) (*model.UserPayload, error) {
+func GetUserFromReqContext(ctx context.Context) (*types.GettableUser, error) {
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("no claims found in context")
 	}
 
-	user := &model.UserPayload{
-		User: model.User{
-			Id:      claims.UserID,
-			GroupId: claims.GroupID,
+	user := &types.GettableUser{
+		User: types.User{
+			ID:      claims.UserID,
+			GroupID: claims.GroupID,
 			Email:   claims.Email,
-			OrgId:   claims.OrgID,
+			OrgID:   claims.OrgID,
 		},
 	}
 	return user, nil
 }
 
-func IsSelfAccessRequest(user *model.UserPayload, id string) bool { return user.Id == id }
+func IsSelfAccessRequest(user *types.GettableUser, id string) bool { return user.ID == id }
 
-func IsViewer(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.ViewerGroupId }
-func IsEditor(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.EditorGroupId }
-func IsAdmin(user *model.UserPayload) bool  { return user.GroupId == AuthCacheObj.AdminGroupId }
+func IsViewer(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.ViewerGroupId }
+func IsEditor(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.EditorGroupId }
+func IsAdmin(user *types.GettableUser) bool  { return user.GroupID == AuthCacheObj.AdminGroupId }
 
 func ValidatePassword(password string) error {
 	if len(password) < minimumPasswordLength {
