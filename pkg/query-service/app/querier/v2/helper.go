@@ -214,7 +214,8 @@ func (q *querier) runBuilderQuery(
 			filteredSeries, startTime, endTime := filterSeriesPoints(series, miss.Start, miss.End, builderQuery.StepInterval)
 
 			// making sure that empty range doesn't doesn't enter the cache
-			if len(filteredSeries) > 0 {
+			// empty results from filteredSeries means data was filtered out, but empty series means actual empty data
+			if len(filteredSeries) > 0 || len(series) == 0 {
 				filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
 					Data:  filteredSeries,
 					Start: startTime,
