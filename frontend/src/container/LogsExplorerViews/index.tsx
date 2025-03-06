@@ -137,9 +137,6 @@ function LogsExplorerViews({
 	// State
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
-	const [lastLogLineTimestamp, setLastLogLineTimestamp] = useState<
-		number | string | null
-	>();
 	const [requestData, setRequestData] = useState<Query | null>(null);
 	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 	const [queryId, setQueryId] = useState<string>(v4());
@@ -278,14 +275,6 @@ function LogsExplorerViews({
 					start: minTime,
 					end: maxTime,
 				}),
-			// send the lastLogTimeStamp only when the panel type is list and the orderBy is timestamp and the order is desc
-			lastLogLineTimestamp:
-				panelType === PANEL_TYPES.LIST &&
-				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.columnName ===
-					'timestamp' &&
-				requestData?.builder?.queryData?.[0]?.orderBy?.[0]?.order === 'desc'
-					? lastLogLineTimestamp
-					: undefined,
 		},
 		undefined,
 		listQueryKeyRef,
@@ -383,10 +372,6 @@ function LogsExplorerViews({
 				log: orderByTimestamp ? lastLog : null,
 				pageSize: nextPageSize,
 			});
-
-			// initialise the last log timestamp to null as we don't have the logs.
-			// as soon as we scroll to the end of the logs we set the lastLogLineTimestamp to the last log timestamp.
-			setLastLogLineTimestamp(lastLog.timestamp);
 
 			setPage((prevPage) => prevPage + 1);
 
@@ -572,11 +557,6 @@ function LogsExplorerViews({
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [data]);
-
-	useEffect(() => {
-		// clear the lastLogLineTimestamp when the data changes
-		setLastLogLineTimestamp(null);
 	}, [data]);
 
 	useEffect(() => {
