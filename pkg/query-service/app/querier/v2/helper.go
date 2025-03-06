@@ -107,6 +107,16 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 	}
 
 	for _, series := range seriesList {
+		// if data data for the series is empty, then we will add it to the cache
+		if len(series.Points) == 0 {
+			filteredSeries = append(filteredSeries, &v3.Series{
+				Labels:      series.Labels,
+				LabelsArray: series.LabelsArray,
+				Points:      make([]v3.Point, 0),
+			})
+			continue
+		}
+
 		// Sort the points based on timestamp
 		sort.Slice(series.Points, func(i, j int) bool {
 			return series.Points[i].Timestamp < series.Points[j].Timestamp
