@@ -156,17 +156,6 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	beforeCompareAndSelectHash := config.StoreableConfig().Hash
-	config, err = service.compareAndSelectConfig(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	if beforeCompareAndSelectHash == config.StoreableConfig().Hash {
-		service.settings.Logger().Debug("skipping config store update for org", "orgID", orgID, "hash", config.StoreableConfig().Hash)
-		return server, nil
-	}
-
 	err = service.configStore.Set(ctx, config)
 	if err != nil {
 		return nil, err
@@ -196,40 +185,6 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	}
 
 	return config, nil
-}
-
-// compareAndSelectConfig compares the existing config with the config derived from channels.
-// If the hash of the config and the channels mismatch, the config derived from channels is returned.
-func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
-	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	matchers, err := service.configStore.GetMatchers(ctx, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := alertmanagertypes.NewConfigFromChannels(service.config.Global, service.config.Route, channels, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	for ruleID, receivers := range matchers {
-		err = config.CreateRuleIDMatcher(ruleID, receivers)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
-		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels and matchers")
-		return config, nil
-	}
-
-	return incomingConfig, nil
-
 }
 
 // getServer returns the server for the given orgID. It should be called with a the lock held.
