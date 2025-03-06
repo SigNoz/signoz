@@ -85,6 +85,9 @@ func (service *Service) SyncServers(ctx context.Context) error {
 }
 
 func (service *Service) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return nil, err
@@ -99,6 +102,9 @@ func (service *Service) GetAlerts(ctx context.Context, orgID string, params aler
 }
 
 func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -108,6 +114,9 @@ func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts aler
 }
 
 func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -117,6 +126,9 @@ func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver
 }
 
 func (service *Service) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -220,10 +232,8 @@ func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConf
 
 }
 
+// getServer returns the server for the given orgID. It should be called with a the lock held.
 func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
-	service.serversMtx.RLock()
-	defer service.serversMtx.RUnlock()
-
 	server, ok := service.servers[orgID]
 	if !ok {
 		return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for org %s", orgID)
