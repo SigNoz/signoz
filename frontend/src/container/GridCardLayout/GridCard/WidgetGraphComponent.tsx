@@ -103,12 +103,16 @@ function WidgetGraphComponent({
 		(state) => state.globalTime,
 	);
 
-	const onNavigateToExplorerPages = (): void => {
-		navigateToExplorerPages({
-			widget,
-			startTime: minTime,
-			endTime: maxTime,
-		});
+	const onNavigateToExplorerPages = async (): Promise<void> => {
+		try {
+			await navigateToExplorerPages({
+				widget,
+				startTime: minTime,
+				endTime: maxTime,
+			});
+		} catch (error) {
+			console.error('Navigation failed:', error);
+		}
 	};
 
 	const onDeleteHandler = (): void => {
