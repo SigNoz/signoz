@@ -54,6 +54,11 @@ func removeRuleIDFromRoute(route *config.Route, ruleID string) error {
 		return nil
 	}
 
-	route.Matchers[matcherIdx].Value = strings.Join(existingRuleIDs, ruleIDMatcherValueSep)
+	matcher, err := labels.NewMatcher(labels.MatchRegexp, ruleIDMatcherName, strings.Join(existingRuleIDs, ruleIDMatcherValueSep))
+	if err != nil {
+		return err
+	}
+
+	route.Matchers[matcherIdx] = matcher
 	return nil
 }
