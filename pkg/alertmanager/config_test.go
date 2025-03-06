@@ -2,8 +2,11 @@ package alertmanager
 
 import (
 	"context"
+	"net/url"
 	"testing"
+	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/config"
@@ -14,6 +17,9 @@ import (
 func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_ALERTMANAGER_PROVIDER", "legacy")
 	t.Setenv("SIGNOZ_ALERTMANAGER_LEGACY_API__URL", "http://localhost:9093/api")
+	t.Setenv("SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_REPEAT__INTERVAL", "5m")
+	t.Setenv("SIGNOZ_ALERTMANAGER_SIGNOZ_EXTERNAL__URL", "https://example.com/test")
+	t.Setenv("SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_RESOLVE__TIMEOUT", "10s")
 
 	conf, err := config.New(
 		context.Background(),
@@ -32,13 +38,26 @@ func TestNewWithEnvProvider(t *testing.T) {
 	actual := &Config{}
 	err = conf.Unmarshal("alertmanager", actual)
 	require.NoError(t, err)
+	err = conf.UnmarshalYaml("alertmanager", actual)
+	require.NoError(t, err)
 
 	def := NewConfigFactory().New().(Config)
+	def.Signoz.Global.ResolveTimeout = model.Duration(10 * time.Second)
+	def.Signoz.Route.RepeatInterval = 5 * time.Minute
+	def.Signoz.ExternalUrl = &url.URL{
+		Scheme: "https",
+		Host:   "example.com",
+		Path:   "/test",
+	}
 
 	expected := &Config{
 		Provider: "legacy",
 		Legacy: Legacy{
-			ApiURL: "http://localhost:9093/api",
+			ApiURL: &url.URL{
+				Scheme: "http",
+				Host:   "localhost:9093",
+				Path:   "/api",
+			},
 		},
 		Signoz: def.Signoz,
 	}

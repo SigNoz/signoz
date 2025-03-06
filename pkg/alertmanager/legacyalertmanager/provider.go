@@ -50,11 +50,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 
-	url, err := url.Parse(config.Legacy.ApiURL)
-	if err != nil {
-		return nil, err
-	}
-
 	return &provider{
 		config:   config,
 		settings: settings,
@@ -63,7 +58,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		},
 		configStore: configStore,
 		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
-		url:         url,
+		url:         config.Legacy.ApiURL,
 	}, nil
 }
 

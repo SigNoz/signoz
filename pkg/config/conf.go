@@ -1,6 +1,9 @@
 package config
 
 import (
+	"net/url"
+	"reflect"
+
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/v2"
@@ -61,11 +64,28 @@ func (conf *Conf) Unmarshal(path string, input any) error {
 			mapstructure.StringToSliceHookFunc(","),
 			mapstructure.StringToTimeDurationHookFunc(),
 			mapstructure.TextUnmarshallerHookFunc(),
+			StringToUrlHookFunc(),
 		),
 		Result: input,
 	}
 
 	return conf.Koanf.UnmarshalWithConf(path, input, koanf.UnmarshalConf{Tag: "mapstructure", DecoderConfig: dc})
+}
+
+func (conf *Conf) UnmarshalYaml(path string, input any) error {
+	dc := &mapstructure.DecoderConfig{
+		TagName:          "yaml",
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToSliceHookFunc(","),
+			mapstructure.StringToTimeDurationHookFunc(),
+			mapstructure.TextUnmarshallerHookFunc(),
+			StringToUrlHookFunc(),
+		),
+		Result: input,
+	}
+
+	return conf.Koanf.UnmarshalWithConf(path, input, koanf.UnmarshalConf{Tag: "yaml", DecoderConfig: dc})
 }
 
 // Set sets the configuration at the given key.
@@ -87,4 +107,23 @@ func (conf *Conf) Set(key string, input any) error {
 	}
 
 	return nil
+}
+
+func StringToUrlHookFunc() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{},
+	) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf(url.URL{}) {
+			return data, nil
+		}
+
+		// Convert it by parsing
+		u, err := url.Parse(data.(string))
+		return u, err
+	}
 }

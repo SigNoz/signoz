@@ -15,7 +15,7 @@ type Config struct {
 	ExternalUrl *url.URL `mapstructure:"external_url"`
 
 	// GlobalConfig is the global configuration for the alertmanager
-	Global alertmanagertypes.GlobalConfig `mapstructure:"global"`
+	Global alertmanagertypes.GlobalConfig `mapstructure:"global" yaml:"global"`
 
 	// Config of the root node of the routing tree.
 	Route alertmanagertypes.RouteConfig `mapstructure:"route"`
@@ -67,7 +67,8 @@ type NFLogConfig struct {
 func NewConfig() Config {
 	return Config{
 		ExternalUrl: &url.URL{
-			Host: "localhost:8080",
+			Scheme: "http",
+			Host:   "localhost:8080",
 		},
 		Global: alertmanagertypes.GlobalConfig{
 			// Corresponds to the default in upstream (https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/config/config.go#L727)

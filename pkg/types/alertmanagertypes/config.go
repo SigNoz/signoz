@@ -33,10 +33,10 @@ type (
 )
 
 type RouteConfig struct {
-	GroupByStr     []string
-	GroupInterval  time.Duration
-	GroupWait      time.Duration
-	RepeatInterval time.Duration
+	GroupByStr     []string      `mapstructure:"group_by"`
+	GroupInterval  time.Duration `mapstructure:"group_interval"`
+	GroupWait      time.Duration `mapstructure:"group_wait"`
+	RepeatInterval time.Duration `mapstructure:"repeat_interval"`
 }
 
 type StoreableConfig struct {

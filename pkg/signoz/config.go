@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"reflect"
 	"time"
@@ -47,7 +48,7 @@ type Config struct {
 	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
 
 	// Alertmanager config
-	Alertmanager alertmanager.Config `mapstructure:"alertmanager"`
+	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -77,6 +78,10 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 
 	var config Config
 	if err := conf.Unmarshal("", &config); err != nil {
+		return Config{}, err
+	}
+
+	if err := conf.UnmarshalYaml("", &config); err != nil {
 		return Config{}, err
 	}
 
@@ -159,7 +164,12 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
 		fmt.Println("[Deprecated] env ALERTMANAGER_API_PREFIX is deprecated and scheduled for removal. Please use SIGNOZ_ALERTMANAGER_LEGACY_API__URL instead.")
-		config.Alertmanager.Legacy.ApiURL = os.Getenv("ALERTMANAGER_API_PREFIX")
+		u, err := url.Parse(os.Getenv("ALERTMANAGER_API_PREFIX"))
+		if err != nil {
+			fmt.Println("Error parsing ALERTMANAGER_API_PREFIX, using default value")
+		} else {
+			config.Alertmanager.Legacy.ApiURL = u
+		}
 	}
 
 	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
