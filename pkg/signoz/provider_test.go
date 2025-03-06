@@ -30,6 +30,10 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{}, sqlmock.QueryMatcherEqual))
+		NewSQLMigrationProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
+	})
+
+	assert.NotPanics(t, func() {
+		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
 	})
 }
