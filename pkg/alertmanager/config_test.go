@@ -44,7 +44,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	def := NewConfigFactory().New().(Config)
 	def.Signoz.Global.ResolveTimeout = model.Duration(10 * time.Second)
 	def.Signoz.Route.RepeatInterval = 5 * time.Minute
-	def.Signoz.ExternalUrl = &url.URL{
+	def.Signoz.ExternalURL = &url.URL{
 		Scheme: "https",
 		Host:   "example.com",
 		Path:   "/test",

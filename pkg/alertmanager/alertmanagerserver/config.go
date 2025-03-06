@@ -12,7 +12,7 @@ import (
 type Config struct {
 	// The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
 	// See https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/cmd/alertmanager/main.go#L155C54-L155C249
-	ExternalUrl *url.URL `mapstructure:"external_url"`
+	ExternalURL *url.URL `mapstructure:"external_url"`
 
 	// GlobalConfig is the global configuration for the alertmanager
 	Global alertmanagertypes.GlobalConfig `mapstructure:"global" yaml:"global"`
@@ -66,7 +66,7 @@ type NFLogConfig struct {
 
 func NewConfig() Config {
 	return Config{
-		ExternalUrl: &url.URL{
+		ExternalURL: &url.URL{
 			Scheme: "http",
 			Host:   "localhost:8080",
 		},
