@@ -688,27 +688,31 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 
 func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 	return func(ctx context.Context, orgID string, expr string, alerts ...*Alert) {
-		for _, alert := range alerts {
-			generatorURL := alert.GeneratorURL
-			if generatorURL == "" {
-				generatorURL = m.opts.RepoURL
-			}
-
-			a := &alertmanagertypes.PostableAlert{
-				Annotations: alert.Annotations.Map(),
-				StartsAt:    strfmt.DateTime(alert.FiredAt),
-				Alert: alertmanagertypes.AlertModel{
-					Labels:       alert.Labels.Map(),
-					GeneratorURL: strfmt.URI(generatorURL),
-				},
-			}
-			if !alert.ResolvedAt.IsZero() {
-				a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
-			} else {
-				a.EndsAt = strfmt.DateTime(alert.ValidUntil)
-			}
-			m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
+		if len(alerts) == 0 {
+			return
 		}
+
+		alert := alerts[0]
+		generatorURL := alert.GeneratorURL
+		if generatorURL == "" {
+			generatorURL = m.opts.RepoURL
+		}
+
+		a := &alertmanagertypes.PostableAlert{
+			Annotations: alert.Annotations.Map(),
+			StartsAt:    strfmt.DateTime(alert.FiredAt),
+			Alert: alertmanagertypes.AlertModel{
+				Labels:       alert.Labels.Map(),
+				GeneratorURL: strfmt.URI(generatorURL),
+			},
+		}
+		if !alert.ResolvedAt.IsZero() {
+			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
+		} else {
+			a.EndsAt = strfmt.DateTime(alert.ValidUntil)
+		}
+
+		m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
 	}
 }
 
