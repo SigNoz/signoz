@@ -13,6 +13,7 @@ export interface MetricsTableProps {
 	onPaginationChange: (page: number, pageSize: number) => void;
 	setOrderBy: Dispatch<SetStateAction<OrderByPayload>>;
 	totalCount: number;
+	openMetricDetails: (metricName: string) => void;
 }
 
 export interface MetricsSearchProps {
@@ -22,10 +23,11 @@ export interface MetricsSearchProps {
 	setHeatmapView: (value: TreemapViewType) => void;
 }
 
-export interface TreemapProps {
+export interface MetricsTreemapProps {
 	data: MetricsTreeMapResponse | null | undefined;
 	isLoading: boolean;
 	viewType: TreemapViewType;
+	openMetricDetails: (metricName: string) => void;
 }
 
 export interface OrderByPayload {

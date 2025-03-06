@@ -10,7 +10,7 @@ import {
 	TREEMAP_MARGINS,
 	TREEMAP_SQUARE_PADDING,
 } from './constants';
-import { TreemapProps, TreemapTile, TreemapViewType } from './types';
+import { MetricsTreemapProps, TreemapTile, TreemapViewType } from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
@@ -21,7 +21,8 @@ function MetricsTreemap({
 	viewType,
 	data,
 	isLoading,
-}: TreemapProps): JSX.Element {
+	openMetricDetails,
+}: MetricsTreemapProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
 	const treemapWidth = useMemo(
@@ -109,6 +110,7 @@ function MetricsTreemap({
 														width={nodeWidth}
 														height={nodeHeight}
 														style={getTreemapTileStyle(node.data)}
+														onClick={(): void => openMetricDetails(node.data.id)}
 													>
 														<div style={getTreemapTileTextStyle()}>
 															{`${node.data.displayValue}%`}
