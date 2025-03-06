@@ -286,6 +286,7 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []Cach
 	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
 	var existingData []CachedSeriesData
 	if err := json.Unmarshal(cachedData, &existingData); err != nil {
+		zap.L().Error("error unmarshalling existing data", zap.Error(err))
 		return newData
 	}
 
