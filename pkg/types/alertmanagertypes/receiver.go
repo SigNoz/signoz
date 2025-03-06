@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
+	"go.signoz.io/signoz/pkg/errors"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/config/receiver"
@@ -29,24 +30,41 @@ func NewReceiver(input string) (Receiver, error) {
 	return receiver, nil
 }
 
+func newRouteFromReceiver(receiver Receiver) *config.Route {
+	return &config.Route{Receiver: receiver.Name, Continue: true}
+}
+
 func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
 	return receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, tmpl *template.Template, logger *slog.Logger) error {
-	now := time.Now()
-	testAlert := NewTestAlert(receiver, now, now)
-
-	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, testAlert.Labels.Fingerprint(), now.Unix()))
-	ctx = notify.WithGroupLabels(ctx, testAlert.Labels)
+func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *template.Template, logger *slog.Logger, alert *Alert) error {
+	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, alert.Labels.Fingerprint(), time.Now().Unix()))
+	ctx = notify.WithGroupLabels(ctx, alert.Labels)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
+
+	// We need to create a new config with the same global and route config but empty receivers and routes
+	// This is so that we can call CreateReceiver without worrying about the existing receivers and routes.
+	// CreateReceiver will ensure that any defaults (such as http config in the case of slack) are set. Otherwise the integration will panic.
+	testConfig, err := config.CopyWithReset()
+	if err != nil {
+		return err
+	}
+
+	if err := testConfig.CreateReceiver(receiver); err != nil {
+		return err
+	}
 
 	integrations, err := NewReceiverIntegrations(receiver, tmpl, logger)
 	if err != nil {
 		return err
 	}
 
-	if _, err = integrations[0].Notify(ctx, testAlert); err != nil {
+	if len(integrations) == 0 {
+		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no integrations found for receiver %s", receiver.Name)
+	}
+
+	if _, err = integrations[0].Notify(ctx, alert); err != nil {
 		return err
 	}
 

@@ -16,7 +16,7 @@ import (
 type provider struct {
 	settings factory.ScopedProviderSettings
 	sqldb    *sql.DB
-	bundb    *bun.DB
+	bundb    *sqlstore.BunDB
 	sqlxdb   *sqlx.DB
 	dialect  *PGDialect
 }
@@ -58,14 +58,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return &provider{
 		settings: settings,
 		sqldb:    sqldb,
-		bundb:    sqlstore.NewBunDB(sqldb, pgdialect.New(), hooks),
+		bundb:    sqlstore.NewBunDB(settings, sqldb, pgdialect.New(), hooks),
 		sqlxdb:   sqlx.NewDb(sqldb, "postgres"),
 		dialect:  &PGDialect{},
 	}, nil
 }
 
 func (provider *provider) BunDB() *bun.DB {
-	return provider.bundb
+	return provider.bundb.DB
 }
 
 func (provider *provider) SQLDB() *sql.DB {
@@ -78,4 +78,12 @@ func (provider *provider) SQLxDB() *sqlx.DB {
 
 func (provider *provider) Dialect() sqlstore.SQLDialect {
 	return provider.dialect
+}
+
+func (provider *provider) BunDBCtx(ctx context.Context) bun.IDB {
+	return provider.bundb.BunDBCtx(ctx)
+}
+
+func (provider *provider) RunInTxCtx(ctx context.Context, opts *sql.TxOptions, cb func(ctx context.Context) error) error {
+	return provider.bundb.RunInTxCtx(ctx, opts, cb)
 }

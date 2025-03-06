@@ -22,4 +22,10 @@
             width: fit-content;
         }
 	}
+    &__item {
+        width: 100%;
+        .raw-log-content {
+            cursor: pointer;
+        }
+    }
 }
