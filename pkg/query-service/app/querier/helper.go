@@ -127,7 +127,7 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		copy(points, series.Points)
 
 		// Filter the first point that is not a complete aggregation window
-		if series.Points[0].Timestamp != missStart && series.Points[0].Timestamp < missStart {
+		if series.Points[0].Timestamp < missStart {
 			// Remove the first point
 			points = points[1:]
 		}
@@ -140,7 +140,7 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 			points = points[:len(points)-1]
 		}
 
-		// making sure that empty range doesn't doesn't enter the cache
+		// making sure that empty range doesn't enter the cache
 		if len(points) > 0 {
 			filteredSeries = append(filteredSeries, &v3.Series{
 				Labels:      series.Labels,
