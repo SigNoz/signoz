@@ -1,3 +1,3 @@
-### Monitor RDS Postgres with SigNoz
+### Monitor RDS with SigNoz
 
-Collect key RDS Postgres metrics and view them with an out of the box dashboard.  
+Collect key RDS metrics and view them with an out of the box dashboard.
