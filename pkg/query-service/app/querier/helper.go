@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -80,6 +81,77 @@ func prepareLogsQuery(_ context.Context,
 	return query, err
 }
 
+// New function to filter series points
+func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepInterval int64) ([]*v3.Series, int64, int64) {
+	filteredSeries := make([]*v3.Series, 0)
+	startTime := missStart
+	endTime := missEnd
+
+	stepMs := stepInterval * 1000
+
+	// return empty series if the interval is not complete
+	if missStart+stepMs > missEnd {
+		return []*v3.Series{}, missStart, missEnd
+	}
+
+	// if the end time is not a complete aggregation window, then we will have to adjust the end time
+	// to the previous complete aggregation window end
+	endCompleteWindow := missEnd%stepMs == 0
+	if !endCompleteWindow {
+		endTime = missEnd - (missEnd % stepMs)
+	}
+
+	// if the start time is not a complete aggregation window, then we will have to adjust the start time
+	// to the next complete aggregation window
+	if missStart%stepMs != 0 {
+		startTime = missStart + stepMs - (missStart % stepMs)
+	}
+
+	for _, series := range seriesList {
+		// if data for the series is empty, then we will add it to the cache
+		if len(series.Points) == 0 {
+			filteredSeries = append(filteredSeries, &v3.Series{
+				Labels:      series.Labels,
+				LabelsArray: series.LabelsArray,
+				Points:      make([]v3.Point, 0),
+			})
+			continue
+		}
+
+		// Sort the points based on timestamp
+		sort.Slice(series.Points, func(i, j int) bool {
+			return series.Points[i].Timestamp < series.Points[j].Timestamp
+		})
+
+		points := make([]v3.Point, len(series.Points))
+		copy(points, series.Points)
+
+		// Filter the first point that is not a complete aggregation window
+		if series.Points[0].Timestamp != missStart && series.Points[0].Timestamp < missStart {
+			// Remove the first point
+			points = points[1:]
+		}
+
+		// filter the last point if it is not a complete aggregation window
+		if (!endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs)) ||
+			(endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd) {
+			// Remove the last point
+			points = points[:len(points)-1]
+		}
+
+		// making sure that empty range doesn't doesn't enter the cache
+		if len(points) > 0 {
+			filteredSeries = append(filteredSeries, &v3.Series{
+				Labels:      series.Labels,
+				LabelsArray: series.LabelsArray,
+				Points:      points,
+			})
+		}
+	}
+
+	return filteredSeries, startTime, endTime
+}
+
 func (q *querier) runBuilderQuery(
 	ctx context.Context,
 	builderQuery *v3.BuilderQuery,
@@ -122,6 +194,7 @@ func (q *querier) runBuilderQuery(
 		misses := q.queryCache.FindMissingTimeRanges(start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		zap.L().Info("cache misses for logs query", zap.Any("misses", misses))
 		missedSeries := make([]querycache.CachedSeriesData, 0)
+		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
 		for _, miss := range misses {
 			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params, preferRPM)
 			if err != nil {
@@ -138,15 +211,32 @@ func (q *querier) runBuilderQuery(
 				}
 				return
 			}
+			filteredSeries, startTime, endTime := filterSeriesPoints(series, miss.Start, miss.End, builderQuery.StepInterval)
+
+			// making sure that empty range doesn't doesn't enter the cache
+			// empty results from filteredSeries means data was filtered out, but empty series means actual empty data
+			if len(filteredSeries) > 0 || len(series) == 0 {
+				filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
+					Data:  filteredSeries,
+					Start: startTime,
+					End:   endTime,
+				})
+			}
+
+			// for the actual response
 			missedSeries = append(missedSeries, querycache.CachedSeriesData{
+				Data:  series,
 				Start: miss.Start,
 				End:   miss.End,
-				Data:  series,
 			})
 		}
-		mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKeys[queryName], missedSeries)
 
-		resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
+
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
+
+		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
 		ch <- channelResult{
 			Err:    nil,

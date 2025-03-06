@@ -132,7 +132,8 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		}
 
 		// filter the last point if it is not a complete aggregation window
-		if !endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs) {
+		if (!endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs)) ||
+			(endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd) {
 			// Remove the last point
 			points = points[:len(points)-1]
 		}
