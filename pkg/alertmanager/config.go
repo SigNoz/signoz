@@ -45,7 +45,7 @@ func newConfig() factory.Config {
 			ApiURL: "http://alertmanager:9093/api",
 		},
 		Signoz: Signoz{
-			PollInterval: 15 * time.Second,
+			PollInterval: 1 * time.Minute,
 			Config:       alertmanagerserver.NewConfig(),
 		},
 	}
