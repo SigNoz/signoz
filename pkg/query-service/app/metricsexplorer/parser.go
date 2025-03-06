@@ -3,6 +3,7 @@ package metricsexplorer
 import (
 	"encoding/json"
 	"fmt"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"net/http"
 	"strconv"
 
@@ -82,8 +83,16 @@ func ParseInspectMetricsParams(r *http.Request) (*metrics_explorer.InspectMetric
 	if err := json.NewDecoder(r.Body).Decode(&inspectMetricParams); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
-	if inspectMetricParams.End-inspectMetricParams.Start > 1800000 { // half hour only
+	if inspectMetricParams.End-inspectMetricParams.Start > constants.InspectMetricsMaxTimeDiff { // half hour only
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("time duration shouldn't be more than 30 mins")}
 	}
 	return &inspectMetricParams, nil
+}
+
+func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.UpdateMetricsMetadataRequest, *model.ApiError) {
+	var updateMetricsMetadataReq metrics_explorer.UpdateMetricsMetadataRequest
+	if err := json.NewDecoder(r.Body).Decode(&updateMetricsMetadataReq); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return &updateMetricsMetadataReq, nil
 }

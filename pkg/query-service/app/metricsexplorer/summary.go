@@ -530,3 +530,18 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 
 	return baseResponse, nil
 }
+
+func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {
+	metadata := model.UpdateMetricsMetadata{
+		MetricName:  params.MetricName,
+		MetricType:  params.MetricType,
+		Temporality: params.Temporality,
+		Unit:        params.Unit,
+		Description: params.Description,
+	}
+	apiError := receiver.reader.UpdateMetricsMetadata(ctx, &metadata)
+	if apiError != nil {
+		return apiError
+	}
+	return nil
+}

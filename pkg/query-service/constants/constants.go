@@ -86,6 +86,7 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
+var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("UPDATED_METADATA", "true")
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
@@ -733,3 +734,5 @@ var MaterializedDataTypeMap = map[string]string{
 	"int64":   "number",
 	"float64": "number",
 }
+
+const InspectMetricsMaxTimeDiff = 1800000

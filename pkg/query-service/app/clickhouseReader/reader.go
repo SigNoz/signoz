@@ -96,6 +96,9 @@ const (
 	signozTSLocalTableNameV41Week = "time_series_v4_1week"
 	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
+	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
+	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
+
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
 	maxProgressiveSteps                   = 4
@@ -3720,6 +3723,11 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 			continue
 		}
 
+		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		if apiError == nil && metadata != nil {
+			typ = string(metadata.MetricType)
+		}
+
 		// Non-monotonic cumulative sums are treated as gauges
 		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
 			typ = "Gauge"
@@ -3839,6 +3847,10 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		if temporality == string(v3.Delta) {
 			deltaExists = true
 		}
+	}
+	metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+	if apiError == nil && metadata != nil {
+		metricType = string(metadata.MetricType)
 	}
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, 'le') as le from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $3 GROUP BY le ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
@@ -6568,4 +6580,70 @@ LIMIT 40`,
 	}
 
 	return fingerprints, nil
+}
+
+func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError {
+	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataLocalTable)
+	err := r.db.Exec(ctx, delQuery, metricName)
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	r.cache.Remove(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName)
+	return nil
+}
+
+func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError {
+	apiErr := r.DeleteMetricsMetadata(ctx, req.MetricName)
+	if apiErr != nil {
+		return apiErr
+	}
+	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, type, description, created_at)
+VALUES ( ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.MetricType, req.Description, time.Now().UnixMilli())
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+req.MetricName, req, -1)
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return nil
+}
+
+func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metricName string) (*model.UpdateMetricsMetadata, *model.ApiError) {
+	metricsMetadata := new(model.UpdateMetricsMetadata)
+	retrieve, err := r.cache.Retrieve(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName, metricsMetadata, true)
+	if err != nil {
+		query := fmt.Sprintf(`SELECT metric_name, type, description
+FROM %s.%s
+WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+		err := r.db.Select(ctx, query, metricName)
+		if err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+	}
+	if retrieve == cache.RetrieveStatusHit {
+		return metricsMetadata, nil
+	}
+	return nil, nil
+}
+
+func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
+	var allMetricsMetadata []model.UpdateMetricsMetadata
+	var errorList []error
+	// Fetch all rows from ClickHouse
+	query := fmt.Sprintf(`SELECT metric_name, type, description FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	err := r.db.Select(ctx, &allMetricsMetadata, query)
+	if err != nil {
+		errorList = append(errorList, err)
+		return errorList
+	}
+	for _, m := range allMetricsMetadata {
+		err := r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+m.MetricName, &m, -1)
+		if err != nil {
+			errorList = append(errorList, err)
+		}
+	}
+
+	return errorList
 }
