@@ -45,6 +45,9 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewAddIntegrationsFactory(),
 			sqlmigration.NewAddLicensesFactory(),
 			sqlmigration.NewAddPatsFactory(),
+			sqlmigration.NewModifyDatetimeFactory(),
+			sqlmigration.NewModifyOrgDomainFactory(),
+			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
 		),
 	)
 	if err != nil {
@@ -62,7 +65,10 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	sqlStore, _ := NewTestSqliteDB(t)
 
-	dao.InitDao(sqlStore)
+	err := dao.InitDao(sqlStore)
+	if err != nil {
+		t.Fatalf("could not initialize dao: %v", err)
+	}
 	dashboards.InitDB(sqlStore.SQLxDB())
 
 	return sqlStore
