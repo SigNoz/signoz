@@ -107,7 +107,7 @@ func filterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 	}
 
 	for _, series := range seriesList {
-		// if data data for the series is empty, then we will add it to the cache
+		// if data for the series is empty, then we will add it to the cache
 		if len(series.Points) == 0 {
 			filteredSeries = append(filteredSeries, &v3.Series{
 				Labels:      series.Labels,
