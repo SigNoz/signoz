@@ -28,7 +28,10 @@ type SigNoz struct {
 func New(
 	ctx context.Context,
 	config Config,
-	providerConfig ProviderConfig,
+	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
+	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
+	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
+	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, version.Build{}, config.Instrumentation)
@@ -36,7 +39,7 @@ func New(
 		return nil, err
 	}
 
-	instrumentation.Logger().InfoContext(ctx, "starting signoz", "config", config)
+	instrumentation.Logger().DebugContext(ctx, "starting signoz", "config", config)
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
@@ -46,7 +49,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Cache,
-		providerConfig.CacheProviderFactories,
+		cacheProviderFactories,
 		config.Cache.Provider,
 	)
 	if err != nil {
@@ -58,7 +61,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Web,
-		providerConfig.WebProviderFactories,
+		webProviderFactories,
 		config.Web.Provider(),
 	)
 	if err != nil {
@@ -70,22 +73,19 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLStore,
-		providerConfig.SQLStoreProviderFactories,
+		sqlstoreProviderFactories,
 		config.SQLStore.Provider,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// add the org migration here since we need to pass the sqlstore
-	providerConfig.SQLMigrationProviderFactories.Add(sqlmigration.NewUpdateOrganizationFactory(sqlstore))
-
 	// Initialize telemetrystore from the available telemetrystore provider factories
 	telemetrystore, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.TelemetryStore,
-		providerConfig.TelemetryStoreProviderFactories,
+		telemetrystoreProviderFactories,
 		config.TelemetryStore.Provider,
 	)
 	if err != nil {
@@ -97,7 +97,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		providerConfig.SQLMigrationProviderFactories,
+		NewSQLMigrationProviderFactories(sqlstore),
 	)
 	if err != nil {
 		return nil, err
