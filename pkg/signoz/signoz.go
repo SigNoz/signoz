@@ -74,6 +74,9 @@ func New(
 		return nil, err
 	}
 
+	// add the org migration here since we need to pass the sqlstore
+	providerConfig.SQLMigrationProviderFactories.Add(sqlmigration.NewUpdateOrganizationFactory(sqlstore))
+
 	// Initialize telemetrystore from the available telemetrystore provider factories
 	telemetrystore, err := factory.NewProviderFromNamedMap(
 		ctx,

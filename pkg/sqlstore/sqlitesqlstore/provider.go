@@ -17,6 +17,7 @@ type provider struct {
 	sqldb    *sql.DB
 	bundb    *sqlstore.BunDB
 	sqlxdb   *sqlx.DB
+	dialect  *SQLiteDialect
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -49,6 +50,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		sqldb:    sqldb,
 		bundb:    sqlstore.NewBunDB(settings, sqldb, sqlitedialect.New(), hooks),
 		sqlxdb:   sqlx.NewDb(sqldb, "sqlite3"),
+		dialect:  &SQLiteDialect{},
 	}, nil
 }
 
@@ -62,6 +64,10 @@ func (provider *provider) SQLDB() *sql.DB {
 
 func (provider *provider) SQLxDB() *sqlx.DB {
 	return provider.sqlxdb
+}
+
+func (provider *provider) Dialect() sqlstore.SQLDialect {
+	return provider.dialect
 }
 
 func (provider *provider) BunDBCtx(ctx context.Context) bun.IDB {
