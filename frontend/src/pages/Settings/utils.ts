@@ -1,7 +1,6 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
-import { isCloudUser, isEECloudUser } from 'utils/app';
 
 import {
 	alertChannels,
@@ -18,12 +17,11 @@ export const getRoutes = (
 	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
+	isCloudAccount: boolean,
+	isEECloudAccount: boolean,
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
-
-	const isCloudAccount = isCloudUser();
-	const isEECloudAccount = isEECloudUser();
 
 	const isAdmin = userRole === USER_ROLES.ADMIN;
 	const isEditor = userRole === USER_ROLES.EDITOR;
