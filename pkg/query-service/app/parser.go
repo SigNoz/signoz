@@ -33,6 +33,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -471,8 +472,8 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-func parseUserRequest(r *http.Request) (*model.User, error) {
-	var req model.User
+func parseUserRequest(r *http.Request) (*types.User, error) {
+	var req types.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -525,8 +526,8 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 	return &req, nil
 }
 
-func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
-	var req model.ApdexSettings
+func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
+	var req types.ApdexSettings
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -572,8 +573,8 @@ func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
 	return &req, nil
 }
 
-func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
-	var req model.Organization
+func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
+	var req types.Organization
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

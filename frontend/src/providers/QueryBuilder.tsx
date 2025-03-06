@@ -763,7 +763,12 @@ export function QueryBuilderProvider({
 		[panelType, stagedQuery],
 	);
 
-	const { safeNavigate } = useSafeNavigate();
+	const { safeNavigate } = useSafeNavigate({
+		preventSameUrlNavigation: !(
+			initialDataSource === DataSource.LOGS ||
+			initialDataSource === DataSource.TRACES
+		),
+	});
 
 	const redirectWithQueryBuilderData = useCallback(
 		(

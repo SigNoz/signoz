@@ -20,6 +20,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 const (
@@ -206,7 +207,7 @@ type Telemetry struct {
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context) (int, error)
 	userRoleCallback       func(ctx context.Context, groupId string) (string, error)
-	getUsersCallback       func(ctx context.Context) ([]model.UserPayload, *model.ApiError)
+	getUsersCallback       func(ctx context.Context) ([]types.GettableUser, *model.ApiError)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
 }
@@ -223,7 +224,7 @@ func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, group
 	a.userRoleCallback = callback
 }
 
-func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]model.UserPayload, *model.ApiError)) {
+func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.GettableUser, *model.ApiError)) {
 	a.getUsersCallback = callback
 }
 
@@ -544,7 +545,7 @@ func getOutboundIP() string {
 	return string(ip)
 }
 
-func (a *Telemetry) IdentifyUser(user *model.User) {
+func (a *Telemetry) IdentifyUser(user *types.User) {
 	if user.Email == DEFAULT_CLOUD_EMAIL {
 		return
 	}
@@ -554,7 +555,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		return
 	}
 	// extract user group from user.groupId
-	role, _ := a.userRoleCallback(context.Background(), user.GroupId)
+	role, _ := a.userRoleCallback(context.Background(), user.GroupID)
 
 	if a.saasOperator != nil {
 		if role != "" {

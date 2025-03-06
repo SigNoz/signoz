@@ -13,18 +13,6 @@ export function extractDomain(email: string): string {
 	return emailParts[1];
 }
 
-export const isCloudUser = (): boolean => {
-	const { hostname } = window.location;
-
-	return hostname?.endsWith('signoz.cloud');
-};
-
-export const isEECloudUser = (): boolean => {
-	const { hostname } = window.location;
-
-	return hostname?.endsWith('signoz.io');
-};
-
 export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
