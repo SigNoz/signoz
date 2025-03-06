@@ -7,7 +7,7 @@ import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
-import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
+import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -84,20 +84,16 @@ export default function OverviewRightPanelGraph({
 
 	const navigateToTraces = useNavigateToTraces();
 
+	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
+
 	const handleGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] => (
 			xValue,
 			yValue,
 			mouseX,
 			mouseY,
-		): Promise<void> =>
-			onGraphClickHandler(handleSetTimeStamp)(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				type,
-			),
+		): Promise<void> => onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
 

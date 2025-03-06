@@ -1,12 +1,13 @@
 import './NoData.styles.scss';
 
 import { Button, Typography } from 'antd';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LifeBuoy, RefreshCw } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
-import { isCloudUser } from 'utils/app';
 
 function NoData(): JSX.Element {
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
 	return (
 		<div className="not-found-trace">
 			<section className="description">

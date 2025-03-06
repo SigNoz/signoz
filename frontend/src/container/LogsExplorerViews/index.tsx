@@ -15,6 +15,7 @@ import {
 	initialFilters,
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
+	OPERATORS,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
@@ -312,6 +313,29 @@ function LogsExplorerViews({
 				pageSize: params.pageSize,
 			});
 
+			// Add filter for activeLogId if present
+			let updatedFilters = paginateData.filters;
+			if (activeLogId) {
+				updatedFilters = {
+					...paginateData.filters,
+					items: [
+						...(paginateData.filters?.items || []),
+						{
+							id: v4(),
+							key: {
+								key: 'id',
+								type: '',
+								dataType: DataTypes.String,
+								isColumn: true,
+							},
+							op: OPERATORS['<='],
+							value: activeLogId,
+						},
+					],
+					op: 'AND',
+				};
+			}
+
 			const queryData: IBuilderQuery[] =
 				query.builder.queryData.length > 1
 					? query.builder.queryData
@@ -319,6 +343,7 @@ function LogsExplorerViews({
 							{
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
+								...(updatedFilters ? { filters: updatedFilters } : {}),
 							},
 					  ];
 
@@ -332,7 +357,7 @@ function LogsExplorerViews({
 
 			return data;
 		},
-		[orderByTimestamp, listQuery],
+		[orderByTimestamp, listQuery, activeLogId],
 	);
 
 	const handleEndReached = useCallback(

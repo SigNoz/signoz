@@ -1,6 +1,7 @@
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
@@ -12,6 +13,10 @@ import { getRoutes } from './utils';
 function SettingsPage(): JSX.Element {
 	const { pathname } = useLocation();
 	const { user, featureFlags, licenses } = useAppContext();
+	const {
+		isCloudUser: isCloudAccount,
+		isEECloudUser: isEECloudAccount,
+	} = useGetTenantLicense();
 
 	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
 
@@ -32,9 +37,19 @@ function SettingsPage(): JSX.Element {
 				isCurrentOrgSettings,
 				isGatewayEnabled,
 				isWorkspaceBlocked,
+				isCloudAccount,
+				isEECloudAccount,
 				t,
 			),
-		[user.role, isCurrentOrgSettings, isGatewayEnabled, isWorkspaceBlocked, t],
+		[
+			user.role,
+			isCurrentOrgSettings,
+			isGatewayEnabled,
+			isWorkspaceBlocked,
+			isCloudAccount,
+			isEECloudAccount,
+			t,
+		],
 	);
 
 	return <RouteTab routes={routes} activeKey={pathname} history={history} />;
