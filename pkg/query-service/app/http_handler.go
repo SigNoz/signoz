@@ -1664,7 +1664,14 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if ok {
-		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
+		switch request.EventType {
+		case model.TrackEvent:
+			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
+		case model.GroupEvent:
+			telemetry.GetInstance().SendGroupEvent(request.Attributes)
+		case model.IdentifyEvent:
+			telemetry.GetInstance().SendIdentifyEvent(request.Attributes)
+		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
