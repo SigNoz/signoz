@@ -223,7 +223,7 @@ func TestFilterSeriesPoints(t *testing.T) {
 			expectedEnd:    1609475400000,
 		},
 		{
-			name:         "empty series should return empty result",
+			name:         "respect actual empty series",
 			missStart:    1609466400000, // 01 Jan 2021 02:00:00 UTC
 			missEnd:      1609475400000, // 01 Jan 2021 04:30:00 UTC
 			stepInterval: 3600,          // 1 hour
