@@ -86,7 +86,7 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
-var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("UPDATED_METADATA", "true")
+var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {

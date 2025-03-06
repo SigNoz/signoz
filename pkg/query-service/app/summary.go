@@ -149,13 +149,13 @@ func (aH *APIHandler) UpdateMetricsMetadataData(w http.ResponseWriter, r *http.R
 	ctx := r.Context()
 	params, apiError := explorer.ParseUpdateMetricsMetadataParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		zap.L().Error("error parsing update metrics metadata params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
 	apiError = aH.SummaryService.UpdateMetricsMetadata(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting inspect metrics data", zap.Error(apiError.Err))
+		zap.L().Error("error updating metrics metadata", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}

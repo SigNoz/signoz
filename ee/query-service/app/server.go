@@ -302,7 +302,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	errorList := qb.PreloadMetricsMetadata(context.Background())
 	for _, er := range errorList {
-		zap.L().Error("preload metrics updated metadata failed", zap.Error(er))
+		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
 	}
 
 	return s, nil
