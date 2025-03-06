@@ -3,6 +3,7 @@ package common
 import (
 	"math"
 	"regexp"
+	"sort"
 	"time"
 	"unicode"
 
@@ -141,7 +142,7 @@ func GetSeriesFromCachedDataV2(data []querycache.CachedSeriesData, start, end, s
 			}
 
 			for _, point := range data.Points {
-				if point.Timestamp >= (start - ((start % (step * 1000)))) && point.Timestamp <= end {
+				if point.Timestamp >= (start-(start%(step*1000))) && point.Timestamp <= end {
 					series[h].Points = append(series[h].Points, point)
 				}
 			}
@@ -155,4 +156,76 @@ func GetSeriesFromCachedDataV2(data []querycache.CachedSeriesData, start, end, s
 		newSeries = append(newSeries, s)
 	}
 	return newSeries
+}
+
+// filter series points for storing in cache
+func FilterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepInterval int64) ([]*v3.Series, int64, int64) {
+	filteredSeries := make([]*v3.Series, 0)
+	startTime := missStart
+	endTime := missEnd
+
+	stepMs := stepInterval * 1000
+
+	// return empty series if the interval is not complete
+	if missStart+stepMs > missEnd {
+		return []*v3.Series{}, missStart, missEnd
+	}
+
+	// if the end time is not a complete aggregation window, then we will have to adjust the end time
+	// to the previous complete aggregation window end
+	endCompleteWindow := missEnd%stepMs == 0
+	if !endCompleteWindow {
+		endTime = missEnd - (missEnd % stepMs)
+	}
+
+	// if the start time is not a complete aggregation window, then we will have to adjust the start time
+	// to the next complete aggregation window
+	if missStart%stepMs != 0 {
+		startTime = missStart + stepMs - (missStart % stepMs)
+	}
+
+	for _, series := range seriesList {
+		// if data for the series is empty, then we will add it to the cache
+		if len(series.Points) == 0 {
+			filteredSeries = append(filteredSeries, &v3.Series{
+				Labels:      series.Labels,
+				LabelsArray: series.LabelsArray,
+				Points:      make([]v3.Point, 0),
+			})
+			continue
+		}
+
+		// Sort the points based on timestamp
+		sort.Slice(series.Points, func(i, j int) bool {
+			return series.Points[i].Timestamp < series.Points[j].Timestamp
+		})
+
+		points := make([]v3.Point, len(series.Points))
+		copy(points, series.Points)
+
+		// Filter the first point that is not a complete aggregation window
+		if series.Points[0].Timestamp < missStart {
+			// Remove the first point
+			points = points[1:]
+		}
+
+		// filter the last point if it is not a complete aggregation window
+		// adding or condition to handle the end time is equal to a complete window end https://github.com/SigNoz/signoz/pull/7212#issuecomment-2703677190
+		if (!endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs)) ||
+			(endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd) {
+			// Remove the last point
+			points = points[:len(points)-1]
+		}
+
+		// making sure that empty range doesn't enter the cache
+		if len(points) > 0 {
+			filteredSeries = append(filteredSeries, &v3.Series{
+				Labels:      series.Labels,
+				LabelsArray: series.LabelsArray,
+				Points:      points,
+			})
+		}
+	}
+
+	return filteredSeries, startTime, endTime
 }
