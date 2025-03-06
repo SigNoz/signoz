@@ -123,3 +123,36 @@ func GetSeriesFromCachedData(data []querycache.CachedSeriesData, start, end int6
 	}
 	return newSeries
 }
+
+// It is different from GetSeriesFromCachedData because doesn't remove a point if it is >= (start - (start % step*1000))
+func GetSeriesFromCachedDataV2(data []querycache.CachedSeriesData, start, end, step int64) []*v3.Series {
+	series := make(map[uint64]*v3.Series)
+
+	for _, cachedData := range data {
+		for _, data := range cachedData.Data {
+			h := labels.FromMap(data.Labels).Hash()
+
+			if _, ok := series[h]; !ok {
+				series[h] = &v3.Series{
+					Labels:      data.Labels,
+					LabelsArray: data.LabelsArray,
+					Points:      make([]v3.Point, 0),
+				}
+			}
+
+			for _, point := range data.Points {
+				if point.Timestamp >= (start-(start%step*1000)) && point.Timestamp <= end {
+					series[h].Points = append(series[h].Points, point)
+				}
+			}
+		}
+	}
+
+	newSeries := make([]*v3.Series, 0, len(series))
+	for _, s := range series {
+		s.SortPoints()
+		s.RemoveDuplicatePoints()
+		newSeries = append(newSeries, s)
+	}
+	return newSeries
+}

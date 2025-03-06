@@ -230,16 +230,10 @@ func (q *querier) runBuilderQuery(
 			})
 		}
 
-		filteredMergedSeries, err := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
-		if err != nil {
-			filteredMergedSeries = filteredMissedSeries
-		}
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
 		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
 
-		mergedSeries, err := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
-		if err != nil {
-			mergedSeries = missedSeries
-		}
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
 
 		resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
 

@@ -278,15 +278,15 @@ func (q *queryCache) storeMergedData(cacheKey string, mergedData []CachedSeriesD
 	}
 }
 
-func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []CachedSeriesData) ([]CachedSeriesData, error) {
+func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
 	if q.cache == nil {
-		return newData, nil
+		return newData
 	}
 
 	cachedData, _, _ := q.cache.Retrieve(cacheKey, true)
 	var existingData []CachedSeriesData
 	if err := json.Unmarshal(cachedData, &existingData); err != nil {
-		return nil, err
+		return newData
 	}
 
 	allData := append(existingData, newData...)
@@ -330,16 +330,12 @@ func (q *queryCache) MergeWithCachedSeriesDataV2(cacheKey string, newData []Cach
 		mergedData = append(mergedData, *current)
 	}
 
-	return mergedData, nil
+	return mergedData
 }
 
 func (q *queryCache) MergeWithCachedSeriesData(cacheKey string, newData []CachedSeriesData) []CachedSeriesData {
 
-	mergedData, err := q.MergeWithCachedSeriesDataV2(cacheKey, newData)
-	if err != nil {
-		// In case of error, we return the entire range as a miss
-		mergedData = newData
-	}
+	mergedData := q.MergeWithCachedSeriesDataV2(cacheKey, newData)
 	q.storeMergedData(cacheKey, mergedData)
 	return mergedData
 }
