@@ -872,14 +872,11 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	storedJSON.UpdatedBy = &claims.Email
 	storedJSON.UpdatedAt = &now
 
-	err = m.ruleDB.EditRule(ctx, storedJSON, func(ctx context.Context) error {
+	err = m.ruleDB.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
+	if err != nil {
 		if err := m.syncRuleStateWithTask(taskName, &storedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
-
-		return nil
-	})
-	if err != nil {
 		return nil, err
 	}
 
