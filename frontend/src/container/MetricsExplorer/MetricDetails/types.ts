@@ -19,4 +19,5 @@ export interface DashboardsAndAlertsPopoverProps {
 export interface MetadataProps {
 	metricName: string;
 	metadata: MetricDetails['metadata'];
+	refetchMetricDetails: () => void;
 }

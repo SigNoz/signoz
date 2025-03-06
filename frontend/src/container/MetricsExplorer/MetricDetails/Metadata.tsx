@@ -15,7 +15,11 @@ import { MetricTypeRenderer } from '../Summary/utils';
 import { METRIC_METADATA_KEYS } from './constants';
 import { MetadataProps } from './types';
 
-function Metadata({ metricName, metadata }: MetadataProps): JSX.Element {
+function Metadata({
+	metricName,
+	metadata,
+	refetchMetricDetails,
+}: MetadataProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
 	const [
 		metricMetadata,
@@ -127,6 +131,7 @@ function Metadata({ metricName, metadata }: MetadataProps): JSX.Element {
 						notifications.success({
 							message: 'Metadata updated successfully',
 						});
+						refetchMetricDetails();
 						setIsEditing(false);
 					} else {
 						notifications.error({
@@ -140,7 +145,13 @@ function Metadata({ metricName, metadata }: MetadataProps): JSX.Element {
 					}),
 			},
 		);
-	}, [updateMetricMetadata, metricName, metricMetadata, notifications]);
+	}, [
+		updateMetricMetadata,
+		metricName,
+		metricMetadata,
+		notifications,
+		refetchMetricDetails,
+	]);
 
 	const actionButton = useMemo(() => {
 		if (isEditing) {

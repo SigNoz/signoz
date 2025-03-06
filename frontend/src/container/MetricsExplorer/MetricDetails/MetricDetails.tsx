@@ -22,7 +22,12 @@ function MetricDetails({
 	metricName,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { data, isLoading, isFetching } = useGetMetricDetails(metricName ?? '', {
+	const {
+		data,
+		isLoading,
+		isFetching,
+		refetch: refetchMetricDetails,
+	} = useGetMetricDetails(metricName ?? '', {
 		enabled: !!metricName,
 	});
 
@@ -96,7 +101,11 @@ function MetricDetails({
 						dashboards={metric.dashboards}
 						alerts={metric.alerts}
 					/>
-					<Metadata metricName={metric?.name} metadata={metric.metadata} />
+					<Metadata
+						metricName={metric?.name}
+						metadata={metric.metadata}
+						refetchMetricDetails={refetchMetricDetails}
+					/>
 				</div>
 			)}
 		</Drawer>
