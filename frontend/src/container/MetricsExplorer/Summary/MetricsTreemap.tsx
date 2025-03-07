@@ -94,6 +94,9 @@ function MetricsTreemap({
 								.map((node, i) => {
 									const nodeWidth = node.x1 - node.x0 - TREEMAP_SQUARE_PADDING;
 									const nodeHeight = node.y1 - node.y0 - TREEMAP_SQUARE_PADDING;
+									if (nodeWidth < 0 || nodeHeight < 0) {
+										return null;
+									}
 									return (
 										<Group
 											// eslint-disable-next-line react/no-array-index-key
