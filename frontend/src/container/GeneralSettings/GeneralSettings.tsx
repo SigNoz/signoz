@@ -5,6 +5,7 @@ import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
 import { useAppContext } from 'providers/App/App';
@@ -23,7 +24,6 @@ import {
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
-import { isCloudUser } from 'utils/app';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
@@ -394,7 +394,7 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const renderConfig = [
 		{

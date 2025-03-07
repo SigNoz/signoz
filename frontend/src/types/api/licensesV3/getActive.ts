@@ -13,6 +13,11 @@ export enum LicenseState {
 	ACTIVE = 'ACTIVE',
 }
 
+export enum LicensePlatform {
+	SELF_HOSTED = 'SELF_HOSTED',
+	CLOUD = 'CLOUD',
+}
+
 export type LicenseV3EventQueueResModel = {
 	event: LicenseEvent;
 	status: string;
@@ -26,4 +31,5 @@ export type LicenseV3ResModel = {
 	status: LicenseStatus;
 	state: LicenseState;
 	event_queue: LicenseV3EventQueueResModel;
+	platform: LicensePlatform;
 };

@@ -47,6 +47,7 @@
 		"@tanstack/react-virtual": "3.11.2",
 		"@uiw/react-md-editor": "3.23.5",
 		"@visx/group": "3.3.0",
+		"@visx/hierarchy": "3.12.0",
 		"@visx/shape": "3.5.0",
 		"@visx/tooltip": "3.3.0",
 		"@xstate/react": "^3.0.0",
@@ -69,8 +70,9 @@
 		"cross-env": "^7.0.3",
 		"css-loader": "5.0.0",
 		"css-minimizer-webpack-plugin": "5.0.1",
+		"d3-hierarchy": "3.1.2",
 		"dayjs": "^1.10.7",
-		"dompurify": "3.1.3",
+		"dompurify": "3.2.4",
 		"dotenv": "8.2.0",
 		"event-source-polyfill": "1.0.31",
 		"eventemitter3": "5.0.1",
@@ -250,10 +252,6 @@
 		"body-parser": "1.20.3",
 		"http-proxy-middleware": "3.0.3",
 		"cross-spawn": "7.0.5",
-		"cookie": "^0.7.1",
-		"react-router/path-to-regexp": "^1.7.0",
-		"webpack-dev-server/path-to-regexp": "^1.7.0",
-		"express/path-to-regexp": "^1.7.0",
-		"@types/webpack-dev-server/path-to-regexp": "^1.7.0"
+		"cookie": "^0.7.1"
 	}
 }

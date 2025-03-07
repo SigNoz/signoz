@@ -21,7 +21,6 @@ import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeatures
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import { LicenseV3ResModel } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
-import { UserFlags } from 'types/api/user/setFlags';
 import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
@@ -158,13 +157,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
-	function setUserFlags(userflags: UserFlags): void {
-		setUser((prev) => ({
-			...prev,
-			flags: userflags,
-		}));
-	}
-
 	function updateUser(user: IUser): void {
 		setUser((prev) => ({
 			...prev,
@@ -252,7 +244,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferencesFetchError,
 			licensesRefetch,
 			updateUser,
-			setUserFlags,
 			updateOrgPreferences,
 			updateOrg,
 		}),
