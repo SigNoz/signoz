@@ -392,11 +392,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING,
 		);
 
-		logEvent(`Slow API Warning`, {
-			duration: `${data.duration}ms`,
-			url: data.url,
-			threshold: data.threshold,
-		});
+		logEvent(
+			`Slow API Warning`,
+			{
+				durationMs: data.duration,
+				url: data.url,
+				thresholdMs: data.threshold,
+			},
+			'track',
+			true, // rate limited - controlled by Backend
+		);
 
 		const isDontShowSlowApiWarning = dontShowSlowApiWarning === 'true';
 
