@@ -4647,7 +4647,8 @@ func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	category := r.URL.Query().Get("category")
 
-	queries, err := explorer.GetViewsForFilters(sourcePage, name, category)
+	user := common.GetUserFromContext(r.Context())
+	queries, err := explorer.GetViewsForFilters(r.Context(), user.OrgID, sourcePage, name, category)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4667,7 +4668,9 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	uuid, err := explorer.CreateView(r.Context(), view)
+
+	user := common.GetUserFromContext(r.Context())
+	uuid, err := explorer.CreateView(r.Context(), user.OrgID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4678,7 +4681,8 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
-	view, err := explorer.GetView(viewID)
+	user := common.GetUserFromContext(r.Context())
+	view, err := explorer.GetView(r.Context(), user.OrgID, viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4701,7 +4705,8 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = explorer.UpdateView(r.Context(), viewID, view)
+	user := common.GetUserFromContext(r.Context())
+	err = explorer.UpdateView(r.Context(), user.OrgID, viewID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4713,7 +4718,8 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
 	viewID := mux.Vars(r)["viewId"]
-	err := explorer.DeleteView(viewID)
+	user := common.GetUserFromContext(r.Context())
+	err := explorer.DeleteView(r.Context(), user.OrgID, viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return

@@ -43,25 +43,27 @@ func (migration *updateDashboard) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer tx.Rollback()
 
-	// add org id to dashboards table
-	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "dashboards", "org_id"); err != nil {
+	// get all org ids
+	var orgIDs []string
+	if err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
 		return err
-	} else if !exists {
-		if _, err := tx.NewAddColumn().Table("dashboards").ColumnExpr("org_id TEXT").Exec(ctx); err != nil {
-			return err
-		}
+	}
 
-		// get all org ids
-		var orgIDs []string
-		if err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
+	// add org id to dashboards table
+	for _, table := range []string{"dashboards", "saved_views"} {
+		if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, table, "org_id"); err != nil {
 			return err
-		}
-
-		// check if there is one org ID if yes then set it to all dashboards.
-		if len(orgIDs) == 1 {
-			orgID := orgIDs[0]
-			if _, err := tx.NewUpdate().Table("dashboards").Set("org_id = ?", orgID).Exec(ctx); err != nil {
+		} else if !exists {
+			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").Exec(ctx); err != nil {
 				return err
+			}
+
+			// check if there is one org ID if yes then set it to all dashboards.
+			if len(orgIDs) == 1 {
+				orgID := orgIDs[0]
+				if _, err := tx.NewUpdate().Table(table).Set("org_id = ?", orgID).Where("org_id IS NULL").Exec(ctx); err != nil {
+					return err
+				}
 			}
 		}
 	}
