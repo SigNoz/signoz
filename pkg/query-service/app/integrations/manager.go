@@ -9,11 +9,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type IntegrationAuthor struct {
@@ -32,8 +32,8 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets        `json:"logs"`
-	Dashboards []dashboards.Data `json:"dashboards"`
+	Logs       LogsAssets            `json:"logs"`
+	Dashboards []types.DashboardData `json:"dashboards"`
 
 	Alerts []rules.PostableRule `json:"alerts"`
 }
@@ -306,7 +306,7 @@ func (m *Manager) parseDashboardUuid(dashboardUuid string) (
 func (m *Manager) GetInstalledIntegrationDashboardById(
 	ctx context.Context,
 	dashboardUuid string,
-) (*dashboards.Dashboard, *model.ApiError) {
+) (*types.Dashboard, *model.ApiError) {
 	integrationId, dashboardId, apiErr := m.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
 		return nil, apiErr
@@ -328,14 +328,18 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 			if id, ok := dId.(string); ok && id == dashboardId {
 				isLocked := 1
 				author := "integration"
-				return &dashboards.Dashboard{
-					Uuid:      m.dashboardUuid(integrationId, string(dashboardId)),
-					Locked:    &isLocked,
-					Data:      dd,
-					CreatedAt: integration.Installation.InstalledAt,
-					CreateBy:  &author,
-					UpdatedAt: integration.Installation.InstalledAt,
-					UpdateBy:  &author,
+				return &types.Dashboard{
+					UUID:   m.dashboardUuid(integrationId, string(dashboardId)),
+					Locked: &isLocked,
+					Data:   dd,
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: integration.Installation.InstalledAt,
+						UpdatedAt: integration.Installation.InstalledAt,
+					},
+					UserAuditable: types.UserAuditable{
+						CreatedBy: author,
+						UpdatedBy: author,
+					},
 				}, nil
 			}
 		}
@@ -348,13 +352,13 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 
 func (m *Manager) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
-) ([]dashboards.Dashboard, *model.ApiError) {
+) ([]types.Dashboard, *model.ApiError) {
 	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	result := []dashboards.Dashboard{}
+	result := []types.Dashboard{}
 
 	for _, ii := range installedIntegrations {
 		for _, dd := range ii.Assets.Dashboards {
@@ -362,14 +366,18 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 				if dashboardId, ok := dId.(string); ok {
 					isLocked := 1
 					author := "integration"
-					result = append(result, dashboards.Dashboard{
-						Uuid:      m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
-						Locked:    &isLocked,
-						Data:      dd,
-						CreatedAt: ii.Installation.InstalledAt,
-						CreateBy:  &author,
-						UpdatedAt: ii.Installation.InstalledAt,
-						UpdateBy:  &author,
+					result = append(result, types.Dashboard{
+						UUID:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
+						Locked: &isLocked,
+						Data:   dd,
+						TimeAuditable: types.TimeAuditable{
+							CreatedAt: ii.Installation.InstalledAt,
+							UpdatedAt: ii.Installation.InstalledAt,
+						},
+						UserAuditable: types.UserAuditable{
+							CreatedBy: author,
+							UpdatedBy: author,
+						},
 					})
 				}
 			}

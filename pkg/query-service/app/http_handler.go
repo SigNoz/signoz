@@ -271,11 +271,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
-	dashboards.LoadDashboardFiles(aH.featureFlags)
-	// if errReadingDashboards != nil {
-	// 	return nil, errReadingDashboards
-	// }
-
 	// check if at least one user is created
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
 	if err.Error() != "" {
@@ -1050,7 +1045,8 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
-	allDashboards, err := dashboards.GetDashboards(r.Context())
+	user := common.GetUserFromContext(r.Context())
+	allDashboards, err := dashboards.GetDashboards(r.Context(), user.OrgID)
 	if err != nil {
 		RespondError(w, err, nil)
 		return
@@ -1104,7 +1100,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		inter = Intersection(inter, tags2Dash[tag])
 	}
 
-	filteredDashboards := []dashboards.Dashboard{}
+	filteredDashboards := []types.Dashboard{}
 	for _, val := range inter {
 		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
@@ -1116,7 +1112,8 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(r.Context(), uuid, aH.featureFlags)
+	user := common.GetUserFromContext(r.Context())
+	err := dashboards.DeleteDashboard(r.Context(), user.OrgID, uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -1203,7 +1200,8 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), uuid, postData, aH.featureFlags)
+	user := common.GetUserFromContext(r.Context())
+	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), user.OrgID, uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -1217,7 +1215,8 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
 
-	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
+	user := common.GetUserFromContext(r.Context())
+	dashboard, apiError := dashboards.GetDashboard(r.Context(), user.OrgID, uuid)
 
 	if apiError != nil {
 		if apiError.Type() != model.ErrorNotFound {
@@ -1266,8 +1265,8 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
-
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), postData, aH.featureFlags)
+	user := common.GetUserFromContext(r.Context())
+	dash, apiErr := dashboards.CreateDashboard(r.Context(), user.OrgID, user.Email, postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)

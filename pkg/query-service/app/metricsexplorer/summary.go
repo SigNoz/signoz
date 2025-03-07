@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
@@ -155,7 +156,8 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	g.Go(func() error {
 		var metricNames []string
 		metricNames = append(metricNames, metricName)
-		data, err := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
+		user := common.GetUserFromContext(ctx)
+		data, err := dashboards.GetDashboardsWithMetricNames(ctx, user.OrgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -322,7 +324,8 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 	alertsRelatedData := make(map[string][]metrics_explorer.Alert)
 
 	g.Go(func() error {
-		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
+		user := common.GetUserFromContext(ctx)
+		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, user.OrgID, metricNames)
 		if apiError != nil {
 			return apiError
 		}

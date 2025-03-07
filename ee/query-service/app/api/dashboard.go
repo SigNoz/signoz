@@ -31,24 +31,25 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 
 	// Get the dashboard UUID from the request
 	uuid := mux.Vars(r)["uuid"]
-	if strings.HasPrefix(uuid,"integration") {
+	if strings.HasPrefix(uuid, "integration") {
 		RespondError(w, &model.ApiError{Typ: model.ErrorForbidden, Err: errors.New("dashboards created by integrations cannot be unlocked")}, "You are not authorized to lock/unlock this dashboard")
-		return 
+		return
 	}
-	dashboard, err := dashboards.GetDashboard(r.Context(), uuid)
+
+	user := common.GetUserFromContext(r.Context())
+	dashboard, err := dashboards.GetDashboard(r.Context(), user.OrgID, uuid)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, err.Error())
 		return
 	}
 
-	user := common.GetUserFromContext(r.Context())
-	if !auth.IsAdmin(user) && (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
+	if !auth.IsAdmin(user) && (dashboard.CreatedBy != nil && *dashboard.CreatedBy != user.Email) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorForbidden, Err: err}, "You are not authorized to lock/unlock this dashboard")
 		return
 	}
 
 	// Lock/Unlock the dashboard
-	err = dashboards.LockUnlockDashboard(r.Context(), uuid, lock)
+	err = dashboards.LockUnlockDashboard(r.Context(), user.OrgID, uuid, lock)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, err.Error())
 		return
