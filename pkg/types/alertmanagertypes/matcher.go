@@ -35,6 +35,10 @@ func addRuleIDMatcherToRoute(route *config.Route, ruleID string) error {
 	}
 
 	existingRuleIDs := strings.Split(route.Matchers[matcherIdx].Value, ruleIDMatcherValueSep)
+	if slices.Contains(existingRuleIDs, ruleID) {
+		return nil
+	}
+
 	existingRuleIDs = append(existingRuleIDs, ruleID)
 	var err error
 	route.Matchers[matcherIdx], err = labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, strings.Join(existingRuleIDs, ruleIDMatcherValueSep))
