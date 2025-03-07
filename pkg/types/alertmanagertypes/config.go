@@ -221,9 +221,21 @@ func (c *Config) GetReceiver(name string) (Receiver, error) {
 	return Receiver{}, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
-func (c *Config) UpdateReceiver(receiver config.Receiver) error {
-	if receiver.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
+func (c *Config) UpdateReceiver(input config.Receiver) error {
+	if err := input.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return err
+	}
+
+	// We marshal and unmarshal the receiver to ensure that the receiver is
+	// initialized with defaults from the upstream alertmanager.
+	bytes, err := yaml.Marshal(input)
+	if err != nil {
+		return err
+	}
+
+	receiver := config.Receiver{}
+	if err := yaml.Unmarshal(bytes, &receiver); err != nil {
+		return err
 	}
 
 	// find and update receiver
