@@ -178,12 +178,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	}
 
 	config.SetGlobalConfig(service.config.Global)
-	if config.AlertmanagerConfig().Route == nil {
-		config.SetRouteConfig(service.config.Route)
-	} else {
-		config.UpdateRouteConfig(service.config.Route)
-	}
-
+	config.SetRouteConfig(service.config.Route)
 	return config, nil
 }
 

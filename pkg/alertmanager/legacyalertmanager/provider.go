@@ -140,9 +140,16 @@ func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts al
 
 	legacyAlerts := make([]postableAlert, len(alerts))
 	for i, alert := range alerts {
-		receivers, err := cfg.ReceiverNamesFromRuleID(alert.Alert.Labels["ruleID"])
-		if err != nil {
-			return err
+		ruleID, ok := alert.Alert.Labels[alertmanagertypes.RuleIDMatcherName]
+		if !ok {
+			provider.settings.Logger().WarnContext(ctx, "cannot find ruleID for alert, skipping sending alert to alertmanager", "alert", alert)
+			continue
+		}
+
+		receivers := cfg.ReceiverNamesFromRuleID(ruleID)
+		if len(receivers) == 0 {
+			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "ruleID", ruleID, "alert", alert)
+			continue
 		}
 
 		legacyAlerts[i] = postableAlert{

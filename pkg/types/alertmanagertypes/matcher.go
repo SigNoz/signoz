@@ -9,17 +9,17 @@ import (
 )
 
 const (
-	ruleIDMatcherName     string = "ruleId"
+	RuleIDMatcherName     string = "ruleId"
 	ruleIDMatcherValueSep string = "|"
 )
 
 func appendRuleIDToRoute(route *config.Route, ruleID string) error {
 	matcherIdx := slices.IndexFunc(route.Matchers, func(m *labels.Matcher) bool {
-		return m.Name == ruleIDMatcherName
+		return m.Name == RuleIDMatcherName
 	})
 
 	if matcherIdx == -1 {
-		matcher, err := labels.NewMatcher(labels.MatchRegexp, ruleIDMatcherName, ruleID)
+		matcher, err := labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, ruleID)
 		if err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func appendRuleIDToRoute(route *config.Route, ruleID string) error {
 
 func removeRuleIDFromRoute(route *config.Route, ruleID string) error {
 	matcherIdx := slices.IndexFunc(route.Matchers, func(m *labels.Matcher) bool {
-		return m.Name == ruleIDMatcherName
+		return m.Name == RuleIDMatcherName
 	})
 
 	if matcherIdx == -1 {
@@ -54,11 +54,24 @@ func removeRuleIDFromRoute(route *config.Route, ruleID string) error {
 		return nil
 	}
 
-	matcher, err := labels.NewMatcher(labels.MatchRegexp, ruleIDMatcherName, strings.Join(existingRuleIDs, ruleIDMatcherValueSep))
+	matcher, err := labels.NewMatcher(labels.MatchRegexp, RuleIDMatcherName, strings.Join(existingRuleIDs, ruleIDMatcherValueSep))
 	if err != nil {
 		return err
 	}
 
 	route.Matchers[matcherIdx] = matcher
 	return nil
+}
+
+func matcherContainsRuleID(matchers config.Matchers, ruleID string) bool {
+	for _, matcher := range matchers {
+		if matcher.Name == RuleIDMatcherName {
+			existingRuleIDs := strings.Split(matcher.Value, ruleIDMatcherValueSep)
+			if slices.Contains(existingRuleIDs, ruleID) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

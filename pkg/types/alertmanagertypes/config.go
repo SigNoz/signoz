@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-	"strings"
 	"time"
 
 	"dario.cat/mergo"
@@ -166,19 +165,6 @@ func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
 	c.storeableConfig.UpdatedAt = time.Now()
 }
 
-func (c *Config) UpdateRouteConfig(routeConfig RouteConfig) {
-	for _, route := range c.alertmanagerConfig.Route.Routes {
-		route.GroupByStr = routeConfig.GroupByStr
-		route.GroupInterval = (*model.Duration)(&routeConfig.GroupInterval)
-		route.GroupWait = (*model.Duration)(&routeConfig.GroupWait)
-		route.RepeatInterval = (*model.Duration)(&routeConfig.RepeatInterval)
-	}
-
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
-}
-
 func (c *Config) AlertmanagerConfig() *config.Config {
 	return c.alertmanagerConfig
 }
@@ -313,18 +299,16 @@ func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
 	return nil
 }
 
-func (c *Config) ReceiverNamesFromRuleID(ruleID string) ([]string, error) {
+func (c *Config) ReceiverNamesFromRuleID(ruleID string) []string {
 	receiverNames := make([]string, 0)
 	routes := c.alertmanagerConfig.Route.Routes
 	for _, route := range routes {
-		for _, matcher := range route.Matchers {
-			if matcher.Name == ruleIDMatcherName && strings.Contains(matcher.Value, ruleID) {
-				receiverNames = append(receiverNames, route.Receiver)
-			}
+		if ok := matcherContainsRuleID(route.Matchers, ruleID); ok {
+			receiverNames = append(receiverNames, route.Receiver)
 		}
 	}
 
-	return receiverNames, nil
+	return receiverNames
 }
 
 type storeOptions struct {
