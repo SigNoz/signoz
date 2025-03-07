@@ -8,9 +8,9 @@
 	color: var(--bg-vanilla-100);
 
 	.periscope-card-header {
-		background-color: var(--bg-slate-500);
 		padding: 12px;
 		width: 100%;
+		border-bottom: 1px solid var(--Slate-400, #1d212d);
 	}
 
 	.periscope-card-content {
@@ -19,7 +19,7 @@
 	}
 
 	.periscope-card-footer {
-		background-color: var(--bg-slate-500);
+		border-top: 1px solid var(--Slate-400, #1d212d);
 		padding: 12px;
 		width: 100%;
 	}
