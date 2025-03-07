@@ -11,10 +11,8 @@ import (
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -91,15 +89,14 @@ func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID 
 		return nil, err
 	}
 
+	route, err := NewRouteFromRouteConfig(nil, routeConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return NewConfig(&config.Config{
-		Global: &globalConfig,
-		Route: &config.Route{
-			Receiver:       DefaultReceiverName,
-			GroupByStr:     routeConfig.GroupByStr,
-			GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
-			GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
-			RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
-		},
+		Global:    &globalConfig,
+		Route:     route,
 		Receivers: []config.Receiver{{Name: DefaultReceiverName}},
 	}, orgID), nil
 }
@@ -160,25 +157,18 @@ func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
 	return nil
 }
 
-func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
-	if c.alertmanagerConfig.Route == nil {
-		c.alertmanagerConfig.Route = &config.Route{
-			Receiver:       DefaultReceiverName,
-			GroupByStr:     routeConfig.GroupByStr,
-			GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
-			GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
-			RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
-		}
-	} else {
-		c.alertmanagerConfig.Route.GroupByStr = routeConfig.GroupByStr
-		c.alertmanagerConfig.Route.GroupInterval = (*model.Duration)(&routeConfig.GroupInterval)
-		c.alertmanagerConfig.Route.GroupWait = (*model.Duration)(&routeConfig.GroupWait)
-		c.alertmanagerConfig.Route.RepeatInterval = (*model.Duration)(&routeConfig.RepeatInterval)
+func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
+	route, err := NewRouteFromRouteConfig(c.alertmanagerConfig.Route, routeConfig)
+	if err != nil {
+		return err
 	}
+	c.alertmanagerConfig.Route = route
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (c *Config) AlertmanagerConfig() *config.Config {
@@ -189,23 +179,7 @@ func (c *Config) StoreableConfig() *StoreableConfig {
 	return c.storeableConfig
 }
 
-func (c *Config) CreateReceiver(input config.Receiver) error {
-	if err := input.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return err
-	}
-
-	// We marshal and unmarshal the receiver to ensure that the receiver is
-	// initialized with defaults from the upstream alertmanager.
-	bytes, err := yaml.Marshal(input)
-	if err != nil {
-		return err
-	}
-
-	receiver := config.Receiver{}
-	if err := yaml.Unmarshal(bytes, &receiver); err != nil {
-		return err
-	}
-
+func (c *Config) CreateReceiver(receiver config.Receiver) error {
 	// check that receiver name is not already used
 	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
@@ -213,7 +187,12 @@ func (c *Config) CreateReceiver(input config.Receiver) error {
 		}
 	}
 
-	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, newRouteFromReceiver(receiver))
+	route, err := NewRouteFromReceiver(receiver)
+	if err != nil {
+		return err
+	}
+
+	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
 	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
@@ -236,29 +215,17 @@ func (c *Config) GetReceiver(name string) (Receiver, error) {
 	return Receiver{}, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
-func (c *Config) UpdateReceiver(input config.Receiver) error {
-	if err := input.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return err
-	}
-
-	// We marshal and unmarshal the receiver to ensure that the receiver is
-	// initialized with defaults from the upstream alertmanager.
-	bytes, err := yaml.Marshal(input)
-	if err != nil {
-		return err
-	}
-
-	receiver := config.Receiver{}
-	if err := yaml.Unmarshal(bytes, &receiver); err != nil {
-		return err
-	}
-
+func (c *Config) UpdateReceiver(receiver config.Receiver) error {
 	// find and update receiver
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
 			c.alertmanagerConfig.Receivers[i] = receiver
 			break
 		}
+	}
+
+	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return err
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))

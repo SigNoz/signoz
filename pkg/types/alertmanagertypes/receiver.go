@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"go.signoz.io/signoz/pkg/errors"
+	"gopkg.in/yaml.v2"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/config/receiver"
@@ -27,11 +28,23 @@ func NewReceiver(input string) (Receiver, error) {
 		return Receiver{}, err
 	}
 
-	return receiver, nil
-}
+	// We marshal and unmarshal the receiver to ensure that the receiver is
+	// initialized with defaults from the upstream alertmanager.
+	bytes, err := yaml.Marshal(receiver)
+	if err != nil {
+		return Receiver{}, err
+	}
 
-func newRouteFromReceiver(receiver Receiver) *config.Route {
-	return &config.Route{Receiver: receiver.Name, Continue: true, GroupByStr: []string{"alertname"}}
+	receiverWithDefaults := Receiver{}
+	if err := yaml.Unmarshal(bytes, &receiverWithDefaults); err != nil {
+		return Receiver{}, err
+	}
+
+	if err := receiverWithDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return Receiver{}, err
+	}
+
+	return receiverWithDefaults, nil
 }
 
 func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
@@ -52,6 +65,11 @@ func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *
 	}
 
 	if err := testConfig.CreateReceiver(receiver); err != nil {
+		return err
+	}
+
+	receiver, err = testConfig.GetReceiver(receiver.Name)
+	if err != nil {
 		return err
 	}
 
