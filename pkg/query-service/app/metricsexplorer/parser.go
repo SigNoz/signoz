@@ -135,6 +135,7 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 			}
 		}
 	case v3.MetricTypeGauge:
+	case v3.MetricTypeSummary:
 		if updateMetricsMetadataReq.Temporality == "" {
 			updateMetricsMetadataReq.Temporality = v3.Unspecified
 		}

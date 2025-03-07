@@ -6613,11 +6613,39 @@ func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, metricName
 }
 
 func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError {
+	if req.MetricType == v3.MetricTypeHistogram {
+		labels := []string{"le"}
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		if apiError != nil {
+			return apiError
+		}
+		if !hasLabels {
+			return &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("metric '%s' cannot be set as histogram type", req.MetricName),
+			}
+		}
+	}
+
+	if req.MetricType == v3.MetricTypeSummary {
+		labels := []string{"quantile"}
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		if apiError != nil {
+			return apiError
+		}
+		if !hasLabels {
+			return &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("metric '%s' cannot be set as summary type", req.MetricName),
+			}
+		}
+	}
+
 	apiErr := r.DeleteMetricsMetadata(ctx, req.MetricName)
 	if apiErr != nil {
 		return apiErr
 	}
-	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temoporality, is_monotonic, type, description, unit, created_at)
+	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
 VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt)
 	if err != nil {
@@ -6625,9 +6653,42 @@ VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadat
 	}
 	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+req.MetricName, req, -1)
 	if err != nil {
-		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+		return &model.ApiError{Typ: "CachingErr", Err: err}
 	}
 	return nil
+}
+
+func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError) {
+	if len(labels) == 0 {
+		return true, nil
+	}
+
+	conditions := "metric_name = ?"
+	for range labels {
+		conditions += " AND JSONHas(labels, ?) = 1"
+	}
+
+	query := fmt.Sprintf(`
+        SELECT count(*) > 0 as has_le
+        FROM %s.%s
+        WHERE %s
+        LIMIT 1`, signozMetricDBName, signozTSTableNameV41Day, conditions)
+
+	args := make([]interface{}, 0, len(labels)+1)
+	args = append(args, metricName)
+	for _, label := range labels {
+		args = append(args, label)
+	}
+
+	var hasLE bool
+	err := r.db.QueryRow(ctx, query, args...).Scan(&hasLE)
+	if err != nil {
+		return false, &model.ApiError{
+			Typ: "ClickHouseError",
+			Err: fmt.Errorf("error checking summary labels: %v", err),
+		}
+	}
+	return hasLE, nil
 }
 
 func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metricName string) (*model.UpdateMetricsMetadata, *model.ApiError) {
