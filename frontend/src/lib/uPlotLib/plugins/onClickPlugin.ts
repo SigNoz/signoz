@@ -7,7 +7,9 @@ export interface OnClickPluginOpts {
 		mouseX: number,
 		mouseY: number,
 		data?: {
-			[key: string]: string;
+			[key: string]: string | boolean;
+			queryName: string;
+			inFocusOrNot: boolean;
 		},
 	) => void;
 	apiResponse?: MetricRangePayloadProps;
@@ -31,6 +33,10 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 				let metric = {};
 				const { series } = u;
 				const apiResult = opts.apiResponse?.data?.result || [];
+				const outputMetric = {
+					queryName: '',
+					inFocusOrNot: false,
+				};
 
 				// this is to get the metric value of the focused series
 				if (Array.isArray(series) && series.length > 0) {
@@ -38,13 +44,18 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						if (item?.show && item?._focus) {
-							const { metric: focusedMetric } = apiResult[index - 1] || [];
+							const { metric: focusedMetric, queryName } = apiResult[index - 1] || [];
 							metric = focusedMetric;
+							outputMetric.queryName = queryName;
+							outputMetric.inFocusOrNot = true;
 						}
 					});
 				}
 
-				opts.onClick(xValue, yValue, mouseX, mouseY, metric);
+				opts.onClick(xValue, yValue, mouseX, mouseY, {
+					...metric,
+					...outputMetric,
+				});
 			};
 			u.over.addEventListener('click', handleClick);
 		},

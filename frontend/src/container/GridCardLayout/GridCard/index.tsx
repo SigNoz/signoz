@@ -248,7 +248,7 @@ function GridCardGraph({
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
-	const currentDataSource = updatedQuery.builder.queryData[0].dataSource;
+	const currentDataSource = updatedQuery?.builder?.queryData?.[0]?.dataSource;
 
 	const menuList = ((): MenuItemKeys[] => {
 		// First filter out CreateAlerts for specific panel types

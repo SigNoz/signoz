@@ -33,6 +33,7 @@ export function useNavigateToExplorer(): (
 						...item.filters,
 						items: selectedFilters,
 					},
+					groupBy: [],
 				})),
 			},
 		}),
