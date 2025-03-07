@@ -1,13 +1,13 @@
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -15,7 +15,6 @@ import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
-import { identity, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
@@ -51,8 +50,6 @@ function App(): JSX.Element {
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 
-	const { trackPageView } = useAnalytics();
-
 	const { hostname, pathname } = window.location;
 
 	const {
@@ -69,17 +66,20 @@ function App(): JSX.Element {
 
 				const { name, email, role } = user;
 
+				const domain = extractDomain(email);
+				const hostNameParts = hostname.split('.');
+
 				const identifyPayload = {
 					email,
 					name,
 					company_name: orgName,
-					role,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
 					source: 'signoz-ui',
+					role,
 				};
-
-				const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
-				const domain = extractDomain(email);
-				const hostNameParts = hostname.split('.');
 
 				const groupTraits = {
 					name: orgName,
@@ -90,8 +90,13 @@ function App(): JSX.Element {
 					source: 'signoz-ui',
 				};
 
-				window.analytics.identify(email, sanitizedIdentifyPayload);
-				window.analytics.group(domain, groupTraits);
+				if (email) {
+					logEvent('Email Identified', identifyPayload, 'identify');
+				}
+
+				if (domain) {
+					logEvent('Domain Identified', groupTraits, 'group');
+				}
 
 				posthog?.identify(email, {
 					email,
@@ -192,9 +197,7 @@ function App(): JSX.Element {
 				hide_default_launcher: false,
 			});
 		}
-
-		trackPageView(pathname);
-	}, [pathname, trackPageView]);
+	}, [pathname]);
 
 	useEffect(() => {
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
