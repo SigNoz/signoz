@@ -532,12 +532,17 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 }
 
 func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {
+	if params.MetricType == v3.MetricTypeSum && !params.IsMonotonic && params.Temporality == v3.Cumulative {
+		params.MetricType = v3.MetricTypeGauge
+	}
 	metadata := model.UpdateMetricsMetadata{
 		MetricName:  params.MetricName,
 		MetricType:  params.MetricType,
 		Temporality: params.Temporality,
 		Unit:        params.Unit,
 		Description: params.Description,
+		IsMonotonic: params.IsMonotonic,
+		CreatedAt:   time.Now(),
 	}
 	apiError := receiver.reader.UpdateMetricsMetadata(ctx, &metadata)
 	if apiError != nil {

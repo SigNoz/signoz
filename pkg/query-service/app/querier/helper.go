@@ -214,6 +214,7 @@ func (q *querier) runBuilderQuery(
 		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
 		if apiError == nil && metadata != nil {
 			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(metadata.MetricType)
+			builderQuery.Temporality = metadata.Temporality
 		}
 	}
 

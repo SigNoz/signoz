@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"time"
 )
 
 type UpdateMetricsMetadata struct {
@@ -11,6 +12,8 @@ type UpdateMetricsMetadata struct {
 	Description string         `json:"description" ch:"description"`
 	Unit        string         `json:"unit" ch:"unit"`
 	Temporality v3.Temporality `json:"temporality" ch:"temporality"`
+	IsMonotonic bool           `json:"is_monotonic" ch:"is_monotonic"`
+	CreatedAt   time.Time      `json:"created_at" ch:"created_at"`
 }
 
 func (c *UpdateMetricsMetadata) MarshalBinary() (data []byte, err error) {

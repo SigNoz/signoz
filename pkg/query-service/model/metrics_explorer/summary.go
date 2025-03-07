@@ -167,4 +167,5 @@ type UpdateMetricsMetadataRequest struct {
 	Description string         `json:"description"`
 	Unit        string         `json:"unit"`
 	Temporality v3.Temporality `json:"temporality"`
+	IsMonotonic bool           `json:"isMonotonic"`
 }

@@ -2892,8 +2892,22 @@ func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 }
 
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
-
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	var metricNamesToQuery []string
+	for _, metricName := range metricNames {
+		updatedMetadata, apiErr := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		if apiErr != nil {
+			return nil, apiErr.Err
+		}
+		if updatedMetadata != nil {
+			if _, exists := metricNameToTemporality[metricName]; !exists {
+				metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+			}
+			metricNameToTemporality[metricName][updatedMetadata.Temporality] = true
+		} else {
+			metricNamesToQuery = append(metricNamesToQuery, metricName)
+		}
+	}
 
 	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableNameV41Day)
 
@@ -3851,6 +3865,12 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
 	if apiError == nil && metadata != nil {
 		metricType = string(metadata.MetricType)
+		temporality = string(metadata.Temporality)
+		if temporality == string(v3.Delta) {
+			deltaExists = true
+		}
+		isMonotonic = metadata.IsMonotonic
+		description = metadata.Description
 	}
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, 'le') as le from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $3 GROUP BY le ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
@@ -6597,9 +6617,9 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model
 	if apiErr != nil {
 		return apiErr
 	}
-	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, type, description, created_at)
-VALUES ( ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
-	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.MetricType, req.Description, time.Now().UnixMilli())
+	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temoporality, is_monotonic, type, description, unit, created_at)
+VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt)
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
