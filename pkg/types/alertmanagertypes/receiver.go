@@ -31,7 +31,7 @@ func NewReceiver(input string) (Receiver, error) {
 }
 
 func newRouteFromReceiver(receiver Receiver) *config.Route {
-	return &config.Route{Receiver: receiver.Name, Continue: true}
+	return &config.Route{Receiver: receiver.Name, Continue: true, GroupByStr: []string{"alertname"}}
 }
 
 func NewReceiverIntegrations(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
