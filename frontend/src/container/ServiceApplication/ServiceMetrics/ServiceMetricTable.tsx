@@ -114,6 +114,7 @@ function ServiceMetricTable({
 				loading={isLoading}
 				dataSource={services}
 				rowKey="serviceName"
+				className="service-metrics-table"
 			/>
 		</>
 	);
