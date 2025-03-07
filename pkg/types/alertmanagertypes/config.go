@@ -161,13 +161,21 @@ func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
 }
 
 func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
-	c.alertmanagerConfig.Route = &config.Route{
-		Receiver:       DefaultReceiverName,
-		GroupByStr:     routeConfig.GroupByStr,
-		GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
-		GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
-		RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
+	if c.alertmanagerConfig.Route == nil {
+		c.alertmanagerConfig.Route = &config.Route{
+			Receiver:       DefaultReceiverName,
+			GroupByStr:     routeConfig.GroupByStr,
+			GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
+			GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
+			RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
+		}
+	} else {
+		c.alertmanagerConfig.Route.GroupByStr = routeConfig.GroupByStr
+		c.alertmanagerConfig.Route.GroupInterval = (*model.Duration)(&routeConfig.GroupInterval)
+		c.alertmanagerConfig.Route.GroupWait = (*model.Duration)(&routeConfig.GroupWait)
+		c.alertmanagerConfig.Route.RepeatInterval = (*model.Duration)(&routeConfig.RepeatInterval)
 	}
+
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
