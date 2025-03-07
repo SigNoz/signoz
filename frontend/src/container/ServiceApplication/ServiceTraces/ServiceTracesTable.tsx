@@ -71,6 +71,7 @@ function ServiceTraceTable({
 				loading={loading}
 				dataSource={services}
 				rowKey="serviceName"
+				className="service-traces-table"
 			/>
 		</>
 	);
