@@ -1,6 +1,7 @@
 import {
 	MetricDetails,
 	MetricDetailsAlert,
+	MetricDetailsAttribute,
 	MetricDetailsDashboard,
 } from 'api/metricsExplorer/getMetricDetails';
 
@@ -20,4 +21,9 @@ export interface MetadataProps {
 	metricName: string;
 	metadata: MetricDetails['metadata'];
 	refetchMetricDetails: () => void;
+}
+
+export interface AllAttributesProps {
+	attributes: MetricDetailsAttribute[];
+	metricName: string;
 }

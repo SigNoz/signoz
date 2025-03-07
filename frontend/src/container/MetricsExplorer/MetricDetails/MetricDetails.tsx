@@ -2,12 +2,13 @@ import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Divider, Drawer, Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from 'lucide-react';
-import { useMemo } from 'react';
+import { Compass, X } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
+import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Metadata from './Metadata';
 import { MetricDetailsProps } from './types';
@@ -47,14 +48,27 @@ function MetricDetails({
 		return `${timeSeriesActive} ⎯ ${timeSeriesTotal} active`;
 	}, [metric]);
 
+	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
+		// TODO: Implement this when explore page is ready
+		console.log(metricName);
+	}, [metricName]);
+
 	return (
 		<Drawer
 			width="60%"
 			title={
-				<>
-					<Divider type="vertical" />
-					<Typography.Text className="title">{metric?.name}</Typography.Text>
-				</>
+				<div className="metric-details-header">
+					<div className="metric-details-title">
+						<Divider type="vertical" />
+						<Typography.Text>{metric?.name}</Typography.Text>
+					</div>
+					<Button
+						onClick={goToMetricsExplorerwithSelectedMetric}
+						icon={<Compass size={16} />}
+					>
+						<Typography.Text>Open in Explorer</Typography.Text>
+					</Button>
+				</div>
 			}
 			placement="right"
 			onClose={onClose}
@@ -101,11 +115,14 @@ function MetricDetails({
 						dashboards={metric.dashboards}
 						alerts={metric.alerts}
 					/>
-					<Metadata
-						metricName={metric?.name}
-						metadata={metric.metadata}
-						refetchMetricDetails={refetchMetricDetails}
-					/>
+					<div>
+						<Metadata
+							metricName={metric?.name}
+							metadata={metric.metadata}
+							refetchMetricDetails={refetchMetricDetails}
+						/>
+						<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+					</div>
 				</div>
 			)}
 		</Drawer>

@@ -1,8 +1,31 @@
 .metric-details-drawer {
+	.metric-details-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		.metric-details-title {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.ant-typography {
+				font-family: 'Geist Mono';
+			}
+		}
+
+		.ant-btn {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			background-color: var(--bg-slate-300);
+		}
+	}
+
 	.metric-details-content {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: 32px;
 
 		.metric-details-content-grid {
 			.labels-row,
@@ -75,6 +98,7 @@
 				align-items: center;
 				.ant-typography {
 					font-family: 'Geist Mono';
+					color: var(--bg-robin-400);
 				}
 
 				.action-button {
@@ -84,6 +108,59 @@
 					align-self: flex-start;
 					.ant-typography {
 						font-family: 'Inter';
+						color: var(--bg-vanilla-400);
+					}
+				}
+
+				.all-attributes-search-input {
+					width: 300px;
+					border: 1px solid var(--bg-slate-300);
+				}
+			}
+
+			.all-attributes-content {
+				.metric-metadata-key {
+					.all-attributes-key {
+						display: flex;
+						justify-content: space-between;
+						.ant-typography:first-child {
+							font-family: 'Geist Mono';
+							color: var(--bg-robin-400);
+						}
+						.ant-typography:last-child {
+							font-family: 'Geist Mono';
+							color: var(--bg-vanilla-400);
+							background-color: rgba(171, 189, 255, 0.1);
+							height: 24px;
+							width: 24px;
+							border-radius: 50%;
+							text-align: center;
+							display: flex;
+							align-items: center;
+							justify-content: center;
+						}
+					}
+				}
+
+				.metric-metadata-value {
+					.all-attributes-value {
+						display: flex;
+						flex-direction: column;
+						gap: 4px;
+						max-height: 120px;
+						overflow-y: scroll;
+						.ant-btn {
+							text-align: left;
+							width: fit-content;
+							background-color: var(--bg-slate-300);
+							.ant-typography {
+								color: var(--bg-vanilla-400);
+								font-family: 'Geist Mono';
+							}
+							&:hover {
+								background-color: var(--bg-slate-400);
+							}
+						}
 					}
 				}
 			}
@@ -108,7 +185,7 @@
 				text-align: center;
 				.field-renderer-container {
 					.label {
-						color: var(--bg-vanilla-100);
+						color: var(--bg-vanilla-400);
 					}
 				}
 			}
@@ -116,6 +193,12 @@
 			.metric-metadata-value {
 				background: rgba(22, 25, 34, 0.4);
 				overflow-x: scroll;
+				.field-renderer-container {
+					.label {
+						color: var(--bg-vanilla-100);
+						padding-right: 10px;
+					}
+				}
 				&::-webkit-scrollbar {
 					height: 2px;
 				}
@@ -123,6 +206,18 @@
 
 			.ant-table-content {
 				margin-bottom: 0 !important;
+			}
+
+			.ant-collapse {
+				border-width: 0.5px !important;
+			}
+
+			.ant-collapse-item {
+				border-width: 0.5px !important;
+			}
+
+			.ant-collapse-content {
+				border-top-width: 0.5px !important;
 			}
 		}
 	}

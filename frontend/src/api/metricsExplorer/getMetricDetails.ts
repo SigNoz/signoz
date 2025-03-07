@@ -28,7 +28,7 @@ export interface MetricDetails {
 export interface MetricDetailsAttribute {
 	key: string;
 	value: string[];
-	contribution: number;
+	valueCount: number;
 }
 
 export interface MetricDetailsAlert {
