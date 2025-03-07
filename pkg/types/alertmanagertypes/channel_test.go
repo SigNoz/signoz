@@ -26,7 +26,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 					Data: `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
 				},
 			},
-			expectedRoutes: []map[string]any{{"receiver": "email-receiver", "continue": true}},
+			expectedRoutes: []map[string]any{{"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 			expectedReceivers: []map[string]any{
 				{"name": "default-receiver"},
 				{
@@ -53,7 +53,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
-			expectedRoutes: []map[string]any{{"receiver": "slack-receiver", "continue": true}},
+			expectedRoutes: []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 			expectedReceivers: []map[string]any{
 				{"name": "default-receiver"},
 				{
@@ -92,7 +92,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
 			},
-			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true}},
+			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 			expectedReceivers: []map[string]any{
 				{"name": "default-receiver"},
 				{
@@ -135,7 +135,7 @@ func TestNewConfigFromChannels(t *testing.T) {
 					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
-			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true}, {"receiver": "slack-receiver", "continue": true}},
+			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}, {"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 			expectedReceivers: []map[string]any{
 				{"name": "default-receiver"},
 				{
