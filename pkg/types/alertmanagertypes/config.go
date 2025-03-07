@@ -267,9 +267,9 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
 	}
 
-	for i := range c.alertmanagerConfig.Route.Routes {
-		if slices.Contains(receiverNames, c.alertmanagerConfig.Route.Routes[i].Receiver) {
-			if err := appendRuleIDToRoute(c.alertmanagerConfig.Route.Routes[i], ruleID); err != nil {
+	for _, route := range c.alertmanagerConfig.Route.Routes {
+		if slices.Contains(receiverNames, route.Receiver) {
+			if err := addRuleIDMatcherToRoute(route, ruleID); err != nil {
 				return err
 			}
 		}
@@ -292,8 +292,7 @@ func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) erro
 }
 
 func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
-	routes := c.alertmanagerConfig.Route.Routes
-	for i := range routes {
+	for i := range c.alertmanagerConfig.Route.Routes {
 		if err := removeRuleIDFromRoute(c.alertmanagerConfig.Route.Routes[i], ruleID); err != nil {
 			return err
 		}

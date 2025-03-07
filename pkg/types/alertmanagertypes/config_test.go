@@ -2,14 +2,13 @@ package alertmanagertypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/gjson"
 )
 
 func TestCreateRuleIDMatcher(t *testing.T) {
@@ -35,7 +34,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"slack-receiver"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}},
 		},
 		{
 			name:  "SlackAndEmailReceivers",
@@ -60,7 +59,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"slack-receiver", "email-receiver"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}},
 		},
 		{
 			name:  "ReceiverDoesNotExist",
@@ -77,7 +76,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"does-not-exist"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 		},
 		{
 			name:  "MultipleAlertsOnOneSlackReceiver",
@@ -94,13 +93,17 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				},
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule-1": {"slack-receiver", "does-not-exist"}, "test-rule-2": {"slack-receiver"}},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule-1|test-rule-2\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule-1|test-rule-2\""}}},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := NewDefaultConfig(GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"}, RouteConfig{}, tc.orgID)
+			cfg, err := NewDefaultConfig(
+				GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"},
+				RouteConfig{GroupInterval: 1 * time.Minute, GroupWait: 1 * time.Minute, RepeatInterval: 1 * time.Minute},
+				tc.orgID,
+			)
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
@@ -113,15 +116,12 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			actualRoutes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
+			routes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
 			require.NoError(t, err)
-			expectedRoutes, err := json.Marshal(tc.expectedRoutes)
+			var actualRoutes []map[string]any
+			err = json.Unmarshal(routes, &actualRoutes)
 			require.NoError(t, err)
-
-			for i := range len(tc.expectedRoutes) {
-				assert.Equal(t, gjson.GetBytes(expectedRoutes, fmt.Sprintf("$[%d].receiver", i)).String(), gjson.GetBytes(actualRoutes, fmt.Sprintf("$[%d].receiver", i)).String())
-				assert.ElementsMatch(t, gjson.GetBytes(expectedRoutes, fmt.Sprintf("$[%d].matchers", i)).Array(), gjson.GetBytes(actualRoutes, fmt.Sprintf("$[%d].matchers", i)).Array())
-			}
+			assert.ElementsMatch(t, tc.expectedRoutes, actualRoutes)
 		})
 	}
 }
@@ -159,7 +159,7 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"email-receiver", "slack-receiver"}},
 			ruleIDsToDelete:   []string{"test-rule"},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true}, {"receiver": "email-receiver", "continue": true}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 		},
 		{
 			name:  "RuleIDDoesNotExist",
@@ -185,13 +185,17 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			},
 			ruleIDToReceivers: map[string][]string{"test-rule": {"email-receiver", "slack-receiver"}},
 			ruleIDsToDelete:   []string{"does-not-exist"},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"test-rule\""}}},
+			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := NewDefaultConfig(GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"}, RouteConfig{}, tc.orgID)
+			cfg, err := NewDefaultConfig(
+				GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"},
+				RouteConfig{GroupInterval: 1 * time.Minute, GroupWait: 1 * time.Minute, RepeatInterval: 1 * time.Minute},
+				tc.orgID,
+			)
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {

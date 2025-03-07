@@ -24,7 +24,7 @@ func NewRouteFromRouteConfig(route *config.Route, cfg RouteConfig) (*config.Rout
 }
 
 func NewRouteFromReceiver(receiver Receiver) (*config.Route, error) {
-	route := &config.Route{Receiver: receiver.Name, Continue: true}
+	route := &config.Route{Receiver: receiver.Name, Continue: true, Matchers: config.Matchers{noRuleIDMatcher}}
 	if err := route.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return nil, err
 	}
