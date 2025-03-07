@@ -96,6 +96,7 @@
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				height: 36px;
 				.ant-typography {
 					font-family: 'Geist Mono';
 					color: var(--bg-robin-400);
@@ -218,6 +219,57 @@
 
 			.ant-collapse-content {
 				border-top-width: 0.5px !important;
+			}
+		}
+	}
+
+	.ant-select {
+		.ant-select-selector {
+			width: 200px !important;
+		}
+	}
+}
+
+.top-attributes-content {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px;
+	font-family: 'Geist Mono' !important;
+	max-height: 300px;
+	overflow-y: scroll;
+	.top-attributes-item {
+		display: flex;
+		justify-content: space-between;
+
+		.top-attributes-item-progress {
+			display: flex;
+			gap: 12px;
+			height: 34px;
+			width: 100%;
+			color: var(--bg-vanilla-100);
+			padding: 0 12px;
+			align-items: center;
+			position: relative;
+
+			.top-attributes-item-key {
+				z-index: 2;
+			}
+
+			.top-attributes-item-count {
+				background-color: var(--bg-slate-300);
+				border-radius: 50px;
+				padding: 2px 6px;
+				color: var(--bg-vanilla-400);
+				z-index: 2;
+			}
+
+			.top-attributes-item-progress-bar {
+				background-color: var(--bg-slate-400);
+				height: 100%;
+				position: absolute;
+				top: 0;
+				left: 0;
 			}
 		}
 	}

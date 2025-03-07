@@ -11,6 +11,7 @@ import { useCallback, useMemo } from 'react';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Metadata from './Metadata';
+import TopAttributes from './TopAttributes';
 import { MetricDetailsProps } from './types';
 import {
 	formatNumberToCompactFormat,
@@ -53,6 +54,17 @@ function MetricDetails({
 		console.log(metricName);
 	}, [metricName]);
 
+	const top5Attributes = useMemo(() => {
+		const totalSum =
+			metric?.attributes.reduce((acc, curr) => acc + curr.valueCount, 0) || 0;
+		if (!metric) return [];
+		return metric.attributes.slice(0, 5).map((attr) => ({
+			key: attr.key,
+			count: attr.valueCount,
+			percentage: totalSum === 0 ? 0 : (attr.valueCount / totalSum) * 100,
+		}));
+	}, [metric]);
+
 	return (
 		<Drawer
 			width="60%"
@@ -66,7 +78,7 @@ function MetricDetails({
 						onClick={goToMetricsExplorerwithSelectedMetric}
 						icon={<Compass size={16} />}
 					>
-						<Typography.Text>Open in Explorer</Typography.Text>
+						Open in Explorer
 					</Button>
 				</div>
 			}
@@ -116,6 +128,7 @@ function MetricDetails({
 						alerts={metric.alerts}
 					/>
 					<div>
+						<TopAttributes items={top5Attributes} title="Top 5 Attributes" />
 						<Metadata
 							metricName={metric?.name}
 							metadata={metric.metadata}
