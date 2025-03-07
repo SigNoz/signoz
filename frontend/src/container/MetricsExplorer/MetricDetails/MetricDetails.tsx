@@ -1,7 +1,7 @@
 import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
 
-import { Color, Spacing } from '@signozhq/design-tokens';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -91,7 +91,7 @@ function MetricDetails({
 			}}
 			className="metric-details-drawer"
 			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			closeIcon={<X size={16} />}
 		>
 			{isMetricDetailsLoading ? (
 				<Skeleton active />
@@ -127,15 +127,13 @@ function MetricDetails({
 						dashboards={metric.dashboards}
 						alerts={metric.alerts}
 					/>
-					<div>
-						<TopAttributes items={top5Attributes} title="Top 5 Attributes" />
-						<Metadata
-							metricName={metric?.name}
-							metadata={metric.metadata}
-							refetchMetricDetails={refetchMetricDetails}
-						/>
-						<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
-					</div>
+					<TopAttributes items={top5Attributes} title="Top 5 Attributes" />
+					<Metadata
+						metricName={metric?.name}
+						metadata={metric.metadata}
+						refetchMetricDetails={refetchMetricDetails}
+					/>
+					<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
 				</div>
 			)}
 		</Drawer>

@@ -108,7 +108,6 @@ function Metadata({
 							name={field.key}
 							value={metricMetadata[field.key as keyof UpdateMetricMetadataProps]}
 							onChange={(e): void => {
-								console.log(e.target.value, field.key);
 								setMetricMetadata({ ...metricMetadata, [field.key]: e.target.value });
 							}}
 						/>
