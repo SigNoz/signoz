@@ -27,14 +27,13 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
 import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
+import { createFilterFromData } from '../utils';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
@@ -109,6 +108,7 @@ function WidgetGraphComponent({
 				widget,
 				startTime: minTime,
 				endTime: maxTime,
+				navigateRequestType: 'panel',
 			});
 		} catch (error) {
 			console.error('Navigation failed:', error);
@@ -258,23 +258,6 @@ function WidgetGraphComponent({
 
 	const currentDataSource = widget?.query?.builder?.queryData?.[0]?.dataSource;
 
-	const createFilterFromData = (
-		data: Record<string, unknown>,
-	): TagFilterItem[] =>
-		Object.entries(data ?? {}).map(([key, value]) => ({
-			id: v4(),
-			key: {
-				key,
-				dataType: DataTypes.String,
-				type: '',
-				isColumn: false,
-				isJSON: false,
-				id: `${key}--string----false`,
-			},
-			op: '=',
-			value: value?.toString() ?? '',
-		}));
-
 	const handleGraphClick = useGraphClickToShowButton({
 		graphRef,
 		onClickHandler: (xValue, _yValue, _mouseX, _mouseY, data) => {
@@ -286,6 +269,8 @@ function WidgetGraphComponent({
 				startTime: xValue,
 				endTime: xValue + (stepInterval ?? 60),
 				filters,
+				navigateRequestType: 'specific',
+				requestData: data,
 			});
 		},
 		buttonText:

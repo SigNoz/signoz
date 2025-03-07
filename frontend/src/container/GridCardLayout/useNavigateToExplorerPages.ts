@@ -11,16 +11,76 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
+import { createFilterFromData, isFormula } from './utils';
+
+type GraphClickMetaData = {
+	[key: string]: string | boolean;
+	queryName: string;
+	inFocusOrNot: boolean;
+};
 interface NavigateToExplorerPagesProps {
 	widget: Widgets;
+	requestData?: GraphClickMetaData;
+	navigateRequestType?: 'panel' | 'specific';
 	startTime?: number;
 	endTime?: number;
 	filters?: TagFilterItem[];
 }
+
+// function to make final filters
+const buildFilters = (
+	query: Query,
+	requestData: GraphClickMetaData,
+	navigateRequestType: 'panel' | 'specific',
+): {
+	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
+} => {
+	// Handle specific query navigation
+	if (navigateRequestType === 'specific' && requestData.queryName) {
+		const queryData = query.builder.queryData.find(
+			(q) => q.queryName === requestData.queryName,
+		);
+
+		if (!queryData) return {};
+
+		const groupByFilters = queryData.groupBy
+			.map((groupBy) => {
+				const value = requestData[groupBy.key];
+				return value ? createFilterFromData({ [groupBy.key]: value }) : [];
+			})
+			.flat();
+
+		return {
+			[requestData.queryName]: {
+				filters: [...(queryData.filters?.items || []), ...groupByFilters],
+				dataSource: queryData.dataSource,
+			},
+		};
+	}
+
+	// Handle panel navigation
+	if (navigateRequestType === 'panel') {
+		const nonFormulaQueries = query.builder.queryData.filter(
+			(q) => !isFormula(q.queryName),
+		);
+
+		return Object.fromEntries(
+			nonFormulaQueries.map((q) => [
+				q.queryName,
+				{
+					filters: q.filters?.items || [],
+					dataSource: q.dataSource,
+				},
+			]),
+		);
+	}
+
+	return {};
+};
 
 /**
  * Custom hook for handling navigation to explorer pages with query data
@@ -46,6 +106,8 @@ function useNavigateToExplorerPages(): (
 			startTime,
 			endTime,
 			filters = [],
+			requestData,
+			navigateRequestType,
 		}: NavigateToExplorerPagesProps): Promise<void> => {
 			try {
 				// Prepare query payload with resolved variables
@@ -63,6 +125,14 @@ function useNavigateToExplorerPages(): (
 					queryResult.compositeQuery,
 					widget?.query,
 				);
+
+				const finalFilters = buildFilters(
+					updatedQuery,
+					requestData ?? { queryName: '', inFocusOrNot: false },
+					navigateRequestType ?? 'panel',
+				);
+
+				console.log('finalFilters', finalFilters);
 
 				// Extract and combine filters
 				const widgetFilters =
