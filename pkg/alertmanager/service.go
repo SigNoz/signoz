@@ -177,8 +177,11 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 		}
 	}
 
-	config.SetGlobalConfig(service.config.Global)
+	if err := config.SetGlobalConfig(service.config.Global); err != nil {
+		return nil, err
+	}
 	config.SetRouteConfig(service.config.Route)
+
 	return config, nil
 }
 

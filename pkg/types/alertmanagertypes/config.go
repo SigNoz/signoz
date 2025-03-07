@@ -146,11 +146,18 @@ func (c *Config) CopyWithReset() (*Config, error) {
 	return newConfig, nil
 }
 
-func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) {
+func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
+	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
+	if err != nil {
+		return err
+	}
+
 	c.alertmanagerConfig.Global = &globalConfig
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
