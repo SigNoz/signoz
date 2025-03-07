@@ -274,3 +274,71 @@
 		}
 	}
 }
+
+.lightMode {
+	.metric-details-header {
+		.ant-btn {
+			background-color: var(--bg-white-400);
+		}
+	}
+
+	.metric-details-content {
+		.metrics-accordion {
+			.metrics-accordion-header {
+				.action-button {
+					.ant-typography {
+						color: var(--bg-slate-400);
+					}
+				}
+			}
+
+			.metrics-accordion-content {
+				.metric-metadata-key {
+					.all-attributes-key {
+						.ant-typography:last-child {
+							color: var(--bg-slate-400);
+							background-color: var(--bg-robin-300);
+						}
+					}
+				}
+
+				.metric-metadata-value {
+					background-color: var(--bg-vanilla-300);
+					.all-attributes-value {
+						.ant-btn {
+							background-color: var(--bg-vanilla-400);
+							.ant-typography {
+								color: var(--bg-slate-400);
+							}
+							&:hover {
+								background-color: var(--bg-vanilla-100);
+							}
+						}
+					}
+
+					.field-renderer-container {
+						.label {
+							color: var(--bg-slate-400);
+						}
+					}
+				}
+			}
+		}
+	}
+	.top-attributes-content {
+		.top-attributes-item-progress {
+			.top-attributes-item-progress-bar {
+				background-color: var(--bg-robin-400);
+			}
+
+			.top-attributes-item-count {
+				background-color: var(--bg-robin-300);
+			}
+
+			.top-attributes-item-key,
+			.top-attributes-item-count {
+				color: var(--bg-slate-400);
+			}
+		}
+	}
+}
