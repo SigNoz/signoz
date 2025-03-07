@@ -27,3 +27,14 @@ export interface AllAttributesProps {
 	attributes: MetricDetailsAttribute[];
 	metricName: string;
 }
+
+export interface TopAttributesProps {
+	items: Array<{
+		key: string;
+		count: number;
+		percentage: number;
+	}>;
+	title: string;
+	loadMore?: () => void;
+	hideLoadMore?: boolean;
+}
