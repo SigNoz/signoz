@@ -211,12 +211,13 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
 	url := provider.url.JoinPath(alertsPath)
 
-	legacyAlert := postableAlert{
+	legacyAlerts := make([]postableAlert, 1)
+	legacyAlerts[0] = postableAlert{
 		PostableAlert: alert,
 		Receivers:     receivers,
 	}
 
-	body, err := json.Marshal(legacyAlert)
+	body, err := json.Marshal(legacyAlerts)
 	if err != nil {
 		return err
 	}
