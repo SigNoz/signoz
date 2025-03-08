@@ -269,7 +269,7 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 
 	for _, route := range c.alertmanagerConfig.Route.Routes {
 		if slices.Contains(receiverNames, route.Receiver) {
-			if err := addRuleIDMatcherToRoute(route, ruleID); err != nil {
+			if err := addRuleIDToRoute(route, ruleID); err != nil {
 				return err
 			}
 		}

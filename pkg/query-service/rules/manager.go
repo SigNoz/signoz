@@ -342,7 +342,21 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 			return err
 		}
 
-		err = cfg.UpdateRuleIDMatcher(id, parsedRule.PreferredChannels)
+		var preferredChannels []string
+		if len(parsedRule.PreferredChannels) == 0 {
+			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
+			if err != nil {
+				return err
+			}
+
+			for _, channel := range channels {
+				preferredChannels = append(preferredChannels, channel.Name)
+			}
+		} else {
+			preferredChannels = parsedRule.PreferredChannels
+		}
+
+		err = cfg.UpdateRuleIDMatcher(id, preferredChannels)
 		if err != nil {
 			return err
 		}
@@ -505,7 +519,21 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 			return err
 		}
 
-		err = cfg.CreateRuleIDMatcher(fmt.Sprintf("%d", id), parsedRule.PreferredChannels)
+		var preferredChannels []string
+		if len(parsedRule.PreferredChannels) == 0 {
+			channels, err := m.alertmanager.ListChannels(ctx, claims.OrgID)
+			if err != nil {
+				return err
+			}
+
+			for _, channel := range channels {
+				preferredChannels = append(preferredChannels, channel.Name)
+			}
+		} else {
+			preferredChannels = parsedRule.PreferredChannels
+		}
+
+		err = cfg.CreateRuleIDMatcher(fmt.Sprintf("%d", id), preferredChannels)
 		if err != nil {
 			return err
 		}
@@ -710,6 +738,18 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 			a.EndsAt = strfmt.DateTime(alert.ResolvedAt)
 		} else {
 			a.EndsAt = strfmt.DateTime(alert.ValidUntil)
+		}
+
+		if len(alert.Receivers) == 0 {
+			channels, err := m.alertmanager.ListChannels(ctx, orgID)
+			if err != nil {
+				zap.L().Error("failed to list channels while sending test notification", zap.Error(err))
+				return
+			}
+
+			for _, channel := range channels {
+				alert.Receivers = append(alert.Receivers, channel.Name)
+			}
 		}
 
 		m.alertmanager.TestAlert(ctx, orgID, a, alert.Receivers)
