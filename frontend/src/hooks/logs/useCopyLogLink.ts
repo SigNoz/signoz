@@ -3,7 +3,6 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import history from 'lib/history';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -18,7 +17,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { HIGHLIGHTED_DELAY } from './configs';
-import { LogTimeRange, UseCopyLogLink } from './types';
+import { UseCopyLogLink } from './types';
 
 export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const urlQuery = useUrlQuery();
@@ -31,27 +30,8 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		null,
 	);
 
-	const { selectedTime, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const onTimeRangeChange = useCallback(
-		(newTimeRange: LogTimeRange | null): void => {
-			if (selectedTime !== 'custom') {
-				urlQuery.delete(QueryParams.startTime);
-				urlQuery.delete(QueryParams.endTime);
-				urlQuery.set(QueryParams.relativeTime, selectedTime);
-			} else {
-				urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
-				urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
-				urlQuery.delete(QueryParams.relativeTime);
-			}
-
-			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
-		},
-		[pathname, urlQuery, selectedTime],
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
@@ -101,6 +81,5 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		isLogsExplorerPage,
 		activeLogId,
 		onLogCopy,
-		onTimeRangeChange,
 	};
 };

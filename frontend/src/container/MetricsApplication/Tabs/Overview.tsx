@@ -51,10 +51,10 @@ import { IServiceName } from './types';
 import {
 	generateExplorerPath,
 	handleNonInQueryRange,
-	onGraphClickHandler,
 	onViewTracePopupClick,
 	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
+	useGraphClickHandler,
 } from './util';
 
 function Application(): JSX.Element {
@@ -79,6 +79,8 @@ function Application(): JSX.Element {
 		setSelectedTimeStamp(selectTime);
 	}, []);
 
+	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
+
 	const dispatch = useDispatch();
 	const handleGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] => (
@@ -86,14 +88,8 @@ function Application(): JSX.Element {
 			yValue,
 			mouseX,
 			mouseY,
-		): Promise<void> =>
-			onGraphClickHandler(handleSetTimeStamp)(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				type,
-			),
+		): Promise<void> => onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
 
