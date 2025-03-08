@@ -21,6 +21,8 @@ type (
 	Receiver = config.Receiver
 )
 
+// Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
+// The only default value which is missed is `send_resolved` (as it is a bool) which if not set in the input will always be set to `false`.
 func NewReceiver(input string) (Receiver, error) {
 	receiver := Receiver{}
 	err := json.Unmarshal([]byte(input), &receiver)

@@ -150,6 +150,11 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 		return err
 	}
 
+	var receiversFromChannels []string
+	for _, channel := range channels {
+		receiversFromChannels = append(receiversFromChannels, channel.Name)
+	}
+
 	type matcher struct {
 		bun.BaseModel `bun:"table:rules"`
 		ID            int    `bun:"id,pk"`
@@ -172,6 +177,10 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
 		for _, receiver := range receivers {
 			matchersMap[strconv.Itoa(matcher.ID)] = append(matchersMap[strconv.Itoa(matcher.ID)], receiver.String())
+		}
+
+		if len(receivers) == 0 {
+			matchersMap[strconv.Itoa(matcher.ID)] = append(matchersMap[strconv.Itoa(matcher.ID)], receiversFromChannels...)
 		}
 	}
 

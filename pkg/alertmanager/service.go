@@ -185,7 +185,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	return config, nil
 }
 
-// getServer returns the server for the given orgID. It should be called with a the lock held.
+// getServer returns the server for the given orgID. It should be called with the lock held.
 func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
 	server, ok := service.servers[orgID]
 	if !ok {
