@@ -3,8 +3,11 @@ package metricsexplorer
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+
+	"go.signoz.io/signoz/pkg/query-service/constants"
 
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
@@ -82,8 +85,66 @@ func ParseInspectMetricsParams(r *http.Request) (*metrics_explorer.InspectMetric
 	if err := json.NewDecoder(r.Body).Decode(&inspectMetricParams); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
-	if inspectMetricParams.End-inspectMetricParams.Start > 1800000 { // half hour only
+	if inspectMetricParams.End-inspectMetricParams.Start > constants.InspectMetricsMaxTimeDiff { // half hour only
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("time duration shouldn't be more than 30 mins")}
 	}
 	return &inspectMetricParams, nil
+}
+
+func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.UpdateMetricsMetadataRequest, *model.ApiError) {
+	var updateMetricsMetadataReq metrics_explorer.UpdateMetricsMetadataRequest
+	if err := json.NewDecoder(r.Body).Decode(&updateMetricsMetadataReq); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	updateMetricsMetadataReq.MetricName = mux.Vars(r)["metric_name"]
+
+	if updateMetricsMetadataReq.Description == "" {
+		return nil, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("description is required"),
+		}
+	}
+
+	switch updateMetricsMetadataReq.MetricType {
+	case v3.MetricTypeSum:
+		if updateMetricsMetadataReq.Temporality == "" {
+			return nil, &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("temporality is required when metric type is Sum"),
+			}
+		}
+
+		if updateMetricsMetadataReq.Temporality != v3.Cumulative && updateMetricsMetadataReq.Temporality != v3.Delta {
+			return nil, &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("invalid value for temporality"),
+			}
+		}
+	case v3.MetricTypeHistogram:
+		if updateMetricsMetadataReq.Temporality == "" {
+			return nil, &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("temporality is required when metric type is Sum"),
+			}
+		}
+
+		if updateMetricsMetadataReq.IsMonotonic && updateMetricsMetadataReq.Temporality == v3.Delta {
+			return nil, &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("histogram metrics with Delta temporality can't be monotonically increased"),
+			}
+		}
+	case v3.MetricTypeGauge:
+	case v3.MetricTypeSummary:
+		if updateMetricsMetadataReq.Temporality == "" {
+			updateMetricsMetadataReq.Temporality = v3.Unspecified
+		}
+
+	default:
+		return nil, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("invalid metric type"),
+		}
+	}
+	return &updateMetricsMetadataReq, nil
 }

@@ -96,6 +96,9 @@ const (
 	signozTSLocalTableNameV41Week = "time_series_v4_1week"
 	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
+	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
+	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
+
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
 	maxProgressiveSteps                   = 4
@@ -2893,8 +2896,22 @@ func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 }
 
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
-
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	var metricNamesToQuery []string
+	for _, metricName := range metricNames {
+		updatedMetadata, apiErr := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		if apiErr != nil {
+			return nil, apiErr.Err
+		}
+		if updatedMetadata != nil {
+			if _, exists := metricNameToTemporality[metricName]; !exists {
+				metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+			}
+			metricNameToTemporality[metricName][updatedMetadata.Temporality] = true
+		} else {
+			metricNamesToQuery = append(metricNamesToQuery, metricName)
+		}
+	}
 
 	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableNameV41Day)
 
@@ -3724,6 +3741,11 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 			continue
 		}
 
+		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		if apiError == nil && metadata != nil {
+			typ = string(metadata.MetricType)
+		}
+
 		// Non-monotonic cumulative sums are treated as gauges
 		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
 			typ = "Gauge"
@@ -3843,6 +3865,16 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		if temporality == string(v3.Delta) {
 			deltaExists = true
 		}
+	}
+	metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+	if apiError == nil && metadata != nil {
+		metricType = string(metadata.MetricType)
+		temporality = string(metadata.Temporality)
+		if temporality == string(v3.Delta) {
+			deltaExists = true
+		}
+		isMonotonic = metadata.IsMonotonic
+		description = metadata.Description
 	}
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, 'le') as le from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $3 GROUP BY le ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
@@ -6677,4 +6709,131 @@ LIMIT 40`,
 	}
 
 	return fingerprints, nil
+}
+
+func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError {
+	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataLocalTable)
+	err := r.db.Exec(ctx, delQuery, metricName)
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	r.cache.Remove(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName)
+	return nil
+}
+
+func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError {
+	if req.MetricType == v3.MetricTypeHistogram {
+		labels := []string{"le"}
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		if apiError != nil {
+			return apiError
+		}
+		if !hasLabels {
+			return &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("metric '%s' cannot be set as histogram type", req.MetricName),
+			}
+		}
+	}
+
+	if req.MetricType == v3.MetricTypeSummary {
+		labels := []string{"quantile"}
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		if apiError != nil {
+			return apiError
+		}
+		if !hasLabels {
+			return &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("metric '%s' cannot be set as summary type", req.MetricName),
+			}
+		}
+	}
+
+	apiErr := r.DeleteMetricsMetadata(ctx, req.MetricName)
+	if apiErr != nil {
+		return apiErr
+	}
+	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
+VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt)
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+req.MetricName, req, -1)
+	if err != nil {
+		return &model.ApiError{Typ: "CachingErr", Err: err}
+	}
+	return nil
+}
+
+func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError) {
+	if len(labels) == 0 {
+		return true, nil
+	}
+
+	conditions := "metric_name = ?"
+	for range labels {
+		conditions += " AND JSONHas(labels, ?) = 1"
+	}
+
+	query := fmt.Sprintf(`
+        SELECT count(*) > 0 as has_le
+        FROM %s.%s
+        WHERE %s
+        LIMIT 1`, signozMetricDBName, signozTSTableNameV41Day, conditions)
+
+	args := make([]interface{}, 0, len(labels)+1)
+	args = append(args, metricName)
+	for _, label := range labels {
+		args = append(args, label)
+	}
+
+	var hasLE bool
+	err := r.db.QueryRow(ctx, query, args...).Scan(&hasLE)
+	if err != nil {
+		return false, &model.ApiError{
+			Typ: "ClickHouseError",
+			Err: fmt.Errorf("error checking summary labels: %v", err),
+		}
+	}
+	return hasLE, nil
+}
+
+func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metricName string) (*model.UpdateMetricsMetadata, *model.ApiError) {
+	metricsMetadata := new(model.UpdateMetricsMetadata)
+	retrieve, err := r.cache.Retrieve(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName, metricsMetadata, true)
+	if err != nil {
+		query := fmt.Sprintf(`SELECT metric_name, type, description
+FROM %s.%s
+WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+		err := r.db.Select(ctx, query, metricName)
+		if err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+	}
+	if retrieve == cache.RetrieveStatusHit {
+		return metricsMetadata, nil
+	}
+	return nil, nil
+}
+
+func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
+	var allMetricsMetadata []model.UpdateMetricsMetadata
+	var errorList []error
+	// Fetch all rows from ClickHouse
+	query := fmt.Sprintf(`SELECT metric_name, type, description FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	err := r.db.Select(ctx, &allMetricsMetadata, query)
+	if err != nil {
+		errorList = append(errorList, err)
+		return errorList
+	}
+	for _, m := range allMetricsMetadata {
+		err := r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+m.MetricName, &m, -1)
+		if err != nil {
+			errorList = append(errorList, err)
+		}
+	}
+
+	return errorList
 }
