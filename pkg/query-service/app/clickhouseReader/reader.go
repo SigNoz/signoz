@@ -4322,9 +4322,11 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 		}
 	}
 
-	relatedValues, _ := r.FetchRelatedValues(ctx, req)
-	attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
-		StringAttributeValues: relatedValues,
+	if req.IncludeRelated {
+		relatedValues, _ := r.FetchRelatedValues(ctx, req)
+		attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+			StringAttributeValues: relatedValues,
+		}
 	}
 
 	return &attributeValues, nil
@@ -5007,9 +5009,11 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		}
 	}
 
-	relatedValues, _ := r.FetchRelatedValues(ctx, req)
-	attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
-		StringAttributeValues: relatedValues,
+	if req.IncludeRelated {
+		relatedValues, _ := r.FetchRelatedValues(ctx, req)
+		attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+			StringAttributeValues: relatedValues,
+		}
 	}
 
 	return &attributeValues, nil

@@ -309,6 +309,7 @@ type FilterAttributeValueRequest struct {
 	Limit                      int                  `json:"limit"`
 	ExistingFilterItems        []FilterItem         `json:"existingFilterItems"`
 	MetricNames                []string             `json:"metricNames"`
+	IncludeRelated             bool                 `json:"includeRelated"`
 }
 
 func (f *FilterAttributeValueRequest) Validate() error {
@@ -415,7 +416,7 @@ type FilterAttributeValueResponse struct {
 	StringAttributeValues []string                      `json:"stringAttributeValues"`
 	NumberAttributeValues []interface{}                 `json:"numberAttributeValues"`
 	BoolAttributeValues   []bool                        `json:"boolAttributeValues"`
-	RelatedValues         *FilterAttributeValueResponse `json:"relatedValues"`
+	RelatedValues         *FilterAttributeValueResponse `json:"relatedValues,omitempty"`
 }
 
 type QueryRangeParamsV3 struct {
