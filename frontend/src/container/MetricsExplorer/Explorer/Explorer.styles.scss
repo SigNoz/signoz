@@ -1,0 +1,50 @@
+.metrics-explorer-explore-container {
+	.explore-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin: 10px 0;
+
+		.explore-header-left-actions {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.explore-header-right-actions {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+	}
+
+	.query-section {
+		max-height: 450px;
+		overflow-y: scroll;
+	}
+
+	.explore-tabs {
+		margin: 15px 0;
+		.tab {
+			background-color: var(--bg-slate-500);
+			border-color: var(--bg-ink-200);
+			width: 180px;
+			padding: 16px 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.tab:first-of-type {
+			border-top-left-radius: 2px;
+		}
+
+		.tab:last-of-type {
+			border-top-right-radius: 2px;
+		}
+
+		.selected-view {
+			background: var(--bg-ink-500);
+		}
+	}
+}
