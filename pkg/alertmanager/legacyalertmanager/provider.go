@@ -189,7 +189,7 @@ func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts al
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
 	url := provider.url.JoinPath(testReceiverPath)
 
-	body, err := json.Marshal(receiver)
+	body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,18 @@ func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*al
 }
 
 func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
-	return provider.configStore.ListAllChannels(ctx)
+	channels, err := provider.configStore.ListAllChannels(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, channel := range channels {
+		if err := channel.MSTeamsV2ToMSTeams(); err != nil {
+			return nil, err
+		}
+	}
+
+	return channels, nil
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
@@ -285,7 +296,7 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 	err = provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
-		body, err := json.Marshal(receiver)
+		body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 		if err != nil {
 			return err
 		}
@@ -336,7 +347,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
-		body, err := json.Marshal(receiver)
+		body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 		if err != nil {
 			return err
 		}

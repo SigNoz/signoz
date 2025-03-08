@@ -90,3 +90,27 @@ func TestReceiver(ctx context.Context, receiver Receiver, config *Config, tmpl *
 
 	return nil
 }
+
+// This is needed by the legacy alertmanager to convert the MSTeamsV2Configs to MSTeamsConfigs
+func MSTeamsV2ReceiverToMSTeamsReceiver(receiver Receiver) Receiver {
+	if receiver.MSTeamsV2Configs == nil {
+		return receiver
+	}
+
+	var msTeamsConfigs []*config.MSTeamsConfig
+	for _, cfg := range receiver.MSTeamsV2Configs {
+		msTeamsConfigs = append(msTeamsConfigs, &config.MSTeamsConfig{
+			NotifierConfig: cfg.NotifierConfig,
+			HTTPConfig:     cfg.HTTPConfig,
+			WebhookURL:     cfg.WebhookURL,
+			WebhookURLFile: cfg.WebhookURLFile,
+			Title:          cfg.Title,
+			Text:           cfg.Text,
+		})
+	}
+
+	receiver.MSTeamsV2Configs = nil
+	receiver.MSTeamsConfigs = msTeamsConfigs
+
+	return receiver
+}

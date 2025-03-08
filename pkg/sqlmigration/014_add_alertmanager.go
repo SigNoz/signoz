@@ -3,10 +3,12 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -184,6 +186,12 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 		}
 	}
 
+	for _, channel := range channels {
+		if err := migration.msTeamsChannelToMSTeamsV2Channel(channel); err != nil {
+			return err
+		}
+	}
+
 	config, err := alertmanagertypes.NewConfigFromChannels(alertmanagerserver.NewConfig().Global, alertmanagerserver.NewConfig().Route, channels, orgID)
 	if err != nil {
 		return err
@@ -207,9 +215,67 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 		return err
 	}
 
+	for _, channel := range channels {
+		if channel.Type == "msteamsv2" {
+			if _, err := tx.
+				NewUpdate().
+				Model(&channel).
+				WherePK().
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
 func (migration *addAlertmanager) Down(ctx context.Context, db *bun.DB) error {
 	return nil
+}
+
+func (migration *addAlertmanager) msTeamsChannelToMSTeamsV2Channel(c *alertmanagertypes.Channel) error {
+	if c.Type != "msteams" {
+		return nil
+	}
+
+	receiver, err := alertmanagertypes.NewReceiver(c.Data)
+	if err != nil {
+		return err
+	}
+
+	receiver = migration.msTeamsReceiverToMSTeamsV2Receiver(receiver)
+	data, err := json.Marshal(receiver)
+	if err != nil {
+		return err
+	}
+
+	c.Type = "msteamsv2"
+	c.Data = string(data)
+	c.UpdatedAt = time.Now()
+
+	return nil
+}
+
+func (migration *addAlertmanager) msTeamsReceiverToMSTeamsV2Receiver(receiver alertmanagertypes.Receiver) alertmanagertypes.Receiver {
+	if receiver.MSTeamsConfigs == nil {
+		return receiver
+	}
+
+	var msTeamsV2Configs []*config.MSTeamsV2Config
+	for _, cfg := range receiver.MSTeamsConfigs {
+		msTeamsV2Configs = append(msTeamsV2Configs, &config.MSTeamsV2Config{
+			NotifierConfig: cfg.NotifierConfig,
+			HTTPConfig:     cfg.HTTPConfig,
+			WebhookURL:     cfg.WebhookURL,
+			WebhookURLFile: cfg.WebhookURLFile,
+			Title:          cfg.Title,
+			Text:           cfg.Text,
+		})
+	}
+
+	receiver.MSTeamsConfigs = nil
+	receiver.MSTeamsV2Configs = msTeamsV2Configs
+
+	return receiver
 }
