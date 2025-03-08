@@ -1,4 +1,6 @@
 .metrics-explorer-explore-container {
+	padding-bottom: 16px;
+
 	.explore-header {
 		display: flex;
 		align-items: center;
@@ -45,6 +47,36 @@
 
 		.selected-view {
 			background: var(--bg-ink-500);
+		}
+	}
+
+	.explore-content {
+		.time-series-container {
+			display: flex;
+			gap: 10px;
+			width: 100%;
+			height: fit-content;
+			overflow-y: scroll;
+
+			.time-series-view {
+				min-width: 100%;
+				width: 100%;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.metrics-explorer-explore-container {
+		.explore-tabs {
+			.tab {
+				background-color: var(--bg-vanilla-100);
+				border-color: var(--bg-vanilla-400);
+			}
+
+			.selected-view {
+				background: var(--bg-vanilla-500);
+			}
 		}
 	}
 }
