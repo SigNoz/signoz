@@ -297,6 +297,8 @@ func (q AttributeKeyDataType) String() string {
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
 type FilterAttributeValueRequest struct {
+	StartTimeMillis            int64                `json:"startTimeMillis"`
+	EndTimeMillis              int64                `json:"endTimeMillis"`
 	DataSource                 DataSource           `json:"dataSource"`
 	AggregateOperator          AggregateOperator    `json:"aggregateOperator"`
 	AggregateAttribute         string               `json:"aggregateAttribute"`
@@ -305,6 +307,51 @@ type FilterAttributeValueRequest struct {
 	TagType                    TagType              `json:"tagType"`
 	SearchText                 string               `json:"searchText"`
 	Limit                      int                  `json:"limit"`
+	ExistingFilterItems        []FilterItem         `json:"existingFilterItems"`
+	MetricNames                []string             `json:"metricNames"`
+	IncludeRelated             bool                 `json:"includeRelated"`
+}
+
+func (f *FilterAttributeValueRequest) Validate() error {
+	if f.FilterAttributeKey == "" {
+		return fmt.Errorf("filterAttributeKey is required")
+	}
+
+	if f.StartTimeMillis == 0 {
+		return fmt.Errorf("startTimeMillis is required")
+	}
+
+	if f.EndTimeMillis == 0 {
+		return fmt.Errorf("endTimeMillis is required")
+	}
+
+	if f.Limit == 0 {
+		f.Limit = 100
+	}
+
+	if f.Limit > 1000 {
+		return fmt.Errorf("limit must be less than 1000")
+	}
+
+	if f.ExistingFilterItems != nil {
+		for _, value := range f.ExistingFilterItems {
+			if value.Key.Key == "" {
+				return fmt.Errorf("existingFilterItems must contain a valid key")
+			}
+		}
+	}
+
+	if err := f.DataSource.Validate(); err != nil {
+		return fmt.Errorf("invalid data source: %w", err)
+	}
+
+	if f.DataSource != DataSourceMetrics {
+		if err := f.AggregateOperator.Validate(); err != nil {
+			return fmt.Errorf("invalid aggregate operator: %w", err)
+		}
+	}
+
+	return nil
 }
 
 type AggregateAttributeResponse struct {
@@ -366,9 +413,10 @@ func (a AttributeKey) Validate() error {
 }
 
 type FilterAttributeValueResponse struct {
-	StringAttributeValues []string      `json:"stringAttributeValues"`
-	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
-	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
+	StringAttributeValues []string                      `json:"stringAttributeValues"`
+	NumberAttributeValues []interface{}                 `json:"numberAttributeValues"`
+	BoolAttributeValues   []bool                        `json:"boolAttributeValues"`
+	RelatedValues         *FilterAttributeValueResponse `json:"relatedValues,omitempty"`
 }
 
 type QueryRangeParamsV3 struct {
