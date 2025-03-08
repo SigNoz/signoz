@@ -22,7 +22,6 @@ export const splitQueryIntoOneChartPerQuery = (query: Query): Query[] =>
 		id: uuid(),
 		builder: {
 			...query.builder,
-			// builderQueries: [currentQuery],
 			queryData: [currentQuery],
 		},
 	}));
