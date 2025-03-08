@@ -1,16 +1,22 @@
+import classNames from 'classnames';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
-import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useMemo } from 'react';
+import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { SuccessResponse } from 'types/api';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TimeSeriesProps } from './types';
+import { splitQueryIntoOneChartPerQuery } from './utils';
 
 function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
@@ -19,8 +25,6 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	console.log(showOneChartPerQuery);
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -41,43 +45,82 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
-	const { data, isLoading, isError } = useGetQueryRange(
-		{
-			query: stagedQuery || initialQueriesMap[DataSource.METRICS],
-			graphType: PANEL_TYPES.TIME_SERIES,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: globalSelectedTime,
-			params: {
-				dataSource: DataSource.METRICS,
-			},
-		},
-		'v4',
-		{
+	const queryPayloads = useMemo(
+		() =>
+			showOneChartPerQuery
+				? splitQueryIntoOneChartPerQuery(
+						stagedQuery || initialQueriesMap[DataSource.METRICS],
+				  )
+				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],
+		[showOneChartPerQuery, stagedQuery],
+	);
+
+	const queries = useQueries(
+		queryPayloads.map((payload, index) => ({
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				payload,
+				ENTITY_VERSION_V4,
 				globalSelectedTime,
 				maxTime,
 				minTime,
-				stagedQuery,
+				index,
 			],
-			enabled: !!stagedQuery,
-		},
+			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+				GetMetricQueryRange(
+					{
+						query: payload,
+						graphType: PANEL_TYPES.TIME_SERIES,
+						selectedTime: 'GLOBAL_TIME',
+						globalSelectedInterval: globalSelectedTime,
+						params: {
+							dataSource: DataSource.METRICS,
+						},
+					},
+					ENTITY_VERSION_V4,
+				),
+			enabled: !!payload,
+		})),
 	);
 
+	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
+
 	const responseData = useMemo(
-		() => (isValidToConvertToMs ? convertDataValueToMs(data) : data),
+		() =>
+			data.map((datapoint) =>
+				isValidToConvertToMs ? convertDataValueToMs(datapoint) : datapoint,
+			),
 		[data, isValidToConvertToMs],
 	);
 
+	const changeLayoutForOneChartPerQuery = useMemo(
+		() => showOneChartPerQuery && queries.length > 1,
+		[showOneChartPerQuery, queries],
+	);
+
 	return (
-		<TimeSeriesView
-			isFilterApplied={false}
-			isError={isError}
-			isLoading={isLoading}
-			data={responseData}
-			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
-			dataSource={DataSource.METRICS}
-		/>
+		<div
+			className={classNames({
+				'time-series-container': changeLayoutForOneChartPerQuery,
+			})}
+		>
+			{responseData.map((datapoint, index) => (
+				<div
+					className="time-series-view"
+					// eslint-disable-next-line react/no-array-index-key
+					key={index}
+				>
+					<TimeSeriesView
+						isFilterApplied={false}
+						isError={queries[index].isError}
+						isLoading={queries[index].isLoading}
+						data={datapoint}
+						yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
+						dataSource={DataSource.METRICS}
+					/>
+				</div>
+			))}
+		</div>
 	);
 }
 
