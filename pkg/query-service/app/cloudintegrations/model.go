@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 // Represents a cloud provider account for cloud integrations
@@ -187,12 +187,12 @@ type CloudServiceAssets struct {
 }
 
 type CloudServiceDashboard struct {
-	Id          string           `json:"id"`
-	Url         string           `json:"url"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Image       string           `json:"image"`
-	Definition  *dashboards.Data `json:"definition,omitempty"`
+	Id          string               `json:"id"`
+	Url         string               `json:"url"`
+	Title       string               `json:"title"`
+	Description string               `json:"description"`
+	Image       string               `json:"image"`
+	Definition  *types.DashboardData `json:"definition,omitempty"`
 }
 
 type SupportedSignals struct {

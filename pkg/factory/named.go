@@ -68,6 +68,15 @@ func (n *NamedMap[T]) Add(factory T) (err error) {
 	return nil
 }
 
+func (n *NamedMap[T]) AddAll(factories ...T) (err error) {
+	for _, factory := range factories {
+		if err := n.Add(factory); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // GetInOrder returns the factories in the order they were added.
 func (n *NamedMap[T]) GetInOrder() []T {
 	return n.factoriesInOrder

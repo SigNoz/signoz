@@ -5,12 +5,12 @@ import (
 	"slices"
 	"testing"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 func NewTestIntegrationsManager(t *testing.T) *Manager {
@@ -92,7 +92,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Data{},
+				Dashboards: []types.DashboardData{},
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
@@ -160,7 +160,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Data{},
+				Dashboards: []types.DashboardData{},
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{

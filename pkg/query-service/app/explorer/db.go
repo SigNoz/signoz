@@ -9,45 +9,32 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
-var db *sqlx.DB
-
-type SavedView struct {
-	UUID       string    `json:"uuid" db:"uuid"`
-	Name       string    `json:"name" db:"name"`
-	Category   string    `json:"category" db:"category"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	CreatedBy  string    `json:"created_by" db:"created_by"`
-	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
-	UpdatedBy  string    `json:"updated_by" db:"updated_by"`
-	SourcePage string    `json:"source_page" db:"source_page"`
-	Tags       string    `json:"tags" db:"tags"`
-	Data       string    `json:"data" db:"data"`
-	ExtraData  string    `json:"extra_data" db:"extra_data"`
-}
+var db *bun.DB
 
 // InitWithDSN sets up setting up the connection pool global variable.
-func InitWithDSN(inputDB *sqlx.DB) error {
+func InitWithDSN(inputDB *bun.DB) error {
 	db = inputDB
 	telemetry.GetInstance().SetSavedViewsInfoCallback(GetSavedViewsInfo)
 
 	return nil
 }
 
-func InitWithDB(sqlDB *sqlx.DB) {
-	db = sqlDB
+func InitWithDB(bunDB *bun.DB) {
+	db = bunDB
 }
 
-func GetViews() ([]*v3.SavedView, error) {
-	var views []SavedView
-	err := db.Select(&views, "SELECT * FROM saved_views")
+func GetViews(ctx context.Context, orgID string) ([]*v3.SavedView, error) {
+	var views []types.SavedView
+	err := db.NewSelect().Model(&views).Where("org_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
 	}
@@ -76,13 +63,13 @@ func GetViews() ([]*v3.SavedView, error) {
 	return savedViews, nil
 }
 
-func GetViewsForFilters(sourcePage string, name string, category string) ([]*v3.SavedView, error) {
-	var views []SavedView
+func GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*v3.SavedView, error) {
+	var views []types.SavedView
 	var err error
 	if len(category) == 0 {
-		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND name LIKE ?", sourcePage, "%"+name+"%")
+		err = db.NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
 	} else {
-		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND category LIKE ? AND name LIKE ?", sourcePage, "%"+category+"%", "%"+name+"%")
+		err = db.NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND category LIKE ? AND name LIKE ?", orgID, sourcePage, "%"+category+"%", "%"+name+"%").Scan(ctx)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
@@ -111,7 +98,7 @@ func GetViewsForFilters(sourcePage string, name string, category string) ([]*v3.
 	return savedViews, nil
 }
 
-func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
+func CreateView(ctx context.Context, orgID string, view v3.SavedView) (string, error) {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
 		return "", fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
@@ -133,29 +120,35 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	createBy := claims.Email
 	updatedBy := claims.Email
 
-	_, err = db.Exec(
-		"INSERT INTO saved_views (uuid, name, category, created_at, created_by, updated_at, updated_by, source_page, tags, data, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		uuid_,
-		view.Name,
-		view.Category,
-		createdAt,
-		createBy,
-		updatedAt,
-		updatedBy,
-		view.SourcePage,
-		strings.Join(view.Tags, ","),
-		data,
-		view.ExtraData,
-	)
+	dbView := types.SavedView{
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: createBy,
+			UpdatedBy: updatedBy,
+		},
+		OrgID:      orgID,
+		UUID:       uuid_,
+		Name:       view.Name,
+		Category:   view.Category,
+		SourcePage: view.SourcePage,
+		Tags:       strings.Join(view.Tags, ","),
+		Data:       string(data),
+		ExtraData:  view.ExtraData,
+	}
+
+	_, err = db.NewInsert().Model(&dbView).Exec(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error in creating saved view: %s", err.Error())
 	}
 	return uuid_, nil
 }
 
-func GetView(uuid_ string) (*v3.SavedView, error) {
-	var view SavedView
-	err := db.Get(&view, "SELECT * FROM saved_views WHERE uuid = ?", uuid_)
+func GetView(ctx context.Context, orgID string, uuid_ string) (*v3.SavedView, error) {
+	var view types.SavedView
+	err := db.NewSelect().Model(&view).Where("org_id = ? AND uuid = ?", orgID, uuid_).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
 	}
@@ -180,7 +173,7 @@ func GetView(uuid_ string) (*v3.SavedView, error) {
 	}, nil
 }
 
-func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
+func UpdateView(ctx context.Context, orgID string, uuid_ string, view v3.SavedView) error {
 	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
 		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
@@ -194,16 +187,25 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 	updatedAt := time.Now()
 	updatedBy := claims.Email
 
-	_, err = db.Exec("UPDATE saved_views SET updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ? WHERE uuid = ?",
-		updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData, uuid_)
+	_, err = db.NewUpdate().
+		Model(&types.SavedView{}).
+		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
+			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
+		Where("uuid = ?", uuid_).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error in updating saved view: %s", err.Error())
 	}
 	return nil
 }
 
-func DeleteView(uuid_ string) error {
-	_, err := db.Exec("DELETE FROM saved_views WHERE uuid = ?", uuid_)
+func DeleteView(ctx context.Context, orgID string, uuid_ string) error {
+	_, err := db.NewDelete().
+		Model(&types.SavedView{}).
+		Where("uuid = ?", uuid_).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error in deleting explorer query: %s", err.Error())
 	}
@@ -212,7 +214,17 @@ func DeleteView(uuid_ string) error {
 
 func GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
 	savedViewsInfo := model.SavedViewsInfo{}
-	savedViews, err := GetViews()
+	// get single org ID from db
+	var orgIDs []string
+	err := db.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs)
+	if err != nil {
+		return nil, fmt.Errorf("error in getting org IDs: %s", err.Error())
+	}
+	if len(orgIDs) != 1 {
+		zap.S().Warn("GetSavedViewsInfo: Zero or multiple org IDs found in the database", zap.Int("orgIDs", len(orgIDs)))
+		return &savedViewsInfo, nil
+	}
+	savedViews, err := GetViews(ctx, orgIDs[0])
 	if err != nil {
 		zap.S().Debug("Error in fetching saved views info: ", err)
 		return &savedViewsInfo, err

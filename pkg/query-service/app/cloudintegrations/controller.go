@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"golang.org/x/exp/maps"
 )
 
@@ -493,9 +493,9 @@ func (c *Controller) UpdateServiceConfig(
 // All dashboards that are available based on cloud integrations configuration
 // across all cloud providers
 func (c *Controller) AvailableDashboards(ctx context.Context) (
-	[]dashboards.Dashboard, *model.ApiError,
+	[]types.Dashboard, *model.ApiError,
 ) {
-	allDashboards := []dashboards.Dashboard{}
+	allDashboards := []types.Dashboard{}
 
 	for _, provider := range []string{"aws"} {
 		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, provider)
@@ -513,7 +513,7 @@ func (c *Controller) AvailableDashboards(ctx context.Context) (
 
 func (c *Controller) AvailableDashboardsForCloudProvider(
 	ctx context.Context, cloudProvider string,
-) ([]dashboards.Dashboard, *model.ApiError) {
+) ([]types.Dashboard, *model.ApiError) {
 
 	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, cloudProvider)
 	if apiErr != nil {
@@ -545,21 +545,25 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 		return nil, apiErr
 	}
 
-	svcDashboards := []dashboards.Dashboard{}
+	svcDashboards := []types.Dashboard{}
 	for _, svc := range allServices {
 		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
 		if serviceDashboardsCreatedAt != nil {
 			for _, d := range svc.Assets.Dashboards {
 				isLocked := 1
 				author := fmt.Sprintf("%s-integration", cloudProvider)
-				svcDashboards = append(svcDashboards, dashboards.Dashboard{
-					Uuid:      c.dashboardUuid(cloudProvider, svc.Id, d.Id),
-					Locked:    &isLocked,
-					Data:      *d.Definition,
-					CreatedAt: *serviceDashboardsCreatedAt,
-					CreateBy:  &author,
-					UpdatedAt: *serviceDashboardsCreatedAt,
-					UpdateBy:  &author,
+				svcDashboards = append(svcDashboards, types.Dashboard{
+					UUID:   c.dashboardUuid(cloudProvider, svc.Id, d.Id),
+					Locked: &isLocked,
+					Data:   *d.Definition,
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: *serviceDashboardsCreatedAt,
+						UpdatedAt: *serviceDashboardsCreatedAt,
+					},
+					UserAuditable: types.UserAuditable{
+						CreatedBy: author,
+						UpdatedBy: author,
+					},
 				})
 			}
 			servicesWithAvailableMetrics[svc.Id] = nil
@@ -571,7 +575,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 func (c *Controller) GetDashboardById(
 	ctx context.Context,
 	dashboardUuid string,
-) (*dashboards.Dashboard, *model.ApiError) {
+) (*types.Dashboard, *model.ApiError) {
 	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
 	if apiErr != nil {
 		return nil, apiErr
@@ -585,7 +589,7 @@ func (c *Controller) GetDashboardById(
 	}
 
 	for _, d := range allDashboards {
-		if d.Uuid == dashboardUuid {
+		if d.UUID == dashboardUuid {
 			return &d, nil
 		}
 	}

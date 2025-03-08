@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type Controller struct {
@@ -130,12 +130,12 @@ func (c *Controller) GetPipelinesForInstalledIntegrations(
 
 func (c *Controller) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
-) ([]dashboards.Dashboard, *model.ApiError) {
+) ([]types.Dashboard, *model.ApiError) {
 	return c.mgr.GetDashboardsForInstalledIntegrations(ctx)
 }
 
 func (c *Controller) GetInstalledIntegrationDashboardById(
 	ctx context.Context, dashboardUuid string,
-) (*dashboards.Dashboard, *model.ApiError) {
+) (*types.Dashboard, *model.ApiError) {
 	return c.mgr.GetInstalledIntegrationDashboardById(ctx, dashboardUuid)
 }
