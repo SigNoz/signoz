@@ -14,6 +14,11 @@ func NewRouteFromRouteConfig(route *config.Route, cfg RouteConfig) (*config.Rout
 			GroupWait:      (*model.Duration)(&cfg.GroupWait),
 			RepeatInterval: (*model.Duration)(&cfg.RepeatInterval),
 		}
+	} else {
+		route.GroupByStr = cfg.GroupByStr
+		route.GroupInterval = (*model.Duration)(&cfg.GroupInterval)
+		route.GroupWait = (*model.Duration)(&cfg.GroupWait)
+		route.RepeatInterval = (*model.Duration)(&cfg.RepeatInterval)
 	}
 
 	if err := route.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {

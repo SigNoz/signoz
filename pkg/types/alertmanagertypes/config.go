@@ -11,6 +11,7 @@ import (
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/errors"
 )
@@ -380,4 +381,5 @@ type ConfigStore interface {
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
+	model.NameValidationScheme = model.UTF8Validation
 }

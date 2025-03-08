@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -219,6 +220,63 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			err = json.Unmarshal(routes, &actualRoutes)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, tc.expectedRoutes, actualRoutes)
+		})
+	}
+}
+
+func TestSetRouteConfigWithNilRoute(t *testing.T) {
+	cfg := NewConfig(&config.Config{}, "1")
+	err := cfg.SetRouteConfig(RouteConfig{GroupByStr: []string{"alertname"}, GroupInterval: 1 * time.Minute, GroupWait: 1 * time.Minute, RepeatInterval: 1 * time.Minute})
+	require.NoError(t, err)
+
+	assert.NotNil(t, cfg.alertmanagerConfig.Route)
+	assert.Equal(t, DefaultReceiverName, cfg.alertmanagerConfig.Route.Receiver)
+	assert.Equal(t, []string{"alertname"}, cfg.alertmanagerConfig.Route.GroupByStr)
+	assert.Equal(t, model.Duration(1*time.Minute), *cfg.alertmanagerConfig.Route.GroupInterval)
+	assert.Equal(t, model.Duration(1*time.Minute), *cfg.alertmanagerConfig.Route.GroupWait)
+	assert.Equal(t, model.Duration(1*time.Minute), *cfg.alertmanagerConfig.Route.RepeatInterval)
+}
+
+func TestSetRouteConfigWithNonNilRoute(t *testing.T) {
+	cfg := NewConfig(&config.Config{Route: &config.Route{Receiver: "test-receiver"}}, "1")
+	err := cfg.SetRouteConfig(RouteConfig{GroupByStr: []string{"testgroupby"}, GroupInterval: 5 * time.Minute, GroupWait: 5 * time.Minute, RepeatInterval: 5 * time.Minute})
+	require.NoError(t, err)
+
+	assert.NotNil(t, cfg.alertmanagerConfig.Route)
+	assert.Equal(t, "test-receiver", cfg.alertmanagerConfig.Route.Receiver)
+	assert.Equal(t, []string{"testgroupby"}, cfg.alertmanagerConfig.Route.GroupByStr)
+	assert.Equal(t, model.Duration(5*time.Minute), *cfg.alertmanagerConfig.Route.GroupInterval)
+	assert.Equal(t, model.Duration(5*time.Minute), *cfg.alertmanagerConfig.Route.GroupWait)
+	assert.Equal(t, model.Duration(5*time.Minute), *cfg.alertmanagerConfig.Route.RepeatInterval)
+}
+
+func TestUTF8Validation(t *testing.T) {
+	testCases := []struct {
+		name  string
+		label string
+		pass  bool
+	}{
+		{
+			name:  "DotLabel",
+			label: "a.b.c",
+			pass:  true,
+		},
+		{
+			name:  "UnderscoreLabel",
+			label: "a_b_c",
+			pass:  true,
+		},
+		{
+			name:  "DashLabel",
+			label: "a-b-c",
+			pass:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			l := model.LabelName(tc.label)
+			assert.Equal(t, tc.pass, l.IsValid())
 		})
 	}
 }

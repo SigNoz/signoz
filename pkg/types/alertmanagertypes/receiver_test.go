@@ -17,7 +17,7 @@ func TestNewReceiver(t *testing.T) {
 	}{
 		{
 			name:     "TelegramConfig",
-			input:    `{"name": "telegram", "telegram_configs": [{"chat": 12345, "token": "1234567890"}]}`,
+			input:    `{"name":"telegram","telegram_configs":[{"chat":12345,"token":"1234567890"}]}`,
 			expected: `{"name":"telegram","telegram_configs":[{"send_resolved":false,"token":"1234567890","chat":12345,"message":"{{ template \"telegram.default.message\" . }}","parse_mode":"HTML"}]}`,
 			pass:     true,
 		},
