@@ -109,6 +109,20 @@ func newConfigFromString(s string) (*config.Config, error) {
 		return nil, err
 	}
 
+	for i, receiver := range config.Receivers {
+		bytes, err := json.Marshal(receiver)
+		if err != nil {
+			return nil, err
+		}
+
+		receiver, err := NewReceiver(string(bytes))
+		if err != nil {
+			return nil, err
+		}
+
+		config.Receivers[i] = receiver
+	}
+
 	return config, nil
 }
 
