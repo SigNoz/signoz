@@ -34,7 +34,7 @@ const createGroupByFilters = (
 		})
 		.flat();
 
-// Helper to build filters for a single query
+// Helper to build filters for a single query, give priority to group by filters
 const buildQueryFilters = (
 	queryData: IBuilderQuery,
 	groupByFilters: TagFilterItem[],
@@ -46,7 +46,6 @@ const buildQueryFilters = (
 				(groupFilter) => groupFilter.key?.key === filter?.key?.key,
 			),
 	);
-	console.log('existingFilters', existingFilters, groupByFilters, uniqueFilters);
 
 	return {
 		filters: [...uniqueFilters, ...groupByFilters],
