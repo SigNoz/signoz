@@ -260,15 +260,17 @@ function WidgetGraphComponent({
 	): Promise<void> => {
 		const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
 
-		navigateToExplorerPages({
-			widget,
-			requestData: {
-				...metric,
-				queryName: queryData?.queryName || '',
-				inFocusOrNot: queryData?.inFocusOrNot || false,
-			},
-			navigateRequestType: 'specific',
-		}).then((result) => {
+		try {
+			const result = await navigateToExplorerPages({
+				widget,
+				requestData: {
+					...metric,
+					queryName: queryData?.queryName || '',
+					inFocusOrNot: queryData?.inFocusOrNot || false,
+				},
+				navigateRequestType: 'specific',
+			});
+
 			const keys = Object.keys(result);
 			const menuItems = keys.map((key) => ({
 				text: `View ${
@@ -284,7 +286,13 @@ function WidgetGraphComponent({
 			}));
 
 			graphClick(xValue, yValue, mouseX, mouseY, metric, queryData, menuItems);
-		});
+		} catch (error) {
+			notifications.error({
+				message: 'Failed to process graph click',
+				description:
+					error instanceof Error ? error.message : 'Unknown error occurred',
+			});
+		}
 	};
 
 	return (
