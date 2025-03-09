@@ -119,9 +119,10 @@ func (q *querier) runBuilderQuery(
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 			return
 		}
-		misses := q.queryCache.FindMissingTimeRanges(start, end, builderQuery.StepInterval, cacheKeys[queryName])
+		misses := q.queryCache.FindMissingTimeRangesV2(start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		zap.L().Info("cache misses for logs query", zap.Any("misses", misses))
 		missedSeries := make([]querycache.CachedSeriesData, 0)
+		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
 		for _, miss := range misses {
 			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params, preferRPM)
 			if err != nil {
@@ -138,15 +139,33 @@ func (q *querier) runBuilderQuery(
 				}
 				return
 			}
+
+			filteredSeries, startTime, endTime := common.FilterSeriesPoints(series, miss.Start, miss.End, builderQuery.StepInterval)
+
+			// making sure that empty range doesn't doesn't enter the cache
+			// empty results from filteredSeries means data was filtered out, but empty series means actual empty data
+			if len(filteredSeries) > 0 || len(series) == 0 {
+				filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
+					Data:  filteredSeries,
+					Start: startTime,
+					End:   endTime,
+				})
+			}
+
+			// for the actual response
 			missedSeries = append(missedSeries, querycache.CachedSeriesData{
 				Data:  series,
 				Start: miss.Start,
 				End:   miss.End,
 			})
 		}
-		mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKeys[queryName], missedSeries)
 
-		resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
+
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
+
+		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
 		ch <- channelResult{
 			Err:    nil,
