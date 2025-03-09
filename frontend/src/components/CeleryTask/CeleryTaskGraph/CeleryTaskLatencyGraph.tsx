@@ -153,7 +153,13 @@ function CeleryTaskLatencyGraph({
 		const filters = createFiltersFromData({
 			[entityData?.entity as string]: entityData?.value,
 		});
-		navigateToExplorer(filters, DataSource.TRACES, start, end, true);
+		navigateToExplorer({
+			filters,
+			dataSource: DataSource.TRACES,
+			startTime: start,
+			endTime: end,
+			sameTab: true,
+		});
 	}, [entityData, navigateToExplorer, selectedTimeStamp]);
 
 	return (

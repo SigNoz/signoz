@@ -8,12 +8,16 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+export interface NavigateToExplorerProps {
+	filters: TagFilterItem[];
+	dataSource: DataSource;
+	startTime?: number;
+	endTime?: number;
+	sameTab?: boolean;
+}
+
 export function useNavigateToExplorer(): (
-	filters: TagFilterItem[],
-	dataSource: DataSource,
-	startTime?: number,
-	endTime?: number,
-	sameTab?: boolean,
+	props: NavigateToExplorerProps,
 ) => void {
 	const { currentQuery } = useQueryBuilder();
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -41,13 +45,8 @@ export function useNavigateToExplorer(): (
 	);
 
 	return useCallback(
-		(
-			filters: TagFilterItem[],
-			dataSource: DataSource,
-			startTime?: number,
-			endTime?: number,
-			sameTab?: boolean,
-		): void => {
+		(props: NavigateToExplorerProps): void => {
+			const { filters, dataSource, startTime, endTime, sameTab } = props;
 			const urlParams = new URLSearchParams();
 			if (startTime && endTime) {
 				urlParams.set(QueryParams.startTime, startTime.toString());
