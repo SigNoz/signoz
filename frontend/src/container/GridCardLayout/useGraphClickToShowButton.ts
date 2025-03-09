@@ -55,7 +55,7 @@ export const useGraphClickToShowButton = ({
 		yValue: number,
 		mouseX: number,
 		mouseY: number,
-		metric: {
+		metric?: {
 			[key: string]: string;
 		},
 		queryData?: {
@@ -124,9 +124,9 @@ export const useGraphClickToShowButton = ({
 			if (
 				isButtonEnabled &&
 				!isUndefined(xValue) &&
-				metric &&
-				metric?.inFocusOrNot &&
-				Object.keys(metric).length > 0
+				queryData &&
+				queryData?.inFocusOrNot &&
+				Object.keys(queryData).length > 0
 			) {
 				hideTooltips();
 				createButton(xValue, yValue, mouseX, mouseY, metric, queryData);
