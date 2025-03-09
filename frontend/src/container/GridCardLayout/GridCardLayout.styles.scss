@@ -293,7 +293,6 @@
 
 .view-onclick-show-button {
 	position: absolute;
-	padding: 6px 12px;
 	background: var(--bg-vanilla-100);
 	border: 2px solid var(--bg-vanilla-300);
 	border-radius: 4px;
@@ -301,10 +300,24 @@
 	font-size: 12px;
 	font-weight: 500;
 	box-shadow: none;
-	transition: background-color 0.2s;
+	list-style-type: none;
+	padding: 4px;
+	color: var(--bg-ink-100);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	overflow: auto;
+	max-height: 150px;
+	width: 150px;
+	max-width: 200px;
 
-	&:hover {
-		background: var(--bg-vanilla-200);
+	.menu-item {
+		cursor: pointer;
+		padding: 4px;
+		&:hover {
+			background-color: var(--bg-vanilla-200);
+			border-radius: 2px;
+		}
 	}
 }
 
@@ -397,8 +410,10 @@
 		border-color: var(--bg-ink-300);
 		color: var(--bg-vanilla-100);
 
-		&:hover {
-			background: var(--bg-ink-300);
+		.menu-item {
+			&:hover {
+				background-color: var(--bg-ink-100);
+			}
 		}
 	}
 }

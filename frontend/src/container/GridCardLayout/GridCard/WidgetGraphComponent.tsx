@@ -2,6 +2,7 @@ import '../GridCardLayout.styles.scss';
 
 import { Skeleton, Typography } from 'antd';
 import cx from 'classnames';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -30,7 +31,6 @@ import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
 import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
-import { createFilterFromData } from '../utils';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
@@ -238,31 +238,54 @@ function WidgetGraphComponent({
 
 	const currentDataSource = widget?.query?.builder?.queryData?.[0]?.dataSource;
 
-	const handleGraphClick = useGraphClickToShowButton({
+	const graphClick = useGraphClickToShowButton({
 		graphRef,
-		onClickHandler: (xValue, _yValue, _mouseX, _mouseY, data, queryData) => {
-			const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
-			const filters = createFilterFromData(data ?? {});
-
-			navigateToExplorerPages({
-				widget,
-				startTime: xValue,
-				endTime: xValue + (stepInterval ?? 60),
-				filters,
-				navigateRequestType: 'specific',
-				requestData: {
-					...data,
-					queryName: queryData?.queryName || '',
-					inFocusOrNot: queryData?.inFocusOrNot || false,
-				},
-			});
-		},
 		buttonText:
 			currentDataSource === DataSource.TRACES ? 'View Traces' : 'View Logs',
 		isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
 			currentDataSource,
 		),
+		buttonClassName: 'view-onclick-show-button',
 	});
+
+	const navigateToExplorer = useNavigateToExplorer();
+
+	const handleGraphClick = async (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		metric?: { [key: string]: string },
+		queryData?: { queryName: string; inFocusOrNot: boolean },
+	): Promise<void> => {
+		const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
+
+		navigateToExplorerPages({
+			widget,
+			requestData: {
+				...metric,
+				queryName: queryData?.queryName || '',
+				inFocusOrNot: queryData?.inFocusOrNot || false,
+			},
+			navigateRequestType: 'specific',
+		}).then((result) => {
+			const keys = Object.keys(result);
+			const menuItems = keys.map((key) => ({
+				text: `View ${
+					currentDataSource === DataSource.TRACES ? 'Traces' : 'Logs'
+				}: ${key}`,
+				onClick: (): void =>
+					navigateToExplorer({
+						filters: result[key].filters,
+						dataSource: result[key].dataSource as DataSource,
+						startTime: xValue,
+						endTime: xValue + (stepInterval ?? 60),
+					}),
+			}));
+
+			graphClick(xValue, yValue, mouseX, mouseY, metric, queryData, menuItems);
+		});
+	};
 
 	return (
 		<div
