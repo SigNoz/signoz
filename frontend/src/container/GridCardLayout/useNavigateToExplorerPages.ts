@@ -38,10 +38,21 @@ const createGroupByFilters = (
 const buildQueryFilters = (
 	queryData: IBuilderQuery,
 	groupByFilters: TagFilterItem[],
-): { filters: TagFilterItem[]; dataSource?: string } => ({
-	filters: [...(queryData.filters?.items || []), ...groupByFilters],
-	dataSource: queryData.dataSource,
-});
+): { filters: TagFilterItem[]; dataSource?: string } => {
+	const existingFilters = queryData.filters?.items || [];
+	const uniqueFilters = existingFilters.filter(
+		(filter) =>
+			!groupByFilters.some(
+				(groupFilter) => groupFilter.key?.key === filter?.key?.key,
+			),
+	);
+	console.log('existingFilters', existingFilters, groupByFilters, uniqueFilters);
+
+	return {
+		filters: [...uniqueFilters, ...groupByFilters],
+		dataSource: queryData.dataSource,
+	};
+};
 
 // Main function to build filters
 export const buildFilters = (
