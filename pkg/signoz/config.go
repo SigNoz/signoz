@@ -77,11 +77,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 	}
 
 	var config Config
-	if err := conf.Unmarshal("", &config); err != nil {
-		return Config{}, err
-	}
-
-	if err := conf.UnmarshalYaml("", &config); err != nil {
+	if err := conf.Unmarshal("", &config, "yaml"); err != nil {
 		return Config{}, err
 	}
 

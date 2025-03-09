@@ -36,9 +36,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := &Config{}
-	err = conf.Unmarshal("alertmanager", actual)
-	require.NoError(t, err)
-	err = conf.UnmarshalYaml("alertmanager", actual)
+	err = conf.Unmarshal("alertmanager", actual, "yaml")
 	require.NoError(t, err)
 
 	def := NewConfigFactory().New().(Config)
