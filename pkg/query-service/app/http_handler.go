@@ -20,6 +20,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
+	"go.signoz.io/signoz/pkg/signoz"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -136,6 +137,8 @@ type APIHandler struct {
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
+
+	Signoz *signoz.SigNoz
 }
 
 type APIHandlerOpts struct {
@@ -179,6 +182,8 @@ type APIHandlerOpts struct {
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
+
+	Signoz *signoz.SigNoz
 }
 
 // NewAPIHandler returns an APIHandler
@@ -249,6 +254,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
+		Signoz:                        opts.Signoz,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -2017,7 +2023,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return

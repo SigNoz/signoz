@@ -70,6 +70,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		Signoz:                        signoz,
 	})
 
 	if err != nil {

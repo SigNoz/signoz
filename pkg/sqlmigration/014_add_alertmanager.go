@@ -56,30 +56,10 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	if _, err := tx.
 		NewAddColumn().
 		Table("notification_channels").
+		ColumnExpr("org_id").
 		Apply(WrapIfNotExists(ctx, db, "notification_channels", "org_id")).
 		Exec(ctx); err != nil && err != ErrNoExecute {
 		return err
-	}
-
-	var orgID string
-
-	err = tx.
-		NewSelect().
-		ColumnExpr("id").
-		Table("organizations").
-		Limit(1).
-		Scan(ctx, &orgID)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			return err
-		}
-	}
-
-	if err == nil {
-		err = migration.populateOrgID(ctx, tx, orgID)
-		if err != nil {
-			return err
-		}
 	}
 
 	if _, err := tx.
@@ -116,8 +96,27 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	if err := migration.populateAlertmanagerConfig(ctx, tx, orgID); err != nil {
-		return err
+	var orgID string
+	err = tx.
+		NewSelect().
+		ColumnExpr("id").
+		Table("organizations").
+		Limit(1).
+		Scan(ctx, &orgID)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+	}
+
+	if err == nil {
+		if err := migration.populateOrgIDInChannels(ctx, tx, orgID); err != nil {
+			return err
+		}
+
+		if err := migration.populateAlertmanagerConfig(ctx, tx, orgID); err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -127,7 +126,7 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (migration *addAlertmanager) populateOrgID(ctx context.Context, tx bun.Tx, orgID string) error {
+func (migration *addAlertmanager) populateOrgIDInChannels(ctx context.Context, tx bun.Tx, orgID string) error {
 	if _, err := tx.
 		NewUpdate().
 		Table("notification_channels").

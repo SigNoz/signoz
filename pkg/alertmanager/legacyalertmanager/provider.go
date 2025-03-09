@@ -439,3 +439,12 @@ func (provider *provider) Stop(ctx context.Context) error {
 func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
 	return provider.configStore.Get(ctx, orgID)
 }
+
+func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
+	if err != nil {
+		return err
+	}
+
+	return provider.configStore.Set(ctx, config)
+}

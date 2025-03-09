@@ -206,6 +206,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
+		Signoz:                        serverOptions.SigNoz,
 	})
 	if err != nil {
 		return nil, err
