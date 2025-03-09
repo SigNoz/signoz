@@ -14,6 +14,11 @@ import {
 	WarningOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
+import { MenuItemType } from 'antd/es/menu/hooks/useItems';
+import {
+	NavigateToExplorerProps,
+	useNavigateToExplorer,
+} from 'components/CeleryTask/useNavigateToExplorer';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -26,12 +31,17 @@ import { isEmpty } from 'lodash-es';
 import { CircleX, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
+import { buildFilters } from '../useNavigateToExplorerPages';
+import useUpdatedQuery from '../useResolveQuery';
 import { errorTooltipPosition, WARNING_MESSAGE } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import { MenuItem } from './types';
@@ -54,8 +64,97 @@ interface IWidgetHeaderProps {
 	isFetchingResponse: boolean;
 	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
 	setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-	onNavigateToExplorerPages?: () => void;
 }
+
+interface FilterGroup {
+	[queryName: string]: {
+		filters: TagFilterItem[];
+		dataSource: string;
+	};
+}
+
+interface GroupedFilters {
+	[dataSource: string]: FilterGroup;
+}
+
+const groupFiltersByDataSource = (
+	filters: ReturnType<typeof buildFilters>,
+): GroupedFilters =>
+	Object.entries(filters).reduce((acc, [queryName, queryData]) => {
+		const { dataSource } = queryData;
+		if (!dataSource) return acc;
+
+		if (!acc[dataSource]) {
+			acc[dataSource] = {};
+		}
+
+		acc[dataSource][queryName] = queryData as {
+			filters: TagFilterItem[];
+			dataSource: string;
+		};
+		return acc;
+	}, {} as GroupedFilters);
+
+export const createMenuForExplorerNavigation = (
+	filters: ReturnType<typeof buildFilters>,
+	navigateToExplorer: (props: NavigateToExplorerProps) => void,
+	headerMenuList?: MenuItemKeys[],
+): {
+	items: MenuItemType[];
+	onClick: MenuProps['onClick'];
+} => {
+	const groupedFilters = groupFiltersByDataSource(filters);
+
+	const menuItems = [
+		{
+			key: MenuItemKeys.ViewTraces,
+			icon: <EyeOutlined />,
+			label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.ViewTraces],
+			isVisible:
+				(headerMenuList?.includes(MenuItemKeys.ViewTraces) &&
+					!isEmpty(groupedFilters[DataSource.TRACES])) ||
+				false,
+			disabled: false,
+			children: Object.entries(groupedFilters[DataSource.TRACES] || {}).map(
+				([queryName]) => ({
+					key: queryName,
+					label: queryName,
+				}),
+			),
+		},
+		{
+			key: MenuItemKeys.ViewLogs,
+			icon: <EyeOutlined />,
+			label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.ViewLogs],
+			isVisible:
+				(headerMenuList?.includes(MenuItemKeys.ViewLogs) &&
+					!isEmpty(groupedFilters[DataSource.LOGS])) ||
+				false,
+			disabled: false,
+			children: Object.entries(groupedFilters[DataSource.LOGS] || {}).map(
+				([queryName]) => ({
+					key: queryName,
+					label: queryName,
+				}),
+			),
+		},
+	];
+
+	const itemClickHandler: MenuProps['onClick'] = ({ key }: { key: string }) => {
+		const properties = filters[key];
+		if (properties.dataSource) {
+			navigateToExplorer({
+				filters: properties.filters,
+				dataSource: properties.dataSource as DataSource,
+			});
+		}
+	};
+
+	return {
+		items: menuItems.filter((item) => item.isVisible),
+		onClick: itemClickHandler,
+	};
+};
 
 function WidgetHeader({
 	title,
@@ -72,7 +171,6 @@ function WidgetHeader({
 	isFetchingResponse,
 	tableProcessedDataRef,
 	setSearchTerm,
-	onNavigateToExplorerPages,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
@@ -109,8 +207,8 @@ function WidgetHeader({
 			[MenuItemKeys.Clone]: onClone,
 			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
 			[MenuItemKeys.Download]: onDownloadHandler,
-			[MenuItemKeys.ViewTraces]: onNavigateToExplorerPages,
-			[MenuItemKeys.ViewLogs]: onNavigateToExplorerPages,
+			[MenuItemKeys.ViewTraces]: undefined,
+			[MenuItemKeys.ViewLogs]: undefined,
 		}),
 		[
 			onView,
@@ -119,7 +217,6 @@ function WidgetHeader({
 			onClone,
 			onCreateAlertsHandler,
 			onDownloadHandler,
-			onNavigateToExplorerPages,
 		],
 	);
 
@@ -187,20 +284,6 @@ function WidgetHeader({
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},
-			{
-				key: MenuItemKeys.ViewTraces,
-				icon: <EyeOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.ViewTraces],
-				isVisible: headerMenuList?.includes(MenuItemKeys.ViewTraces) || false,
-				disabled: false,
-			},
-			{
-				key: MenuItemKeys.ViewLogs,
-				icon: <EyeOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.ViewLogs],
-				isVisible: headerMenuList?.includes(MenuItemKeys.ViewLogs) || false,
-				disabled: false,
-			},
 		],
 		[
 			headerMenuList,
@@ -217,13 +300,49 @@ function WidgetHeader({
 
 	const globalSearchAvailable = widget.panelTypes === PANEL_TYPES.TABLE;
 
-	const menu = useMemo(
-		() => ({
-			items: updatedMenuList,
-			onClick: onMenuItemSelectHandler,
-		}),
-		[updatedMenuList, onMenuItemSelectHandler],
+	const { selectedDashboard } = useDashboard();
+
+	const navigateToExplorer = useNavigateToExplorer();
+
+	// item and onclick handler for explorer navigate queries
+	const { getUpdatedQuery } = useUpdatedQuery();
+	const [explorerFilters, setExplorerFilters] = useState<
+		ReturnType<typeof buildFilters>
+	>({});
+
+	const handleDropdownVisibilityChange = useCallback(
+		async (visible: boolean) => {
+			if (visible) {
+				try {
+					const query = await getUpdatedQuery({ widget, selectedDashboard });
+					const explorerFiltersComputed = buildFilters(query);
+					setExplorerFilters(explorerFiltersComputed);
+				} catch (error) {
+					console.error('Failed to update explorer filters:', error);
+				}
+			}
+		},
+		[widget, selectedDashboard, getUpdatedQuery],
 	);
+
+	const menu = useMemo(() => {
+		const { items, onClick } = createMenuForExplorerNavigation(
+			explorerFilters,
+			navigateToExplorer,
+			headerMenuList,
+		);
+		return {
+			items: [...updatedMenuList, ...items],
+			onClick: (e: any): void =>
+				isTWidgetOptions(e.key) ? onMenuItemSelectHandler(e) : onClick?.(e),
+		};
+	}, [
+		explorerFilters,
+		navigateToExplorer,
+		headerMenuList,
+		updatedMenuList,
+		onMenuItemSelectHandler,
+	]);
 
 	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
 		return null;
@@ -306,7 +425,12 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-						<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+						<Dropdown
+							menu={menu}
+							trigger={['hover']}
+							placement="bottomRight"
+							onOpenChange={handleDropdownVisibilityChange}
+						>
 							<MoreOutlined
 								data-testid="widget-header-options"
 								className={`widget-header-more-options ${
@@ -326,7 +450,6 @@ WidgetHeader.defaultProps = {
 	onClone: undefined,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
-	onNavigateToExplorerPages: undefined,
 };
 
 export default WidgetHeader;

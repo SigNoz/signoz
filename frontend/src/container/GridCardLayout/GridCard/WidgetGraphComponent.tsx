@@ -23,12 +23,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
@@ -97,23 +94,6 @@ function WidgetGraphComponent({
 	);
 
 	const updateDashboardMutation = useUpdateDashboard();
-
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const onNavigateToExplorerPages = async (): Promise<void> => {
-		try {
-			await navigateToExplorerPages({
-				widget,
-				startTime: minTime,
-				endTime: maxTime,
-				navigateRequestType: 'panel',
-			});
-		} catch (error) {
-			console.error('Navigation failed:', error);
-		}
-	};
 
 	const onDeleteHandler = (): void => {
 		if (!selectedDashboard) return;
@@ -260,7 +240,7 @@ function WidgetGraphComponent({
 
 	const handleGraphClick = useGraphClickToShowButton({
 		graphRef,
-		onClickHandler: (xValue, _yValue, _mouseX, _mouseY, data) => {
+		onClickHandler: (xValue, _yValue, _mouseX, _mouseY, data, queryData) => {
 			const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
 			const filters = createFilterFromData(data ?? {});
 
@@ -270,7 +250,11 @@ function WidgetGraphComponent({
 				endTime: xValue + (stepInterval ?? 60),
 				filters,
 				navigateRequestType: 'specific',
-				requestData: data,
+				requestData: {
+					...data,
+					queryName: queryData?.queryName || '',
+					inFocusOrNot: queryData?.inFocusOrNot || false,
+				},
 			});
 		},
 		buttonText:
@@ -349,7 +333,6 @@ function WidgetGraphComponent({
 					isFetchingResponse={isFetchingResponse}
 					tableProcessedDataRef={tableProcessedDataRef}
 					setSearchTerm={setSearchTerm}
-					onNavigateToExplorerPages={onNavigateToExplorerPages}
 				/>
 			</div>
 

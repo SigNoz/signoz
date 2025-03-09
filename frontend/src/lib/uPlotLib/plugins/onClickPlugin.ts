@@ -7,7 +7,9 @@ export interface OnClickPluginOpts {
 		mouseX: number,
 		mouseY: number,
 		data?: {
-			[key: string]: string | boolean;
+			[key: string]: string;
+		},
+		queryData?: {
 			queryName: string;
 			inFocusOrNot: boolean;
 		},
@@ -52,10 +54,7 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					});
 				}
 
-				opts.onClick(xValue, yValue, mouseX, mouseY, {
-					...metric,
-					...outputMetric,
-				});
+				opts.onClick(xValue, yValue, mouseX, mouseY, metric, outputMetric);
 			};
 			u.over.addEventListener('click', handleClick);
 		},

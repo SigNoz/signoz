@@ -106,7 +106,12 @@ export default function CeleryTaskDetail({
 						endTime,
 						source: widgetData.title,
 					});
-					navigateToExplorer(filters, DataSource.TRACES, startTime, endTime);
+					navigateToExplorer({
+						filters,
+						dataSource: DataSource.TRACES,
+						startTime,
+						endTime,
+					});
 				}}
 				start={startTime}
 				end={endTime}

@@ -1,21 +1,16 @@
-import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { getGraphType } from 'utils/getGraphType';
+import {
+	IBuilderQuery,
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import { createFilterFromData, isFormula } from './utils';
+import useUpdatedQuery from './useResolveQuery';
+import { createFilterFromData, extractQueryNamesFromExpression } from './utils';
 
 type GraphClickMetaData = {
 	[key: string]: string | boolean;
@@ -31,52 +26,78 @@ interface NavigateToExplorerPagesProps {
 	filters?: TagFilterItem[];
 }
 
-// function to make final filters
-const buildFilters = (
-	query: Query,
+// Helper to create group by filters from request data
+const createGroupByFilters = (
+	groupBy: { key: string }[],
 	requestData: GraphClickMetaData,
-	navigateRequestType: 'panel' | 'specific',
+): TagFilterItem[] =>
+	groupBy
+		.map((gb) => {
+			const value = requestData[gb.key];
+			return value ? createFilterFromData({ [gb.key]: value }) : [];
+		})
+		.flat();
+
+// Helper to build filters for a single query
+const buildQueryFilters = (
+	queryData: IBuilderQuery,
+	groupByFilters: TagFilterItem[],
+): { filters: TagFilterItem[]; dataSource?: string } => ({
+	filters: [...(queryData.filters?.items || []), ...groupByFilters],
+	dataSource: queryData.dataSource,
+});
+
+// Main function to build filters
+export const buildFilters = (
+	query: Query,
+	requestData?: GraphClickMetaData,
+	navigateRequestType: 'panel' | 'specific' = 'panel',
 ): {
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 } => {
+	// Handle panel navigation
+	if (navigateRequestType === 'panel') {
+		return Object.fromEntries(
+			query.builder.queryData.map((q) => [q.queryName, buildQueryFilters(q, [])]),
+		);
+	}
+
 	// Handle specific query navigation
-	if (navigateRequestType === 'specific' && requestData.queryName) {
+	if (navigateRequestType === 'specific' && requestData?.queryName) {
 		const queryData = query.builder.queryData.find(
 			(q) => q.queryName === requestData.queryName,
 		);
 
-		if (!queryData) return {};
+		// Direct query match
+		if (queryData) {
+			const groupByFilters = createGroupByFilters(queryData.groupBy, requestData);
+			return {
+				[requestData.queryName]: buildQueryFilters(queryData, groupByFilters),
+			};
+		}
 
-		const groupByFilters = queryData.groupBy
-			.map((groupBy) => {
-				const value = requestData[groupBy.key];
-				return value ? createFilterFromData({ [groupBy.key]: value }) : [];
-			})
-			.flat();
-
-		return {
-			[requestData.queryName]: {
-				filters: [...(queryData.filters?.items || []), ...groupByFilters],
-				dataSource: queryData.dataSource,
-			},
-		};
-	}
-
-	// Handle panel navigation
-	if (navigateRequestType === 'panel') {
-		const nonFormulaQueries = query.builder.queryData.filter(
-			(q) => !isFormula(q.queryName),
+		// Formula query handling
+		const formulaQuery = query.builder.queryFormulas.find(
+			(q) => q.queryName === requestData.queryName,
 		);
 
-		return Object.fromEntries(
-			nonFormulaQueries.map((q) => [
-				q.queryName,
-				{
-					filters: q.filters?.items || [],
-					dataSource: q.dataSource,
-				},
-			]),
+		if (!formulaQuery) return {};
+
+		const queryNames = extractQueryNamesFromExpression(formulaQuery.expression);
+		const filteredQueryData = query.builder.queryData.filter((q) =>
+			queryNames.includes(q.queryName),
 		);
+
+		const returnObject: {
+			[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
+		} = {};
+
+		filteredQueryData.forEach((q) => {
+			const groupByFilters = createGroupByFilters(q.groupBy, requestData);
+			returnObject[q.queryName] = buildQueryFilters(q, groupByFilters);
+		});
+
+		return returnObject;
 	}
 
 	return {};
@@ -92,13 +113,7 @@ function useNavigateToExplorerPages(): (
 	const navigateToExplorer = useNavigateToExplorer();
 	const { selectedDashboard } = useDashboard();
 	const { notifications } = useNotifications();
-
-	const { selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const queryRangeMutation = useMutation(getQueryRangeFormat);
+	const { getUpdatedQuery } = useUpdatedQuery();
 
 	return useCallback(
 		async ({
@@ -110,21 +125,11 @@ function useNavigateToExplorerPages(): (
 			navigateRequestType,
 		}: NavigateToExplorerPagesProps): Promise<void> => {
 			try {
-				// Prepare query payload with resolved variables
-				const { queryPayload } = prepareQueryRangePayload({
-					query: widget.query,
-					graphType: getGraphType(widget.panelTypes),
-					selectedTime: widget.timePreferance,
-					globalSelectedInterval,
-					variables: getDashboardVariables(selectedDashboard?.data?.variables),
+				// Get updated query using the extracted hook
+				const updatedQuery = await getUpdatedQuery({
+					widget,
+					selectedDashboard,
 				});
-
-				// Execute query and process results
-				const queryResult = await queryRangeMutation.mutateAsync(queryPayload);
-				const updatedQuery = mapQueryDataFromApi(
-					queryResult.compositeQuery,
-					widget?.query,
-				);
 
 				const finalFilters = buildFilters(
 					updatedQuery,
@@ -144,27 +149,21 @@ function useNavigateToExplorerPages(): (
 				}
 
 				// Navigate with combined filters
-				await navigateToExplorer(
-					[...widgetFilters, ...filters],
-					currentDataSource,
+				navigateToExplorer({
+					filters: [...widgetFilters, ...filters],
+					dataSource: currentDataSource,
 					startTime,
 					endTime,
-				);
+				});
 			} catch (error) {
 				notifications.error({
-					message: SOMETHING_WENT_WRONG,
+					message: 'Error navigating to explorer',
 					description:
 						error instanceof Error ? error.message : 'Unknown error occurred',
 				});
 			}
 		},
-		[
-			globalSelectedInterval,
-			navigateToExplorer,
-			notifications,
-			queryRangeMutation,
-			selectedDashboard?.data?.variables,
-		],
+		[getUpdatedQuery, selectedDashboard, navigateToExplorer, notifications],
 	);
 }
 

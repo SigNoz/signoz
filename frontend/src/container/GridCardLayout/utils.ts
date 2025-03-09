@@ -30,3 +30,18 @@ export const createFilterFromData = (
 
 export const isFormula = (queryName: string): boolean =>
 	FORMULA_REGEXP.test(queryName);
+
+/**
+ * Extracts query names from a formula expression
+ * Specifically targets capital letters A-Z as query names, as after Z we dont have any query names
+ */
+export function extractQueryNamesFromExpression(expression: string): string[] {
+	if (!expression) return [];
+
+	// Use regex to match standalone capital letters
+	// Uses word boundaries to ensure we only get standalone letters
+	const queryNameRegex = /\b[A-Z]\b/g;
+
+	// Extract matches and deduplicate
+	return [...new Set(expression.match(queryNameRegex) || [])];
+}

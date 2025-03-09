@@ -56,7 +56,9 @@ export const useGraphClickToShowButton = ({
 		mouseX: number,
 		mouseY: number,
 		metric: {
-			[key: string]: string | boolean;
+			[key: string]: string;
+		},
+		queryData?: {
 			queryName: string;
 			inFocusOrNot: boolean;
 		},
@@ -94,7 +96,7 @@ export const useGraphClickToShowButton = ({
 
 		newButton.onclick = (e: MouseEvent): void => {
 			e.stopPropagation();
-			onClickHandler?.(xValue, yValue, mouseX, mouseY, metric);
+			onClickHandler?.(xValue, yValue, mouseX, mouseY, metric, queryData);
 			cleanup();
 		};
 
@@ -116,7 +118,7 @@ export const useGraphClickToShowButton = ({
 	}, [cleanup, graphRef]);
 
 	return useCallback(
-		(xValue, yValue, mouseX, mouseY, metric) => {
+		(xValue, yValue, mouseX, mouseY, metric, queryData) => {
 			cleanup();
 
 			if (
@@ -127,7 +129,7 @@ export const useGraphClickToShowButton = ({
 				Object.keys(metric).length > 0
 			) {
 				hideTooltips();
-				createButton(xValue, yValue, mouseX, mouseY, metric);
+				createButton(xValue, yValue, mouseX, mouseY, metric, queryData);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
