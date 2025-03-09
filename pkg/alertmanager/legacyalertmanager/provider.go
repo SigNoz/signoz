@@ -37,6 +37,7 @@ type provider struct {
 	configStore alertmanagertypes.ConfigStore
 	batcher     *alertmanagerbatcher.Batcher
 	url         *url.URL
+	orgID       string
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -49,11 +50,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 
-	url, err := url.Parse(config.Legacy.ApiURL)
-	if err != nil {
-		return nil, err
-	}
-
 	return &provider{
 		config:   config,
 		settings: settings,
@@ -62,7 +58,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		},
 		configStore: configStore,
 		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
-		url:         url,
+		url:         config.Legacy.ApiURL,
 	}, nil
 }
 
@@ -73,8 +69,25 @@ func (provider *provider) Start(ctx context.Context) error {
 	}
 
 	for alerts := range provider.batcher.C {
-		if err := provider.putAlerts(ctx, "", alerts); err != nil {
-			provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
+		// For the first time, we need to get the orgID from the config store.
+		// Since this is the legacy alertmanager, we get the first org from the store.
+		if provider.orgID == "" {
+			orgIDs, err := provider.configStore.ListOrgs(ctx)
+			if err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
+				continue
+			}
+
+			if len(orgIDs) == 0 {
+				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", "no orgs found")
+				continue
+			}
+
+			provider.orgID = orgIDs[0]
+		}
+
+		if err := provider.putAlerts(ctx, provider.orgID, alerts); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
 		}
 	}
 
@@ -125,17 +138,24 @@ func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts al
 		return err
 	}
 
-	legacyAlerts := make([]postableAlert, len(alerts))
-	for i, alert := range alerts {
-		receivers, err := cfg.ReceiverNamesFromRuleID(alert.Alert.Labels["ruleID"])
-		if err != nil {
-			return err
+	var legacyAlerts []postableAlert
+	for _, alert := range alerts {
+		ruleID, ok := alert.Alert.Labels[alertmanagertypes.RuleIDMatcherName]
+		if !ok {
+			provider.settings.Logger().WarnContext(ctx, "cannot find ruleID for alert, skipping sending alert to alertmanager", "alert", alert)
+			continue
 		}
 
-		legacyAlerts[i] = postableAlert{
+		receivers := cfg.ReceiverNamesFromRuleID(ruleID)
+		if len(receivers) == 0 {
+			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "ruleID", ruleID, "alert", alert)
+			continue
+		}
+
+		legacyAlerts = append(legacyAlerts, postableAlert{
 			PostableAlert: alert,
 			Receivers:     receivers,
-		}
+		})
 	}
 
 	url := provider.url.JoinPath(alertsPath)
@@ -169,7 +189,7 @@ func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts al
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
 	url := provider.url.JoinPath(testReceiverPath)
 
-	body, err := json.Marshal(receiver)
+	body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 	if err != nil {
 		return err
 	}
@@ -198,12 +218,13 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
 	url := provider.url.JoinPath(alertsPath)
 
-	legacyAlert := postableAlert{
+	legacyAlerts := make([]postableAlert, 1)
+	legacyAlerts[0] = postableAlert{
 		PostableAlert: alert,
 		Receivers:     receivers,
 	}
 
-	body, err := json.Marshal(legacyAlert)
+	body, err := json.Marshal(legacyAlerts)
 	if err != nil {
 		return err
 	}
@@ -234,7 +255,18 @@ func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*al
 }
 
 func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
-	return provider.configStore.ListAllChannels(ctx)
+	channels, err := provider.configStore.ListAllChannels(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, channel := range channels {
+		if err := channel.MSTeamsV2ToMSTeams(); err != nil {
+			return nil, err
+		}
+	}
+
+	return channels, nil
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
@@ -264,7 +296,7 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 	err = provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
-		body, err := json.Marshal(receiver)
+		body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 		if err != nil {
 			return err
 		}
@@ -315,7 +347,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
 		url := provider.url.JoinPath(routesPath)
 
-		body, err := json.Marshal(receiver)
+		body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 		if err != nil {
 			return err
 		}
@@ -406,4 +438,13 @@ func (provider *provider) Stop(ctx context.Context) error {
 
 func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
 	return provider.configStore.Get(ctx, orgID)
+}
+
+func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
+	if err != nil {
+		return err
+	}
+
+	return provider.configStore.Set(ctx, config)
 }

@@ -95,16 +95,6 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) *Channel {
 	return &channel
 }
 
-func NewReceiverFromChannel(channel *Channel) (Receiver, error) {
-	receiver := Receiver{}
-	err := json.Unmarshal([]byte(channel.Data), &receiver)
-	if err != nil {
-		return Receiver{}, err
-	}
-
-	return receiver, nil
-}
-
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {
 	cfg, err := NewDefaultConfig(
 		globalConfig,
@@ -162,6 +152,29 @@ func (c *Channel) Update(receiver Receiver) error {
 
 	c.Data = channel.Data
 	c.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// This is needed by the legacy alertmanager to convert the MSTeamsV2Configs to MSTeamsConfigs
+func (c *Channel) MSTeamsV2ToMSTeams() error {
+	if c.Type != "msteamsv2" {
+		return nil
+	}
+
+	receiver, err := NewReceiver(c.Data)
+	if err != nil {
+		return err
+	}
+
+	receiver = MSTeamsV2ReceiverToMSTeamsReceiver(receiver)
+	data, err := json.Marshal(receiver)
+	if err != nil {
+		return err
+	}
+
+	c.Type = "msteams"
+	c.Data = string(data)
 
 	return nil
 }
