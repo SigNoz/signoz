@@ -101,12 +101,12 @@ export default function OverviewRightPanelGraph({
 	const goToTraces = useCallback(
 		(widget: Widgets) => {
 			const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
-			navigateToExplorer(
-				filters ?? [],
-				DataSource.TRACES,
-				selectedTimeStamp,
-				selectedTimeStamp + (stepInterval ?? 60),
-			);
+			navigateToExplorer({
+				filters: filters ?? [],
+				dataSource: DataSource.TRACES,
+				startTime: selectedTimeStamp,
+				endTime: selectedTimeStamp + (stepInterval ?? 60),
+			});
 		},
 		[navigateToExplorer, filters, selectedTimeStamp],
 	);

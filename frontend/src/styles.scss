@@ -143,7 +143,7 @@ body {
 // =================================================================
 // AntD style overrides
 .ant-dropdown-menu {
-	margin-top: 2px !important;
+	margin-top: 2px;
 	min-width: 160px;
 
 	border-radius: 4px;
@@ -178,6 +178,14 @@ body {
 			}
 		}
 	}
+}
+
+// these are default styles but are overridden by above dropdown styles
+.ant-dropdown-menu-submenu-popup {
+	padding: 0 !important;
+	z-index: 1050 !important;
+	box-shadow: none !important;
+	border: 0 !important;
 }
 
 // https://github.com/ant-design/ant-design/issues/41307

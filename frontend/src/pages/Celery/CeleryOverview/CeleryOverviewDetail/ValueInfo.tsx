@@ -145,7 +145,12 @@ export default function ValueInfo({
 								maxTime,
 								source: 'request rate',
 							});
-							navigateToExplorer(filters ?? [], DataSource.TRACES, minTime, maxTime);
+							navigateToExplorer({
+								filters: filters ?? [],
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+							});
 						}}
 					>
 						View Traces
@@ -175,8 +180,8 @@ export default function ValueInfo({
 								maxTime,
 								source: 'error rate',
 							});
-							navigateToExplorer(
-								[
+							navigateToExplorer({
+								filters: [
 									...(filters ?? []),
 									{
 										id: uuidv4(),
@@ -192,10 +197,10 @@ export default function ValueInfo({
 										value: 'true',
 									},
 								],
-								DataSource.TRACES,
-								minTime,
-								maxTime,
-							);
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+							});
 						}}
 					>
 						View Traces
@@ -225,7 +230,12 @@ export default function ValueInfo({
 								maxTime,
 								source: 'average latency',
 							});
-							navigateToExplorer(filters ?? [], DataSource.TRACES, minTime, maxTime);
+							navigateToExplorer({
+								filters: filters ?? [],
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+							});
 						}}
 					>
 						View Traces

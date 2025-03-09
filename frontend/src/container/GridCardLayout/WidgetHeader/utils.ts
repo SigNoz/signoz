@@ -20,6 +20,4 @@ export const isTWidgetOptions = (value: string): value is MenuItemKeys =>
 	value === MenuItemKeys.Delete ||
 	value === MenuItemKeys.Clone ||
 	value === MenuItemKeys.CreateAlerts ||
-	value === MenuItemKeys.Download ||
-	value === MenuItemKeys.ViewTraces ||
-	value === MenuItemKeys.ViewLogs;
+	value === MenuItemKeys.Download;
