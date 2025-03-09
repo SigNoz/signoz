@@ -219,7 +219,7 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 		if channel.Type == "msteamsv2" {
 			if _, err := tx.
 				NewUpdate().
-				Model(&channel).
+				Model(channel).
 				WherePK().
 				Exec(ctx); err != nil {
 				return err
