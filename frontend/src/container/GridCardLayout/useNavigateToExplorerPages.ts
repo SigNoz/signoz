@@ -1,4 +1,3 @@
-import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
@@ -21,9 +20,6 @@ interface NavigateToExplorerPagesProps {
 	widget: Widgets;
 	requestData?: GraphClickMetaData;
 	navigateRequestType?: 'panel' | 'specific';
-	startTime?: number;
-	endTime?: number;
-	filters?: TagFilterItem[];
 }
 
 // Helper to create group by filters from request data
@@ -109,8 +105,9 @@ export const buildFilters = (
  */
 function useNavigateToExplorerPages(): (
 	props: NavigateToExplorerPagesProps,
-) => Promise<void> {
-	const navigateToExplorer = useNavigateToExplorer();
+) => Promise<{
+	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
+}> {
 	const { selectedDashboard } = useDashboard();
 	const { notifications } = useNotifications();
 	const { getUpdatedQuery } = useUpdatedQuery();
@@ -118,52 +115,33 @@ function useNavigateToExplorerPages(): (
 	return useCallback(
 		async ({
 			widget,
-			startTime,
-			endTime,
-			filters = [],
 			requestData,
 			navigateRequestType,
-		}: NavigateToExplorerPagesProps): Promise<void> => {
+		}: NavigateToExplorerPagesProps) => {
 			try {
-				// Get updated query using the extracted hook
 				const updatedQuery = await getUpdatedQuery({
 					widget,
 					selectedDashboard,
 				});
 
-				const finalFilters = buildFilters(
+				// Return the finalFilters
+				return buildFilters(
 					updatedQuery,
 					requestData ?? { queryName: '', inFocusOrNot: false },
 					navigateRequestType ?? 'panel',
 				);
-
-				console.log('finalFilters', finalFilters);
-
-				// Extract and combine filters
-				const widgetFilters =
-					updatedQuery?.builder?.queryData?.[0]?.filters?.items ?? [];
-				const currentDataSource = updatedQuery?.builder?.queryData?.[0]?.dataSource;
-
-				if (!currentDataSource) {
-					throw new Error('No data source found in query result');
-				}
-
-				// Navigate with combined filters
-				navigateToExplorer({
-					filters: [...widgetFilters, ...filters],
-					dataSource: currentDataSource,
-					startTime,
-					endTime,
-				});
 			} catch (error) {
 				notifications.error({
 					message: 'Error navigating to explorer',
 					description:
 						error instanceof Error ? error.message : 'Unknown error occurred',
 				});
+				// Return empty object in case of error
+				return {};
 			}
 		},
-		[getUpdatedQuery, selectedDashboard, navigateToExplorer, notifications],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[selectedDashboard, notifications],
 	);
 }
 
