@@ -1,8 +1,71 @@
-import { Button } from 'antd';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { Button, Skeleton, Tag } from 'antd';
+import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
+import ROUTES from 'constants/routes';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
+import {
+	ArrowRight,
+	ArrowUpRight,
+	CompassIcon,
+	DraftingCompass,
+} from 'lucide-react';
+import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ViewProps } from 'types/api/saveViews/types';
 
-export default function SavedViews(): JSX.Element {
+export default function SavedViews({
+	tracesViews,
+	logsViews,
+	logsViewsLoading,
+	tracesViewsLoading,
+	logsViewsError,
+	tracesViewsError,
+}: {
+	tracesViews: ViewProps[];
+	logsViews: ViewProps[];
+	logsViewsLoading: boolean;
+	tracesViewsLoading: boolean;
+	logsViewsError: boolean;
+	tracesViewsError: boolean;
+}): JSX.Element {
+	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
+	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>(
+		logsViews,
+	);
+
+	useEffect(() => {
+		setSelectedEntityViews(selectedEntity === 'logs' ? logsViews : tracesViews);
+	}, [selectedEntity, logsViews, tracesViews]);
+
+	const hasTracesViews = tracesViews.length > 0;
+	const hasLogsViews = logsViews.length > 0;
+
+	const hasSavedViews = hasTracesViews || hasLogsViews;
+
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const handleRedirectQuery = (view: ViewProps): void => {
+		const currentViewDetails = getViewDetailsUsingViewKey(
+			view.uuid,
+			selectedEntity === 'logs' ? logsViews : tracesViews,
+		);
+		if (!currentViewDetails) return;
+		const { query, name, uuid, panelType: currentPanelType } = currentViewDetails;
+
+		if (selectedEntity) {
+			handleExplorerTabChange(
+				currentPanelType,
+				{
+					query,
+					name,
+					uuid,
+				},
+				SOURCEPAGE_VS_ROUTES[selectedEntity],
+			);
+		}
+	};
+
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
@@ -21,11 +84,27 @@ export default function SavedViews(): JSX.Element {
 				</div>
 
 				<div className="empty-actions-container">
-					<Button type="default" className="periscope-btn secondary">
-						Get Started &nbsp; <ArrowRight size={16} />
-					</Button>
+					<Link
+						to={
+							selectedEntity === 'logs' ? ROUTES.LOGS_EXPLORER : ROUTES.TRACES_EXPLORER
+						}
+					>
+						<Button type="default" className="periscope-btn secondary">
+							Get Started &nbsp; <ArrowRight size={16} />
+						</Button>
+					</Link>
 
-					<Button type="link" className="learn-more-link">
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							window.open(
+								'https://signoz.io/docs/product-features/saved-view/',
+								'_blank',
+								'noopener noreferrer',
+							);
+						}}
+					>
 						Learn more <ArrowUpRight size={12} />
 					</Button>
 				</div>
@@ -33,9 +112,158 @@ export default function SavedViews(): JSX.Element {
 		</div>
 	);
 
+	const renderSavedViews = (): JSX.Element => (
+		<div className="saved-views-list-container home-data-item-container">
+			<div className="saved-views-list">
+				{selectedEntityViews.map((view) => (
+					<div className="saved-view-item home-data-item" key={view.id}>
+						<div className="saved-view-item-name-container home-data-item-name-container">
+							<img
+								src={
+									view.id % 2 === 0 ? '/Icons/eight-ball.svg' : '/Icons/circus-tent.svg'
+								}
+								alt="alert-rules"
+								className="alert-rules-img"
+							/>
+
+							<div className="saved-view-item-name home-data-item-name">
+								{view.name}
+							</div>
+						</div>
+
+						<div className="saved-view-item-description home-data-item-tag">
+							{view.tags?.map((tag: string) => {
+								if (tag === '') {
+									return null;
+								}
+
+								return (
+									<Tag color={tag} key={tag}>
+										{tag}
+									</Tag>
+								);
+							})}
+						</div>
+
+						<Button
+							type="link"
+							size="small"
+							className="periscope-btn link"
+							onClick={(): void => handleRedirectQuery(view)}
+						>
+							<CompassIcon size={16} />
+						</Button>
+					</div>
+				))}
+
+				{selectedEntityViews.length === 0 && (
+					<div className="saved-views-list-empty-state">
+						<div className="saved-views-list-empty-state-message">
+							No saved views found.
+						</div>
+					</div>
+				)}
+
+				{selectedEntity === 'logs' && logsViewsError && (
+					<div className="logs-saved-views-error-container">
+						<div className="logs-saved-views-error-message">
+							Oops, something went wrong while loading your saved views.
+						</div>
+					</div>
+				)}
+
+				{selectedEntity === 'traces' && tracesViewsError && (
+					<div className="traces-saved-views-error-container">
+						<div className="traces-saved-views-error-message">
+							Oops, something went wrong while loading your saved views.
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+
+	const handleTabChange = (tab: string): void => {
+		setSelectedEntityViews(tab === 'logs' ? logsViews : tracesViews);
+		setSelectedEntity(tab);
+	};
+
+	if (logsViewsLoading || tracesViewsLoading) {
+		return (
+			<Card className="dashboards-list-card home-data-card loading-card">
+				<Card.Content>
+					<Skeleton active />
+				</Card.Content>
+			</Card>
+		);
+	}
+
+	if (logsViewsError || tracesViewsError) {
+		return (
+			<Card className="dashboards-list-card home-data-card">
+				<Card.Content>
+					<Skeleton active />
+				</Card.Content>
+			</Card>
+		);
+	}
+
 	return (
-		<Card className="saved-views-card home-data-card">
-			<Card.Content>{emptyStateCard()}</Card.Content>
+		<Card className="dashboards-list-card home-data-card">
+			{hasSavedViews && (
+				<Card.Header>
+					<div className="services-header home-data-card-header">
+						Saved Views
+						<div className="services-header-actions">
+							<Button.Group className="views-tabs">
+								<Button
+									value="logs"
+									className={
+										// eslint-disable-next-line sonarjs/no-duplicate-string
+										selectedEntity === 'logs' ? 'selected tab' : 'tab'
+									}
+									onClick={(): void => handleTabChange('logs')}
+								>
+									<img src="/Icons/logs.svg" alt="logs-icon" className="logs-icon" />
+									Logs
+								</Button>
+								<Button
+									value="traces"
+									className={
+										// eslint-disable-next-line sonarjs/no-duplicate-string
+										selectedEntity === 'traces' ? 'selected tab' : 'tab'
+									}
+									onClick={(): void => handleTabChange('traces')}
+								>
+									<DraftingCompass size={14} /> Traces
+								</Button>
+							</Button.Group>
+						</div>
+					</div>
+				</Card.Header>
+			)}
+
+			<Card.Content>
+				{selectedEntityViews.length > 0 ? renderSavedViews() : emptyStateCard()}
+			</Card.Content>
+
+			{selectedEntityViews.length > 0 && (
+				<Card.Footer>
+					<div className="services-footer home-data-card-footer">
+						<Link
+							to={
+								selectedEntity === 'logs'
+									? ROUTES.LOGS_SAVE_VIEWS
+									: ROUTES.TRACES_SAVE_VIEWS
+							}
+						>
+							<Button type="link" className="periscope-btn link learn-more-link">
+								All Views <ArrowRight size={12} />
+							</Button>
+						</Link>
+					</div>
+				</Card.Footer>
+			)}
 		</Card>
 	);
 }

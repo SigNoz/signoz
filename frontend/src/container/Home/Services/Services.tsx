@@ -1,41 +1,24 @@
-import { Button } from 'antd';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import Card from 'periscope/components/Card/Card';
+import * as Sentry from '@sentry/react';
+import { FeatureKeys } from 'constants/features';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { useAppContext } from 'providers/App/App';
 
-export default function Services(): JSX.Element {
-	const emptyStateCard = (): JSX.Element => (
-		<div className="empty-state-container">
-			<div className="empty-state-content-container">
-				<div className="empty-state-content">
-					<img
-						src="/Icons/triangle-ruler.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
+import ServiceMetrics from './ServiceMetrics';
+import ServiceTraces from './ServiceTraces';
 
-					<div className="empty-title">You are not sending traces yet.</div>
-
-					<div className="empty-description">
-						Start sending traces to see your services.
-					</div>
-				</div>
-
-				<div className="empty-actions-container">
-					<Button type="default" className="periscope-btn secondary">
-						Get Started &nbsp; <ArrowRight size={16} />
-					</Button>
-
-					<Button type="link" className="learn-more-link">
-						Learn more <ArrowUpRight size={12} />
-					</Button>
-				</div>
-			</div>
-		</div>
-	);
+function Services(): JSX.Element {
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	return (
-		<Card className="services-card home-data-card">
-			<Card.Content>{emptyStateCard()}</Card.Content>
-		</Card>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<div className="home-services-container">
+				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
+			</div>
+		</Sentry.ErrorBoundary>
 	);
 }
+
+export default Services;
