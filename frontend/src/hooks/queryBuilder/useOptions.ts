@@ -174,8 +174,7 @@ export const useOptions = (
 									// to remove duplicate & empty options from list
 									o.label === option.label &&
 									o.value === option.value &&
-									o.dataType?.trim()?.toLowerCase() ===
-										option.dataType?.trim()?.toLowerCase(), // handle case sensitivity and leading/trailing spaces
+									o.dataType?.toLowerCase() === option.dataType?.toLowerCase(), // handle case sensitivity
 							) && option.value !== '',
 				) || []
 			).map((option) => {
