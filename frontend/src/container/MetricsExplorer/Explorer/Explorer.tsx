@@ -7,7 +7,7 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import QuerySection from './QuerySection';
 import RelatedMetrics from './RelatedMetrics';
@@ -15,7 +15,7 @@ import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 
 function Explorer(): JSX.Element {
-	const { handleRunQuery } = useQueryBuilder();
+	const { handleRunQuery, stagedQuery } = useQueryBuilder();
 
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(false);
 	const [selectedTab, setSelectedTab] = useState<ExplorerTabs>(
@@ -24,6 +24,15 @@ function Explorer(): JSX.Element {
 
 	const handleToggleShowOneChartPerQuery = (): void =>
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
+
+	const metricNames = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length === 0) {
+			return [];
+		}
+		return stagedQuery.builder.queryData.map(
+			(query) => query.aggregateAttribute.key,
+		);
+	}, [stagedQuery]);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -67,7 +76,9 @@ function Explorer(): JSX.Element {
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
 						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
 					)}
-					{selectedTab === ExplorerTabs.RELATED_METRICS && <RelatedMetrics />}
+					{selectedTab === ExplorerTabs.RELATED_METRICS && (
+						<RelatedMetrics metricNames={metricNames} />
+					)}
 				</div>
 			</div>
 		</Sentry.ErrorBoundary>
