@@ -1,0 +1,7 @@
+{
+    "dockerComposeFile": "../deploy/docker/clickhouse-setup/docker-compose.yaml",
+    "service": "frontend",
+    "workspaceFolder": "/workspaces/signoz/",
+    "postStartCommand": {},
+    "postAttachCommand": {}
+  }
