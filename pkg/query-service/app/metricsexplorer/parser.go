@@ -76,3 +76,14 @@ func ParseRelatedMetricsParams(r *http.Request) (*metrics_explorer.RelatedMetric
 	}
 	return &relatedMetricParams, nil
 }
+
+func ParseInspectMetricsParams(r *http.Request) (*metrics_explorer.InspectMetricsRequest, *model.ApiError) {
+	var inspectMetricParams metrics_explorer.InspectMetricsRequest
+	if err := json.NewDecoder(r.Body).Decode(&inspectMetricParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	if inspectMetricParams.End-inspectMetricParams.Start > 1800000 { // half hour only
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("time duration shouldn't be more than 30 mins")}
+	}
+	return &inspectMetricParams, nil
+}

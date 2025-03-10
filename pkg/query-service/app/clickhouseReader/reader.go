@@ -6009,7 +6009,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		sb.WriteString(orderByClauseFirstQuery)
 	}
 
-	sb.WriteString(fmt.Sprintf(" LIMIT %d OFFSET %d;", req.Limit, req.Offset))
+	sb.WriteString(fmt.Sprintf(" LIMIT %d;", req.Limit))
 
 	sampleQuery := sb.String()
 
@@ -6466,4 +6466,205 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 	}
 
 	return result, nil
+}
+
+func (r *ClickHouseReader) GetMetricsAllResourceAttributes(ctx context.Context, start int64, end int64) (map[string]uint64, *model.ApiError) {
+	query := fmt.Sprintf(`SELECT 
+    key, 
+    count(distinct value) AS distinct_value_count
+FROM (
+    SELECT key, value
+    FROM signoz_metadata.attributes_metadata
+    ARRAY JOIN 
+        arrayConcat(mapKeys(resource_attributes)) AS key,
+        arrayConcat(mapValues(resource_attributes)) AS value
+    WHERE unix_milli between ? and ?
+) 
+GROUP BY key
+ORDER BY distinct_value_count DESC;`)
+	rows, err := r.db.Query(ctx, query, start, end)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	attributes := make(map[string]uint64)
+	for rows.Next() {
+		var attrs string
+		var uniqCount uint64
+
+		if err := rows.Scan(&attrs, &uniqCount); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+		attributes[attrs] = uniqCount
+	}
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return attributes, nil
+}
+
+func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_explorer.InspectMetricsRequest, fingerprints []string) (*metrics_explorer.InspectMetricsResponse, *model.ApiError) {
+	start, end, _, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
+	fingerprintsString := strings.Join(fingerprints, ",")
+	query := fmt.Sprintf(`SELECT
+                fingerprint,
+                labels,
+                unix_milli,
+                value as per_series_value
+        FROM
+                signoz_metrics.distributed_samples_v4
+        INNER JOIN (
+                SELECT DISTINCT
+                        fingerprint,
+                        labels
+                FROM
+                        %s.%s
+                WHERE
+                        fingerprint in (%s)
+                        AND unix_milli >= ?
+                        AND unix_milli < ?) as filtered_time_series
+                USING fingerprint
+        WHERE
+                metric_name  = ?
+                AND unix_milli >= ?
+                AND unix_milli < ?
+                ORDER BY fingerprint DESC, unix_milli DESC`, signozMetricDBName, localTsTable, fingerprintsString)
+
+	rows, err := r.db.Query(ctx, query, start, end, req.MetricName, start, end)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	defer rows.Close()
+
+	seriesMap := make(map[uint64]*v3.Series)
+
+	for rows.Next() {
+		var fingerprint uint64
+		var labelsJSON string
+		var unixMilli int64
+		var perSeriesValue float64
+
+		if err := rows.Scan(&fingerprint, &labelsJSON, &unixMilli, &perSeriesValue); err != nil {
+			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+		}
+
+		var labelsMap map[string]string
+		if err := json.Unmarshal([]byte(labelsJSON), &labelsMap); err != nil {
+			return nil, &model.ApiError{Typ: "JsonUnmarshalError", Err: err}
+		}
+
+		// Filter out keys starting with "__"
+		filteredLabelsMap := make(map[string]string)
+		for k, v := range labelsMap {
+			if !strings.HasPrefix(k, "__") {
+				filteredLabelsMap[k] = v
+			}
+		}
+
+		var labelsArray []map[string]string
+		for k, v := range filteredLabelsMap {
+			labelsArray = append(labelsArray, map[string]string{k: v})
+		}
+
+		// Check if we already have a Series for this fingerprint.
+		series, exists := seriesMap[fingerprint]
+		if !exists {
+			series = &v3.Series{
+				Labels:      filteredLabelsMap,
+				LabelsArray: labelsArray,
+				Points:      []v3.Point{},
+			}
+			seriesMap[fingerprint] = series
+		}
+
+		series.Points = append(series.Points, v3.Point{
+			Timestamp: unixMilli,
+			Value:     perSeriesValue,
+		})
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+
+	var seriesList []v3.Series
+	for _, s := range seriesMap {
+		seriesList = append(seriesList, *s)
+	}
+
+	return &metrics_explorer.InspectMetricsResponse{
+		Series: &seriesList,
+	}, nil
+}
+
+func (r *ClickHouseReader) GetInspectMetricsFingerprints(ctx context.Context, attributes []string, req *metrics_explorer.InspectMetricsRequest) ([]string, *model.ApiError) {
+	// Build dynamic key selections and JSON extracts
+	var jsonExtracts []string
+	var groupBys []string
+
+	for i, attr := range attributes {
+		keyAlias := fmt.Sprintf("key%d", i+1)
+		jsonExtracts = append(jsonExtracts, fmt.Sprintf("JSONExtractString(labels, '%s') AS %s", attr, keyAlias))
+		groupBys = append(groupBys, keyAlias)
+	}
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
+	query := fmt.Sprintf(`
+        SELECT 
+    arrayDistinct(groupArray(toString(fingerprint))) AS fingerprints
+FROM
+(
+    SELECT 
+        metric_name, labels, fingerprint,
+        %s
+    FROM %s.%s
+    WHERE metric_name = ?
+      AND unix_milli BETWEEN ? AND ?
+)
+GROUP BY %s
+ORDER BY length(fingerprints) DESC, rand()
+LIMIT 40`,
+		strings.Join(jsonExtracts, ", "),
+		signozMetricDBName, tsTable,
+		strings.Join(groupBys, ", "))
+
+	rows, err := r.db.Query(ctx, query,
+		req.MetricName,
+		start,
+		end,
+	)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+	defer rows.Close()
+
+	var fingerprints []string
+	for rows.Next() {
+		// Create dynamic scanning based on number of attributes
+		var fingerprintsList []string
+
+		if err := rows.Scan(&fingerprintsList); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+
+		if len(fingerprints) == 0 {
+			fingerprints = append(fingerprints, fingerprintsList...)
+			if len(fingerprints) > 40 {
+				break
+			} else {
+				continue
+			}
+		} else {
+			if len(fingerprints)+len(fingerprintsList) < 40 {
+				fingerprints = append(fingerprints, fingerprintsList...)
+			} else {
+				continue
+			}
+		}
+
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	return fingerprints, nil
 }
