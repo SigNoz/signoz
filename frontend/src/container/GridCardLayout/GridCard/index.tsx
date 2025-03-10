@@ -248,12 +248,37 @@ function GridCardGraph({
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
-	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE ||
-		widget.panelTypes === PANEL_TYPES.LIST ||
-		widget.panelTypes === PANEL_TYPES.PIE
-			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
-			: headerMenuList;
+	const availableDataSources = new Set(
+		updatedQuery?.builder?.queryData.map((query) => query.dataSource),
+	);
+
+	const DATA_SOURCE_TO_MENU_ITEM = {
+		[DataSource.LOGS]: MenuItemKeys.ViewLogs,
+		[DataSource.TRACES]: MenuItemKeys.ViewTraces,
+	} as const;
+
+	// Then add view options based on data source
+	const additionalMenuItems = Array.from(availableDataSources)
+		.filter(
+			(dataSource): dataSource is keyof typeof DATA_SOURCE_TO_MENU_ITEM =>
+				dataSource in DATA_SOURCE_TO_MENU_ITEM,
+		)
+		.map((dataSource) => DATA_SOURCE_TO_MENU_ITEM[dataSource]);
+
+	const menuList = ((): MenuItemKeys[] => {
+		// First filter out CreateAlerts for specific panel types
+		let filteredMenu =
+			widget.panelTypes === PANEL_TYPES.TABLE ||
+			widget.panelTypes === PANEL_TYPES.LIST ||
+			widget.panelTypes === PANEL_TYPES.PIE
+				? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
+				: headerMenuList;
+
+		// Then add view option based on data source
+		filteredMenu = [...filteredMenu, ...additionalMenuItems];
+
+		return filteredMenu;
+	})();
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
