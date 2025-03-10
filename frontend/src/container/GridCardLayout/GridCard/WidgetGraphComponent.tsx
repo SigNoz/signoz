@@ -2,6 +2,7 @@ import '../GridCardLayout.styles.scss';
 
 import { Skeleton, Typography } from 'antd';
 import cx from 'classnames';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -25,8 +26,11 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
+import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
@@ -77,6 +81,8 @@ function WidgetGraphComponent({
 	}, []);
 
 	const tableProcessedDataRef = useRef<RowData[]>([]);
+
+	const navigateToExplorerPages = useNavigateToExplorerPages();
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -230,6 +236,65 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
+	const currentDataSource = widget?.query?.builder?.queryData?.[0]?.dataSource;
+
+	const graphClick = useGraphClickToShowButton({
+		graphRef,
+		buttonText:
+			currentDataSource === DataSource.TRACES ? 'View Traces' : 'View Logs',
+		isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
+			currentDataSource,
+		),
+		buttonClassName: 'view-onclick-show-button',
+	});
+
+	const navigateToExplorer = useNavigateToExplorer();
+
+	const handleGraphClick = async (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		metric?: { [key: string]: string },
+		queryData?: { queryName: string; inFocusOrNot: boolean },
+	): Promise<void> => {
+		const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
+
+		try {
+			const result = await navigateToExplorerPages({
+				widget,
+				requestData: {
+					...metric,
+					queryName: queryData?.queryName || '',
+					inFocusOrNot: queryData?.inFocusOrNot || false,
+				},
+				navigateRequestType: 'specific',
+			});
+
+			const keys = Object.keys(result);
+			const menuItems = keys.map((key) => ({
+				text: `View ${
+					currentDataSource === DataSource.TRACES ? 'Traces' : 'Logs'
+				}: ${key}`,
+				onClick: (): void =>
+					navigateToExplorer({
+						filters: result[key].filters,
+						dataSource: result[key].dataSource as DataSource,
+						startTime: xValue,
+						endTime: xValue + (stepInterval ?? 60),
+					}),
+			}));
+
+			graphClick(xValue, yValue, mouseX, mouseY, metric, queryData, menuItems);
+		} catch (error) {
+			notifications.error({
+				message: 'Failed to process graph click',
+				description:
+					error instanceof Error ? error.message : 'Unknown error occurred',
+			});
+		}
+	};
+
 	return (
 		<div
 			style={{
@@ -322,7 +387,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={onClickHandler}
+						onClickHandler={onClickHandler ?? handleGraphClick}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
