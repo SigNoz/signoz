@@ -14,6 +14,7 @@ import {
 } from 'antd';
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import { K8sEntityStatusResponse } from 'api/infraMonitoring/getK8sEntityStatus';
 import { K8sStatefulSetsListPayload } from 'api/infraMonitoring/getsK8sStatefulSetsList';
 import classNames from 'classnames';
 import { useGetK8sStatefulSetsList } from 'hooks/infraMonitoring/useGetK8sStatefulSetsList';
@@ -31,6 +32,7 @@ import {
 	K8sCategory,
 	K8sEntityToAggregateAttributeMapping,
 } from '../constants';
+import EntityStatusEmptyStateWrapper from '../EntityStatusEmptyStateWrapper';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -48,10 +50,12 @@ function K8sStatefulSetsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
 	quickFiltersLastUpdated,
+	entityStatus,
 }: {
 	isFiltersVisible: boolean;
 	handleFilterVisibilityChange: () => void;
 	quickFiltersLastUpdated: number;
+	entityStatus: K8sEntityStatusResponse | null | undefined;
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -499,55 +503,60 @@ function K8sStatefulSetsList({
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
 
-			<Table
-				className={classNames('k8s-list-table', 'statefulSets-list-table', {
-					'expanded-statefulsets-list-table': isGroupedByAttribute,
-				})}
-				dataSource={isFetching || isLoading ? [] : formattedStatefulSetsData}
-				columns={columns}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					total: totalCount,
-					showSizeChanger: true,
-					hideOnSinglePage: false,
-					onChange: onPaginationChange,
-				}}
-				scroll={{ x: true }}
-				loading={{
-					spinning: isFetching || isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText:
-						isFetching || isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+			<EntityStatusEmptyStateWrapper
+				category={K8sCategory.STATEFULSETS}
+				data={entityStatus}
+			>
+				<Table
+					className={classNames('k8s-list-table', 'statefulSets-list-table', {
+						'expanded-statefulsets-list-table': isGroupedByAttribute,
+					})}
+					dataSource={isFetching || isLoading ? [] : formattedStatefulSetsData}
+					columns={columns}
+					pagination={{
+						current: currentPage,
+						pageSize,
+						total: totalCount,
+						showSizeChanger: true,
+						hideOnSinglePage: false,
+						onChange: onPaginationChange,
+					}}
+					scroll={{ x: true }}
+					loading={{
+						spinning: isFetching || isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					locale={{
+						emptyText:
+							isFetching || isLoading ? null : (
+								<div className="no-filtered-hosts-message-container">
+									<div className="no-filtered-hosts-message-content">
+										<img
+											src="/Icons/emptyState.svg"
+											alt="thinking-emoji"
+											className="empty-state-svg"
+										/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
+										<Typography.Text className="no-filtered-hosts-message">
+											This query had no results. Edit your query and try again!
+										</Typography.Text>
+									</div>
 								</div>
-							</div>
-						),
-				}}
-				tableLayout="fixed"
-				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
-				})}
-				expandable={{
-					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-					expandIcon: expandRowIconRenderer,
-					expandedRowKeys,
-				}}
-			/>
+							),
+					}}
+					tableLayout="fixed"
+					onChange={handleTableChange}
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => handleRowClick(record),
+						className: 'clickable-row',
+					})}
+					expandable={{
+						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
+					}}
+				/>
+			</EntityStatusEmptyStateWrapper>
 
 			<StatefulSetDetails
 				statefulSet={selectedStatefulSetData}
