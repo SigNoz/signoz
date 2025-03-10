@@ -55,7 +55,7 @@ function MetricsTable({
 				dataSource={data}
 				columns={metricsTableColumns}
 				locale={{
-					emptyText: (
+					emptyText: isLoading ? null : (
 						<div className="no-metrics-message-container">
 							<img
 								src="/Icons/emptyState.svg"
