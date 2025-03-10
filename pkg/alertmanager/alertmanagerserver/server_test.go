@@ -26,7 +26,7 @@ func TestServerSetConfigAndStop(t *testing.T) {
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore())
 	require.NoError(t, err)
 
-	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{}, "1")
+	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
 	require.NoError(t, err)
 
 	assert.NoError(t, server.SetConfig(context.Background(), amConfig))
@@ -37,7 +37,7 @@ func TestServerTestReceiverTypeWebhook(t *testing.T) {
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore())
 	require.NoError(t, err)
 
-	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{}, "1")
+	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
 	require.NoError(t, err)
 
 	webhookListener, err := net.Listen("tcp", "localhost:0")
