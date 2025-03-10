@@ -10,12 +10,17 @@ export type ChecklistItem = {
 	description: string;
 	completed: boolean;
 	isSkipped: boolean;
+	skippedPreferenceKey?: string;
 };
 
 function HomeChecklist({
 	checklistItems,
+	onSkip,
+	isLoading,
 }: {
 	checklistItems: ChecklistItem[];
+	onSkip: (item: ChecklistItem) => void;
+	isLoading: boolean;
 }): JSX.Element {
 	const [completedChecklistItems, setCompletedChecklistItems] = useState<
 		ChecklistItem[]
@@ -49,8 +54,10 @@ function HomeChecklist({
 					{whatsNextChecklistItems.map((item, index) => (
 						<div
 							key={item.id}
-							className={`whats-next-checklist-item ${index === 0 ? 'active' : ''} ${
+							className={`whats-next-checklist-item ${
 								item.isSkipped ? 'skipped' : ''
+							} ${index === 0 && !item.isSkipped ? 'active' : ''} ${
+								isLoading ? 'loading' : ''
 							}`}
 						>
 							<div className="whats-next-checklist-item-title">{item.title}</div>
@@ -72,8 +79,15 @@ function HomeChecklist({
 									</div>
 
 									<div className="whats-next-checklist-item-action-buttons-container">
-										<Button type="link" className="periscope-btn link skip-btn">
-											<ArrowRightToLine size={16} /> &nbsp; Skip for now
+										<Button
+											type="link"
+											className="periscope-btn link skip-btn"
+											onClick={(): void => onSkip(item)}
+											disabled={isLoading}
+											loading={isLoading}
+											icon={<ArrowRightToLine size={16} />}
+										>
+											Skip for now
 										</Button>
 									</div>
 								</div>

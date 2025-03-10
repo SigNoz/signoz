@@ -8,8 +8,8 @@ import Card from 'periscope/components/Card/Card';
 import { useEffect, useState } from 'react';
 
 function DataSourceInfo(): JSX.Element {
-	const notSendingData = false;
-	const listeningToData = true;
+	const notSendingData = true;
+	const listeningToData = false;
 
 	const {
 		data: deploymentsData,
@@ -82,11 +82,11 @@ function DataSourceInfo(): JSX.Element {
 							</Button>
 						</div>
 
-						{isErrorDeploymentsData && (
+						{/* {isErrorDeploymentsData && (
 							<div className="workspace-details">
 								<Typography>Error fetching data. Please try again later.</Typography>
 							</div>
-						)}
+						)} */}
 
 						{!isErrorDeploymentsData && deploymentsData && (
 							<div className="workspace-details">

@@ -1,4 +1,5 @@
 import { Button, Skeleton, Tag } from 'antd';
+import getAll from 'api/alerts/getAll';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -6,26 +7,41 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { GettableAlert } from 'types/api/alerts/get';
 
-export default function AlertRules({
-	rules,
-	isLoading,
-	isError,
-}: {
-	rules: GettableAlert[];
-	isLoading: boolean;
-	isError: boolean;
-}): JSX.Element {
+export default function AlertRules(): JSX.Element {
 	const [rulesExist, setRulesExist] = useState(false);
+
+	const [sortedAlertRules, setSortedAlertRules] = useState<GettableAlert[]>([]);
 
 	const location = useLocation();
 	const params = new URLSearchParams(location.search);
 
+	// Fetch Alerts
+	const { data: alerts, isError, isLoading } = useQuery('allAlerts', {
+		queryFn: getAll,
+		cacheTime: 0,
+	});
+
 	useEffect(() => {
+		const rules = alerts?.payload || [];
 		setRulesExist(rules.length > 0);
-	}, [rules]);
+
+		const sortedRules = rules.sort((a, b) => {
+			// First, prioritize firing alerts
+			if (a.state === 'firing' && b.state !== 'firing') return -1;
+			if (a.state !== 'firing' && b.state === 'firing') return 1;
+
+			// Then sort by updateAt timestamp
+			const aUpdateAt = new Date(a.updateAt).getTime();
+			const bUpdateAt = new Date(b.updateAt).getTime();
+			return bUpdateAt - aUpdateAt;
+		});
+
+		setSortedAlertRules(sortedRules.slice(0, 5));
+	}, [alerts]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
@@ -45,15 +61,23 @@ export default function AlertRules({
 				</div>
 
 				<div className="empty-actions-container">
-					<Button
-						type="default"
-						className="periscope-btn secondary"
-						icon={<Plus size={16} />}
-					>
-						Create Alert Rule
-					</Button>
+					<Link to={ROUTES.ALERTS_NEW}>
+						<Button
+							type="default"
+							className="periscope-btn secondary"
+							icon={<Plus size={16} />}
+						>
+							Create Alert Rule
+						</Button>
+					</Link>
 
-					<Button type="link" className="learn-more-link">
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							window.open('https://signoz.io/docs/alerts/', '_blank');
+						}}
+					>
 						Learn more <ArrowUpRight size={12} />
 					</Button>
 				</div>
@@ -78,7 +102,7 @@ export default function AlertRules({
 	const renderAlertRules = (): JSX.Element => (
 		<div className="alert-rules-container home-data-item-container">
 			<div className="alert-rules-list">
-				{rules.map((rule) => (
+				{sortedAlertRules.map((rule) => (
 					<div
 						role="button"
 						tabIndex={0}
@@ -107,6 +131,12 @@ export default function AlertRules({
 
 						<div className="alert-rule-item-description home-data-item-tag">
 							<Tag color={rule?.labels?.severity}>{rule?.labels?.severity}</Tag>
+
+							{rule?.state === 'firing' && (
+								<Tag color="red" className="firing-tag">
+									{rule?.state}
+								</Tag>
+							)}
 						</div>
 					</div>
 				))}

@@ -1,9 +1,12 @@
 import { Button, Skeleton, Table } from 'antd';
+import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -15,6 +18,8 @@ export default function ServiceTraces(): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const [servicesList, setServicesList] = useState<ServicesList[]>([]);
 
@@ -32,7 +37,13 @@ export default function ServiceTraces(): JSX.Element {
 	});
 
 	useEffect(() => {
-		setServicesList(services || []);
+		const sortedServices = services?.sort((a, b) => {
+			const aUpdateAt = new Date(a.p99).getTime();
+			const bUpdateAt = new Date(b.p99).getTime();
+			return bUpdateAt - aUpdateAt;
+		});
+
+		setServicesList(sortedServices || []);
 	}, [services]);
 
 	const servicesExist = servicesList?.length > 0;
@@ -56,11 +67,22 @@ export default function ServiceTraces(): JSX.Element {
 				</div>
 
 				<div className="empty-actions-container">
-					<Button type="default" className="periscope-btn secondary">
-						Get Started &nbsp; <ArrowRight size={16} />
-					</Button>
+					<Link to={ROUTES.GET_STARTED}>
+						<Button type="default" className="periscope-btn secondary">
+							Get Started &nbsp; <ArrowRight size={16} />
+						</Button>
+					</Link>
 
-					<Button type="link" className="learn-more-link">
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							window.open(
+								'https://signoz.io/docs/instrumentation/overview/',
+								'_blank',
+							);
+						}}
+					>
 						Learn more <ArrowUpRight size={12} />
 					</Button>
 				</div>
@@ -76,17 +98,24 @@ export default function ServiceTraces(): JSX.Element {
 					dataSource={top5Services}
 					pagination={false}
 					className="services-table"
+					onRow={(record): { onClick: () => void } => ({
+						onClick: (): void => {
+							safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+						},
+					})}
 				/>
 			</div>
 		</div>
 	);
 
 	if (isServicesLoading || isServicesFetching) {
-		<Card className="dashboards-list-card home-data-card">
-			<Card.Content>
-				<Skeleton active />
-			</Card.Content>
-		</Card>;
+		return (
+			<Card className="dashboards-list-card home-data-card loading-card">
+				<Card.Content>
+					<Skeleton active />
+				</Card.Content>
+			</Card>
+		);
 	}
 
 	if (isServicesError) {
@@ -113,9 +142,11 @@ export default function ServiceTraces(): JSX.Element {
 			{servicesExist && (
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
-						<Button type="link" className="periscope-btn link learn-more-link">
-							All Services <ArrowRight size={12} />
-						</Button>
+						<Link to="/services">
+							<Button type="link" className="periscope-btn link learn-more-link">
+								All Services <ArrowRight size={12} />
+							</Button>
+						</Link>
 					</div>
 				</Card.Footer>
 			)}

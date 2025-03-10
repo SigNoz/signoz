@@ -2,21 +2,17 @@ import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover } from 'antd';
-import getAll from 'api/alerts/getAll';
+import getAllUserPreferences from 'api/preferences/getAllUserPreference';
+import updateUserPreferenceAPI from 'api/preferences/updateUserPreference';
 import Header from 'components/Header/Header';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import history from 'lib/history';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
-import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
-import { useAppContext } from 'providers/App/App';
-import { useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { DataSource } from 'types/common/queryBuilder';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery } from 'react-query';
+import { UserPreference } from 'types/reducer/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -27,136 +23,188 @@ import SavedViews from './SavedViews/SavedViews';
 import Services from './Services/Services';
 import StepsProgress from './StepsProgress/StepsProgress';
 
+const checkListStepToPreferenceKeyMap = {
+	WILL_DO_LATER: 'WELCOME_CHECKLIST_DO_LATER',
+	SEND_LOGS: 'WELCOME_CHECKLIST_SEND_LOGS_SKIPPED',
+	SEND_TRACES: 'WELCOME_CHECKLIST_SEND_TRACES_SKIPPED',
+	SEND_INFRA_METRICS: 'WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED',
+	SETUP_DASHBOARDS: 'WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED',
+	SETUP_ALERTS: 'WELCOME_CHECKLIST_SETUP_ALERTS_SKIPPED',
+	SETUP_SAVED_VIEW: 'WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED',
+	SETUP_WORKSPACE: 'WELCOME_CHECKLIST_SETUP_WORKSPACE_SKIPPED',
+	ADD_DATA_SOURCE: 'WELCOME_CHECKLIST_ADD_DATA_SOURCE_SKIPPED',
+};
+
+const defaultChecklistItemsState: ChecklistItem[] = [
+	{
+		id: 'SETUP_WORKSPACE',
+		title: 'Set up your workspace',
+		description: '',
+		completed: true,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_WORKSPACE,
+	},
+	{
+		id: 'ADD_DATA_SOURCE',
+		title: 'Add your first data source',
+		description: '',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.ADD_DATA_SOURCE,
+	},
+	{
+		id: 'SEND_LOGS',
+		title: 'Send your logs',
+		description:
+			'Send your logs to SigNoz to get more visibility into how your resources interact.',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_LOGS,
+	},
+	{
+		id: 'SEND_TRACES',
+		title: 'Send your traces',
+		description:
+			'Send your traces to SigNoz to get more visibility into how your resources interact.',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_TRACES,
+	},
+	{
+		id: 'SEND_INFRA_METRICS',
+		title: 'Send your infra metrics',
+		description:
+			'Send your infra metrics to SigNoz to get more visibility into your infrastructure.',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_INFRA_METRICS,
+	},
+	{
+		id: 'SETUP_ALERTS',
+		title: 'Setup Alerts',
+		description:
+			'Setup alerts to get notified when your resources are not performing as expected.',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_ALERTS,
+	},
+	{
+		id: 'SETUP_SAVED_VIEW',
+		title: 'Setup Saved Views',
+		description:
+			'Save your views to get a quick overview of your data and share it with your team.',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_SAVED_VIEW,
+	},
+	{
+		id: 'SETUP_DASHBOARDS',
+		title: 'Setup Dashboards',
+		description:
+			'Create dashboards to visualize your data and share it with your team.',
+		completed: false,
+		isSkipped: false,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_DASHBOARDS,
+	},
+];
+
 export default function Home(): JSX.Element {
-	const checklistItems: ChecklistItem[] = [
-		{
-			id: '1',
-			title: 'Set up your workspace',
-			description: '',
-			completed: true,
-			isSkipped: false,
-		},
-		{
-			id: '2',
-			title: 'Add your first data source',
-			description: '',
-			completed: true,
-			isSkipped: false,
-		},
-		{
-			id: '3',
-			title: 'Send your logs',
-			description:
-				'Send your logs to SigNoz to get more visibility into how your resources interact.',
-			completed: false,
-			isSkipped: false,
-		},
-		{
-			id: '4',
-			title: 'Send your traces',
-			description:
-				'Send your traces to SigNoz to get more visibility into how your resources interact.',
-			completed: false,
-			isSkipped: true,
-		},
-		{
-			id: '5',
-			title: 'Send your infra metrics',
-			description:
-				'Send your infra metrics to SigNoz to get more visibility into your infrastructure.',
-			completed: true,
-			isSkipped: false,
-		},
-		{
-			id: '6',
-			title: 'Setup Alerts',
-			description:
-				'Setup alerts to get notified when your resources are not performing as expected.',
-			completed: true,
-			isSkipped: false,
-		},
-		{
-			id: '7',
-			title: 'Setup Saved Views',
-			description:
-				'Save your views to get a quick overview of your data and share it with your team.',
-			completed: false,
-			isSkipped: false,
-		},
-		{
-			id: '8',
-			title: 'Setup Dashboards',
-			description:
-				'Create dashboards to visualize your data and share it with your team.',
-			completed: false,
-			isSkipped: false,
-		},
-	];
+	const [userPreferences, setUserPreferences] = useState<UserPreference[]>([]);
+	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
+	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
+
+	const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(
+		defaultChecklistItemsState,
+	);
+
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
+		false,
+	);
 
 	const isLogIngestionActive = true;
 	const isTraceIngestionActive = true;
 	const isMetricIngestionActive = true;
 
-	const [checklistSkipped, setChecklistSkipped] = useState<boolean>(false);
+	// Fetch User Preferences
+	const { refetch: refetchUserPreferences } = useQuery({
+		queryFn: () => getAllUserPreferences(),
+		queryKey: ['getUserPreferences'],
+		enabled: true,
+		refetchOnWindowFocus: false,
+		onSuccess: (response) => {
+			if (response.payload && response.payload.data) {
+				setUserPreferences(response.payload.data);
+			}
 
-	const { featureFlags } = useAppContext();
+			setLoadingUserPreferences(false);
+			setUpdatingUserPreferences(false);
+		},
+		onError: () => {
+			setUpdatingUserPreferences(false);
+			setLoadingUserPreferences(false);
+		},
+	});
 
-	const isSpanMetricEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
-			?.active || false;
+	useEffect(() => {
+		const checklistSkipped = userPreferences?.find(
+			(preference) => preference.key === 'WELCOME_CHECKLIST_DO_LATER',
+		)?.value;
 
-	console.log('isSpanMetricEnabled', isSpanMetricEnabled);
+		const updatedChecklistItems = cloneDeep(defaultChecklistItemsState);
+
+		const newChecklistItems = updatedChecklistItems.map((item) => {
+			const newItem = { ...item };
+			newItem.isSkipped =
+				userPreferences?.find(
+					(preference) => preference.key === item.skippedPreferenceKey,
+				)?.value || false;
+			return newItem;
+		});
+
+		setChecklistItems(newChecklistItems);
+
+		setIsWelcomeChecklistSkipped(checklistSkipped || false);
+	}, [userPreferences]);
+
+	const { mutate: updateUserPreference } = useMutation(updateUserPreferenceAPI, {
+		onSuccess: () => {
+			setUpdatingUserPreferences(false);
+			refetchUserPreferences();
+		},
+		onError: () => {
+			setUpdatingUserPreferences(false);
+		},
+	});
+
+	const handleWillDoThisLater = (): void => {
+		setUpdatingUserPreferences(true);
+
+		updateUserPreference({
+			preferenceID: 'WELCOME_CHECKLIST_DO_LATER',
+			value: true,
+		});
+	};
+
+	const handleSkipChecklistItem = (item: ChecklistItem): void => {
+		if (item.skippedPreferenceKey) {
+			setUpdatingUserPreferences(true);
+
+			updateUserPreference({
+				preferenceID: item.skippedPreferenceKey,
+				value: true,
+			});
+		}
+	};
 
 	const renderWelcomeChecklistModal = (): JSX.Element => (
 		<div className="welcome-checklist-popover-container">
-			<HomeChecklist checklistItems={checklistItems} />
+			<HomeChecklist
+				checklistItems={checklistItems}
+				onSkip={handleSkipChecklistItem}
+				isLoading={loadingUserPreferences || updatingUserPreferences}
+			/>
 		</div>
 	);
-
-	// Fetch Dashboards
-	const {
-		data: dashboardsList,
-		isLoading: isDashboardListLoading,
-		isError: isDashboardListError,
-		isFetching: isDashboardListFetching,
-	} = useGetAllDashboard();
-
-	// Fetch Alerts
-	const {
-		data: alerts,
-		isError: alertsIsError,
-		isLoading: alertsIsLoading,
-		isFetching: alertsIsFetching,
-	} = useQuery('allAlerts', {
-		queryFn: getAll,
-		cacheTime: 0,
-	});
-
-	const {
-		data: logsViewsData,
-		isLoading: logsViewsLoading,
-		isFetching: logsViewsFetching,
-		isError: logsViewsError,
-	} = useGetAllViews(DataSource.LOGS);
-
-	const {
-		data: tracesViewsData,
-		isLoading: tracesViewsLoading,
-		isFetching: tracesViewsFetching,
-		isError: tracesViewsError,
-	} = useGetAllViews(DataSource.TRACES);
-
-	const logsViews = useMemo(() => [...(logsViewsData?.data.data || [])], [
-		logsViewsData,
-	]);
-
-	const tracesViews = useMemo(() => [...(tracesViewsData?.data.data || [])], [
-		tracesViewsData,
-	]);
-
-	const handleWillDoThisLater = (): void => {
-		setChecklistSkipped(true);
-	};
 
 	return (
 		<div className="home-container">
@@ -431,76 +479,60 @@ export default function Home(): JSX.Element {
 						</Card>
 					</div>
 
-					<AlertRules
-						rules={alerts?.payload || []}
-						isLoading={alertsIsLoading || alertsIsFetching}
-						isError={alertsIsError}
-					/>
-					<Dashboards
-						dashboards={dashboardsList || []}
-						isLoading={isDashboardListLoading || isDashboardListFetching}
-						isError={isDashboardListError}
-					/>
+					<AlertRules />
+					<Dashboards />
 				</div>
 
 				<div className="home-right-content">
-					<AnimatePresence initial={false}>
-						{!checklistSkipped && (
-							<motion.div
-								initial={{ height: 'auto' }}
-								animate={{ height: 'auto' }}
-								exit={{ height: 0 }}
-								key="box"
-							>
-								<Card className="checklist-card">
-									<Card.Content>
-										<div className="checklist-container">
-											<div className="checklist-items-container">
-												<StepsProgress checklistItems={checklistItems} />
+					{isWelcomeChecklistSkipped && !loadingUserPreferences && (
+						<Card className="checklist-card">
+							<Card.Content>
+								<div className="checklist-container">
+									<div className="checklist-items-container">
+										<StepsProgress checklistItems={checklistItems} />
 
-												<HomeChecklist checklistItems={checklistItems} />
-											</div>
-											<div className="checklist-container-right-img">
-												<div className="checklist-img-bg-container">
-													<img
-														src="/Images/perilianBackground.svg"
-														alt="not-found"
-														className="checklist-img-bg"
-													/>
-												</div>
-
-												<div className="checklist-img-container">
-													<img
-														src="/Images/allInOne.svg"
-														alt="checklist-img"
-														className="checklist-img"
-													/>
-												</div>
-											</div>
+										<HomeChecklist
+											checklistItems={checklistItems}
+											onSkip={handleSkipChecklistItem}
+											isLoading={updatingUserPreferences || loadingUserPreferences}
+										/>
+									</div>
+									<div className="checklist-container-right-img">
+										<div className="checklist-img-bg-container">
+											<img
+												src="/Images/perilianBackground.svg"
+												alt="not-found"
+												className="checklist-img-bg"
+											/>
 										</div>
-									</Card.Content>
 
-									<Card.Footer>
-										<div className="checklist-footer-container">
-											<Button type="link" onClick={handleWillDoThisLater}>
-												I’ll do this later
-											</Button>
+										<div className="checklist-img-container">
+											<img
+												src="/Images/allInOne.svg"
+												alt="checklist-img"
+												className="checklist-img"
+											/>
 										</div>
-									</Card.Footer>
-								</Card>
-							</motion.div>
-						)}
-					</AnimatePresence>
+									</div>
+								</div>
+							</Card.Content>
+
+							<Card.Footer>
+								<div className="checklist-footer-container">
+									<Button
+										type="link"
+										onClick={handleWillDoThisLater}
+										loading={updatingUserPreferences}
+									>
+										I’ll do this later
+									</Button>
+								</div>
+							</Card.Footer>
+						</Card>
+					)}
 
 					<Services />
-					<SavedViews
-						tracesViews={tracesViews || []}
-						logsViews={logsViews || []}
-						logsViewsLoading={logsViewsLoading || logsViewsFetching}
-						tracesViewsLoading={tracesViewsLoading || tracesViewsFetching}
-						logsViewsError={logsViewsError}
-						tracesViewsError={tracesViewsError}
-					/>
+					<SavedViews />
 				</div>
 			</div>
 		</div>

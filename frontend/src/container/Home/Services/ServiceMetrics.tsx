@@ -1,5 +1,6 @@
 import { Button, Skeleton, Table } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import ROUTES from 'constants/routes';
 import {
 	getQueryRangeRequestData,
 	getServiceListFromQuery,
@@ -8,6 +9,7 @@ import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
 import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useMemo, useState } from 'react';
@@ -27,6 +29,9 @@ function ServiceMetrics(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 	const { queries } = useResourceAttribute();
+
+	const { safeNavigate } = useSafeNavigate();
+
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
@@ -49,9 +54,6 @@ function ServiceMetrics(): JSX.Element {
 		start: minTime,
 		end: maxTime,
 	});
-
-	console.log('isLoadingTopLevelOperations', isLoadingTopLevelOperations);
-	console.log('isErrorTopLevelOperations', isErrorTopLevelOperations);
 
 	const topLevelOperations = Object.entries(data || {});
 
@@ -100,9 +102,14 @@ function ServiceMetrics(): JSX.Element {
 	);
 
 	const servicesExist = services?.length > 0;
-	const top5Services = services?.slice(0, 5);
 
-	console.log('services', services, isLoading);
+	const sortedServices = services?.sort((a, b) => {
+		const aUpdateAt = new Date(a.p99).getTime();
+		const bUpdateAt = new Date(b.p99).getTime();
+		return bUpdateAt - aUpdateAt;
+	});
+
+	const top5Services = sortedServices?.slice(0, 5);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
@@ -122,11 +129,22 @@ function ServiceMetrics(): JSX.Element {
 				</div>
 
 				<div className="empty-actions-container">
-					<Button type="default" className="periscope-btn secondary">
-						Get Started &nbsp; <ArrowRight size={16} />
-					</Button>
+					<Link to={ROUTES.GET_STARTED}>
+						<Button type="default" className="periscope-btn secondary">
+							Get Started &nbsp; <ArrowRight size={16} />
+						</Button>
+					</Link>
 
-					<Button type="link" className="learn-more-link">
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							window.open(
+								'https://signoz.io/docs/instrumentation/overview/',
+								'_blank',
+							);
+						}}
+					>
 						Learn more <ArrowUpRight size={12} />
 					</Button>
 				</div>
@@ -142,22 +160,29 @@ function ServiceMetrics(): JSX.Element {
 					dataSource={top5Services}
 					pagination={false}
 					className="services-table"
+					onRow={(record): { onClick: () => void } => ({
+						onClick: (): void => {
+							safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+						},
+					})}
 				/>
 			</div>
 		</div>
 	);
 
 	if (isLoadingTopLevelOperations || isLoading) {
-		<Card className="dashboards-list-card home-data-card">
-			<Card.Content>
-				<Skeleton active />
-			</Card.Content>
-		</Card>;
+		return (
+			<Card className="dashboards-list-card home-data-card loading-card">
+				<Card.Content>
+					<Skeleton active />
+				</Card.Content>
+			</Card>
+		);
 	}
 
 	if (isErrorTopLevelOperations || isError) {
 		return (
-			<Card className="dashboards-list-card home-data-card">
+			<Card className="dashboards-list-card home-data-card error-card">
 				<Card.Content>
 					<Skeleton active />
 				</Card.Content>

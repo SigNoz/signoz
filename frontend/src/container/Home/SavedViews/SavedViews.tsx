@@ -1,6 +1,7 @@
 import { Button, Skeleton, Tag } from 'antd';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import ROUTES from 'constants/routes';
+import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import {
 	ArrowRight,
@@ -10,29 +11,34 @@ import {
 } from 'lucide-react';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ViewProps } from 'types/api/saveViews/types';
+import { DataSource } from 'types/common/queryBuilder';
 
-export default function SavedViews({
-	tracesViews,
-	logsViews,
-	logsViewsLoading,
-	tracesViewsLoading,
-	logsViewsError,
-	tracesViewsError,
-}: {
-	tracesViews: ViewProps[];
-	logsViews: ViewProps[];
-	logsViewsLoading: boolean;
-	tracesViewsLoading: boolean;
-	logsViewsError: boolean;
-	tracesViewsError: boolean;
-}): JSX.Element {
+export default function SavedViews(): JSX.Element {
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
-	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>(
-		logsViews,
-	);
+	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>([]);
+
+	const {
+		data: logsViewsData,
+		isLoading: logsViewsLoading,
+		isError: logsViewsError,
+	} = useGetAllViews(DataSource.LOGS);
+
+	const {
+		data: tracesViewsData,
+		isLoading: tracesViewsLoading,
+		isError: tracesViewsError,
+	} = useGetAllViews(DataSource.TRACES);
+
+	const logsViews = useMemo(() => [...(logsViewsData?.data.data || [])], [
+		logsViewsData,
+	]);
+
+	const tracesViews = useMemo(() => [...(tracesViewsData?.data.data || [])], [
+		tracesViewsData,
+	]);
 
 	useEffect(() => {
 		setSelectedEntityViews(selectedEntity === 'logs' ? logsViews : tracesViews);
@@ -115,8 +121,19 @@ export default function SavedViews({
 	const renderSavedViews = (): JSX.Element => (
 		<div className="saved-views-list-container home-data-item-container">
 			<div className="saved-views-list">
-				{selectedEntityViews.map((view) => (
-					<div className="saved-view-item home-data-item" key={view.id}>
+				{selectedEntityViews.slice(0, 5).map((view) => (
+					<div
+						role="button"
+						tabIndex={0}
+						className="saved-view-item home-data-item"
+						key={view.id}
+						onClick={(): void => handleRedirectQuery(view)}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter') {
+								handleRedirectQuery(view);
+							}
+						}}
+					>
 						<div className="saved-view-item-name-container home-data-item-name-container">
 							<img
 								src={
@@ -190,7 +207,7 @@ export default function SavedViews({
 
 	if (logsViewsLoading || tracesViewsLoading) {
 		return (
-			<Card className="dashboards-list-card home-data-card loading-card">
+			<Card className="saved-views-list-card home-data-card loading-card">
 				<Card.Content>
 					<Skeleton active />
 				</Card.Content>
@@ -200,7 +217,7 @@ export default function SavedViews({
 
 	if (logsViewsError || tracesViewsError) {
 		return (
-			<Card className="dashboards-list-card home-data-card">
+			<Card className="saved-views-list-card home-data-card error-card">
 				<Card.Content>
 					<Skeleton active />
 				</Card.Content>
@@ -209,7 +226,7 @@ export default function SavedViews({
 	}
 
 	return (
-		<Card className="dashboards-list-card home-data-card">
+		<Card className="saved-views-list-card home-data-card">
 			{hasSavedViews && (
 				<Card.Header>
 					<div className="services-header home-data-card-header">

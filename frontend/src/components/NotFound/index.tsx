@@ -14,8 +14,8 @@ function NotFound({ text = defaultText }: Props): JSX.Element {
 				<Text>Page Not Found</Text>
 			</TextContainer>
 
-			<Button to={ROUTES.APPLICATION} tabIndex={0}>
-				Return To Services Page
+			<Button to={ROUTES.HOME} tabIndex={0}>
+				Return Home
 			</Button>
 		</Container>
 	);

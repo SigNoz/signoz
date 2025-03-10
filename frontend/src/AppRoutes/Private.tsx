@@ -216,7 +216,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					history.push(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-					history.push(ROUTES.APPLICATION);
+					history.push(ROUTES.HOME);
 				}
 			} else {
 				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
@@ -230,7 +230,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(fromPathname);
 				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 			} else {
-				history.push(ROUTES.APPLICATION);
+				history.push(ROUTES.HOME);
 			}
 		} else {
 			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);

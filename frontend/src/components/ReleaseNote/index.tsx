@@ -30,6 +30,7 @@ const allComponentMap: ComponentMapType[] = [
 				ROUTES.LIST_ALL_ALERT,
 				ROUTES.APPLICATION,
 				ROUTES.ALL_DASHBOARD,
+				ROUTES.HOME,
 			];
 
 			return (
