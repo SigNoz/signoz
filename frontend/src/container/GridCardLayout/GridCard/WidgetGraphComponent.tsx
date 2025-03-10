@@ -18,6 +18,7 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
+	RefObject,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -26,7 +27,6 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
@@ -35,7 +35,7 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getLocalStorageGraphVisibilityState } from './utils';
+import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -70,6 +70,11 @@ function WidgetGraphComponent({
 		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
+
+	const [
+		currentGraphRef,
+		setCurrentGraphRef,
+	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
 		if (!lineChartRef.current) return;
@@ -236,63 +241,37 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
-	const currentDataSource = widget?.query?.builder?.queryData?.[0]?.dataSource;
-
 	const graphClick = useGraphClickToShowButton({
-		graphRef,
-		buttonText:
-			currentDataSource === DataSource.TRACES ? 'View Traces' : 'View Logs',
-		isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
-			currentDataSource,
-		),
+		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
+		// isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
+		// 	currentDataSource,
+		// ),
 		buttonClassName: 'view-onclick-show-button',
 	});
 
 	const navigateToExplorer = useNavigateToExplorer();
 
-	const handleGraphClick = async (
+	const graphClickHandler = (
 		xValue: number,
 		yValue: number,
 		mouseX: number,
 		mouseY: number,
 		metric?: { [key: string]: string },
 		queryData?: { queryName: string; inFocusOrNot: boolean },
-	): Promise<void> => {
-		const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
-
-		try {
-			const result = await navigateToExplorerPages({
-				widget,
-				requestData: {
-					...metric,
-					queryName: queryData?.queryName || '',
-					inFocusOrNot: queryData?.inFocusOrNot || false,
-				},
-				navigateRequestType: 'specific',
-			});
-
-			const keys = Object.keys(result);
-			const menuItems = keys.map((key) => ({
-				text: `View ${
-					currentDataSource === DataSource.TRACES ? 'Traces' : 'Logs'
-				}: ${key}`,
-				onClick: (): void =>
-					navigateToExplorer({
-						filters: result[key].filters,
-						dataSource: result[key].dataSource as DataSource,
-						startTime: xValue,
-						endTime: xValue + (stepInterval ?? 60),
-					}),
-			}));
-
-			graphClick(xValue, yValue, mouseX, mouseY, metric, queryData, menuItems);
-		} catch (error) {
-			notifications.error({
-				message: 'Failed to process graph click',
-				description:
-					error instanceof Error ? error.message : 'Unknown error occurred',
-			});
-		}
+	): void => {
+		handleGraphClick({
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+			metric,
+			queryData,
+			widget,
+			navigateToExplorerPages,
+			navigateToExplorer,
+			notifications,
+			graphClick,
+		});
 	};
 
 	return (
@@ -345,6 +324,8 @@ function WidgetGraphComponent({
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
+					onClickHandler={onClickHandler ?? graphClickHandler}
+					setCurrentGraphRef={setCurrentGraphRef}
 				/>
 			</Modal>
 
@@ -387,7 +368,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={onClickHandler ?? handleGraphClick}
+						onClickHandler={onClickHandler ?? graphClickHandler}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}
