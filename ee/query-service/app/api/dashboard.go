@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 func (ah *APIHandler) lockDashboard(w http.ResponseWriter, r *http.Request) {
@@ -36,20 +36,24 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user := common.GetUserFromContext(r.Context())
-	dashboard, err := dashboards.GetDashboard(r.Context(), user.OrgID, uuid)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		return
+	}
+	dashboard, err := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, err.Error())
 		return
 	}
 
-	if !auth.IsAdmin(user) && (dashboard.CreatedBy != user.Email) {
+	if !auth.IsAdminV2(claims) && (dashboard.CreatedBy != claims.Email) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorForbidden, Err: err}, "You are not authorized to lock/unlock this dashboard")
 		return
 	}
 
 	// Lock/Unlock the dashboard
-	err = dashboards.LockUnlockDashboard(r.Context(), user.OrgID, uuid, lock)
+	err = dashboards.LockUnlockDashboard(r.Context(), claims.OrgID, uuid, lock)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, err.Error())
 		return

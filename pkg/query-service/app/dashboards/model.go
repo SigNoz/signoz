@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/types"
@@ -86,10 +85,8 @@ func DeleteDashboard(ctx context.Context, orgID, uuid string, fm interfaces.Feat
 		return dErr
 	}
 
-	if user := common.GetUserFromContext(ctx); user != nil {
-		if dashboard.Locked != nil && *dashboard.Locked == 1 {
-			return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
-		}
+	if dashboard.Locked != nil && *dashboard.Locked == 1 {
+		return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
 	}
 
 	result, err := db.NewDelete().Model(&types.Dashboard{}).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
@@ -119,7 +116,7 @@ func GetDashboard(ctx context.Context, orgID, uuid string) (*types.Dashboard, *m
 	return &dashboard, nil
 }
 
-func UpdateDashboard(ctx context.Context, orgID, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*types.Dashboard, *model.ApiError) {
+func UpdateDashboard(ctx context.Context, orgID, userEmail, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*types.Dashboard, *model.ApiError) {
 
 	mapData, err := json.Marshal(data)
 	if err != nil {
@@ -132,12 +129,8 @@ func UpdateDashboard(ctx context.Context, orgID, uuid string, data map[string]in
 		return nil, apiErr
 	}
 
-	var userEmail string
-	if user := common.GetUserFromContext(ctx); user != nil {
-		userEmail = user.Email
-		if dashboard.Locked != nil && *dashboard.Locked == 1 {
-			return nil, model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to edit it"))
-		}
+	if dashboard.Locked != nil && *dashboard.Locked == 1 {
+		return nil, model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to edit it"))
 	}
 
 	// if the total count of panels has reduced by more than 1,

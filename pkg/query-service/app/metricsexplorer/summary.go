@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -156,8 +156,11 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	g.Go(func() error {
 		var metricNames []string
 		metricNames = append(metricNames, metricName)
-		user := common.GetUserFromContext(ctx)
-		data, err := dashboards.GetDashboardsWithMetricNames(ctx, user.OrgID, metricNames)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if !ok {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}
+		}
+		data, err := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -324,8 +327,11 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 	alertsRelatedData := make(map[string][]metrics_explorer.Alert)
 
 	g.Go(func() error {
-		user := common.GetUserFromContext(ctx)
-		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, user.OrgID, metricNames)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if !ok {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}
+		}
+		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
 		if apiError != nil {
 			return apiError
 		}
