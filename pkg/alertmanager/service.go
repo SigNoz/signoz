@@ -85,6 +85,9 @@ func (service *Service) SyncServers(ctx context.Context) error {
 }
 
 func (service *Service) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return nil, err
@@ -99,6 +102,9 @@ func (service *Service) GetAlerts(ctx context.Context, orgID string, params aler
 }
 
 func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -108,6 +114,9 @@ func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts aler
 }
 
 func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -117,6 +126,9 @@ func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver
 }
 
 func (service *Service) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -144,17 +156,6 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	beforeCompareAndSelectHash := config.StoreableConfig().Hash
-	config, err = service.compareAndSelectConfig(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	if beforeCompareAndSelectHash == config.StoreableConfig().Hash {
-		service.settings.Logger().Debug("skipping config store update for org", "orgID", orgID, "hash", config.StoreableConfig().Hash)
-		return server, nil
-	}
-
 	err = service.configStore.Set(ctx, config)
 	if err != nil {
 		return nil, err
@@ -174,56 +175,18 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 		if err != nil {
 			return nil, err
 		}
-
-		config.SetGlobalConfig(service.config.Global)
-		if config.AlertmanagerConfig().Route == nil {
-			config.SetRouteConfig(service.config.Route)
-		} else {
-			config.UpdateRouteConfig(service.config.Route)
-		}
 	}
+
+	if err := config.SetGlobalConfig(service.config.Global); err != nil {
+		return nil, err
+	}
+	config.SetRouteConfig(service.config.Route)
 
 	return config, nil
 }
 
-// compareAndSelectConfig compares the existing config with the config derived from channels.
-// If the hash of the config and the channels mismatch, the config derived from channels is returned.
-func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
-	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	matchers, err := service.configStore.GetMatchers(ctx, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := alertmanagertypes.NewConfigFromChannels(service.config.Global, service.config.Route, channels, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	for ruleID, receivers := range matchers {
-		err = config.CreateRuleIDMatcher(ruleID, receivers)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
-		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels and matchers")
-		return config, nil
-	}
-
-	return incomingConfig, nil
-
-}
-
+// getServer returns the server for the given orgID. It should be called with the lock held.
 func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
-	service.serversMtx.RLock()
-	defer service.serversMtx.RUnlock()
-
 	server, ok := service.servers[orgID]
 	if !ok {
 		return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerNotFound, "alertmanager not found for org %s", orgID)

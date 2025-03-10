@@ -18,7 +18,9 @@ import (
 	"text/template"
 	"time"
 
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
+	"go.signoz.io/signoz/pkg/signoz"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -60,7 +62,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
@@ -86,7 +87,6 @@ type APIHandler struct {
 	reader            interfaces.Reader
 	skipConfig        *model.SkipConfig
 	appDao            dao.ModelDao
-	alertManager      am.Manager
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	querier           interfaces.Querier
@@ -135,6 +135,10 @@ type APIHandler struct {
 	pvcsRepo *inframetrics.PvcsRepo
 
 	JWT *authtypes.JWT
+
+	AlertmanagerAPI *alertmanager.API
+
+	Signoz *signoz.SigNoz
 }
 
 type APIHandlerOpts struct {
@@ -176,16 +180,14 @@ type APIHandlerOpts struct {
 	UseTraceNewSchema bool
 
 	JWT *authtypes.JWT
+
+	AlertmanagerAPI *alertmanager.API
+
+	Signoz *signoz.SigNoz
 }
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
-
-	alertManager, err := am.New()
-	if err != nil {
-		return nil, err
-	}
-
 	querierOpts := querier.QuerierOptions{
 		Reader:            opts.Reader,
 		Cache:             opts.Cache,
@@ -229,7 +231,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
-		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
 		IntegrationsController:        opts.IntegrationsController,
@@ -252,6 +253,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		pvcsRepo:                      pvcsRepo,
 		JWT:                           opts.JWT,
 		SummaryService:                summaryService,
+		AlertmanagerAPI:               opts.AlertmanagerAPI,
+		Signoz:                        opts.Signoz,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -491,21 +494,21 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 
 // RegisterPrivateRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", aH.AlertmanagerAPI.ListAllChannels).Methods(http.MethodGet)
 }
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.listChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.getChannel)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.editChannel)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.createChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.testChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.AlertmanagerAPI.ListChannels)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetChannelByID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateChannelByID)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteChannelByID)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.getAlerts)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
@@ -1369,138 +1372,6 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := aH.ruleManager.RuleDB().GetChannel(id)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-	aH.Respond(w, channel)
-}
-
-func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	apiErrorObj := aH.ruleManager.RuleDB().DeleteChannel(id)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-	aH.Respond(w, "notification channel successfully deleted")
-}
-
-func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := aH.ruleManager.RuleDB().GetChannels()
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-	aH.Respond(w, channels)
-}
-
-// testChannels sends test alert to all registered channels
-func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("Error in getting req body of testChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	// send alert
-	apiErrorObj := aH.alertManager.TestReceiver(receiver)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-	aH.Respond(w, "test alert sent")
-}
-
-func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
-
-	id := mux.Vars(r)["id"]
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("Error in getting req body of editChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of editChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	_, apiErrorObj := aH.ruleManager.RuleDB().EditChannel(receiver, id)
-
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	aH.Respond(w, nil)
-
-}
-
-func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		zap.L().Error("Error in getting req body of createChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	receiver := &am.Receiver{}
-	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.L().Error("Error in parsing req body of createChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	_, apiErrorObj := aH.ruleManager.RuleDB().CreateChannel(receiver)
-
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	aH.Respond(w, nil)
-
-}
-
-func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	amEndpoint := constants.GetAlertManagerApiPrefix()
-	resp, err := http.Get(amEndpoint + "v1/alerts" + "?" + params.Encode())
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, string(body))
-}
-
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
@@ -2165,7 +2036,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
