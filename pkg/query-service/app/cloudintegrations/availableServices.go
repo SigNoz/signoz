@@ -86,23 +86,25 @@ func readAllServiceDefinitions() error {
 			continue
 		}
 
-		cloudProviderDirPath := path.Join(rootDirName, d.Name())
-		cloudServices, err := readServiceDefinitionsFromDir(cloudProviderDirPath)
+		cloudProvider := d.Name()
+
+		cloudProviderDirPath := path.Join(rootDirName, cloudProvider)
+		cloudServices, err := readServiceDefinitionsFromDir(cloudProvider, cloudProviderDirPath)
 		if err != nil {
-			return fmt.Errorf("couldn't read %s service definitions", d.Name())
+			return fmt.Errorf("couldn't read %s service definitions: %w", cloudProvider, err)
 		}
 
 		if len(cloudServices) < 1 {
-			return fmt.Errorf("no %s services could be read", d.Name())
+			return fmt.Errorf("no %s services could be read", cloudProvider)
 		}
 
-		availableServices[d.Name()] = cloudServices
+		availableServices[cloudProvider] = cloudServices
 	}
 
 	return nil
 }
 
-func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
+func readServiceDefinitionsFromDir(cloudProvider string, cloudProviderDirPath string) (
 	map[string]CloudServiceDetails, error,
 ) {
 	svcDefDirs, err := fs.ReadDir(serviceDefinitionFiles, cloudProviderDirPath)
@@ -118,7 +120,7 @@ func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
 		}
 
 		svcDirPath := path.Join(cloudProviderDirPath, d.Name())
-		s, err := readServiceDefinition(svcDirPath)
+		s, err := readServiceDefinition(cloudProvider, svcDirPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't read svc definition for %s: %w", d.Name(), err)
 		}
@@ -135,14 +137,14 @@ func readServiceDefinitionsFromDir(cloudProviderDirPath string) (
 	return svcDefs, nil
 }
 
-func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
-	integrationJsonPath := path.Join(dirpath, "integration.json")
+func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServiceDetails, error) {
+	integrationJsonPath := path.Join(svcDirpath, "integration.json")
 
 	serializedSpec, err := serviceDefinitionFiles.ReadFile(integrationJsonPath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't find integration.json in %s: %w",
-			dirpath, err,
+			svcDirpath, err,
 		)
 	}
 
@@ -155,7 +157,7 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 	}
 
 	hydrated, err := integrations.HydrateFileUris(
-		integrationSpec, serviceDefinitionFiles, dirpath,
+		integrationSpec, serviceDefinitionFiles, svcDirpath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -163,20 +165,9 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 			integrationJsonPath, err,
 		)
 	}
+	hydratedSpec := hydrated.(map[string]any)
 
-	hydratedSpec := hydrated.(map[string]interface{})
-	hydratedSpecJson, err := koanfJson.Parser().Marshal(hydratedSpec)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't serialize hydrated integration spec back to JSON %s: %w",
-			integrationJsonPath, err,
-		)
-	}
-
-	var serviceDef CloudServiceDetails
-	decoder := json.NewDecoder(bytes.NewReader(hydratedSpecJson))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&serviceDef)
+	serviceDef, err := ParseStructWithJsonTagsFromMap[CloudServiceDetails](hydratedSpec)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't parse hydrated JSON spec read from %s: %w",
@@ -189,29 +180,45 @@ func readServiceDefinition(dirpath string) (*CloudServiceDetails, error) {
 		return nil, fmt.Errorf("invalid service definition %s: %w", serviceDef.Id, err)
 	}
 
-	return &serviceDef, nil
+	serviceDef.TelemetryCollectionStrategy.Provider = cloudProvider
+
+	return serviceDef, nil
 
 }
 
-func validateServiceDefinition(s CloudServiceDetails) error {
+func validateServiceDefinition(s *CloudServiceDetails) error {
 	// Validate dashboard data
 	seenDashboardIds := map[string]interface{}{}
 	for _, dd := range s.Assets.Dashboards {
-		did, exists := dd["id"]
-		if !exists {
-			return fmt.Errorf("id is required. not specified in dashboard titled %v", dd["title"])
+		if _, seen := seenDashboardIds[dd.Id]; seen {
+			return fmt.Errorf("multiple dashboards found with id %s", dd.Id)
 		}
-		dashboardId, ok := did.(string)
-		if !ok {
-			return fmt.Errorf("id must be string in dashboard titled %v", dd["title"])
-		}
-		if _, seen := seenDashboardIds[dashboardId]; seen {
-			return fmt.Errorf("multiple dashboards found with id %s", dashboardId)
-		}
-		seenDashboardIds[dashboardId] = nil
+		seenDashboardIds[dd.Id] = nil
+	}
+
+	if s.TelemetryCollectionStrategy == nil {
+		return fmt.Errorf("telemetry_collection_strategy is required")
 	}
 
 	// potentially more to follow
 
 	return nil
+}
+
+func ParseStructWithJsonTagsFromMap[StructType any](data map[string]any) (
+	*StructType, error,
+) {
+	mapJson, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't marshal map to json: %w", err)
+	}
+
+	var res StructType
+	decoder := json.NewDecoder(bytes.NewReader(mapJson))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&res)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't unmarshal json back to struct: %w", err)
+	}
+	return &res, nil
 }

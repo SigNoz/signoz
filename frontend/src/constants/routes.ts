@@ -7,8 +7,9 @@ const ROUTES = {
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
-	GET_STARTED: '/get-started',
 	ONBOARDING: '/onboarding',
+	GET_STARTED: '/get-started',
+	GET_STARTED_WITH_CLOUD: '/get-started-with-signoz-cloud',
 	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
 	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
@@ -59,12 +60,15 @@ const ROUTES = {
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/shortcuts',
 	INTEGRATIONS: '/integrations',
-	MESSAGING_QUEUES: '/messaging-queues',
-	MESSAGING_QUEUES_DETAIL: '/messaging-queues/detail',
+	MESSAGING_QUEUES_KAFKA: '/messaging-queues/kafka',
+	MESSAGING_QUEUES_KAFKA_DETAIL: '/messaging-queues/kafka/detail',
 	INFRASTRUCTURE_MONITORING_HOSTS: '/infrastructure-monitoring/hosts',
 	INFRASTRUCTURE_MONITORING_KUBERNETES: '/infrastructure-monitoring/kubernetes',
 	MESSAGING_QUEUES_CELERY_TASK: '/messaging-queues/celery-task',
 	MESSAGING_QUEUES_OVERVIEW: '/messaging-queues/overview',
+	METRICS_EXPLORER: '/metrics-explorer/summary',
+	METRICS_EXPLORER_EXPLORER: '/metrics-explorer/explorer',
+	METRICS_EXPLORER_VIEWS: '/metrics-explorer/views',
 } as const;
 
 export default ROUTES;

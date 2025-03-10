@@ -1,7 +1,6 @@
 import './CeleryOverviewConfigOptions.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
-import { Button, Row, Select, Spin, Tooltip } from 'antd';
+import { Row, Select, Spin } from 'antd';
 import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
@@ -10,10 +9,7 @@ import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOpt
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Check, Share2 } from 'lucide-react';
-import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 
 interface SelectOptionConfig {
 	placeholder: string;
@@ -66,10 +62,6 @@ function FilterSelect({
 }
 
 function CeleryOverviewConfigOptions(): JSX.Element {
-	const [isURLCopied, setIsURLCopied] = useState(false);
-
-	const [, handleCopyToClipboard] = useCopyToClipboard();
-
 	const selectConfigs: SelectOptionConfig[] = [
 		{
 			placeholder: 'Service Name',
@@ -98,14 +90,6 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 		},
 	];
 
-	const handleShareURL = (): void => {
-		handleCopyToClipboard(window.location.href);
-		setIsURLCopied(true);
-		setTimeout(() => {
-			setIsURLCopied(false);
-		}, 1000);
-	};
-
 	return (
 		<div className="celery-overview-filters">
 			<Row className="celery-filters">
@@ -118,19 +102,6 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 					/>
 				))}
 			</Row>
-			<Tooltip title="Share this" arrow={false}>
-				<Button
-					className="periscope-btn copy-url-btn"
-					onClick={handleShareURL}
-					icon={
-						isURLCopied ? (
-							<Check size={14} color={Color.BG_FOREST_500} />
-						) : (
-							<Share2 size={14} />
-						)
-					}
-				/>
-			</Tooltip>
 		</div>
 	);
 }

@@ -261,8 +261,9 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 	var fs *v3.FilterSet = mq.Filters
 	var groupTags []v3.AttributeKey = mq.GroupBy
 
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
+	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
+	conditions = append(conditions, "__normalized = true")
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
 
@@ -348,8 +349,9 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 	var fs *v3.FilterSet = mq.Filters
 	var groupTags []v3.AttributeKey = mq.GroupBy
 
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
+	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
+	conditions = append(conditions, "__normalized = true")
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
 

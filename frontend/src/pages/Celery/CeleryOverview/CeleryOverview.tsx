@@ -23,7 +23,7 @@ export default function CeleryOverview(): JSX.Element {
 					<p className="celery-overview-content-header-title">
 						Messaging Queue Overview
 					</p>
-					<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal={false} />
 				</div>
 				<CeleryOverviewConfigOptions />
 				<CeleryOverviewTable onRowClick={onRowClick} />

@@ -11,14 +11,15 @@ import (
 
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -259,7 +260,7 @@ func (tb *FilterSuggestionsTestBed) mockAttribValuesQueryResponse(
 
 type FilterSuggestionsTestBed struct {
 	t              *testing.T
-	testUser       *model.User
+	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
 }
@@ -292,20 +293,23 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:       reader,
 		AppDao:       dao.DB(),
 		FeatureFlags: fm,
+		JWT:          jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
 	router := app.NewRouter()
-	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	//add the jwt middleware
+	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 

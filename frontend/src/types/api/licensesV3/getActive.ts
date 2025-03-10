@@ -1,6 +1,6 @@
 export enum LicenseEvent {
 	NO_EVENT = '',
-	FAILED_PAYMENT = 'FAILED_PAYMENT',
+	DEFAULT = 'DEFAULT',
 }
 
 export enum LicenseStatus {
@@ -9,8 +9,13 @@ export enum LicenseStatus {
 }
 
 export enum LicenseState {
-	PAYMENT_FAILED = 'PAYMENT_FAILED',
+	DEFAULTED = 'DEFAULTED',
 	ACTIVE = 'ACTIVE',
+}
+
+export enum LicensePlatform {
+	SELF_HOSTED = 'SELF_HOSTED',
+	CLOUD = 'CLOUD',
 }
 
 export type LicenseV3EventQueueResModel = {
@@ -26,4 +31,5 @@ export type LicenseV3ResModel = {
 	status: LicenseStatus;
 	state: LicenseState;
 	event_queue: LicenseV3EventQueueResModel;
+	platform: LicensePlatform;
 };

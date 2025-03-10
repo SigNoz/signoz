@@ -3,13 +3,15 @@
 	"LOGIN": "SigNoz | Login",
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
-	"GET_STARTED": "SigNoz | Get Started",
+	"GET_STARTED_OLD": "SigNoz | Get Started",
 	"ONBOARDING": "SigNoz | Get Started",
 	"GET_STARTED_APPLICATION_MONITORING": "SigNoz | Get Started | APM",
 	"GET_STARTED_LOGS_MANAGEMENT": "SigNoz | Get Started | Logs",
 	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
 	"GET_STARTED_AWS_MONITORING": "SigNoz | Get Started | AWS",
 	"GET_STARTED_AZURE_MONITORING": "SigNoz | Get Started | AZURE",
+	"GET_STARTED": "SigNoz | Get Started with SigNoz Cloud",
+	"GET_STARTED_WITH_CLOUD": "SigNoz | Get Started with SigNoz Cloud",
 	"TRACE": "SigNoz | Trace",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",
@@ -57,5 +59,8 @@
 	"ALERT_OVERVIEW": "SigNoz | Alert Rule Overview",
 	"MESSAGING_QUEUES": "SigNoz | Messaging Queues",
 	"INFRASTRUCTURE_MONITORING_HOSTS": "SigNoz | Infra Monitoring",
-	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring"
+	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring",
+	"METRICS_EXPLORER": "SigNoz | Metrics Explorer",
+	"METRICS_EXPLORER_EXPLORER": "SigNoz | Metrics Explorer",
+	"METRICS_EXPLORER_VIEWS": "SigNoz | Metrics Explorer"
 }

@@ -3,11 +3,15 @@ package cloudintegrations
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"slices"
+	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"golang.org/x/exp/maps"
 )
 
 var SupportedCloudProviders = []string{
@@ -26,15 +30,15 @@ type Controller struct {
 	serviceConfigRepo serviceConfigRepository
 }
 
-func NewController(db *sqlx.DB) (
+func NewController(sqlStore sqlstore.SQLStore) (
 	*Controller, error,
 ) {
-	accountsRepo, err := newCloudProviderAccountsRepository(db)
+	accountsRepo, err := newCloudProviderAccountsRepository(sqlStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
 	}
 
-	serviceConfigRepo, err := newServiceConfigRepository(db)
+	serviceConfigRepo, err := newServiceConfigRepository(sqlStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider service config repo: %w", err)
 	}
@@ -92,6 +96,11 @@ type GenerateConnectionUrlRequest struct {
 type SigNozAgentConfig struct {
 	// The region in which SigNoz agent should be installed.
 	Region string `json:"region"`
+
+	IngestionUrl string `json:"ingestion_url"`
+	IngestionKey string `json:"ingestion_key"`
+	SigNozAPIUrl string `json:"signoz_api_url"`
+	SigNozAPIKey string `json:"signoz_api_key"`
 }
 
 type GenerateConnectionUrlResponse struct {
@@ -114,11 +123,29 @@ func (c *Controller) GenerateConnectionUrl(
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
-	// TODO(Raj): Add actual cloudformation template for AWS integration after it has been shipped.
+	// TODO(Raj): parameterized this in follow up changes
+	agentVersion := "0.0.2"
+
 	connectionUrl := fmt.Sprintf(
-		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?stackName=SigNozIntegration/",
+		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",
 		req.AgentConfig.Region, req.AgentConfig.Region,
 	)
+
+	for qp, value := range map[string]string{
+		"param_SigNozIntegrationAgentVersion": agentVersion,
+		"param_SigNozApiUrl":                  req.AgentConfig.SigNozAPIUrl,
+		"param_SigNozApiKey":                  req.AgentConfig.SigNozAPIKey,
+		"param_SigNozAccountId":               account.Id,
+		"param_IngestionUrl":                  req.AgentConfig.IngestionUrl,
+		"param_IngestionKey":                  req.AgentConfig.IngestionKey,
+		"stackName":                           "signoz-integration",
+		"templateURL": fmt.Sprintf(
+			"https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json",
+			agentVersion,
+		),
+	} {
+		connectionUrl += fmt.Sprintf("&%s=%s", qp, url.QueryEscape(value))
+	}
 
 	return &GenerateConnectionUrlResponse{
 		AccountId:     account.Id,
@@ -163,7 +190,17 @@ type AgentCheckInRequest struct {
 }
 
 type AgentCheckInResponse struct {
-	Account AccountRecord `json:"account"`
+	AccountId      string     `json:"account_id"`
+	CloudAccountId string     `json:"cloud_account_id"`
+	RemovedAt      *time.Time `json:"removed_at"`
+
+	IntegrationConfig IntegrationConfigForAgent `json:"integration_config"`
+}
+
+type IntegrationConfigForAgent struct {
+	EnabledRegions []string `json:"enabled_regions"`
+
+	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -201,8 +238,70 @@ func (c *Controller) CheckInAsAgent(
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
 	}
 
+	// prepare and return integration config to be consumed by agent
+	telemetryCollectionStrategy, err := NewCloudTelemetryCollectionStrategy(cloudProvider)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't init telemetry collection strategy: %w", err,
+		))
+	}
+
+	agentConfig := IntegrationConfigForAgent{
+		EnabledRegions:              []string{},
+		TelemetryCollectionStrategy: telemetryCollectionStrategy,
+	}
+
+	if account.Config != nil && account.Config.EnabledRegions != nil {
+		agentConfig.EnabledRegions = account.Config.EnabledRegions
+	}
+
+	services, apiErr := listCloudProviderServices(cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
+	}
+	svcDetailsById := map[string]*CloudServiceDetails{}
+	for _, svcDetails := range services {
+		svcDetailsById[svcDetails.Id] = &svcDetails
+	}
+
+	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
+		ctx, cloudProvider, *account.CloudAccountId,
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, "couldn't get service configs for cloud account",
+		)
+	}
+
+	// accumulate config in a fixed order to ensure same config generated across runs
+	configuredSvcIds := maps.Keys(svcConfigs)
+	slices.Sort(configuredSvcIds)
+
+	for _, svcId := range configuredSvcIds {
+		svcDetails := svcDetailsById[svcId]
+		svcConfig := svcConfigs[svcId]
+
+		if svcDetails != nil {
+			metricsEnabled := svcConfig.Metrics != nil && svcConfig.Metrics.Enabled
+			logsEnabled := svcConfig.Logs != nil && svcConfig.Logs.Enabled
+			if logsEnabled || metricsEnabled {
+				err := agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
+					svcDetails.TelemetryCollectionStrategy, logsEnabled, metricsEnabled,
+				)
+				if err != nil {
+					return nil, model.InternalError(fmt.Errorf(
+						"couldn't add service telemetry collection strategy: %w", err,
+					))
+				}
+			}
+		}
+	}
+
 	return &AgentCheckInResponse{
-		Account: *account,
+		AccountId:         account.Id,
+		CloudAccountId:    *account.CloudAccountId,
+		RemovedAt:         account.RemovedAt,
+		IntegrationConfig: agentConfig,
 	}, nil
 }
 
@@ -325,6 +424,18 @@ func (c *Controller) GetServiceDetails(
 
 		if config != nil {
 			service.Config = config
+
+			if config.Metrics != nil && config.Metrics.Enabled {
+				// add links to service dashboards, making them clickable.
+				for i, d := range service.Assets.Dashboards {
+					dashboardUuid := c.dashboardUuid(
+						cloudProvider, serviceId, d.Id,
+					)
+					service.Assets.Dashboards[i].Url = fmt.Sprintf(
+						"/dashboard/%s", dashboardUuid,
+					)
+				}
+			}
 		}
 	}
 
@@ -377,4 +488,135 @@ func (c *Controller) UpdateServiceConfig(
 		Id:     serviceId,
 		Config: *updatedConfig,
 	}, nil
+}
+
+// All dashboards that are available based on cloud integrations configuration
+// across all cloud providers
+func (c *Controller) AvailableDashboards(ctx context.Context) (
+	[]dashboards.Dashboard, *model.ApiError,
+) {
+	allDashboards := []dashboards.Dashboard{}
+
+	for _, provider := range []string{"aws"} {
+		providerDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, provider)
+		if apiErr != nil {
+			return nil, model.WrapApiError(
+				apiErr, fmt.Sprintf("couldn't get available dashboards for %s", provider),
+			)
+		}
+
+		allDashboards = append(allDashboards, providerDashboards...)
+	}
+
+	return allDashboards, nil
+}
+
+func (c *Controller) AvailableDashboardsForCloudProvider(
+	ctx context.Context, cloudProvider string,
+) ([]dashboards.Dashboard, *model.ApiError) {
+
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
+	}
+
+	// for v0, service dashboards are only available when metrics are enabled.
+	servicesWithAvailableMetrics := map[string]*time.Time{}
+
+	for _, ar := range accountRecords {
+		if ar.CloudAccountId != nil {
+			configsBySvcId, apiErr := c.serviceConfigRepo.getAllForAccount(
+				ctx, cloudProvider, *ar.CloudAccountId,
+			)
+			if apiErr != nil {
+				return nil, apiErr
+			}
+
+			for svcId, config := range configsBySvcId {
+				if config.Metrics != nil && config.Metrics.Enabled {
+					servicesWithAvailableMetrics[svcId] = &ar.CreatedAt
+				}
+			}
+		}
+	}
+
+	allServices, apiErr := listCloudProviderServices(cloudProvider)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	svcDashboards := []dashboards.Dashboard{}
+	for _, svc := range allServices {
+		serviceDashboardsCreatedAt := servicesWithAvailableMetrics[svc.Id]
+		if serviceDashboardsCreatedAt != nil {
+			for _, d := range svc.Assets.Dashboards {
+				isLocked := 1
+				author := fmt.Sprintf("%s-integration", cloudProvider)
+				svcDashboards = append(svcDashboards, dashboards.Dashboard{
+					Uuid:      c.dashboardUuid(cloudProvider, svc.Id, d.Id),
+					Locked:    &isLocked,
+					Data:      *d.Definition,
+					CreatedAt: *serviceDashboardsCreatedAt,
+					CreateBy:  &author,
+					UpdatedAt: *serviceDashboardsCreatedAt,
+					UpdateBy:  &author,
+				})
+			}
+			servicesWithAvailableMetrics[svc.Id] = nil
+		}
+	}
+
+	return svcDashboards, nil
+}
+func (c *Controller) GetDashboardById(
+	ctx context.Context,
+	dashboardUuid string,
+) (*dashboards.Dashboard, *model.ApiError) {
+	cloudProvider, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	allDashboards, apiErr := c.AvailableDashboardsForCloudProvider(ctx, cloudProvider)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, fmt.Sprintf("couldn't list available dashboards"),
+		)
+	}
+
+	for _, d := range allDashboards {
+		if d.Uuid == dashboardUuid {
+			return &d, nil
+		}
+	}
+
+	return nil, model.NotFoundError(fmt.Errorf(
+		"couldn't find dashboard with uuid: %s", dashboardUuid,
+	))
+}
+
+func (c *Controller) dashboardUuid(
+	cloudProvider string, svcId string, dashboardId string,
+) string {
+	return fmt.Sprintf(
+		"cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId,
+	)
+}
+
+func (c *Controller) parseDashboardUuid(dashboardUuid string) (
+	cloudProvider string, svcId string, dashboardId string, apiErr *model.ApiError,
+) {
+	parts := strings.SplitN(dashboardUuid, "--", 4)
+	if len(parts) != 4 || parts[0] != "cloud-integration" {
+		return "", "", "", model.BadRequest(fmt.Errorf(
+			"invalid cloud integration dashboard id",
+		))
+	}
+
+	return parts[1], parts[2], parts[3], nil
+}
+
+func (c *Controller) IsCloudIntegrationDashboardUuid(dashboardUuid string) bool {
+	_, _, _, apiErr := c.parseDashboardUuid(dashboardUuid)
+	return apiErr == nil
 }

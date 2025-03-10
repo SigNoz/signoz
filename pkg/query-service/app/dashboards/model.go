@@ -37,115 +37,6 @@ var (
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(inputDB *sqlx.DB) error {
 	db = inputDB
-	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		uuid TEXT NOT NULL UNIQUE,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		data TEXT NOT NULL
-	);`
-
-	_, err := db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating dashboard table: %s", err.Error())
-	}
-
-	table_schema = `CREATE TABLE IF NOT EXISTS rules (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		updated_at datetime NOT NULL,
-		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating rules table: %s", err.Error())
-	}
-
-	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		name TEXT NOT NULL UNIQUE,
-		type TEXT NOT NULL,
-		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating notification_channles table: %s", err.Error())
-	}
-
-	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		description TEXT,
-		alert_ids TEXT,
-		schedule TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		created_by TEXT NOT NULL,
-		updated_at datetime NOT NULL,
-		updated_by TEXT NOT NULL
-	);`
-	_, err = db.Exec(tableSchema)
-	if err != nil {
-		return fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
-	}
-
-	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		transaction_id TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		table_name TEXT NOT NULL,
-		ttl INTEGER DEFAULT 0,
-		cold_storage_ttl INTEGER DEFAULT 0,
-		status TEXT NOT NULL
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating ttl_status table: %s", err.Error())
-	}
-
-	// sqlite does not support "IF NOT EXISTS"
-	createdAt := `ALTER TABLE rules ADD COLUMN created_at datetime;`
-	_, err = db.Exec(createdAt)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column created_at to rules table: %s", err.Error())
-	}
-
-	createdBy := `ALTER TABLE rules ADD COLUMN created_by TEXT;`
-	_, err = db.Exec(createdBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column created_by to rules table: %s", err.Error())
-	}
-
-	updatedBy := `ALTER TABLE rules ADD COLUMN updated_by TEXT;`
-	_, err = db.Exec(updatedBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column updated_by to rules table: %s", err.Error())
-	}
-
-	createdBy = `ALTER TABLE dashboards ADD COLUMN created_by TEXT;`
-	_, err = db.Exec(createdBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column created_by to dashboards table: %s", err.Error())
-	}
-
-	updatedBy = `ALTER TABLE dashboards ADD COLUMN updated_by TEXT;`
-	_, err = db.Exec(updatedBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column updated_by to dashboards table: %s", err.Error())
-	}
-
-	locked := `ALTER TABLE dashboards ADD COLUMN locked INTEGER DEFAULT 0;`
-	_, err = db.Exec(locked)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
-	}
-
 	telemetry.GetInstance().SetDashboardsInfoCallback(GetDashboardsInfo)
 
 	return nil
@@ -645,4 +536,98 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 		DashboardsWithTraceChQuery:   traceChQueryCount,
 		LogsPanelsWithAttrContainsOp: logsPanelsWithAttrContains,
 	}
+}
+
+func GetDashboardsWithMetricNames(ctx context.Context, metricNames []string) (map[string][]map[string]string, *model.ApiError) {
+	// Get all dashboards first
+	query := `SELECT uuid, data FROM dashboards`
+
+	type dashboardRow struct {
+		Uuid string          `db:"uuid"`
+		Data json.RawMessage `db:"data"`
+	}
+
+	var dashboards []dashboardRow
+	err := db.Select(&dashboards, query)
+	if err != nil {
+		zap.L().Error("Error in getting dashboards", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	// Initialize result map for each metric
+	result := make(map[string][]map[string]string)
+	// for _, metricName := range metricNames {
+	// 	result[metricName] = []map[string]string{}
+	// }
+
+	// Process the JSON data in Go
+	for _, dashboard := range dashboards {
+		var dashData map[string]interface{}
+		if err := json.Unmarshal(dashboard.Data, &dashData); err != nil {
+			continue
+		}
+
+		dashTitle, _ := dashData["title"].(string)
+		widgets, ok := dashData["widgets"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, w := range widgets {
+			widget, ok := w.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			widgetTitle, _ := widget["title"].(string)
+			widgetID, _ := widget["id"].(string)
+
+			query, ok := widget["query"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			builder, ok := query["builder"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			queryData, ok := builder["queryData"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			for _, qd := range queryData {
+				data, ok := qd.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+					continue
+				}
+
+				aggregateAttr, ok := data["aggregateAttribute"].(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				if key, ok := aggregateAttr["key"].(string); ok {
+					// Check if this metric is in our list of interest
+					for _, metricName := range metricNames {
+						if strings.TrimSpace(key) == metricName {
+							result[metricName] = append(result[metricName], map[string]string{
+								"dashboard_id":    dashboard.Uuid,
+								"widget_title":    widgetTitle,
+								"widget_id":       widgetID,
+								"dashboard_title": dashTitle,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result, nil
 }

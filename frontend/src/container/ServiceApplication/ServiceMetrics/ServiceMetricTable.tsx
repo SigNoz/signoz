@@ -5,6 +5,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
@@ -14,7 +15,6 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -34,7 +34,7 @@ function ServiceMetricTable({
 	const { t: getText } = useTranslation(['services']);
 
 	const { licenses, isFetchingLicenses } = useAppContext();
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
 		queryKey: [

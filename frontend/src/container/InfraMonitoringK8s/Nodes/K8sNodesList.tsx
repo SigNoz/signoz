@@ -188,6 +188,11 @@ function K8sNodesList({
 		return queryPayload;
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
+	const nestedNodesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const formattedGroupedByNodesData = useMemo(
 		() =>
 			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
@@ -228,6 +233,11 @@ function K8sNodesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sNodesRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -236,6 +246,11 @@ function K8sNodesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s nodes list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -247,7 +262,7 @@ function K8sNodesList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -261,21 +276,26 @@ function K8sNodesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s nodes list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s nodes list page visited', {});
 	}, []);
 
 	const selectedNodeData = useMemo(() => {
 		if (!selectedNodeUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the node from the formatted grouped by nodes data
+			return (
+				nestedNodesData.find((node) => node.nodeUID === selectedNodeUID) || null
+			);
+		}
+		// If not grouped by, return the node from the nodes data
 		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
-	}, [selectedNodeUID, nodesData]);
+	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
@@ -329,6 +349,10 @@ function K8sNodesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedNodeUID(record.nodeUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -411,6 +435,8 @@ function K8sNodesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s nodes list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
@@ -425,6 +451,16 @@ function K8sNodesList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s nodes list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -451,10 +487,7 @@ function K8sNodesList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

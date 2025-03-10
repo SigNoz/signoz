@@ -1,8 +1,10 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getOrgUser from 'api/user/getOrgUser';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -12,7 +14,6 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
-import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -36,6 +37,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isFetchingLicenses,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
+		featureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -53,7 +55,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	);
 	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
 	const currentRoute = mapRoutes.get('current');
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
@@ -156,7 +158,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			const currentRoute = mapRoutes.get('current');
 			const shouldSuspendWorkspace =
 				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicenseV3.state === LicenseState.DEFAULTED;
 
 			if (shouldSuspendWorkspace && currentRoute) {
 				navigateToWorkSpaceSuspended(currentRoute);
@@ -169,6 +171,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			setOrgData(org[0]);
 		}
 	}, [org]);
+
+	// if the feature flag is enabled and the current route is /get-started then redirect to /get-started-with-signoz-cloud
+	useEffect(() => {
+		if (
+			currentRoute?.path === ROUTES.GET_STARTED &&
+			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
+		) {
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+		}
+	}, [currentRoute, featureFlags]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {

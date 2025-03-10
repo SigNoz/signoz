@@ -53,8 +53,8 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
-		if (value && 'msteams_configs' in value) {
-			const msteamsConfig = value.msteams_configs[0];
+		if (value && 'msteamsv2_configs' in value) {
+			const msteamsConfig = value.msteamsv2_configs[0];
 			channel = msteamsConfig;
 			return {
 				type: ChannelType.MsTeams,

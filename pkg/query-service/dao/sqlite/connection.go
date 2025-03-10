@@ -2,90 +2,25 @@ package sqlite
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
 type ModelDaoSqlite struct {
-	db *sqlx.DB
+	db    *sqlx.DB
+	bundb *bun.DB
 }
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(db *sqlx.DB) (*ModelDaoSqlite, error) {
-	table_schema := `
-		PRAGMA foreign_keys = ON;
-
-		CREATE TABLE IF NOT EXISTS invites (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			email TEXT NOT NULL UNIQUE,
-			token TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			role TEXT NOT NULL,
-			org_id TEXT NOT NULL,
-			FOREIGN KEY(org_id) REFERENCES organizations(id)
-		);
-		CREATE TABLE IF NOT EXISTS organizations (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
-			has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
-		);
-		CREATE TABLE IF NOT EXISTS users (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			email TEXT NOT NULL UNIQUE,
-			password TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			profile_picture_url TEXT,
-			group_id TEXT NOT NULL,
-			org_id TEXT NOT NULL,
-			FOREIGN KEY(group_id) REFERENCES groups(id),
-			FOREIGN KEY(org_id) REFERENCES organizations(id)
-		);
-		CREATE TABLE IF NOT EXISTS groups (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL UNIQUE
-		);
-		CREATE TABLE IF NOT EXISTS reset_password_request (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id TEXT NOT NULL,
-			token TEXT NOT NULL,
-			FOREIGN KEY(user_id) REFERENCES users(id)
-		);
-		CREATE TABLE IF NOT EXISTS user_flags (
-			user_id TEXT PRIMARY KEY,
-			flags TEXT,
-			FOREIGN KEY(user_id) REFERENCES users(id)
-		);
-		CREATE TABLE IF NOT EXISTS apdex_settings (
-			service_name TEXT PRIMARY KEY,
-			threshold FLOAT NOT NULL,
-			exclude_status_codes TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS ingestion_keys (
-			key_id TEXT PRIMARY KEY,
-			name TEXT,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			ingestion_key TEXT NOT NULL,
-			ingestion_url TEXT NOT NULL,
-			data_region TEXT NOT NULL
-		);
-	`
-
-	_, err := db.Exec(table_schema)
-	if err != nil {
-		return nil, fmt.Errorf("error in creating tables: %v", err.Error())
-	}
-
-	mds := &ModelDaoSqlite{db: db}
+func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
+	mds := &ModelDaoSqlite{db: sqlStore.SQLxDB(), bundb: sqlStore.BunDB()}
 
 	ctx := context.Background()
 	if err := mds.initializeOrgPreferences(ctx); err != nil {
@@ -126,13 +61,13 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 		return errors.Errorf("Found %d organizations, expected one or none.", len(orgs))
 	}
 
-	var org model.Organization
+	var org types.Organization
 	if len(orgs) == 1 {
 		org = orgs[0]
 	}
 
 	// set telemetry fields from userPreferences
-	telemetry.GetInstance().SetDistinctId(org.Id)
+	telemetry.GetInstance().SetDistinctId(org.ID)
 
 	users, _ := mds.GetUsers(ctx)
 	countUsers := len(users)
@@ -165,7 +100,7 @@ func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
 }
 
 func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
-	name string) (*model.Group, error) {
+	name string) (*types.Group, error) {
 
 	group, err := mds.GetGroupByName(ctx, name)
 	if err != nil {
@@ -176,7 +111,7 @@ func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
 	}
 
 	zap.L().Debug("group is not found, creating it", zap.String("group_name", name))
-	group, cErr := mds.CreateGroup(ctx, &model.Group{Name: name})
+	group, cErr := mds.CreateGroup(ctx, &types.Group{Name: name})
 	if cErr != nil {
 		return nil, cErr.Err
 	}

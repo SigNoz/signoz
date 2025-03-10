@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -27,92 +28,125 @@ func (migration *addOrganization) Register(migrations *migrate.Migrations) error
 }
 
 func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
-	// table:invites
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS invites (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		email TEXT NOT NULL UNIQUE,
-		token TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		role TEXT NOT NULL,
-		org_id TEXT NOT NULL,
-		FOREIGN KEY(org_id) REFERENCES organizations(id)
-	)`).Exec(ctx); err != nil {
-		return err
-	}
 
 	// table:organizations
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS organizations (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
-		has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
-	)`).Exec(ctx); err != nil {
-		return err
-	}
-
-	// table:users
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS users (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		email TEXT NOT NULL UNIQUE,
-		password TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		profile_picture_url TEXT,
-		group_id TEXT NOT NULL,
-		org_id TEXT NOT NULL,
-		FOREIGN KEY(group_id) REFERENCES groups(id),
-		FOREIGN KEY(org_id) REFERENCES organizations(id)
-	)`).Exec(ctx); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel   `bun:"table:organizations"`
+			ID              string `bun:"id,pk,type:text"`
+			Name            string `bun:"name,type:text,notnull"`
+			CreatedAt       int    `bun:"created_at,notnull"`
+			IsAnonymous     int    `bun:"is_anonymous,notnull,default:0"`
+			HasOptedUpdates int    `bun:"has_opted_updates,notnull,default:1"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// table:groups
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS groups (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL UNIQUE
-	)`).Exec(ctx); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:groups"`
+			ID            string `bun:"id,pk,type:text"`
+			Name          string `bun:"name,type:text,notnull,unique"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// table:users
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel     `bun:"table:users"`
+			ID                string `bun:"id,pk,type:text"`
+			Name              string `bun:"name,type:text,notnull"`
+			Email             string `bun:"email,type:text,notnull,unique"`
+			Password          string `bun:"password,type:text,notnull"`
+			CreatedAt         int    `bun:"created_at,notnull"`
+			ProfilePictureURL string `bun:"profile_picture_url,type:text"`
+			GroupID           string `bun:"group_id,type:text,notnull"`
+			OrgID             string `bun:"org_id,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		ForeignKey(`("group_id") REFERENCES "groups" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// table:invites
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:invites"`
+			ID            int    `bun:"id,pk,autoincrement"`
+			Name          string `bun:"name,type:text,notnull"`
+			Email         string `bun:"email,type:text,notnull,unique"`
+			Token         string `bun:"token,type:text,notnull"`
+			CreatedAt     int    `bun:"created_at,notnull"`
+			Role          string `bun:"role,type:text,notnull"`
+			OrgID         string `bun:"org_id,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// table:reset_password_request
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS reset_password_request (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id TEXT NOT NULL,
-		token TEXT NOT NULL,
-		FOREIGN KEY(user_id) REFERENCES users(id)
-	)`).Exec(ctx); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:reset_password_request"`
+			ID            int    `bun:"id,pk,autoincrement"`
+			Token         string `bun:"token,type:text,notnull"`
+			UserID        string `bun:"user_id,type:text,notnull"`
+		}{}).
+		ForeignKey(`("user_id") REFERENCES "users" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// table:user_flags
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS user_flags (
-		user_id TEXT PRIMARY KEY,
-		flags TEXT,
-		FOREIGN KEY(user_id) REFERENCES users(id)
-	)`).Exec(ctx); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:user_flags"`
+			UserID        string `bun:"user_id,pk,type:text,notnull"`
+			Flags         string `bun:"flags,type:text"`
+		}{}).
+		ForeignKey(`("user_id") REFERENCES "users" ("id")`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// table:apdex_settings
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS apdex_settings (
-		service_name TEXT PRIMARY KEY,
-		threshold FLOAT NOT NULL,
-		exclude_status_codes TEXT NOT NULL
-	)`).Exec(ctx); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel      `bun:"table:apdex_settings"`
+			ServiceName        string  `bun:"service_name,pk,type:text"`
+			Threshold          float64 `bun:"threshold,type:float,notnull"`
+			ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	// table:ingestion_keys
-	if _, err := db.NewRaw(`CREATE TABLE IF NOT EXISTS ingestion_keys (
-		key_id TEXT PRIMARY KEY,
-		name TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		ingestion_key TEXT NOT NULL,
-		ingestion_url TEXT NOT NULL,
-		data_region TEXT NOT NULL
-	)`).Exec(ctx); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:ingestion_keys"`
+			KeyId         string    `bun:"key_id,pk,type:text"`
+			Name          string    `bun:"name,type:text"`
+			CreatedAt     time.Time `bun:"created_at,default:current_timestamp"`
+			IngestionKey  string    `bun:"ingestion_key,type:text,notnull"`
+			IngestionURL  string    `bun:"ingestion_url,type:text,notnull"`
+			DataRegion    string    `bun:"data_region,type:text,notnull"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 

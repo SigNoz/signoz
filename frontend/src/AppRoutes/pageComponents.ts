@@ -43,7 +43,10 @@ export const TraceFilter = Loadable(
 );
 
 export const TraceDetail = Loadable(
-	() => import(/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetail'),
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
+		),
 );
 
 export const UsageExplorerPage = Loadable(
@@ -68,6 +71,10 @@ export const Onboarding = Loadable(
 
 export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
+);
+
+export const OnboardingV2 = Loadable(
+	() => import(/* webpackChunkName: "Onboarding V2" */ 'pages/OnboardingPageV2'),
 );
 
 export const DashboardPage = Loadable(
@@ -260,4 +267,9 @@ export const CeleryOverview = Loadable(
 		import(
 			/* webpackChunkName: "CeleryOverview" */ 'pages/Celery/CeleryOverview/CeleryOverview'
 		),
+);
+
+export const MetricsExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "MetricsExplorer" */ 'pages/MetricsExplorer'),
 );

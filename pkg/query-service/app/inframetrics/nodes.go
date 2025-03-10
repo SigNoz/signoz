@@ -2,11 +2,14 @@ package inframetrics
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -60,6 +63,20 @@ func (n *NodesRepo) GetNodeAttributeKeys(ctx context.Context, req v3.FilterAttri
 	}
 
 	return attributeKeysResponse, nil
+}
+
+func (n *NodesRepo) DidSendNodeMetrics(ctx context.Context) (bool, error) {
+	namesStr := "'" + strings.Join(nodeMetricNamesToCheck, "','") + "'"
+
+	query := fmt.Sprintf(didSendNodeMetricsQuery,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
+
+	count, err := n.reader.GetCountOfThings(ctx, query)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func (n *NodesRepo) GetNodeAttributeValues(ctx context.Context, req v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {

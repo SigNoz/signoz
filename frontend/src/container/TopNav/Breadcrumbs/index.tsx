@@ -9,6 +9,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
 	[ROUTES.GET_STARTED]: 'Get Started',
+	[ROUTES.GET_STARTED_WITH_CLOUD]: 'Get Started',
 	[ROUTES.ALL_CHANNELS]: 'Channels',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
@@ -29,7 +30,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 	[ROUTES.WORKSPACE_SUSPENDED]: 'Workspace Suspended',
-	[ROUTES.MESSAGING_QUEUES]: 'Messaging Queues',
+	[ROUTES.MESSAGING_QUEUES_OVERVIEW]: 'Messaging Queues',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

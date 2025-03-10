@@ -4,7 +4,7 @@
 	width: 100%;
 
 	.app-content {
-		width: calc(100% - 64px);
+		width: 100%;
 		z-index: 0;
 
 		margin: 0 auto;
@@ -101,11 +101,30 @@
 	}
 }
 
-.trial-expiry-banner {
+.trial-expiry-banner,
+.slow-api-warning-banner {
 	padding: 8px;
 	background-color: #f25733;
 	color: white;
 	text-align: center;
+}
+
+.slow-api-warning-banner {
+	background-color: var(--bg-robin-500);
+
+	.dismiss-banner {
+		color: white;
+		float: right;
+		padding: 0 16px;
+
+		display: flex;
+		align-items: center;
+		gap: 4px;
+
+		&:hover {
+			color: white;
+		}
+	}
 }
 
 .payment-failed-banner {

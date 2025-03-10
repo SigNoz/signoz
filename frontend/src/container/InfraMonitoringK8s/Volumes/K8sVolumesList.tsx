@@ -198,6 +198,11 @@ function K8sVolumesList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedVolumesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sVolumesList(
 		query as K8sVolumesListPayload,
 		{
@@ -232,6 +237,11 @@ function K8sVolumesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sVolumesRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -240,6 +250,11 @@ function K8sVolumesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s volumes list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -251,7 +266,7 @@ function K8sVolumesList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -265,25 +280,30 @@ function K8sVolumesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s volumes list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s volumes list page visited', {});
 	}, []);
 
 	const selectedVolumeData = useMemo(() => {
 		if (!selectedVolumeUID) return null;
+		if (groupBy.length > 0) {
+			return (
+				nestedVolumesData.find(
+					(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
+				) || null
+			);
+		}
 		return (
 			volumesData.find(
 				(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
 			) || null
 		);
-	}, [selectedVolumeUID, volumesData]);
+	}, [selectedVolumeUID, volumesData, groupBy.length, nestedVolumesData]);
 
 	const handleRowClick = (record: K8sVolumesRowData): void => {
 		if (groupBy.length === 0) {
@@ -336,6 +356,10 @@ function K8sVolumesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedVolumeUID(record.volumeUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -418,6 +442,8 @@ function K8sVolumesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s volumes list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
@@ -432,6 +458,16 @@ function K8sVolumesList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s volumes list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -460,10 +496,7 @@ function K8sVolumesList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

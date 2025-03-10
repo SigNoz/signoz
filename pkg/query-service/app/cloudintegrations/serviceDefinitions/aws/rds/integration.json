@@ -1,0 +1,803 @@
+{
+  "id": "rds",
+  "title": "Amazon RDS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_RDS_BurstBalance_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_BurstBalance_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_BurstBalance_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_BurstBalance_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditBalance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUCreditUsage_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditBalance_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUSurplusCreditsCharged_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUUtilization_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUUtilization_max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUUtilization_min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CPUUtilization_sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CheckpointLag_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CheckpointLag_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CheckpointLag_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_CheckpointLag_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadCPU_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadCPU_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadCPU_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadCPU_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadNonCPU_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadNonCPU_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadNonCPU_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadNonCPU_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoadRelativeToNumVCPUs_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_count",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_max",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_min",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DBLoad_sum",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DatabaseConnections_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DatabaseConnections_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DatabaseConnections_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DatabaseConnections_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DiskQueueDepth_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DiskQueueDepth_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DiskQueueDepth_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_DiskQueueDepth_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSByteBalance__count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSByteBalance__max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSByteBalance__min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSByteBalance__sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSIOBalance__count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSIOBalance__max",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSIOBalance__min",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_EBSIOBalance__sum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeStorageSpace_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeStorageSpace_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeStorageSpace_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeStorageSpace_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeableMemory_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeableMemory_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeableMemory_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_FreeableMemory_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_MaximumUsedTransactionIDs_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_MaximumUsedTransactionIDs_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_MaximumUsedTransactionIDs_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_MaximumUsedTransactionIDs_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkReceiveThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkReceiveThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkReceiveThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkReceiveThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_NetworkTransmitThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_OldestReplicationSlotLag_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_count",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_max",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_min",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadLatency_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReadThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_ReplicationSlotDiskUsage_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_SwapUsage_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsDiskUsage_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_TransactionLogsGeneration_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_count",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_max",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_min",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteIOPS_sum",
+        "unit": "Count/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteLatency_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_count",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_max",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_min",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_RDS_WriteThroughput_sum",
+        "unit": "Bytes/Second",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Account Id",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/RDS"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "/aws/rds",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "RDS Overview",
+        "description": "Overview of RDS",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

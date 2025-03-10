@@ -29,7 +29,7 @@ func TestBuildQuery(t *testing.T) {
 		}
 		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 		require.NoError(t, err)
-		require.Contains(t, query, "WHERE metric_name = 'name'")
+		require.Contains(t, query, "WHERE metric_name IN ['name']")
 	})
 }
 
@@ -58,7 +58,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 		require.NoError(t, err)
 
-		require.Contains(t, query, "WHERE metric_name = 'name' AND temporality = 'Cumulative' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'a') != 'b'")
+		require.Contains(t, query, "WHERE metric_name IN ['name'] AND temporality = 'Cumulative' AND __normalized = true AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'a') != 'b'")
 		require.Contains(t, query, rateWithoutNegative)
 		require.Contains(t, query, "not match(JSONExtractString(labels, 'code'), 'ERROR_*')")
 	})
@@ -97,7 +97,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 		require.NoError(t, err)
 
-		require.Contains(t, query, "WHERE metric_name = 'name' AND temporality = 'Cumulative' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'in') IN ['a','b','c']")
+		require.Contains(t, query, "WHERE metric_name IN ['name'] AND temporality = 'Cumulative' AND __normalized = true AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000 AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		require.Contains(t, query, rateWithoutNegative)
 	})
 }
@@ -105,7 +105,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 func TestBuildQueryXRate(t *testing.T) {
 	t.Run("TestBuildQueryXRate", func(t *testing.T) {
 
-		tmpl := `SELECT  ts, %s(rate_value) as value FROM (SELECT  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as rate_value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'name' AND temporality = '' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND unix_milli >= 1650991920000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint,  ts) ) WHERE isNaN(rate_value) = 0 GROUP BY ts ORDER BY  ts`
+		tmpl := `SELECT  ts, %s(rate_value) as value FROM (SELECT  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as rate_value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['name'] AND temporality = '' AND __normalized = true AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name IN ['name'] AND unix_milli >= 1650991920000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint,  ts) ) WHERE isNaN(rate_value) = 0 GROUP BY ts ORDER BY  ts`
 
 		cases := []struct {
 			aggregateOperator v3.AggregateOperator
@@ -158,7 +158,7 @@ func TestBuildQueryXRate(t *testing.T) {
 func TestBuildQueryRPM(t *testing.T) {
 	t.Run("TestBuildQueryXRate", func(t *testing.T) {
 
-		tmpl := `SELECT  ts, ceil(value * 60) as value FROM (SELECT  ts, %s(rate_value) as value FROM (SELECT  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as rate_value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'name' AND temporality = '' AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND unix_milli >= 1650991920000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint,  ts) ) WHERE isNaN(rate_value) = 0 GROUP BY ts ORDER BY  ts)`
+		tmpl := `SELECT  ts, ceil(value * 60) as value FROM (SELECT  ts, %s(rate_value) as value FROM (SELECT  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as rate_value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['name'] AND temporality = '' AND __normalized = true AND unix_milli >= 1650931200000 AND unix_milli < 1651078380000) as filtered_time_series USING fingerprint WHERE metric_name IN ['name'] AND unix_milli >= 1650991920000 AND unix_milli < 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint,  ts) ) WHERE isNaN(rate_value) = 0 GROUP BY ts ORDER BY  ts)`
 
 		cases := []struct {
 			aggregateOperator v3.AggregateOperator
@@ -456,7 +456,7 @@ func TestBuildQueryWithDotInMetricAndAttributes(t *testing.T) {
 					},
 				},
 			},
-			expected: "SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp  FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` asc, ts) )",
+			expected: "SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp  FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.memory.usage'] AND temporality = '' AND __normalized = true AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name IN ['system.memory.usage'] AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` asc, ts) )",
 		},
 		{
 			name: "TestBuildQueryWithDotInMetricAndAttributes with dot in metric and attributes with rate_avg aggregation",
@@ -527,7 +527,7 @@ func TestBuildQueryWithDotInMetricAndAttributes(t *testing.T) {
 					},
 				},
 			},
-			expected: "SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp  FROM (SELECT `os.type`,  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as value FROM(SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name = 'system.memory.usage' AND temporality = '' AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name = 'system.memory.usage' AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` asc, ts) WINDOW rate_window as (PARTITION BY `os.type` ORDER BY `os.type`,  ts) ) )",
+			expected: "SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp  FROM (SELECT `os.type`,  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as value FROM(SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.memory.usage'] AND temporality = '' AND __normalized = true AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name IN ['system.memory.usage'] AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` asc, ts) WINDOW rate_window as (PARTITION BY `os.type` ORDER BY `os.type`,  ts) ) )",
 		},
 	}
 	for _, testCase := range cases {

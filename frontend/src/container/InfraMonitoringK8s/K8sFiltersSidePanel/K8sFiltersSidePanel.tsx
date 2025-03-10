@@ -37,6 +37,25 @@ function K8sFiltersSidePanel({
 		}
 	}, [searchValue]);
 
+	// Close side panel when clicking outside of it
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				sidePanelRef.current &&
+				!sidePanelRef.current.contains(event.target as Node)
+			) {
+				onClose();
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	return (
 		<div className="k8s-filters-side-panel-container">
 			<div className="k8s-filters-side-panel" ref={sidePanelRef}>

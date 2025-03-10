@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/metrics"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -230,6 +231,18 @@ func ClickHouseFormattedValue(v interface{}) string {
 	}
 }
 
+func ClickHouseFormattedMetricNames(v interface{}) string {
+	if name, ok := v.(string); ok {
+		if newName, ok := metrics.MetricsUnderTransition[name]; ok {
+			return ClickHouseFormattedValue([]interface{}{name, newName})
+		} else {
+			return ClickHouseFormattedValue([]interface{}{name})
+		}
+	}
+
+	return ClickHouseFormattedValue(v)
+}
+
 func AddBackTickToFormatTag(str string) string {
 	if strings.Contains(str, ".") {
 		return "`" + str + "`"
@@ -336,4 +349,43 @@ func GetEpochNanoSecs(epoch int64) int64 {
 		}
 	}
 	return temp * int64(math.Pow(10, float64(19-count)))
+}
+
+func NormalizeMap(data map[string]uint64) map[string]float64 {
+	if len(data) == 0 {
+		return nil
+	}
+
+	var minVal, maxVal uint64
+	first := true
+	for _, v := range data {
+		if first {
+			minVal, maxVal = v, v
+			first = false
+		} else {
+			if v < minVal {
+				minVal = v
+			}
+			if v > maxVal {
+				maxVal = v
+			}
+		}
+	}
+
+	// If all values are the same, avoid division by zero
+	if minVal == maxVal {
+		normalized := make(map[string]float64)
+		for k := range data {
+			normalized[k] = 1.0 // or 0.0, depending on the convention
+		}
+		return normalized
+	}
+
+	// Normalize the values using min-max normalization
+	normalized := make(map[string]float64)
+	for k, v := range data {
+		normalized[k] = float64(v-minVal) / float64(maxVal-minVal)
+	}
+
+	return normalized
 }

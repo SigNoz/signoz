@@ -30,6 +30,12 @@ export const getStartedMenuItem = {
 	icon: <RocketOutlined rotate={45} />,
 };
 
+export const getStartedV3MenuItem = {
+	key: ROUTES.GET_STARTED_WITH_CLOUD,
+	label: 'Get Started',
+	icon: <RocketOutlined rotate={45} />,
+};
+
 export const inviteMemberMenuItem = {
 	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
 	label: 'Invite Team Member',
@@ -82,6 +88,13 @@ const menuItems: SidebarItem[] = [
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
 	},
+	// TODO - Enable this when the metrics explorer feature is read for release
+	// {
+	// 	key: ROUTES.METRICS_EXPLORER,
+	// 	label: 'Metrics',
+	// 	icon: <BarChart2 size={16} />,
+	// 	isNew: true,
+	// },
 	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',
@@ -94,7 +107,7 @@ const menuItems: SidebarItem[] = [
 		icon: <LayoutGrid size={16} />,
 	},
 	{
-		key: ROUTES.MESSAGING_QUEUES,
+		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
 	},

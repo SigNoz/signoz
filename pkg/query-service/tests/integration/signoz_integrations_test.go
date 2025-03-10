@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -21,6 +22,9 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
+	"go.uber.org/zap"
 )
 
 // Higher level tests for UI facing APIs
@@ -364,7 +368,7 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 
 type IntegrationsTestBed struct {
 	t              *testing.T
-	testUser       *model.User
+	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
 }
@@ -538,12 +542,12 @@ func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(expectation *model.
 	}
 
 	tb.mockClickhouse.ExpectQuery(
-		`SELECT.*metric_name, labels, unix_milli.*from.*signoz_metrics.*where metric_name in.*limit 1.*`,
+		`SELECT.*from.*signoz_metrics.*`,
 	).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
+func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *IntegrationsTestBed {
 	if testDB == nil {
 		testDB = utils.NewQueryServiceDBForTests(t)
 	}
@@ -554,21 +558,29 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
+	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create cloud integrations controller: %v", err)
+	}
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                 reader,
-		AppDao:                 dao.DB(),
-		IntegrationsController: controller,
-		FeatureFlags:           fm,
+		Reader:                      reader,
+		AppDao:                      dao.DB(),
+		IntegrationsController:      controller,
+		FeatureFlags:                fm,
+		JWT:                         jwt,
+		CloudIntegrationsController: cloudIntegrationsController,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
 	router := app.NewRouter()
-	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	router.Use(middleware.NewAuth(zap.L(), jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	am := app.NewAuthMiddleware(auth.GetUserFromReqContext)
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 

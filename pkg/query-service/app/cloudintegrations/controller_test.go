@@ -12,8 +12,8 @@ import (
 
 func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	// should be able to generate connection url for
@@ -56,8 +56,8 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 
 func TestAgentCheckIns(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	// An agent should be able to check in from a cloud account even
@@ -71,8 +71,8 @@ func TestAgentCheckIns(t *testing.T) {
 		},
 	)
 	require.Nil(apiErr)
-	require.Equal(testAccountId1, resp1.Account.Id)
-	require.Equal(testCloudAccountId1, *resp1.Account.CloudAccountId)
+	require.Equal(testAccountId1, resp1.AccountId)
+	require.Equal(testCloudAccountId1, resp1.CloudAccountId)
 
 	// The agent should not be able to check in with a different
 	// cloud account id for the same account.
@@ -139,8 +139,8 @@ func TestAgentCheckIns(t *testing.T) {
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	// Attempting to disconnect a non-existent account should return error
@@ -154,8 +154,8 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 
 func TestConfigureService(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	testCloudAccountId := "546311234"
@@ -262,9 +262,10 @@ func makeTestConnectedAccount(t *testing.T, controller *Controller, cloudAccount
 		},
 	)
 	require.Nil(apiErr)
-	require.Equal(testAccountId, resp.Account.Id)
-	require.Equal(cloudAccountId, *resp.Account.CloudAccountId)
+	require.Equal(testAccountId, resp.AccountId)
+	require.Equal(cloudAccountId, resp.CloudAccountId)
 
-	return &resp.Account
-
+	acc, err := controller.accountsRepo.get(context.TODO(), "aws", resp.AccountId)
+	require.Nil(err)
+	return acc
 }

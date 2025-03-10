@@ -9,13 +9,14 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type AuthMiddleware struct {
-	GetUserFromRequest func(r *http.Request) (*model.UserPayload, error)
+	GetUserFromRequest func(r context.Context) (*types.GettableUser, error)
 }
 
-func NewAuthMiddleware(f func(r *http.Request) (*model.UserPayload, error)) *AuthMiddleware {
+func NewAuthMiddleware(f func(ctx context.Context) (*types.GettableUser, error)) *AuthMiddleware {
 	return &AuthMiddleware{
 		GetUserFromRequest: f,
 	}
@@ -29,7 +30,7 @@ func (am *AuthMiddleware) OpenAccess(f func(http.ResponseWriter, *http.Request))
 
 func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := am.GetUserFromRequest(r)
+		user, err := am.GetUserFromRequest(r.Context())
 		if err != nil {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
@@ -53,7 +54,7 @@ func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request))
 
 func (am *AuthMiddleware) EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := am.GetUserFromRequest(r)
+		user, err := am.GetUserFromRequest(r.Context())
 		if err != nil {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
@@ -76,7 +77,7 @@ func (am *AuthMiddleware) EditAccess(f func(http.ResponseWriter, *http.Request))
 
 func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := am.GetUserFromRequest(r)
+		user, err := am.GetUserFromRequest(r.Context())
 		if err != nil {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
@@ -100,7 +101,7 @@ func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request))
 
 func (am *AuthMiddleware) AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := am.GetUserFromRequest(r)
+		user, err := am.GetUserFromRequest(r.Context())
 		if err != nil {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,

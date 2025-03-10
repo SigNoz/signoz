@@ -75,6 +75,12 @@ jest.mock('hooks/queryBuilder/useGetExplorerQueryRange', () => ({
 	useGetExplorerQueryRange: jest.fn(),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 // Set up the specific behavior for useGetExplorerQueryRange in individual test cases
 beforeEach(() => {
 	(useGetExplorerQueryRange as jest.Mock).mockReturnValue({

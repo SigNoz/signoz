@@ -219,6 +219,11 @@ function K8sNamespacesList({
 		[namespacesData, groupBy],
 	);
 
+	const nestedNamespacesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const columns = useMemo(() => getK8sNamespacesListColumns(groupBy), [groupBy]);
 
 	const handleGroupByRowClick = (record: K8sNamespacesRowData): void => {
@@ -237,6 +242,11 @@ function K8sNamespacesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sNamespacesRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -247,6 +257,11 @@ function K8sNamespacesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s namespaces list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -258,7 +273,7 @@ function K8sNamespacesList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -272,25 +287,37 @@ function K8sNamespacesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s namespaces list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s namespaces list page visited', {});
 	}, []);
 
 	const selectedNamespaceData = useMemo(() => {
 		if (!selectedNamespaceUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the namespace from the formatted grouped by namespaces data
+			return (
+				nestedNamespacesData.find(
+					(namespace) => namespace.namespaceName === selectedNamespaceUID,
+				) || null
+			);
+		}
+		// If not grouped by, return the node from the nodes data
 		return (
 			namespacesData.find(
 				(namespace) => namespace.namespaceName === selectedNamespaceUID,
 			) || null
 		);
-	}, [selectedNamespaceUID, namespacesData]);
+	}, [
+		selectedNamespaceUID,
+		groupBy.length,
+		namespacesData,
+		nestedNamespacesData,
+	]);
 
 	const handleRowClick = (record: K8sNamespacesRowData): void => {
 		if (groupBy.length === 0) {
@@ -343,6 +370,10 @@ function K8sNamespacesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedNamespaceUID(record.namespaceUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -426,6 +457,8 @@ function K8sNamespacesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s namespaces list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
@@ -440,6 +473,16 @@ function K8sNamespacesList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s namespaces list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -466,10 +509,7 @@ function K8sNamespacesList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

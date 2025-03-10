@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -28,7 +29,7 @@ import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
+import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -60,6 +61,10 @@ function SideNav(): JSX.Element {
 
 	const { user, featureFlags, licenses } = useAppContext();
 
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
+
 	const [licenseTag, setLicenseTag] = useState('');
 
 	const userSettingsMenuItem = {
@@ -82,7 +87,10 @@ function SideNav(): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser: isCloudUserVal,
+		isEECloudUser: isEECloudUserVal,
+	} = useGetTenantLicense();
 
 	const { t } = useTranslation('');
 
@@ -131,10 +139,15 @@ function SideNav(): JSX.Element {
 			menuRoute: '/get-started',
 			menuLabel: 'Get Started',
 		});
+
+		const onboaringRoute = isOnboardingV3Enabled
+			? ROUTES.GET_STARTED_WITH_CLOUD
+			: ROUTES.GET_STARTED;
+
 		if (isCtrlMetaKey(event)) {
-			openInNewTab('/get-started');
+			openInNewTab(onboaringRoute);
 		} else {
-			history.push(`/get-started`);
+			history.push(onboaringRoute);
 		}
 	};
 
@@ -239,7 +252,7 @@ function SideNav(): JSX.Element {
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
-			onClickHandler(ROUTES.MESSAGING_QUEUES, null),
+			onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
@@ -266,14 +279,17 @@ function SideNav(): JSX.Element {
 		let updatedUserManagementItems: UserManagementMenuItems[] = [
 			manageLicenseMenuItem,
 		];
-		if (isCloudUserVal || isEECloudUser()) {
+		if (isCloudUserVal || isEECloudUserVal) {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
 					?.active || false;
+
 			if (!isOnboardingEnabled) {
 				updatedMenuItems = updatedMenuItems.filter(
 					(item) =>
-						item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+						item.key !== ROUTES.GET_STARTED &&
+						item.key !== ROUTES.ONBOARDING &&
+						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
 				);
 			}
 
@@ -318,6 +334,7 @@ function SideNav(): JSX.Element {
 		featureFlags,
 		isCloudUserVal,
 		isCurrentVersionError,
+		isEECloudUserVal,
 		isLatestVersion,
 		licenses?.licenses,
 		onClickVersionHandler,

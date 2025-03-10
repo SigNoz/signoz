@@ -195,6 +195,11 @@ function K8sJobsList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedJobsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sJobsList(
 		query as K8sJobsListPayload,
 		{
@@ -229,6 +234,11 @@ function K8sJobsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
+		totalCount,
+		pageSize,
+	]);
+
 	const handleTableChange: TableProps<K8sJobsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -237,6 +247,11 @@ function K8sJobsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent('Infra Monitoring: K8s jobs list page number changed', {
+					page: pagination.current,
+					pageSize,
+					numberOfPages,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -248,7 +263,7 @@ function K8sJobsList({
 				setOrderBy(null);
 			}
 		},
-		[],
+		[numberOfPages, pageSize],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -262,21 +277,23 @@ function K8sJobsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			logEvent('Infra Monitoring: K8s jobs list filters applied', {});
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
+		logEvent('Infra Monitoring: K8s jobs list page visited', {});
 	}, []);
 
 	const selectedJobData = useMemo(() => {
-		if (!selectedJobUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the job from the formatted grouped by data
+			return nestedJobsData.find((job) => job.jobName === selectedJobUID) || null;
+		}
+		// If not grouped by, return the job from the jobs data
 		return jobsData.find((job) => job.jobName === selectedJobUID) || null;
-	}, [selectedJobUID, jobsData]);
+	}, [selectedJobUID, groupBy.length, jobsData, nestedJobsData]);
 
 	const handleRowClick = (record: K8sJobsRowData): void => {
 		if (groupBy.length === 0) {
@@ -329,6 +346,10 @@ function K8sJobsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedJobUID(record.jobUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -411,6 +432,8 @@ function K8sJobsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent('Infra Monitoring: K8s jobs list group by changed', {});
 		},
 		[groupByFiltersData],
 	);
@@ -425,6 +448,16 @@ function K8sJobsList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent('Infra Monitoring: K8s jobs list page number changed', {
+			page,
+			pageSize,
+			numberOfPages,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -453,10 +486,7 @@ function K8sJobsList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

@@ -158,13 +158,9 @@ function PodDetails({
 		[pod?.meta.k8s_pod_name],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logsAndTracesFilters, setLogsAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
@@ -178,8 +174,7 @@ function PodDetails({
 	}, []);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogsAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -198,6 +193,10 @@ function PodDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent('Infra Monitoring: Pods list details tab changed', {
+			pod: pod?.podUID,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -221,6 +220,7 @@ function PodDetails({
 			logEvent('Infra Monitoring: Pods list details time updated', {
 				pod: pod?.podUID,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,7 +229,7 @@ function PodDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogsAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[
 						QUERY_KEYS.K8S_POD_NAME,
@@ -265,7 +265,7 @@ function PodDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogsAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[
 						QUERY_KEYS.K8S_POD_NAME,
@@ -343,8 +343,8 @@ function PodDetails({
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logsAndTracesFilters,
+				items: logsAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -378,7 +378,7 @@ function PodDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logsAndTracesFilters,
 						},
 					],
 				},
@@ -559,7 +559,7 @@ function PodDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_POD_NAME,
@@ -576,9 +576,14 @@ function PodDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="podTraces"
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_POD_NAME,
+								QUERY_KEYS.K8S_CLUSTER_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 

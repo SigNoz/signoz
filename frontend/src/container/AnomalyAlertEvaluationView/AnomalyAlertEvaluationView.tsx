@@ -259,7 +259,7 @@ function AnomalyAlertEvaluationView({
 		grid: {
 			show: true,
 		},
-		axes: getAxes(isDarkMode, yAxisUnit),
+		axes: getAxes({ isDarkMode, yAxisUnit }),
 		tzDate: (timestamp: number): Date =>
 			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 	};

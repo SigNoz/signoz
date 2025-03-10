@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -27,59 +28,69 @@ func (migration *addAgents) Register(migrations *migrate.Migrations) error {
 }
 
 func (migration *addAgents) Up(ctx context.Context, db *bun.DB) error {
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS agents (
-		agent_id TEXT PRIMARY KEY UNIQUE,
-		started_at datetime NOT NULL,
-		terminated_at datetime,
-		current_status TEXT NOT NULL,
-		effective_config TEXT NOT NULL
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel   `bun:"table:agents"`
+			AgentID         string    `bun:"agent_id,pk,type:text,unique"`
+			StartedAt       time.Time `bun:"started_at,notnull"`
+			TerminatedAt    time.Time `bun:"terminated_at"`
+			CurrentStatus   string    `bun:"current_status,type:text,notnull"`
+			EffectiveConfig string    `bun:"effective_config,type:text,notnull"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS agent_config_versions(
-		id TEXT PRIMARY KEY,
-		created_by TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_by TEXT,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		version INTEGER DEFAULT 1,
-		active int,
-		is_valid int,
-		disabled int,
-		element_type VARCHAR(120) NOT NULL,
-		deploy_status VARCHAR(80) NOT NULL DEFAULT 'DIRTY',
-		deploy_sequence INTEGER,
-		deploy_result TEXT,
-		last_hash TEXT,
-		last_config TEXT,
-		UNIQUE(element_type, version)
-	);`); err != nil {
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel  `bun:"table:agent_config_versions"`
+			ID             string    `bun:"id,pk,type:text"`
+			CreatedBy      string    `bun:"created_by,type:text"`
+			CreatedAt      time.Time `bun:"created_at,default:CURRENT_TIMESTAMP"`
+			UpdatedBy      string    `bun:"updated_by,type:text"`
+			UpdatedAt      time.Time `bun:"updated_at,default:CURRENT_TIMESTAMP"`
+			Version        int       `bun:"version,default:1,unique:element_version_idx"`
+			Active         int       `bun:"active"`
+			IsValid        int       `bun:"is_valid"`
+			Disabled       int       `bun:"disabled"`
+			ElementType    string    `bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
+			DeployStatus   string    `bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`
+			DeploySequence int       `bun:"deploy_sequence"`
+			DeployResult   string    `bun:"deploy_result,type:text"`
+			LastHash       string    `bun:"last_hash,type:text"`
+			LastConfig     string    `bun:"last_config,type:text"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS agent_config_versions_u1 ON agent_config_versions(element_type, version);`); err != nil {
+	// add an index on the last_hash column
+	if _, err := db.NewCreateIndex().
+		Table("agent_config_versions").
+		Column("last_hash").
+		Index("idx_agent_config_versions_last_hash").
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx, `CREATE INDEX IF NOT EXISTS agent_config_versions_nu1 ON agent_config_versions(last_hash);`); err != nil {
-		return err
-	}
+	if _, err := db.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:agent_config_elements"`
 
-	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS agent_config_elements(
-		id TEXT PRIMARY KEY,
-		created_by TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_by TEXT,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		element_id TEXT NOT NULL,
-		element_type VARCHAR(120) NOT NULL,
-		version_id TEXT NOT NULL
-	);`); err != nil {
-		return err
-	}
-
-	if _, err := db.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS agent_config_elements_u1 ON agent_config_elements(version_id, element_id, element_type);`); err != nil {
+			ID          string    `bun:"id,pk,type:text"`
+			CreatedBy   string    `bun:"created_by,type:text"`
+			CreatedAt   time.Time `bun:"created_at,default:CURRENT_TIMESTAMP"`
+			UpdatedBy   string    `bun:"updated_by,type:text"`
+			UpdatedAt   time.Time `bun:"updated_at,default:CURRENT_TIMESTAMP"`
+			ElementID   string    `bun:"element_id,type:text,notnull,unique:agent_config_elements_u1"`
+			ElementType string    `bun:"element_type,type:varchar(120),notnull,unique:agent_config_elements_u1"`
+			VersionID   string    `bun:"version_id,type:text,notnull,unique:agent_config_elements_u1"`
+		}{}).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 

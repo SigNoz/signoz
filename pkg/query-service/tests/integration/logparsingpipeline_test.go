@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
@@ -22,13 +21,13 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -442,7 +441,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
 	t               *testing.T
-	testUser        *model.User
+	testUser        *types.User
 	apiHandler      *app.APIHandler
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
@@ -450,18 +449,18 @@ type LogPipelinesTestBed struct {
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
-	if testDB == nil {
-		testDB = utils.NewQueryServiceDBForTests(t)
+func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipelinesTestBed {
+	if sqlStore == nil {
+		sqlStore = utils.NewQueryServiceDBForTests(t)
 	}
 
-	ic, err := integrations.NewController(testDB)
+	ic, err := integrations.NewController(sqlStore)
 	if err != nil {
 		t.Fatalf("could not create integrations controller: %v", err)
 	}
 
 	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
-		testDB, ic.GetPipelinesForInstalledIntegrations,
+		sqlStore.SQLxDB(), ic.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
@@ -470,6 +469,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		AppDao:                        dao.DB(),
 		LogsParsingPipelineController: controller,
+		JWT:                           jwt,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -481,7 +481,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	}
 
 	// Mock an available opamp agent
-	testDB, err = opampModel.InitDB(testDB)
+	testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
@@ -499,7 +499,7 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 	}
 }
 
-func NewLogPipelinesTestBed(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
+func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
@@ -540,7 +540,12 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	}
 
 	respWriter := httptest.NewRecorder()
-	ctx := auth.AttachJwtToContext(req.Context(), req)
+
+	ctx, err := tb.apiHandler.JWT.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	if err != nil {
+		tb.t.Fatalf("couldn't get jwt from request: %v", err)
+	}
+
 	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 
