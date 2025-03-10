@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	errorsV2 "go.signoz.io/signoz/pkg/errors"
+	"go.signoz.io/signoz/pkg/http/render"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -38,7 +40,7 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	dashboard, err := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)

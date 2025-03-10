@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"go.signoz.io/signoz/pkg/alertmanager"
+	errorsV2 "go.signoz.io/signoz/pkg/errors"
+	"go.signoz.io/signoz/pkg/http/render"
 	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"go.signoz.io/signoz/pkg/signoz"
 
@@ -1055,7 +1057,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	allDashboards, err := dashboards.GetDashboards(r.Context(), claims.OrgID)
@@ -1126,7 +1128,7 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	uuid := mux.Vars(r)["uuid"]
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid, aH.featureFlags)
@@ -1218,7 +1220,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData, aH.featureFlags)
@@ -1237,7 +1239,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	dashboard, apiError := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
@@ -1291,7 +1293,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData, aH.featureFlags)
@@ -3405,7 +3407,7 @@ func (aH *APIHandler) getUserPreference(
 	preferenceId := mux.Vars(r)["preferenceId"]
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 
@@ -3426,7 +3428,7 @@ func (aH *APIHandler) updateUserPreference(
 	preferenceId := mux.Vars(r)["preferenceId"]
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	req := preferences.UpdatePreference{}
@@ -3451,7 +3453,7 @@ func (aH *APIHandler) getAllUserPreferences(
 ) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	preference, apiErr := preferences.GetAllUserPreferences(
@@ -3471,7 +3473,7 @@ func (aH *APIHandler) getOrgPreference(
 	preferenceId := mux.Vars(r)["preferenceId"]
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	preference, apiErr := preferences.GetOrgPreference(
@@ -3492,7 +3494,7 @@ func (aH *APIHandler) updateOrgPreference(
 	req := preferences.UpdatePreference{}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 
@@ -3516,7 +3518,7 @@ func (aH *APIHandler) getAllOrgPreferences(
 ) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	preference, apiErr := preferences.GetAllOrgPreferences(
@@ -4569,7 +4571,7 @@ func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	queries, err := explorer.GetViewsForFilters(r.Context(), claims.OrgID, sourcePage, name, category)
@@ -4595,7 +4597,7 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	uuid, err := explorer.CreateView(r.Context(), claims.OrgID, view)
@@ -4611,7 +4613,7 @@ func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	view, err := explorer.GetView(r.Context(), claims.OrgID, viewID)
@@ -4639,7 +4641,7 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	err = explorer.UpdateView(r.Context(), claims.OrgID, viewID, view)
@@ -4656,7 +4658,7 @@ func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
 	err := explorer.DeleteView(r.Context(), claims.OrgID, viewID)
