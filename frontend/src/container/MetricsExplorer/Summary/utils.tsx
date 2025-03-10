@@ -71,7 +71,11 @@ export const getMetricsListQuery = (): MetricsListPayload => ({
 	orderBy: { columnName: 'metric_name', order: 'asc' },
 });
 
-function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
+export function MetricTypeRenderer({
+	type,
+}: {
+	type: MetricType;
+}): JSX.Element {
 	const [icon, color] = useMemo(() => {
 		switch (type) {
 			case MetricType.SUM:
@@ -157,7 +161,7 @@ export const formatDataForMetricsTable = (
 		),
 		[TreemapViewType.DATAPOINTS]: (
 			<ValidateRowValueWrapper value={metric[TreemapViewType.DATAPOINTS]}>
-				{metric[TreemapViewType.DATAPOINTS]}
+				{metric[TreemapViewType.DATAPOINTS].toLocaleString()}
 			</ValidateRowValueWrapper>
 		),
 		[TreemapViewType.CARDINALITY]: (

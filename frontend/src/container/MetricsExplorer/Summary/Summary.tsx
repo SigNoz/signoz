@@ -13,6 +13,7 @@ import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import MetricDetails from '../MetricDetails';
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
 import MetricsTreemap from './MetricsTreemap';
@@ -32,6 +33,10 @@ function Summary(): JSX.Element {
 	});
 	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
 		TreemapViewType.CARDINALITY,
+	);
+	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
+		null,
 	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -133,6 +138,16 @@ function Summary(): JSX.Element {
 		[metricsData],
 	);
 
+	const openMetricDetails = (metricName: string): void => {
+		setSelectedMetricName(metricName);
+		setIsMetricDetailsOpen(true);
+	};
+
+	const closeMetricDetails = (): void => {
+		setSelectedMetricName(null);
+		setIsMetricDetailsOpen(false);
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
@@ -146,6 +161,7 @@ function Summary(): JSX.Element {
 					data={treeMapData?.payload}
 					isLoading={isTreeMapLoading || isTreeMapFetching}
 					viewType={heatmapView}
+					openMetricDetails={openMetricDetails}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
@@ -154,9 +170,18 @@ function Summary(): JSX.Element {
 					currentPage={currentPage}
 					onPaginationChange={onPaginationChange}
 					setOrderBy={setOrderBy}
-					totalCount={metricsData?.payload?.data.total || 0}
+					totalCount={metricsData?.payload?.data?.total || 0}
+					openMetricDetails={openMetricDetails}
 				/>
 			</div>
+			{isMetricDetailsOpen && (
+				<MetricDetails
+					isOpen={isMetricDetailsOpen}
+					onClose={closeMetricDetails}
+					metricName={selectedMetricName}
+					isModalTimeSelection={false}
+				/>
+			)}
 		</Sentry.ErrorBoundary>
 	);
 }
