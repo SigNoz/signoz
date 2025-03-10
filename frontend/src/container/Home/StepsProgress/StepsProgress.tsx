@@ -25,7 +25,9 @@ function StepsProgress({
 				<div className="steps-progress-title-text">
 					Build your observability base
 				</div>
-				<div className="steps-progress-count">Step 3 / 7</div>
+				<div className="steps-progress-count">
+					Step {completedChecklistItems.length} / {totalChecklistItems}
+				</div>
 			</div>
 
 			<div className="steps-progress-progress">

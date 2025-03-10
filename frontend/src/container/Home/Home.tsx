@@ -1,44 +1,33 @@
 import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover, Typography } from 'antd';
+import { Button, Popover } from 'antd';
 import getAll from 'api/alerts/getAll';
 import Header from 'components/Header/Header';
+import { FeatureKeys } from 'constants/features';
+import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
-import { useQueryService } from 'hooks/useQueryService';
-import {
-	Clock,
-	CompassIcon,
-	DotIcon,
-	Globe,
-	HomeIcon,
-	Link2,
-	Plus,
-	Wrench,
-} from 'lucide-react';
+import history from 'lib/history';
+import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
-import { useMemo } from 'react';
+import { useAppContext } from 'providers/App/App';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
 import Dashboards from './Dashboards/Dashboards';
+import DataSourceInfo from './DataSourceInfo/DataSourceInfo';
 import HomeChecklist, { ChecklistItem } from './HomeChecklist/HomeChecklist';
 import SavedViews from './SavedViews/SavedViews';
-import Traces from './Services/Services';
+import Services from './Services/Services';
 import StepsProgress from './StepsProgress/StepsProgress';
 
 export default function Home(): JSX.Element {
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
 	const checklistItems: ChecklistItem[] = [
 		{
 			id: '1',
@@ -104,18 +93,19 @@ export default function Home(): JSX.Element {
 		},
 	];
 
-	const workspaceDetails = {
-		region: 'United States',
-		url: 'https://signoz.io',
-		timezone: 'America/New_York',
-	};
-
-	const notSendingData = true;
-	const listeningToData = false;
-
 	const isLogIngestionActive = true;
 	const isTraceIngestionActive = true;
 	const isMetricIngestionActive = true;
+
+	const [checklistSkipped, setChecklistSkipped] = useState<boolean>(false);
+
+	const { featureFlags } = useAppContext();
+
+	const isSpanMetricEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
+
+	console.log('isSpanMetricEnabled', isSpanMetricEnabled);
 
 	const renderWelcomeChecklistModal = (): JSX.Element => (
 		<div className="welcome-checklist-popover-container">
@@ -123,90 +113,38 @@ export default function Home(): JSX.Element {
 		</div>
 	);
 
-	// Fetch Services
-	const { data: services, error, isLoading, isError } = useQueryService({
-		minTime,
-		maxTime,
-		selectedTime,
-		selectedTags: [],
-	});
-
-	console.log(
-		'services',
-		services,
-		error,
-		isLoading,
-		isError,
-		selectedTime,
-		minTime,
-		maxTime,
-	);
-
 	// Fetch Dashboards
 	const {
 		data: dashboardsList,
 		isLoading: isDashboardListLoading,
-		isRefetching: isDashboardListRefetching,
-		error: dashboardFetchError,
+		isError: isDashboardListError,
+		isFetching: isDashboardListFetching,
 	} = useGetAllDashboard();
 
-	console.log(
-		'dashboardsList',
-		dashboardsList,
-		isDashboardListLoading,
-		isDashboardListRefetching,
-		dashboardFetchError,
-	);
-
 	// Fetch Alerts
-
 	const {
 		data: alerts,
 		isError: alertsIsError,
 		isLoading: alertsIsLoading,
-		status: alertsStatus,
+		isFetching: alertsIsFetching,
 	} = useQuery('allAlerts', {
 		queryFn: getAll,
 		cacheTime: 0,
 	});
 
-	console.log(
-		'alerts',
-		alerts?.payload,
-		alertsIsError,
-		alertsIsLoading,
-		alertsStatus,
-	);
-
 	const {
 		data: logsViewsData,
 		isLoading: logsViewsLoading,
-		error: logsViewsError,
-		isRefetching: logsViewsRefetching,
+		isFetching: logsViewsFetching,
+		isError: logsViewsError,
 	} = useGetAllViews(DataSource.LOGS);
-
-	console.log(
-		'logsViewsData',
-		logsViewsData,
-		logsViewsLoading,
-		logsViewsError,
-		logsViewsRefetching,
-	);
 
 	const {
 		data: tracesViewsData,
 		isLoading: tracesViewsLoading,
-		error: tracesViewsError,
-		isRefetching: tracesViewsRefetching,
+		isFetching: tracesViewsFetching,
+		isError: tracesViewsError,
 	} = useGetAllViews(DataSource.TRACES);
-
-	console.log(
-		'tracesViewsData',
-		tracesViewsData,
-		tracesViewsLoading,
-		tracesViewsError,
-		tracesViewsRefetching,
-	);
 
 	const logsViews = useMemo(() => [...(logsViewsData?.data.data || [])], [
 		logsViewsData,
@@ -216,108 +154,9 @@ export default function Home(): JSX.Element {
 		tracesViewsData,
 	]);
 
-	console.log('logsViews', logsViews);
-	console.log('tracesViews', tracesViews);
-
-	const renderNotSendingData = (): JSX.Element => (
-		<>
-			<Typography className="welcome-title">
-				Hello there, Welcome to your SigNoz workspace
-			</Typography>
-
-			<Typography className="welcome-description">
-				You’re not sending any data yet. <br />
-				SigNoz is so much better with your data ⎯ start by sending your telemetry
-				data to SigNoz.
-			</Typography>
-
-			<Card className="welcome-card">
-				<Card.Content>
-					<div className="workspace-ready-container">
-						<div className="workspace-ready-header">
-							<Typography className="workspace-ready-title">
-								<img src="/Icons/hurray.svg" alt="hurray" />
-								Your workspace is ready
-							</Typography>
-
-							<Button
-								type="primary"
-								className="periscope-btn primary"
-								icon={<img src="/Icons/container-plus.svg" alt="plus" />}
-							>
-								Connect Data Source
-							</Button>
-						</div>
-
-						<div className="workspace-details">
-							<div className="workspace-region">
-								<Globe size={10} />
-								<Typography>{workspaceDetails.region}</Typography>
-							</div>
-
-							<div className="workspace-url">
-								<Link2 size={12} />
-								<Typography>{workspaceDetails.url}</Typography>
-							</div>
-
-							<div className="workspace-timezone">
-								<Clock size={10} />
-								<Typography>{workspaceDetails.timezone}</Typography>
-							</div>
-						</div>
-					</div>
-				</Card.Content>
-			</Card>
-		</>
-	);
-
-	const renderListeningToData = (): JSX.Element => (
-		<>
-			<Typography className="welcome-title">Listening for data</Typography>
-
-			<Typography className="welcome-description">
-				Hold on a bit, it takes a little time for the data to start streaming in.
-			</Typography>
-
-			<Card className="welcome-card">
-				<Card.Content>
-					<div className="workspace-ready-container">
-						<div className="workspace-ready-header">
-							<Typography className="workspace-ready-title">
-								<img src="/Icons/spinner.svg" alt="spinner" />
-								Waiting for logs...
-							</Typography>
-
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<img src="/Icons/play-back.svg" alt="play-back" />}
-							>
-								Retry sending data
-							</Button>
-						</div>
-
-						<div className="workspace-details">
-							<div className="workspace-region">
-								<Globe size={10} />
-								<Typography>{workspaceDetails.region}</Typography>
-							</div>
-
-							<div className="workspace-url">
-								<Link2 size={12} />
-								<Typography>{workspaceDetails.url}</Typography>
-							</div>
-
-							<div className="workspace-timezone">
-								<Clock size={12} />
-								<Typography>{workspaceDetails.timezone}</Typography>
-							</div>
-						</div>
-					</div>
-				</Card.Content>
-			</Card>
-		</>
-	);
+	const handleWillDoThisLater = (): void => {
+		setChecklistSkipped(true);
+	};
 
 	return (
 		<div className="home-container">
@@ -360,24 +199,8 @@ export default function Home(): JSX.Element {
 			</div>
 
 			<div className="home-content">
-				<div className="left-content">
-					<div className="welcome-container">
-						<div className="hello-wave-container">
-							<div className="hello-wave-img-container">
-								<img
-									src="/Icons/hello-wave.svg"
-									alt="hello-wave"
-									className="hello-wave-img"
-									width={36}
-									height={36}
-								/>
-							</div>
-						</div>
-
-						{notSendingData && renderNotSendingData()}
-
-						{listeningToData && renderListeningToData()}
-					</div>
+				<div className="home-left-content">
+					<DataSourceInfo />
 
 					<div className="divider">
 						<img src="/Images/dotted-divider.svg" alt="divider" />
@@ -398,7 +221,19 @@ export default function Home(): JSX.Element {
 											</div>
 										</div>
 
-										<div className="active-ingestion-card-actions">
+										<div
+											role="button"
+											tabIndex={0}
+											className="active-ingestion-card-actions"
+											onClick={(): void => {
+												history.push(ROUTES.LOGS_EXPLORER);
+											}}
+											onKeyDown={(e): void => {
+												if (e.key === 'Enter') {
+													history.push(ROUTES.LOGS_EXPLORER);
+												}
+											}}
+										>
 											<CompassIcon size={12} />
 											Open Explorer
 										</div>
@@ -421,7 +256,19 @@ export default function Home(): JSX.Element {
 											</div>
 										</div>
 
-										<div className="active-ingestion-card-actions">
+										<div
+											className="active-ingestion-card-actions"
+											role="button"
+											tabIndex={0}
+											onClick={(): void => {
+												history.push(ROUTES.TRACES_EXPLORER);
+											}}
+											onKeyDown={(e): void => {
+												if (e.key === 'Enter') {
+													history.push(ROUTES.TRACES_EXPLORER);
+												}
+											}}
+										>
 											<CompassIcon size={12} />
 											Open Explorer
 										</div>
@@ -444,9 +291,21 @@ export default function Home(): JSX.Element {
 											</div>
 										</div>
 
-										<div className="active-ingestion-card-actions">
+										<div
+											className="active-ingestion-card-actions"
+											role="button"
+											tabIndex={0}
+											onClick={(): void => {
+												history.push(ROUTES.ALL_DASHBOARD);
+											}}
+											onKeyDown={(e): void => {
+												if (e.key === 'Enter') {
+													history.push(ROUTES.ALL_DASHBOARD);
+												}
+											}}
+										>
 											<CompassIcon size={12} />
-											Open Explorer
+											Open Dashboards
 										</div>
 									</div>
 								</Card.Content>
@@ -483,6 +342,9 @@ export default function Home(): JSX.Element {
 											type="default"
 											className="periscope-btn secondary"
 											icon={<Wrench size={14} />}
+											onClick={(): void => {
+												history.push(ROUTES.LOGS_EXPLORER);
+											}}
 										>
 											Open Explorer
 										</Button>
@@ -518,6 +380,9 @@ export default function Home(): JSX.Element {
 											type="default"
 											className="periscope-btn secondary"
 											icon={<Plus size={14} />}
+											onClick={(): void => {
+												history.push(ROUTES.ALL_DASHBOARD);
+											}}
 										>
 											Create dashboard
 										</Button>
@@ -554,6 +419,9 @@ export default function Home(): JSX.Element {
 											type="default"
 											className="periscope-btn secondary"
 											icon={<Plus size={14} />}
+											onClick={(): void => {
+												history.push(ROUTES.ALERTS_NEW);
+											}}
 										>
 											Create an alert
 										</Button>
@@ -563,48 +431,76 @@ export default function Home(): JSX.Element {
 						</Card>
 					</div>
 
-					<AlertRules />
-					<Dashboards />
+					<AlertRules
+						rules={alerts?.payload || []}
+						isLoading={alertsIsLoading || alertsIsFetching}
+						isError={alertsIsError}
+					/>
+					<Dashboards
+						dashboards={dashboardsList || []}
+						isLoading={isDashboardListLoading || isDashboardListFetching}
+						isError={isDashboardListError}
+					/>
 				</div>
 
-				<div className="right-content">
-					<Card className="checklist-card">
-						<Card.Content>
-							<div className="checklist-container">
-								<div className="checklist-items-container">
-									<StepsProgress checklistItems={checklistItems} />
+				<div className="home-right-content">
+					<AnimatePresence initial={false}>
+						{!checklistSkipped && (
+							<motion.div
+								initial={{ height: 'auto' }}
+								animate={{ height: 'auto' }}
+								exit={{ height: 0 }}
+								key="box"
+							>
+								<Card className="checklist-card">
+									<Card.Content>
+										<div className="checklist-container">
+											<div className="checklist-items-container">
+												<StepsProgress checklistItems={checklistItems} />
 
-									<HomeChecklist checklistItems={checklistItems} />
-								</div>
-								<div className="checklist-container-right-img">
-									<div className="checklist-img-bg-container">
-										<img
-											src="/Images/perilianBackground.svg"
-											alt="not-found"
-											className="checklist-img-bg"
-										/>
-									</div>
+												<HomeChecklist checklistItems={checklistItems} />
+											</div>
+											<div className="checklist-container-right-img">
+												<div className="checklist-img-bg-container">
+													<img
+														src="/Images/perilianBackground.svg"
+														alt="not-found"
+														className="checklist-img-bg"
+													/>
+												</div>
 
-									<div className="checklist-img-container">
-										<img
-											src="/Images/allInOne.svg"
-											alt="checklist-img"
-											className="checklist-img"
-										/>
-									</div>
-								</div>
-							</div>
-						</Card.Content>
+												<div className="checklist-img-container">
+													<img
+														src="/Images/allInOne.svg"
+														alt="checklist-img"
+														className="checklist-img"
+													/>
+												</div>
+											</div>
+										</div>
+									</Card.Content>
 
-						<Card.Footer>
-							<div className="checklist-footer-container">
-								<Button type="link">I’ll do this later</Button>
-							</div>
-						</Card.Footer>
-					</Card>
+									<Card.Footer>
+										<div className="checklist-footer-container">
+											<Button type="link" onClick={handleWillDoThisLater}>
+												I’ll do this later
+											</Button>
+										</div>
+									</Card.Footer>
+								</Card>
+							</motion.div>
+						)}
+					</AnimatePresence>
 
-					<Traces />
-					<SavedViews />
+					<Services />
+					<SavedViews
+						tracesViews={tracesViews || []}
+						logsViews={logsViews || []}
+						logsViewsLoading={logsViewsLoading || logsViewsFetching}
+						tracesViewsLoading={tracesViewsLoading || tracesViewsFetching}
+						logsViewsError={logsViewsError}
+						tracesViewsError={tracesViewsError}
+					/>
 				</div>
 			</div>
 		</div>
