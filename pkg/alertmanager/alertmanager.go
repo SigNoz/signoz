@@ -49,4 +49,7 @@ type Alertmanager interface {
 
 	// GetConfig gets the config for the organization.
 	GetConfig(context.Context, string) (*alertmanagertypes.Config, error)
+
+	// SetDefaultConfig sets the default config for the organization.
+	SetDefaultConfig(context.Context, string) error
 }

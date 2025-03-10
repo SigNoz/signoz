@@ -3,6 +3,7 @@ package signoz
 import (
 	"context"
 
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/instrumentation"
@@ -16,16 +17,21 @@ import (
 )
 
 type SigNoz struct {
+	*factory.Registry
 	Cache          cache.Cache
 	Web            web.Web
 	SQLStore       sqlstore.SQLStore
 	TelemetryStore telemetrystore.TelemetryStore
+	Alertmanager   alertmanager.Alertmanager
 }
 
 func New(
 	ctx context.Context,
 	config Config,
-	providerConfig ProviderConfig,
+	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
+	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
+	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
+	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, version.Build{}, config.Instrumentation)
@@ -33,7 +39,7 @@ func New(
 		return nil, err
 	}
 
-	instrumentation.Logger().InfoContext(ctx, "starting signoz", "config", config)
+	instrumentation.Logger().DebugContext(ctx, "starting signoz", "config", config)
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
@@ -43,7 +49,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Cache,
-		providerConfig.CacheProviderFactories,
+		cacheProviderFactories,
 		config.Cache.Provider,
 	)
 	if err != nil {
@@ -55,7 +61,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Web,
-		providerConfig.WebProviderFactories,
+		webProviderFactories,
 		config.Web.Provider(),
 	)
 	if err != nil {
@@ -67,25 +73,19 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLStore,
-		providerConfig.SQLStoreProviderFactories,
+		sqlstoreProviderFactories,
 		config.SQLStore.Provider,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// add the org migration here since we need to pass the sqlstore
-	providerConfig.SQLMigrationProviderFactories.AddAll(
-		sqlmigration.NewUpdateOrganizationFactory(sqlstore),
-		sqlmigration.NewUpdateDashboardFactory(sqlstore),
-	)
-
 	// Initialize telemetrystore from the available telemetrystore provider factories
 	telemetrystore, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.TelemetryStore,
-		providerConfig.TelemetryStoreProviderFactories,
+		telemetrystoreProviderFactories,
 		config.TelemetryStore.Provider,
 	)
 	if err != nil {
@@ -97,7 +97,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		providerConfig.SQLMigrationProviderFactories,
+		NewSQLMigrationProviderFactories(sqlstore),
 	)
 	if err != nil {
 		return nil, err
@@ -108,10 +108,32 @@ func New(
 		return nil, err
 	}
 
+	alertmanager, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Alertmanager,
+		NewAlertmanagerProviderFactories(sqlstore),
+		config.Alertmanager.Provider,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	registry, err := factory.NewRegistry(
+		instrumentation.Logger(),
+		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &SigNoz{
+		Registry:       registry,
 		Cache:          cache,
 		Web:            web,
 		SQLStore:       sqlstore,
 		TelemetryStore: telemetrystore,
+		Alertmanager:   alertmanager,
 	}, nil
 }

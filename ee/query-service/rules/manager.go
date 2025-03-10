@@ -28,6 +28,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -48,6 +49,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Logger,
 			opts.Reader,
 			opts.ManagerOpts.PqlEngine,
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -68,6 +70,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Reader,
 			opts.Cache,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 		if err != nil {
 			return task, err
@@ -126,6 +129,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			opts.UseTraceNewSchema,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -144,6 +148,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			opts.ManagerOpts.PqlEngine,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -160,6 +165,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			opts.Cache,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 		if err != nil {
 			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", rule.Name()), zap.Error(err))
