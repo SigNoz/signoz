@@ -1,23 +1,36 @@
 import { Button, Skeleton, Tag } from 'antd';
 import ROUTES from 'constants/routes';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-export default function Dashboards({
-	dashboards,
-	isLoading,
-	isError,
-}: {
-	dashboards: Dashboard[];
-	isLoading: boolean;
-	isError: boolean;
-}): JSX.Element {
-	const dashboardsExist = dashboards.length > 0;
-
+export default function Dashboards(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+
+	const [sortedDashboards, setSortedDashboards] = useState<Dashboard[]>([]);
+
+	// Fetch Dashboards
+	const {
+		data: dashboardsList,
+		isLoading: isDashboardListLoading,
+		isError: isDashboardListError,
+	} = useGetAllDashboard();
+
+	useEffect(() => {
+		if (!dashboardsList) return;
+
+		const sortedDashboards = dashboardsList.sort((a, b) => {
+			const aUpdateAt = new Date(a.updated_at).getTime();
+			const bUpdateAt = new Date(b.updated_at).getTime();
+			return bUpdateAt - aUpdateAt;
+		});
+
+		setSortedDashboards(sortedDashboards.slice(0, 5));
+	}, [dashboardsList]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
@@ -35,15 +48,26 @@ export default function Dashboards({
 				</div>
 
 				<div className="empty-actions-container">
-					<Button
-						type="default"
-						className="periscope-btn secondary"
-						icon={<Plus size={16} />}
-					>
-						New Dashboard
-					</Button>
+					<Link to={ROUTES.ALL_DASHBOARD}>
+						<Button
+							type="default"
+							className="periscope-btn secondary"
+							icon={<Plus size={16} />}
+						>
+							New Dashboard
+						</Button>
+					</Link>
 
-					<Button type="link" className="learn-more-link">
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							window.open(
+								'https://signoz.io/docs/userguide/manage-dashboards/',
+								'_blank',
+							);
+						}}
+					>
 						Learn more <ArrowUpRight size={12} />
 					</Button>
 				</div>
@@ -54,7 +78,7 @@ export default function Dashboards({
 	const renderDashboardsList = (): JSX.Element => (
 		<div className="home-dashboards-list-container home-data-item-container">
 			<div className="dashboards-list">
-				{dashboards.map((dashboard) => {
+				{sortedDashboards.slice(0, 5).map((dashboard) => {
 					const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.uuid}`;
 
 					const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
@@ -109,23 +133,27 @@ export default function Dashboards({
 		</div>
 	);
 
-	if (isLoading) {
-		<Card className="dashboards-list-card home-data-card">
-			<Card.Content>
-				<Skeleton active />
-			</Card.Content>
-		</Card>;
-	}
-
-	if (isError) {
+	if (isDashboardListLoading) {
 		return (
-			<Card className="dashboards-list-card home-data-card">
+			<Card className="dashboards-list-card home-data-card loading-card">
 				<Card.Content>
 					<Skeleton active />
 				</Card.Content>
 			</Card>
 		);
 	}
+
+	if (isDashboardListError) {
+		return (
+			<Card className="dashboards-list-card home-data-card error-card">
+				<Card.Content>
+					<Skeleton active />
+				</Card.Content>
+			</Card>
+		);
+	}
+
+	const dashboardsExist = sortedDashboards.length > 0;
 
 	return (
 		<Card className="dashboards-list-card home-data-card">
