@@ -10,91 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewChannelsFromAlertmanagerConfig(t *testing.T) {
-	testCases := []struct {
-		name               string
-		orgID              string
-		alertmanagerConfig *config.Config
-		expectedChannels   Channels
-	}{
-		{
-			name:  "DefaultReceiver",
-			orgID: "1",
-			alertmanagerConfig: &config.Config{
-				Receivers: []config.Receiver{
-					{
-						Name: DefaultReceiverName,
-					},
-				},
-			},
-			expectedChannels: Channels{},
-		},
-		{
-			name:  "OneEmailReceiver",
-			orgID: "1",
-			alertmanagerConfig: &config.Config{
-				Receivers: []config.Receiver{
-					{
-						Name: "email-receiver",
-						EmailConfigs: []*config.EmailConfig{
-							{
-								To: "test@example.com",
-							},
-						},
-					},
-				},
-			},
-			expectedChannels: Channels{
-				"email-receiver": {
-					Name:  "email-receiver",
-					Type:  "email",
-					Data:  `{"name":"email-receiver","email_configs":[{"send_resolved":false,"to":"test@example.com","smarthost":""}]}`,
-					OrgID: "1",
-				},
-			},
-		},
-		{
-			name:  "OneSlackReceiver",
-			orgID: "1",
-			alertmanagerConfig: &config.Config{
-				Receivers: []config.Receiver{
-					{
-						Name: "slack-receiver",
-						SlackConfigs: []*config.SlackConfig{
-							{
-								Channel: "#alerts",
-							},
-						},
-					},
-				},
-			},
-			expectedChannels: Channels{
-				"slack-receiver": {
-					Name:  "slack-receiver",
-					Type:  "slack",
-					Data:  `{"name":"slack-receiver","slack_configs":[{"send_resolved":false,"channel":"#alerts"}]}`,
-					OrgID: "1",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			actualChannels := NewChannelsFromConfig(tc.alertmanagerConfig, tc.orgID)
-			assert.Equal(t, len(tc.expectedChannels), len(actualChannels))
-			for _, channel := range actualChannels {
-				expectedChannel, ok := tc.expectedChannels[channel.Name]
-				assert.True(t, ok)
-				assert.Equal(t, expectedChannel.Name, channel.Name)
-				assert.Equal(t, expectedChannel.Type, channel.Type)
-				assert.Equal(t, expectedChannel.Data, channel.Data)
-				assert.Equal(t, expectedChannel.OrgID, channel.OrgID)
-			}
-		})
-	}
-}
-
 func TestNewConfigFromChannels(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -105,55 +20,174 @@ func TestNewConfigFromChannels(t *testing.T) {
 		{
 			name: "OneEmailChannel",
 			channels: Channels{
-				"email-receiver": {
+				{
 					Name: "email-receiver",
 					Type: "email",
 					Data: `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
 				},
 			},
-			expectedRoutes:    []map[string]any{{"receiver": "email-receiver", "continue": true}},
-			expectedReceivers: []map[string]any{{"name": "default-receiver"}, {"name": "email-receiver", "email_configs": []any{map[string]any{"send_resolved": false, "to": "test@example.com", "from": "alerts@example.com", "hello": "localhost", "smarthost": "smtp.example.com:587", "require_tls": true, "tls_config": map[string]any{"insecure_skip_verify": false}}}}},
+			expectedRoutes: []map[string]any{{"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
+			expectedReceivers: []map[string]any{
+				{"name": "default-receiver"},
+				{
+					"name": "email-receiver",
+					"email_configs": []any{map[string]any{
+						"send_resolved": false,
+						"to":            "test@example.com",
+						"from":          "alerts@example.com",
+						"hello":         "localhost",
+						"smarthost":     "smtp.example.com:587",
+						"require_tls":   true,
+						"html":          "{{ template \"email.default.html\" . }}",
+						"tls_config":    map[string]any{"insecure_skip_verify": false},
+					}},
+				},
+			},
 		},
 		{
 			name: "OneSlackChannel",
 			channels: Channels{
-				"slack-receiver": {
+				{
 					Name: "slack-receiver",
 					Type: "slack",
 					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
-			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true}},
-			expectedReceivers: []map[string]any{{"name": "default-receiver"}, {"name": "slack-receiver", "slack_configs": []any{map[string]any{"send_resolved": true, "http_config": map[string]any{"tls_config": map[string]any{"insecure_skip_verify": false}, "follow_redirects": true, "enable_http2": true, "proxy_url": nil}, "api_url": "https://slack.com/api/test", "channel": "#alerts"}}}},
+			expectedRoutes: []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
+			expectedReceivers: []map[string]any{
+				{"name": "default-receiver"},
+				{
+					"name": "slack-receiver",
+					"slack_configs": []any{map[string]any{
+						"send_resolved": true,
+						"api_url":       "https://slack.com/api/test",
+						"channel":       "#alerts",
+						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
+						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
+						"fallback":      "{{ template \"slack.default.fallback\" . }}",
+						"footer":        "{{ template \"slack.default.footer\" . }}",
+						"icon_emoji":    "{{ template \"slack.default.iconemoji\" . }}",
+						"icon_url":      "{{ template \"slack.default.iconurl\" . }}",
+						"pretext":       "{{ template \"slack.default.pretext\" . }}",
+						"text":          "{{ template \"slack.default.text\" . }}",
+						"title":         "{{ template \"slack.default.title\" . }}",
+						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
+						"username":      "{{ template \"slack.default.username\" . }}",
+						"http_config": map[string]any{
+							"tls_config":       map[string]any{"insecure_skip_verify": false},
+							"follow_redirects": true,
+							"enable_http2":     true,
+							"proxy_url":        nil,
+						},
+					}},
+				},
+			},
 		},
 		{
 			name: "OnePagerdutyChannel",
 			channels: Channels{
-				"pagerduty-receiver": {
+				{
 					Name: "pagerduty-receiver",
 					Type: "pagerduty",
 					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
 			},
-			expectedRoutes:    []map[string]any{{"receiver": "pagerduty-receiver", "continue": true}},
-			expectedReceivers: []map[string]any{{"name": "default-receiver"}, {"name": "pagerduty-receiver", "pagerduty_configs": []any{map[string]any{"send_resolved": false, "http_config": map[string]any{"tls_config": map[string]any{"insecure_skip_verify": false}, "follow_redirects": true, "enable_http2": true, "proxy_url": nil}, "service_key": "test", "url": "https://events.pagerduty.com/v2/enqueue"}}}},
+			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
+			expectedReceivers: []map[string]any{
+				{"name": "default-receiver"},
+				{
+					"name": "pagerduty-receiver",
+					"pagerduty_configs": []any{map[string]any{
+						"send_resolved": false,
+						"service_key":   "test",
+						"url":           "https://events.pagerduty.com/v2/enqueue",
+						"client":        "{{ template \"pagerduty.default.client\" . }}",
+						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
+						"description":   "{{ template \"pagerduty.default.description\" .}}",
+						"source":        "{{ template \"pagerduty.default.client\" . }}",
+						"details": map[string]any{
+							"firing":       "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
+							"num_firing":   "{{ .Alerts.Firing | len }}",
+							"num_resolved": "{{ .Alerts.Resolved | len }}",
+							"resolved":     "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}",
+						},
+						"http_config": map[string]any{
+							"tls_config":       map[string]any{"insecure_skip_verify": false},
+							"follow_redirects": true,
+							"enable_http2":     true,
+							"proxy_url":        nil,
+						},
+					}},
+				},
+			},
 		},
 		{
 			name: "OnePagerdutyAndOneSlackChannel",
 			channels: Channels{
-				"pagerduty-receiver": {
+				{
 					Name: "pagerduty-receiver",
 					Type: "pagerduty",
 					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
-				"slack-receiver": {
+				{
 					Name: "slack-receiver",
 					Type: "slack",
 					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
-			expectedRoutes:    []map[string]any{{"receiver": "pagerduty-receiver", "continue": true}, {"receiver": "slack-receiver", "continue": true}},
-			expectedReceivers: []map[string]any{{"name": "default-receiver"}, {"name": "pagerduty-receiver", "pagerduty_configs": []any{map[string]any{"send_resolved": false, "http_config": map[string]any{"tls_config": map[string]any{"insecure_skip_verify": false}, "follow_redirects": true, "enable_http2": true, "proxy_url": nil}, "service_key": "test", "url": "https://events.pagerduty.com/v2/enqueue"}}}, {"name": "slack-receiver", "slack_configs": []any{map[string]any{"send_resolved": true, "http_config": map[string]any{"tls_config": map[string]any{"insecure_skip_verify": false}, "follow_redirects": true, "enable_http2": true, "proxy_url": nil}, "api_url": "https://slack.com/api/test", "channel": "#alerts"}}}},
+			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}, {"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
+			expectedReceivers: []map[string]any{
+				{"name": "default-receiver"},
+				{
+					"name": "pagerduty-receiver",
+					"pagerduty_configs": []any{map[string]any{
+						"send_resolved": false,
+						"service_key":   "test",
+						"url":           "https://events.pagerduty.com/v2/enqueue",
+						"client":        "{{ template \"pagerduty.default.client\" . }}",
+						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
+						"description":   "{{ template \"pagerduty.default.description\" .}}",
+						"source":        "{{ template \"pagerduty.default.client\" . }}",
+						"details": map[string]any{
+							"firing":       "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
+							"num_firing":   "{{ .Alerts.Firing | len }}",
+							"num_resolved": "{{ .Alerts.Resolved | len }}",
+							"resolved":     "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}",
+						},
+						"http_config": map[string]any{
+							"tls_config":       map[string]any{"insecure_skip_verify": false},
+							"follow_redirects": true,
+							"enable_http2":     true,
+							"proxy_url":        nil,
+						},
+					}},
+				},
+				{
+					"name": "slack-receiver",
+					"slack_configs": []any{map[string]any{
+						"send_resolved": true,
+						"api_url":       "https://slack.com/api/test",
+						"channel":       "#alerts",
+						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
+						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
+						"fallback":      "{{ template \"slack.default.fallback\" . }}",
+						"footer":        "{{ template \"slack.default.footer\" . }}",
+						"icon_emoji":    "{{ template \"slack.default.iconemoji\" . }}",
+						"icon_url":      "{{ template \"slack.default.iconurl\" . }}",
+						"pretext":       "{{ template \"slack.default.pretext\" . }}",
+						"text":          "{{ template \"slack.default.text\" . }}",
+						"title":         "{{ template \"slack.default.title\" . }}",
+						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
+						"username":      "{{ template \"slack.default.username\" . }}",
+						"http_config": map[string]any{
+							"tls_config":       map[string]any{"insecure_skip_verify": false},
+							"follow_redirects": true,
+							"enable_http2":     true,
+							"proxy_url":        nil,
+						},
+					}},
+				},
+			},
 		},
 	}
 

@@ -12,7 +12,7 @@ import (
 
 type Service struct {
 	// config is the config for the alertmanager service
-	config Config
+	config alertmanagerserver.Config
 
 	// stateStore is the state store for the alertmanager service
 	stateStore alertmanagertypes.StateStore
@@ -30,7 +30,7 @@ type Service struct {
 	serversMtx sync.RWMutex
 }
 
-func New(ctx context.Context, settings factory.ScopedProviderSettings, config Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore) *Service {
+func New(ctx context.Context, settings factory.ScopedProviderSettings, config alertmanagerserver.Config, stateStore alertmanagertypes.StateStore, configStore alertmanagertypes.ConfigStore) *Service {
 	service := &Service{
 		config:      config,
 		stateStore:  stateStore,
@@ -53,13 +53,23 @@ func (service *Service) SyncServers(ctx context.Context) error {
 	for _, orgID := range orgIDs {
 		config, err := service.getConfig(ctx, orgID)
 		if err != nil {
-			service.settings.Logger().Error("failed to get alertmanagerconfig for org", "orgID", orgID, "error", err)
+			service.settings.Logger().Error("failed to get alertmanager config for org", "orgID", orgID, "error", err)
 			continue
 		}
 
-		service.servers[orgID], err = alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config.Config, orgID, service.stateStore)
-		if err != nil {
-			service.settings.Logger().Error("failed to create alertmanagerserver", "orgID", orgID, "error", err)
+		// If the server is not present, create it and sync the config
+		if _, ok := service.servers[orgID]; !ok {
+			server, err := service.newServer(ctx, orgID)
+			if err != nil {
+				service.settings.Logger().Error("failed to create alertmanager server", "orgID", orgID, "error", err)
+				continue
+			}
+
+			service.servers[orgID] = server
+		}
+
+		if service.servers[orgID].Hash() == config.StoreableConfig().Hash {
+			service.settings.Logger().Debug("skipping alertmanager sync for org", "orgID", orgID, "hash", config.StoreableConfig().Hash)
 			continue
 		}
 
@@ -74,16 +84,27 @@ func (service *Service) SyncServers(ctx context.Context) error {
 	return nil
 }
 
-func (service *Service) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
+func (service *Service) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	return server.GetAlerts(ctx, params)
+	alerts, err := server.GetAlerts(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return alertmanagertypes.NewDeprecatedGettableAlertsFromGettableAlerts(alerts), nil
 }
 
 func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -93,6 +114,9 @@ func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts aler
 }
 
 func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
 	server, err := service.getServer(orgID)
 	if err != nil {
 		return err
@@ -101,12 +125,43 @@ func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver
 	return server.TestReceiver(ctx, receiver)
 }
 
+func (service *Service) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	service.serversMtx.RLock()
+	defer service.serversMtx.RUnlock()
+
+	server, err := service.getServer(orgID)
+	if err != nil {
+		return err
+	}
+
+	return server.TestAlert(ctx, alert, receivers)
+}
+
 func (service *Service) Stop(ctx context.Context) error {
 	for _, server := range service.servers {
 		server.Stop(ctx)
 	}
 
 	return nil
+}
+
+func (service *Service) newServer(ctx context.Context, orgID string) (*alertmanagerserver.Server, error) {
+	config, err := service.getConfig(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore)
+	if err != nil {
+		return nil, err
+	}
+
+	err = service.configStore.Set(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return server, nil
 }
 
 func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
@@ -120,13 +175,17 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 		if err != nil {
 			return nil, err
 		}
-
-		return config, err
 	}
+
+	if err := config.SetGlobalConfig(service.config.Global); err != nil {
+		return nil, err
+	}
+	config.SetRouteConfig(service.config.Route)
 
 	return config, nil
 }
 
+// getServer returns the server for the given orgID. It should be called with the lock held.
 func (service *Service) getServer(orgID string) (*alertmanagerserver.Server, error) {
 	server, ok := service.servers[orgID]
 	if !ok {

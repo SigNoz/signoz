@@ -31,6 +31,7 @@ export const useAutoComplete = (
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
 	entity?: K8sCategory | null,
+	isMetricsExplorer?: boolean,
 ): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
@@ -42,6 +43,7 @@ export const useAutoComplete = (
 		shouldUseSuggestions,
 		isInfraMonitoring,
 		entity,
+		isMetricsExplorer,
 	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
