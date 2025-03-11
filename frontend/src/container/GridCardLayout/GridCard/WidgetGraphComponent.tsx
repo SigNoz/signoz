@@ -244,7 +244,7 @@ function WidgetGraphComponent({
 
 	const graphClick = useGraphClickToShowButton({
 		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
-		isButtonEnabled: widget?.query?.builder?.queryData.some(
+		isButtonEnabled: (widget?.query?.builder?.queryData ?? []).some(
 			(q) =>
 				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
 		),

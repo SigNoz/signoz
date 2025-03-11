@@ -97,7 +97,7 @@ function WidgetGraph({
 	// context redirection to explorer pages
 	const graphClick = useGraphClickToShowButton({
 		graphRef,
-		isButtonEnabled: selectedWidget?.query?.builder?.queryData.some(
+		isButtonEnabled: (selectedWidget?.query?.builder?.queryData ?? []).some(
 			(q) =>
 				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
 		),

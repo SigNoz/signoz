@@ -64,7 +64,7 @@ function FullView({
 
 	useEffect(() => {
 		setCurrentGraphRef(fullViewRef);
-	}, [fullViewRef, setCurrentGraphRef]);
+	}, [setCurrentGraphRef]);
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
