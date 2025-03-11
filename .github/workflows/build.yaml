@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: cd frontend && yarn install
       - name: TSC
-        run: yarn tsc
+        run: yarn i18n:generate-hash && yarn tsc
         working-directory: ./frontend
       - name: Build frontend docker image
         shell: bash
