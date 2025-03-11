@@ -242,6 +242,7 @@ export const useFetchKeysAndValues = (
 					const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
 					const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
 					setResults(key ? payload[key] || [] : []);
+					return;
 				}
 				const values = Object.values(payload).find((el) => !!el) || [];
 				setResults(values);
