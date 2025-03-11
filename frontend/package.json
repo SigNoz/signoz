@@ -8,6 +8,7 @@
 		"dev": "npm run i18n:generate-hash && cross-env NODE_ENV=development webpack serve --progress",
 		"build": "npm run i18n:generate-hash && webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
+		"fmt": "prettier --check .",
 		"lint": "npm run i18n:generate-hash && eslint ./src",
 		"lint:fix": "npm run i18n:generate-hash && eslint ./src --fix",
 		"jest": "jest",
