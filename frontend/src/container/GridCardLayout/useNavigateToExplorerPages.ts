@@ -16,7 +16,7 @@ type GraphClickMetaData = {
 	queryName: string;
 	inFocusOrNot: boolean;
 };
-interface NavigateToExplorerPagesProps {
+export interface NavigateToExplorerPagesProps {
 	widget: Widgets;
 	requestData?: GraphClickMetaData;
 	navigateRequestType?: 'panel' | 'specific';

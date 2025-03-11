@@ -29,16 +29,20 @@ export function useNavigateToExplorer(): (
 			...currentQuery,
 			builder: {
 				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
-					...item,
-					dataSource,
-					aggregateOperator: MetricAggregateOperator.NOOP,
-					filters: {
-						...item.filters,
-						items: selectedFilters,
-					},
-					groupBy: [],
-				})),
+				queryData: currentQuery.builder.queryData
+					.map((item) => ({
+						...item,
+						dataSource,
+						aggregateOperator: MetricAggregateOperator.NOOP,
+						filters: {
+							...item.filters,
+							items: selectedFilters,
+						},
+						groupBy: [],
+						disabled: false,
+					}))
+					.slice(0, 1),
+				queryFormulas: [],
 			},
 		}),
 		[currentQuery],

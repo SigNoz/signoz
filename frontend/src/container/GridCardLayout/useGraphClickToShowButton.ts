@@ -1,30 +1,21 @@
 import './GridCardLayout.styles.scss';
 
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { isUndefined } from 'lodash-es';
 import { useCallback, useEffect, useRef } from 'react';
 
 interface ClickToShowButtonProps {
 	graphRef: React.RefObject<HTMLDivElement>;
-	onClickHandler?: OnClickPluginOpts['onClick'];
-	buttonText?: string;
 	buttonClassName?: string;
 	isButtonEnabled?: boolean;
 }
 
-export const useGraphClickToShowButton = ({
-	graphRef,
-	onClickHandler,
-	buttonText = 'View Explorer',
-	buttonClassName = 'view-onclick-show-button',
-	isButtonEnabled = true,
-}: ClickToShowButtonProps): ((
-	xValue: number,
-	yValue: number,
-	mouseX: number,
-	mouseY: number,
-	metric?: { [key: string]: string },
-	queryData?: { queryName: string; inFocusOrNot: boolean },
+export interface GraphClickProps {
+	xValue: number;
+	yValue: number;
+	mouseX: number;
+	mouseY: number;
+	metric?: { [key: string]: string };
+	queryData?: { queryName: string; inFocusOrNot: boolean };
 	menuItems?: Array<{
 		text: string;
 		onClick: (
@@ -35,8 +26,14 @@ export const useGraphClickToShowButton = ({
 			metric?: { [key: string]: string },
 			queryData?: { queryName: string; inFocusOrNot: boolean },
 		) => void;
-	}>,
-) => void) => {
+	}>;
+}
+
+export const useGraphClickToShowButton = ({
+	graphRef,
+	buttonClassName = 'view-onclick-show-button',
+	isButtonEnabled = true,
+}: ClickToShowButtonProps): ((props: GraphClickProps) => void) => {
 	const activeButtonRef = useRef<HTMLButtonElement | HTMLUListElement | null>(
 		null,
 	);
@@ -69,59 +66,6 @@ export const useGraphClickToShowButton = ({
 			}
 		});
 	}, []);
-
-	// const createButton = (
-	// 	xValue: number,
-	// 	yValue: number,
-	// 	mouseX: number,
-	// 	mouseY: number,
-	// 	metric?: {
-	// 		[key: string]: string;
-	// 	},
-	// 	queryData?: {
-	// 		queryName: string;
-	// 		inFocusOrNot: boolean;
-	// 	},
-	// ): void => {
-	// 	const newButton = document.createElement('button');
-	// 	newButton.textContent = buttonText;
-	// 	newButton.className = buttonClassName;
-	// 	newButton.style.position = 'absolute';
-	// 	newButton.style.zIndex = '9999';
-
-	// 	const graphBounds = graphRef.current?.getBoundingClientRect();
-	// 	if (!graphBounds) return;
-
-	// 	const left = mouseX;
-	// 	const top = mouseY;
-
-	// 	// Add the button to the graph container
-	// 	graphRef.current?.appendChild(newButton);
-
-	// 	// Apply position after adding to DOM
-	// 	const buttonBounds = newButton.getBoundingClientRect();
-
-	// 	// Ensure button stays within graph boundaries
-	// 	const finalLeft = Math.min(
-	// 		Math.max(0, left),
-	// 		graphBounds.width - buttonBounds.width,
-	// 	);
-	// 	const finalTop = Math.min(
-	// 		Math.max(0, top),
-	// 		graphBounds.height - buttonBounds.height,
-	// 	);
-
-	// 	newButton.style.left = `${finalLeft}px`;
-	// 	newButton.style.top = `${finalTop}px`;
-
-	// 	newButton.onclick = (e: MouseEvent): void => {
-	// 		e.stopPropagation();
-	// 		onClickHandler?.(xValue, yValue, mouseX, mouseY, metric, queryData);
-	// 		cleanup();
-	// 	};
-
-	// 	activeButtonRef.current = newButton;
-	// };
 
 	const createMenu = (
 		xValue: number,
@@ -209,13 +153,22 @@ export const useGraphClickToShowButton = ({
 	}, [cleanup, graphRef]);
 
 	return useCallback(
-		(xValue, yValue, mouseX, mouseY, metric, queryData, menuItems) => {
+		(props: GraphClickProps) => {
 			cleanup();
+			const {
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
+				metric,
+				queryData,
+				menuItems,
+			} = props;
 
 			if (
 				isButtonEnabled &&
-				!isUndefined(xValue) &&
-				queryData &&
+				!isUndefined(props.xValue) &&
+				props.queryData &&
 				queryData?.inFocusOrNot &&
 				Object.keys(queryData).length > 0
 			) {
@@ -233,13 +186,6 @@ export const useGraphClickToShowButton = ({
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[
-			buttonText,
-			buttonClassName,
-			graphRef,
-			onClickHandler,
-			isButtonEnabled,
-			cleanup,
-		],
+		[buttonClassName, graphRef, isButtonEnabled, cleanup],
 	);
 };
