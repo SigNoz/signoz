@@ -3,6 +3,7 @@ import './Home.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover } from 'antd';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
+import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import getAllUserPreferences from 'api/preferences/getAllUserPreference';
 import updateUserPreferenceAPI from 'api/preferences/updateUserPreference';
 import Header from 'components/Header/Header';
@@ -12,6 +13,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getHostListsQuery } from 'container/InfraMonitoringHosts/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
+import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -161,8 +163,6 @@ export default function Home(): JSX.Element {
 		false,
 	);
 
-	const isMetricIngestionActive = false;
-
 	// Detect Logs
 	const { data: logsData, isLoading: isLogsLoading } = useGetQueryRange(
 		{
@@ -211,9 +211,6 @@ export default function Home(): JSX.Element {
 		},
 	);
 
-	console.log('logsData', logsData);
-	console.log('tracesData', tracesData);
-
 	// Detect Infra Metrics - Hosts
 	const query = useMemo(() => {
 		const baseQuery = getHostListsQuery();
@@ -235,18 +232,21 @@ export default function Home(): JSX.Element {
 		};
 	}, [minTime, maxTime]);
 
-	const { data, isFetching, isLoading, isError } = useGetHostList(
-		query as HostListPayload,
-		{
-			queryKey: ['hostList', query],
-			enabled: !!query,
-		},
-	);
+	const { data: hostData } = useGetHostList(query as HostListPayload, {
+		queryKey: ['hostList', query],
+		enabled: !!query,
+	});
 
-	console.log('data', data, isFetching, isLoading, isError);
+	const { data: k8sPodsData } = useGetK8sPodsList(query as K8sPodsListPayload, {
+		queryKey: ['hostList', query],
+		enabled: !!query,
+	});
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
+		false,
+	);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = userPreferences?.find(
@@ -265,8 +265,6 @@ export default function Home(): JSX.Element {
 		});
 
 		setChecklistItems(newChecklistItems);
-
-		console.log('checklistSkipped', checklistSkipped);
 
 		setIsWelcomeChecklistSkipped(checklistSkipped || false);
 	};
@@ -340,18 +338,43 @@ export default function Home(): JSX.Element {
 	}, []);
 
 	useEffect(() => {
-		if (logsData && logsData?.payload.data.result.length > 0) {
+		const logsDataTotal = parseInt(
+			logsData?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
+				?.values?.[0]?.value || '0',
+			10,
+		);
+
+		if (logsDataTotal > 0) {
 			setIsLogsIngestionActive(true);
 			handleUpdateChecklistDoneItem('SEND_LOGS');
+			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
 		}
 	}, [logsData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		if (tracesData && tracesData?.payload.data.result.length > 0) {
+		const tracesDataTotal = parseInt(
+			tracesData?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
+				?.values?.[0]?.value || '0',
+			10,
+		);
+
+		if (tracesDataTotal > 0) {
 			setIsTracesIngestionActive(true);
 			handleUpdateChecklistDoneItem('SEND_TRACES');
+			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
 		}
 	}, [tracesData, handleUpdateChecklistDoneItem]);
+
+	useEffect(() => {
+		const hostDataTotal = hostData?.payload?.data?.total ?? 0;
+		const k8sPodsDataTotal = k8sPodsData?.payload?.data?.total ?? 0;
+
+		if (hostDataTotal > 0 || k8sPodsDataTotal > 0) {
+			setIsMetricsIngestionActive(true);
+			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
+			handleUpdateChecklistDoneItem('SEND_INFRA_METRICS');
+		}
+	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
 
 	return (
 		<div className="home-container">
@@ -417,7 +440,7 @@ export default function Home(): JSX.Element {
 											</div>
 
 											<div className="active-ingestion-card-content-description">
-												Log ingestion is active
+												Logs ingestion is active
 											</div>
 										</div>
 
@@ -435,7 +458,7 @@ export default function Home(): JSX.Element {
 											}}
 										>
 											<CompassIcon size={12} />
-											Open Explorer
+											Explore Logs
 										</div>
 									</div>
 								</Card.Content>
@@ -452,7 +475,7 @@ export default function Home(): JSX.Element {
 											</div>
 
 											<div className="active-ingestion-card-content-description">
-												Trace ingestion is active
+												Traces ingestion is active
 											</div>
 										</div>
 
@@ -470,14 +493,14 @@ export default function Home(): JSX.Element {
 											}}
 										>
 											<CompassIcon size={12} />
-											Open Explorer
+											Explore Traces
 										</div>
 									</div>
 								</Card.Content>
 							</Card>
 						)}
 
-						{isMetricIngestionActive && (
+						{isMetricsIngestionActive && (
 							<Card className="active-ingestion-card" size="small">
 								<Card.Content>
 									<div className="active-ingestion-card-content-container">
@@ -487,7 +510,7 @@ export default function Home(): JSX.Element {
 											</div>
 
 											<div className="active-ingestion-card-content-description">
-												Metric ingestion is active
+												Metrics ingestion is active
 											</div>
 										</div>
 
@@ -496,16 +519,16 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(): void => {
-												history.push(ROUTES.ALL_DASHBOARD);
+												history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													history.push(ROUTES.ALL_DASHBOARD);
+													history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 												}
 											}}
 										>
 											<CompassIcon size={12} />
-											Open Dashboards
+											Explore Infra Metrics
 										</div>
 									</div>
 								</Card.Content>
@@ -546,7 +569,18 @@ export default function Home(): JSX.Element {
 												history.push(ROUTES.LOGS_EXPLORER);
 											}}
 										>
-											Open Explorer
+											Open Logs Explorer
+										</Button>
+
+										<Button
+											type="default"
+											className="periscope-btn secondary"
+											icon={<Wrench size={14} />}
+											onClick={(): void => {
+												history.push(ROUTES.TRACES_EXPLORER);
+											}}
+										>
+											Open Traces Explorer
 										</Button>
 									</div>
 								</div>
