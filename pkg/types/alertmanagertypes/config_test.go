@@ -17,7 +17,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 		name              string
 		orgID             string
 		receivers         []config.Receiver
-		ruleIDToReceivers map[string][]string
+		ruleIDToReceivers []map[string][]string
 		expectedRoutes    []map[string]any
 	}{
 		{
@@ -34,7 +34,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					},
 				},
 			},
-			ruleIDToReceivers: map[string][]string{"test-rule": {"slack-receiver"}},
+			ruleIDToReceivers: []map[string][]string{{"test-rule": {"slack-receiver"}}},
 			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}},
 		},
 		{
@@ -59,7 +59,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					},
 				},
 			},
-			ruleIDToReceivers: map[string][]string{"test-rule": {"slack-receiver", "email-receiver"}},
+			ruleIDToReceivers: []map[string][]string{{"test-rule": {"slack-receiver", "email-receiver"}}},
 			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}, {"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule\""}}},
 		},
 		{
@@ -76,7 +76,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					},
 				},
 			},
-			ruleIDToReceivers: map[string][]string{"test-rule": {"does-not-exist"}},
+			ruleIDToReceivers: []map[string][]string{{"test-rule": {"does-not-exist"}}},
 			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
 		},
 		{
@@ -93,7 +93,7 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 					},
 				},
 			},
-			ruleIDToReceivers: map[string][]string{"test-rule-1": {"slack-receiver", "does-not-exist"}, "test-rule-2": {"slack-receiver"}},
+			ruleIDToReceivers: []map[string][]string{{"test-rule-1": {"slack-receiver", "does-not-exist"}}, {"test-rule-2": {"slack-receiver"}}},
 			expectedRoutes:    []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1|test-rule-1|test-rule-2\""}}},
 		},
 	}
@@ -112,9 +112,12 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			for ruleID, receiverNames := range tc.ruleIDToReceivers {
-				err = cfg.CreateRuleIDMatcher(ruleID, receiverNames)
-				assert.NoError(t, err)
+			for _, ruleIDToReceiversMap := range tc.ruleIDToReceivers {
+				for ruleId, receiverNames := range ruleIDToReceiversMap {
+					err = cfg.CreateRuleIDMatcher(ruleId, receiverNames)
+					assert.NoError(t, err)
+				}
+
 			}
 
 			routes, err := json.Marshal(cfg.alertmanagerConfig.Route.Routes)
