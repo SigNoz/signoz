@@ -1,4 +1,5 @@
 import { Button, Skeleton, Tag } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -93,6 +94,10 @@ export default function Dashboards({
 
 					const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 						event.stopPropagation();
+						logEvent('Homepage: Dashboard clicked', {
+							dashboardId: dashboard.id,
+							dashboardName: dashboard.data.title,
+						});
 						if (event.metaKey || event.ctrlKey) {
 							window.open(getLink(), '_blank');
 						} else {
@@ -180,7 +185,13 @@ export default function Dashboards({
 				<Card.Footer>
 					<div className="dashboards-footer home-data-card-footer">
 						<Link to={ROUTES.ALL_DASHBOARD}>
-							<Button type="link" className="periscope-btn link learn-more-link">
+							<Button
+								type="link"
+								className="periscope-btn link learn-more-link"
+								onClick={(): void => {
+									logEvent('Homepage: All dashboards clicked', {});
+								}}
+							>
 								All Dashboards <ArrowRight size={12} />
 							</Button>
 						</Link>

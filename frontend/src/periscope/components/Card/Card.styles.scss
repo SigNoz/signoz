@@ -11,6 +11,11 @@
 		padding: 12px;
 		width: 100%;
 		border-bottom: 1px solid var(--Slate-400, #1d212d);
+
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+		gap: 1rem;
 	}
 
 	.periscope-card-content {

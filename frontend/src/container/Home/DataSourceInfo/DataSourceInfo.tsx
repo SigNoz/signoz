@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Button, Skeleton, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import history from 'lib/history';
@@ -76,10 +77,12 @@ function DataSourceInfo({
 								role="button"
 								tabIndex={0}
 								onClick={(): void => {
+									logEvent('Homepage: Connect dataSource clicked', {});
 									history.push(ROUTES.GET_STARTED);
 								}}
 								onKeyDown={(e): void => {
 									if (e.key === 'Enter') {
+										logEvent('Homepage: Connect dataSource clicked', {});
 										history.push(ROUTES.GET_STARTED);
 									}
 								}}
@@ -136,10 +139,12 @@ function DataSourceInfo({
 								role="button"
 								tabIndex={0}
 								onClick={(): void => {
+									logEvent('Homepage: Retry sending data clicked', {});
 									history.push(ROUTES.GET_STARTED);
 								}}
 								onKeyDown={(e): void => {
 									if (e.key === 'Enter') {
+										logEvent('Homepage: Retry sending data clicked', {});
 										history.push(ROUTES.GET_STARTED);
 									}
 								}}

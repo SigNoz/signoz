@@ -441,14 +441,15 @@
 		letter-spacing: -0.07px;
 	}
 
-	.services-header {
+	.saved-views-header {
+		width: 100%;
 		display: flex;
 		flex-direction: row;
 		align-items: center;
 		justify-content: space-between;
 		gap: 8px;
 
-		.services-header-actions {
+		.saved-views-header-actions {
 			display: flex;
 			flex-direction: row;
 			gap: 8px;
@@ -470,6 +471,30 @@
 					&.selected {
 						background: var(--Ink-300, #16181d);
 					}
+				}
+			}
+		}
+	}
+
+	.services-header {
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+
+		.services-header-actions {
+			display: flex;
+			flex-direction: row;
+			gap: 8px;
+
+			.ant-select {
+				width: 150px;
+
+				.ant-select-selector {
+					background-color: transparent !important;
+					border: none !important;
 				}
 			}
 		}
@@ -556,7 +581,8 @@
 		}
 
 		&.services-list-container {
-			height: 350px !important;
+			height: 268px !important;
+			overflow: hidden;
 
 			.ant-table-row {
 				cursor: pointer;
@@ -564,8 +590,7 @@
 		}
 
 		.services-list {
-			height: 100%;
-			overflow: auto;
+			overflow-y: auto;
 		}
 	}
 

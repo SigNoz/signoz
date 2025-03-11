@@ -2,6 +2,7 @@ import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import getAllUserPreferences from 'api/preferences/getAllUserPreference';
@@ -23,11 +24,8 @@ import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { UserPreference } from 'types/reducer/app';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -39,11 +37,11 @@ import SavedViews from './SavedViews/SavedViews';
 import Services from './Services/Services';
 import StepsProgress from './StepsProgress/StepsProgress';
 
-export default function Home(): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+const homeInterval = 30 * 60 * 1000;
 
+export default function Home(): JSX.Element {
+	const [startTime, setStartTime] = useState<number | null>(null);
+	const [endTime, setEndTime] = useState<number | null>(null);
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
 	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
 
@@ -54,6 +52,15 @@ export default function Home(): JSX.Element {
 	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
 		false,
 	);
+
+	useEffect(() => {
+		const now = new Date();
+		const startTime = new Date(now.getTime() - homeInterval);
+		const endTime = now;
+
+		setStartTime(startTime.getTime());
+		setEndTime(endTime.getTime());
+	}, []);
 
 	// Detect Logs
 	const { data: logsData, isLoading: isLogsLoading } = useGetQueryRange(
@@ -71,11 +78,11 @@ export default function Home(): JSX.Element {
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				'30m',
-				maxTime / 1000,
-				minTime / 1000,
+				endTime || Date.now(),
+				startTime || Date.now(),
 				initialQueriesMap[DataSource.LOGS],
 			],
-			enabled: true,
+			enabled: !!startTime && !!endTime,
 		},
 	);
 
@@ -95,11 +102,11 @@ export default function Home(): JSX.Element {
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				'30m',
-				maxTime / 1000,
-				minTime / 1000,
+				endTime || Date.now(),
+				startTime || Date.now(),
 				initialQueriesMap[DataSource.TRACES],
 			],
-			enabled: true,
+			enabled: !!startTime && !!endTime,
 		},
 	);
 
@@ -114,15 +121,15 @@ export default function Home(): JSX.Element {
 				items: [],
 				op: 'and',
 			},
-			start: Math.floor(minTime / 1000000),
-			end: Math.floor(maxTime / 1000000),
+			start: startTime ? Math.floor(startTime) : Math.floor(Date.now()),
+			end: endTime ? Math.floor(endTime) : Math.floor(Date.now()),
 			orderBy: {
 				columnName: 'hostName',
 				order: 'asc',
 			},
 			groupBy: [],
 		};
-	}, [minTime, maxTime]);
+	}, [startTime, endTime]);
 
 	const { data: hostData } = useGetHostList(query as HostListPayload, {
 		queryKey: ['hostList', query],
@@ -192,6 +199,7 @@ export default function Home(): JSX.Element {
 	});
 
 	const handleWillDoThisLater = (): void => {
+		logEvent('Homepage Checklist: Will do this later clicked', {});
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
@@ -268,6 +276,10 @@ export default function Home(): JSX.Element {
 		}
 	}, [hostData, k8sPodsData, handleUpdateChecklistDoneItem]);
 
+	useEffect(() => {
+		logEvent('Homepage: Visited', {});
+	}, []);
+
 	return (
 		<div className="home-container">
 			<div className="sticky-header">
@@ -285,6 +297,13 @@ export default function Home(): JSX.Element {
 									arrow={false}
 									trigger="click"
 									autoAdjustOverflow
+									onOpenChange={(visible): void => {
+										if (visible) {
+											logEvent('Homepage Checklist: Expanded', {});
+										} else {
+											logEvent('Homepage Checklist: Minimized', {});
+										}
+									}}
 									content={renderWelcomeChecklistModal()}
 									getPopupContainer={popupContainer}
 									rootClassName="welcome-checklist-popover"
