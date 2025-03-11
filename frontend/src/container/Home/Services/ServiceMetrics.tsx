@@ -1,4 +1,4 @@
-import { Button, Skeleton, Table } from 'antd';
+import { Button, Select, Skeleton, Table } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import {
@@ -12,7 +12,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,9 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
-import { columns } from './constants';
+import { columns, TIME_PICKER_OPTIONS } from './constants';
+
+const homeInterval = 30 * 60 * 1000;
 
 function ServiceMetrics({
 	onUpdateChecklistDoneItem,
@@ -30,10 +32,18 @@ function ServiceMetrics({
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
 	loadingUserPreferences: boolean;
 }): JSX.Element {
-	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const now = new Date().getTime();
+	const [timeRange, setTimeRange] = useState({
+		startTime: now - homeInterval,
+		endTime: now,
+		selectedInterval: homeInterval,
+	});
+
 	const { queries } = useResourceAttribute();
 
 	const { safeNavigate } = useSafeNavigate();
@@ -46,19 +56,29 @@ function ServiceMetrics({
 	const [isError, setIsError] = useState(false);
 
 	const queryKey: QueryKey = [
-		minTime,
-		maxTime,
+		timeRange.startTime,
+		timeRange.endTime,
 		selectedTags,
 		globalSelectedInterval,
 	];
+
 	const {
 		data,
 		isLoading: isLoadingTopLevelOperations,
 		isError: isErrorTopLevelOperations,
 	} = useGetTopLevelOperations(queryKey, {
-		start: minTime,
-		end: maxTime,
+		start: timeRange.startTime * 1e6,
+		end: timeRange.endTime * 1e6,
 	});
+
+	const handleTimeIntervalChange = useCallback((value: number): void => {
+		const now = new Date();
+		setTimeRange({
+			startTime: now.getTime() - value,
+			endTime: now.getTime(),
+			selectedInterval: value,
+		});
+	}, []);
 
 	const topLevelOperations = Object.entries(data || {});
 
@@ -66,11 +86,16 @@ function ServiceMetrics({
 		() =>
 			getQueryRangeRequestData({
 				topLevelOperations,
-				minTime,
-				maxTime,
+				minTime: timeRange.startTime * 1e6,
+				maxTime: timeRange.endTime * 1e6,
 				globalSelectedInterval,
 			}),
-		[globalSelectedInterval, maxTime, minTime, topLevelOperations],
+		[
+			globalSelectedInterval,
+			timeRange.endTime,
+			timeRange.startTime,
+			topLevelOperations,
+		],
 	);
 
 	const dataQueries = useGetQueriesRange(
@@ -79,8 +104,8 @@ function ServiceMetrics({
 		{
 			queryKey: [
 				`GetMetricsQueryRange-home-${globalSelectedInterval}`,
-				maxTime,
-				minTime,
+				timeRange.endTime,
+				timeRange.startTime,
 				globalSelectedInterval,
 			],
 			keepPreviousData: true,
@@ -92,7 +117,9 @@ function ServiceMetrics({
 		},
 	);
 
-	const isLoading = dataQueries.some((query) => query.isLoading);
+	const isLoading = useMemo(() => dataQueries.some((query) => query.isLoading), [
+		dataQueries,
+	]);
 
 	const services: ServicesList[] = useMemo(
 		() =>
@@ -101,25 +128,29 @@ function ServiceMetrics({
 				topLevelOperations,
 				isLoading,
 			}),
-
-		[isLoading, dataQueries, topLevelOperations],
+		[dataQueries, topLevelOperations, isLoading],
 	);
 
-	const servicesExist = services?.length > 0;
+	const sortedServices = useMemo(
+		() =>
+			services?.sort((a, b) => {
+				const aUpdateAt = new Date(a.p99).getTime();
+				const bUpdateAt = new Date(b.p99).getTime();
+				return bUpdateAt - aUpdateAt;
+			}) || [],
+		[services],
+	);
 
-	const sortedServices = services?.sort((a, b) => {
-		const aUpdateAt = new Date(a.p99).getTime();
-		const bUpdateAt = new Date(b.p99).getTime();
-		return bUpdateAt - aUpdateAt;
-	});
-
-	const top5Services = sortedServices?.slice(0, 5);
+	const servicesExist = sortedServices.length > 0;
+	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
+		sortedServices,
+	]);
 
 	useEffect(() => {
-		if (sortedServices.length > 0 && !loadingUserPreferences) {
+		if (!loadingUserPreferences && servicesExist) {
 			onUpdateChecklistDoneItem('SETUP_SERVICES');
 		}
-	}, [sortedServices, onUpdateChecklistDoneItem, loadingUserPreferences]);
+	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
@@ -163,7 +194,7 @@ function ServiceMetrics({
 	);
 
 	const renderDashboardsList = (): JSX.Element => (
-		<div className="services-list-container home-data-item-container">
+		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
 				<Table<ServicesList>
 					columns={columns}
@@ -182,7 +213,7 @@ function ServiceMetrics({
 
 	if (isLoadingTopLevelOperations || isLoading) {
 		return (
-			<Card className="dashboards-list-card home-data-card loading-card">
+			<Card className="services-list-card home-data-card loading-card">
 				<Card.Content>
 					<Skeleton active />
 				</Card.Content>
@@ -192,7 +223,7 @@ function ServiceMetrics({
 
 	if (isErrorTopLevelOperations || isError) {
 		return (
-			<Card className="dashboards-list-card home-data-card error-card">
+			<Card className="services-list-card home-data-card error-card">
 				<Card.Content>
 					<Skeleton active />
 				</Card.Content>
@@ -201,10 +232,21 @@ function ServiceMetrics({
 	}
 
 	return (
-		<Card className="dashboards-list-card home-data-card">
+		<Card className="services-list-card home-data-card">
 			{servicesExist && (
 				<Card.Header>
-					<div className="services-header home-data-card-header"> Services </div>
+					<div className="services-header home-data-card-header">
+						{' '}
+						Services
+						<div className="services-header-actions">
+							<Select
+								value={timeRange.selectedInterval}
+								onChange={handleTimeIntervalChange}
+								options={TIME_PICKER_OPTIONS}
+								className="services-header-select"
+							/>
+						</div>
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>
