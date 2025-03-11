@@ -1,4 +1,5 @@
 import { Button, Select, Skeleton, Table } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -71,6 +72,15 @@ export default function ServiceTraces({
 
 	const handleTimeIntervalChange = useCallback((value: number): void => {
 		const now = new Date();
+
+		const timeInterval = TIME_PICKER_OPTIONS.find(
+			(option) => option.value === value,
+		);
+
+		logEvent('Homepage: Services time interval updated', {
+			updatedTimeInterval: timeInterval?.label,
+		});
+
 		setTimeRange({
 			startTime: now.getTime() - value,
 			endTime: now.getTime(),
