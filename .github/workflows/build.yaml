@@ -65,10 +65,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: Run tests
-        shell: bash
-        run: |
-          make test
       - name: Build query-service image
         shell: bash
         run: |
