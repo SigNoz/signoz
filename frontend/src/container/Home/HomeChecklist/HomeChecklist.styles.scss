@@ -312,3 +312,72 @@
 		}
 	}
 }
+
+.lightMode {
+	.home-checklist-container {
+		.completed-checklist-container {
+			.completed-checklist-title {
+				color: var(--bg-ink-300);
+			}
+
+			.completed-checklist-item {
+				&:before {
+					border: 1px solid var(--bg-vanilla-300);
+					color: var(--bg-ink-300);
+					background-color: var(--bg-forest-400);
+				}
+
+				.completed-checklist-item-title {
+					color: var(--bg-ink-300);
+				}
+
+				.completed-checklist-item-description {
+					color: var(--bg-ink-300);
+				}
+			}
+		}
+
+		.whats-next-checklist-container {
+			.whats-next-checklist-title {
+				color: var(--bg-ink-300);
+			}
+
+			.whats-next-checklist-item {
+				&:before {
+					background-color: var(--bg-vanilla-100);
+					border: 1px dashed var(--bg-vanilla-300);
+					color: var(--bg-ink-300);
+				}
+
+				.whats-next-checklist-item-title {
+					color: var(--bg-ink-300);
+				}
+
+				.whats-next-checklist-item-description {
+					color: var(--bg-ink-300);
+				}
+
+				&:hover {
+					.whats-next-checklist-item-title {
+						color: var(--bg-ink-300) !important;
+					}
+				}
+
+				&.active {
+					.whats-next-checklist-item-title {
+						color: var(--bg-ink-300) !important;
+					}
+				}
+
+				.whats-next-checklist-item-action-buttons {
+					.periscope-btn.secondary {
+						border-radius: 2px;
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+						box-shadow: 0px 0px 8px 0px rgba(255, 255, 255, 0.1);
+					}
+				}
+			}
+		}
+	}
+}

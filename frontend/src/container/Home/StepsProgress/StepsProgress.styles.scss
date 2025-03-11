@@ -43,3 +43,13 @@
 		width: 100% !important;
 	}
 }
+
+.lightMode {
+	.steps-progress-title-text {
+		color: var(--bg-ink-300);
+	}
+
+	.steps-progress-count {
+		color: var(--bg-ink-300);
+	}
+}

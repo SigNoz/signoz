@@ -19,3 +19,11 @@
 	display: flex;
 	align-items: center;
 }
+
+.lightMode {
+	.header-container {
+		background: var(--bg-vanilla-100);
+		backdrop-filter: blur(20px);
+		border-bottom: 1px solid var(--bg-vanilla-300);
+	}
+}
