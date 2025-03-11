@@ -1,0 +1,18 @@
+name: postci
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - synchronize
+
+jobs:
+  remove:
+    if: github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]'
+    uses: signoz/primus.workflows/.github/workflows/github-label.yaml@main
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      GITHUB_LABEL_ACTION: remove
+      GITHUB_LABEL_NAME: safe-to-test
