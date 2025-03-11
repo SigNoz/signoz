@@ -1,4 +1,5 @@
 import { Button, Skeleton, Tag } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import ROUTES from 'constants/routes';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -58,6 +59,11 @@ export default function SavedViews({
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const handleRedirectQuery = (view: ViewProps): void => {
+		logEvent('Homepage: Saved view clicked', {
+			viewId: view.uuid,
+			viewName: view.name,
+		});
+
 		const currentViewDetails = getViewDetailsUsingViewKey(
 			view.uuid,
 			selectedEntity === 'logs' ? logsViews : tracesViews,
@@ -213,6 +219,9 @@ export default function SavedViews({
 	);
 
 	const handleTabChange = (tab: string): void => {
+		logEvent('Homepage: Saved views switched', {
+			tab,
+		});
 		setSelectedEntityViews(tab === 'logs' ? logsViews : tracesViews);
 		setSelectedEntity(tab);
 	};
@@ -241,9 +250,9 @@ export default function SavedViews({
 		<Card className="saved-views-list-card home-data-card">
 			{hasSavedViews && (
 				<Card.Header>
-					<div className="services-header home-data-card-header">
+					<div className="saved-views-header home-data-card-header">
 						Saved Views
-						<div className="services-header-actions">
+						<div className="saved-views-header-actions">
 							<Button.Group className="views-tabs">
 								<Button
 									value="logs"
@@ -286,7 +295,15 @@ export default function SavedViews({
 									: ROUTES.TRACES_SAVE_VIEWS
 							}
 						>
-							<Button type="link" className="periscope-btn link learn-more-link">
+							<Button
+								type="link"
+								className="periscope-btn link learn-more-link"
+								onClick={(): void => {
+									logEvent('Homepage: All saved views clicked', {
+										entity: selectedEntity,
+									});
+								}}
+							>
 								All Views <ArrowRight size={12} />
 							</Button>
 						</Link>

@@ -1,6 +1,7 @@
 import './HomeChecklist.styles.scss';
 
 import { Button } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -73,7 +74,15 @@ function HomeChecklist({
 								<div className="whats-next-checklist-item-action-buttons">
 									<div className="whats-next-checklist-item-action-buttons-container">
 										<Link to={item.toRoute || ''}>
-											<Button type="default" className="periscope-btn secondary">
+											<Button
+												type="default"
+												className="periscope-btn secondary"
+												onClick={(): void => {
+													logEvent('Homepage Checklist: Get started clicked', {
+														step: item.id,
+													});
+												}}
+											>
 												Get Started &nbsp; <ArrowRight size={16} />
 											</Button>
 										</Link>
@@ -83,6 +92,10 @@ function HomeChecklist({
 												type="default"
 												className="periscope-btn secondary"
 												onClick={(): void => {
+													logEvent('Homepage Checklist: Docs clicked', {
+														step: item.id,
+													});
+
 													window?.open(item.docsLink, '_blank');
 												}}
 											>
@@ -95,7 +108,12 @@ function HomeChecklist({
 										<Button
 											type="link"
 											className="periscope-btn link skip-btn"
-											onClick={(): void => onSkip(item)}
+											onClick={(): void => {
+												logEvent('Homepage Checklist: Skip clicked', {
+													step: item.id,
+												});
+												onSkip(item);
+											}}
 											disabled={isLoading}
 											loading={isLoading}
 											icon={<ArrowRightToLine size={16} />}

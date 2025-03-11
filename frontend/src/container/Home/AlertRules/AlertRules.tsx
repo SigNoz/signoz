@@ -1,5 +1,6 @@
 import { Button, Skeleton, Tag } from 'antd';
 import getAll from 'api/alerts/getAll';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -96,6 +97,12 @@ export default function AlertRules({
 	);
 
 	const onEditHandler = (record: GettableAlert) => (): void => {
+		logEvent('Homepage: Alert clicked', {
+			ruleId: record.id,
+			ruleName: record.alert,
+			ruleState: record.state,
+		});
+
 		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
 		params.set(
 			QueryParams.compositeQuery,
@@ -189,7 +196,13 @@ export default function AlertRules({
 				<Card.Footer>
 					<div className="alert-rules-footer home-data-card-footer">
 						<Link to={ROUTES.LIST_ALL_ALERT}>
-							<Button type="link" className="periscope-btn link learn-more-link">
+							<Button
+								type="link"
+								className="periscope-btn link learn-more-link"
+								onClick={(): void => {
+									logEvent('Homepage: All alert rules clicked', {});
+								}}
+							>
 								All Alert Rules <ArrowRight size={12} />
 							</Button>
 						</Link>
