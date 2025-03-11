@@ -21,7 +21,7 @@
 		"playwright:codegen:local:auth": "yarn playwright:codegen:local --load-storage=tests/auth.json",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
-		"test": "jest --coverage",
+		"test": "jest",
 		"test:changedsince": "jest --changedSince=main --coverage --silent"
 	},
 	"engines": {
