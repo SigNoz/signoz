@@ -28,41 +28,53 @@ export const columns: TableProps<ServicesList>['columns'] = [
 	},
 ];
 
+export enum TimeIntervalsEnum {
+	LAST_5_MINUTES = 60 * 5 * 1000, // 300000
+	LAST_15_MINUTES = 60 * 15 * 1000, // 900000
+	LAST_30_MINUTES = 60 * 30 * 1000, // 1800000
+	LAST_1_HOUR = 60 * 60 * 1000, // 3600000
+	LAST_6_HOURS = 60 * 60 * 6 * 1000, // 21600000
+	LAST_1_DAY = 60 * 60 * 24 * 1000, // 86400000
+	LAST_3_DAYS = 60 * 60 * 24 * 3 * 1000, // 259200000
+	LAST_7_DAYS = 60 * 60 * 24 * 7 * 1000, // 604800000
+	LAST_30_DAYS = 60 * 60 * 24 * 30 * 1000, // 2592000000
+}
+
 export const TIME_PICKER_OPTIONS = [
 	{
-		value: 60 * 5 * 1000,
+		value: TimeIntervalsEnum.LAST_5_MINUTES,
 		label: 'Last 5 minutes',
 	},
 	{
-		value: 60 * 15 * 1000,
+		value: TimeIntervalsEnum.LAST_15_MINUTES,
 		label: 'Last 15 minutes',
 	},
 	{
-		value: 60 * 30 * 1000,
+		value: TimeIntervalsEnum.LAST_30_MINUTES,
 		label: 'Last 30 minutes',
 	},
 	{
-		value: 60 * 60 * 1000,
+		value: TimeIntervalsEnum.LAST_1_HOUR,
 		label: 'Last 1 hour',
 	},
 	{
-		value: 60 * 60 * 6 * 1000,
+		value: TimeIntervalsEnum.LAST_6_HOURS,
 		label: 'Last 6 hours',
 	},
 	{
-		value: 60 * 60 * 24 * 1000,
+		value: TimeIntervalsEnum.LAST_1_DAY,
 		label: 'Last 1 day',
 	},
 	{
-		value: 60 * 60 * 24 * 3 * 1000,
+		value: TimeIntervalsEnum.LAST_3_DAYS,
 		label: 'Last 3 days',
 	},
 	{
-		value: 60 * 60 * 24 * 7 * 1000,
+		value: TimeIntervalsEnum.LAST_7_DAYS,
 		label: 'Last 1 week',
 	},
 	{
-		value: 60 * 60 * 24 * 30 * 1000,
+		value: TimeIntervalsEnum.LAST_30_DAYS,
 		label: 'Last 1 month',
 	},
 ];

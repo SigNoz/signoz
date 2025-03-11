@@ -1,4 +1,5 @@
 import { Button, Select, Skeleton, Table } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import {
@@ -12,7 +13,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -24,6 +25,73 @@ import { Tags } from 'types/reducer/trace';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
 const homeInterval = 30 * 60 * 1000;
+
+// Extracted EmptyState component
+const EmptyState = memo(
+	(): JSX.Element => (
+		<div className="empty-state-container">
+			<div className="empty-state-content-container">
+				<div className="empty-state-content">
+					<img
+						src="/Icons/triangle-ruler.svg"
+						alt="empty-alert-icon"
+						className="empty-state-icon"
+					/>
+					<div className="empty-title">You are not sending traces yet.</div>
+					<div className="empty-description">
+						Start sending traces to see your services.
+					</div>
+				</div>
+				<div className="empty-actions-container">
+					<Link to={ROUTES.GET_STARTED}>
+						<Button type="default" className="periscope-btn secondary">
+							Get Started &nbsp; <ArrowRight size={16} />
+						</Button>
+					</Link>
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							window.open(
+								'https://signoz.io/docs/instrumentation/overview/',
+								'_blank',
+							);
+						}}
+					>
+						Learn more <ArrowUpRight size={12} />
+					</Button>
+				</div>
+			</div>
+		</div>
+	),
+);
+EmptyState.displayName = 'EmptyState';
+
+// Extracted ServicesList component
+const ServicesListTable = memo(
+	({
+		services,
+		onRowClick,
+	}: {
+		services: ServicesList[];
+		onRowClick: (record: ServicesList) => void;
+	}): JSX.Element => (
+		<div className="services-list-container home-data-item-container metrics-services-list">
+			<div className="services-list">
+				<Table<ServicesList>
+					columns={columns}
+					dataSource={services}
+					pagination={false}
+					className="services-table"
+					onRow={(record): { onClick: () => void } => ({
+						onClick: (): void => onRowClick(record),
+					})}
+				/>
+			</div>
+		</div>
+	),
+);
+ServicesListTable.displayName = 'ServicesListTable';
 
 function ServiceMetrics({
 	onUpdateChecklistDoneItem,
@@ -37,15 +105,16 @@ function ServiceMetrics({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const now = new Date().getTime();
-	const [timeRange, setTimeRange] = useState({
-		startTime: now - homeInterval,
-		endTime: now,
-		selectedInterval: homeInterval,
+	const [timeRange, setTimeRange] = useState(() => {
+		const now = new Date().getTime();
+		return {
+			startTime: now - homeInterval,
+			endTime: now,
+			selectedInterval: homeInterval,
+		};
 	});
 
 	const { queries } = useResourceAttribute();
-
 	const { safeNavigate } = useSafeNavigate();
 
 	const selectedTags = useMemo(
@@ -55,12 +124,20 @@ function ServiceMetrics({
 
 	const [isError, setIsError] = useState(false);
 
-	const queryKey: QueryKey = [
-		timeRange.startTime,
-		timeRange.endTime,
-		selectedTags,
-		globalSelectedInterval,
-	];
+	const queryKey: QueryKey = useMemo(
+		() => [
+			timeRange.startTime,
+			timeRange.endTime,
+			selectedTags,
+			globalSelectedInterval,
+		],
+		[
+			timeRange.startTime,
+			timeRange.endTime,
+			selectedTags,
+			globalSelectedInterval,
+		],
+	);
 
 	const {
 		data,
@@ -72,6 +149,14 @@ function ServiceMetrics({
 	});
 
 	const handleTimeIntervalChange = useCallback((value: number): void => {
+		const timeInterval = TIME_PICKER_OPTIONS.find(
+			(option) => option.value === value,
+		);
+
+		logEvent('Homepage: Services time interval updated', {
+			updatedTimeInterval: timeInterval?.label,
+		});
+
 		const now = new Date();
 		setTimeRange({
 			startTime: now.getTime() - value,
@@ -80,7 +165,7 @@ function ServiceMetrics({
 		});
 	}, []);
 
-	const topLevelOperations = Object.entries(data || {});
+	const topLevelOperations = useMemo(() => Object.entries(data || {}), [data]);
 
 	const queryRangeRequestData = useMemo(
 		() =>
@@ -102,12 +187,15 @@ function ServiceMetrics({
 		queryRangeRequestData,
 		ENTITY_VERSION_V4,
 		{
-			queryKey: [
-				`GetMetricsQueryRange-home-${globalSelectedInterval}`,
-				timeRange.endTime,
-				timeRange.startTime,
-				globalSelectedInterval,
-			],
+			queryKey: useMemo(
+				() => [
+					`GetMetricsQueryRange-home-${globalSelectedInterval}`,
+					timeRange.endTime,
+					timeRange.startTime,
+					globalSelectedInterval,
+				],
+				[globalSelectedInterval, timeRange.endTime, timeRange.startTime],
+			),
 			keepPreviousData: true,
 			enabled: true,
 			refetchOnMount: false,
@@ -152,63 +240,11 @@ function ServiceMetrics({
 		}
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
-	const emptyStateCard = (): JSX.Element => (
-		<div className="empty-state-container">
-			<div className="empty-state-content-container">
-				<div className="empty-state-content">
-					<img
-						src="/Icons/triangle-ruler.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
-
-					<div className="empty-title">You are not sending traces yet.</div>
-
-					<div className="empty-description">
-						Start sending traces to see your services.
-					</div>
-				</div>
-
-				<div className="empty-actions-container">
-					<Link to={ROUTES.GET_STARTED}>
-						<Button type="default" className="periscope-btn secondary">
-							Get Started &nbsp; <ArrowRight size={16} />
-						</Button>
-					</Link>
-
-					<Button
-						type="link"
-						className="learn-more-link"
-						onClick={(): void => {
-							window.open(
-								'https://signoz.io/docs/instrumentation/overview/',
-								'_blank',
-							);
-						}}
-					>
-						Learn more <ArrowUpRight size={12} />
-					</Button>
-				</div>
-			</div>
-		</div>
-	);
-
-	const renderDashboardsList = (): JSX.Element => (
-		<div className="services-list-container home-data-item-container metrics-services-list">
-			<div className="services-list">
-				<Table<ServicesList>
-					columns={columns}
-					dataSource={top5Services}
-					pagination={false}
-					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => {
-							safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
-						},
-					})}
-				/>
-			</div>
-		</div>
+	const handleRowClick = useCallback(
+		(record: ServicesList) => {
+			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+		},
+		[safeNavigate],
 	);
 
 	if (isLoadingTopLevelOperations || isLoading) {
@@ -250,7 +286,11 @@ function ServiceMetrics({
 				</Card.Header>
 			)}
 			<Card.Content>
-				{servicesExist ? renderDashboardsList() : emptyStateCard()}
+				{servicesExist ? (
+					<ServicesListTable services={top5Services} onRowClick={handleRowClick} />
+				) : (
+					<EmptyState />
+				)}
 			</Card.Content>
 
 			{servicesExist && (
@@ -268,4 +308,4 @@ function ServiceMetrics({
 	);
 }
 
-export default ServiceMetrics;
+export default memo(ServiceMetrics);
