@@ -3,6 +3,7 @@ import './HomeChecklist.styles.scss';
 import { Button } from 'antd';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export type ChecklistItem = {
 	id: string;
@@ -11,6 +12,8 @@ export type ChecklistItem = {
 	completed: boolean;
 	isSkipped: boolean;
 	skippedPreferenceKey?: string;
+	toRoute?: string;
+	docsLink?: string;
 };
 
 function HomeChecklist({
@@ -55,8 +58,8 @@ function HomeChecklist({
 						<div
 							key={item.id}
 							className={`whats-next-checklist-item ${
-								item.isSkipped ? 'skipped' : ''
-							} ${index === 0 && !item.isSkipped ? 'active' : ''} ${
+								item.isSkipped && !item.completed ? 'skipped' : ''
+							} ${index === 0 && !item.isSkipped && !item.completed ? 'active' : ''} ${
 								isLoading ? 'loading' : ''
 							}`}
 						>
@@ -69,13 +72,23 @@ function HomeChecklist({
 
 								<div className="whats-next-checklist-item-action-buttons">
 									<div className="whats-next-checklist-item-action-buttons-container">
-										<Button type="default" className="periscope-btn secondary">
-											Get Started &nbsp; <ArrowRight size={16} />
-										</Button>
+										<Link to={item.toRoute || ''}>
+											<Button type="default" className="periscope-btn secondary">
+												Get Started &nbsp; <ArrowRight size={16} />
+											</Button>
+										</Link>
 
-										<Button type="default" className="periscope-btn secondary">
-											<BookOpenText size={16} />
-										</Button>
+										{item.docsLink && (
+											<Button
+												type="default"
+												className="periscope-btn secondary"
+												onClick={(): void => {
+													window?.open(item.docsLink, '_blank');
+												}}
+											>
+												<BookOpenText size={16} />
+											</Button>
+										)}
 									</div>
 
 									<div className="whats-next-checklist-item-action-buttons-container">

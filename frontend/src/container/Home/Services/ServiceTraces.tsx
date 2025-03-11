@@ -13,7 +13,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { columns } from './constants';
 
-export default function ServiceTraces(): JSX.Element {
+export default function ServiceTraces({
+	onUpdateChecklistDoneItem,
+	isWelcomeChecklistSkipped,
+}: {
+	onUpdateChecklistDoneItem: (itemKey: string) => void;
+	isWelcomeChecklistSkipped: boolean;
+}): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -48,6 +54,12 @@ export default function ServiceTraces(): JSX.Element {
 
 	const servicesExist = servicesList?.length > 0;
 	const top5Services = servicesList?.slice(0, 5);
+
+	useEffect(() => {
+		if (servicesList.length > 0 && !isWelcomeChecklistSkipped) {
+			onUpdateChecklistDoneItem('SETUP_SERVICES');
+		}
+	}, [servicesList, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

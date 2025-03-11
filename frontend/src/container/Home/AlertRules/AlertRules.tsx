@@ -11,7 +11,13 @@ import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { GettableAlert } from 'types/api/alerts/get';
 
-export default function AlertRules(): JSX.Element {
+export default function AlertRules({
+	onUpdateChecklistDoneItem,
+	isWelcomeChecklistSkipped,
+}: {
+	onUpdateChecklistDoneItem: (itemKey: string) => void;
+	isWelcomeChecklistSkipped: boolean;
+}): JSX.Element {
 	const [rulesExist, setRulesExist] = useState(false);
 
 	const [sortedAlertRules, setSortedAlertRules] = useState<GettableAlert[]>([]);
@@ -40,8 +46,12 @@ export default function AlertRules(): JSX.Element {
 			return bUpdateAt - aUpdateAt;
 		});
 
+		if (sortedRules.length > 0 && !isWelcomeChecklistSkipped) {
+			onUpdateChecklistDoneItem('SETUP_ALERTS');
+		}
+
 		setSortedAlertRules(sortedRules.slice(0, 5));
-	}, [alerts]);
+	}, [alerts, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

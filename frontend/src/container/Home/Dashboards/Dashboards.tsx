@@ -8,7 +8,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-export default function Dashboards(): JSX.Element {
+export default function Dashboards({
+	onUpdateChecklistDoneItem,
+	isWelcomeChecklistSkipped,
+}: {
+	onUpdateChecklistDoneItem: (itemKey: string) => void;
+	isWelcomeChecklistSkipped: boolean;
+}): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const [sortedDashboards, setSortedDashboards] = useState<Dashboard[]>([]);
@@ -29,8 +35,12 @@ export default function Dashboards(): JSX.Element {
 			return bUpdateAt - aUpdateAt;
 		});
 
+		if (sortedDashboards.length > 0 && !isWelcomeChecklistSkipped) {
+			onUpdateChecklistDoneItem('SETUP_DASHBOARDS');
+		}
+
 		setSortedDashboards(sortedDashboards.slice(0, 5));
-	}, [dashboardsList]);
+	}, [dashboardsList, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

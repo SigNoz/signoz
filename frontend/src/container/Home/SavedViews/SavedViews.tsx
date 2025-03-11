@@ -16,7 +16,13 @@ import { Link } from 'react-router-dom';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 
-export default function SavedViews(): JSX.Element {
+export default function SavedViews({
+	onUpdateChecklistDoneItem,
+	isWelcomeChecklistSkipped,
+}: {
+	onUpdateChecklistDoneItem: (itemKey: string) => void;
+	isWelcomeChecklistSkipped: boolean;
+}): JSX.Element {
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
 	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>([]);
 
@@ -71,6 +77,12 @@ export default function SavedViews(): JSX.Element {
 			);
 		}
 	};
+
+	useEffect(() => {
+		if (hasSavedViews && !isWelcomeChecklistSkipped) {
+			onUpdateChecklistDoneItem('SETUP_SAVED_VIEWS');
+		}
+	}, [hasSavedViews, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

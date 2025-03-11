@@ -542,7 +542,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
-				<div className="app-content" data-overlayscrollbars-initialize>
+				<div
+					className={cx('app-content', {
+						'full-screen-content': renderFullScreen,
+					})}
+					data-overlayscrollbars-initialize
+				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>

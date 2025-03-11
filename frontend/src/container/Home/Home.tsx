@@ -2,17 +2,28 @@ import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover } from 'antd';
+import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import getAllUserPreferences from 'api/preferences/getAllUserPreference';
 import updateUserPreferenceAPI from 'api/preferences/updateUserPreference';
 import Header from 'components/Header/Header';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
+import { getHostListsQuery } from 'container/InfraMonitoringHosts/utils';
+import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { UserPreference } from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -30,9 +41,20 @@ const checkListStepToPreferenceKeyMap = {
 	SEND_INFRA_METRICS: 'WELCOME_CHECKLIST_SEND_INFRA_METRICS_SKIPPED',
 	SETUP_DASHBOARDS: 'WELCOME_CHECKLIST_SETUP_DASHBOARDS_SKIPPED',
 	SETUP_ALERTS: 'WELCOME_CHECKLIST_SETUP_ALERTS_SKIPPED',
-	SETUP_SAVED_VIEW: 'WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED',
+	SETUP_SAVED_VIEWS: 'WELCOME_CHECKLIST_SETUP_SAVED_VIEW_SKIPPED',
 	SETUP_WORKSPACE: 'WELCOME_CHECKLIST_SETUP_WORKSPACE_SKIPPED',
 	ADD_DATA_SOURCE: 'WELCOME_CHECKLIST_ADD_DATA_SOURCE_SKIPPED',
+};
+
+const DOCS_LINKS = {
+	SEND_LOGS: 'https://signoz.io/docs/userguide/logs/',
+	SEND_TRACES: 'https://signoz.io/docs/userguide/traces/',
+	SEND_INFRA_METRICS:
+		'https://signoz.io/docs/infrastructure-monitoring/overview/',
+	SETUP_ALERTS: 'https://signoz.io/docs/userguide/alerts-management/',
+	SETUP_SAVED_VIEWS:
+		'https://signoz.io/docs/product-features/saved-view/#step-2-save-your-view',
+	SETUP_DASHBOARDS: 'https://signoz.io/docs/userguide/manage-dashboards/',
 };
 
 const defaultChecklistItemsState: ChecklistItem[] = [
@@ -51,6 +73,7 @@ const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.ADD_DATA_SOURCE,
+		toRoute: ROUTES.GET_STARTED,
 	},
 	{
 		id: 'SEND_LOGS',
@@ -60,6 +83,8 @@ const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_LOGS,
+		toRoute: ROUTES.GET_STARTED,
+		docsLink: DOCS_LINKS.SEND_LOGS,
 	},
 	{
 		id: 'SEND_TRACES',
@@ -69,6 +94,8 @@ const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_TRACES,
+		toRoute: ROUTES.GET_STARTED,
+		docsLink: DOCS_LINKS.SEND_TRACES,
 	},
 	{
 		id: 'SEND_INFRA_METRICS',
@@ -78,6 +105,8 @@ const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_INFRA_METRICS,
+		toRoute: ROUTES.GET_STARTED,
+		docsLink: DOCS_LINKS.SEND_INFRA_METRICS,
 	},
 	{
 		id: 'SETUP_ALERTS',
@@ -87,15 +116,19 @@ const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_ALERTS,
+		toRoute: ROUTES.ALERTS_NEW,
+		docsLink: DOCS_LINKS.SETUP_ALERTS,
 	},
 	{
-		id: 'SETUP_SAVED_VIEW',
+		id: 'SETUP_SAVED_VIEWS',
 		title: 'Setup Saved Views',
 		description:
 			'Save your views to get a quick overview of your data and share it with your team.',
 		completed: false,
 		isSkipped: false,
-		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_SAVED_VIEW,
+		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_SAVED_VIEWS,
+		toRoute: ROUTES.LOGS_EXPLORER,
+		docsLink: DOCS_LINKS.SETUP_SAVED_VIEWS,
 	},
 	{
 		id: 'SETUP_DASHBOARDS',
@@ -105,11 +138,16 @@ const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_DASHBOARDS,
+		toRoute: ROUTES.ALL_DASHBOARD,
+		docsLink: DOCS_LINKS.SETUP_DASHBOARDS,
 	},
 ];
 
 export default function Home(): JSX.Element {
-	const [userPreferences, setUserPreferences] = useState<UserPreference[]>([]);
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
 	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
 
@@ -121,31 +159,102 @@ export default function Home(): JSX.Element {
 		false,
 	);
 
-	const isLogIngestionActive = true;
-	const isTraceIngestionActive = true;
-	const isMetricIngestionActive = true;
+	const isMetricIngestionActive = false;
 
-	// Fetch User Preferences
-	const { refetch: refetchUserPreferences } = useQuery({
-		queryFn: () => getAllUserPreferences(),
-		queryKey: ['getUserPreferences'],
-		enabled: true,
-		refetchOnWindowFocus: false,
-		onSuccess: (response) => {
-			if (response.payload && response.payload.data) {
-				setUserPreferences(response.payload.data);
-			}
-
-			setLoadingUserPreferences(false);
-			setUpdatingUserPreferences(false);
+	// Detect Logs
+	const {
+		data: logsData,
+		isLoading: isLogsLoading,
+		isError: isLogsError,
+	} = useGetQueryRange(
+		{
+			query: initialQueriesMap[DataSource.LOGS],
+			graphType: PANEL_TYPES.TABLE,
+			selectedTime: 'GLOBAL_TIME',
+			globalSelectedInterval: '30m',
+			params: {
+				dataSource: DataSource.LOGS,
+			},
 		},
-		onError: () => {
-			setUpdatingUserPreferences(false);
-			setLoadingUserPreferences(false);
+		DEFAULT_ENTITY_VERSION,
+		{
+			queryKey: [
+				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				'30m',
+				maxTime / 1000,
+				minTime / 1000,
+				initialQueriesMap[DataSource.LOGS],
+			],
+			enabled: true,
 		},
-	});
+	);
 
-	useEffect(() => {
+	// Detect Traces
+	const {
+		data: tracesData,
+		isLoading: isTracesLoading,
+		isError: isTracesError,
+	} = useGetQueryRange(
+		{
+			query: initialQueriesMap[DataSource.TRACES],
+			graphType: PANEL_TYPES.TABLE,
+			selectedTime: 'GLOBAL_TIME',
+			globalSelectedInterval: '30m',
+			params: {
+				dataSource: DataSource.TRACES,
+			},
+		},
+		DEFAULT_ENTITY_VERSION,
+		{
+			queryKey: [
+				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				'30m',
+				maxTime / 1000,
+				minTime / 1000,
+				initialQueriesMap[DataSource.TRACES],
+			],
+			enabled: true,
+		},
+	);
+
+	console.log('logsData', logsData);
+	console.log('tracesData', tracesData);
+
+	// Detect Infra Metrics - Hosts
+	const query = useMemo(() => {
+		const baseQuery = getHostListsQuery();
+		return {
+			...baseQuery,
+			limit: 10,
+			offset: 0,
+			filters: {
+				items: [],
+				op: 'and',
+			},
+			start: Math.floor(minTime / 1000000),
+			end: Math.floor(maxTime / 1000000),
+			orderBy: {
+				columnName: 'hostName',
+				order: 'asc',
+			},
+			groupBy: [],
+		};
+	}, [minTime, maxTime]);
+
+	const { data, isFetching, isLoading, isError } = useGetHostList(
+		query as HostListPayload,
+		{
+			queryKey: ['hostList', query],
+			enabled: !!query,
+		},
+	);
+
+	console.log('data', data, isFetching, isLoading, isError);
+
+	const isLogsIngestionActive = !isLogsLoading && !isLogsError;
+	const isTracesIngestionActive = !isTracesLoading && !isTracesError;
+
+	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = userPreferences?.find(
 			(preference) => preference.key === 'WELCOME_CHECKLIST_DO_LATER',
 		)?.value;
@@ -164,7 +273,27 @@ export default function Home(): JSX.Element {
 		setChecklistItems(newChecklistItems);
 
 		setIsWelcomeChecklistSkipped(checklistSkipped || false);
-	}, [userPreferences]);
+	};
+
+	// Fetch User Preferences
+	const { refetch: refetchUserPreferences } = useQuery({
+		queryFn: () => getAllUserPreferences(),
+		queryKey: ['getUserPreferences'],
+		enabled: true,
+		refetchOnWindowFocus: false,
+		onSuccess: (response) => {
+			if (response.payload && response.payload.data) {
+				processUserPreferences(response.payload.data);
+			}
+
+			setLoadingUserPreferences(false);
+			setUpdatingUserPreferences(false);
+		},
+		onError: () => {
+			setUpdatingUserPreferences(false);
+			setLoadingUserPreferences(false);
+		},
+	});
 
 	const { mutate: updateUserPreference } = useMutation(updateUserPreferenceAPI, {
 		onSuccess: () => {
@@ -205,6 +334,16 @@ export default function Home(): JSX.Element {
 			/>
 		</div>
 	);
+
+	const handleUpdateChecklistDoneItem = useCallback((itemKey: string): void => {
+		console.log('itemKey', itemKey);
+
+		setChecklistItems((prevItems) =>
+			prevItems.map((item) =>
+				item.id === itemKey ? { ...item, completed: true } : item,
+			),
+		);
+	}, []);
 
 	return (
 		<div className="home-container">
@@ -255,7 +394,7 @@ export default function Home(): JSX.Element {
 					</div>
 
 					<div className="active-ingestions-container">
-						{isLogIngestionActive && (
+						{isLogsIngestionActive && (
 							<Card className="active-ingestion-card" size="small">
 								<Card.Content>
 									<div className="active-ingestion-card-content-container">
@@ -290,7 +429,7 @@ export default function Home(): JSX.Element {
 							</Card>
 						)}
 
-						{isTraceIngestionActive && (
+						{isTracesIngestionActive && (
 							<Card className="active-ingestion-card" size="small">
 								<Card.Content>
 									<div className="active-ingestion-card-content-container">
@@ -479,12 +618,18 @@ export default function Home(): JSX.Element {
 						</Card>
 					</div>
 
-					<AlertRules />
-					<Dashboards />
+					<AlertRules
+						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+					/>
+					<Dashboards
+						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+					/>
 				</div>
 
 				<div className="home-right-content">
-					{isWelcomeChecklistSkipped && !loadingUserPreferences && (
+					{!isWelcomeChecklistSkipped && !loadingUserPreferences && (
 						<Card className="checklist-card">
 							<Card.Content>
 								<div className="checklist-container">
@@ -524,15 +669,21 @@ export default function Home(): JSX.Element {
 										onClick={handleWillDoThisLater}
 										loading={updatingUserPreferences}
 									>
-										I’ll do this later
+										I&apos;ll do this later
 									</Button>
 								</div>
 							</Card.Footer>
 						</Card>
 					)}
 
-					<Services />
-					<SavedViews />
+					<Services
+						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+					/>
+					<SavedViews
+						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+					/>
 				</div>
 			</div>
 		</div>
