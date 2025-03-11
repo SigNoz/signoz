@@ -27,6 +27,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 function WidgetGraph({
 	selectedWidget,
@@ -96,9 +97,10 @@ function WidgetGraph({
 	// context redirection to explorer pages
 	const graphClick = useGraphClickToShowButton({
 		graphRef,
-		// isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
-		// 	currentDataSource,
-		// ),
+		isButtonEnabled: selectedWidget?.query?.builder?.queryData.some(
+			(q) =>
+				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+		),
 		buttonClassName: 'view-onclick-show-button',
 	});
 

@@ -27,6 +27,7 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
@@ -243,9 +244,10 @@ function WidgetGraphComponent({
 
 	const graphClick = useGraphClickToShowButton({
 		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
-		// isButtonEnabled: [DataSource.TRACES, DataSource.LOGS].includes(
-		// 	currentDataSource,
-		// ),
+		isButtonEnabled: widget?.query?.builder?.queryData.some(
+			(q) =>
+				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+		),
 		buttonClassName: 'view-onclick-show-button',
 	});
 
