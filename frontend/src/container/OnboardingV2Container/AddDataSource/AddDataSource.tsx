@@ -411,7 +411,6 @@ function OnboardingAddDataSource(): JSX.Element {
 						<div className="header-left-section">
 							<X
 								size={14}
-								color="#fff"
 								className="onboarding-header-container-close-icon"
 								onClick={(): void => {
 									logEvent(
