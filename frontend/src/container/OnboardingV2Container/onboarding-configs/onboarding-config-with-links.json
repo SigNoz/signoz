@@ -877,7 +877,7 @@
 		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-pino-logs/"
 	},
 	{
-		"dataSource": "nodejs-winston-logs/",
+		"dataSource": "nodejs-winston-logs",
 		"label": "Winston Logs",
 		"imgUrl": "/Logos/winston.svg",
 		"tags": ["logs"],
@@ -910,7 +910,7 @@
 	},
 	{
 		"dataSource": "k8s-metrics",
-		"label": "Kuberenetes Monitoring",
+		"label": "Kubernetes Monitoring",
 		"tags": ["infrastructure monitoring"],
 		"module": "infra-monitoring-k8s",
 		"imgUrl": "/Logos/kubernetes.svg",
