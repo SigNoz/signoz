@@ -634,7 +634,7 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddlewar
 		am.ViewAccess(ah.GetInspectMetricsData)).
 		Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
-		am.ViewAccess(ah.UpdateMetricsMetadataData)).
+		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
 }
 

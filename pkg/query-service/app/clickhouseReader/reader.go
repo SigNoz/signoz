@@ -1146,7 +1146,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1294,7 +1294,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -6693,27 +6693,43 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 
 func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metricName string) (*model.UpdateMetricsMetadata, *model.ApiError) {
 	metricsMetadata := new(model.UpdateMetricsMetadata)
-	retrieve, err := r.cache.Retrieve(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName, metricsMetadata, true)
-	if err != nil {
-		query := fmt.Sprintf(`SELECT metric_name, type, description
-FROM %s.%s
-WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
-		err := r.db.Select(ctx, query, metricName)
-		if err != nil {
-			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
-		}
-	}
-	if retrieve == cache.RetrieveStatusHit {
+
+	// Try to get from cache first
+	retrieveStatus, err := r.cache.Retrieve(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName, metricsMetadata, true)
+	if err == nil && retrieveStatus == cache.RetrieveStatusHit {
 		return metricsMetadata, nil
 	}
-	return nil, nil
+
+	zap.L().Error("Error getting metrics updated metadata from cache ", zap.String("metric_name", metricName), zap.Error(err))
+	// If not in cache, query from database
+	query := fmt.Sprintf(`SELECT metric_name, type, description , temporality, is_monotonic, unit
+		FROM %s.%s 
+		WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+
+	err = r.db.QueryRow(ctx, query, metricName).Scan(
+		&metricsMetadata.MetricName,
+		&metricsMetadata.MetricType,
+		&metricsMetadata.Description,
+		&metricsMetadata.Temporality,
+		&metricsMetadata.IsMonotonic,
+		&metricsMetadata.Unit,
+	)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
+	}
+	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName, metricsMetadata, -1)
+	if err != nil {
+		return nil, &model.ApiError{Typ: "CachingErr", Err: err}
+	}
+	return metricsMetadata, nil
 }
 
 func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
 	var allMetricsMetadata []model.UpdateMetricsMetadata
 	var errorList []error
 	// Fetch all rows from ClickHouse
-	query := fmt.Sprintf(`SELECT metric_name, type, description FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	query := fmt.Sprintf(`SELECT metric_name, type, description , temporality, is_monotonic, unit
+		FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 	err := r.db.Select(ctx, &allMetricsMetadata, query)
 	if err != nil {
 		errorList = append(errorList, err)

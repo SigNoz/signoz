@@ -143,7 +143,7 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (aH *APIHandler) UpdateMetricsMetadataData(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) UpdateMetricsMetadata(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	ctx := r.Context()
