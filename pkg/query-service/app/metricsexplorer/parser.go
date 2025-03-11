@@ -134,8 +134,7 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 				Err: fmt.Errorf("histogram metrics with Delta temporality can't be monotonically increased"),
 			}
 		}
-	case v3.MetricTypeGauge:
-	case v3.MetricTypeSummary:
+	case v3.MetricTypeGauge, v3.MetricTypeSummary:
 		if updateMetricsMetadataReq.Temporality == "" {
 			updateMetricsMetadataReq.Temporality = v3.Unspecified
 		}

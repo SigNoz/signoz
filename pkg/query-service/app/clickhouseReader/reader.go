@@ -3740,6 +3740,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
 		if apiError == nil && metadata != nil {
 			typ = string(metadata.MetricType)
+			isMonotonic = metadata.IsMonotonic
+			temporality = string(metadata.Temporality)
 		}
 
 		// Non-monotonic cumulative sums are treated as gauges
@@ -6647,7 +6649,7 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
 VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
-	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt)
+	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt.UnixMilli())
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6700,21 +6702,34 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 		return metricsMetadata, nil
 	}
 
-	zap.L().Error("Error getting metrics updated metadata from cache ", zap.String("metric_name", metricName), zap.Error(err))
+	zap.L().Info("Error getting metrics updated metadata from cache ", zap.String("metric_name", metricName), zap.Error(err))
 	// If not in cache, query from database
 	query := fmt.Sprintf(`SELECT metric_name, type, description , temporality, is_monotonic, unit
 		FROM %s.%s 
 		WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 
-	err = r.db.QueryRow(ctx, query, metricName).Scan(
-		&metricsMetadata.MetricName,
-		&metricsMetadata.MetricType,
-		&metricsMetadata.Description,
-		&metricsMetadata.Temporality,
-		&metricsMetadata.IsMonotonic,
-		&metricsMetadata.Unit,
-	)
+	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
+		return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil, nil
+	}
+	for rows.Next() {
+		err := rows.Scan(
+			&metricsMetadata.MetricName,
+			&metricsMetadata.MetricType,
+			&metricsMetadata.Description,
+			&metricsMetadata.Temporality,
+			&metricsMetadata.IsMonotonic,
+			&metricsMetadata.Unit,
+		)
+		if err != nil {
+			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
+		}
+	}
+	if err := rows.Err(); err != nil {
 		return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
 	}
 	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName, metricsMetadata, -1)
