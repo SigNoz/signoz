@@ -1545,9 +1545,9 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 		case model.TrackEvent:
 			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
 		case model.GroupEvent:
-			telemetry.GetInstance().SendGroupEvent(request.Attributes)
+			telemetry.GetInstance().SendGroupEvent(request.Attributes, claims.Email)
 		case model.IdentifyEvent:
-			telemetry.GetInstance().SendIdentifyEvent(request.Attributes)
+			telemetry.GetInstance().SendIdentifyEvent(request.Attributes, claims.Email)
 		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
