@@ -10,10 +10,10 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
-	isWelcomeChecklistSkipped,
+	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
-	isWelcomeChecklistSkipped: boolean;
+	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
@@ -35,12 +35,12 @@ export default function Dashboards({
 			return bUpdateAt - aUpdateAt;
 		});
 
-		if (sortedDashboards.length > 0 && !isWelcomeChecklistSkipped) {
+		if (sortedDashboards.length > 0 && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_DASHBOARDS');
 		}
 
 		setSortedDashboards(sortedDashboards.slice(0, 5));
-	}, [dashboardsList, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
+	}, [dashboardsList, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

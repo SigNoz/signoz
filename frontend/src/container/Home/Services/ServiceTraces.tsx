@@ -15,10 +15,10 @@ import { columns } from './constants';
 
 export default function ServiceTraces({
 	onUpdateChecklistDoneItem,
-	isWelcomeChecklistSkipped,
+	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
-	isWelcomeChecklistSkipped: boolean;
+	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -56,10 +56,10 @@ export default function ServiceTraces({
 	const top5Services = servicesList?.slice(0, 5);
 
 	useEffect(() => {
-		if (servicesList.length > 0 && !isWelcomeChecklistSkipped) {
+		if (servicesList.length > 0 && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_SERVICES');
 		}
-	}, [servicesList, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
+	}, [servicesList, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

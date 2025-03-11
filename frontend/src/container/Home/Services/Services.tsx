@@ -8,10 +8,10 @@ import ServiceTraces from './ServiceTraces';
 
 function Services({
 	onUpdateChecklistDoneItem,
-	isWelcomeChecklistSkipped,
+	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
-	isWelcomeChecklistSkipped: boolean;
+	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { featureFlags } = useAppContext();
 	const isSpanMetricEnabled =
@@ -24,12 +24,12 @@ function Services({
 				{isSpanMetricEnabled ? (
 					<ServiceMetrics
 						onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
-						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+						loadingUserPreferences={loadingUserPreferences}
 					/>
 				) : (
 					<ServiceTraces
 						onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
-						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+						loadingUserPreferences={loadingUserPreferences}
 					/>
 				)}
 			</div>

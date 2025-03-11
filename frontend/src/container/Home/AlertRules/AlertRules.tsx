@@ -13,10 +13,10 @@ import { GettableAlert } from 'types/api/alerts/get';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
-	isWelcomeChecklistSkipped,
+	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
-	isWelcomeChecklistSkipped: boolean;
+	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const [rulesExist, setRulesExist] = useState(false);
 
@@ -46,12 +46,12 @@ export default function AlertRules({
 			return bUpdateAt - aUpdateAt;
 		});
 
-		if (sortedRules.length > 0 && !isWelcomeChecklistSkipped) {
+		if (sortedRules.length > 0 && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_ALERTS');
 		}
 
 		setSortedAlertRules(sortedRules.slice(0, 5));
-	}, [alerts, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
+	}, [alerts, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

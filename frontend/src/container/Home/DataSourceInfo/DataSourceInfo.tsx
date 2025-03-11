@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import { Button, Typography } from 'antd';
+import { Button, Skeleton, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import history from 'lib/history';
@@ -7,9 +7,15 @@ import { Globe, Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useEffect, useState } from 'react';
 
-function DataSourceInfo(): JSX.Element {
-	const notSendingData = true;
-	const listeningToData = false;
+function DataSourceInfo({
+	dataSentToSigNoz,
+	isLoading,
+}: {
+	dataSentToSigNoz: boolean;
+	isLoading: boolean;
+}): JSX.Element {
+	const notSendingData = !dataSentToSigNoz;
+	const listeningToData = !dataSentToSigNoz;
 
 	const {
 		data: deploymentsData,
@@ -145,11 +151,11 @@ function DataSourceInfo(): JSX.Element {
 							</Button>
 						</div>
 
-						{isErrorDeploymentsData && (
+						{/* {isErrorDeploymentsData && (
 							<div className="workspace-details">
 								<Typography>Error fetching data. Please try again later.</Typography>
 							</div>
-						)}
+						)} */}
 
 						{!isErrorDeploymentsData && deploymentsData && (
 							<div className="workspace-details">
@@ -172,6 +178,36 @@ function DataSourceInfo(): JSX.Element {
 		</>
 	);
 
+	const renderDataReceived = (): JSX.Element => (
+		<>
+			<Typography className="welcome-title">
+				Hello there, Welcome to your SigNoz workspace
+			</Typography>
+
+			{!isErrorDeploymentsData && deploymentsData && (
+				<Card className="welcome-card">
+					<Card.Content>
+						<div className="workspace-ready-container">
+							<div className="workspace-details">
+								<div className="workspace-region">
+									<Globe size={10} />
+
+									<Typography>{region}</Typography>
+								</div>
+
+								<div className="workspace-url">
+									<Link2 size={12} />
+
+									<Typography>{url}</Typography>
+								</div>
+							</div>
+						</div>
+					</Card.Content>
+				</Card>
+			)}
+		</>
+	);
+
 	return (
 		<div className="welcome-container">
 			<div className="hello-wave-container">
@@ -186,9 +222,18 @@ function DataSourceInfo(): JSX.Element {
 				</div>
 			</div>
 
-			{notSendingData && renderNotSendingData()}
+			{isLoading && (
+				<>
+					<Skeleton.Avatar active size={36} shape="square" />
+					<Skeleton active />
+				</>
+			)}
 
-			{listeningToData && renderListeningToData()}
+			{!isLoading && dataSentToSigNoz && renderDataReceived()}
+
+			{!isLoading && notSendingData && renderNotSendingData()}
+
+			{!isLoading && listeningToData && renderListeningToData()}
 		</div>
 	);
 }

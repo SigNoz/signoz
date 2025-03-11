@@ -16,8 +16,10 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -162,11 +164,7 @@ export default function Home(): JSX.Element {
 	const isMetricIngestionActive = false;
 
 	// Detect Logs
-	const {
-		data: logsData,
-		isLoading: isLogsLoading,
-		isError: isLogsError,
-	} = useGetQueryRange(
+	const { data: logsData, isLoading: isLogsLoading } = useGetQueryRange(
 		{
 			query: initialQueriesMap[DataSource.LOGS],
 			graphType: PANEL_TYPES.TABLE,
@@ -190,11 +188,7 @@ export default function Home(): JSX.Element {
 	);
 
 	// Detect Traces
-	const {
-		data: tracesData,
-		isLoading: isTracesLoading,
-		isError: isTracesError,
-	} = useGetQueryRange(
+	const { data: tracesData, isLoading: isTracesLoading } = useGetQueryRange(
 		{
 			query: initialQueriesMap[DataSource.TRACES],
 			graphType: PANEL_TYPES.TABLE,
@@ -251,15 +245,15 @@ export default function Home(): JSX.Element {
 
 	console.log('data', data, isFetching, isLoading, isError);
 
-	const isLogsIngestionActive = !isLogsLoading && !isLogsError;
-	const isTracesIngestionActive = !isTracesLoading && !isTracesError;
+	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
+	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = userPreferences?.find(
 			(preference) => preference.key === 'WELCOME_CHECKLIST_DO_LATER',
 		)?.value;
 
-		const updatedChecklistItems = cloneDeep(defaultChecklistItemsState);
+		const updatedChecklistItems = cloneDeep(checklistItems);
 
 		const newChecklistItems = updatedChecklistItems.map((item) => {
 			const newItem = { ...item };
@@ -271,6 +265,8 @@ export default function Home(): JSX.Element {
 		});
 
 		setChecklistItems(newChecklistItems);
+
+		console.log('checklistSkipped', checklistSkipped);
 
 		setIsWelcomeChecklistSkipped(checklistSkipped || false);
 	};
@@ -336,14 +332,26 @@ export default function Home(): JSX.Element {
 	);
 
 	const handleUpdateChecklistDoneItem = useCallback((itemKey: string): void => {
-		console.log('itemKey', itemKey);
-
 		setChecklistItems((prevItems) =>
 			prevItems.map((item) =>
 				item.id === itemKey ? { ...item, completed: true } : item,
 			),
 		);
 	}, []);
+
+	useEffect(() => {
+		if (logsData && logsData?.payload.data.result.length > 0) {
+			setIsLogsIngestionActive(true);
+			handleUpdateChecklistDoneItem('SEND_LOGS');
+		}
+	}, [logsData, handleUpdateChecklistDoneItem]);
+
+	useEffect(() => {
+		if (tracesData && tracesData?.payload.data.result.length > 0) {
+			setIsTracesIngestionActive(true);
+			handleUpdateChecklistDoneItem('SEND_TRACES');
+		}
+	}, [tracesData, handleUpdateChecklistDoneItem]);
 
 	return (
 		<div className="home-container">
@@ -356,30 +364,32 @@ export default function Home(): JSX.Element {
 					}
 					rightComponent={
 						<div className="home-header-right">
-							<Popover
-								placement="bottomRight"
-								arrow={false}
-								trigger="click"
-								autoAdjustOverflow
-								content={renderWelcomeChecklistModal()}
-								getPopupContainer={popupContainer}
-								rootClassName="welcome-checklist-popover"
-							>
-								<Button
-									type="default"
-									size="small"
-									className="periscope-btn secondary welcome-checklist-btn"
+							{isWelcomeChecklistSkipped && (
+								<Popover
+									placement="bottomRight"
+									arrow={false}
+									trigger="click"
+									autoAdjustOverflow
+									content={renderWelcomeChecklistModal()}
+									getPopupContainer={popupContainer}
+									rootClassName="welcome-checklist-popover"
 								>
-									<img
-										src="/Icons/spinner-half-blue.svg"
-										alt="spinner-half-blue"
-										width={16}
-										height={16}
-										className="welcome-checklist-icon"
-									/>
-									&nbsp; Welcome checklist
-								</Button>
-							</Popover>
+									<Button
+										type="default"
+										size="small"
+										className="periscope-btn secondary welcome-checklist-btn"
+									>
+										<img
+											src="/Icons/spinner-half-blue.svg"
+											alt="spinner-half-blue"
+											width={16}
+											height={16}
+											className="welcome-checklist-icon"
+										/>
+										&nbsp; Welcome checklist
+									</Button>
+								</Popover>
+							)}
 						</div>
 					}
 				/>
@@ -387,7 +397,10 @@ export default function Home(): JSX.Element {
 
 			<div className="home-content">
 				<div className="home-left-content">
-					<DataSourceInfo />
+					<DataSourceInfo
+						dataSentToSigNoz={isLogsIngestionActive || isTracesIngestionActive}
+						isLoading={isLogsLoading || isTracesLoading}
+					/>
 
 					<div className="divider">
 						<img src="/Images/dotted-divider.svg" alt="divider" />
@@ -620,69 +633,78 @@ export default function Home(): JSX.Element {
 
 					<AlertRules
 						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+						loadingUserPreferences={loadingUserPreferences}
 					/>
 					<Dashboards
 						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+						loadingUserPreferences={loadingUserPreferences}
 					/>
 				</div>
 
 				<div className="home-right-content">
 					{!isWelcomeChecklistSkipped && !loadingUserPreferences && (
-						<Card className="checklist-card">
-							<Card.Content>
-								<div className="checklist-container">
-									<div className="checklist-items-container">
-										<StepsProgress checklistItems={checklistItems} />
-
-										<HomeChecklist
-											checklistItems={checklistItems}
-											onSkip={handleSkipChecklistItem}
-											isLoading={updatingUserPreferences || loadingUserPreferences}
-										/>
-									</div>
-									<div className="checklist-container-right-img">
-										<div className="checklist-img-bg-container">
-											<img
-												src="/Images/perilianBackground.svg"
-												alt="not-found"
-												className="checklist-img-bg"
-											/>
-										</div>
-
-										<div className="checklist-img-container">
-											<img
-												src="/Images/allInOne.svg"
-												alt="checklist-img"
-												className="checklist-img"
-											/>
-										</div>
-									</div>
-								</div>
-							</Card.Content>
-
-							<Card.Footer>
-								<div className="checklist-footer-container">
-									<Button
-										type="link"
-										onClick={handleWillDoThisLater}
-										loading={updatingUserPreferences}
+						<AnimatePresence initial={false}>
+							<Card className="checklist-card">
+								<Card.Content>
+									<motion.div
+										initial={{ opacity: 0, scale: 0 }}
+										animate={{ opacity: 1, scale: 1 }}
+										exit={{ opacity: 0, scale: 0 }}
+										key="box"
 									>
-										I&apos;ll do this later
-									</Button>
-								</div>
-							</Card.Footer>
-						</Card>
+										<div className="checklist-container">
+											<div className="checklist-items-container">
+												<StepsProgress checklistItems={checklistItems} />
+
+												<HomeChecklist
+													checklistItems={checklistItems}
+													onSkip={handleSkipChecklistItem}
+													isLoading={updatingUserPreferences || loadingUserPreferences}
+												/>
+											</div>
+											<div className="checklist-container-right-img">
+												<div className="checklist-img-bg-container">
+													<img
+														src="/Images/perilianBackground.svg"
+														alt="not-found"
+														className="checklist-img-bg"
+													/>
+												</div>
+
+												<div className="checklist-img-container">
+													<img
+														src="/Images/allInOne.svg"
+														alt="checklist-img"
+														className="checklist-img"
+													/>
+												</div>
+											</div>
+										</div>
+									</motion.div>
+								</Card.Content>
+
+								<Card.Footer>
+									<div className="checklist-footer-container">
+										<Button
+											type="link"
+											onClick={handleWillDoThisLater}
+											loading={updatingUserPreferences}
+										>
+											I&apos;ll do this later
+										</Button>
+									</div>
+								</Card.Footer>
+							</Card>
+						</AnimatePresence>
 					)}
 
 					<Services
 						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+						loadingUserPreferences={loadingUserPreferences}
 					/>
 					<SavedViews
 						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+						loadingUserPreferences={loadingUserPreferences}
 					/>
 				</div>
 			</div>

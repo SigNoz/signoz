@@ -352,7 +352,7 @@ function SideNav(): JSX.Element {
 							// eslint-disable-next-line react/no-unknown-property
 							onClick={(event: MouseEvent): void => {
 								// Current home page
-								onClickHandler(ROUTES.APPLICATION, event);
+								onClickHandler(ROUTES.HOME, event);
 							}}
 						>
 							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
