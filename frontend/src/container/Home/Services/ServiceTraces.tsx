@@ -1,17 +1,19 @@
-import { Button, Skeleton, Table } from 'antd';
+import { Button, Select, Skeleton, Table } from 'antd';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { columns } from './constants';
+import { columns, TIME_PICKER_OPTIONS } from './constants';
+
+const homeInterval = 30 * 60 * 1000;
 
 export default function ServiceTraces({
 	onUpdateChecklistDoneItem,
@@ -20,14 +22,18 @@ export default function ServiceTraces({
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
 	loadingUserPreferences: boolean;
 }): JSX.Element {
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const now = new Date().getTime();
+	const [timeRange, setTimeRange] = useState({
+		startTime: now - homeInterval,
+		endTime: now,
+		selectedInterval: homeInterval,
+	});
 
 	const { safeNavigate } = useSafeNavigate();
-
-	const [servicesList, setServicesList] = useState<ServicesList[]>([]);
 
 	// Fetch Services
 	const {
@@ -36,88 +42,105 @@ export default function ServiceTraces({
 		isFetching: isServicesFetching,
 		isError: isServicesError,
 	} = useQueryService({
-		minTime,
-		maxTime,
+		minTime: timeRange.startTime * 1e6,
+		maxTime: timeRange.endTime * 1e6,
 		selectedTime,
 		selectedTags: [],
+		options: {
+			enabled: true,
+		},
 	});
 
-	useEffect(() => {
-		const sortedServices = services?.sort((a, b) => {
-			const aUpdateAt = new Date(a.p99).getTime();
-			const bUpdateAt = new Date(b.p99).getTime();
-			return bUpdateAt - aUpdateAt;
-		});
-
-		setServicesList(sortedServices || []);
-	}, [services]);
-
-	const servicesExist = servicesList?.length > 0;
-	const top5Services = servicesList?.slice(0, 5);
-
-	useEffect(() => {
-		if (servicesList.length > 0 && !loadingUserPreferences) {
-			onUpdateChecklistDoneItem('SETUP_SERVICES');
-		}
-	}, [servicesList, onUpdateChecklistDoneItem, loadingUserPreferences]);
-
-	const emptyStateCard = (): JSX.Element => (
-		<div className="empty-state-container">
-			<div className="empty-state-content-container">
-				<div className="empty-state-content">
-					<img
-						src="/Icons/triangle-ruler.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
-
-					<div className="empty-title">You are not sending traces yet.</div>
-
-					<div className="empty-description">
-						Start sending traces to see your services.
-					</div>
-				</div>
-
-				<div className="empty-actions-container">
-					<Link to={ROUTES.GET_STARTED}>
-						<Button type="default" className="periscope-btn secondary">
-							Get Started &nbsp; <ArrowRight size={16} />
-						</Button>
-					</Link>
-
-					<Button
-						type="link"
-						className="learn-more-link"
-						onClick={(): void => {
-							window.open(
-								'https://signoz.io/docs/instrumentation/overview/',
-								'_blank',
-							);
-						}}
-					>
-						Learn more <ArrowUpRight size={12} />
-					</Button>
-				</div>
-			</div>
-		</div>
+	const sortedServices = useMemo(
+		() => services?.sort((a, b) => b.p99 - a.p99) || [],
+		[services],
 	);
 
-	const renderDashboardsList = (): JSX.Element => (
-		<div className="services-list-container home-data-item-container">
-			<div className="services-list">
-				<Table<ServicesList>
-					columns={columns}
-					dataSource={top5Services}
-					pagination={false}
-					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => {
-							safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
-						},
-					})}
-				/>
+	const servicesExist = useMemo(() => sortedServices.length > 0, [
+		sortedServices,
+	]);
+	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
+		sortedServices,
+	]);
+
+	useEffect(() => {
+		if (servicesExist && !loadingUserPreferences) {
+			onUpdateChecklistDoneItem('SETUP_SERVICES');
+		}
+	}, [servicesExist, onUpdateChecklistDoneItem, loadingUserPreferences]);
+
+	const handleTimeIntervalChange = useCallback((value: number): void => {
+		const now = new Date();
+		setTimeRange({
+			startTime: now.getTime() - value,
+			endTime: now.getTime(),
+			selectedInterval: value,
+		});
+	}, []);
+
+	const emptyStateCard = useMemo(
+		() => (
+			<div className="empty-state-container">
+				<div className="empty-state-content-container">
+					<div className="empty-state-content">
+						<img
+							src="/Icons/triangle-ruler.svg"
+							alt="empty-alert-icon"
+							className="empty-state-icon"
+						/>
+
+						<div className="empty-title">You are not sending traces yet.</div>
+
+						<div className="empty-description">
+							Start sending traces to see your services.
+						</div>
+					</div>
+
+					<div className="empty-actions-container">
+						<Link to={ROUTES.GET_STARTED}>
+							<Button type="default" className="periscope-btn secondary">
+								Get Started &nbsp; <ArrowRight size={16} />
+							</Button>
+						</Link>
+
+						<Button
+							type="link"
+							className="learn-more-link"
+							onClick={(): void => {
+								window.open(
+									'https://signoz.io/docs/instrumentation/overview/',
+									'_blank',
+								);
+							}}
+						>
+							Learn more <ArrowUpRight size={12} />
+						</Button>
+					</div>
+				</div>
 			</div>
-		</div>
+		),
+		[],
+	);
+
+	const renderDashboardsList = useCallback(
+		() => (
+			<div className="services-list-container home-data-item-container traces-services-list">
+				<div className="services-list">
+					<Table<ServicesList>
+						columns={columns}
+						dataSource={top5Services}
+						pagination={false}
+						className="services-table"
+						onRow={(record): { onClick: () => void } => ({
+							onClick: (): void => {
+								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+							},
+						})}
+					/>
+				</div>
+			</div>
+		),
+		[top5Services, safeNavigate],
 	);
 
 	if (isServicesLoading || isServicesFetching) {
@@ -144,11 +167,21 @@ export default function ServiceTraces({
 		<Card className="dashboards-list-card home-data-card">
 			{servicesExist && (
 				<Card.Header>
-					<div className="services-header home-data-card-header"> Services </div>
+					<div className="services-header home-data-card-header">
+						Services
+						<div className="services-header-actions">
+							<Select
+								value={timeRange.selectedInterval}
+								onChange={handleTimeIntervalChange}
+								options={TIME_PICKER_OPTIONS}
+								className="services-header-select"
+							/>
+						</div>
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>
-				{servicesExist ? renderDashboardsList() : emptyStateCard()}
+				{servicesExist ? renderDashboardsList() : emptyStateCard}
 			</Card.Content>
 
 			{servicesExist && (
