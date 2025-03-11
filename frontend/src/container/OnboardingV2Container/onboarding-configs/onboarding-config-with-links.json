@@ -16,7 +16,7 @@
 					"key": "springboot",
 					"label": "Spring Boot",
 					"imgUrl": "/Logos/springboot.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -26,19 +26,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-springboot/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-springboot/"
 							}
 						]
 					}
@@ -47,7 +47,7 @@
 					"key": "tomcat",
 					"label": "Tomcat",
 					"imgUrl": "/Logos/tomcat.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -57,19 +57,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-tomcat/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-tomcat/"
 							}
 						]
 					}
@@ -78,7 +78,7 @@
 					"key": "jboss",
 					"label": "JBoss",
 					"imgUrl": "/Logos/jboss.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -88,19 +88,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-jboss/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-jboss/"
 							}
 						]
 					}
@@ -109,7 +109,7 @@
 					"key": "opentelemetry-quarkus",
 					"label": "Quarkus",
 					"imgUrl": "/Logos/quarkus.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-quarkus/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/",
 					"question": {
 					  "desc": "What is your Environment?",
 					  "type": "select",
@@ -119,19 +119,19 @@
 						  "key": "vm",
 						  "label": "VM",
 						  "imgUrl": "/Logos/vm.svg",
-						  "link": "http://localhost:3000/docs/instrumentation/opentelemetry-quarkus/"
+						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
 						},
 						{
 						  "key": "k8s",
 						  "label": "Kubernetes",
 						  "imgUrl": "/Logos/kubernetes.svg",
-						  "link": "http://localhost:3000/docs/instrumentation/opentelemetry-quarkus/"
+						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
 						},
 						{
 						  "key": "windows",
 						  "label": "Windows",
 						  "imgUrl": "/Logos/windows.svg",
-						  "link": "http://localhost:3000/docs/instrumentation/opentelemetry-quarkus/"
+						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
 						}
 					  ]
 					}
@@ -140,7 +140,7 @@
 					"key": "Others",
 					"label": "Others",
 					"imgUrl": "/Logos/java-others.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -150,13 +150,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-java/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-java/"
 							}
 						]
 					}
@@ -180,7 +180,7 @@
 					"key": "flask",
 					"label": "Flask",
 					"imgUrl": "/Logos/flask.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -190,13 +190,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-flask/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-flask/"
 							}
 						]
 					}
@@ -205,7 +205,7 @@
 					"key": "django",
 					"label": "Django",
 					"imgUrl": "/Logos/django.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -215,13 +215,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-django/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-django/"
 							}
 						]
 					}
@@ -230,7 +230,7 @@
 					"key": "fastapi",
 					"label": "FastAPI",
 					"imgUrl": "/Logos/fastapi.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -240,13 +240,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-fastapi/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-fastapi/"
 							}
 						]
 					}
@@ -255,7 +255,7 @@
 					"key": "falcon",
 					"label": "Falcon",
 					"imgUrl": "/Logos/falcon.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -265,13 +265,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-falcon/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-falcon/"
 							}
 						]
 					}
@@ -280,7 +280,7 @@
 					"key": "others",
 					"label": "Others",
 					"imgUrl": "/Logos/python-others.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -290,13 +290,13 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-python/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-python/"
 							}
 						]
 					}
@@ -320,7 +320,7 @@
 					"key": "nodejs",
 					"label": "NodeJs",
 					"imgUrl": "/Logos/nodejs.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -330,19 +330,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-javascript/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-javascript/"
 							}
 						]
 					}
@@ -351,7 +351,7 @@
 					"key": "express",
 					"label": "Express",
 					"imgUrl": "/Logos/express.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -361,19 +361,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-express/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-express/"
 							}
 						]
 					}
@@ -382,7 +382,7 @@
 					"key": "nestjs",
 					"label": "NestJS",
 					"imgUrl": "/Logos/nestjs.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -392,19 +392,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nestjs/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nestjs/"
 							}
 						]
 					}
@@ -413,7 +413,7 @@
 					"key": "angular",
 					"label": "Angular",
 					"imgUrl": "/Logos/angular.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -423,19 +423,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-angular/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-angular/"
 							}
 						]
 					}
@@ -444,7 +444,7 @@
 					"key": "nextjs",
 					"label": "NextJS",
 					"imgUrl": "/Logos/nextjs.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/",
 					"question": {
 						"desc": "What is your Environment?",
 						"type": "select",
@@ -454,19 +454,19 @@
 								"key": "vm",
 								"label": "VM",
 								"imgUrl": "/Logos/vm.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
 							},
 							{
 								"key": "k8s",
 								"label": "Kubernetes",
 								"imgUrl": "/Logos/kubernetes.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
 							},
 							{
 								"key": "windows",
 								"label": "Windows",
 								"imgUrl": "/Logos/windows.svg",
-								"link": "http://localhost:3000/docs/instrumentation/opentelemetry-nextjs/"
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
 							}
 						]
 					}
@@ -481,7 +481,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "golang",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -491,19 +491,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-golang/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-golang/"
 				}
 			]
 		}
@@ -515,7 +515,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "php",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -525,19 +525,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-php/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-php/"
 				}
 			]
 		}
@@ -549,7 +549,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "dotnet",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -559,19 +559,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-dotnet/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-dotnet/"
 				}
 			]
 		}
@@ -583,7 +583,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "ruby-on-rails",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -593,19 +593,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-ruby-on-rails/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-ruby-on-rails/"
 				}
 			]
 		}
@@ -617,7 +617,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "elixir",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -627,19 +627,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-elixir/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-elixir/"
 				}
 			]
 		}
@@ -651,7 +651,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "rust",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -661,19 +661,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-rust/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-rust/"
 				}
 			]
 		}
@@ -685,7 +685,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "swift",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/",
 		"question": {
 			"desc": "What is your Environment?",
 			"type": "select",
@@ -695,19 +695,19 @@
 					"key": "vm",
 					"label": "VM",
 					"imgUrl": "/Logos/vm.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/"
 				},
 				{
 					"key": "k8s",
 					"label": "Kubernetes",
 					"imgUrl": "/Logos/kubernetes.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/"
 				},
 				{
 					"key": "windows",
 					"label": "Windows",
 					"imgUrl": "/Logos/windows.svg",
-					"link": "http://localhost:3000/docs/instrumentation/opentelemetry-swift/"
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-swift/"
 				}
 			]
 		}
@@ -719,7 +719,7 @@
 		"tags": ["apm"],
 		"module": "apm",
 		"id": "opentelemetry-cpp",
-		"link": "http://localhost:3000/docs/instrumentation/opentelemetry-cpp/"
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cpp/"
 	},
 	{
 		"dataSource": "kubernetes-pod-logs",
@@ -728,7 +728,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "kubernetes-pod-logs",
-		"link": "http://localhost:3000/docs/userguide/collect_kubernetes_pod_logs/"
+		"link": "https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/"
 	},
 	{
 		"dataSource": "docker-container-logs",
@@ -737,7 +737,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "docker-container-logs",
-		"link": "http://localhost:3000/docs/userguide/collect_docker_logs/"
+		"link": "https://signoz.io/docs/userguide/collect_docker_logs/"
 	},
 	{
 		"dataSource": "vercel-logs",
@@ -746,7 +746,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "vercel-logs",
-		"link": "http://localhost:3000/docs/userguide/vercel_logs_to_signoz/"
+		"link": "https://signoz.io/docs/userguide/vercel_logs_to_signoz/"
 	},
 	{
 		"dataSource": "heroku-logs",
@@ -755,7 +755,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "heroku-logs",
-		"link": "http://localhost:3000/docs/userguide/heroku_logs_to_signoz/"
+		"link": "https://signoz.io/docs/userguide/heroku_logs_to_signoz/"
 	},
 	{
 		"dataSource": "http-logs",
@@ -764,7 +764,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "http-logs",
-		"link": "http://localhost:3000/docs/userguide/send-logs-http/"
+		"link": "https://signoz.io/docs/userguide/send-logs-http/"
 	},
 	{
 		"dataSource": "syslogs",
@@ -773,7 +773,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "syslogs",
-		"link": "http://localhost:3000/docs/userguide/collecting_syslogs/"
+		"link": "https://signoz.io/docs/userguide/collecting_syslogs/"
 	},
 	{
 		"dataSource": "fluentd",
@@ -782,7 +782,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "fluentd",
-		"link": "http://localhost:3000/docs/userguide/fluentd_to_signoz/"
+		"link": "https://signoz.io/docs/userguide/fluentd_to_signoz/"
 	},
 	{
 		"dataSource": "fluentbit",
@@ -791,7 +791,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "fluentbit",
-		"link": "http://localhost:3000/docs/userguide/fluentbit_to_signoz/"
+		"link": "https://signoz.io/docs/userguide/fluentbit_to_signoz/"
 	},
 	{
 		"dataSource": "logstash",
@@ -800,7 +800,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "logstash",
-		"link": "http://localhost:3000/docs/userguide/logstash_to_signoz/"
+		"link": "https://signoz.io/docs/userguide/logstash_to_signoz/"
 	},
 	{
 		"dataSource": "tomcat-logs",
@@ -809,7 +809,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "tomcat-logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/"
 	},
 	{
 		"dataSource": "vector-logs",
@@ -818,7 +818,7 @@
 		"tags": ["logs"],
 		"module": "logs",
 		"id": "vector-logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/vector-logs-to-signoz/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/vector-logs-to-signoz/"
 	},
 	{
 		"dataSource": "windows-events-logs",
@@ -826,7 +826,7 @@
 		"imgUrl": "/Logos/windows-events-logs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/windows-events-log/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/windows-events-log/"
 	},
 	{
 		"dataSource": "cloudwatch-logs",
@@ -834,7 +834,7 @@
 		"imgUrl": "/Logos/cloudwatch-logs.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/userguide/send-cloudwatch-logs-to-signoz/"
+		"link": "https://signoz.io/docs/userguide/send-cloudwatch-logs-to-signoz/"
 	},
 	{
 		"dataSource": "from-log-file",
@@ -842,7 +842,7 @@
 		"imgUrl": "/Logos/from-log-file.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/aws-lambda-nodejs/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/aws-lambda-nodejs/"
 	},
 	{
 		"dataSource": "aws-lambda-nodejs-logs",
@@ -850,7 +850,7 @@
 		"imgUrl": "/Logos/lambda.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/userguide/collect_logs_from_file/"
+		"link": "https://signoz.io/docs/userguide/collect_logs_from_file/"
 	},
 	{
 		"dataSource": "python-logs-auto-instrumentation",
@@ -858,7 +858,7 @@
 		"imgUrl": "/Logos/python.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/userguide/python-logs-auto-instrumentation/"
+		"link": "https://signoz.io/docs/userguide/python-logs-auto-instrumentation/"
 	},
 	{
 		"dataSource": "otel-java-sdk",
@@ -866,7 +866,7 @@
 		"imgUrl": "/Logos/java.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/userguide/collecting_application_logs_otel_sdk_java/"
+		"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/"
 	},
 	{
 		"dataSource": "nodejs-pino-logs",
@@ -874,7 +874,7 @@
 		"imgUrl": "/Logos/pino.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/nodejs-pino-logs/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-pino-logs/"
 	},
 	{
 		"dataSource": "nodejs-winston-logs/",
@@ -882,7 +882,7 @@
 		"imgUrl": "/Logos/winston.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/nodejs-winston-logs/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
 	},
 	{
 		"dataSource": "golang-zap-logs",
@@ -890,7 +890,7 @@
 		"imgUrl": "/Logos/zap.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/zap-to-signoz/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/zap-to-signoz/"
 	},
 	{
 		"dataSource": "golang-logrus-logs",
@@ -898,7 +898,7 @@
 		"imgUrl": "/Logos/logrus.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"link": "http://localhost:3000/docs/logs-management/send-logs/logrus-to-signoz/"
+		"link": "https://signoz.io/docs/logs-management/send-logs/logrus-to-signoz/"
 	},
 	{
 		"dataSource": "hostmetrics",
@@ -906,7 +906,7 @@
 		"tags": ["infrastructure monitoring"],
 		"module": "infra-monitoring-hosts",
 		"imgUrl": "/Logos/hostmetrics.svg",
-		"link": "http://localhost:3000/docs/userguide/hostmetrics/"
+		"link": "https://signoz.io/docs/userguide/hostmetrics/"
 	},
 	{
 		"dataSource": "k8s-metrics",
@@ -914,7 +914,7 @@
 		"tags": ["infrastructure monitoring"],
 		"module": "infra-monitoring-k8s",
 		"imgUrl": "/Logos/kubernetes.svg",
-		"link": "http://localhost:3000/docs/userguide/k8s-metrics/"
+		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
 	},
 	{
 		"dataSource": "docker-container-metrics",
@@ -922,7 +922,7 @@
 		"tags": ["metrics"],
 		"module": "metrics",
 		"imgUrl": "/Logos/docker.svg",
-		"link": "http://localhost:3000/docs/userguide/k8s-metrics/"
+		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
 	},
 	{
 		"dataSource": "ec2-application-logs",
@@ -930,7 +930,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/ec2.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/ec2-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/ec2-logs/"
 	},
 	{
 		"dataSource": "ec2-infrastructure-metrics",
@@ -938,7 +938,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ec2.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/ec2-infra-metrics/"
+		"link": "https://signoz.io/docs/aws-monitoring/ec2-infra-metrics/"
 	},
 	{
 		"dataSource": "ecs-ec2",
@@ -946,7 +946,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "http://localhost:3000/docs/userguide/collecting-ecs-logs-and-metrics/"
+		"link": "https://signoz.io/docs/userguide/collecting-ecs-logs-and-metrics/"
 	},
 	{
 		"dataSource": "ecs-external",
@@ -954,7 +954,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "http://localhost:3000/docs/userguide/collecting-ecs-logs-and-metrics/"
+		"link": "https://signoz.io/docs/userguide/collecting-ecs-logs-and-metrics/"
 	},
 	{
 		"dataSource": "ecs-fargate",
@@ -962,7 +962,7 @@
 		"tags": ["AWS"],
 		"module": "metrics",
 		"imgUrl": "/Logos/ecs.svg",
-		"link": "http://localhost:3000/docs/userguide/collecting-ecs-sidecar-infra/"
+		"link": "https://signoz.io/docs/userguide/collecting-ecs-sidecar-infra/"
 	},
 	{
 		"dataSource": "eks",
@@ -970,7 +970,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/eks.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/eks/"
+		"link": "https://signoz.io/docs/aws-monitoring/eks/"
 	},
 	{
 		"dataSource": "elb-logs",
@@ -978,7 +978,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/elb.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/elb-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/elb-logs/"
 	},
 	{
 		"dataSource": "vpc-logs",
@@ -986,7 +986,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/vpc.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/vpc-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/vpc-logs/"
 	},
 	{
 		"dataSource": "rds-logs",
@@ -994,7 +994,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/rds.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/rds-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/"
 	},
 	{
 		"dataSource": "aws-lambda",
@@ -1002,7 +1002,7 @@
 		"tags": ["AWS", "logs"],
 		"module": "logs",
 		"imgUrl": "/Logos/lambda.svg",
-		"link": "http://localhost:3000/docs/aws-monitoring/lambda-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/lambda-logs/"
 	},
 	{
 		"dataSource": "vm-metrics-and-logging",
@@ -1010,7 +1010,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-vm.svg",
-		"link": "http://localhost:3000/docs/azure-monitoring/virtual-machines/vm-metrics/"
+		"link": "https://signoz.io/docs/azure-monitoring/virtual-machines/vm-metrics/"
 	},
 	{
 		"dataSource": "app-service",
@@ -1026,19 +1026,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-vm.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/app-service/logging/"
+					"link": "https://signoz.io/docs/azure-monitoring/app-service/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-vm.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/app-service/metrics/"
+					"link": "https://signoz.io/docs/azure-monitoring/app-service/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-vm.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/app-service/tracing/"
+					"link": "https://signoz.io/docs/azure-monitoring/app-service/tracing/"
 				}
 			]
 		}
@@ -1049,7 +1049,7 @@
 		"tags": ["Azure"],
 		"module": "apm",
 		"imgUrl": "/Logos/azure-app-service.svg",
-		"link": "http://localhost:3000/docs/azure-monitoring/aks/"
+		"link": "https://signoz.io/docs/azure-monitoring/aks/"
 	},
 	{
 		"dataSource": "azure-container-apps",
@@ -1065,19 +1065,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-container-apps.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-container-apps/logging/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-container-apps/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-container-apps.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-container-apps/metrics/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-container-apps/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-container-apps.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-container-apps/tracing/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-container-apps/tracing/"
 				}
 			]
 		}
@@ -1096,19 +1096,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-functions.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-fns/logging/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-fns/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-functions.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-fns/metrics/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-fns/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-functions.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-fns/tracing/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-fns/tracing/"
 				}
 			]
 		}
@@ -1119,7 +1119,7 @@
 		"tags": ["Azure"],
 		"module": "metrics",
 		"imgUrl": "/Logos/azure-sql-database-metrics.svg",
-		"link": "http://localhost:3000/docs/azure-monitoring/db-metrics/"
+		"link": "https://signoz.io/docs/azure-monitoring/db-metrics/"
 	},
 	{
 		"dataSource": "azure-blob-storage",
@@ -1135,19 +1135,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/azure-blob-storage.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-blob-storage/logging/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/azure-blob-storage.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-blob-storage/metrics/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/azure-blob-storage.svg",
-					"link": "http://localhost:3000/docs/azure-monitoring/az-blob-storage/tracing/"
+					"link": "https://signoz.io/docs/azure-monitoring/az-blob-storage/tracing/"
 				}
 			]
 		}
@@ -1166,25 +1166,25 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcp-fns/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Cloud Function Metrics",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcp-fns/fns-metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/fns-metrics/"
 				},
 				{
 					"key": "metrics",
 					"label": "Custom Metrics",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcp-fns/custom-metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/custom-metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-cloud-functions.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcp-fns/tracing/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcp-fns/tracing/"
 				}
 			]
 		}
@@ -1203,19 +1203,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-app-engine.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/app-engine/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/app-engine/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-app-engine.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/app-engine/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/app-engine/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-app-engine.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/app-engine/tracing/"
+					"link": "https://signoz.io/docs/gcp-monitoring/app-engine/tracing/"
 				}
 			]
 		}
@@ -1234,19 +1234,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-compute-engine.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/compute-engine/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-compute-engine.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/compute-engine/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-compute-engine.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/compute-engine/tracing/"
+					"link": "https://signoz.io/docs/gcp-monitoring/compute-engine/tracing/"
 				}
 			]
 		}
@@ -1265,13 +1265,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-storage.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcs/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcs/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-storage.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcs/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcs/metrics/"
 				}
 			]
 		}
@@ -1290,13 +1290,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-sql.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/cloud-sql/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/cloud-sql/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-sql.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/cloud-sql/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/cloud-sql/metrics/"
 				}
 			]
 		}
@@ -1315,13 +1315,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcp-clb/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcp-clb/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-load-balancer.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gcp-clb/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gcp-clb/metrics/"
 				}
 			]
 		}
@@ -1340,13 +1340,13 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-vpc.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/vpc/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/vpc/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-vpc.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/vpc/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/vpc/metrics/"
 				}
 			]
 		}
@@ -1365,19 +1365,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-gke.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-gke.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gke/gke-logging-and-metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-gke.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/gke/gke-tracing/"
+					"link": "https://signoz.io/docs/gcp-monitoring/gke/gke-tracing/"
 				}
 			]
 		}
@@ -1396,19 +1396,19 @@
 					"key": "logging",
 					"label": "Logs",
 					"imgUrl": "/Logos/gcp-cloud-run.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/cloud-run/logging/"
+					"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/logging/"
 				},
 				{
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-run.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/cloud-run/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/metrics/"
 				},
 				{
 					"key": "tracing",
 					"label": "Traces",
 					"imgUrl": "/Logos/gcp-cloud-run.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/cloud-run/tracing/"
+					"link": "https://signoz.io/docs/gcp-monitoring/cloud-run/tracing/"
 				}
 			]
 		}
@@ -1427,7 +1427,7 @@
 					"key": "metrics",
 					"label": "Metrics",
 					"imgUrl": "/Logos/gcp-cloud-monitoring.svg",
-					"link": "http://localhost:3000/docs/gcp-monitoring/cloud-monitoring/metrics/"
+					"link": "https://signoz.io/docs/gcp-monitoring/cloud-monitoring/metrics/"
 				}
 			]
 		}
@@ -1438,7 +1438,7 @@
 		"imgUrl": "/Logos/llm-monitoring.svg",
 		"tags": ["LLM Monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/community/llm-monitoring/"
+		"link": "https://signoz.io/docs/community/llm-monitoring/"
 	},
 	{
 		"dataSource": "android-java",
@@ -1446,7 +1446,7 @@
 		"imgUrl": "/Logos/android-java-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
+		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-java/"
 	},
 	{
 		"dataSource": "android-kotlin",
@@ -1454,7 +1454,7 @@
 		"imgUrl": "/Logos/android-kotlin-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
+		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-kotlin/"
 	},
 	{
 		"dataSource": "flutter",
@@ -1462,7 +1462,7 @@
 		"imgUrl": "/Logos/flutter-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
+		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-flutter/"
 	},
 	{
 		"dataSource": "swift",
@@ -1470,7 +1470,7 @@
 		"imgUrl": "/Logos/swift-monitoring.svg",
 		"tags": ["mobile app monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
+		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
 	},
 	{
 		"dataSource": "web-vitals",
@@ -1478,7 +1478,7 @@
 		"imgUrl": "/Logos/llm-monitoring.svg",
 		"tags": ["Frontend Monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/frontend-monitoring/opentelemetry-web-vitals/"
+		"link": "https://signoz.io/docs/frontend-monitoring/opentelemetry-web-vitals/"
 	},
 	{
 		"dataSource": "document-load",
@@ -1486,6 +1486,6 @@
 		"imgUrl": "/Logos/document-load.svg",
 		"tags": ["Frontend Monitoring"],
 		"module": "apm",
-		"link": "http://localhost:3000/docs/frontend-monitoring/document-load/"
+		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
 	}
 ]
