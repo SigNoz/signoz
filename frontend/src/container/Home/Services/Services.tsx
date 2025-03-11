@@ -6,7 +6,13 @@ import { useAppContext } from 'providers/App/App';
 import ServiceMetrics from './ServiceMetrics';
 import ServiceTraces from './ServiceTraces';
 
-function Services(): JSX.Element {
+function Services({
+	onUpdateChecklistDoneItem,
+	isWelcomeChecklistSkipped,
+}: {
+	onUpdateChecklistDoneItem: (itemKey: string) => void;
+	isWelcomeChecklistSkipped: boolean;
+}): JSX.Element {
 	const { featureFlags } = useAppContext();
 	const isSpanMetricEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
@@ -15,7 +21,17 @@ function Services(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="home-services-container">
-				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
+				{isSpanMetricEnabled ? (
+					<ServiceMetrics
+						onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
+						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+					/>
+				) : (
+					<ServiceTraces
+						onUpdateChecklistDoneItem={onUpdateChecklistDoneItem}
+						isWelcomeChecklistSkipped={isWelcomeChecklistSkipped}
+					/>
+				)}
 			</div>
 		</Sentry.ErrorBoundary>
 	);

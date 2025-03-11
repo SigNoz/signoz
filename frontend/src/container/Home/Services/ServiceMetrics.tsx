@@ -12,7 +12,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -23,7 +23,13 @@ import { Tags } from 'types/reducer/trace';
 
 import { columns } from './constants';
 
-function ServiceMetrics(): JSX.Element {
+function ServiceMetrics({
+	onUpdateChecklistDoneItem,
+	isWelcomeChecklistSkipped,
+}: {
+	onUpdateChecklistDoneItem: (itemKey: string) => void;
+	isWelcomeChecklistSkipped: boolean;
+}): JSX.Element {
 	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -110,6 +116,12 @@ function ServiceMetrics(): JSX.Element {
 	});
 
 	const top5Services = sortedServices?.slice(0, 5);
+
+	useEffect(() => {
+		if (sortedServices.length > 0 && !isWelcomeChecklistSkipped) {
+			onUpdateChecklistDoneItem('SETUP_SERVICES');
+		}
+	}, [sortedServices, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
