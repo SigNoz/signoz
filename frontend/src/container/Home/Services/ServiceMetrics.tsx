@@ -44,7 +44,6 @@ function ServiceMetrics({
 	);
 
 	const [isError, setIsError] = useState(false);
-	const [error, setError] = useState<Error | null>(null);
 
 	const queryKey: QueryKey = [
 		minTime,
@@ -87,9 +86,8 @@ function ServiceMetrics({
 			keepPreviousData: true,
 			enabled: true,
 			refetchOnMount: false,
-			onError: (error) => {
+			onError: () => {
 				setIsError(true);
-				setError(error);
 			},
 		},
 	);
@@ -201,8 +199,6 @@ function ServiceMetrics({
 			</Card>
 		);
 	}
-
-	console.log('error', error);
 
 	return (
 		<Card className="dashboards-list-card home-data-card">
