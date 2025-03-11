@@ -25,10 +25,10 @@ import { columns } from './constants';
 
 function ServiceMetrics({
 	onUpdateChecklistDoneItem,
-	isWelcomeChecklistSkipped,
+	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
-	isWelcomeChecklistSkipped: boolean;
+	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -118,10 +118,10 @@ function ServiceMetrics({
 	const top5Services = sortedServices?.slice(0, 5);
 
 	useEffect(() => {
-		if (sortedServices.length > 0 && !isWelcomeChecklistSkipped) {
+		if (sortedServices.length > 0 && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_SERVICES');
 		}
-	}, [sortedServices, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
+	}, [sortedServices, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

@@ -18,10 +18,10 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
-	isWelcomeChecklistSkipped,
+	loadingUserPreferences,
 }: {
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
-	isWelcomeChecklistSkipped: boolean;
+	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
 	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>([]);
@@ -79,10 +79,10 @@ export default function SavedViews({
 	};
 
 	useEffect(() => {
-		if (hasSavedViews && !isWelcomeChecklistSkipped) {
+		if (hasSavedViews && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_SAVED_VIEWS');
 		}
-	}, [hasSavedViews, onUpdateChecklistDoneItem, isWelcomeChecklistSkipped]);
+	}, [hasSavedViews, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">

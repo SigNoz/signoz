@@ -9081,12 +9081,12 @@ fraction.js@^4.3.7:
   resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-4.3.7.tgz#06ca0085157e42fda7f9e726e79fefc4068840f7"
   integrity sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==
 
-framer-motion@^12.4.10:
-  version "12.4.10"
-  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-12.4.10.tgz#5b2aa0a18f5563edc9603c2c1cbc9d6f19a110a2"
-  integrity sha512-3Msuyjcr1Pb5hjkn4EJcRe1HumaveP0Gbv4DBMKTPKcV/1GSMkQXj+Uqgneys+9DPcZM18Hac9qY9iUEF5LZtg==
+framer-motion@^12.4.13:
+  version "12.4.13"
+  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-12.4.13.tgz#1efd954f95e6a54685b660929c00f5a61e35256a"
+  integrity sha512-JHSXIdL7WOTCSEb2UUurHURV85pWTn6UIg+iWLBhH5SFndbjni8CEQcxwsBwOs3RHZ83TkE4xoxb9cHsFPY9yQ==
   dependencies:
-    motion-dom "^12.4.10"
+    motion-dom "^12.4.11"
     motion-utils "^12.4.10"
     tslib "^2.4.0"
 
@@ -12772,10 +12772,10 @@ moment@^2.29.4:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.4.tgz#3dbe052889fe7c1b2ed966fcb3a77328964ef108"
   integrity sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==
 
-motion-dom@^12.4.10:
-  version "12.4.10"
-  resolved "https://registry.yarnpkg.com/motion-dom/-/motion-dom-12.4.10.tgz#025886748e33e8ee77742eea7bd088b202e7c83a"
-  integrity sha512-ISP5u6FTceoD6qKdLupIPU/LyXBrxGox+P2e3mBbm1+pLdlBbwv01YENJr7+1WZnW5ucVKzFScYsV1eXTCG4Xg==
+motion-dom@^12.4.11:
+  version "12.4.11"
+  resolved "https://registry.yarnpkg.com/motion-dom/-/motion-dom-12.4.11.tgz#0419c8686cda4d523f08249deeb8fa6683a9b9d3"
+  integrity sha512-wstlyV3pktgFjqsjbXMo1NX9hQD9XTVqxQNvfc+FREAgxr3GVzgWIEKvbyyNlki3J1jmmh+et9X3aCKeqFPcxA==
   dependencies:
     motion-utils "^12.4.10"
 
@@ -12784,12 +12784,12 @@ motion-utils@^12.4.10:
   resolved "https://registry.yarnpkg.com/motion-utils/-/motion-utils-12.4.10.tgz#3d93acea5454419eaaad8d5e5425cb71cbfa1e7f"
   integrity sha512-NPwZd94V013SwRf++jMrk2+HEBgPkeIE2RiOzhAuuQlqxMJPkKt/LXVh6Upl+iN8oarSGD2dlY5/bqgsYXDABA==
 
-motion@12.4.10:
-  version "12.4.10"
-  resolved "https://registry.yarnpkg.com/motion/-/motion-12.4.10.tgz#d00c2b2c777032d1ac0d91ba2a7dd5bc602f6f54"
-  integrity sha512-AM21Lyfn7ZHO+nBuHJEA2REFgS3kUM83CLZnzM0ZY1/sVeKGkCtV4LF4O/YsQXyZ9mrUrrnTaUkKquS4eaIYjg==
+motion@12.4.13:
+  version "12.4.13"
+  resolved "https://registry.yarnpkg.com/motion/-/motion-12.4.13.tgz#4c9f990ca0eace167c0bd76034a199e82ba9c676"
+  integrity sha512-8ehpE6Sd8ack6jLLzweW6RwCBQoASf+yVu8aUPFNKHsJIVejJaBPGsMiswcpfzHeCusZ/ztNIKbgoEn7ruJaOw==
   dependencies:
-    framer-motion "^12.4.10"
+    framer-motion "^12.4.13"
     tslib "^2.4.0"
 
 mozjpeg@^7.0.0:
