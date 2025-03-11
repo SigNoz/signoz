@@ -3,6 +3,7 @@ import '../Summary/Summary.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Skeleton, Tooltip, Typography } from 'antd';
+import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, X } from 'lucide-react';
@@ -130,7 +131,10 @@ function MetricDetails({
 					<TopAttributes items={top5Attributes} title="Top 5 Attributes" />
 					<Metadata
 						metricName={metric?.name}
-						metadata={metric.metadata}
+						metadata={{
+							...metric.metadata,
+							temporality: Temporality.CUMULATIVE,
+						}}
 						refetchMetricDetails={refetchMetricDetails}
 					/>
 					<AllAttributes metricName={metric?.name} attributes={metric.attributes} />

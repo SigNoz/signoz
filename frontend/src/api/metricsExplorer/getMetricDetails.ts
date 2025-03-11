@@ -20,9 +20,15 @@ export interface MetricDetails {
 		metric_type: MetricType;
 		description: string;
 		unit: string;
+		temporality: Temporality;
 	};
 	alerts: MetricDetailsAlert[] | null;
 	dashboards: MetricDetailsDashboard[] | null;
+}
+
+export enum Temporality {
+	CUMULATIVE = 'cumulative',
+	DELTA = 'delta',
 }
 
 export interface MetricDetailsAttribute {
