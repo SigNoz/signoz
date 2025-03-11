@@ -250,7 +250,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApiGateway_Latency_max"
+            "query": ""
           }
         ],
         "queryType": "builder"
@@ -474,7 +474,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApiGateway_Latency_max"
+            "query": ""
           }
         ],
         "queryType": "builder"
@@ -698,7 +698,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApiGateway_Latency_max"
+            "query": ""
           }
         ],
         "queryType": "builder"
@@ -922,7 +922,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApiGateway_Latency_max"
+            "query": ""
           }
         ],
         "queryType": "builder"
@@ -1146,7 +1146,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApiGateway_Latency_max"
+            "query": ""
           }
         ],
         "queryType": "builder"
@@ -1370,7 +1370,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "aws_ApiGateway_Latency_max"
+            "query": ""
           }
         ],
         "queryType": "builder"
