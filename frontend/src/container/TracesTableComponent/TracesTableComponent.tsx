@@ -1,7 +1,7 @@
 import './TracesTableComponent.styles.scss';
 
-import { Table } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
@@ -54,9 +54,14 @@ function TracesTableComponent({
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const columns = getListColumns(
-		widget.selectedTracesFields || [],
-		formatTimezoneAdjustedTimestamp,
+	const columns = useMemo(
+		() =>
+			getListColumns(
+				widget.selectedTracesFields || [],
+				formatTimezoneAdjustedTimestamp,
+			),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widget],
 	);
 
 	const dataLength =
@@ -116,16 +121,18 @@ function TracesTableComponent({
 		<div className="traces-table">
 			<div className="resize-table">
 				<OverlayScrollbar>
-					<Table
+					<ResizeTable
 						pagination={false}
 						tableLayout="fixed"
-						scroll={{ x: true }}
+						scroll={{ x: 'max-content' }}
 						loading={queryResponse.isFetching}
 						style={tableStyles}
 						dataSource={transformedQueryTableData}
 						columns={columns}
 						onRow={handleRow}
 						sticky
+						widgetId={widget.id}
+						shouldPersistColumnWidths
 					/>
 				</OverlayScrollbar>
 			</div>

@@ -52,9 +52,12 @@ function ResizeTable({
 
 	const handleResize = useCallback(
 		(index: number) => (
-			_e: SyntheticEvent<Element>,
+			e: SyntheticEvent<Element>,
 			{ size }: ResizeCallbackData,
 		): void => {
+			e.preventDefault();
+			e.stopPropagation();
+
 			const newColumns = [...columnsData];
 			newColumns[index] = {
 				...newColumns[index],

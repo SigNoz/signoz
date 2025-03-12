@@ -1,9 +1,9 @@
 import './LogsPanelComponent.styles.scss';
 
-import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
@@ -79,9 +79,14 @@ function LogsPanelComponent({
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const columns = getLogPanelColumnsList(
-		widget.selectedLogFields,
-		formatTimezoneAdjustedTimestamp,
+	const columns = useMemo(
+		() =>
+			getLogPanelColumnsList(
+				widget.selectedLogFields,
+				formatTimezoneAdjustedTimestamp,
+			),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widget],
 	);
 
 	const dataLength =
@@ -216,7 +221,7 @@ function LogsPanelComponent({
 			<div className="logs-table">
 				<div className="resize-table">
 					<OverlayScrollbar>
-						<Table
+						<ResizeTable
 							pagination={false}
 							tableLayout="fixed"
 							scroll={{ x: `calc(50vw - 10px)` }}
@@ -226,6 +231,8 @@ function LogsPanelComponent({
 							dataSource={flattenLogData}
 							columns={columns}
 							onRow={handleRow}
+							widgetId={widget.id}
+							shouldPersistColumnWidths
 						/>
 					</OverlayScrollbar>
 				</div>
