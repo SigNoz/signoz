@@ -241,22 +241,28 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
+			isDashboardLocked ||
+			!saveLayoutPermission ||
+			updateDashboardMutation.isLoading ||
+			isDashboardFetching
+		) {
+			return;
+		}
+
+		const shouldSaveLayout =
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
-			!isEqual(layouts, dashboardLayout) &&
-			!isDashboardLocked &&
-			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading &&
-			!isDashboardFetching
-		) {
+			!isEqual(layouts, dashboardLayout);
+
+		const shouldSaveColumnWidths = hasColumnWidthsChanged(
+			columnWidths,
+			selectedDashboard,
+		);
+
+		if (shouldSaveLayout || shouldSaveColumnWidths) {
 			onSaveHandler();
 		}
-
-		if (hasColumnWidthsChanged(columnWidths, selectedDashboard)) {
-			onSaveHandler();
-		}
-
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboardLayout, columnWidths]);
 
