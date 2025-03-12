@@ -27,10 +27,10 @@ function Metadata({
 		metricMetadata,
 		setMetricMetadata,
 	] = useState<UpdateMetricMetadataProps>({
-		metricType: metadata.metric_type,
-		description: metadata.description,
-		unit: metadata.unit,
-		temporality: metadata?.temporality,
+		metricType: metadata?.metric_type || MetricType.SUM,
+		description: metadata?.description || '',
+		unit: metadata?.unit || '',
+		temporality: metadata?.temporality || Temporality.CUMULATIVE,
 	});
 	const { notifications } = useNotifications();
 	const {
