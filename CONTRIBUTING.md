@@ -1,17 +1,13 @@
 # Contributing Guidelines
 
-## Welcome to SigNoz Contributing section 🎉
-
 Hi there! We're thrilled that you'd like to contribute to this project, thank you for your interest. Whether it's a bug report, new feature, correction, or additional documentation, we greatly value feedback and contributions from our community.
 
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary information to effectively respond to your bug report or contribution.
 
-### Finding contributions to work on 💬
+## How can I contribute?
 
-Looking at the existing issues is a great way to find something to contribute on. 
-Also, have a look at these [good first issues label](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with.
+Looking at the existing issues is a great way to find something to contribute on.  Also, have a look at these [good first issues label](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with.
 
-### Creating Issue(s)
 Before making any significant changes and before filing a new issue, please check [existing open](https://github.com/SigNoz/signoz/issues?q=is%3Aopen+is%3Aissue), or [recently closed](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aclosed) issues to make sure somebody else hasn't already reported the issue. Please try to include as much information as you can. 
 
 **Issue Types** - [Bug Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=bug_report.md&title=) | [Feature Request](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=feature_request.md&title=) | [Performance Issue Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=performance-issue-report.md&title=) | [Request Dashboard](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=dashboard-template&projects=&template=request_dashboard.md&title=%5BDashboard+Request%5D+) | [Report a Security Vulnerability](https://github.com/SigNoz/signoz/security/policy)
