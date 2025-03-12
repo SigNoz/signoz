@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -142,7 +143,7 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	})
 
 	g.Go(func() error {
-		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName)
+		attributes, err := receiver.reader.GetAttributesForMetricName(ctx, metricName, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -462,7 +463,7 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 
 	// Run the two queries concurrently using the derived context.
 	g.Go(func() error {
-		attrs, apiErr := receiver.reader.GetAttributesForMetricName(egCtx, params.MetricName)
+		attrs, apiErr := receiver.reader.GetAttributesForMetricName(egCtx, params.MetricName, &params.Start, &params.End)
 		if apiErr != nil {
 			return apiErr
 		}
@@ -494,16 +495,17 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 	}
 
 	// Build a set of attribute keys for O(1) lookup.
-	attributeKeys := make(map[string]bool)
+	attributeKeys := make(map[string]struct{})
 	for _, attr := range attributes {
-		attributeKeys[attr.Key] = true
+		attributeKeys[attr.Key] = struct{}{}
 	}
 
 	// Filter resource attributes that are present in attributes.
 	var validAttrs []string
 	for attrName := range resourceAttrs {
-		if attributeKeys[attrName] {
-			validAttrs = append(validAttrs, attrName)
+		normalizedAttrName := strings.ReplaceAll(attrName, ".", "_")
+		if _, ok := attributeKeys[normalizedAttrName]; ok {
+			validAttrs = append(validAttrs, normalizedAttrName)
 		}
 	}
 

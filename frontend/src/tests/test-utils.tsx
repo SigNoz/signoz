@@ -16,6 +16,7 @@ import thunk from 'redux-thunk';
 import store from 'store';
 import {
 	LicenseEvent,
+	LicensePlatform,
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
@@ -115,6 +116,7 @@ export function getAppContextMock(
 			key: 'does-not-matter',
 			state: LicenseState.ACTIVE,
 			status: LicenseStatus.VALID,
+			platform: LicensePlatform.CLOUD,
 		},
 		isFetchingActiveLicenseV3: false,
 		activeLicenseV3FetchError: null,
@@ -126,7 +128,6 @@ export function getAppContextMock(
 			name: 'John Doe',
 			profilePictureURL: '',
 			createdAt: 1732544623,
-			flags: {},
 			organization: 'Nightswatch',
 			orgId: 'does-not-matter-id',
 			role: role as ROLES,
@@ -324,7 +325,6 @@ export function getAppContextMock(
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		updateUser: jest.fn(),
-		setUserFlags: jest.fn(),
 		updateOrg: jest.fn(),
 		updateOrgPreferences: jest.fn(),
 		licensesRefetch: jest.fn(),

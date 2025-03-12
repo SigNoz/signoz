@@ -71,6 +71,7 @@ const (
 	signozTraceTableName      = "distributed_signoz_index_v2"
 	signozTraceLocalTableName = "signoz_index_v2"
 	signozMetricDBName        = "signoz_metrics"
+	signozMetadataDbName      = "signoz_metadata"
 
 	signozSampleLocalTableName = "samples_v4"
 	signozSampleTableName      = "distributed_samples_v4"
@@ -96,9 +97,14 @@ const (
 	signozTSLocalTableNameV41Week = "time_series_v4_1week"
 	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
+<<<<<<< HEAD
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
 
+=======
+	signozTableAttributesMetadata         = "distributed_attributes_metadata"
+	signozLocalTableAttributesMetadata    = "attributes_metadata"
+>>>>>>> fb9b47ec90dd354c9fab12aca9200b185b358bb7
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
 	maxProgressiveSteps                   = 4
@@ -167,6 +173,8 @@ type ClickHouseReader struct {
 
 	fluxIntervalForTraceDetail time.Duration
 	cache                      cache.Cache
+	metadataDB                 string
+	metadataTable              string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -262,6 +270,8 @@ func NewReaderFromClickhouseConnection(
 
 		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		cache:                      cache,
+		metadataDB:                 options.primary.MetadataDB,
+		metadataTable:              options.primary.MetadataTable,
 	}
 }
 
@@ -2040,9 +2050,6 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-// SetTTL sets the TTL for traces or metrics or logs tables.
-// This is an async API which creates goroutines to set TTL.
-// Status of TTL update is tracked with ttl_status table in sqlite db.
 // SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
@@ -4160,6 +4167,97 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	return &response, nil
 }
 
+func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.FilterAttributeValueRequest) ([]string, error) {
+	var andConditions []string
+
+	andConditions = append(andConditions, fmt.Sprintf("unix_milli >= %d", req.StartTimeMillis))
+	andConditions = append(andConditions, fmt.Sprintf("unix_milli <= %d", req.EndTimeMillis))
+
+	if len(req.ExistingFilterItems) != 0 {
+		for _, item := range req.ExistingFilterItems {
+			// we only support string for related values
+			if item.Key.DataType != v3.AttributeKeyDataTypeString {
+				continue
+			}
+
+			var colName string
+			switch item.Key.Type {
+			case v3.AttributeKeyTypeResource:
+				colName = "resource_attributes"
+			case v3.AttributeKeyTypeTag:
+				colName = "attributes"
+			default:
+				// we only support resource and tag for related values as of now
+				continue
+			}
+			// IN doesn't make use of map value index, we convert it to = or !=
+			operator := item.Operator
+			if v3.FilterOperator(strings.ToLower(string(item.Operator))) == v3.FilterOperatorIn {
+				operator = "="
+			} else if v3.FilterOperator(strings.ToLower(string(item.Operator))) == v3.FilterOperatorNotIn {
+				operator = "!="
+			}
+			addCondition := func(val string) {
+				andConditions = append(andConditions, fmt.Sprintf("mapContains(%s, '%s') AND %s['%s'] %s %s", colName, item.Key.Key, colName, item.Key.Key, operator, val))
+			}
+			switch v := item.Value.(type) {
+			case string:
+				fmtVal := utils.ClickHouseFormattedValue(v)
+				addCondition(fmtVal)
+			case []string:
+				for _, val := range v {
+					fmtVal := utils.ClickHouseFormattedValue(val)
+					addCondition(fmtVal)
+				}
+			case []interface{}:
+				for _, val := range v {
+					fmtVal := utils.ClickHouseFormattedValue(val)
+					addCondition(fmtVal)
+				}
+			}
+		}
+	}
+	whereClause := strings.Join(andConditions, " AND ")
+
+	var selectColumn string
+	switch req.TagType {
+	case v3.TagTypeResource:
+		selectColumn = "resource_attributes" + "['" + req.FilterAttributeKey + "']"
+	case v3.TagTypeTag:
+		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+	default:
+		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+	}
+
+	filterSubQuery := fmt.Sprintf(
+		"SELECT DISTINCT %s FROM %s.%s WHERE %s LIMIT 100",
+		selectColumn,
+		r.metadataDB,
+		r.metadataTable,
+		whereClause,
+	)
+	zap.L().Debug("filterSubQuery for related values", zap.String("query", filterSubQuery))
+
+	rows, err := r.db.Query(ctx, filterSubQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeValues []string
+	for rows.Next() {
+		var value string
+		if err := rows.Scan(&value); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if value != "" {
+			attributeValues = append(attributeValues, value)
+		}
+	}
+
+	return attributeValues, nil
+}
+
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var err error
 	var filterValueColumn string
@@ -4258,6 +4356,13 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	}
+
+	if req.IncludeRelated {
+		relatedValues, _ := r.FetchRelatedValues(ctx, req)
+		attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+			StringAttributeValues: relatedValues,
 		}
 	}
 
@@ -4938,6 +5043,13 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	}
+
+	if req.IncludeRelated {
+		relatedValues, _ := r.FetchRelatedValues(ctx, req)
+		attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+			StringAttributeValues: relatedValues,
 		}
 	}
 
@@ -5626,7 +5738,8 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err := r.db.Query(ctx, query, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText))
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText)) //only showing past day data
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -5648,6 +5761,9 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 		}
 		response = append(response, key)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
 	return &response, nil
 }
 
@@ -5661,7 +5777,8 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err = r.db.Query(valueCtx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff()) //only showing past day data
 
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
@@ -5676,6 +5793,9 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 		}
 		attributeValues = append(attributeValues, atrributeValue)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
 	return attributeValues, nil
 }
 
@@ -5687,7 +5807,8 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 
-	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -5699,6 +5820,9 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		response = append(response, attributeKey)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	return response, nil
 }
@@ -5709,8 +5833,8 @@ func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *met
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-
-	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -5722,6 +5846,9 @@ func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *met
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		response = append(response, attributeKey)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	return response, nil
 }
@@ -5733,7 +5860,8 @@ FROM %s.%s
 WHERE metric_name = ?
 `, signozMetricDBName, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME)
 	var dataPoints uint64
-	err := r.db.QueryRow(ctx, query, metricName).Scan(&dataPoints)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.QueryRow(valueCtx, query, metricName).Scan(&dataPoints)
 	if err != nil {
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -5747,7 +5875,8 @@ FROM %s.%s
 WHERE metric_name = ?
 `, signozMetricDBName, signozSampleTableName)
 	var lastReceived int64
-	err := r.db.QueryRow(ctx, query, metricName).Scan(&lastReceived)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.QueryRow(valueCtx, query, metricName).Scan(&lastReceived)
 	if err != nil {
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -5760,52 +5889,60 @@ func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, 
 FROM %s.%s
 WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
 	var timeSeriesCount uint64
-	err := r.db.QueryRow(ctx, query, metricName).Scan(&timeSeriesCount)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.QueryRow(valueCtx, query, metricName).Scan(&timeSeriesCount)
 	if err != nil {
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	return timeSeriesCount, nil
 }
 
-func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError) {
-	query := fmt.Sprintf(`
+func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string, start, end *int64) (*[]metrics_explorer.Attribute, *model.ApiError) {
+	const baseQueryTemplate = `
 SELECT 
     kv.1 AS key,
-    arrayMap(x -> trim(BOTH '\"' FROM x), groupUniqArray(10000)(kv.2)) AS values,
+    arrayMap(x -> trim(BOTH '"' FROM x), groupUniqArray(10000)(kv.2)) AS values,
     length(groupUniqArray(10000)(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
-WHERE metric_name = ?
-GROUP BY kv.1
-ORDER BY valueCount DESC;
-    `, signozMetricDBName, signozTSTableNameV41Week)
+WHERE metric_name = ?`
 
-	rows, err := r.db.Query(ctx, query, metricName)
+	var args []interface{}
+	args = append(args, metricName)
+	tableName := signozTSTableNameV41Week
+
+	if start != nil && end != nil {
+		st, en, tsTable, _ := utils.WhichTSTableToUse(*start, *end)
+		*start, *end, tableName = st, en, tsTable
+		args = append(args, *start, *end)
+	} else if start == nil && end == nil {
+		tableName = signozTSTableNameV41Week
+	}
+
+	query := fmt.Sprintf(baseQueryTemplate, signozMetricDBName, tableName)
+
+	if start != nil && end != nil {
+		query += " AND unix_milli BETWEEN ? AND ?"
+	}
+
+	query += "\nGROUP BY kv.1\nORDER BY valueCount DESC;"
+
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	defer rows.Close() // Ensure the rows are closed
+	defer rows.Close()
 
 	var attributesList []metrics_explorer.Attribute
 	for rows.Next() {
-		var key string
-		var values []string
-		var valueCount uint64
-
-		// Manually scan each value into its corresponding variable
-		if err := rows.Scan(&key, &values, &valueCount); err != nil {
+		var attr metrics_explorer.Attribute
+		if err := rows.Scan(&attr.Key, &attr.Value, &attr.ValueCount); err != nil {
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-
-		// Append the scanned values into the struct
-		attributesList = append(attributesList, metrics_explorer.Attribute{
-			Key:        key,
-			Value:      values,
-			ValueCount: valueCount,
-		})
+		attributesList = append(attributesList, attr)
 	}
 
-	// Handle any errors encountered while scanning rows
 	if err := rows.Err(); err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -5818,7 +5955,8 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 	query := fmt.Sprintf("SELECT uniq(fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV4, metricName)
 	var timeSeries uint64
 	// Using QueryRow instead of Select since we're only expecting a single value
-	err := r.db.QueryRow(ctx, query, milli).Scan(&timeSeries)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.QueryRow(valueCtx, query, milli).Scan(&timeSeries)
 	if err != nil {
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6390,6 +6528,10 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		}
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+
 	// Normalize the attribute similarity scores
 	normalizeMap := utils.NormalizeMap(attributeMap)
 	for metric := range result {
@@ -6404,20 +6546,22 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 }
 
 func (r *ClickHouseReader) GetMetricsAllResourceAttributes(ctx context.Context, start int64, end int64) (map[string]uint64, *model.ApiError) {
+	start, end, attTable, _ := utils.WhichAttributesTableToUse(start, end)
 	query := fmt.Sprintf(`SELECT 
     key, 
     count(distinct value) AS distinct_value_count
 FROM (
     SELECT key, value
-    FROM signoz_metadata.attributes_metadata
+    FROM %s.%s
     ARRAY JOIN 
         arrayConcat(mapKeys(resource_attributes)) AS key,
         arrayConcat(mapValues(resource_attributes)) AS value
     WHERE unix_milli between ? and ?
 ) 
 GROUP BY key
-ORDER BY distinct_value_count DESC;`)
-	rows, err := r.db.Query(ctx, query, start, end)
+ORDER BY distinct_value_count DESC;`, signozMetadataDbName, attTable)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6463,8 +6607,8 @@ func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_e
                 AND unix_milli >= ?
                 AND unix_milli < ?
                 ORDER BY fingerprint DESC, unix_milli DESC`, signozMetricDBName, localTsTable, fingerprintsString)
-
-	rows, err := r.db.Query(ctx, query, start, end, req.MetricName, start, end)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query, start, end, req.MetricName, start, end)
 	if err != nil {
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6556,12 +6700,12 @@ FROM
 )
 GROUP BY %s
 ORDER BY length(fingerprints) DESC, rand()
-LIMIT 40`,
+LIMIT 40`, // added rand to get diff value every time we run this query
 		strings.Join(jsonExtracts, ", "),
 		signozMetricDBName, tsTable,
 		strings.Join(groupBys, ", "))
-
-	rows, err := r.db.Query(ctx, query,
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	rows, err := r.db.Query(valueCtx, query,
 		req.MetricName,
 		start,
 		end,
@@ -6580,19 +6724,12 @@ LIMIT 40`,
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 		}
 
-		if len(fingerprints) == 0 {
+		if len(fingerprints) == 0 || len(fingerprints)+len(fingerprintsList) < 40 {
 			fingerprints = append(fingerprints, fingerprintsList...)
-			if len(fingerprints) > 40 {
-				break
-			} else {
-				continue
-			}
-		} else {
-			if len(fingerprints)+len(fingerprintsList) < 40 {
-				fingerprints = append(fingerprints, fingerprintsList...)
-			} else {
-				continue
-			}
+		}
+
+		if len(fingerprints) > 40 {
+			break
 		}
 
 	}
