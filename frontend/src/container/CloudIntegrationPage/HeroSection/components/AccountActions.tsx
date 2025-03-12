@@ -3,7 +3,8 @@ import './AccountActions.style.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
-import { useAwsAccounts } from 'hooks/integrations/aws/useAwsAccounts';
+import logEvent from 'api/common/logEvent';
+import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -159,16 +160,39 @@ function AccountActions(): JSX.Element {
 	useEffect(() => {
 		if (initialAccount !== null) {
 			setActiveAccount(initialAccount);
-			urlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
-			navigate({ search: urlQuery.toString() });
+			const latestUrlQuery = new URLSearchParams(window.location.search);
+			latestUrlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
+			navigate({ search: latestUrlQuery.toString() });
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+	const startAccountConnectionAttempt = (): void => {
+		setIsIntegrationModalOpen(true);
+		logEvent('AWS Integration: Account connection attempt started', {});
+	};
+
 	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
 		false,
 	);
+	const openAccountSettings = (): void => {
+		setIsAccountSettingsModalOpen(true);
+		logEvent('AWS Integration: Account settings viewed', {
+			cloudAccountId: activeAccount?.cloud_account_id,
+		});
+	};
+
+	// log telemetry event when an account is viewed.
+	useEffect(() => {
+		if (activeAccount) {
+			logEvent('AWS Integration: Account viewed', {
+				cloudAccountId: activeAccount?.cloud_account_id,
+				status: activeAccount?.status,
+				enabledRegions: activeAccount?.config?.regions,
+			});
+		}
+	}, [activeAccount]);
 
 	const selectOptions: SelectProps['options'] = useMemo(
 		() =>
@@ -195,8 +219,8 @@ function AccountActions(): JSX.Element {
 						navigate({ search: urlQuery.toString() });
 					}
 				}}
-				onIntegrationModalOpen={(): void => setIsIntegrationModalOpen(true)}
-				onAccountSettingsModalOpen={(): void => setIsAccountSettingsModalOpen(true)}
+				onIntegrationModalOpen={startAccountConnectionAttempt}
+				onAccountSettingsModalOpen={openAccountSettings}
 			/>
 
 			{isIntegrationModalOpen && (

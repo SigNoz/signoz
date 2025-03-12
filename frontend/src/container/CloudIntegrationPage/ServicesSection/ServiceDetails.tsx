@@ -5,10 +5,11 @@ import CloudServiceDashboards from 'container/CloudIntegrationPage/ServicesSecti
 import CloudServiceDataCollected from 'container/CloudIntegrationPage/ServicesSection/CloudServiceDataCollected';
 import { IServiceStatus } from 'container/CloudIntegrationPage/ServicesSection/types';
 import dayjs from 'dayjs';
-import { useServiceDetails } from 'hooks/integrations/aws/useServiceDetails';
+import { useServiceDetails } from 'hooks/integration/aws/useServiceDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import logEvent from '../../../api/common/logEvent';
 import ConfigureServiceModal from './ConfigureServiceModal';
 
 const getStatus = (
@@ -57,6 +58,13 @@ function ServiceDetails(): JSX.Element | null {
 	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
 		false,
 	);
+	const openServiceConfigModal = (): void => {
+		setIsConfigureServiceModalOpen(true);
+		logEvent('AWS Integration: Service settings viewed', {
+			cloudAccountId,
+			serviceId,
+		});
+	};
 
 	const { data: serviceDetailsData, isLoading } = useServiceDetails(
 		serviceId || '',
@@ -79,6 +87,16 @@ function ServiceDetails(): JSX.Element | null {
 		() => !!config?.logs?.enabled || !!config?.metrics?.enabled,
 		[config],
 	);
+
+	// log telemetry event on visiting details of a service.
+	useEffect(() => {
+		if (serviceId) {
+			logEvent('AWS Integration: Service viewed', {
+				cloudAccountId,
+				serviceId,
+			});
+		}
+	}, [cloudAccountId, serviceId]);
 
 	if (isLoading) {
 		return <Spinner size="large" height="50vh" />;
@@ -111,24 +129,27 @@ function ServiceDetails(): JSX.Element | null {
 			<div className="service-details__title-bar">
 				<div className="service-details__details-title">Details</div>
 				<div className="service-details__right-actions">
-					<ServiceStatus serviceStatus={serviceDetailsData.status} />
-
-					{!!cloudAccountId && isAnySignalConfigured ? (
-						<Button
-							className="configure-button configure-button--default"
-							onClick={(): void => setIsConfigureServiceModalOpen(true)}
-						>
-							Configure ({enabledSignals}/{totalSupportedSignals})
-						</Button>
-					) : (
-						<Button
-							type="primary"
-							className="configure-button configure-button--primary"
-							onClick={(): void => setIsConfigureServiceModalOpen(true)}
-						>
-							Enable Service
-						</Button>
+					{isAnySignalConfigured && (
+						<ServiceStatus serviceStatus={serviceDetailsData.status} />
 					)}
+
+					{!!cloudAccountId &&
+						(isAnySignalConfigured ? (
+							<Button
+								className="configure-button configure-button--default"
+								onClick={openServiceConfigModal}
+							>
+								Configure ({enabledSignals}/{totalSupportedSignals})
+							</Button>
+						) : (
+							<Button
+								type="primary"
+								className="configure-button configure-button--primary"
+								onClick={openServiceConfigModal}
+							>
+								Enable Service
+							</Button>
+						))}
 				</div>
 			</div>
 			<div className="service-details__overview">

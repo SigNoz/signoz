@@ -23,6 +23,12 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 jest.mock('uplot', () => {
 	const paths = {
 		spline: jest.fn(),

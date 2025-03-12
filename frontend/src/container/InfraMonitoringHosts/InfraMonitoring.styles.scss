@@ -55,11 +55,14 @@
 	.hosts-list-content {
 		display: flex;
 		flex-direction: row;
+		align-items: stretch;
+		height: calc(100vh - 110px);
 
 		.hosts-quick-filters-container {
 			width: 280px;
 			min-width: 280px;
 			border-right: 1px solid var(--bg-slate-400);
+			height: 100%;
 
 			.hosts-quick-filters-container-header {
 				padding: 8px;
@@ -193,7 +196,7 @@
 		.ant-pagination {
 			position: fixed;
 			bottom: 0;
-			width: calc(100% - 64px);
+			width: calc(100% - 364px);
 			background: var(--bg-ink-500);
 			padding: 16px;
 			margin: 0;

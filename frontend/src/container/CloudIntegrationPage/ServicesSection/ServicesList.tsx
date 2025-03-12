@@ -1,5 +1,5 @@
 import Spinner from 'components/Spinner';
-import { useGetAccountServices } from 'hooks/integrations/aws/useGetAccountServices';
+import { useGetAccountServices } from 'hooks/integration/aws/useGetAccountServices';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -24,10 +24,11 @@ function ServicesList({
 
 	const handleActiveService = useCallback(
 		(serviceId: string): void => {
-			urlQuery.set('service', serviceId);
-			navigate({ search: urlQuery.toString() });
+			const latestUrlQuery = new URLSearchParams(window.location.search);
+			latestUrlQuery.set('service', serviceId);
+			navigate({ search: latestUrlQuery.toString() });
 		},
-		[navigate, urlQuery],
+		[navigate],
 	);
 
 	const filteredServices = useMemo(() => {

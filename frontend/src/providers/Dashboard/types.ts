@@ -47,4 +47,5 @@ export interface IDashboardContext {
 	setDashboardQueryRangeCalled: (value: boolean) => void;
 	selectedRowWidgetId: string | null;
 	setSelectedRowWidgetId: React.Dispatch<React.SetStateAction<string | null>>;
+	isDashboardFetching: boolean;
 }

@@ -1,10 +1,11 @@
 import { Form } from 'antd';
 import cx from 'classnames';
-import { useAccountStatus } from 'hooks/integrations/aws/useAccountStatus';
+import { useAccountStatus } from 'hooks/integration/aws/useAccountStatus';
 import { useRef } from 'react';
 import { AccountStatusResponse } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
+import logEvent from '../../../../api/common/logEvent';
 import { ModalStateEnum, RegionFormProps } from '../types';
 import AlertMessage from './AlertMessage';
 import {
@@ -41,7 +42,7 @@ export function RegionForm({
 }: RegionFormProps): JSX.Element {
 	const startTimeRef = useRef(Date.now());
 	const refetchInterval = 10 * 1000;
-	const errorTimeout = 5 * 60 * 1000;
+	const errorTimeout = 10 * 60 * 1000;
 
 	const { isLoading: isAccountStatusLoading } = useAccountStatus(accountId, {
 		refetchInterval,
@@ -49,9 +50,15 @@ export function RegionForm({
 		onSuccess: (data: AccountStatusResponse) => {
 			if (data.data.status.integration.last_heartbeat_ts_ms !== null) {
 				setModalState(ModalStateEnum.SUCCESS);
+				logEvent('AWS Integration: Account connected', {
+					cloudAccountId: data?.data?.cloud_account_id,
+					status: data?.data?.status,
+				});
 			} else if (Date.now() - startTimeRef.current >= errorTimeout) {
-				// 5 minutes in milliseconds
 				setModalState(ModalStateEnum.ERROR);
+				logEvent('AWS Integration: Account connection attempt timed out', {
+					id: accountId,
+				});
 			}
 		},
 		onError: () => {

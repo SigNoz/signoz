@@ -21,8 +21,8 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -89,6 +89,7 @@ export function sanitizeDashboardData(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const { handle } = props;
 	const {
 		selectedDashboard,
@@ -139,7 +140,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	let isAuthor = false;
 
 	if (selectedDashboard && user && user.email) {
-		isAuthor = selectedDashboard?.created_by === user?.email;
+		isAuthor = selectedDashboard?.createdBy === user?.email;
 	}
 
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -151,7 +152,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.created_by === user?.email
+		selectedDashboard?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -311,7 +312,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
-		history.replace(generatedUrl);
+		safeNavigate(generatedUrl);
 	}
 
 	return (
@@ -363,14 +364,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									{(isAuthor || user.role === USER_ROLES.ADMIN) && (
 										<Tooltip
 											title={
-												selectedDashboard?.created_by === 'integration' &&
+												selectedDashboard?.createdBy === 'integration' &&
 												'Dashboards created by integrations cannot be unlocked'
 											}
 										>
 											<Button
 												type="text"
 												icon={<LockKeyhole size={14} />}
-												disabled={selectedDashboard?.created_by === 'integration'}
+												disabled={selectedDashboard?.createdBy === 'integration'}
 												onClick={handleLockDashboardToggle}
 												data-testid="lock-unlock-dashboard"
 											>
@@ -442,7 +443,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								</section>
 								<section className="delete-dashboard">
 									<DeleteButton
-										createdBy={selectedDashboard?.created_by || ''}
+										createdBy={selectedDashboard?.createdBy || ''}
 										name={selectedDashboard?.data.title || ''}
 										id={String(selectedDashboard?.uuid) || ''}
 										isLocked={isDashboardLocked}

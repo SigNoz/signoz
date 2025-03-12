@@ -39,7 +39,7 @@ export const getActiveLogBackground = (
 				return `background-color: ${Color.BG_SLATE_200} !important;`;
 		}
 	}
-	return `background-color: ${Color.BG_VANILLA_300}!important; color: ${Color.TEXT_SLATE_400} !important;`;
+	return `background-color: ${Color.BG_VANILLA_400}!important; color: ${Color.TEXT_SLATE_400} !important;`;
 };
 
 export const getHightLightedLogBackground = (

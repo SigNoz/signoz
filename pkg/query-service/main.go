@@ -4,8 +4,6 @@ import (
 	"context"
 	"flag"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
@@ -17,6 +15,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -93,10 +92,28 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
+	signoz, err := signoz.New(
+		context.Background(),
+		config,
+		signoz.NewCacheProviderFactories(),
+		signoz.NewWebProviderFactories(),
+		signoz.NewSQLStoreProviderFactories(),
+		signoz.NewTelemetryStoreProviderFactories(),
+	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
+
+	// Read the jwt secret key
+	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
+
+	if len(jwtSecret) == 0 {
+		zap.L().Warn("No JWT secret key is specified.")
+	} else {
+		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
 
 	serverOptions := &app.ServerOptions{
 		Config:                     config,
@@ -114,15 +131,7 @@ func main() {
 		UseLogsNewSchema:           useLogsNewSchema,
 		UseTraceNewSchema:          useTraceNewSchema,
 		SigNoz:                     signoz,
-	}
-
-	// Read the jwt secret key
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
-
-	if len(auth.JwtSecret) == 0 {
-		zap.L().Warn("No JWT secret key is specified.")
-	} else {
-		zap.L().Info("JWT secret key set successfully.")
+		Jwt:                        jwt,
 	}
 
 	server, err := app.NewServer(serverOptions)
@@ -138,22 +147,20 @@ func main() {
 		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
-	signalsChannel := make(chan os.Signal, 1)
-	signal.Notify(signalsChannel, os.Interrupt, syscall.SIGTERM)
+	signoz.Start(context.Background())
 
-	for {
-		select {
-		case status := <-server.HealthCheckStatus():
-			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
-		case <-signalsChannel:
-			logger.Info("Received OS Interrupt Signal ... ")
-			err := server.Stop()
-			if err != nil {
-				logger.Fatal("Failed to stop server", zap.Error(err))
-			}
-			logger.Info("Server stopped")
-			return
-		}
+	if err := signoz.Wait(context.Background()); err != nil {
+		zap.L().Fatal("Failed to start signoz", zap.Error(err))
+	}
+
+	err = server.Stop()
+	if err != nil {
+		zap.L().Fatal("Failed to stop server", zap.Error(err))
+	}
+
+	err = signoz.Stop(context.Background())
+	if err != nil {
+		zap.L().Fatal("Failed to stop signoz", zap.Error(err))
 	}
 
 }

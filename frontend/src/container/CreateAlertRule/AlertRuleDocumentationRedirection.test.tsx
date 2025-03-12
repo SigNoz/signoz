@@ -27,6 +27,12 @@ jest.mock('uplot', () => {
 	};
 });
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 let mockWindowOpen: jest.Mock;
 
 window.ResizeObserver =

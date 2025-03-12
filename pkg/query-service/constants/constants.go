@@ -57,21 +57,11 @@ const PreferRPM = "PreferRPM"
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 
-func GetAlertManagerApiPrefix() string {
-	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
-		return os.Getenv("ALERTMANAGER_API_PREFIX")
-	}
-	return "http://alertmanager:9093/api/"
-}
-
 var TELEMETRY_HEART_BEAT_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_HEART_BEAT_DURATION_MINUTES", 720)
 
 var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIVE_USER_DURATION_MINUTES", 360)
 
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
-
-// Alert manager channel subpath
-var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
 var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
 var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
@@ -84,6 +74,8 @@ var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
+
+var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
@@ -231,6 +223,9 @@ const (
 	SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME = "time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME        = "distributed_time_series_v4_1day"
 	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME      = "distributed_top_level_operations"
+	SIGNOZ_TIMESERIES_v4_TABLENAME             = "distributed_time_series_v4"
+	SIGNOZ_TIMESERIES_v4_1WEEK_TABLENAME       = "distributed_time_series_v4_1week"
+	SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME        = "distributed_time_series_v4_6hrs"
 )
 
 // alert related constants
@@ -714,3 +709,17 @@ func init() {
 const TRACE_V4_MAX_PAGINATION_LIMIT = 10000
 
 const MaxResultRowsForCHQuery = 1_000_000
+
+var ChDataTypeMap = map[string]string{
+	"string":  "String",
+	"bool":    "Bool",
+	"int64":   "Float64",
+	"float64": "Float64",
+}
+
+var MaterializedDataTypeMap = map[string]string{
+	"string":  "string",
+	"bool":    "bool",
+	"int64":   "number",
+	"float64": "number",
+}

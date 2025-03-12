@@ -12,6 +12,7 @@ import {
 	transformDataWithDate,
 } from 'container/TracesExplorer/ListView/utils';
 import { Pagination } from 'hooks/queryPagination';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -39,6 +40,7 @@ function TracesTableComponent({
 		offset: 0,
 		limit: 10,
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	useEffect(() => {
 		setRequestData((prev) => ({
@@ -87,6 +89,25 @@ function TracesTableComponent({
 		[],
 	);
 
+	const handlePaginationChange = useCallback(
+		(newPagination: Pagination) => {
+			const urlQuery = new URLSearchParams(window.location.search);
+
+			// Update URL with new pagination values
+			urlQuery.set('offset', newPagination.offset.toString());
+			urlQuery.set('limit', newPagination.limit.toString());
+
+			// Update URL without page reload
+			safeNavigate({
+				search: urlQuery.toString(),
+			});
+
+			// Update component state
+			setPagination(newPagination);
+		},
+		[safeNavigate],
+	);
+
 	if (queryResponse.isError) {
 		return <div>{SOMETHING_WENT_WRONG}</div>;
 	}
@@ -116,19 +137,19 @@ function TracesTableComponent({
 					offset={pagination.offset}
 					countPerPage={pagination.limit}
 					handleNavigatePrevious={(): void => {
-						setPagination({
+						handlePaginationChange({
 							...pagination,
 							offset: pagination.offset - pagination.limit,
 						});
 					}}
 					handleNavigateNext={(): void => {
-						setPagination({
+						handlePaginationChange({
 							...pagination,
 							offset: pagination.offset + pagination.limit,
 						});
 					}}
 					handleCountItemsPerPageChange={(value): void => {
-						setPagination({
+						handlePaginationChange({
 							...pagination,
 							limit: value,
 							offset: 0,

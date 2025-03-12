@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/factory/providertest"
+	"go.signoz.io/signoz/pkg/factory/factorytest"
 )
 
 // TestNew tests the New function
@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.NotNil(t, c.(*provider).cc)
@@ -60,7 +60,7 @@ func TestStoreWithNilPointer(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	var storeCacheableEntity *CacheableEntity
 	assert.Error(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
@@ -72,7 +72,7 @@ func TestStoreWithStruct(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	var storeCacheableEntity CacheableEntity
 	assert.Error(t, c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second))
@@ -83,7 +83,7 @@ func TestStoreWithNonNilPointer(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -99,7 +99,7 @@ func TestRetrieveWithNilPointer(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -120,7 +120,7 @@ func TestRetrieveWitNonPointer(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -141,7 +141,7 @@ func TestRetrieveWithDifferentTypes(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -161,7 +161,7 @@ func TestRetrieveWithSameTypes(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -179,7 +179,7 @@ func TestRetrieveWithSameTypes(t *testing.T) {
 
 // TestSetTTL tests the SetTTL function
 func TestSetTTL(t *testing.T) {
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: 10 * time.Second, CleanupInterval: 1 * time.Second}})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: 10 * time.Second, CleanupInterval: 1 * time.Second}})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -209,7 +209,7 @@ func TestRemove(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -232,7 +232,7 @@ func TestBulkRemove(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",
@@ -261,7 +261,7 @@ func TestCache(t *testing.T) {
 		TTL:             10 * time.Second,
 		CleanupInterval: 10 * time.Second,
 	}
-	c, err := New(context.Background(), providertest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: opts})
 	require.NoError(t, err)
 	storeCacheableEntity := &CacheableEntity{
 		Key:    "some-random-key",

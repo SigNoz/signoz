@@ -1,13 +1,14 @@
 import './CeleryTaskGraph.style.scss';
 
 import { Col, Row } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
-import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
+import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -40,8 +41,10 @@ export enum CeleryTaskGraphState {
 
 function CeleryTaskLatencyGraph({
 	queryEnabled,
+	checkIfDataExists,
 }: {
 	queryEnabled: boolean;
+	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
 	const history = useHistory();
 	const { pathname } = useLocation();
@@ -61,6 +64,10 @@ function CeleryTaskLatencyGraph({
 
 	const handleTabClick = (key: CeleryTaskGraphState): void => {
 		setGraphState(key as CeleryTaskGraphState);
+		logEvent('MQ Celery: Task latency graph tab clicked', {
+			taskName: urlQuery.get(QueryParams.taskName),
+			graphState: key,
+		});
 	};
 
 	const onDragSelect = useCallback(
@@ -115,6 +122,8 @@ function CeleryTaskLatencyGraph({
 		setSelectedTimeStamp(selectTime);
 	}, []);
 
+	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
+
 	const onGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] => (
 			xValue,
@@ -130,14 +139,9 @@ function CeleryTaskLatencyGraph({
 				value,
 			});
 
-			return onGraphClickHandler(handleSetTimeStamp)(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				type,
-			);
+			return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
 
@@ -195,6 +199,7 @@ function CeleryTaskLatencyGraph({
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p99_latency')}
 							isQueryEnabled={queryEnabled}
+							dataAvailable={checkIfDataExists}
 						/>
 					</>
 				)}
@@ -215,6 +220,7 @@ function CeleryTaskLatencyGraph({
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p95_latency')}
 							isQueryEnabled={queryEnabled}
+							dataAvailable={checkIfDataExists}
 						/>
 					</>
 				)}
@@ -234,6 +240,7 @@ function CeleryTaskLatencyGraph({
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p90_latency')}
 							isQueryEnabled={queryEnabled}
+							dataAvailable={checkIfDataExists}
 						/>
 					</>
 				)}
@@ -243,3 +250,7 @@ function CeleryTaskLatencyGraph({
 }
 
 export default CeleryTaskLatencyGraph;
+
+CeleryTaskLatencyGraph.defaultProps = {
+	checkIfDataExists: undefined,
+};

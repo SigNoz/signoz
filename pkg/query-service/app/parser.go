@@ -13,6 +13,10 @@ import (
 	"text/template"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
@@ -29,6 +33,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -63,7 +68,12 @@ func parseRegisterEventRequest(r *http.Request) (*model.RegisterEventParams, err
 	if err != nil {
 		return nil, err
 	}
-	if postData.EventName == "" {
+	// Validate the event type
+	if !postData.EventType.IsValid() {
+		return nil, errors.New("eventType param missing/incorrect in query")
+	}
+
+	if postData.EventType == model.TrackEvent && postData.EventName == "" {
 		return nil, errors.New("eventName param missing in query")
 	}
 
@@ -462,8 +472,8 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-func parseUserRequest(r *http.Request) (*model.User, error) {
-	var req model.User
+func parseUserRequest(r *http.Request) (*types.User, error) {
+	var req types.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -516,8 +526,8 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 	return &req, nil
 }
 
-func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
-	var req model.ApdexSettings
+func parseSetApdexScoreRequest(r *http.Request) (*types.ApdexSettings, error) {
+	var req types.ApdexSettings
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -563,8 +573,8 @@ func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
 	return &req, nil
 }
 
-func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
-	var req model.Organization
+func parseEditOrgRequest(r *http.Request) (*types.Organization, error) {
+	var req types.Organization
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -728,6 +738,25 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
 	}
+	return &req, nil
+}
+
+func parseFilterAttributeValueRequestBody(r *http.Request) (*v3.FilterAttributeValueRequest, error) {
+
+	var req v3.FilterAttributeValueRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// offset by two windows periods for start for better results
+	req.StartTimeMillis = req.StartTimeMillis - time.Hour.Milliseconds()*6*2
+	req.EndTimeMillis = req.EndTimeMillis + time.Hour.Milliseconds()*6
+
 	return &req, nil
 }
 
@@ -1006,4 +1035,31 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	}
 
 	return queryRangeParams, nil
+}
+
+// ParseKafkaQueueBody parse for messaging queue params
+func ParseKafkaQueueBody(r *http.Request) (*kafka.MessagingQueue, *model.ApiError) {
+	messagingQueue := new(kafka.MessagingQueue)
+	if err := json.NewDecoder(r.Body).Decode(messagingQueue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return messagingQueue, nil
+}
+
+// ParseQueueBody parses for any queue
+func ParseQueueBody(r *http.Request) (*queues2.QueueListRequest, *model.ApiError) {
+	queue := new(queues2.QueueListRequest)
+	if err := json.NewDecoder(r.Body).Decode(queue); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return queue, nil
+}
+
+// ParseRequestBody for third party APIs
+func ParseRequestBody(r *http.Request) (*thirdPartyApi.ThirdPartyApis, *model.ApiError) {
+	thirdPartApis := new(thirdPartyApi.ThirdPartyApis)
+	if err := json.NewDecoder(r.Body).Decode(thirdPartApis); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
+	}
+	return thirdPartApis, nil
 }

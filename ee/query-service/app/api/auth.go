@@ -50,7 +50,7 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if all looks good, call auth
-	resp, err := baseauth.Login(ctx, &req)
+	resp, err := baseauth.Login(ctx, &req, ah.opts.JWT)
 	if ah.HandleError(w, err, http.StatusUnauthorized) {
 		return
 	}
@@ -134,7 +134,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, registerError := baseauth.Register(ctx, req)
+		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager)
 		if !registerError.IsNil() {
 			RespondError(w, apierr, nil)
 			return
@@ -253,7 +253,7 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, identity.Email)
+	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, identity.Email, ah.opts.JWT)
 	if err != nil {
 		zap.L().Error("[receiveGoogleAuth] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)
@@ -331,7 +331,7 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, email)
+	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, email, ah.opts.JWT)
 	if err != nil {
 		zap.L().Error("[receiveSAML] failed to generate redirect URI after successful login ", zap.String("domain", domain.String()), zap.Error(err))
 		handleSsoError(w, r, redirectUri)

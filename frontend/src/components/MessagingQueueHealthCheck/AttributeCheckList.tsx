@@ -16,6 +16,7 @@ import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnbo
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { History } from 'history';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Bolt, Check, OctagonAlert, X } from 'lucide-react';
 import {
 	KAFKA_SETUP_DOC_LINK,
@@ -23,7 +24,6 @@ import {
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { isCloudUser } from 'utils/app';
 import { v4 as uuid } from 'uuid';
 
 interface AttributeCheckListProps {
@@ -181,7 +181,7 @@ function AttributeCheckList({
 	const handleFilterChange = (value: AttributesFilters): void => {
 		setFilter(value);
 	};
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const history = useHistory();
 
 	useEffect(() => {

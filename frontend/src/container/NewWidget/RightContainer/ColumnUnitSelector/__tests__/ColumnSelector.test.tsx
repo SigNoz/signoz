@@ -87,6 +87,12 @@ jest.mock('hooks/queryBuilder/useGetCompositeQueryParam', () => ({
 	useGetCompositeQueryParam: (): Query => compositeQueryParam as Query,
 }));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
 describe('Column unit selector panel unit test', () => {
 	it('unit selectors should be rendered for queries and formula', () => {
 		const mockLocation = {

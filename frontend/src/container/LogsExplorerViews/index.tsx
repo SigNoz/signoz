@@ -15,6 +15,7 @@ import {
 	initialFilters,
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
+	OPERATORS,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
@@ -29,7 +30,6 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import dayjs from 'dayjs';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
-import { LogTimeRange } from 'hooks/logs/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -38,6 +38,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
@@ -62,7 +63,6 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
@@ -98,12 +98,12 @@ function LogsExplorerViews({
 	chartQueryKeyRef: MutableRefObject<any>;
 }): JSX.Element {
 	const { notifications } = useNotifications();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	// this is to respect the panel type present in the URL rather than defaulting it to list always.
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const { activeLogId, onTimeRangeChange } = useCopyLogLink();
+	const { activeLogId } = useCopyLogLink();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -313,6 +313,29 @@ function LogsExplorerViews({
 				pageSize: params.pageSize,
 			});
 
+			// Add filter for activeLogId if present
+			let updatedFilters = paginateData.filters;
+			if (activeLogId) {
+				updatedFilters = {
+					...paginateData.filters,
+					items: [
+						...(paginateData.filters?.items || []),
+						{
+							id: v4(),
+							key: {
+								key: 'id',
+								type: '',
+								dataType: DataTypes.String,
+								isColumn: true,
+							},
+							op: OPERATORS['<='],
+							value: activeLogId,
+						},
+					],
+					op: 'AND',
+				};
+			}
+
 			const queryData: IBuilderQuery[] =
 				query.builder.queryData.length > 1
 					? query.builder.queryData
@@ -320,6 +343,7 @@ function LogsExplorerViews({
 							{
 								...(listQuery || initialQueryBuilderFormValues),
 								...paginateData,
+								...(updatedFilters ? { filters: updatedFilters } : {}),
 							},
 					  ];
 
@@ -333,7 +357,7 @@ function LogsExplorerViews({
 
 			return data;
 		},
-		[orderByTimestamp, listQuery],
+		[orderByTimestamp, listQuery, activeLogId],
 	);
 
 	const handleEndReached = useCallback(
@@ -486,7 +510,7 @@ function LogsExplorerViews({
 						widgetId,
 					});
 
-					history.push(dashboardEditView);
+					safeNavigate(dashboardEditView);
 				},
 				onError: handleAxisError,
 			});
@@ -495,7 +519,7 @@ function LogsExplorerViews({
 			getUpdatedQueryForExport,
 			exportDefaultQuery,
 			options.selectColumns,
-			history,
+			safeNavigate,
 			notifications,
 			panelType,
 			updateDashboard,
@@ -537,7 +561,6 @@ function LogsExplorerViews({
 	}, [handleSetConfig, panelTypes]);
 
 	useEffect(() => {
-		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload?.data?.newResult?.data?.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
@@ -547,11 +570,6 @@ function LogsExplorerViews({
 			const newLogs = [...logs, ...currentLogs];
 
 			setLogs(newLogs);
-			onTimeRangeChange({
-				start: currentParams?.start,
-				end: currentParams?.end,
-				pageSize: newLogs.length,
-			});
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -587,7 +605,6 @@ function LogsExplorerViews({
 		pageSize,
 		minTime,
 		activeLogId,
-		onTimeRangeChange,
 		panelType,
 		selectedView,
 	]);

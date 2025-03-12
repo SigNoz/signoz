@@ -12,8 +12,8 @@ import (
 
 func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	// should be able to generate connection url for
@@ -56,8 +56,8 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 
 func TestAgentCheckIns(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	// An agent should be able to check in from a cloud account even
@@ -139,8 +139,8 @@ func TestAgentCheckIns(t *testing.T) {
 
 func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	// Attempting to disconnect a non-existent account should return error
@@ -154,8 +154,8 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 
 func TestConfigureService(t *testing.T) {
 	require := require.New(t)
-	testDB, _ := utils.NewTestSqliteDB(t)
-	controller, err := NewController(testDB)
+	sqlStore, _ := utils.NewTestSqliteDB(t)
+	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
 	testCloudAccountId := "546311234"

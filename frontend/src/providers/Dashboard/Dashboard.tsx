@@ -9,10 +9,10 @@ import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useAxiosError from 'hooks/useAxiosError';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
@@ -73,6 +73,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	setDashboardQueryRangeCalled: () => {},
 	selectedRowWidgetId: '',
 	setSelectedRowWidgetId: () => {},
+	isDashboardFetching: false,
 });
 
 interface Props {
@@ -83,6 +84,7 @@ interface Props {
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
@@ -144,7 +146,7 @@ export function DashboardProvider({
 		params.set('order', sortOrder.order as string);
 		params.set('page', sortOrder.pagination || '1');
 		params.set('search', sortOrder.search || '');
-		history.replace({ search: params.toString() });
+		safeNavigate({ search: params.toString() });
 	}
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -191,6 +193,8 @@ export function DashboardProvider({
 
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
+
+	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
 
 	const mergeDBWithLocalStorage = (
 		data: Dashboard,
@@ -256,14 +260,20 @@ export function DashboardProvider({
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
-			queryFn: () =>
-				getDashboard({
-					uuid: dashboardId,
-				}),
+			queryFn: async () => {
+				setIsDashboardFetching(true);
+				try {
+					return await getDashboard({
+						uuid: dashboardId,
+					});
+				} finally {
+					setIsDashboardFetching(false);
+				}
+			},
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
 				const updatedDashboardData = transformDashboardVariables(data);
-				const updatedDate = dayjs(updatedDashboardData.updated_at);
+				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.isLocked || false);
 
@@ -311,7 +321,7 @@ export function DashboardProvider({
 
 							dashboardRef.current = updatedDashboardData;
 
-							updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
+							updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
 
 							setLayouts(
 								sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
@@ -324,7 +334,7 @@ export function DashboardProvider({
 					modalRef.current = modal;
 				} else {
 					// normal flow
-					updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
+					updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
 
 					dashboardRef.current = updatedDashboardData;
 
@@ -424,6 +434,7 @@ export function DashboardProvider({
 			setDashboardQueryRangeCalled,
 			selectedRowWidgetId,
 			setSelectedRowWidgetId,
+			isDashboardFetching,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -445,6 +456,7 @@ export function DashboardProvider({
 			setDashboardQueryRangeCalled,
 			selectedRowWidgetId,
 			setSelectedRowWidgetId,
+			isDashboardFetching,
 		],
 	);
 

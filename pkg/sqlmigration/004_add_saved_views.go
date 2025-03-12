@@ -35,9 +35,9 @@ func (migration *addSavedViews) Up(ctx context.Context, db *bun.DB) error {
 			UUID          string    `bun:"uuid,pk,type:text"`
 			Name          string    `bun:"name,type:text,notnull"`
 			Category      string    `bun:"category,type:text,notnull"`
-			CreatedAt     time.Time `bun:"created_at,type:datetime,notnull"`
+			CreatedAt     time.Time `bun:"created_at,notnull"`
 			CreatedBy     string    `bun:"created_by,type:text"`
-			UpdatedAt     time.Time `bun:"updated_at,type:datetime,notnull"`
+			UpdatedAt     time.Time `bun:"updated_at,notnull"`
 			UpdatedBy     string    `bun:"updated_by,type:text"`
 			SourcePage    string    `bun:"source_page,type:text,notnull"`
 			Tags          string    `bun:"tags,type:text"`

@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './IngestionSettings.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
@@ -33,6 +35,7 @@ import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
+import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -43,7 +46,6 @@ import {
 	Check,
 	Copy,
 	Infinity,
-	Info,
 	Minus,
 	PenLine,
 	Plus,
@@ -69,6 +71,7 @@ import {
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
 import { USER_ROLES } from 'types/roles';
+import { hasDatePassed } from 'utils/timeUtils';
 
 const { Option } = Select;
 
@@ -284,6 +287,13 @@ function MultiIngestionSettings(): JSX.Element {
 	const clearSearch = (): void => {
 		setSearchValue('');
 	};
+
+	const {
+		data: deploymentsData,
+		isLoading: isLoadingDeploymentsData,
+		isFetching: isFetchingDeploymentsData,
+		isError: isErrorDeploymentsData,
+	} = useGetDeploymentsData();
 
 	const {
 		mutate: createIngestionKey,
@@ -1233,8 +1243,22 @@ function MultiIngestionSettings(): JSX.Element {
 						<div className="ingestion-key-details">
 							<div className="ingestion-key-last-used-at">
 								<CalendarClock size={14} />
-								Expires on <Minus size={12} />
-								<Typography.Text>{expiresOn}</Typography.Text>
+
+								{hasDatePassed(expiresOn) ? (
+									<>
+										Expired on <Minus size={12} />
+										<Typography.Text>{expiresOn}</Typography.Text>
+									</>
+								) : (
+									<>
+										{expiresOn !== 'No Expiry' && (
+											<>
+												Expires on <Minus size={12} />
+											</>
+										)}
+										<Typography.Text>{expiresOn}</Typography.Text>
+									</>
+								)}
 							</div>
 						</div>
 					</div>
@@ -1253,22 +1277,6 @@ function MultiIngestionSettings(): JSX.Element {
 	return (
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
-				<div className="ingestion-setup-details-links">
-					<Info size={14} />
-
-					<span>
-						Find your ingestion URL and learn more about sending data to SigNoz{' '}
-						<a
-							href="https://signoz.io/docs/ingestion/signoz-cloud/overview/"
-							target="_blank"
-							className="learn-more"
-							rel="noreferrer"
-						>
-							here <ArrowUpRight size={14} />
-						</a>
-					</span>
-				</div>
-
 				<header>
 					<Typography.Title className="title"> Ingestion Keys </Typography.Title>
 					<Typography.Text className="subtitle">
@@ -1283,6 +1291,46 @@ function MultiIngestionSettings(): JSX.Element {
 						</a>
 					</Typography.Text>
 				</header>
+
+				{!isErrorDeploymentsData &&
+					!isLoadingDeploymentsData &&
+					!isFetchingDeploymentsData && (
+						<div className="ingestion-setup-details-links">
+							<div className="ingestion-key-url-container">
+								<div className="ingestion-key-url-label">Ingestion URL</div>
+								<div
+									className="ingestion-key-url-value"
+									onClick={(e): void => {
+										e.stopPropagation();
+										e.preventDefault();
+										handleCopyKey(
+											`ingest.${deploymentsData?.data.data.cluster.region.dns}`,
+										);
+									}}
+								>
+									ingest.{deploymentsData?.data.data.cluster.region.dns}
+									<Copy className="copy-key-btn" size={12} />
+								</div>
+							</div>
+
+							<div className="ingestion-data-region-container">
+								<div className="ingestion-data-region-label">Region</div>
+								<div
+									className="ingestion-data-region-value"
+									onClick={(e): void => {
+										e.stopPropagation();
+										e.preventDefault();
+										handleCopyKey(deploymentsData?.data.data.cluster.region.name || '');
+									}}
+								>
+									<Typography.Text className="ingestion-data-region-value-text">
+										{deploymentsData?.data.data.cluster.region.name}
+									</Typography.Text>
+									<Copy className="copy-key-btn" size={12} />
+								</div>
+							</div>
+						</div>
+					)}
 
 				<div className="ingestion-keys-search-add-new">
 					<Input

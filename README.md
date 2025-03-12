@@ -219,12 +219,18 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 - [Nityananda Gohain](https://github.com/nityanandagohain)
 - [Srikanth Chekuri](https://github.com/srikanthccv)
 - [Vishal Sharma](https://github.com/makeavish)
+- [Shivanshu Raj Shrivastava](https://github.com/shivanshuraj1333)
+- [Ekansh Gupta](https://github.com/eKuG)
+- [Aniket Agarwal](https://github.com/aniketio-ctrl)
 
 #### Frontend
 
 - [Yunus M](https://github.com/YounixM)
 - [Vikrant Gupta](https://github.com/vikrantgupta25)
 - [Sagar Rajput](https://github.com/SagarRajput-7)
+- [Shaheer Kochai](https://github.com/ahmadshaheer)
+- [Amlan Kumar Nandy](https://github.com/amlannandy)
+- [Sahil Khan](https://github.com/sawhil)
 
 #### DevOps
 

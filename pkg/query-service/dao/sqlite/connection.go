@@ -5,19 +5,22 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
 type ModelDaoSqlite struct {
-	db *sqlx.DB
+	db    *sqlx.DB
+	bundb *bun.DB
 }
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(db *sqlx.DB) (*ModelDaoSqlite, error) {
-	mds := &ModelDaoSqlite{db: db}
+func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
+	mds := &ModelDaoSqlite{db: sqlStore.SQLxDB(), bundb: sqlStore.BunDB()}
 
 	ctx := context.Background()
 	if err := mds.initializeOrgPreferences(ctx); err != nil {
@@ -58,13 +61,13 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 		return errors.Errorf("Found %d organizations, expected one or none.", len(orgs))
 	}
 
-	var org model.Organization
+	var org types.Organization
 	if len(orgs) == 1 {
 		org = orgs[0]
 	}
 
 	// set telemetry fields from userPreferences
-	telemetry.GetInstance().SetDistinctId(org.Id)
+	telemetry.GetInstance().SetDistinctId(org.ID)
 
 	users, _ := mds.GetUsers(ctx)
 	countUsers := len(users)
@@ -97,7 +100,7 @@ func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
 }
 
 func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
-	name string) (*model.Group, error) {
+	name string) (*types.Group, error) {
 
 	group, err := mds.GetGroupByName(ctx, name)
 	if err != nil {
@@ -108,7 +111,7 @@ func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
 	}
 
 	zap.L().Debug("group is not found, creating it", zap.String("group_name", name))
-	group, cErr := mds.CreateGroup(ctx, &model.Group{Name: name})
+	group, cErr := mds.CreateGroup(ctx, &types.Group{Name: name})
 	if cErr != nil {
 		return nil, cErr.Err
 	}

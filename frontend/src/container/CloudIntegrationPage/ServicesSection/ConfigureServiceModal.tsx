@@ -7,9 +7,11 @@ import {
 	ServiceConfig,
 	SupportedSignals,
 } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { useUpdateServiceConfig } from 'hooks/integrations/aws/useUpdateServiceConfig';
+import { useUpdateServiceConfig } from 'hooks/integration/aws/useUpdateServiceConfig';
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+
+import logEvent from '../../../api/common/logEvent';
 
 interface IConfigureServiceModalProps {
 	isOpen: boolean;
@@ -34,10 +36,19 @@ function ConfigureServiceModal({
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Track current form values
-	const [currentValues, setCurrentValues] = useState({
+	const initialValues = {
 		metrics: initialConfig?.metrics?.enabled || false,
 		logs: initialConfig?.logs?.enabled || false,
-	});
+	};
+	const [currentValues, setCurrentValues] = useState(initialValues);
+
+	const isSaveDisabled = useMemo(
+		() =>
+			// disable only if current values are same as the initial config
+			currentValues.metrics === initialValues.metrics &&
+			currentValues.logs === initialValues.logs,
+		[currentValues, initialValues.metrics, initialValues.logs],
+	);
 
 	const {
 		mutate: updateServiceConfig,
@@ -73,6 +84,13 @@ function ConfigureServiceModal({
 							serviceId,
 						]);
 						onClose();
+
+						logEvent('AWS Integration: Service settings saved', {
+							cloudAccountId,
+							serviceId,
+							logsEnabled: values?.logs,
+							metricsEnabled: values?.metrics,
+						});
 					},
 					onError: (error) => {
 						console.error('Failed to update service config:', error);
@@ -92,11 +110,6 @@ function ConfigureServiceModal({
 		queryClient,
 		onClose,
 	]);
-
-	const isSaveDisabled = useMemo(
-		() => currentValues.metrics === false && currentValues.logs === false,
-		[currentValues],
-	);
 
 	const handleClose = useCallback(() => {
 		form.resetFields();

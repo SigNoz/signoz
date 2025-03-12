@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -44,6 +45,7 @@ function GridCardGraph({
 	customErrorMessage,
 	start,
 	end,
+	analyticsEvent,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -219,6 +221,11 @@ function GridCardGraph({
 					setIsInternalServerError(
 						String(error.message).includes('API responded with 500'),
 					);
+					if (analyticsEvent) {
+						logEvent(analyticsEvent, {
+							error: error.message,
+						});
+					}
 				}
 				setDashboardQueryRangeCalled(true);
 			},
@@ -283,6 +290,7 @@ GridCardGraph.defaultProps = {
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 	version: 'v3',
+	analyticsEvent: undefined,
 };
 
 export default memo(GridCardGraph);

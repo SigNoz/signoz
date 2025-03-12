@@ -5,18 +5,18 @@ import (
 	"slices"
 	"testing"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 func NewTestIntegrationsManager(t *testing.T) *Manager {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
-	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
+	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB.SQLxDB())
 	if err != nil {
 		t.Fatalf("could not init sqlite DB for installed integrations: %v", err)
 	}
@@ -92,7 +92,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Data{},
+				Dashboards: []types.DashboardData{},
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
@@ -160,7 +160,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Data{},
+				Dashboards: []types.DashboardData{},
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{

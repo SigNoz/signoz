@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type Controller struct {
 	mgr *Manager
 }
 
-func NewController(db *sqlx.DB) (
+func NewController(sqlStore sqlstore.SQLStore) (
 	*Controller, error,
 ) {
-	mgr, err := NewManager(db)
+	mgr, err := NewManager(sqlStore.SQLxDB())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
@@ -130,12 +130,12 @@ func (c *Controller) GetPipelinesForInstalledIntegrations(
 
 func (c *Controller) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
-) ([]dashboards.Dashboard, *model.ApiError) {
+) ([]types.Dashboard, *model.ApiError) {
 	return c.mgr.GetDashboardsForInstalledIntegrations(ctx)
 }
 
 func (c *Controller) GetInstalledIntegrationDashboardById(
 	ctx context.Context, dashboardUuid string,
-) (*dashboards.Dashboard, *model.ApiError) {
+) (*types.Dashboard, *model.ApiError) {
 	return c.mgr.GetInstalledIntegrationDashboardById(ctx, dashboardUuid)
 }

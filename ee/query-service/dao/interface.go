@@ -10,6 +10,8 @@ import (
 	basedao "go.signoz.io/signoz/pkg/query-service/dao"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type ModelDao interface {
@@ -22,7 +24,7 @@ type ModelDao interface {
 
 	// auth methods
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
-	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError)
+	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (redirectURL string, apierr basemodel.BaseApiError)
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error)
 
 	// org domain (auth domains) CRUD ops
@@ -38,7 +40,7 @@ type ModelDao interface {
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
 	UpdatePATLastUsed(ctx context.Context, pat string, lastUsed int64) basemodel.BaseApiError
 	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
-	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)
+	GetUserByPAT(ctx context.Context, token string) (*types.GettableUser, basemodel.BaseApiError)
 	ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApiError)
 	RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError
 }

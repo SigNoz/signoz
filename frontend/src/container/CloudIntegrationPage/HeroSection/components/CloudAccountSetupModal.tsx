@@ -2,9 +2,11 @@ import './CloudAccountSetupModal.style.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import SignozModal from 'components/SignozModal/SignozModal';
-import { useIntegrationModal } from 'hooks/integrations/aws/useIntegrationModal';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { useCallback } from 'react';
+import { useQueryClient } from 'react-query';
 
 import {
 	ActiveViewEnum,
@@ -18,6 +20,7 @@ import { SuccessView } from './SuccessView';
 function CloudAccountSetupModal({
 	onClose,
 }: IntegrationModalProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const {
 		form,
 		modalState,
@@ -103,14 +106,17 @@ function CloudAccountSetupModal({
 		// Handle success state first
 		if (modalState === ModalStateEnum.SUCCESS) {
 			return {
-				title: 'AWS Webservice Integration',
+				title: 'AWS Integration',
 				okText: (
 					<div className="cloud-account-setup-success-view__footer-button">
 						Continue
 					</div>
 				),
 				block: true,
-				onOk: handleClose,
+				onOk: (): void => {
+					queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
+					handleClose();
+				},
 				cancelButtonProps: { style: { display: 'none' } },
 				disabled: false,
 			};
@@ -151,6 +157,7 @@ function CloudAccountSetupModal({
 		activeView,
 		handleClose,
 		setActiveView,
+		queryClient,
 	]);
 
 	const modalConfig = getModalConfig();

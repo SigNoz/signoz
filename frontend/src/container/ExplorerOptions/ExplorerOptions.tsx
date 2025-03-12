@@ -100,11 +100,19 @@ function ExplorerOptions({
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
+	const isMetricsExplorer = sourcepage === DataSource.METRICS;
 
 	const PRESERVED_VIEW_LOCAL_STORAGE_KEY = LOCALSTORAGE.LAST_USED_SAVED_VIEWS;
-	const PRESERVED_VIEW_TYPE = isLogsExplorer
-		? PreservedViewsTypes.LOGS
-		: PreservedViewsTypes.TRACES;
+
+	const PRESERVED_VIEW_TYPE = useMemo(() => {
+		if (isLogsExplorer) {
+			return PreservedViewsTypes.LOGS;
+		}
+		if (isMetricsExplorer) {
+			return PreservedViewsTypes.METRICS;
+		}
+		return PreservedViewsTypes.TRACES;
+	}, [isLogsExplorer, isMetricsExplorer]);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -125,6 +133,10 @@ function ExplorerOptions({
 			});
 		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Save view clicked', {
+				panelType,
+			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Save view clicked', {
 				panelType,
 			});
 		}
@@ -161,6 +173,10 @@ function ExplorerOptions({
 			logEvent('Logs Explorer: Create alert', {
 				panelType,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Create alert', {
+				panelType,
+			});
 		}
 
 		const stringifiedQuery = handleConditionalQueryModification();
@@ -184,6 +200,10 @@ function ExplorerOptions({
 			});
 		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Add to dashboard clicked', {
+				panelType,
+			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Add to dashboard clicked', {
 				panelType,
 			});
 		}
@@ -212,13 +232,46 @@ function ExplorerOptions({
 		0.08,
 	);
 
+	const { options, handleOptionsChange } = useOptionsMenu({
+		storageKey:
+			sourcepage === DataSource.TRACES
+				? LOCALSTORAGE.TRACES_LIST_OPTIONS
+				: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: sourcepage,
+		aggregateOperator: StringOperators.NOOP,
+	});
+
+	const getUpdatedExtraData = (
+		extraData: string | undefined,
+		newSelectedColumns: BaseAutocompleteData[],
+	): string => {
+		let updatedExtraData;
+
+		if (extraData) {
+			const parsedExtraData = JSON.parse(extraData);
+			parsedExtraData.selectColumns = newSelectedColumns;
+			updatedExtraData = JSON.stringify(parsedExtraData);
+		} else {
+			updatedExtraData = JSON.stringify({
+				color: Color.BG_SIENNA_500,
+				selectColumns: newSelectedColumns,
+			});
+		}
+		return updatedExtraData;
+	};
+
+	const updatedExtraData = getUpdatedExtraData(
+		extraData,
+		options?.selectColumns,
+	);
+
 	const {
 		mutateAsync: updateViewAsync,
 		isLoading: isViewUpdating,
 	} = useUpdateView({
 		compositeQuery,
 		viewKey,
-		extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
+		extraData: updatedExtraData,
 		sourcePage: sourcepage,
 		viewName,
 	});
@@ -230,13 +283,11 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
-		const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
-			?.extraData;
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
-				extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
+				extraData: updatedExtraData,
 				sourcePage: sourcepage,
 				viewName,
 			},
@@ -257,15 +308,6 @@ function ExplorerOptions({
 	useErrorNotification(error);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
-
-	const { options, handleOptionsChange } = useOptionsMenu({
-		storageKey:
-			sourcepage === DataSource.TRACES
-				? LOCALSTORAGE.TRACES_LIST_OPTIONS
-				: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: sourcepage,
-		aggregateOperator: StringOperators.NOOP,
-	});
 
 	type ExtraData = {
 		selectColumns?: BaseAutocompleteData[];
@@ -373,6 +415,11 @@ function ExplorerOptions({
 				panelType,
 				viewName: option?.value,
 			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Select view', {
+				panelType,
+				viewName: option?.value,
+			});
 		}
 
 		updatePreservedViewInLocalStorage(option);
@@ -422,7 +469,11 @@ function ExplorerOptions({
 		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
 	};
 
-	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
+	const isQueryUpdated = isStagedQueryUpdated(
+		viewsData?.data?.data,
+		viewKey,
+		options,
+	);
 
 	const {
 		isLoading: isSaveViewLoading,
@@ -462,6 +513,11 @@ function ExplorerOptions({
 			});
 		} else if (isLogsExplorer) {
 			logEvent('Logs Explorer: Save view successful', {
+				panelType,
+				viewName: newViewName,
+			});
+		} else if (isMetricsExplorer) {
+			logEvent('Metrics Explorer: Save view successful', {
 				panelType,
 				viewName: newViewName,
 			});
@@ -543,6 +599,27 @@ function ExplorerOptions({
 		viewName,
 		viewsData?.data?.data,
 	]);
+
+	const infoIconText = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'Learn more about Logs explorer';
+		}
+		if (isMetricsExplorer) {
+			return 'Learn more about Metrics explorer';
+		}
+		return 'Learn more about Traces explorer';
+	}, [isLogsExplorer, isMetricsExplorer]);
+
+	const infoIconLink = useMemo(() => {
+		if (isLogsExplorer) {
+			return 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar';
+		}
+		// TODO: Add metrics explorer info icon link
+		if (isMetricsExplorer) {
+			return '';
+		}
+		return 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar';
+	}, [isLogsExplorer, isMetricsExplorer]);
 
 	return (
 		<div className="explorer-options-container">
@@ -667,28 +744,22 @@ function ExplorerOptions({
 						</Button>
 					</div>
 					<div className="actions">
-						<Tooltip
-							title={
-								<div>
-									{isLogsExplorer
-										? 'Learn more about Logs explorer '
-										: 'Learn more about Traces explorer '}
-									<Typography.Link
-										href={
-											isLogsExplorer
-												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
-												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
-										}
-										target="_blank"
-									>
-										{' '}
-										here
-									</Typography.Link>{' '}
-								</div>
-							}
-						>
-							<InfoCircleOutlined className="info-icon" />
-						</Tooltip>
+						{/* Hide the info icon for metrics explorer until we get the docs link */}
+						{!isMetricsExplorer && (
+							<Tooltip
+								title={
+									<div>
+										{infoIconText}
+										<Typography.Link href={infoIconLink} target="_blank">
+											{' '}
+											here
+										</Typography.Link>{' '}
+									</div>
+								}
+							>
+								<InfoCircleOutlined className="info-icon" />
+							</Tooltip>
+						)}
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}

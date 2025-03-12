@@ -7,11 +7,13 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"sync"
 
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/types"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -43,12 +45,12 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(db *sqlx.DB, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, bundb *bun.DB, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
 
-	repo := NewLicenseRepo(db)
+	repo := NewLicenseRepo(db, bundb)
 	m := &Manager{
 		repo: &repo,
 	}
@@ -237,10 +239,10 @@ func (lm *Manager) ValidateV3(ctx context.Context) (reterr error) {
 func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseResponse *model.LicenseV3, errResponse *model.ApiError) {
 	defer func() {
 		if errResponse != nil {
-			userEmail, err := auth.GetEmailFromJwt(ctx)
-			if err == nil {
+			claims, ok := authtypes.ClaimsFromContext(ctx)
+			if ok {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED,
-					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail, true, false)
+					map[string]interface{}{"err": errResponse.Err.Error()}, claims.Email, true, false)
 			}
 		}
 	}()
@@ -282,15 +284,41 @@ func (lm *Manager) GetFeatureFlags() (basemodel.FeatureSet, error) {
 }
 
 func (lm *Manager) InitFeatures(features basemodel.FeatureSet) error {
-	return lm.repo.InitFeatures(features)
+	featureStatus := make([]types.FeatureStatus, len(features))
+	for i, f := range features {
+		featureStatus[i] = types.FeatureStatus{
+			Name:       f.Name,
+			Active:     f.Active,
+			Usage:      int(f.Usage),
+			UsageLimit: int(f.UsageLimit),
+			Route:      f.Route,
+		}
+	}
+	return lm.repo.InitFeatures(featureStatus)
 }
 
 func (lm *Manager) UpdateFeatureFlag(feature basemodel.Feature) error {
-	return lm.repo.UpdateFeature(feature)
+	return lm.repo.UpdateFeature(types.FeatureStatus{
+		Name:       feature.Name,
+		Active:     feature.Active,
+		Usage:      int(feature.Usage),
+		UsageLimit: int(feature.UsageLimit),
+		Route:      feature.Route,
+	})
 }
 
 func (lm *Manager) GetFeatureFlag(key string) (basemodel.Feature, error) {
-	return lm.repo.GetFeature(key)
+	featureStatus, err := lm.repo.GetFeature(key)
+	if err != nil {
+		return basemodel.Feature{}, err
+	}
+	return basemodel.Feature{
+		Name:       featureStatus.Name,
+		Active:     featureStatus.Active,
+		Usage:      int64(featureStatus.Usage),
+		UsageLimit: int64(featureStatus.UsageLimit),
+		Route:      featureStatus.Route,
+	}, nil
 }
 
 // GetRepo return the license repo
