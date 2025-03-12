@@ -71,9 +71,7 @@ func IsViewer(user *types.GettableUser) bool { return user.GroupID == AuthCacheO
 func IsEditor(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.EditorGroupId }
 func IsAdmin(user *types.GettableUser) bool  { return user.GroupID == AuthCacheObj.AdminGroupId }
 
-func IsViewerV2(claims authtypes.Claims) bool { return claims.GroupID == AuthCacheObj.ViewerGroupId }
-func IsEditorV2(claims authtypes.Claims) bool { return claims.GroupID == AuthCacheObj.EditorGroupId }
-func IsAdminV2(claims authtypes.Claims) bool  { return claims.GroupID == AuthCacheObj.AdminGroupId }
+func IsAdminV2(claims authtypes.Claims) bool { return claims.GroupID == AuthCacheObj.AdminGroupId }
 
 func ValidatePassword(password string) error {
 	if len(password) < minimumPasswordLength {
