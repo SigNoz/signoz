@@ -237,7 +237,13 @@ function OnboardingAddDataSource(): JSX.Element {
 		}
 	};
 
-	const handleSelectEnvironment = (selectedEnvironment: any): void => {
+	// Base Assumption:
+	// Environment is the last question in the onboarding flow and no more question will be shown regarless of the configuration
+	// We will have to handle this in the future
+	const handleSelectEnvironment = (
+		selectedEnvironment: any,
+		baseURL?: string,
+	): void => {
 		setSelectedEnvironment(selectedEnvironment);
 		setHasMoreQuestions(false);
 
@@ -250,7 +256,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			},
 		);
 
-		updateUrl(docsUrl, selectedEnvironment?.key);
+		updateUrl(baseURL || docsUrl, selectedEnvironment?.key);
 
 		setShowConfigureProduct(true);
 	};
@@ -411,7 +417,6 @@ function OnboardingAddDataSource(): JSX.Element {
 						<div className="header-left-section">
 							<X
 								size={14}
-								color="#fff"
 								className="onboarding-header-container-close-icon"
 								onClick={(): void => {
 									logEvent(
@@ -584,7 +589,15 @@ function OnboardingAddDataSource(): JSX.Element {
 																			selectedFramework?.label === option.label ? 'selected' : ''
 																		}`}
 																		type="primary"
-																		onClick={(): void => handleSelectFramework(option)}
+																		onClick={(): void => {
+																			if (
+																				selectedDataSource?.question?.entityID === 'environment'
+																			) {
+																				handleSelectEnvironment(option, option.link);
+																			} else {
+																				handleSelectFramework(option);
+																			}
+																		}}
 																	>
 																		{option.imgUrl && (
 																			<img
