@@ -32,7 +32,7 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 	// Get the dashboard UUID from the request
 	uuid := mux.Vars(r)["uuid"]
 	if strings.HasPrefix(uuid, "integration") {
-		render.Error(w, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "dashboards created by integrations cannot be unlocked"))
+		render.Error(w, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "dashboards created by integrations cannot be modified"))
 		return
 	}
 
