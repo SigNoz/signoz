@@ -536,9 +536,7 @@ const generateTableColumns = (
 		const column: ColumnType<RowData> = {
 			dataIndex: item.dataIndex,
 			title: item.title,
-			key: item.dataIndex,
 			width: QUERY_TABLE_CONFIG.width,
-			ellipsis: true,
 			responsive: ['md'],
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
