@@ -68,7 +68,12 @@ func parseRegisterEventRequest(r *http.Request) (*model.RegisterEventParams, err
 	if err != nil {
 		return nil, err
 	}
-	if postData.EventName == "" {
+	// Validate the event type
+	if !postData.EventType.IsValid() {
+		return nil, errors.New("eventType param missing/incorrect in query")
+	}
+
+	if postData.EventType == model.TrackEvent && postData.EventName == "" {
 		return nil, errors.New("eventName param missing in query")
 	}
 
@@ -733,6 +738,25 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
 	}
+	return &req, nil
+}
+
+func parseFilterAttributeValueRequestBody(r *http.Request) (*v3.FilterAttributeValueRequest, error) {
+
+	var req v3.FilterAttributeValueRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// offset by two windows periods for start for better results
+	req.StartTimeMillis = req.StartTimeMillis - time.Hour.Milliseconds()*6*2
+	req.EndTimeMillis = req.EndTimeMillis + time.Hour.Milliseconds()*6
+
 	return &req, nil
 }
 

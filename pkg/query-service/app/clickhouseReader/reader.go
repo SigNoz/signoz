@@ -49,7 +49,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/metrics"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -145,7 +144,6 @@ type ClickHouseReader struct {
 
 	promConfigFile string
 	promConfig     *config.Config
-	alertManager   am.Manager
 	featureFlags   interfaces.FeatureLookup
 
 	liveTailRefreshSeconds int
@@ -164,6 +162,8 @@ type ClickHouseReader struct {
 
 	fluxIntervalForTraceDetail time.Duration
 	cache                      cache.Cache
+	metadataDB                 string
+	metadataTable              string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -194,13 +194,6 @@ func NewReaderFromClickhouseConnection(
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickHouseReader {
-	alertManager, err := am.New()
-	if err != nil {
-		zap.L().Error("failed to initialize alert manager", zap.Error(err))
-		zap.L().Error("check if the alert manager URL is correctly set and valid")
-		os.Exit(1)
-	}
-
 	logsTableName := options.primary.LogsTable
 	logsLocalTableName := options.primary.LogsLocalTable
 	if useLogsNewSchema {
@@ -219,7 +212,6 @@ func NewReaderFromClickhouseConnection(
 		db:                      db,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
-		alertManager:            alertManager,
 		operationsTable:         options.primary.OperationsTable,
 		indexTable:              options.primary.IndexTable,
 		errorTable:              options.primary.ErrorTable,
@@ -259,6 +251,8 @@ func NewReaderFromClickhouseConnection(
 
 		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		cache:                      cache,
+		metadataDB:                 options.primary.MetadataDB,
+		metadataTable:              options.primary.MetadataTable,
 	}
 }
 
@@ -4126,6 +4120,97 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	return &response, nil
 }
 
+func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.FilterAttributeValueRequest) ([]string, error) {
+	var andConditions []string
+
+	andConditions = append(andConditions, fmt.Sprintf("unix_milli >= %d", req.StartTimeMillis))
+	andConditions = append(andConditions, fmt.Sprintf("unix_milli <= %d", req.EndTimeMillis))
+
+	if len(req.ExistingFilterItems) != 0 {
+		for _, item := range req.ExistingFilterItems {
+			// we only support string for related values
+			if item.Key.DataType != v3.AttributeKeyDataTypeString {
+				continue
+			}
+
+			var colName string
+			switch item.Key.Type {
+			case v3.AttributeKeyTypeResource:
+				colName = "resource_attributes"
+			case v3.AttributeKeyTypeTag:
+				colName = "attributes"
+			default:
+				// we only support resource and tag for related values as of now
+				continue
+			}
+			// IN doesn't make use of map value index, we convert it to = or !=
+			operator := item.Operator
+			if v3.FilterOperator(strings.ToLower(string(item.Operator))) == v3.FilterOperatorIn {
+				operator = "="
+			} else if v3.FilterOperator(strings.ToLower(string(item.Operator))) == v3.FilterOperatorNotIn {
+				operator = "!="
+			}
+			addCondition := func(val string) {
+				andConditions = append(andConditions, fmt.Sprintf("mapContains(%s, '%s') AND %s['%s'] %s %s", colName, item.Key.Key, colName, item.Key.Key, operator, val))
+			}
+			switch v := item.Value.(type) {
+			case string:
+				fmtVal := utils.ClickHouseFormattedValue(v)
+				addCondition(fmtVal)
+			case []string:
+				for _, val := range v {
+					fmtVal := utils.ClickHouseFormattedValue(val)
+					addCondition(fmtVal)
+				}
+			case []interface{}:
+				for _, val := range v {
+					fmtVal := utils.ClickHouseFormattedValue(val)
+					addCondition(fmtVal)
+				}
+			}
+		}
+	}
+	whereClause := strings.Join(andConditions, " AND ")
+
+	var selectColumn string
+	switch req.TagType {
+	case v3.TagTypeResource:
+		selectColumn = "resource_attributes" + "['" + req.FilterAttributeKey + "']"
+	case v3.TagTypeTag:
+		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+	default:
+		selectColumn = "attributes" + "['" + req.FilterAttributeKey + "']"
+	}
+
+	filterSubQuery := fmt.Sprintf(
+		"SELECT DISTINCT %s FROM %s.%s WHERE %s LIMIT 100",
+		selectColumn,
+		r.metadataDB,
+		r.metadataTable,
+		whereClause,
+	)
+	zap.L().Debug("filterSubQuery for related values", zap.String("query", filterSubQuery))
+
+	rows, err := r.db.Query(ctx, filterSubQuery)
+	if err != nil {
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeValues []string
+	for rows.Next() {
+		var value string
+		if err := rows.Scan(&value); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if value != "" {
+			attributeValues = append(attributeValues, value)
+		}
+	}
+
+	return attributeValues, nil
+}
+
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var err error
 	var filterValueColumn string
@@ -4224,6 +4309,13 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	}
+
+	if req.IncludeRelated {
+		relatedValues, _ := r.FetchRelatedValues(ctx, req)
+		attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+			StringAttributeValues: relatedValues,
 		}
 	}
 
@@ -4904,6 +4996,13 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	}
+
+	if req.IncludeRelated {
+		relatedValues, _ := r.FetchRelatedValues(ctx, req)
+		attributeValues.RelatedValues = &v3.FilterAttributeValueResponse{
+			StringAttributeValues: relatedValues,
 		}
 	}
 

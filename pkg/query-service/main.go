@@ -4,8 +4,6 @@ import (
 	"context"
 	"flag"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
@@ -94,7 +92,14 @@ func main() {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
+	signoz, err := signoz.New(
+		context.Background(),
+		config,
+		signoz.NewCacheProviderFactories(),
+		signoz.NewWebProviderFactories(),
+		signoz.NewSQLStoreProviderFactories(),
+		signoz.NewTelemetryStoreProviderFactories(),
+	)
 	if err != nil {
 		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
 	}
@@ -142,22 +147,20 @@ func main() {
 		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
-	signalsChannel := make(chan os.Signal, 1)
-	signal.Notify(signalsChannel, os.Interrupt, syscall.SIGTERM)
+	signoz.Start(context.Background())
 
-	for {
-		select {
-		case status := <-server.HealthCheckStatus():
-			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
-		case <-signalsChannel:
-			logger.Info("Received OS Interrupt Signal ... ")
-			err := server.Stop()
-			if err != nil {
-				logger.Fatal("Failed to stop server", zap.Error(err))
-			}
-			logger.Info("Server stopped")
-			return
-		}
+	if err := signoz.Wait(context.Background()); err != nil {
+		zap.L().Fatal("Failed to start signoz", zap.Error(err))
+	}
+
+	err = server.Stop()
+	if err != nil {
+		zap.L().Fatal("Failed to stop server", zap.Error(err))
+	}
+
+	err = signoz.Stop(context.Background())
+	if err != nil {
+		zap.L().Fatal("Failed to stop signoz", zap.Error(err))
 	}
 
 }
