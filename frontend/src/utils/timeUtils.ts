@@ -155,3 +155,8 @@ export const normalizeTimeToMs = (timestamp: number | string): number => {
 
 	return isNanoSeconds ? Math.floor(ts / 1_000_000) : ts;
 };
+
+export const hasDatePassed = (expiresAt: string): boolean => {
+	const date = dayjs(expiresAt);
+	return date.isBefore(dayjs(), 'day');
+};
