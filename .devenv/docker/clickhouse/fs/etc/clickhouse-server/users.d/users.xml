@@ -10,7 +10,6 @@
     </profiles>
     <users>
         <default>
-            <access_management>1</access_management>
             <profile>default</profile>
             <networks>
                 <ip>::/0</ip>
