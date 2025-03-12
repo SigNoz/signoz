@@ -188,8 +188,6 @@ export function createColumnsAndDataSource(
 				// if no legend present then rely on the column name value
 				title: !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
-				ellipsis: true,
-				key: item.name,
 				responsive: ['md'],
 				render: renderColumnCell && renderColumnCell[item.name],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
