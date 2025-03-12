@@ -43,6 +43,7 @@ function GridTableComponent({
 	sticky,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	widgetId,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -229,6 +230,7 @@ function GridTableComponent({
 				columns={openTracesButton ? columnDataWithOpenTracesButton : newColumnData}
 				dataSource={dataSource}
 				sticky={sticky}
+				widgetId={widgetId}
 				onRow={
 					openTracesButton
 						? (record): React.HTMLAttributes<HTMLElement> => ({
