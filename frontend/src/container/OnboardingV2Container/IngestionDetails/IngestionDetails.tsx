@@ -76,8 +76,6 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		if (ingestionKeys?.data.data && ingestionKeys?.data.data.length > 0) {
 			setFirstIngestionKey(ingestionKeys?.data.data[0]);
 		}
-
-		console.log('ingestionKeys', ingestionKeys);
 	}, [ingestionKeys]);
 
 	return (

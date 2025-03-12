@@ -158,5 +158,10 @@ export const normalizeTimeToMs = (timestamp: number | string): number => {
 
 export const hasDatePassed = (expiresAt: string): boolean => {
 	const date = dayjs(expiresAt);
+
+	if (!date.isValid()) {
+		return false;
+	}
+
 	return date.isBefore(dayjs(), 'day');
 };
