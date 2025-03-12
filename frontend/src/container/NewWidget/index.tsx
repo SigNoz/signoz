@@ -74,6 +74,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 		selectedRowWidgetId,
 		setSelectedRowWidgetId,
+		columnWidths,
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
@@ -234,6 +235,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
+				columnWidths: columnWidths[selectedWidget?.id],
 			};
 		});
 	}, [
@@ -255,6 +257,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		bucketCount,
 		combineHistogram,
 		stackedBarChart,
+		columnWidths,
+		selectedWidget,
 	]);
 
 	const closeModal = (): void => {

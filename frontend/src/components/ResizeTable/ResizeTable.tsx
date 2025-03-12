@@ -3,28 +3,52 @@
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
-import { set } from 'lodash-es';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { debounce, set } from 'lodash-es';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	SyntheticEvent,
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import ReactDragListView from 'react-drag-listview';
 import { ResizeCallbackData } from 'react-resizable';
+import { Widgets } from 'types/api/dashboard/getAll';
 
 import ResizableHeader from './ResizableHeader';
 import { DragSpanStyle } from './styles';
 import { ResizeTableProps } from './types';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ResizeTable({
 	columns,
 	onDragColumn,
 	pagination,
+	widgetId,
+	shouldPersistColumnWidths = false,
 	...restProps
 }: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
+	const { setColumnWidths, selectedDashboard } = useDashboard();
+
+	const columnWidths = shouldPersistColumnWidths
+		? (selectedDashboard?.data.widgets?.find(
+				(widget) => widget.id === widgetId,
+		  ) as Widgets)?.columnWidths
+		: undefined;
+
+	const updateAllColumnWidths = useRef(
+		debounce((widthsConfig: Record<string, number>) => {
+			if (!widgetId || !shouldPersistColumnWidths) return;
+			setColumnWidths((prev) => ({
+				...prev,
+				[widgetId]: widthsConfig,
+			}));
+		}, 1000),
+	).current;
 
 	const handleResize = useCallback(
 		(index: number) => (
@@ -78,9 +102,39 @@ function ResizeTable({
 
 	useEffect(() => {
 		if (columns) {
-			setColumns(columns);
+			// Apply stored column widths from widget configuration
+			const columnsWithStoredWidths = columns.map((col) => {
+				const dataIndex = (col as RowData).dataIndex as string;
+				if (dataIndex && columnWidths && columnWidths[dataIndex]) {
+					return {
+						...col,
+						width: columnWidths[dataIndex], // Apply stored width
+					};
+				}
+				return col;
+			});
+
+			setColumns(columnsWithStoredWidths);
 		}
-	}, [columns]);
+	}, [columns, columnWidths]);
+
+	useEffect(() => {
+		if (!shouldPersistColumnWidths) return;
+		// Collect all column widths in a single object
+		const newColumnWidths: Record<string, number> = {};
+
+		mergedColumns.forEach((col) => {
+			if (col.width && (col as RowData).dataIndex) {
+				const dataIndex = (col as RowData).dataIndex as string;
+				newColumnWidths[dataIndex] = col.width as number;
+			}
+		});
+
+		// Only update if there are actual widths to set
+		if (Object.keys(newColumnWidths).length > 0) {
+			updateAllColumnWidths(newColumnWidths);
+		}
+	}, [mergedColumns, updateAllColumnWidths, shouldPersistColumnWidths]);
 
 	return onDragColumn ? (
 		<ReactDragListView.DragColumn {...dragColumnParams} onDragEnd={onDragColumn}>
