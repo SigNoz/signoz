@@ -521,7 +521,7 @@ export default function CeleryOverviewTable({
 				locale={{
 					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,
 				}}
-				scroll={{ x: true }}
+				scroll={{ x: 'max-content' }}
 				showSorterTooltip
 				onDragColumn={handleDragColumn}
 				onRow={(record): { onClick: () => void; className: string } => ({
