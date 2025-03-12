@@ -106,6 +106,37 @@
 					}
 				},
 				{
+					"key": "opentelemetry-quarkus",
+					"label": "Quarkus",
+					"imgUrl": "/Logos/quarkus.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/",
+					"question": {
+					  "desc": "What is your Environment?",
+					  "type": "select",
+					  "entityID": "environment",
+					  "options": [
+						{
+						  "key": "vm",
+						  "label": "VM",
+						  "imgUrl": "/Logos/vm.svg",
+						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+						},
+						{
+						  "key": "k8s",
+						  "label": "Kubernetes",
+						  "imgUrl": "/Logos/kubernetes.svg",
+						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+						},
+						{
+						  "key": "windows",
+						  "label": "Windows",
+						  "imgUrl": "/Logos/windows.svg",
+						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+						}
+					  ]
+					}
+				},
+				{
 					"key": "Others",
 					"label": "Others",
 					"imgUrl": "/Logos/java-others.svg",
@@ -682,6 +713,15 @@
 		}
 	},
 	{
+		"dataSource": "opentelemetry-cpp",
+		"label": "C++",
+		"imgUrl": "/Logos/cpp.svg",
+		"tags": ["apm"],
+		"module": "apm",
+		"id": "opentelemetry-cpp",
+		"link": "https://signoz.io/docs/instrumentation/opentelemetry-cpp/"
+	},
+	{
 		"dataSource": "kubernetes-pod-logs",
 		"label": "Kubernetes Pod Logs",
 		"imgUrl": "/Logos/kubernetes.svg",
@@ -696,6 +736,7 @@
 		"imgUrl": "/Logos/docker.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "docker-container-logs",
 		"link": "https://signoz.io/docs/userguide/collect_docker_logs/"
 	},
 	{
@@ -704,6 +745,7 @@
 		"imgUrl": "/Logos/vercel.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "vercel-logs",
 		"link": "https://signoz.io/docs/userguide/vercel_logs_to_signoz/"
 	},
 	{
@@ -712,14 +754,16 @@
 		"imgUrl": "/Logos/heroku.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "heroku-logs",
 		"link": "https://signoz.io/docs/userguide/heroku_logs_to_signoz/"
 	},
 	{
 		"dataSource": "http-logs",
-		"label": "HTTP logs",
+		"label": "Send Logs using HTTP",
 		"imgUrl": "/Logos/http.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "http-logs",
 		"link": "https://signoz.io/docs/userguide/send-logs-http/"
 	},
 	{
@@ -728,6 +772,7 @@
 		"imgUrl": "/Logos/syslogs.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "syslogs",
 		"link": "https://signoz.io/docs/userguide/collecting_syslogs/"
 	},
 	{
@@ -736,6 +781,7 @@
 		"imgUrl": "/Logos/fluentd.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "fluentd",
 		"link": "https://signoz.io/docs/userguide/fluentd_to_signoz/"
 	},
 	{
@@ -744,6 +790,7 @@
 		"imgUrl": "/Logos/fluentbit.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "fluentbit",
 		"link": "https://signoz.io/docs/userguide/fluentbit_to_signoz/"
 	},
 	{
@@ -752,6 +799,7 @@
 		"imgUrl": "/Logos/logstash.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "logstash",
 		"link": "https://signoz.io/docs/userguide/logstash_to_signoz/"
 	},
 	{
@@ -760,6 +808,7 @@
 		"imgUrl": "/Logos/tomcat-logs.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "tomcat-logs",
 		"link": "https://signoz.io/docs/logs-management/send-logs/collect-tomcat-access-and-garbage-collector-logs/"
 	},
 	{
@@ -768,6 +817,7 @@
 		"imgUrl": "/Logos/vector.svg",
 		"tags": ["logs"],
 		"module": "logs",
+		"id": "vector-logs",
 		"link": "https://signoz.io/docs/logs-management/send-logs/vector-logs-to-signoz/"
 	},
 	{
@@ -787,63 +837,92 @@
 		"link": "https://signoz.io/docs/userguide/send-cloudwatch-logs-to-signoz/"
 	},
 	{
-		"dataSource": "application-logs",
-		"label": "Application Logs",
-		"imgUrl": "/Logos/application-logs.svg",
+		"dataSource": "from-log-file",
+		"label": "From Log File",
+		"imgUrl": "/Logos/from-log-file.svg",
 		"tags": ["logs"],
 		"module": "logs",
-		"question": {
-			"desc": "Where do you want to collect your application logs from?",
-			"type": "select",
-			"options": [
-				{
-					"key": "from-log-file",
-					"label": "From log file",
-					"imgUrl": "/Logos/from-log-file.svg",
-					"link": "https://signoz.io/docs/userguide/collect_logs_from_file/"
-				},
-				{
-					"key": "aws-lambda-nodejs-logs",
-					"label": "AWS Lambda NodeJS logs",
-					"imgUrl": "/Logos/lambda.svg",
-					"link": "https://signoz.io/docs/logs-management/send-logs/aws-lambda-nodejs/"
-				},
-				{
-					"key": "otel-python-sdk",
-					"label": "OTel Python SDK",
-					"imgUrl": "/Logos/python.svg",
-					"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_python/"
-				},
-				{
-					"key": "otel-java-sdk",
-					"label": "OTel Java SDK",
-					"imgUrl": "/Logos/java.svg",
-					"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/"
-				},
-				{
-					"key": "python-logs-auto-instrumentation",
-					"label": "Python logs auto-instrumentation",
-					"imgUrl": "/Logos/python.svg",
-					"link": "https://signoz.io/docs/userguide/python-logs-auto-instrumentation/"
-				}
-			]
-		}
+		"link": "https://signoz.io/docs/logs-management/send-logs/aws-lambda-nodejs/"
 	},
 	{
-		"dataSource": "kubernetes-infra-metrics",
-		"label": "Kuberenetes Infra Metrics",
-		"tags": ["infrastructure monitoring"],
-		"module": "metrics",
-		"imgUrl": "/Logos/kubernetes.svg",
-		"link": "https://signoz.io/docs/tutorial/kubernetes-infra-metrics/"
+		"dataSource": "aws-lambda-nodejs-logs",
+		"label": "AWS Lambda NodeJS logs",
+		"imgUrl": "/Logos/lambda.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/userguide/collect_logs_from_file/"
+	},
+	{
+		"dataSource": "python-logs-auto-instrumentation",
+		"label": "Python logs",
+		"imgUrl": "/Logos/python.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/userguide/python-logs-auto-instrumentation/"
+	},
+	{
+		"dataSource": "otel-java-sdk",
+		"label": "Java logs",
+		"imgUrl": "/Logos/java.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/"
+	},
+	{
+		"dataSource": "nodejs-pino-logs",
+		"label": "Pino Logs",
+		"imgUrl": "/Logos/pino.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-pino-logs/"
+	},
+	{
+		"dataSource": "nodejs-winston-logs",
+		"label": "Winston Logs",
+		"imgUrl": "/Logos/winston.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
+	},
+	{
+		"dataSource": "golang-zap-logs",
+		"label": "Zap Logs",
+		"imgUrl": "/Logos/zap.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/logs-management/send-logs/zap-to-signoz/"
+	},
+	{
+		"dataSource": "golang-logrus-logs",
+		"label": "Logrus Logs",
+		"imgUrl": "/Logos/logrus.svg",
+		"tags": ["logs"],
+		"module": "logs",
+		"link": "https://signoz.io/docs/logs-management/send-logs/logrus-to-signoz/"
 	},
 	{
 		"dataSource": "hostmetrics",
-		"label": "Hostmetrics",
+		"label": "Host Monitoring",
 		"tags": ["infrastructure monitoring"],
-		"module": "metrics",
+		"module": "infra-monitoring-hosts",
 		"imgUrl": "/Logos/hostmetrics.svg",
 		"link": "https://signoz.io/docs/userguide/hostmetrics/"
+	},
+	{
+		"dataSource": "k8s-metrics",
+		"label": "Kubernetes Monitoring",
+		"tags": ["infrastructure monitoring"],
+		"module": "infra-monitoring-k8s",
+		"imgUrl": "/Logos/kubernetes.svg",
+		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
+	},
+	{
+		"dataSource": "docker-container-metrics",
+		"label": "Docker Container Metrics",
+		"tags": ["metrics"],
+		"module": "metrics",
+		"imgUrl": "/Logos/docker.svg",
+		"link": "https://signoz.io/docs/userguide/k8s-metrics/"
 	},
 	{
 		"dataSource": "ec2-application-logs",
@@ -1394,11 +1473,19 @@
 		"link": "https://signoz.io/docs/instrumentation/mobile-instrumentation/opentelemetry-swiftui/"
 	},
 	{
-		"dataSource": "frontend-monitoring",
+		"dataSource": "web-vitals",
 		"label": "Web Vitals",
 		"imgUrl": "/Logos/llm-monitoring.svg",
 		"tags": ["Frontend Monitoring"],
 		"module": "apm",
 		"link": "https://signoz.io/docs/frontend-monitoring/opentelemetry-web-vitals/"
+	},
+	{
+		"dataSource": "document-load",
+		"label": "Document Load",
+		"imgUrl": "/Logos/document-load.svg",
+		"tags": ["Frontend Monitoring"],
+		"module": "apm",
+		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
 	}
 ]

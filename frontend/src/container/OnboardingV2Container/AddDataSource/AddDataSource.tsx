@@ -378,6 +378,12 @@ function OnboardingAddDataSource(): JSX.Element {
 				case 'metrics':
 					history.push(ROUTES.ALL_DASHBOARD);
 					break;
+				case 'infra-monitoring-hosts':
+					history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
+					break;
+				case 'infra-monitoring-k8s':
+					history.push(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES);
+					break;
 				default:
 					history.push(ROUTES.APPLICATION);
 			}
@@ -405,7 +411,6 @@ function OnboardingAddDataSource(): JSX.Element {
 						<div className="header-left-section">
 							<X
 								size={14}
-								color="#fff"
 								className="onboarding-header-container-close-icon"
 								onClick={(): void => {
 									logEvent(
