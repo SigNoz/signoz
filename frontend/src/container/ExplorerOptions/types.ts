@@ -31,7 +31,8 @@ export interface SaveNewViewHandlerProps {
 
 export type PreservedViewType =
 	| PreservedViewsTypes.LOGS
-	| PreservedViewsTypes.TRACES;
+	| PreservedViewsTypes.TRACES
+	| PreservedViewsTypes.METRICS;
 
 export type PreservedViewsInLocalStorage = Partial<
 	Record<PreservedViewType, { key: string; value: string }>

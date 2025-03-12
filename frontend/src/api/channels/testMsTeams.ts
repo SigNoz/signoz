@@ -10,7 +10,7 @@ const testMsTeams = async (
 	try {
 		const response = await axios.post('/testChannel', {
 			name: props.name,
-			msteams_configs: [
+			msteamsv2_configs: [
 				{
 					send_resolved: true,
 					webhook_url: props.webhook_url,

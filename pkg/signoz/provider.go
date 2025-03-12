@@ -1,6 +1,9 @@
 package signoz
 
 import (
+	"go.signoz.io/signoz/pkg/alertmanager"
+	"go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager"
+	"go.signoz.io/signoz/pkg/alertmanager/signozalertmanager"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/cache/memorycache"
 	"go.signoz.io/signoz/pkg/cache/rediscache"
@@ -18,53 +21,56 @@ import (
 	"go.signoz.io/signoz/pkg/web/routerweb"
 )
 
-type ProviderConfig struct {
-	// Map of all cache provider factories
-	CacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]]
-
-	// Map of all web provider factories
-	WebProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]]
-
-	// Map of all sqlstore provider factories
-	SQLStoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]]
-
-	// Map of all sql migration provider factories
-	SQLMigrationProviderFactories factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]]
-
-	// Map of all telemetrystore provider factories
-	TelemetryStoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]]
+func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]] {
+	return factory.MustNewNamedMap(
+		memorycache.NewFactory(),
+		rediscache.NewFactory(),
+	)
 }
 
-func NewProviderConfig() ProviderConfig {
-	return ProviderConfig{
-		CacheProviderFactories: factory.MustNewNamedMap(
-			memorycache.NewFactory(),
-			rediscache.NewFactory(),
-		),
-		WebProviderFactories: factory.MustNewNamedMap(
-			routerweb.NewFactory(),
-			noopweb.NewFactory(),
-		),
-		SQLStoreProviderFactories: factory.MustNewNamedMap(
-			sqlitesqlstore.NewFactory(sqlstorehook.NewLoggingFactory()),
-			postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory()),
-		),
-		SQLMigrationProviderFactories: factory.MustNewNamedMap(
-			sqlmigration.NewAddDataMigrationsFactory(),
-			sqlmigration.NewAddOrganizationFactory(),
-			sqlmigration.NewAddPreferencesFactory(),
-			sqlmigration.NewAddDashboardsFactory(),
-			sqlmigration.NewAddSavedViewsFactory(),
-			sqlmigration.NewAddAgentsFactory(),
-			sqlmigration.NewAddPipelinesFactory(),
-			sqlmigration.NewAddIntegrationsFactory(),
-			sqlmigration.NewAddLicensesFactory(),
-			sqlmigration.NewAddPatsFactory(),
-			sqlmigration.NewModifyDatetimeFactory(),
-			sqlmigration.NewModifyOrgDomainFactory(),
-		),
-		TelemetryStoreProviderFactories: factory.MustNewNamedMap(
-			clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
-		),
-	}
+func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]] {
+	return factory.MustNewNamedMap(
+		routerweb.NewFactory(),
+		noopweb.NewFactory(),
+	)
+}
+
+func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
+	hook := sqlstorehook.NewLoggingFactory()
+	return factory.MustNewNamedMap(
+		sqlitesqlstore.NewFactory(hook),
+		postgressqlstore.NewFactory(hook),
+	)
+}
+
+func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+	return factory.MustNewNamedMap(
+		sqlmigration.NewAddDataMigrationsFactory(),
+		sqlmigration.NewAddOrganizationFactory(),
+		sqlmigration.NewAddPreferencesFactory(),
+		sqlmigration.NewAddDashboardsFactory(),
+		sqlmigration.NewAddSavedViewsFactory(),
+		sqlmigration.NewAddAgentsFactory(),
+		sqlmigration.NewAddPipelinesFactory(),
+		sqlmigration.NewAddIntegrationsFactory(),
+		sqlmigration.NewAddLicensesFactory(),
+		sqlmigration.NewAddPatsFactory(),
+		sqlmigration.NewModifyDatetimeFactory(),
+		sqlmigration.NewModifyOrgDomainFactory(),
+		sqlmigration.NewUpdateOrganizationFactory(sqlstore),
+		sqlmigration.NewAddAlertmanagerFactory(),
+	)
+}
+
+func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
+	return factory.MustNewNamedMap(
+		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
+	)
+}
+
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+	return factory.MustNewNamedMap(
+		legacyalertmanager.NewFactory(sqlstore),
+		signozalertmanager.NewFactory(sqlstore),
+	)
 }

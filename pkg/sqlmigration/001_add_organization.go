@@ -36,8 +36,8 @@ func (migration *addOrganization) Up(ctx context.Context, db *bun.DB) error {
 			ID              string `bun:"id,pk,type:text"`
 			Name            string `bun:"name,type:text,notnull"`
 			CreatedAt       int    `bun:"created_at,notnull"`
-			IsAnonymous     int    `bun:"is_anonymous,notnull,default:0,CHECK(is_anonymous IN (0,1))"`
-			HasOptedUpdates int    `bun:"has_opted_updates,notnull,default:1,CHECK(has_opted_updates IN (0,1))"`
+			IsAnonymous     int    `bun:"is_anonymous,notnull,default:0"`
+			HasOptedUpdates int    `bun:"has_opted_updates,notnull,default:1"`
 		}{}).
 		IfNotExists().
 		Exec(ctx); err != nil {

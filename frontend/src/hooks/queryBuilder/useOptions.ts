@@ -170,7 +170,11 @@ export const useOptions = (
 					(option, index, self) =>
 						index ===
 							self.findIndex(
-								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+								(o) =>
+									// to remove duplicate & empty options from list
+									o.label === option.label &&
+									o.value === option.value &&
+									o.dataType?.toLowerCase() === option.dataType?.toLowerCase(), // handle case sensitivity
 							) && option.value !== '',
 				) || []
 			).map((option) => {
