@@ -159,20 +159,6 @@
 		gap: 16px;
 		padding-top: 32px;
 	}
-
-	.metric-type-renderer {
-		border-radius: 50px;
-		height: 24px;
-		width: fit-content;
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		gap: 4px;
-		text-transform: uppercase;
-		font-size: 12px;
-		padding: 5px 10px;
-		align-self: flex-end;
-	}
 }
 
 .lightMode {
@@ -220,4 +206,18 @@
 			}
 		}
 	}
+}
+
+.metric-type-renderer {
+	border-radius: 50px;
+	max-height: 24px;
+	width: fit-content;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 4px;
+	text-transform: uppercase;
+	font-size: 12px;
+	padding: 5px 10px;
+	align-self: flex-end;
 }
