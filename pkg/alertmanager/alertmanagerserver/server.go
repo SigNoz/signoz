@@ -218,12 +218,12 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = template.FromGlobs(config.Templates)
+	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
 	if err != nil {
 		return err
 	}
 
-	server.tmpl.ExternalURL = server.srvConfig.ExternalUrl
+	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -314,7 +314,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	return alertmanagertypes.TestReceiver(ctx, receiver, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
+	return alertmanagertypes.TestReceiver(ctx, receiver, server.alertmanagerConfig, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
 }
 
 func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanagertypes.PostableAlert, receivers []string) error {
@@ -335,7 +335,7 @@ func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanager
 				ch <- err
 				return
 			}
-			ch <- alertmanagertypes.TestReceiver(ctx, receiver, server.tmpl, server.logger, alerts[0])
+			ch <- alertmanagertypes.TestReceiver(ctx, receiver, server.alertmanagerConfig, server.tmpl, server.logger, alerts[0])
 		}(receiverName)
 	}
 

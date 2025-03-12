@@ -40,7 +40,7 @@ func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, erro
 	}, nil
 }
 
-func (r *Registry) Start(ctx context.Context) error {
+func (r *Registry) Start(ctx context.Context) {
 	for _, s := range r.services.GetInOrder() {
 		go func(s NamedService) {
 			r.logger.InfoContext(ctx, "starting service", "service", s.Name())
@@ -49,7 +49,6 @@ func (r *Registry) Start(ctx context.Context) error {
 		}(s)
 	}
 
-	return nil
 }
 
 func (r *Registry) Wait(ctx context.Context) error {

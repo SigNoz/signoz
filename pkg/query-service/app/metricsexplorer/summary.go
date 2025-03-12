@@ -15,6 +15,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/types/authtypes"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -155,7 +156,11 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	g.Go(func() error {
 		var metricNames []string
 		metricNames = append(metricNames, metricName)
-		data, err := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if !ok {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}
+		}
+		data, err := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
 		if err != nil {
 			return err
 		}
@@ -322,7 +327,11 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 	alertsRelatedData := make(map[string][]metrics_explorer.Alert)
 
 	g.Go(func() error {
-		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, metricNames)
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if !ok {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}
+		}
+		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
 		if apiError != nil {
 			return apiError
 		}

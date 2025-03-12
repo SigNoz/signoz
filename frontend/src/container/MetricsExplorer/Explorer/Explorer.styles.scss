@@ -1,0 +1,172 @@
+.metrics-explorer-explore-container {
+	padding-bottom: 16px;
+
+	.explore-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin: 10px 0;
+
+		.explore-header-left-actions {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.explore-header-right-actions {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+	}
+
+	.query-section {
+		max-height: 450px;
+		overflow-y: scroll;
+	}
+
+	.explore-tabs {
+		margin: 15px 0;
+		.tab {
+			background-color: var(--bg-slate-500);
+			border-color: var(--bg-ink-200);
+			width: 180px;
+			padding: 16px 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.tab:first-of-type {
+			border-top-left-radius: 2px;
+		}
+
+		.tab:last-of-type {
+			border-top-right-radius: 2px;
+		}
+
+		.selected-view {
+			background: var(--bg-ink-500);
+		}
+	}
+
+	.explore-content {
+		.time-series-container {
+			display: flex;
+			gap: 10px;
+			width: 100%;
+			height: fit-content;
+			overflow-y: scroll;
+
+			.time-series-view {
+				min-width: 100%;
+				width: 100%;
+			}
+		}
+
+		.related-metrics-container {
+			width: 100%;
+			min-height: 300px;
+			max-height: 450px;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+
+			.related-metrics-header {
+				display: flex;
+				align-items: center;
+				justify-content: flex-start;
+
+				.metric-name-select {
+					width: 20%;
+					margin-right: 10px;
+				}
+
+				.related-metrics-input {
+					width: 40%;
+
+					.ant-input-wrapper {
+						.ant-input-group-addon {
+							.related-metrics-select {
+								width: 250px;
+								border: 1px solid var(--bg-slate-500) !important;
+
+								.ant-select-selector {
+									text-align: left;
+									color: var(--text-vanilla-500) !important;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			.related-metrics-body {
+				padding: 10px 0;
+
+				.related-metrics-card-container {
+					min-height: 300px;
+					margin-bottom: 25px;
+					.related-metrics-card {
+						// height: 400px;
+						display: flex;
+						flex-direction: column;
+						gap: 16px;
+
+						.related-metrics-card-error {
+							padding-top: 10px;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+.lightMode {
+	.metrics-explorer-explore-container {
+		.explore-tabs {
+			.tab {
+				background-color: var(--bg-vanilla-100);
+				border-color: var(--bg-vanilla-400);
+			}
+
+			.selected-view {
+				background: var(--bg-vanilla-500);
+			}
+		}
+	}
+}
+
+.dashboards-and-alerts-popover-container {
+	display: flex;
+	gap: 16px;
+
+	.dashboards-and-alerts-popover {
+		border-radius: 20px;
+		padding: 4px 8px;
+		cursor: pointer;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 4px;
+
+		&:hover {
+			opacity: 0.8;
+		}
+	}
+
+	.dashboards-popover {
+		border: 1px solid var(--bg-sienna-500);
+		.ant-typography {
+			color: var(--bg-sienna-500);
+		}
+	}
+
+	.alerts-popover {
+		border: 1px solid var(--bg-sakura-500);
+		.ant-typography {
+			color: var(--bg-sakura-500);
+		}
+	}
+}

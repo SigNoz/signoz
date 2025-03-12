@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
@@ -62,13 +61,13 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 		return errors.Errorf("Found %d organizations, expected one or none.", len(orgs))
 	}
 
-	var org model.Organization
+	var org types.Organization
 	if len(orgs) == 1 {
 		org = orgs[0]
 	}
 
 	// set telemetry fields from userPreferences
-	telemetry.GetInstance().SetDistinctId(org.Id)
+	telemetry.GetInstance().SetDistinctId(org.ID)
 
 	users, _ := mds.GetUsers(ctx)
 	countUsers := len(users)

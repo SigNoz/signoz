@@ -10,7 +10,6 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/uptrace/bun"
@@ -33,10 +32,10 @@ type (
 )
 
 type RouteConfig struct {
-	GroupByStr     []string
-	GroupInterval  time.Duration
-	GroupWait      time.Duration
-	RepeatInterval time.Duration
+	GroupByStr     []string      `mapstructure:"group_by"`
+	GroupInterval  time.Duration `mapstructure:"group_interval"`
+	GroupWait      time.Duration `mapstructure:"group_wait"`
+	RepeatInterval time.Duration `mapstructure:"repeat_interval"`
 }
 
 type StoreableConfig struct {
@@ -91,15 +90,14 @@ func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID 
 		return nil, err
 	}
 
+	route, err := NewRouteFromRouteConfig(nil, routeConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return NewConfig(&config.Config{
-		Global: &globalConfig,
-		Route: &config.Route{
-			Receiver:       DefaultReceiverName,
-			GroupByStr:     routeConfig.GroupByStr,
-			GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
-			GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
-			RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
-		},
+		Global:    &globalConfig,
+		Route:     route,
 		Receivers: []config.Receiver{{Name: DefaultReceiverName}},
 	}, orgID), nil
 }
@@ -109,6 +107,20 @@ func newConfigFromString(s string) (*config.Config, error) {
 	err := json.Unmarshal([]byte(s), config)
 	if err != nil {
 		return nil, err
+	}
+
+	for i, receiver := range config.Receivers {
+		bytes, err := json.Marshal(receiver)
+		if err != nil {
+			return nil, err
+		}
+
+		receiver, err := NewReceiver(string(bytes))
+		if err != nil {
+			return nil, err
+		}
+
+		config.Receivers[i] = receiver
 	}
 
 	return config, nil
@@ -128,37 +140,50 @@ func newConfigHash(s string) [16]byte {
 	return md5.Sum([]byte(s))
 }
 
-func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) {
+func (c *Config) CopyWithReset() (*Config, error) {
+	newConfig, err := NewDefaultConfig(
+		*c.alertmanagerConfig.Global,
+		RouteConfig{
+			GroupByStr:     c.alertmanagerConfig.Route.GroupByStr,
+			GroupInterval:  time.Duration(*c.alertmanagerConfig.Route.GroupInterval),
+			GroupWait:      time.Duration(*c.alertmanagerConfig.Route.GroupWait),
+			RepeatInterval: time.Duration(*c.alertmanagerConfig.Route.RepeatInterval),
+		},
+		c.storeableConfig.OrgID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConfig, nil
+}
+
+func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
+	err := mergo.Merge(&globalConfig, config.DefaultGlobalConfig())
+	if err != nil {
+		return err
+	}
+
 	c.alertmanagerConfig.Global = &globalConfig
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
 }
 
-func (c *Config) SetRouteConfig(routeConfig RouteConfig) {
-	c.alertmanagerConfig.Route = &config.Route{
-		Receiver:       DefaultReceiverName,
-		GroupByStr:     routeConfig.GroupByStr,
-		GroupInterval:  (*model.Duration)(&routeConfig.GroupInterval),
-		GroupWait:      (*model.Duration)(&routeConfig.GroupWait),
-		RepeatInterval: (*model.Duration)(&routeConfig.RepeatInterval),
+func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
+	route, err := NewRouteFromRouteConfig(c.alertmanagerConfig.Route, routeConfig)
+	if err != nil {
+		return err
 	}
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
-}
-
-func (c *Config) UpdateRouteConfig(routeConfig RouteConfig) {
-	for _, route := range c.alertmanagerConfig.Route.Routes {
-		route.GroupByStr = routeConfig.GroupByStr
-		route.GroupInterval = (*model.Duration)(&routeConfig.GroupInterval)
-		route.GroupWait = (*model.Duration)(&routeConfig.GroupWait)
-		route.RepeatInterval = (*model.Duration)(&routeConfig.RepeatInterval)
-	}
+	c.alertmanagerConfig.Route = route
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
 	c.storeableConfig.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (c *Config) AlertmanagerConfig() *config.Config {
@@ -170,10 +195,6 @@ func (c *Config) StoreableConfig() *StoreableConfig {
 }
 
 func (c *Config) CreateReceiver(receiver config.Receiver) error {
-	if receiver.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
-	}
-
 	// check that receiver name is not already used
 	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
@@ -181,7 +202,12 @@ func (c *Config) CreateReceiver(receiver config.Receiver) error {
 		}
 	}
 
-	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, newRouteFromReceiver(receiver))
+	route, err := NewRouteFromReceiver(receiver)
+	if err != nil {
+		return err
+	}
+
+	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
 	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
@@ -201,20 +227,20 @@ func (c *Config) GetReceiver(name string) (Receiver, error) {
 		}
 	}
 
-	return Receiver{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
+	return Receiver{}, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
 func (c *Config) UpdateReceiver(receiver config.Receiver) error {
-	if receiver.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "receiver is mandatory in route and receiver")
-	}
-
 	// find and update receiver
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
 			c.alertmanagerConfig.Receivers[i] = receiver
 			break
 		}
+	}
+
+	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return err
 	}
 
 	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
@@ -256,15 +282,11 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigInvalid, "route is nil")
 	}
 
-	routes := c.alertmanagerConfig.Route.Routes
-	for i, route := range routes {
+	for _, route := range c.alertmanagerConfig.Route.Routes {
 		if slices.Contains(receiverNames, route.Receiver) {
-			matcher, err := labels.NewMatcher(labels.MatchEqual, "ruleId", ruleID)
-			if err != nil {
+			if err := addRuleIDToRoute(route, ruleID); err != nil {
 				return err
 			}
-
-			c.alertmanagerConfig.Route.Routes[i].Matchers = append(c.alertmanagerConfig.Route.Routes[i].Matchers, matcher)
 		}
 	}
 
@@ -285,13 +307,9 @@ func (c *Config) UpdateRuleIDMatcher(ruleID string, receiverNames []string) erro
 }
 
 func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
-	routes := c.alertmanagerConfig.Route.Routes
-	for i, r := range routes {
-		j := slices.IndexFunc(r.Matchers, func(m *labels.Matcher) bool {
-			return m.Name == "ruleId" && m.Value == ruleID
-		})
-		if j != -1 {
-			c.alertmanagerConfig.Route.Routes[i].Matchers = slices.Delete(r.Matchers, j, j+1)
+	for i := range c.alertmanagerConfig.Route.Routes {
+		if err := removeRuleIDFromRoute(c.alertmanagerConfig.Route.Routes[i], ruleID); err != nil {
+			return err
 		}
 	}
 
@@ -302,23 +320,45 @@ func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
 	return nil
 }
 
-func (c *Config) ReceiverNamesFromRuleID(ruleID string) ([]string, error) {
+func (c *Config) ReceiverNamesFromRuleID(ruleID string) []string {
 	receiverNames := make([]string, 0)
 	routes := c.alertmanagerConfig.Route.Routes
-	for _, r := range routes {
-		for _, m := range r.Matchers {
-			if m.Name == "ruleId" && m.Value == ruleID {
-				receiverNames = append(receiverNames, r.Receiver)
-			}
+	for _, route := range routes {
+		if ok := matcherContainsRuleID(route.Matchers, ruleID); ok {
+			receiverNames = append(receiverNames, route.Receiver)
 		}
 	}
 
-	return receiverNames, nil
+	return receiverNames
+}
+
+type storeOptions struct {
+	Cb func(context.Context) error
+}
+
+type StoreOption func(*storeOptions)
+
+func WithCb(cb func(context.Context) error) StoreOption {
+	return func(o *storeOptions) {
+		o.Cb = cb
+	}
+}
+
+func NewStoreOptions(opts ...StoreOption) *storeOptions {
+	o := &storeOptions{
+		Cb: nil,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	return o
 }
 
 type ConfigStore interface {
 	// Set creates or updates a config.
-	Set(context.Context, *Config) error
+	Set(context.Context, *Config, ...StoreOption) error
 
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
@@ -327,16 +367,16 @@ type ConfigStore interface {
 	ListOrgs(context.Context) ([]string, error)
 
 	// CreateChannel creates a new channel.
-	CreateChannel(context.Context, *Channel, func(context.Context) error) error
+	CreateChannel(context.Context, *Channel, ...StoreOption) error
 
 	// GetChannelByID returns the channel for the given id.
 	GetChannelByID(context.Context, string, int) (*Channel, error)
 
 	// UpdateChannel updates a channel.
-	UpdateChannel(context.Context, string, *Channel, func(context.Context) error) error
+	UpdateChannel(context.Context, string, *Channel, ...StoreOption) error
 
 	// DeleteChannelByID deletes a channel.
-	DeleteChannelByID(context.Context, string, int, func(context.Context) error) error
+	DeleteChannelByID(context.Context, string, int, ...StoreOption) error
 
 	// ListChannels returns the list of channels.
 	ListChannels(context.Context, string) ([]*Channel, error)
@@ -349,12 +389,11 @@ type ConfigStore interface {
 	GetMatchers(context.Context, string) (map[string][]string, error)
 }
 
-var ConfigStoreNoopCallback = func(ctx context.Context) error { return nil }
-
 // MarshalSecretValue if set to true will expose Secret type
 // through the marshal interfaces. We need to store the actual value of the secret
 // in the database, so we need to set this to true.
 func init() {
 	commoncfg.MarshalSecretValue = true
 	config.MarshalSecretValue = true
+	model.NameValidationScheme = model.UTF8Validation
 }

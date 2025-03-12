@@ -11,7 +11,7 @@ export const useUpdateDashboard = (): UseUpdateDashboard => {
 	return useMutation(update, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				updatedTimeRef.current = dayjs(data.payload.updated_at);
+				updatedTimeRef.current = dayjs(data.payload.updatedAt);
 			}
 		},
 	});
