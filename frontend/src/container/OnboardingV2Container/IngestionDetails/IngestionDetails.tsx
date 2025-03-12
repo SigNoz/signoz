@@ -1,8 +1,8 @@
 import { Skeleton, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import getIngestionData from 'api/settings/getIngestionData';
 import { AxiosError } from 'axios';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
+import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	ArrowUpRight,
@@ -13,9 +13,8 @@ import {
 	TriangleAlert,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { IngestionInfo } from 'types/api/settings/ingestion';
+import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
 
 function maskKey(key: string, visibleStart = 4, visibleEnd = 4): string {
 	if (!key) {
@@ -44,18 +43,19 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionInfo>(
-		{} as IngestionInfo,
+	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionKeyProps>(
+		{} as IngestionKeyProps,
 	);
 
 	const {
-		status,
-		data: ingestionData,
+		data: ingestionKeys,
 		isLoading: isIngestionKeysLoading,
 		error,
 		isError,
-	} = useQuery({
-		queryFn: () => getIngestionData(),
+	} = useGetAllIngestionsKeys({
+		search: '',
+		page: 1,
+		per_page: 10,
 	});
 
 	const {
@@ -73,22 +73,10 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (
-			status === 'success' &&
-			ingestionData &&
-			ingestionData &&
-			Array.isArray(ingestionData.payload)
-		) {
-			const payload = ingestionData.payload[0] || {
-				ingestionKey: '',
-				ingestionURL: '',
-				dataRegion: '',
-			};
-
-			setFirstIngestionKey(payload);
+		if (ingestionKeys?.data.data && ingestionKeys?.data.data.length > 0) {
+			setFirstIngestionKey(ingestionKeys?.data.data[0]);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [status, ingestionData?.payload]);
+	}, [ingestionKeys]);
 
 	return (
 		<div className="configure-product-ingestion-section-content">
@@ -170,7 +158,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 										</Typography.Text>
 
 										<Typography.Text className="ingestion-key-value-copy">
-											{maskKey(firstIngestionKey?.ingestionKey)}
+											{maskKey(firstIngestionKey?.value)}
 
 											<Copy
 												size={14}
@@ -180,7 +168,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
 														{},
 													);
-													handleCopyKey(firstIngestionKey?.ingestionKey);
+													handleCopyKey(firstIngestionKey?.value);
 												}}
 											/>
 										</Typography.Text>
