@@ -97,18 +97,15 @@ const (
 	signozTSLocalTableNameV41Week = "time_series_v4_1week"
 	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
-<<<<<<< HEAD
+	signozTableAttributesMetadata      = "distributed_attributes_metadata"
+	signozLocalTableAttributesMetadata = "attributes_metadata"
+
 	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
 	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
-
-=======
-	signozTableAttributesMetadata         = "distributed_attributes_metadata"
-	signozLocalTableAttributesMetadata    = "attributes_metadata"
->>>>>>> fb9b47ec90dd354c9fab12aca9200b185b358bb7
-	minTimespanForProgressiveSearch       = time.Hour
-	minTimespanForProgressiveSearchMargin = time.Minute
-	maxProgressiveSteps                   = 4
-	charset                               = "abcdefghijklmnopqrstuvwxyz" +
+	minTimespanForProgressiveSearch        = time.Hour
+	minTimespanForProgressiveSearchMargin  = time.Minute
+	maxProgressiveSteps                    = 4
+	charset                                = "abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	NANOSECOND = 1000000000
 )
@@ -1156,7 +1153,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1304,7 +1301,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
