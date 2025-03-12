@@ -304,6 +304,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
+	errorList := qb.PreloadMetricsMetadata(context.Background())
+	for _, er := range errorList {
+		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+	}
+
 	return s, nil
 }
 
