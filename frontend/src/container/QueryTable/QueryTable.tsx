@@ -95,7 +95,7 @@ export function QueryTable({
 				columns={tableColumns}
 				tableLayout="fixed"
 				dataSource={filterTable === null ? newDataSource : filterTable}
-				scroll={{ x: true }}
+				scroll={{ x: 'max-content' }}
 				pagination={paginationConfig}
 				sticky={sticky}
 				// eslint-disable-next-line react/jsx-props-no-spreading
