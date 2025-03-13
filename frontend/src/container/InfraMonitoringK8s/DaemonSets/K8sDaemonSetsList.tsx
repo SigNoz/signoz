@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sDaemonSetsListPayload } from 'api/infraMonitoring/getK8sDaemonSetsList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sDaemonSetsList } from 'hooks/infraMonitoring/useGetK8sDaemonSetsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -243,11 +244,6 @@ function K8sDaemonSetsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
-		totalCount,
-		pageSize,
-	]);
-
 	const handleTableChange: TableProps<K8sDaemonSetsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -258,10 +254,10 @@ function K8sDaemonSetsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
-				logEvent('Infra Monitoring: K8s daemonSets list page number changed', {
-					page: pagination.current,
-					pageSize,
-					numberOfPages,
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.DaemonSet,
 				});
 			}
 
@@ -274,7 +270,7 @@ function K8sDaemonSetsList({
 				setOrderBy(null);
 			}
 		},
-		[numberOfPages, pageSize],
+		[],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -288,14 +284,25 @@ function K8sDaemonSetsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s daemonSets list filters applied', {});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.DaemonSet,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s daemonSets list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.DaemonSet,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedDaemonSetData = useMemo(() => {
 		if (groupBy.length > 0) {
@@ -327,8 +334,10 @@ function K8sDaemonSetsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s daemonSet list item clicked', {
-			daemonSetName: record.daemonsetName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.DaemonSet,
 		});
 	};
 
@@ -457,7 +466,11 @@ function K8sDaemonSetsList({
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 
-			logEvent('Infra Monitoring: K8s daemonSets list group by changed', {});
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.DaemonSet,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -476,10 +489,10 @@ function K8sDaemonSetsList({
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
-		logEvent('Infra Monitoring: K8s daemonSets list page number changed', {
-			page,
-			pageSize,
-			numberOfPages,
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.DaemonSet,
 		});
 	};
 

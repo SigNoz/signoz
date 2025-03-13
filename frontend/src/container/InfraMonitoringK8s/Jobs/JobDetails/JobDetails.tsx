@@ -6,6 +6,7 @@ import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -161,11 +162,15 @@ function JobDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Jobs list details page visited', {
-			job: job?.jobName,
-		});
+		if (job) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Job,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [job]);
 
 	useEffect(() => {
 		setLogAndTracesFilters(initialFilters);
@@ -187,8 +192,10 @@ function JobDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: Jobs list details tab changed', {
-			job: job?.jobName,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Job,
 			view: e.target.value,
 		});
 	};
@@ -211,8 +218,10 @@ function JobDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Jobs list details time updated', {
-				job: job?.jobName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Job,
 				interval,
 				view: selectedView,
 			});
@@ -235,9 +244,14 @@ function JobDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_JOB_NAME,
 				);
 
-				logEvent('Infra Monitoring: Jobs list details logs filters applied', {
-					job: job?.jobName,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Job,
+						view: 'logs',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -262,9 +276,14 @@ function JobDetails({
 					),
 				);
 
-				logEvent('Infra Monitoring: Jobs list details traces filters applied', {
-					job: job?.jobName,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Job,
+						view: 'traces',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -291,9 +310,14 @@ function JobDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Jobs list details events filters applied', {
-					job: job?.jobName,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Job,
+						view: 'events',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -322,8 +346,10 @@ function JobDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Jobs list details explore clicked', {
-			job: job?.jobName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Job,
 			view: selectedView,
 		});
 
