@@ -71,6 +71,8 @@ func IsViewer(user *types.GettableUser) bool { return user.GroupID == AuthCacheO
 func IsEditor(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.EditorGroupId }
 func IsAdmin(user *types.GettableUser) bool  { return user.GroupID == AuthCacheObj.AdminGroupId }
 
+func IsAdminV2(claims authtypes.Claims) bool { return claims.GroupID == AuthCacheObj.AdminGroupId }
+
 func ValidatePassword(password string) error {
 	if len(password) < minimumPasswordLength {
 		return errors.Errorf("Password should be atleast %d characters.", minimumPasswordLength)

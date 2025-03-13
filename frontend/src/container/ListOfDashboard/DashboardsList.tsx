@@ -186,16 +186,14 @@ function DashboardsList(): JSX.Element {
 
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
-			(a, b) =>
-				new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 		);
 		setDashboards(sortedDashboards);
 	};
 
 	const sortDashboardsByUpdatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
-			(a, b) =>
-				new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+			(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
 		);
 		setDashboards(sortedDashboards);
 	};
@@ -260,16 +258,16 @@ function DashboardsList(): JSX.Element {
 
 	const data: Data[] =
 		dashboards?.map((e) => ({
-			createdAt: e.created_at,
+			createdAt: e.createdAt,
 			description: e.data.description || '',
 			id: e.uuid,
-			lastUpdatedTime: e.updated_at,
+			lastUpdatedTime: e.updatedAt,
 			name: e.data.title,
 			tags: e.data.tags || [],
 			key: e.uuid,
-			createdBy: e.created_by,
+			createdBy: e.createdBy,
 			isLocked: !!e.isLocked || false,
-			lastUpdatedBy: e.updated_by,
+			lastUpdatedBy: e.updatedBy,
 			image: e.data.image || Base64Icons[0],
 			variables: e.data.variables,
 			widgets: e.data.widgets,
@@ -978,10 +976,10 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.createdBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.created_by?.substring(0, 1).toUpperCase()}
+												{dashboards?.[0]?.createdBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.created_by}
+												{dashboards?.[0]?.createdBy}
 											</Typography.Text>
 										</div>
 									)}
@@ -990,16 +988,16 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{onLastUpdated(dashboards?.[0]?.updated_at || '')}
+											{onLastUpdated(dashboards?.[0]?.updatedAt || '')}
 										</Typography.Text>
 									)}
 									{visibleColumns.updatedBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.updated_by?.substring(0, 1).toUpperCase()}
+												{dashboards?.[0]?.updatedBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.updated_by}
+												{dashboards?.[0]?.updatedBy}
 											</Typography.Text>
 										</div>
 									)}
