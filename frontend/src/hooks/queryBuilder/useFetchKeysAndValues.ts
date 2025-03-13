@@ -169,6 +169,15 @@ export const useFetchKeysAndValues = (
 		);
 	}
 
+	// Add type guard function
+	function isMetricsListFilterValuesData(
+		payload: any,
+	): payload is { filterValues: string[] } {
+		return (
+			payload && 'filterValues' in payload && Array.isArray(payload.filterValues)
+		);
+	}
+
 	/**
 	 * Fetches the options to be displayed based on the selected value
 	 * @param value - the selected value
@@ -238,14 +247,17 @@ export const useFetchKeysAndValues = (
 			}
 
 			if (payload) {
-				if (!isMetricsExplorer && isAttributeValuesResponse(payload)) {
+				if (isAttributeValuesResponse(payload)) {
 					const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
 					const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
 					setResults(key ? payload[key] || [] : []);
 					return;
 				}
-				const values = Object.values(payload).find((el) => !!el) || [];
-				setResults(values);
+
+				if (isMetricsExplorer && isMetricsListFilterValuesData(payload)) {
+					setResults(payload.filterValues || []);
+					return;
+				}
 			}
 		} catch (e) {
 			console.error(e);
