@@ -12,10 +12,12 @@ import {
 } from 'lucide-react';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
+import { USER_ROLES } from 'types/roles';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
@@ -24,6 +26,7 @@ export default function SavedViews({
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
 	loadingUserPreferences: boolean;
 }): JSX.Element {
+	const { user } = useAppContext();
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
 	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>([]);
 
@@ -62,6 +65,7 @@ export default function SavedViews({
 		logEvent('Homepage: Saved view clicked', {
 			viewId: view.uuid,
 			viewName: view.name,
+			entity: selectedEntity,
 		});
 
 		const currentViewDetails = getViewDetailsUsingViewKey(
@@ -102,36 +106,56 @@ export default function SavedViews({
 
 					<div className="empty-title">You have not saved any views yet.</div>
 
-					<div className="empty-description">
-						Explore your data and save them as views.
-					</div>
+					{user?.role !== USER_ROLES.VIEWER && (
+						<div className="empty-description">
+							Explore your data and save them as views.
+						</div>
+					)}
 				</div>
 
-				<div className="empty-actions-container">
-					<Link
-						to={
-							selectedEntity === 'logs' ? ROUTES.LOGS_EXPLORER : ROUTES.TRACES_EXPLORER
-						}
-					>
-						<Button type="default" className="periscope-btn secondary">
-							Get Started &nbsp; <ArrowRight size={16} />
+				{user?.role !== USER_ROLES.VIEWER && (
+					<div className="empty-actions-container">
+						<Link
+							to={
+								selectedEntity === 'logs'
+									? ROUTES.LOGS_EXPLORER
+									: ROUTES.TRACES_EXPLORER
+							}
+						>
+							<Button
+								type="default"
+								className="periscope-btn secondary"
+								onClick={(): void => {
+									logEvent('Homepage: Get Started clicked', {
+										source: 'Saved Views',
+										entity: selectedEntity,
+									});
+								}}
+							>
+								Get Started &nbsp; <ArrowRight size={16} />
+							</Button>
+						</Link>
+
+						<Button
+							type="link"
+							className="learn-more-link"
+							onClick={(): void => {
+								logEvent('Homepage: Learn more clicked', {
+									source: 'Saved Views',
+									entity: selectedEntity,
+								});
+
+								window.open(
+									'https://signoz.io/docs/product-features/saved-view/',
+									'_blank',
+									'noopener noreferrer',
+								);
+							}}
+						>
+							Learn more <ArrowUpRight size={12} />
 						</Button>
-					</Link>
-
-					<Button
-						type="link"
-						className="learn-more-link"
-						onClick={(): void => {
-							window.open(
-								'https://signoz.io/docs/product-features/saved-view/',
-								'_blank',
-								'noopener noreferrer',
-							);
-						}}
-					>
-						Learn more <ArrowUpRight size={12} />
-					</Button>
-				</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);

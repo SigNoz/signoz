@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
@@ -22,10 +23,12 @@ import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 import { UserPreference } from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -40,6 +43,8 @@ import StepsProgress from './StepsProgress/StepsProgress';
 const homeInterval = 30 * 60 * 1000;
 
 export default function Home(): JSX.Element {
+	const { user } = useAppContext();
+
 	const [startTime, setStartTime] = useState<number | null>(null);
 	const [endTime, setEndTime] = useState<number | null>(null);
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
@@ -119,15 +124,10 @@ export default function Home(): JSX.Element {
 			offset: 0,
 			filters: {
 				items: [],
-				op: 'and',
+				op: 'AND',
 			},
 			start: startTime ? Math.floor(startTime) : Math.floor(Date.now()),
 			end: endTime ? Math.floor(endTime) : Math.floor(Date.now()),
-			orderBy: {
-				columnName: 'hostName',
-				order: 'asc',
-			},
-			groupBy: [],
 		};
 	}, [startTime, endTime]);
 
@@ -199,7 +199,7 @@ export default function Home(): JSX.Element {
 	});
 
 	const handleWillDoThisLater = (): void => {
-		logEvent('Homepage Checklist: Will do this later clicked', {});
+		logEvent('Welcome Checklist: Will do this later clicked', {});
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
@@ -299,9 +299,9 @@ export default function Home(): JSX.Element {
 									autoAdjustOverflow
 									onOpenChange={(visible): void => {
 										if (visible) {
-											logEvent('Homepage Checklist: Expanded', {});
+											logEvent('Welcome Checklist: Expanded', {});
 										} else {
-											logEvent('Homepage Checklist: Minimized', {});
+											logEvent('Welcome Checklist: Minimized', {});
 										}
 									}}
 									content={renderWelcomeChecklistModal()}
@@ -360,10 +360,17 @@ export default function Home(): JSX.Element {
 											tabIndex={0}
 											className="active-ingestion-card-actions"
 											onClick={(): void => {
+												// eslint-disable-next-line sonarjs/no-duplicate-string
+												logEvent('Homepage: Ingestion Active Explore clicked', {
+													source: 'Logs',
+												});
 												history.push(ROUTES.LOGS_EXPLORER);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
+													logEvent('Homepage: Ingestion Active Explore clicked', {
+														source: 'Logs',
+													});
 													history.push(ROUTES.LOGS_EXPLORER);
 												}
 											}}
@@ -395,10 +402,16 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(): void => {
+												logEvent('Homepage: Ingestion Active Explore clicked', {
+													source: 'Traces',
+												});
 												history.push(ROUTES.TRACES_EXPLORER);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
+													logEvent('Homepage: Ingestion Active Explore clicked', {
+														source: 'Traces',
+													});
 													history.push(ROUTES.TRACES_EXPLORER);
 												}
 											}}
@@ -430,10 +443,16 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(): void => {
+												logEvent('Homepage: Ingestion Active Explore clicked', {
+													source: 'Metrics',
+												});
 												history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
+													logEvent('Homepage: Ingestion Active Explore clicked', {
+														source: 'Metrics',
+													});
 													history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 												}
 											}}
@@ -447,134 +466,148 @@ export default function Home(): JSX.Element {
 						)}
 					</div>
 
-					<div className="explorers-container">
-						<Card className="explorer-card">
-							<Card.Content>
-								<div className="section-container">
-									<div className="section-content">
-										<div className="section-icon">
-											<img
-												src="/Icons/wrench.svg"
-												alt="wrench"
-												width={16}
-												height={16}
-												loading="lazy"
-											/>
-										</div>
+					{user?.role !== USER_ROLES.VIEWER && (
+						<div className="explorers-container">
+							<Card className="explorer-card">
+								<Card.Content>
+									<div className="section-container">
+										<div className="section-content">
+											<div className="section-icon">
+												<img
+													src="/Icons/wrench.svg"
+													alt="wrench"
+													width={16}
+													height={16}
+													loading="lazy"
+												/>
+											</div>
 
-										<div className="section-title">
-											<div className="title">Filter and save views with the Explorer</div>
+											<div className="section-title">
+												<div className="title">Filter and save views with the Explorer</div>
 
-											<div className="description">
-												Explore your data, and save useful views for everyone in the team.
+												<div className="description">
+													Explore your data, and save useful views for everyone in the team.
+												</div>
 											</div>
 										</div>
-									</div>
 
-									<div className="section-actions">
-										<Button
-											type="default"
-											className="periscope-btn secondary"
-											icon={<Wrench size={14} />}
-											onClick={(): void => {
-												history.push(ROUTES.LOGS_EXPLORER);
-											}}
-										>
-											Open Logs Explorer
-										</Button>
+										<div className="section-actions">
+											<Button
+												type="default"
+												className="periscope-btn secondary"
+												icon={<Wrench size={14} />}
+												onClick={(): void => {
+													logEvent('Homepage: Explore clicked', {
+														source: 'Logs',
+													});
+													history.push(ROUTES.LOGS_EXPLORER);
+												}}
+											>
+												Open Logs Explorer
+											</Button>
 
-										<Button
-											type="default"
-											className="periscope-btn secondary"
-											icon={<Wrench size={14} />}
-											onClick={(): void => {
-												history.push(ROUTES.TRACES_EXPLORER);
-											}}
-										>
-											Open Traces Explorer
-										</Button>
-									</div>
-								</div>
-							</Card.Content>
-						</Card>
-
-						<Card className="explorer-card">
-							<Card.Content>
-								<div className="section-container">
-									<div className="section-content">
-										<div className="section-icon">
-											<img
-												src="/Icons/dashboard.svg"
-												alt="dashboard"
-												width={16}
-												height={16}
-											/>
+											<Button
+												type="default"
+												className="periscope-btn secondary"
+												icon={<Wrench size={14} />}
+												onClick={(): void => {
+													logEvent('Homepage: Explore clicked', {
+														source: 'Traces',
+													});
+													history.push(ROUTES.TRACES_EXPLORER);
+												}}
+											>
+												Open Traces Explorer
+											</Button>
 										</div>
+									</div>
+								</Card.Content>
+							</Card>
 
-										<div className="section-title">
-											<div className="title">Create a dashboard</div>
+							<Card className="explorer-card">
+								<Card.Content>
+									<div className="section-container">
+										<div className="section-content">
+											<div className="section-icon">
+												<img
+													src="/Icons/dashboard.svg"
+													alt="dashboard"
+													width={16}
+													height={16}
+												/>
+											</div>
 
-											<div className="description">
-												Create a dashboard to visualize your data.
+											<div className="section-title">
+												<div className="title">Create a dashboard</div>
+
+												<div className="description">
+													Create a dashboard to visualize your data.
+												</div>
 											</div>
 										</div>
-									</div>
 
-									<div className="section-actions">
-										<Button
-											type="default"
-											className="periscope-btn secondary"
-											icon={<Plus size={14} />}
-											onClick={(): void => {
-												history.push(ROUTES.ALL_DASHBOARD);
-											}}
-										>
-											Create dashboard
-										</Button>
-									</div>
-								</div>
-							</Card.Content>
-						</Card>
-
-						<Card className="explorer-card">
-							<Card.Content>
-								<div className="section-container">
-									<div className="section-content">
-										<div className="section-icon">
-											<img
-												src="/Icons/cracker.svg"
-												alt="cracker"
-												width={16}
-												height={16}
-												loading="lazy"
-											/>
+										<div className="section-actions">
+											<Button
+												type="default"
+												className="periscope-btn secondary"
+												icon={<Plus size={14} />}
+												onClick={(): void => {
+													logEvent('Homepage: Explore clicked', {
+														source: 'Dashboards',
+													});
+													history.push(ROUTES.ALL_DASHBOARD);
+												}}
+											>
+												Create dashboard
+											</Button>
 										</div>
+									</div>
+								</Card.Content>
+							</Card>
 
-										<div className="section-title">
-											<div className="title">Add an alert</div>
+							<Card className="explorer-card">
+								<Card.Content>
+									<div className="section-container">
+										<div className="section-content">
+											<div className="section-icon">
+												<img
+													src="/Icons/cracker.svg"
+													alt="cracker"
+													width={16}
+													height={16}
+													loading="lazy"
+												/>
+											</div>
 
-											<div className="description">
-												Create bespoke alerting rules to suit your needs.
+											<div className="section-title">
+												<div className="title">Add an alert</div>
+
+												<div className="description">
+													Create bespoke alerting rules to suit your needs.
+												</div>
 											</div>
 										</div>
-									</div>
 
-									<div className="section-actions">
-										<Button
-											type="default"
-											className="periscope-btn secondary"
-											icon={<Plus size={14} />}
-											onClick={(): void => {
-												history.push(ROUTES.ALERTS_NEW);
-											}}
-										>
-											Create an alert
-										</Button>
+										<div className="section-actions">
+											<Button
+												type="default"
+												className="periscope-btn secondary"
+												icon={<Plus size={14} />}
+												onClick={(): void => {
+													logEvent('Homepage: Explore clicked', {
+														source: 'Alerts',
+													});
+													history.push(ROUTES.ALERTS_NEW);
+												}}
+											>
+												Create an alert
+											</Button>
+										</div>
 									</div>
-								</div>
-							</Card.Content>
-						</Card>
-					</div>
+								</Card.Content>
+							</Card>
+						</div>
+					)}
 
 					<AlertRules
 						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}

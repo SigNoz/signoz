@@ -13,6 +13,8 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
+import { useAppContext } from 'providers/App/App';
+import { IUser } from 'providers/App/types';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -21,6 +23,7 @@ import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
+import { USER_ROLES } from 'types/roles';
 
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -28,7 +31,7 @@ const homeInterval = 30 * 60 * 1000;
 
 // Extracted EmptyState component
 const EmptyState = memo(
-	(): JSX.Element => (
+	({ user }: { user: IUser }): JSX.Element => (
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
@@ -42,25 +45,39 @@ const EmptyState = memo(
 						Start sending traces to see your services.
 					</div>
 				</div>
-				<div className="empty-actions-container">
-					<Link to={ROUTES.GET_STARTED}>
-						<Button type="default" className="periscope-btn secondary">
-							Get Started &nbsp; <ArrowRight size={16} />
+
+				{user?.role !== USER_ROLES.VIEWER && (
+					<div className="empty-actions-container">
+						<Link to={ROUTES.GET_STARTED}>
+							<Button
+								type="default"
+								className="periscope-btn secondary"
+								onClick={(): void => {
+									logEvent('Homepage: Get Started clicked', {
+										source: 'Service Metrics',
+									});
+								}}
+							>
+								Get Started &nbsp; <ArrowRight size={16} />
+							</Button>
+						</Link>
+						<Button
+							type="link"
+							className="learn-more-link"
+							onClick={(): void => {
+								logEvent('Homepage: Learn more clicked', {
+									source: 'Service Metrics',
+								});
+								window.open(
+									'https://signoz.io/docs/instrumentation/overview/',
+									'_blank',
+								);
+							}}
+						>
+							Learn more <ArrowUpRight size={12} />
 						</Button>
-					</Link>
-					<Button
-						type="link"
-						className="learn-more-link"
-						onClick={(): void => {
-							window.open(
-								'https://signoz.io/docs/instrumentation/overview/',
-								'_blank',
-							);
-						}}
-					>
-						Learn more <ArrowUpRight size={12} />
-					</Button>
-				</div>
+					</div>
+				)}
 			</div>
 		</div>
 	),
@@ -104,6 +121,8 @@ function ServiceMetrics({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { user } = useAppContext();
 
 	const [timeRange, setTimeRange] = useState(() => {
 		const now = new Date().getTime();
@@ -242,6 +261,9 @@ function ServiceMetrics({
 
 	const handleRowClick = useCallback(
 		(record: ServicesList) => {
+			logEvent('Homepage: Service clicked', {
+				serviceName: record.serviceName,
+			});
 			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
 		},
 		[safeNavigate],
@@ -289,7 +311,7 @@ function ServiceMetrics({
 				{servicesExist ? (
 					<ServicesListTable services={top5Services} onRowClick={handleRowClick} />
 				) : (
-					<EmptyState />
+					<EmptyState user={user} />
 				)}
 			</Card.Content>
 
@@ -297,7 +319,13 @@ function ServiceMetrics({
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
 						<Link to="/services">
-							<Button type="link" className="periscope-btn link learn-more-link">
+							<Button
+								type="link"
+								className="periscope-btn link learn-more-link"
+								onClick={(): void => {
+									logEvent('Homepage: All Services clicked', {});
+								}}
+							>
 								All Services <ArrowRight size={12} />
 							</Button>
 						</Link>

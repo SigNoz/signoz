@@ -366,7 +366,7 @@ function SideNav(): JSX.Element {
 					</div>
 				</div>
 
-				{isCloudUserVal && (
+				{isCloudUserVal && user?.role !== USER_ROLES.VIEWER && (
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"
