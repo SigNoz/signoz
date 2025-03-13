@@ -71,7 +71,7 @@ This command:
 
    You should see: `{"status":"ok"}`
 
-> The API server runs at `http://localhost:8080/` by default
+> 💡 **Tip**: The API server runs at `http://localhost:8080/` by default
 
 ### 3. Setting up the Frontend
 
