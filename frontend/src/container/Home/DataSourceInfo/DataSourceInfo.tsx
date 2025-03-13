@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import { Button, Skeleton, Typography } from 'antd';
+import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
@@ -101,7 +101,13 @@ function DataSourceInfo({
 								<div className="workspace-url">
 									<Link2 size={12} />
 
-									<Typography>{url}</Typography>
+									<Typography className="workspace-url-text">
+										{url}
+
+										<Tag color="default" className="workspace-url-tag">
+											default
+										</Tag>
+									</Typography>
 								</div>
 							</div>
 						)}
@@ -131,7 +137,13 @@ function DataSourceInfo({
 								<div className="workspace-url">
 									<Link2 size={12} />
 
-									<Typography>{url}</Typography>
+									<Typography className="workspace-url-text">
+										{url}
+
+										<Tag color="default" className="workspace-url-tag">
+											default
+										</Tag>
+									</Typography>
 								</div>
 							</div>
 						</div>

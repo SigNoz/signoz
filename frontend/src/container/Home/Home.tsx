@@ -42,6 +42,7 @@ import StepsProgress from './StepsProgress/StepsProgress';
 
 const homeInterval = 30 * 60 * 1000;
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
 
@@ -332,7 +333,11 @@ export default function Home(): JSX.Element {
 			<div className="home-content">
 				<div className="home-left-content">
 					<DataSourceInfo
-						dataSentToSigNoz={isLogsIngestionActive || isTracesIngestionActive}
+						dataSentToSigNoz={
+							isLogsIngestionActive ||
+							isTracesIngestionActive ||
+							isMetricsIngestionActive
+						}
 						isLoading={isLogsLoading || isTracesLoading}
 					/>
 
@@ -609,14 +614,20 @@ export default function Home(): JSX.Element {
 						</div>
 					)}
 
-					<AlertRules
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-					<Dashboards
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
+					{(isLogsIngestionActive ||
+						isTracesIngestionActive ||
+						isMetricsIngestionActive) && (
+						<>
+							<AlertRules
+								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+								loadingUserPreferences={loadingUserPreferences}
+							/>
+							<Dashboards
+								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+								loadingUserPreferences={loadingUserPreferences}
+							/>
+						</>
+					)}
 				</div>
 
 				<div className="home-right-content">
@@ -676,14 +687,20 @@ export default function Home(): JSX.Element {
 						</AnimatePresence>
 					)}
 
-					<Services
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
-					<SavedViews
-						onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
-						loadingUserPreferences={loadingUserPreferences}
-					/>
+					{(isLogsIngestionActive ||
+						isTracesIngestionActive ||
+						isMetricsIngestionActive) && (
+						<>
+							<Services
+								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+								loadingUserPreferences={loadingUserPreferences}
+							/>
+							<SavedViews
+								onUpdateChecklistDoneItem={handleUpdateChecklistDoneItem}
+								loadingUserPreferences={loadingUserPreferences}
+							/>
+						</>
+					)}
 				</div>
 			</div>
 		</div>
