@@ -245,6 +245,26 @@
 			flex-direction: row;
 			align-items: center;
 			gap: 8px;
+
+			.workspace-url-text {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				gap: 8px;
+
+				.workspace-url-tag {
+					font-size: 10px;
+					font-weight: 400;
+					line-height: 18px; /* 150% */
+					letter-spacing: 0.12px;
+
+					border-radius: 3px;
+
+					border: 1px solid var(--Slate-400, #1d212d);
+					background: var(--Ink-400, #121317);
+					color: var(--Vanilla-400, #c0c1c3);
+				}
+			}
 		}
 
 		.workspace-timezone {
