@@ -29,7 +29,16 @@ builds:
     goarm64:
       - v8.0
     ldflags:
-      - -s -w -X github.com/SigNoz/signoz/pkg/query-service/version.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }} -X main.builtBy=goreleaser -X go.signoz.io/signoz/pkg/query-service/version.buildVersion={{ .Version }} -X go.signoz.io/signoz/pkg/query-service/version.buildHash={{ .ShortCommit }} -X go.signoz.io/signoz/pkg/query-service/version.buildTime={{ .Date }} -X go.signoz.io/signoz/pkg/query-service/version.gitBranch={{ .Branch }} -X go.signoz.io/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
+      - -s -w
+      - -X github.com/SigNoz/signoz/pkg/query-service/version.version={{ .Version }}
+      - -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }}
+      - -X main.builtBy=goreleaser
+      - -X go.signoz.io/signoz/pkg/query-service/version.buildVersion={{ .Version }}
+      - -X go.signoz.io/signoz/pkg/query-service/version.buildHash={{ .ShortCommit }}
+      - -X go.signoz.io/signoz/pkg/query-service/version.buildTime={{ .Date }}
+      - -X go.signoz.io/signoz/pkg/query-service/version.gitBranch={{ .Branch }}
+      - -X go.signoz.io/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
+      - -X go.signoz.io/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1
       - >-
         {{- if eq .Os "linux" }}-linkmode external -extldflags '-static'{{- end }}
     mod_timestamp: "{{ .CommitTimestamp }}"

@@ -76,7 +76,7 @@ const config = {
 		open: true,
 		hot: true,
 		liveReload: true,
-		port: portFinderSync.getPort(8080),
+		port: portFinderSync.getPort(3301),
 		static: {
 			directory: resolve(__dirname, 'public'),
 			publicPath: '/',

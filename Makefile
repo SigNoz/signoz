@@ -7,6 +7,7 @@ BUILD_VERSION   ?= $(shell git describe --always --tags)
 BUILD_HASH      ?= $(shell git rev-parse --short HEAD)
 BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
+LICENSE_SIGNOZ_IO ?= https://license.signoz.io/api/v1
 DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
 ZEUS_URL ?= https://api.signoz.cloud
 DEV_BUILD ?= "" # set to any non-empty value to enable dev build
@@ -38,7 +39,8 @@ gitBranch=${PACKAGE}/pkg/query-service/version.gitBranch
 licenseSignozIo=${PACKAGE}/ee/query-service/constants.LicenseSignozIo
 zeusURL=${PACKAGE}/ee/query-service/constants.ZeusURL
 
-LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH} -X ${zeusURL}=${ZEUS_URL}
+LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}
+PROD_LD_FLAGS=-X ${zeusURL}=${ZEUS_URL} -X ${licenseSignozIo}=${LICENSE_SIGNOZ_IO}
 DEV_LD_FLAGS=-X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
 
 
@@ -102,7 +104,7 @@ build-signoz-static:
 	else \
 		cd $(EE_QUERY_SERVICE_DIRECTORY) && \
 		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/signoz-${GOOS}-${GOARCH} \
-		-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS}"; \
+		-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS} ${PROD_LD_FLAGS}"; \
 	fi
 
 .PHONY: build-signoz-static-amd64
