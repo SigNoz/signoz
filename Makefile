@@ -178,22 +178,39 @@ test:
 ########################################################
 # Goreleaser
 ########################################################
-.PHONY: goreleaser-snapshot goreleaser-snapshot-histogram-quantile goreleaser-snapshot-signoz goreleaser-snapshot-signoz-community
+.PHONY: goreleaser-merge goreleaser-split goreleaser-split-histogram-quantile goreleaser-split-signoz goreleaser-split-signoz-community goreleaser-snapshot goreleaser-snapshot-histogram-quantile goreleaser-snapshot-signoz goreleaser-snapshot-signoz-community
 
-goreleaser-snapshot:
+gor-snapshot:
 	@if [[ ${GORELEASER_WORKDIR} ]]; then \
-		cd ${GORELEASER_WORKDIR} && \
-		${GORELEASER_BIN} release --clean --snapshot; \
-		cd -; \
+		${GORELEASER_BIN} release --config ${GORELEASER_WORKDIR}/.goreleaser.yaml --clean --snapshot; \
 	else \
 		${GORELEASER_BIN} release --clean --snapshot; \
 	fi
 
-goreleaser-snapshot-histogram-quantile:
+gor-snapshot-histogram-quantile:
 	make GORELEASER_WORKDIR=$(CH_HISTOGRAM_QUANTILE_DIRECTORY) goreleaser-snapshot
 
-goreleaser-snapshot-signoz: build-frontend-static
+gor-snapshot-signoz: build-frontend-static
 	make GORELEASER_WORKDIR=$(EE_QUERY_SERVICE_DIRECTORY) goreleaser-snapshot
 
-goreleaser-snapshot-signoz-community: build-frontend-static
+gor-snapshot-signoz-community: build-frontend-static
 	make GORELEASER_WORKDIR=$(QUERY_SERVICE_DIRECTORY) goreleaser-snapshot
+
+gor-split:
+	@if [[ ${GORELEASER_WORKDIR} ]]; then \
+		${GORELEASER_BIN} release --config ${GORELEASER_WORKDIR}/.goreleaser.yaml --clean --split; \
+	else \
+		${GORELEASER_BIN} release --clean --split; \
+	fi
+
+gor-split-histogram-quantile:
+	make GORELEASER_WORKDIR=$(CH_HISTOGRAM_QUANTILE_DIRECTORY) goreleaser-split
+
+gor-split-signoz: build-frontend-static
+	make GORELEASER_WORKDIR=$(EE_QUERY_SERVICE_DIRECTORY) goreleaser-split
+
+gor-split-signoz-community: build-frontend-static
+	make GORELEASER_WORKDIR=$(QUERY_SERVICE_DIRECTORY) goreleaser-split
+
+gor-merge:
+	${GORELEASER_BIN} continue --merge
