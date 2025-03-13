@@ -38,8 +38,8 @@ function Explorer(): JSX.Element {
 	const { notifications } = useNotifications();
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
 	const { options } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		storageKey: LOCALSTORAGE.METRICS_LIST_OPTIONS,
+		dataSource: DataSource.METRICS,
 		aggregateOperator: 'noop',
 	});
 

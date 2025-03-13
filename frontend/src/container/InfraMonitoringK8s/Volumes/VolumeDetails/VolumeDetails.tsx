@@ -4,6 +4,7 @@ import '../../EntityDetailsUtils/entityDetails.styles.scss';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { InfraMonitoringEvents } from 'constants/events';
 import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import {
 	CustomTimeType,
@@ -50,11 +51,15 @@ function VolumeDetails({
 	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Volumes list details page visited', {
-			volume: volume?.persistentVolumeClaimName,
-		});
+		if (volume) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Volume,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [volume]);
 
 	useEffect(() => {
 		setSelectedInterval(selectedTime as Time);
@@ -87,8 +92,10 @@ function VolumeDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Volumes list details time updated', {
-				volume: volume?.persistentVolumeClaimName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Volume,
 				interval,
 			});
 		},

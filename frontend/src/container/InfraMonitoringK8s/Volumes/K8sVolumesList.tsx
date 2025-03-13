@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sVolumesListPayload } from 'api/infraMonitoring/getK8sVolumesList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sVolumesList } from 'hooks/infraMonitoring/useGetK8sVolumesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -42,7 +43,6 @@ import {
 	K8sVolumesRowData,
 } from './utils';
 import VolumeDetails from './VolumeDetails';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sVolumesList({
 	isFiltersVisible,
@@ -237,11 +237,6 @@ function K8sVolumesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
-		totalCount,
-		pageSize,
-	]);
-
 	const handleTableChange: TableProps<K8sVolumesRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -250,10 +245,10 @@ function K8sVolumesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
-				logEvent('Infra Monitoring: K8s volumes list page number changed', {
-					page: pagination.current,
-					pageSize,
-					numberOfPages,
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Volumes,
 				});
 			}
 
@@ -266,7 +261,7 @@ function K8sVolumesList({
 				setOrderBy(null);
 			}
 		},
-		[numberOfPages, pageSize],
+		[],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -280,14 +275,25 @@ function K8sVolumesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s volumes list filters applied', {});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Volumes,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s volumes list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Volumes,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedVolumeData = useMemo(() => {
 		if (!selectedVolumeUID) return null;
@@ -313,8 +319,10 @@ function K8sVolumesList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s volume list item clicked', {
-			volumeUID: record.volumeUID,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Volumes,
 		});
 	};
 
@@ -443,7 +451,11 @@ function K8sVolumesList({
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 
-			logEvent('Infra Monitoring: K8s volumes list group by changed', {});
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Volumes,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -462,10 +474,10 @@ function K8sVolumesList({
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
-		logEvent('Infra Monitoring: K8s volumes list page number changed', {
-			page,
-			pageSize,
-			numberOfPages,
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Volumes,
 		});
 	};
 
