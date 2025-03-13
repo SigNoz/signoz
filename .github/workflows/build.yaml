@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: cd frontend && yarn install
-      - name: Build frontend docker image
+      - name: Build frontend static files
         shell: bash
         run: |
-          make build-frontend-amd64
+          make build-frontend-static
 
   build-signoz:
     runs-on: ubuntu-latest
