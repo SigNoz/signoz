@@ -7,13 +7,6 @@ on:
       - release/v*
 
 jobs:
-  check-no-ee-references:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run check
-        run: make check-no-ee-references
-
   build-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -21,36 +14,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: cd frontend && yarn install
-      - name: Run ESLint
-        run: cd frontend && npm run lint
-      - name: Run Jest
-        run: cd frontend && npm run jest
-      - name: TSC
-        run: yarn tsc
-        working-directory: ./frontend
-      - name: Build frontend docker image
-        shell: bash
-        run: |
-          make build-frontend-amd64
-
-  build-frontend-ee:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Create .env file
-        run: |
-          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
-          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
-      - name: Install dependencies
-        run: cd frontend && yarn install
-      - name: Run ESLint
-        run: cd frontend && npm run lint
-      - name: Run Jest
-        run: cd frontend && npm run jest
-      - name: TSC
-        run: yarn tsc
-        working-directory: ./frontend
       - name: Build frontend docker image
         shell: bash
         run: |

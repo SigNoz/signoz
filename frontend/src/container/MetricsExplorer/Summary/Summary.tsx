@@ -7,7 +7,7 @@ import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -98,6 +98,15 @@ function Summary(): JSX.Element {
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
 		enabled: !!metricsTreemapQuery,
 	});
+
+	// Reset the filters when the component mounts
+	useEffect(() => {
+		handleChangeQueryData('filters', {
+			op: 'AND',
+			items: [],
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
