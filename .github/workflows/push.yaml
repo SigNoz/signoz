@@ -75,7 +75,7 @@ jobs:
           fi
       - name: publish-query-service
         run: |
-          SIGNOZ_DOCKER_IMAGE=query-service make build-push-query-service
+          SIGNOZ_DOCKER_IMAGE=query-service make build-push-signoz
 
   image-build-and-push-signoz-community:
     runs-on: ubuntu-latest
@@ -131,4 +131,4 @@ jobs:
           fi
       - name: publish-query-service-oss
         run: |
-          SIGNOZ_DOCKER_IMAGE=query-service make build-push-query-service
+          SIGNOZ_DOCKER_IMAGE=query-service make build-push-signoz-community
