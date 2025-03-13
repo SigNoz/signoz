@@ -25,7 +25,7 @@ jobs:
       - name: upload-frontend-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: signoz-frontend-build-${{ env.sha_short }}
+          name: community-frontend-build-${{ env.sha_short }}
           path: frontend/build
   build:
     needs: prepare
@@ -63,15 +63,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-      - name: download-frontend-artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: signoz-frontend-build-${{ env.sha_short }}
-          path: frontend/build
       - name: get-sha
         shell: bash
         run: |
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: download-frontend-artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: community-frontend-build-${{ env.sha_short }}
+          path: frontend/build
       - name: cache-linux
         uses: actions/cache@v4
         if: matrix.os == 'ubuntu-latest'
