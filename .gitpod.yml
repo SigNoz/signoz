@@ -16,10 +16,8 @@ tasks:
       yarn dev
 
 ports:
-  - port: 3301
-    onOpen: open-browser
   - port: 8080
-    onOpen: ignore
+    onOpen: open-browser
   - port: 9000
     onOpen: ignore
   - port: 8123

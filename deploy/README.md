@@ -26,7 +26,7 @@ cd deploy/docker
 docker compose up -d
 ```
 
-Open http://localhost:3301 in your favourite browser.
+Open http://localhost:8080 in your favourite browser.
 
 To start collecting logs and metrics from your infrastructure, run the following command:
 
@@ -55,7 +55,7 @@ cd deploy/docker-swarm
 docker stack deploy -c docker-compose.yaml signoz
 ```
 
-Open http://localhost:3301 in your favourite browser.
+Open http://localhost:8080 in your favourite browser.
 
 To start collecting logs and metrics from your infrastructure, run the following command:
 
