@@ -218,7 +218,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = template.FromGlobs(config.Templates)
+	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
 	if err != nil {
 		return err
 	}

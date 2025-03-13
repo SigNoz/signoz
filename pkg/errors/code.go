@@ -13,6 +13,7 @@ var (
 	CodeMethodNotAllowed      = code{"method_not_allowed"}
 	CodeAlreadyExists         = code{"already_exists"}
 	CodeUnauthenticated       = code{"unauthenticated"}
+	CodeForbidden             = code{"forbidden"}
 )
 
 var (

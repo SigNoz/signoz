@@ -67,7 +67,6 @@
 		.related-metrics-container {
 			width: 100%;
 			min-height: 300px;
-			max-height: 450px;
 			display: flex;
 			flex-direction: column;
 			gap: 10px;
@@ -102,19 +101,23 @@
 			}
 
 			.related-metrics-body {
-				padding: 10px 0;
+				margin-top: 20px;
+				max-height: 650px;
+				overflow-y: scroll;
 
 				.related-metrics-card-container {
-					min-height: 300px;
-					margin-bottom: 25px;
+					margin-bottom: 20px;
+					min-height: 640px;
+
 					.related-metrics-card {
-						// height: 400px;
 						display: flex;
 						flex-direction: column;
 						gap: 16px;
 
 						.related-metrics-card-error {
 							padding-top: 10px;
+							height: fit-content;
+							width: fit-content;
 						}
 					}
 				}

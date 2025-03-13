@@ -6,6 +6,7 @@ import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
@@ -131,6 +132,10 @@ function TimeSeriesView({
 				logEvent('Logs Explorer: Data present', {
 					panelType: 'TIME_SERIES',
 				});
+			} else if (dataSource === DataSource.METRICS) {
+				logEvent('Metrics Explorer: Data present', {
+					panelType: 'TIME_SERIES',
+				});
 			}
 		}
 	}, [isLoading, isError, chartData, dataSource]);
@@ -164,8 +169,9 @@ function TimeSeriesView({
 				ref={graphRef}
 				data-testid="time-series-graph"
 			>
-				{isLoading &&
-					(dataSource === DataSource.LOGS ? <LogsLoading /> : <TracesLoading />)}
+				{isLoading && dataSource === DataSource.LOGS && <LogsLoading />}
+				{isLoading && dataSource === DataSource.TRACES && <TracesLoading />}
+				{isLoading && dataSource === DataSource.METRICS && <MetricsLoading />}
 
 				{chartData &&
 					chartData[0] &&

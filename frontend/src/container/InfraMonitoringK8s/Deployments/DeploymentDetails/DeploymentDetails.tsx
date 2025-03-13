@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sDeploymentsData } from 'api/infraMonitoring/getK8sDeploymentsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -166,11 +167,15 @@ function DeploymentDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Deployments list details page visited', {
-			deployment: deployment?.deploymentName,
-		});
+		if (deployment) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Deployment,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [deployment]);
 
 	useEffect(() => {
 		setLogAndTracesFilters(initialFilters);
@@ -192,8 +197,10 @@ function DeploymentDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: Deployments list details tab changed', {
-			deployment: deployment?.deploymentName,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Deployment,
 			view: e.target.value,
 		});
 	};
@@ -216,8 +223,10 @@ function DeploymentDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Deployments list details time updated', {
-				deployment: deployment?.deploymentName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Deployment,
 				interval,
 				view: selectedView,
 			});
@@ -241,12 +250,14 @@ function DeploymentDetails({
 						item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: Deployments list details logs filters applied',
-					{
-						deployment: deployment?.deploymentName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Deployment,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -273,12 +284,14 @@ function DeploymentDetails({
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: Deployments list details traces filters applied',
-					{
-						deployment: deployment?.deploymentName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Deployment,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -307,12 +320,14 @@ function DeploymentDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: Deployments list details events filters applied',
-					{
-						deployment: deployment?.deploymentName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Deployment,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -343,8 +358,10 @@ function DeploymentDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Deployments list details explore clicked', {
-			deployment: deployment?.deploymentName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Deployment,
 			view: selectedView,
 		});
 
