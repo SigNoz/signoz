@@ -49,9 +49,7 @@ jobs:
       - name: docker-tag
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            tag="${{ steps.branch-name.outputs.tag }}"
-            tag="${tag:1}"
-            echo "DOCKER_TAG=${tag}" >> $GITHUB_ENV
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
             echo "DOCKER_TAG=latest" >> $GITHUB_ENV
           else
@@ -93,9 +91,7 @@ jobs:
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            tag="${{ steps.branch-name.outputs.tag }}"
-            tag="${tag:1}"
-            echo "DOCKER_TAG=$tag" >> $GITHUB_ENV
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
             echo "DOCKER_TAG=latest" >> $GITHUB_ENV
           else
