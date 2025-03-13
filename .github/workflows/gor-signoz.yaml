@@ -142,11 +142,13 @@ jobs:
         run: |
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: cache-linux
+        id: cache-linux
         uses: actions/cache@v4
         with:
           path: dist/linux
           key: signoz-linux-${{ env.sha_short }}
       - name: cache-darwin
+        id: cache-darwin
         uses: actions/cache@v4
         with:
           path: dist/darwin
@@ -154,7 +156,7 @@ jobs:
 
       # release
       - uses: goreleaser/goreleaser-action@v6
-        if: steps.cache.outputs.cache-hit != 'true' # do not run if cache hit
+        if: steps.cache-linux.outputs.cache-hit != 'true' && steps.cache-darwin.outputs.cache-hit != 'true' # do not run if cache hit
         with:
           distribution: goreleaser-pro
           version: '~> v2'
