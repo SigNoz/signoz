@@ -8,10 +8,6 @@ before:
   hooks:
     - go mod tidy
 
-after:
-  hooks:
-    - rm -rf bundle
-
 builds:
   - id: signoz
     binary: bin/signoz
