@@ -59,14 +59,18 @@ For substantial changes, please split your contribution into multiple PRs:
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). All commits and PRs should include type specifiers (e.g., `feat:`, `fix:`, `docs:`, etc.).
 
-## Where do I go from here?
+### Finding other Repositories
 
-### Getting Help
+You can find other repositories in the [SigNoz](https://github.com/SigNoz) organization to contribute to:
+
+- [charts](https://github.com/SigNoz/charts)
+- [dashboards](https://github.com/SigNoz/dashboards)
+
+## Getting Help
 Need assistance? Join our Slack community:
 - [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M)
 - [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B)
 
-### Additional Resources
+## Where do I go from here?
+
 - Set up your [development environment](docs/contributing/development.md)
-- Contribute to our [charts repository](https://github.com/SigNoz/charts)
-- Help improve our [dashboards repository](https://github.com/SigNoz/dashboards)
