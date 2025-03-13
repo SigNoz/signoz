@@ -60,8 +60,22 @@ jobs:
           set -ex
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-      - name: Build and push docker image
+      - name: publish-signoz
         run: make build-push-signoz
+      - name: qs-docker-tag
+        run: |
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=${tag}" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+          fi
+      - name: publish-query-service
+        run: |
+          SIGNOZ_DOCKER_IMAGE=query-service make build-push-query-service
 
   image-build-and-push-signoz-community:
     runs-on: ubuntu-latest
@@ -102,5 +116,19 @@ jobs:
           set -ex
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-      - name: Build and push docker image
+      - name: publish-signoz-community
         run: make build-push-signoz-community
+      - name: qs-docker-tag
+        run: |
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=${tag}-oss" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest-oss" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}-oss" >> $GITHUB_ENV
+          fi
+      - name: publish-query-service-oss
+        run: |
+          SIGNOZ_DOCKER_IMAGE=query-service make build-push-query-service
