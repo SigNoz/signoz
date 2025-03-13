@@ -131,4 +131,4 @@ jobs:
           fi
       - name: publish-query-service-oss
         run: |
-          SIGNOZ_DOCKER_IMAGE=query-service make build-push-signoz-community
+          SIGNOZ_COMMUNITY_DOCKER_IMAGE=query-service make build-push-signoz-community
