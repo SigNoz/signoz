@@ -7,13 +7,13 @@ import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { isNaN } from 'lodash-es';
 import { useRef, useState } from 'react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
-import { getLabel, lightenColor, tooltipStyles } from './utils';
+import { lightenColor, tooltipStyles } from './utils';
 
 // refernce: https://www.youtube.com/watch?v=bL3P9CqQkKw
 function PiePanelWrapper({
@@ -40,8 +40,7 @@ function PiePanelWrapper({
 		detectBounds: true,
 	});
 
-	const panelData =
-		queryResponse.data?.payload?.data?.newResult?.data?.result || [];
+	const panelData = queryResponse.data?.payload?.data?.result || [];
 
 	const isDarkMode = useIsDarkMode();
 
@@ -51,21 +50,14 @@ function PiePanelWrapper({
 		color: string;
 	}[] = [].concat(
 		...(panelData
-			.map((d) =>
-				d.series?.map((s) => ({
-					label:
-						d.series?.length === 1
-							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
-							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
-					value: s.values[0].value,
-					color: generateColor(
-						d.series?.length === 1
-							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
-							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
-						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-					),
-				})),
-			)
+			.map((d) => ({
+				label: getLabelName(d.metric, d.queryName || '', d.legend || ''),
+				value: d.values?.[0]?.[1],
+				color: generateColor(
+					getLabelName(d.metric, d.queryName || '', d.legend || ''),
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				),
+			}))
 			.filter((d) => d !== undefined) as never[]),
 	);
 	pieChartData = pieChartData.filter(
