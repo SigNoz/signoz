@@ -178,7 +178,7 @@ test:
 ########################################################
 # Goreleaser
 ########################################################
-.PHONY: goreleaser-merge goreleaser-split goreleaser-split-histogram-quantile goreleaser-split-signoz goreleaser-split-signoz-community goreleaser-snapshot goreleaser-snapshot-histogram-quantile goreleaser-snapshot-signoz goreleaser-snapshot-signoz-community
+.PHONY: gor-snapshot gor-snapshot-histogram-quantile gor-snapshot-signoz gor-snapshot-signoz-community gor-split gor-split-histogram-quantile gor-split-signoz gor-split-signoz-community gor-merge
 
 gor-snapshot:
 	@if [[ ${GORELEASER_WORKDIR} ]]; then \
