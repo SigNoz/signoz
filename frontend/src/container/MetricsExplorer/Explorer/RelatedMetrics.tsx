@@ -1,9 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Card, Col, Input, Row, Select, Skeleton } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useResizeObserver } from 'hooks/useDimensions';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { Card, Col, Empty, Input, Row, Select, Skeleton } from 'antd';
 import { Gauge } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -15,9 +11,7 @@ import { RelatedMetricsProps, RelatedMetricWithQueryResult } from './types';
 import { useGetRelatedMetricsGraphs } from './useGetRelatedMetricsGraphs';
 
 function RelatedMetrics({ metricNames }: RelatedMetricsProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
-	const dimensions = useResizeObserver(graphRef);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -41,13 +35,15 @@ function RelatedMetrics({ metricNames }: RelatedMetricsProps): JSX.Element {
 		}
 	}, [metricNames]);
 
-	const { relatedMetrics, isRelatedMetricsLoading } = useGetRelatedMetricsGraphs(
-		{
-			selectedMetricName,
-			startMs,
-			endMs,
-		},
-	);
+	const {
+		relatedMetrics,
+		isRelatedMetricsLoading,
+		isRelatedMetricsError,
+	} = useGetRelatedMetricsGraphs({
+		selectedMetricName,
+		startMs,
+		endMs,
+	});
 
 	const metricNamesSelectOptions = useMemo(
 		() =>
@@ -91,31 +87,6 @@ function RelatedMetrics({ metricNames }: RelatedMetricsProps): JSX.Element {
 		return filteredMetrics;
 	}, [relatedMetrics, selectedRelatedMetric, searchValue]);
 
-	const chartData = useMemo(
-		() =>
-			filteredRelatedMetrics.map(({ queryResult }) =>
-				getUPlotChartData(queryResult.data?.payload),
-			),
-		[filteredRelatedMetrics],
-	);
-
-	const options = useMemo(
-		() =>
-			filteredRelatedMetrics.map(({ queryResult }) =>
-				getUPlotChartOptions({
-					apiResponse: queryResult.data?.payload,
-					isDarkMode,
-					dimensions,
-					yAxisUnit: '',
-					softMax: null,
-					softMin: null,
-					minTimeScale: startMs,
-					maxTimeScale: endMs,
-				}),
-			),
-		[filteredRelatedMetrics, isDarkMode, dimensions, startMs, endMs],
-	);
-
 	return (
 		<div className="related-metrics-container">
 			<div className="related-metrics-header">
@@ -145,20 +116,34 @@ function RelatedMetrics({ metricNames }: RelatedMetricsProps): JSX.Element {
 			</div>
 			<div className="related-metrics-body">
 				{isRelatedMetricsLoading && <Skeleton active />}
-				<Row gutter={24}>
-					{filteredRelatedMetrics.map((relatedMetricWithQueryResult, index) => (
-						<Col span={8} key={relatedMetricWithQueryResult.name}>
-							<Card bordered ref={graphRef} className="related-metrics-card-container">
-								<RelatedMetricsCard
-									key={relatedMetricWithQueryResult.name}
-									metric={relatedMetricWithQueryResult}
-									options={options[index]}
-									chartData={chartData[index]}
-								/>
-							</Card>
-						</Col>
-					))}
-				</Row>
+				{isRelatedMetricsError && (
+					<Empty description="Error fetching related metrics" />
+				)}
+				{!isRelatedMetricsLoading &&
+					!isRelatedMetricsError &&
+					filteredRelatedMetrics.length === 0 && (
+						<Empty description="No related metrics found" />
+					)}
+				{!isRelatedMetricsLoading &&
+					!isRelatedMetricsError &&
+					filteredRelatedMetrics.length > 0 && (
+						<Row gutter={24}>
+							{filteredRelatedMetrics.map((relatedMetricWithQueryResult) => (
+								<Col span={12} key={relatedMetricWithQueryResult.name}>
+									<Card
+										bordered
+										ref={graphRef}
+										className="related-metrics-card-container"
+									>
+										<RelatedMetricsCard
+											key={relatedMetricWithQueryResult.name}
+											metric={relatedMetricWithQueryResult}
+										/>
+									</Card>
+								</Col>
+							))}
+						</Row>
+					)}
 			</div>
 		</div>
 	);

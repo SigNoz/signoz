@@ -1,5 +1,6 @@
 import { Button, Collapse, Input, Select, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import { UpdateMetricMetadataProps } from 'api/metricsExplorer/updateMetricMetadata';
 import { ResizeTable } from 'components/ResizeTable';
@@ -14,6 +15,7 @@ import { METRIC_TYPE_LABEL_MAP } from '../Summary/constants';
 import { MetricTypeRenderer } from '../Summary/utils';
 import { METRIC_METADATA_KEYS } from './constants';
 import { MetadataProps } from './types';
+import { determineIsMonotonic } from './utils';
 
 function Metadata({
 	metricName,
@@ -25,9 +27,10 @@ function Metadata({
 		metricMetadata,
 		setMetricMetadata,
 	] = useState<UpdateMetricMetadataProps>({
-		type: metadata.metric_type,
-		description: metadata.description,
-		unit: metadata.unit,
+		metricType: metadata?.metric_type || MetricType.SUM,
+		description: metadata?.description || '',
+		unit: metadata?.unit || '',
+		temporality: metadata?.temporality || Temporality.CUMULATIVE,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -41,13 +44,16 @@ function Metadata({
 	const tableData = useMemo(
 		() =>
 			metadata
-				? Object.keys(metadata).map((key) => ({
-						key,
-						value: {
-							value: metadata[key as keyof typeof metadata],
+				? Object.keys(metadata)
+						// Filter out isMonotonic as user input is not required
+						.filter((key) => key !== 'isMonotonic')
+						.map((key) => ({
 							key,
-						},
-				  }))
+							value: {
+								value: metadata[key as keyof typeof metadata],
+								key,
+							},
+						}))
 				: [],
 		[metadata],
 	);
@@ -93,11 +99,28 @@ function Metadata({
 									value: key,
 									label: value,
 								}))}
-								value={metricMetadata.type}
+								value={metricMetadata.metricType}
 								onChange={(value): void => {
 									setMetricMetadata({
 										...metricMetadata,
-										type: value as MetricType,
+										metricType: value as MetricType,
+									});
+								}}
+							/>
+						);
+					}
+					if (field.key === 'temporality') {
+						return (
+							<Select
+								options={Object.values(Temporality).map((key) => ({
+									value: key,
+									label: key,
+								}))}
+								value={metricMetadata.temporality}
+								onChange={(value): void => {
+									setMetricMetadata({
+										...metricMetadata,
+										temporality: value as Temporality,
 									});
 								}}
 							/>
@@ -106,7 +129,11 @@ function Metadata({
 					return (
 						<Input
 							name={field.key}
-							value={metricMetadata[field.key as keyof UpdateMetricMetadataProps]}
+							value={
+								metricMetadata[
+									field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
+								]
+							}
 							onChange={(e): void => {
 								setMetricMetadata({ ...metricMetadata, [field.key]: e.target.value });
 							}}
@@ -122,7 +149,13 @@ function Metadata({
 		updateMetricMetadata(
 			{
 				metricName,
-				payload: metricMetadata,
+				payload: {
+					...metricMetadata,
+					isMonotonic: determineIsMonotonic(
+						metricMetadata.metricType,
+						metricMetadata.temporality,
+					),
+				},
 			},
 			{
 				onSuccess: (response): void => {

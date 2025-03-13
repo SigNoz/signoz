@@ -1,12 +1,15 @@
 import axios from 'api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
+import { Temporality } from './getMetricDetails';
 import { MetricType } from './getMetricsList';
 
 export interface UpdateMetricMetadataProps {
 	description: string;
 	unit: string;
-	type: MetricType;
+	metricType: MetricType;
+	temporality: Temporality;
+	isMonotonic?: boolean;
 }
 
 export interface UpdateMetricMetadataResponse {

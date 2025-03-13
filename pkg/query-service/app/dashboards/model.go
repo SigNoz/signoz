@@ -518,10 +518,10 @@ func GetDashboardsWithMetricNames(ctx context.Context, orgID string, metricNames
 					for _, metricName := range metricNames {
 						if strings.TrimSpace(key) == metricName {
 							result[metricName] = append(result[metricName], map[string]string{
-								"dashboard_id":    dashboard.UUID,
-								"widget_title":    widgetTitle,
-								"widget_id":       widgetID,
-								"dashboard_title": dashTitle,
+								"dashboard_id":   dashboard.UUID,
+								"widget_name":    widgetTitle,
+								"widget_id":      widgetID,
+								"dashboard_name": dashTitle,
 							})
 						}
 					}
