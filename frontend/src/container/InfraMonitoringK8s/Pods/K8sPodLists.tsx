@@ -16,6 +16,7 @@ import set from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -248,11 +249,6 @@ function K8sPodsList({
 		groupBy,
 	]);
 
-	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
-		totalCount,
-		pageSize,
-	]);
-
 	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -261,10 +257,10 @@ function K8sPodsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
-				logEvent('Infra Monitoring: K8s pods list page number changed', {
-					page: pagination.current,
-					pageSize,
-					numberOfPages,
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Pod,
 				});
 			}
 
@@ -277,7 +273,7 @@ function K8sPodsList({
 				setOrderBy(null);
 			}
 		},
-		[numberOfPages, pageSize],
+		[],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -291,7 +287,13 @@ function K8sPodsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s pods list filters applied', {});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Pod,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
@@ -317,14 +319,23 @@ function K8sPodsList({
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 
-			logEvent('Infra Monitoring: K8s pods list group by changed', {});
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Pod,
+			});
 		},
 		[groupByFiltersData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s pods list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Pod,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedPodData = useMemo(() => {
 		if (!selectedPodUID) return null;
@@ -360,8 +371,10 @@ function K8sPodsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s pods list item clicked', {
-			podUID: record.podUID,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Pod,
 		});
 	};
 
@@ -512,10 +525,10 @@ function K8sPodsList({
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
-		logEvent('Infra Monitoring: K8s pods list page number changed', {
-			page,
-			pageSize,
-			numberOfPages,
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Pod,
 		});
 	};
 

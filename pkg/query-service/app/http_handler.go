@@ -636,6 +636,9 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddlewar
 	router.HandleFunc("/api/v1/metrics/related",
 		am.ViewAccess(ah.GetRelatedMetrics)).
 		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/inspect",
+		am.ViewAccess(ah.GetInspectMetricsData)).
+		Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {

@@ -9,6 +9,7 @@ import {
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useCallback, useMemo } from 'react';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
@@ -77,8 +78,9 @@ export default function HostsListTable({
 
 	const handleRowClick = (record: HostRowData): void => {
 		setSelectedHostName(record.hostName);
-		logEvent('Infra Monitoring: Hosts list item clicked', {
-			host: record.hostName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.HostEntity,
+			page: InfraMonitoringEvents.ListPage,
 		});
 	};
 

@@ -15,6 +15,7 @@ import {
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sClustersListPayload } from 'api/infraMonitoring/getK8sClustersList';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sClustersList } from 'hooks/infraMonitoring/useGetK8sClustersList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -41,7 +42,6 @@ import {
 	getK8sClustersListQuery,
 	K8sClustersRowData,
 } from './utils';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sClustersList({
 	isFiltersVisible,
@@ -240,11 +240,6 @@ function K8sClustersList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
-		totalCount,
-		pageSize,
-	]);
-
 	const handleTableChange: TableProps<K8sClustersRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -255,10 +250,10 @@ function K8sClustersList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
-				logEvent('Infra Monitoring: K8s clusters list page number changed', {
-					page: pagination.current,
-					pageSize,
-					numberOfPages,
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Cluster,
 				});
 			}
 
@@ -271,7 +266,7 @@ function K8sClustersList({
 				setOrderBy(null);
 			}
 		},
-		[numberOfPages, pageSize],
+		[],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -285,14 +280,25 @@ function K8sClustersList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s clusters list filters applied', {});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					category: InfraMonitoringEvents.Cluster,
+					page: InfraMonitoringEvents.ListPage,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s clusters list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			category: InfraMonitoringEvents.Cluster,
+			page: InfraMonitoringEvents.ListPage,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedClusterData = useMemo(() => {
 		if (!selectedClusterName) return null;
@@ -320,8 +326,10 @@ function K8sClustersList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s cluster list item clicked', {
-			clusterName: record.clusterName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Cluster,
 		});
 	};
 
@@ -450,7 +458,11 @@ function K8sClustersList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
-			logEvent('Infra Monitoring: K8s clusters list group by changed', {});
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Cluster,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -469,10 +481,10 @@ function K8sClustersList({
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
-		logEvent('Infra Monitoring: K8s clusters list page number changed', {
-			page,
-			pageSize,
-			numberOfPages,
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Cluster,
 		});
 	};
 

@@ -26,6 +26,9 @@ RUN chmod 755 /root /root/signoz
 # Copy frontend
 COPY frontend/build/ /etc/signoz/web/
 
+# Copy frontend
+COPY frontend/build/ /etc/signoz/web/
+
 # run the binary
 ENTRYPOINT ["./signoz"]
 
