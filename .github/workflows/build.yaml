@@ -19,7 +19,7 @@ jobs:
         run: |
           make build-frontend-amd64
 
-  build-query-service:
+  build-signoz:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,13 +27,13 @@ jobs:
       - name: Setup golang
         uses: actions/setup-go@v4
         with:
-          go-version: "1.21"
-      - name: Build query-service image
+          go-version: "1.22"
+      - name: Build signoz image
         shell: bash
         run: |
-          make build-query-service-amd64
+          make build-signoz-amd64
 
-  build-ee-query-service:
+  build-signoz-community:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -41,8 +41,8 @@ jobs:
       - name: Setup golang
         uses: actions/setup-go@v4
         with:
-          go-version: "1.21"
-      - name: Build EE query-service image
+          go-version: "1.22"
+      - name: Build signoz community image
         shell: bash
         run: |
-          make build-ee-query-service-amd64
+          make build-signoz-community-amd64

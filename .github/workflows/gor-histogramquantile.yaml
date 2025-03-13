@@ -1,9 +1,8 @@
-name: goreleaser
+name: gor-histogramquantile
 
 on:
   push:
     tags:
-      - v*
       - histogram-quantile/v*
 
 permissions:
