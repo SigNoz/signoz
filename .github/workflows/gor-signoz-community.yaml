@@ -1,4 +1,4 @@
-name: gor-signoz
+name: gor-signoz-community
 
 on:
   push:
@@ -20,20 +20,6 @@ jobs:
         shell: bash
         run: |
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - name: dotenv-frontend
-        working-directory: frontend
-        run: |
-          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
-          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> .env
-          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> .env
-          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> .env
-          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> .env
-          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> .env
-          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> .env
-          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> .env
-          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> .env
-          echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> .env
-          echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> .env
       - name: build-frontend
         run: make build-frontend-static
       - name: upload-frontend-artifact
@@ -49,7 +35,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
     env:
-      CONFIG_PATH: ee/query-service/.goreleaser.yaml
+      CONFIG_PATH: pkg/query-service/.goreleaser.yaml
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout
@@ -91,13 +77,13 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         with:
           path: dist/linux
-          key: signoz-linux-${{ env.sha_short }}
+          key: signoz-community-linux-${{ env.sha_short }}
       - name: cache-darwin
         uses: actions/cache@v4
         if: matrix.os == 'macos-latest'
         with:
           path: dist/darwin
-          key: signoz-darwin-${{ env.sha_short }}
+          key: signoz-community-darwin-${{ env.sha_short }}
       - name: release
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -113,6 +99,7 @@ jobs:
     needs: build
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
+      WORKDIR: pkg/query-service
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -145,12 +132,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: dist/linux
-          key: signoz-linux-${{ env.sha_short }}
+          key: signoz-community-linux-${{ env.sha_short }}
       - name: cache-darwin
         uses: actions/cache@v4
         with:
           path: dist/darwin
-          key: signoz-darwin-${{ env.sha_short }}
+          key: signoz-community-darwin-${{ env.sha_short }}
 
       # release
       - uses: goreleaser/goreleaser-action@v6

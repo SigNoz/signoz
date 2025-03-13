@@ -7,17 +7,16 @@ project_name: signoz
 before:
   hooks:
     - go mod tidy
-    - cp ../../LICENSE ./PROJECT_LICENSE
-    - cp ../../README.md ./PROJECT_README.md
-    - cp -r ../../frontend/build ./frontend-build
 
 after:
   hooks:
-    - rm PROJECT_LICENSE
-    - rm PROJECT_README.md
+    - rm -rf bundle
 
 builds:
-  - env:
+  - id: signoz
+    binary: bin/signoz
+    main: ee/query-service/main.go
+    env:
       - CGO_ENABLED=1
       - >-
         {{- if eq .Os "linux" }}
@@ -46,18 +45,19 @@ archives:
       - tar.gz
     name_template: >-
       {{ .ProjectName }}_{{- .Os }}_{{- .Arch }}
+    wrap_in_directory: true
+    strip_binary_directory: false
     files:
-      - src: PROJECT_README.md
+      - src: README.md
         dst: README.md
-      - src: PROJECT_LICENSE
+      - src: LICENSE
         dst: LICENSE
-      - src: frontend-build
-        dst: signoz-web
+      - src: frontend/build
+        dst: web
+      - src: conf
+        dst: conf
+      - src: templates
+        dst: templates
 
 release:
   name_template: "v{{ .Version }}"
-  footer: >-
-
-    ---
-
-    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
