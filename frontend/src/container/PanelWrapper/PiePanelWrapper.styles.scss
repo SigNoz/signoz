@@ -49,19 +49,12 @@
 	flex-wrap: wrap;
 	justify-content: center;
 	gap: 8px;
-	max-height: calc(
-		2em + 24px
-	); /* Height for 2 rows (2 * font-size + padding + gap) */
+
+	/* Set height for exactly 2 rows */
+	max-height: calc(2 * (24px + 4px) + 12px);
 	overflow-y: auto;
 	width: 100%;
-
-	/* Add this to create rows that scroll horizontally when needed */
-	display: grid;
-	grid-template-rows: repeat(2, auto);
-	grid-auto-flow: column;
-	grid-auto-columns: max-content;
-	overflow-x: auto;
-	justify-content: start;
+	align-content: flex-start;
 }
 
 .piechart-legend-item {
@@ -69,8 +62,10 @@
 	align-items: center;
 	font-size: 12px;
 	white-space: nowrap;
-	padding: 2px 4px;
+	margin-bottom: 2px;
 	cursor: pointer;
+
+	flex: 0 0 auto;
 }
 
 .piechart-legend-label {
