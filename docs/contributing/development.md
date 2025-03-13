@@ -1,83 +1,95 @@
-# Development
+# Development Guide
 
-Welcome to the SigNoz development guide! This document will help you set up your local development environment and get started with contributing to SigNoz.
+Welcome! This guide will help you set up your local development environment for SigNoz. Let's get you started! 🚀
 
-## Prerequisites
+## What do I need?
 
-- [Git](https://git-scm.com/) is used as our version control system.
+Before diving in, make sure you have these tools installed:
 
-- [Go](https://go.dev/dl/) is used as our backend language. You can find the minimum version of the dependencies in the [go.mod](../../go.mod#L3) file.
+- **Git** - Our version control system
+  - Download from [git-scm.com](https://git-scm.com/)
 
-- [GCC](https://gcc.gnu.org/) is used to compile CGO dependencies.
+- **Go** - Powers our backend
+  - Download from [go.dev/dl](https://go.dev/dl/)
+  - Check [go.mod](../../go.mod#L3) for the minimum version
 
-- [Node](https://nodejs.org) is used as our frontend language. You can find the minimum version of the dependencies in the [package.json](../../frontend/.nvmrc) file.
+- **GCC** - Required for CGO dependencies
+  - Download from [gcc.gnu.org](https://gcc.gnu.org/)
 
-- [Yarn](https://yarnpkg.com/getting-started/install) is used as our frontend package manager.
+- **Node** - Powers our frontend
+  - Download from [nodejs.org](https://nodejs.org)
+  - Check [.nvmrc](../../frontend/.nvmrc) for the version
 
-- [Docker](https://docs.docker.com/get-docker/) makes it easy to setup local development environments for clickhouse and postgres.
+- **Yarn** - Our frontend package manager
+  - Follow the [installation guide](https://yarnpkg.com/getting-started/install)
 
-> Familiarizing yourself with the [Makefile](../../Makefile) commands. `make help` will print most of available commands with relevant details.
+- **Docker** - For running Clickhouse and Postgres locally
+  - Get it from [docs.docker.com/get-docker](https://docs.docker.com/get-docker/)
 
+> 💡 **Tip**: Run `make help` to see all available commands with descriptions
 
-## Download
+## How do I get the code?
 
-Open a new terminal and run the following command to clone the repository.
+1. Open your terminal
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/SigNoz/signoz.git
+   ```
+3. Navigate to the project:
+   ```bash
+   cd signoz
+   ```
 
-```
-git clone https://github.com/SigNoz/signoz.git
-```
+## How do I run it locally?
 
-The command will create a new `signoz` directory in your current directory. Open the `signoz` directory in your favorite code editor.
+SigNoz has three main components: Clickhouse, Backend, and Frontend. Let's set them up one by one.
 
-## Build
+### 1. Setting up Clickhouse
 
-SigNoz is built of 3 components (clickhouse, backend and frontend).
+First, we need to get Clickhouse running:
 
-### Clickhouse
-
-Before getting started with other components, you need to install clickhouse. Run the following command in the root of the repository to start clickhouse in devenv:
-
-```
+```bash
 make devenv-clickhouse
 ```
 
-This will start clickhouse in a single shard, single replica cluster with zookeeper and run the latest schema migrations. Next, we'll explain how to build and run the server that serves the apis for the frontend.
+This command:
+- Starts Clickhouse in a single-shard, single-replica cluster
+- Sets up Zookeeper
+- Runs the latest schema migrations
 
-### Backend
+### 2. Starting the Backend
 
-Run the backend by running `make run-go` in the root directory of the repository. This command compiles the Go source code and starts the backend.
-By default, the apiserver is accessible at `http://localhost:8080/`.
+1. Run the backend server:
+   ```bash
+   make run-go
+   ```
 
-Try the following api to check if the backend is running:
+2. Verify it's working:
+   ```bash
+   curl http://localhost:8080/api/v1/health
+   ```
 
-```
-curl http://localhost:8080/api/v1/health
-```
+   You should see: `{"status":"ok"}`
 
-If the backend is running, you should see a response like this:
+> The API server runs at `http://localhost:8080/` by default
 
-```
-{"status":"ok"}
-```
+### 3. Setting up the Frontend
 
-### Frontend
+1. Install dependencies:
+   ```bash
+   yarn install
+   ```
 
-Before you get started with the frontend, you need to install the related dependencies:
+2. Create a `.env` file in the `frontend` directory:
+   ```env
+   FRONTEND_API_ENDPOINT=http://localhost:8080
+   ```
 
-```
-yarn install
-```
+3. Start the development server:
+   ```bash
+   yarn dev
+   ```
 
-Create a `.env` file in the `frontend` directory with the following environment variable (`FRONTEND_API_ENDPOINT`) matching the backend api endpoint. An example `.env` file is given below:
+> 💡 **Tip**: `yarn dev` will automatically rebuild when you make changes to the code
 
-```
-FRONTEND_API_ENDPOINT=http://localhost:8080
-```
-
-After the command has finished, you can start building the source code:
-
-```
-yarn dev
-```
-
-After `yarn dev` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
+Now you're all set to start developing! Happy coding! 🎉
