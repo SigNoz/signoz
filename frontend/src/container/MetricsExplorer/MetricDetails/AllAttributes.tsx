@@ -23,8 +23,6 @@ function AllAttributes({
 
 	const goToMetricsExploreWithAppliedAttribute = useCallback(
 		(key: string, value: string) => {
-			console.log('key', key);
-			console.log('value', value);
 			const compositeQuery = getMetricDetailsQuery(metricName, { key, value });
 			const encodedCompositeQuery = JSON.stringify(compositeQuery);
 			safeNavigate(
