@@ -163,13 +163,16 @@ export const useFetchKeysAndValues = (
 		payload: any,
 	): payload is IAttributeValuesResponse {
 		return (
-			'stringAttributeValues' in payload ||
-			'numberAttributeValues' in payload ||
-			'boolAttributeValues' in payload
+			payload &&
+			(Array.isArray(payload.stringAttributeValues) ||
+				payload.stringAttributeValues === null ||
+				Array.isArray(payload.numberAttributeValues) ||
+				payload.numberAttributeValues === null ||
+				Array.isArray(payload.boolAttributeValues) ||
+				payload.boolAttributeValues === null)
 		);
 	}
 
-	// Add type guard function
 	function isMetricsListFilterValuesData(
 		payload: any,
 	): payload is { filterValues: string[] } {
