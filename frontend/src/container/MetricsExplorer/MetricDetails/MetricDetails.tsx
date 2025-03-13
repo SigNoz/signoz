@@ -2,9 +2,19 @@ import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Skeleton, Tooltip, Typography } from 'antd';
+import {
+	Button,
+	Divider,
+	Drawer,
+	Empty,
+	Skeleton,
+	Tooltip,
+	Typography,
+} from 'antd';
+import ROUTES from 'constants/routes';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Compass, X } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
@@ -16,6 +26,7 @@ import { MetricDetailsProps } from './types';
 import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
+	getMetricDetailsQuery,
 } from './utils';
 
 function MetricDetails({
@@ -24,10 +35,13 @@ function MetricDetails({
 	metricName,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const { safeNavigate } = useSafeNavigate();
+
 	const {
 		data,
 		isLoading,
 		isFetching,
+		error: metricDetailsError,
 		refetch: refetchMetricDetails,
 	} = useGetMetricDetails(metricName ?? '', {
 		enabled: !!metricName,
@@ -40,7 +54,7 @@ function MetricDetails({
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
 
-	const isMetricDetailsLoading = isLoading || isFetching || !metric;
+	const isMetricDetailsLoading = isLoading || isFetching;
 
 	const timeSeries = useMemo(() => {
 		if (!metric) return null;
@@ -50,20 +64,27 @@ function MetricDetails({
 	}, [metric]);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
-		// TODO: Implement this when explore page is ready
-		console.log(metricName);
-	}, [metricName]);
+		if (metricName) {
+			const compositeQuery = getMetricDetailsQuery(metricName);
+			const encodedCompositeQuery = JSON.stringify(compositeQuery);
+			safeNavigate(
+				`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
+			);
+		}
+	}, [metricName, safeNavigate]);
 
 	const top5Attributes = useMemo(() => {
+		if (!metric) return [];
 		const totalSum =
 			metric?.attributes.reduce((acc, curr) => acc + curr.valueCount, 0) || 0;
-		if (!metric) return [];
-		return metric.attributes.slice(0, 5).map((attr) => ({
+		return metric?.attributes.slice(0, 5).map((attr) => ({
 			key: attr.key,
 			count: attr.valueCount,
 			percentage: totalSum === 0 ? 0 : (attr.valueCount / totalSum) * 100,
 		}));
 	}, [metric]);
+
+	const isMetricDetailsError = metricDetailsError || !metric;
 
 	return (
 		<Drawer
@@ -77,6 +98,7 @@ function MetricDetails({
 					<Button
 						onClick={goToMetricsExplorerwithSelectedMetric}
 						icon={<Compass size={16} />}
+						disabled={!metricName}
 					>
 						Open in Explorer
 					</Button>
@@ -93,9 +115,11 @@ function MetricDetails({
 			destroyOnClose
 			closeIcon={<X size={16} />}
 		>
-			{isMetricDetailsLoading ? (
-				<Skeleton active />
-			) : (
+			{isMetricDetailsLoading && <Skeleton active />}
+			{isMetricDetailsError && !isMetricDetailsLoading && (
+				<Empty description="Error fetching metric details" />
+			)}
+			{!isMetricDetailsLoading && !isMetricDetailsError && (
 				<div className="metric-details-content">
 					<div className="metric-details-content-grid">
 						<div className="labels-row">
