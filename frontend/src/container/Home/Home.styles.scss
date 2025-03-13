@@ -393,22 +393,24 @@
 
 		.section-actions {
 			display: flex;
-			flex-direction: row;
+			flex-direction: column;
 			gap: 14px;
 
-			width: 200px;
+			width: 150px;
 			justify-content: flex-end;
 
 			.ant-btn {
 				color: var(--Vanilla-400, #c0c1c3);
 				font-family: Inter;
-				font-size: 12px;
+				font-size: 11px;
 				font-style: normal;
-				font-weight: 500;
+				font-weight: 400;
 				line-height: 18px; /* 150% */
 				letter-spacing: 0.12px;
 
 				padding: 8px;
+
+				justify-content: flex-start;
 
 				&:hover {
 					background-color: var(--bg-ink-300) !important;

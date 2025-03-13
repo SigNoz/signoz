@@ -16,7 +16,6 @@ function DataSourceInfo({
 	isLoading: boolean;
 }): JSX.Element {
 	const notSendingData = !dataSentToSigNoz;
-	const listeningToData = !dataSentToSigNoz;
 
 	const {
 		data: deploymentsData,
@@ -90,77 +89,6 @@ function DataSourceInfo({
 								Connect Data Source
 							</Button>
 						</div>
-
-						{/* {isErrorDeploymentsData && (
-							<div className="workspace-details">
-								<Typography>Error fetching data. Please try again later.</Typography>
-							</div>
-						)} */}
-
-						{!isErrorDeploymentsData && deploymentsData && (
-							<div className="workspace-details">
-								<div className="workspace-region">
-									<Globe size={10} />
-
-									<Typography>{region}</Typography>
-								</div>
-
-								<div className="workspace-url">
-									<Link2 size={12} />
-
-									<Typography>{url}</Typography>
-								</div>
-							</div>
-						)}
-					</div>
-				</Card.Content>
-			</Card>
-		</>
-	);
-
-	const renderListeningToData = (): JSX.Element => (
-		<>
-			<Typography className="welcome-title">Listening for data</Typography>
-
-			<Typography className="welcome-description">
-				Hold on a bit, it takes a little time for the data to start streaming in.
-			</Typography>
-
-			<Card className="welcome-card">
-				<Card.Content>
-					<div className="workspace-ready-container">
-						<div className="workspace-ready-header">
-							<Typography className="workspace-ready-title">
-								<img src="/Icons/spinner.svg" alt="spinner" />
-								Waiting for logs...
-							</Typography>
-
-							<Button
-								role="button"
-								tabIndex={0}
-								onClick={(): void => {
-									logEvent('Homepage: Retry sending data clicked', {});
-									history.push(ROUTES.GET_STARTED);
-								}}
-								onKeyDown={(e): void => {
-									if (e.key === 'Enter') {
-										logEvent('Homepage: Retry sending data clicked', {});
-										history.push(ROUTES.GET_STARTED);
-									}
-								}}
-								type="default"
-								className="periscope-btn secondary"
-								icon={<img src="/Icons/play-back.svg" alt="play-back" />}
-							>
-								Retry sending data
-							</Button>
-						</div>
-
-						{/* {isErrorDeploymentsData && (
-							<div className="workspace-details">
-								<Typography>Error fetching data. Please try again later.</Typography>
-							</div>
-						)} */}
 
 						{!isErrorDeploymentsData && deploymentsData && (
 							<div className="workspace-details">
@@ -237,8 +165,6 @@ function DataSourceInfo({
 			{!isLoading && dataSentToSigNoz && renderDataReceived()}
 
 			{!isLoading && notSendingData && renderNotSendingData()}
-
-			{!isLoading && listeningToData && renderListeningToData()}
 		</div>
 	);
 }

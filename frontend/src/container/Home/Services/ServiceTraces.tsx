@@ -5,12 +5,14 @@ import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { USER_ROLES } from 'types/roles';
 
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -26,6 +28,8 @@ export default function ServiceTraces({
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const { user } = useAppContext();
 
 	const now = new Date().getTime();
 	const [timeRange, setTimeRange] = useState({
@@ -106,30 +110,43 @@ export default function ServiceTraces({
 						</div>
 					</div>
 
-					<div className="empty-actions-container">
-						<Link to={ROUTES.GET_STARTED}>
-							<Button type="default" className="periscope-btn secondary">
-								Get Started &nbsp; <ArrowRight size={16} />
-							</Button>
-						</Link>
+					{user?.role !== USER_ROLES.VIEWER && (
+						<div className="empty-actions-container">
+							<Link to={ROUTES.GET_STARTED}>
+								<Button
+									type="default"
+									className="periscope-btn secondary"
+									onClick={(): void => {
+										logEvent('Homepage: Get Started clicked', {
+											source: 'Service Traces',
+										});
+									}}
+								>
+									Get Started &nbsp; <ArrowRight size={16} />
+								</Button>
+							</Link>
 
-						<Button
-							type="link"
-							className="learn-more-link"
-							onClick={(): void => {
-								window.open(
-									'https://signoz.io/docs/instrumentation/overview/',
-									'_blank',
-								);
-							}}
-						>
-							Learn more <ArrowUpRight size={12} />
-						</Button>
-					</div>
+							<Button
+								type="link"
+								className="learn-more-link"
+								onClick={(): void => {
+									logEvent('Homepage: Learn more clicked', {
+										source: 'Service Traces',
+									});
+									window.open(
+										'https://signoz.io/docs/instrumentation/overview/',
+										'_blank',
+									);
+								}}
+							>
+								Learn more <ArrowUpRight size={12} />
+							</Button>
+						</div>
+					)}
 				</div>
 			</div>
 		),
-		[],
+		[user?.role],
 	);
 
 	const renderDashboardsList = useCallback(
@@ -143,6 +160,10 @@ export default function ServiceTraces({
 						className="services-table"
 						onRow={(record): { onClick: () => void } => ({
 							onClick: (): void => {
+								logEvent('Homepage: Service clicked', {
+									serviceName: record.serviceName,
+								});
+
 								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
 							},
 						})}
@@ -198,7 +219,13 @@ export default function ServiceTraces({
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
 						<Link to="/services">
-							<Button type="link" className="periscope-btn link learn-more-link">
+							<Button
+								type="link"
+								className="periscope-btn link learn-more-link"
+								onClick={(): void => {
+									logEvent('Homepage: All Services clicked', {});
+								}}
+							>
 								All Services <ArrowRight size={12} />
 							</Button>
 						</Link>

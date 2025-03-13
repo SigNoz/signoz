@@ -258,11 +258,9 @@
 				gap: 0.5rem;
 			}
 
-			&:not(.skipped) {
-				&:hover {
-					.whats-next-checklist-item-content {
-						display: flex;
-					}
+			&:hover {
+				.whats-next-checklist-item-content {
+					display: flex;
 				}
 			}
 
