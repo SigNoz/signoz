@@ -49,9 +49,7 @@
 	flex-wrap: wrap;
 	justify-content: center;
 	gap: 8px;
-
-	/* Set height for exactly 2 rows */
-	max-height: calc(2 * (24px + 4px) + 12px);
+	max-height: 68px;
 	overflow-y: auto;
 	width: 100%;
 	align-content: flex-start;
@@ -60,7 +58,7 @@
 .piechart-legend-item {
 	display: flex;
 	align-items: center;
-	font-size: 12px;
+	font-size: 10px;
 	white-space: nowrap;
 	margin-bottom: 2px;
 	cursor: pointer;

@@ -162,7 +162,7 @@ function PiePanelWrapper({
 																x={centroidX}
 																y={centroidY}
 																dy=".33em"
-																fill={isDarkMode ? '#fff' : '#000'}
+																fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
 																fontSize={10}
 																textAnchor="middle"
 																pointerEvents="none"
