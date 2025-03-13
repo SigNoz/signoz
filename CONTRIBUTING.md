@@ -59,7 +59,7 @@ For substantial changes, please split your contribution into multiple PRs:
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). All commits and PRs should include type specifiers (e.g., `feat:`, `fix:`, `docs:`, etc.).
 
-### Finding other Repositories
+## Finding other Repositories
 
 You can find other repositories in the [SigNoz](https://github.com/SigNoz) organization to contribute to:
 
