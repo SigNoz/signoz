@@ -425,7 +425,7 @@ func createTelemetry() {
 						"total_metrics_based_panels":  dashboardsInfo.MetricBasedPanels,
 						"total_logs_based_panels":     dashboardsInfo.LogsBasedPanels,
 						"total_traces_based_panels":   dashboardsInfo.TracesBasedPanels,
-					})
+					}, "")
 					telemetry.SendGroupEvent(map[string]interface{}{
 						"total_logs":                  totalLogs,
 						"total_traces":                totalSpans,
@@ -442,7 +442,7 @@ func createTelemetry() {
 						"total_metrics_based_panels":  dashboardsInfo.MetricBasedPanels,
 						"total_logs_based_panels":     dashboardsInfo.LogsBasedPanels,
 						"total_traces_based_panels":   dashboardsInfo.TracesBasedPanels,
-					})
+					}, "")
 				}
 			}
 		}
@@ -451,16 +451,16 @@ func createTelemetry() {
 		}
 
 		if totalLogs > 0 {
-			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_logs": true})
-			telemetry.SendGroupEvent(map[string]interface{}{"sent_logs": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_logs": true}, "")
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_logs": true}, "")
 		}
 		if totalSpans > 0 {
-			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_traces": true})
-			telemetry.SendGroupEvent(map[string]interface{}{"sent_traces": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_traces": true}, "")
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_traces": true}, "")
 		}
 		if totalSamples > 0 {
-			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_metrics": true})
-			telemetry.SendGroupEvent(map[string]interface{}{"sent_metrics": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_metrics": true}, "")
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_metrics": true}, "")
 		}
 
 		getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(ctx)
@@ -591,10 +591,19 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	}
 }
 
-func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}) {
+func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail string) {
 
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
+	}
+	// ignore telemetry for default user
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+		return
+	}
+
+	if userEmail != "" {
+		a.SetUserEmail(userEmail)
+		a.SetCompanyDomain(userEmail)
 	}
 	traits := analytics.NewTraits()
 
@@ -615,10 +624,19 @@ func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}) {
 	}
 }
 
-func (a *Telemetry) SendGroupEvent(data map[string]interface{}) {
+func (a *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
 
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
+	}
+	// ignore telemetry for default user
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+		return
+	}
+
+	if userEmail != "" {
+		a.SetUserEmail(userEmail)
+		a.SetCompanyDomain(userEmail)
 	}
 	traits := analytics.NewTraits()
 

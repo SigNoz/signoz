@@ -7,6 +7,7 @@ import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { InfraMonitoringEvents } from 'constants/events';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -21,7 +22,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import HostsListControls from './HostsListControls';
 import HostsListTable from './HostsListTable';
 import { getHostListsQuery, HostsQuickFiltersConfig } from './utils';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -85,9 +85,12 @@ function HostsList(): JSX.Element {
 			if (isNewFilterAdded) {
 				setCurrentPage(1);
 
-				logEvent('Infra Monitoring: Hosts list filters applied', {
-					filters: value,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.HostEntity,
+						page: InfraMonitoringEvents.ListPage,
+					});
+				}
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,8 +98,12 @@ function HostsList(): JSX.Element {
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Hosts list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			total: data?.payload?.data?.total,
+			entity: InfraMonitoringEvents.HostEntity,
+			page: InfraMonitoringEvents.ListPage,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedHostData = useMemo(() => {
 		if (!selectedHostName) return null;

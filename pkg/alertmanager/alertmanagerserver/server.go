@@ -218,12 +218,12 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = template.FromGlobs(config.Templates)
+	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
 	if err != nil {
 		return err
 	}
 
-	server.tmpl.ExternalURL = server.srvConfig.ExternalUrl
+	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)

@@ -8,6 +8,7 @@ var (
 	TypeMethodNotAllowed     = typ{"method-not-allowed"}
 	TypeAlreadyExists        = typ{"already-exists"}
 	TypeUnauthenticated      = typ{"unauthenticated"}
+	TypeForbidden            = typ{"forbidden"}
 )
 
 // Defines custom error types

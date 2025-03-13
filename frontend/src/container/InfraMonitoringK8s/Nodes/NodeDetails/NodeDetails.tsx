@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sNodesData } from 'api/infraMonitoring/getK8sNodesList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -150,11 +151,15 @@ function NodeDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Nodes list details page visited', {
-			node: node?.nodeUID,
-		});
+		if (node) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Node,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [node]);
 
 	useEffect(() => {
 		setLogAndTracesFilters(initialFilters);
@@ -176,8 +181,10 @@ function NodeDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: Nodes list details tab changed', {
-			node: node?.nodeUID,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Node,
 			view: e.target.value,
 		});
 	};
@@ -200,8 +207,10 @@ function NodeDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Nodes list details time updated', {
-				node: node?.nodeUID,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Node,
 				interval,
 				view: selectedView,
 			});
@@ -224,9 +233,14 @@ function NodeDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NODE_NAME,
 				);
 
-				logEvent('Infra Monitoring: Nodes list details logs filters applied', {
-					node: node?.nodeUID,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Node,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -253,9 +267,14 @@ function NodeDetails({
 					),
 				);
 
-				logEvent('Infra Monitoring: Nodes list details traces filters applied', {
-					node: node?.nodeUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Node,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -284,9 +303,14 @@ function NodeDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Nodes list details events filters applied', {
-					node: node?.nodeUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Node,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -315,8 +339,10 @@ function NodeDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Nodes list details explore clicked', {
-			node: node?.nodeUID,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Node,
 			view: selectedView,
 		});
 
