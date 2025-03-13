@@ -61,7 +61,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 ## How can I contribute to other repositories?
 
-You can find other repositories in the [SigNoz](https://github.com/SigNoz) organization to contribute to:
+You can find other repositories in the [SigNoz](https://github.com/SigNoz) organization to contribute to. Here is a list of **highlighted** repositories:
 
 - [charts](https://github.com/SigNoz/charts)
 - [dashboards](https://github.com/SigNoz/dashboards)
