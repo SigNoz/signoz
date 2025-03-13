@@ -24,7 +24,7 @@ GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 
-REPONAME ?= coolboi567
+REPONAME ?= signoz
 DOCKER_TAG ?= $(subst v,,$(BUILD_VERSION))
 SIGNOZ_DOCKER_IMAGE ?= signoz
 SIGNOZ_COMMUNITY_DOCKER_IMAGE ?= signoz-community
