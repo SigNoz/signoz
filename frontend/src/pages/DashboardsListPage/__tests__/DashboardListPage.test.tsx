@@ -236,7 +236,7 @@ describe('dashboard list page', () => {
 			expect.objectContaining({
 				id: firstDashboardData.uuid,
 				title: firstDashboardData.data.title,
-				createdAt: firstDashboardData.created_at,
+				createdAt: firstDashboardData.createdAt,
 			}),
 		);
 	});
