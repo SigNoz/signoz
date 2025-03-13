@@ -87,7 +87,7 @@ function PiePanelWrapper({
 	};
 
 	return (
-		<>
+		<div className="piechart-wrapper">
 			{!pieChartData.length && <div className="piechart-no-data">No data</div>}
 			{pieChartData.length > 0 && (
 				<>
@@ -119,6 +119,16 @@ function PiePanelWrapper({
 												const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.6;
 												const arcPath = pie.path(arc);
 												const arcFill = arc.data.color;
+
+												// Calculate available space for label text
+												const arcSize = arc.endAngle - arc.startAngle;
+												const maxLabelLength = Math.floor(arcSize * 15);
+												const labelText = arc.data.label;
+												const displayLabel =
+													labelText.length > maxLabelLength
+														? `${labelText.substring(0, maxLabelLength - 3)}...`
+														: labelText;
+
 												return (
 													<g
 														// eslint-disable-next-line react/no-array-index-key
@@ -152,12 +162,12 @@ function PiePanelWrapper({
 																x={centroidX}
 																y={centroidY}
 																dy=".33em"
-																fill="#000"
+																fill={isDarkMode ? '#fff' : '#000'}
 																fontSize={10}
 																textAnchor="middle"
 																pointerEvents="none"
 															>
-																{arc.data.label}
+																{displayLabel}
 															</text>
 														)}
 													</g>
@@ -190,31 +200,30 @@ function PiePanelWrapper({
 						)}
 					</div>
 					<div className="piechart-legend">
-						{pieChartData.length > 0 &&
-							pieChartData.map((data) => (
+						{pieChartData.map((data) => (
+							<div
+								key={data.label}
+								className="piechart-legend-item"
+								onMouseEnter={(): void => {
+									setActive(data);
+								}}
+								onMouseLeave={(): void => {
+									setActive(null);
+								}}
+							>
 								<div
-									key={data.label}
-									className="piechart-legend-item"
-									onMouseEnter={(): void => {
-										setActive(data);
+									style={{
+										backgroundColor: getFillColor(data.color),
 									}}
-									onMouseLeave={(): void => {
-										setActive(null);
-									}}
-								>
-									<div
-										style={{
-											backgroundColor: getFillColor(data.color),
-										}}
-										className="piechart-legend-label"
-									/>
-									{data.label}
-								</div>
-							))}
+									className="piechart-legend-label"
+								/>
+								{data.label}
+							</div>
+						))}
 					</div>
 				</>
 			)}
-		</>
+		</div>
 	);
 }
 
