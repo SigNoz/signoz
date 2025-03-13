@@ -78,3 +78,7 @@ dist/
 deploy/common/clickhouse/user_scripts/
 
 queries.active
+
+
+# .devenv tmp files
+.devenv/**/tmp/**
