@@ -25,7 +25,7 @@ GOARCH ?= $(shell go env GOARCH)
 GOPATH ?= $(shell go env GOPATH)
 
 REPONAME ?= signoz
-DOCKER_TAG ?= $(subst v,,$(BUILD_VERSION))
+DOCKER_TAG ?= $(BUILD_VERSION)
 SIGNOZ_DOCKER_IMAGE ?= signoz
 SIGNOZ_COMMUNITY_DOCKER_IMAGE ?= signoz-community
 
