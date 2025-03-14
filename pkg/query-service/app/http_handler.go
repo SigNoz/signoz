@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"go.signoz.io/signoz/pkg/alertmanager"
+	errorsV2 "go.signoz.io/signoz/pkg/errors"
+	"go.signoz.io/signoz/pkg/http/render"
 	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
 	"go.signoz.io/signoz/pkg/signoz"
 
@@ -49,7 +51,6 @@ import (
 	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/contextlinks"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -273,11 +274,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildLogQuery:    logsQueryBuilder,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
-
-	dashboards.LoadDashboardFiles(aH.featureFlags)
-	// if errReadingDashboards != nil {
-	// 	return nil, errReadingDashboards
-	// }
 
 	// check if at least one user is created
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
@@ -639,6 +635,9 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddlewar
 		Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/metrics/related",
 		am.ViewAccess(ah.GetRelatedMetrics)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/inspect",
+		am.ViewAccess(ah.GetInspectMetricsData)).
 		Methods(http.MethodPost)
 }
 
@@ -1059,7 +1058,12 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
-	allDashboards, err := dashboards.GetDashboards(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	allDashboards, err := dashboards.GetDashboards(r.Context(), claims.OrgID)
 	if err != nil {
 		RespondError(w, err, nil)
 		return
@@ -1113,7 +1117,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		inter = Intersection(inter, tags2Dash[tag])
 	}
 
-	filteredDashboards := []dashboards.Dashboard{}
+	filteredDashboards := []types.Dashboard{}
 	for _, val := range inter {
 		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
@@ -1125,7 +1129,12 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(r.Context(), uuid, aH.featureFlags)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -1212,7 +1221,12 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), uuid, postData, aH.featureFlags)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -1226,7 +1240,12 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
 
-	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	dashboard, apiError := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
 
 	if apiError != nil {
 		if apiError.Type() != model.ErrorNotFound {
@@ -1275,8 +1294,12 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
-
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), postData, aH.featureFlags)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1545,9 +1568,9 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 		case model.TrackEvent:
 			telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, claims.Email, request.RateLimited, true)
 		case model.GroupEvent:
-			telemetry.GetInstance().SendGroupEvent(request.Attributes)
+			telemetry.GetInstance().SendGroupEvent(request.Attributes, claims.Email)
 		case model.IdentifyEvent:
-			telemetry.GetInstance().SendIdentifyEvent(request.Attributes)
+			telemetry.GetInstance().SendIdentifyEvent(request.Attributes, claims.Email)
 		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
@@ -3385,10 +3408,14 @@ func (aH *APIHandler) getUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	user := common.GetUserFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	preference, apiErr := preferences.GetUserPreference(
-		r.Context(), preferenceId, user.User.OrgID, user.User.ID,
+		r.Context(), preferenceId, claims.OrgID, claims.UserID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3402,7 +3429,11 @@ func (aH *APIHandler) updateUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	user := common.GetUserFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	req := preferences.UpdatePreference{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -3411,7 +3442,7 @@ func (aH *APIHandler) updateUserPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.ID)
+	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, claims.UserID)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3423,9 +3454,13 @@ func (aH *APIHandler) updateUserPreference(
 func (aH *APIHandler) getAllUserPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	user := common.GetUserFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	preference, apiErr := preferences.GetAllUserPreferences(
-		r.Context(), user.User.OrgID, user.User.ID,
+		r.Context(), claims.OrgID, claims.UserID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3439,9 +3474,13 @@ func (aH *APIHandler) getOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	user := common.GetUserFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId, user.User.OrgID,
+		r.Context(), preferenceId, claims.OrgID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3456,7 +3495,11 @@ func (aH *APIHandler) updateOrgPreference(
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
 	req := preferences.UpdatePreference{}
-	user := common.GetUserFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 
@@ -3464,7 +3507,7 @@ func (aH *APIHandler) updateOrgPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, user.User.OrgID)
+	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3476,9 +3519,13 @@ func (aH *APIHandler) updateOrgPreference(
 func (aH *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	user := common.GetUserFromContext(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	preference, apiErr := preferences.GetAllOrgPreferences(
-		r.Context(), user.User.OrgID,
+		r.Context(), claims.OrgID,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -4525,7 +4572,12 @@ func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	category := r.URL.Query().Get("category")
 
-	queries, err := explorer.GetViewsForFilters(sourcePage, name, category)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	queries, err := explorer.GetViewsForFilters(r.Context(), claims.OrgID, sourcePage, name, category)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4545,7 +4597,13 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	uuid, err := explorer.CreateView(r.Context(), view)
+
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	uuid, err := explorer.CreateView(r.Context(), claims.OrgID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4556,7 +4614,12 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
-	view, err := explorer.GetView(viewID)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	view, err := explorer.GetView(r.Context(), claims.OrgID, viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4579,7 +4642,12 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = explorer.UpdateView(r.Context(), viewID, view)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	err = explorer.UpdateView(r.Context(), claims.OrgID, viewID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4591,7 +4659,12 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
 	viewID := mux.Vars(r)["viewId"]
-	err := explorer.DeleteView(viewID)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	err := explorer.DeleteView(r.Context(), claims.OrgID, viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return

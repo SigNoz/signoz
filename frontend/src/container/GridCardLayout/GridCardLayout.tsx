@@ -113,7 +113,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	}
 
 	const userRole: ROLES | null =
-		selectedDashboard?.created_by === user?.email
+		selectedDashboard?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 

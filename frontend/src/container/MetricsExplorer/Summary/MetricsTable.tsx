@@ -20,6 +20,7 @@ function MetricsTable({
 	onPaginationChange,
 	setOrderBy,
 	totalCount,
+	openMetricDetails,
 }: MetricsTableProps): JSX.Element {
 	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
 		(
@@ -54,7 +55,7 @@ function MetricsTable({
 				dataSource={data}
 				columns={metricsTableColumns}
 				locale={{
-					emptyText: (
+					emptyText: isLoading ? null : (
 						<div className="no-metrics-message-container">
 							<img
 								src="/Icons/emptyState.svg"
@@ -78,6 +79,10 @@ function MetricsTable({
 					onChange: onPaginationChange,
 					total: totalCount,
 				}}
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => openMetricDetails(record.key),
+					className: 'clickable-row',
+				})}
 			/>
 		</div>
 	);
