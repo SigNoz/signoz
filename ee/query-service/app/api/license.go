@@ -48,6 +48,13 @@ type details struct {
 	BillTotal float64         `json:"billTotal"`
 }
 
+type Redirect struct {
+	RedirectURL string `json:"redirectURL"`
+}
+type CheckoutResponse struct {
+	Data Redirect `json:"data"`
+}
+
 type billingDetails struct {
 	Status string `json:"status"`
 	Data   struct {
@@ -119,22 +126,32 @@ func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusNoContent, nil)
 }
 
+func getCheckoutPortalResponse(redirectURL string) *CheckoutResponse {
+	return &CheckoutResponse{Data: Redirect{RedirectURL: redirectURL}}
+}
+
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 
 	type checkoutResponse struct {
 		Status string `json:"status"`
 		Data   struct {
-			RedirectURL string `json:"redirectURL"`
+			RedirectURL string `json:"checkout_session_url"`
 		} `json:"data"`
 	}
 
+	license := ah.LM().GetActiveLicense()
+	if license == nil {
+		RespondError(w, model.BadRequestStr("cannot proceed with checkout without license key"), nil)
+		return
+	}
+
 	hClient := &http.Client{}
-	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/checkout", r.Body)
+	req, err := http.NewRequest("POST", constants.ZeusURL+"v2/subscriptions/me/sessions/checkout", r.Body)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	req.Header.Set("X-Signoz-Cloud-Api-Key", license.Key)
 	licenseResp, err := hClient.Do(req)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
@@ -148,7 +165,7 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ah.Respond(w, resp.Data)
+	ah.Respond(w, getCheckoutPortalResponse(resp.Data.RedirectURL))
 }
 
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
@@ -298,20 +315,26 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 
-	type checkoutResponse struct {
+	type portalResponse struct {
 		Status string `json:"status"`
 		Data   struct {
-			RedirectURL string `json:"redirectURL"`
+			RedirectURL string `json:"portal_session_url"`
 		} `json:"data"`
 	}
 
+	license := ah.LM().GetActiveLicense()
+	if license == nil {
+		RespondError(w, model.BadRequestStr("cannot request the portal session without license key"), nil)
+		return
+	}
+
 	hClient := &http.Client{}
-	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/portal", r.Body)
+	req, err := http.NewRequest("POST", constants.ZeusURL+"v2/subscriptions/me/sessions/portal", r.Body)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	req.Header.Set("X-Signoz-Cloud-Api-Key", license.Key)
 	licenseResp, err := hClient.Do(req)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
@@ -319,11 +342,11 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// decode response body
-	var resp checkoutResponse
+	var resp portalResponse
 	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 
-	ah.Respond(w, resp.Data)
+	ah.Respond(w, getCheckoutPortalResponse(resp.Data.RedirectURL))
 }
