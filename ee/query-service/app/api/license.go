@@ -129,6 +129,11 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	license := ah.LM().GetActiveLicense()
+	if license == nil {
+		RespondError(w, model.BadRequestStr("cannot proceed with checkout without license key"), nil)
+		return
+	}
+
 	hClient := &http.Client{}
 	req, err := http.NewRequest("POST", constants.ZeusURL+"v2/subscriptions/me/sessions/checkout", r.Body)
 	if err != nil {
@@ -307,6 +312,11 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	license := ah.LM().GetActiveLicense()
+	if license == nil {
+		RespondError(w, model.BadRequestStr("cannot proceed with checkout without license key"), nil)
+		return
+	}
+
 	hClient := &http.Client{}
 	req, err := http.NewRequest("POST", constants.ZeusURL+"v2/subscriptions/me/sessions/portal", r.Body)
 	if err != nil {
