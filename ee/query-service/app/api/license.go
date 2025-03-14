@@ -313,7 +313,7 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 
 	license := ah.LM().GetActiveLicense()
 	if license == nil {
-		RespondError(w, model.BadRequestStr("cannot proceed with checkout without license key"), nil)
+		RespondError(w, model.BadRequestStr("cannot request the portal session without license key"), nil)
 		return
 	}
 
