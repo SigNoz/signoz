@@ -10,6 +10,7 @@ BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 LICENSE_SIGNOZ_IO ?= https://license.signoz.io/api/v1
 DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
 ZEUS_URL ?= https://api.signoz.cloud
+DEV_ZEUS_URL ?= https://api.staging.signoz.cloud
 DEV_BUILD ?= "" # set to any non-empty value to enable dev build
 
 # Internal variables or constants.
@@ -41,7 +42,7 @@ zeusURL=${PACKAGE}/ee/query-service/constants.ZeusURL
 
 LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}
 PROD_LD_FLAGS=-X ${zeusURL}=${ZEUS_URL} -X ${licenseSignozIo}=${LICENSE_SIGNOZ_IO}
-DEV_LD_FLAGS=-X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
+DEV_LD_FLAGS=-X ${zeusURL}=${DEV_ZEUS_URL} -X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
 
 
 ##############################################################
