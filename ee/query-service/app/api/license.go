@@ -48,6 +48,13 @@ type details struct {
 	BillTotal float64         `json:"billTotal"`
 }
 
+type Redirect struct {
+	RedirectURL string `json:"redirectURL"`
+}
+type CheckoutResponse struct {
+	Data Redirect `json:"data"`
+}
+
 type billingDetails struct {
 	Status string `json:"status"`
 	Data   struct {
@@ -119,6 +126,10 @@ func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusNoContent, nil)
 }
 
+func getCheckoutPortalResponse(redirectURL string) *CheckoutResponse {
+	return &CheckoutResponse{Data: Redirect{RedirectURL: redirectURL}}
+}
+
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 
 	type checkoutResponse struct {
@@ -154,7 +165,7 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ah.Respond(w, resp.Data)
+	ah.Respond(w, getCheckoutPortalResponse(resp.Data.RedirectURL))
 }
 
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
@@ -337,5 +348,5 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ah.Respond(w, resp.Data)
+	ah.Respond(w, getCheckoutPortalResponse(resp.Data.RedirectURL))
 }
