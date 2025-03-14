@@ -124,17 +124,18 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	type checkoutResponse struct {
 		Status string `json:"status"`
 		Data   struct {
-			RedirectURL string `json:"redirectURL"`
+			RedirectURL string `json:"checkout_session_url"`
 		} `json:"data"`
 	}
 
+	license := ah.LM().GetActiveLicense()
 	hClient := &http.Client{}
-	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/checkout", r.Body)
+	req, err := http.NewRequest("POST", constants.ZeusURL+"v2/subscriptions/me/sessions/checkout", r.Body)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	req.Header.Set("X-Signoz-Cloud-Api-Key", license.Key)
 	licenseResp, err := hClient.Do(req)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
@@ -298,20 +299,21 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 
-	type checkoutResponse struct {
+	type portalResponse struct {
 		Status string `json:"status"`
 		Data   struct {
-			RedirectURL string `json:"redirectURL"`
+			RedirectURL string `json:"portal_session_url"`
 		} `json:"data"`
 	}
 
+	license := ah.LM().GetActiveLicense()
 	hClient := &http.Client{}
-	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/portal", r.Body)
+	req, err := http.NewRequest("POST", constants.ZeusURL+"v2/subscriptions/me/sessions/portal", r.Body)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	req.Header.Set("X-Signoz-Cloud-Api-Key", license.Key)
 	licenseResp, err := hClient.Do(req)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
@@ -319,7 +321,7 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// decode response body
-	var resp checkoutResponse
+	var resp portalResponse
 	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
