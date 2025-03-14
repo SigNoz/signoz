@@ -8,7 +8,7 @@ import { AxiosError } from 'axios';
 import cx from 'classnames';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -22,6 +22,7 @@ import {
 	formatDataForTable,
 	hardcodedAttributeKeys,
 } from '../../utils';
+import DomainDetails from './DomainDetails/DomainDetails';
 
 function DomainList({
 	query,
@@ -32,6 +33,10 @@ function DomainList({
 	showIP: boolean;
 	handleChangeQueryData: HandleChangeQueryData;
 }): JSX.Element {
+	const [selectedDomainData, setSelectedDomainData] = useState<any>(null);
+	// const [selectedDomainIndex, setSelectedDomainIndex] = useState<
+	// 	number | undefined
+	// >(undefined);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -69,10 +74,11 @@ function DomainList({
 		fetchApiOverview,
 	);
 
-	const domainListData = useMemo(
-		() => data?.payload?.data?.result[0]?.table?.rows,
+	const formattedDataForTable = useMemo(
+		() => formatDataForTable(data?.payload?.data?.result[0]?.table?.rows),
 		[data],
 	);
+
 	return (
 		<section className={cx('api-module-right-section')}>
 			<div className={cx('api-monitoring-list-header')}>
@@ -92,9 +98,7 @@ function DomainList({
 			</div>
 			<Table
 				className={cx('api-monitoring-domain-list-table')}
-				dataSource={
-					isFetching || isLoading ? [] : formatDataForTable(domainListData)
-				}
+				dataSource={isFetching || isLoading ? [] : formattedDataForTable}
 				columns={columnsConfig}
 				loading={{
 					spinning: isFetching || isLoading,
@@ -120,7 +124,23 @@ function DomainList({
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"
+				onRow={(record): { onClick: () => void; className: string } => ({
+					onClick: (): void => {
+						// setSelectedDomainIndex(index);
+						setSelectedDomainData(record); // TODO: update the selected domain data based on index later to support navigation
+					},
+					className: 'expanded-clickable-row',
+				})}
 			/>
+			{selectedDomainData && (
+				<DomainDetails
+					domainData={selectedDomainData}
+					handleClose={(): void => {
+						setSelectedDomainData(null);
+						// setSelectedDomainIndex(undefined);
+					}}
+				/>
+			)}
 		</section>
 	);
 }
