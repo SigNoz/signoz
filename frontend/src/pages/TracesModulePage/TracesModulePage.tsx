@@ -11,12 +11,7 @@ import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 function TracesModulePage(): JSX.Element {
 	const { pathname } = useLocation();
 
-	const routes: TabRoutes[] = [
-		tracesExplorer,
-		// TODO(shaheer): remove this check after everything is ready
-		process.env.NODE_ENV === 'development' ? tracesFunnel : null,
-		tracesSaveView,
-	].filter(Boolean) as TabRoutes[];
+	const routes: TabRoutes[] = [tracesExplorer, tracesFunnel, tracesSaveView];
 
 	return (
 		<div className="traces-module-container">

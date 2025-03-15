@@ -1,11 +1,10 @@
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { Compass, Cone, TowerControl } from 'lucide-react';
+import { Compass, Cone, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
-import TracesFunnelDetails from 'pages/TracesFunnelDetails';
 import TracesFunnels from 'pages/TracesFunnels';
-import { matchPath, useLocation } from 'react-router-dom';
 
 export const tracesExplorer: TabRoutes = {
 	Component: TracesExplorer,
@@ -19,12 +18,7 @@ export const tracesExplorer: TabRoutes = {
 };
 
 export const tracesFunnel: TabRoutes = {
-	Component: (): JSX.Element => {
-		const { pathname } = useLocation();
-		const isFunnelDetails = matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
-
-		return isFunnelDetails ? <TracesFunnelDetails /> : <TracesFunnels />;
-	},
+	Component: TracesFunnels,
 	name: (
 		<div className="tab-item">
 			<Cone className="funnel-icon" size={16} /> Funnels

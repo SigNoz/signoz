@@ -360,9 +360,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
 		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
 	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
-	const isTracesFunnelDetails = (): boolean =>
-		!!matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
-
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -668,11 +665,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() ||
-										isTracesFunnels() ||
-										isTracesFunnelDetails()
-											? { margin: 0 }
-											: {}),
+										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}
