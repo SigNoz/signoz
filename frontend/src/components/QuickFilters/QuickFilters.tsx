@@ -63,30 +63,31 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	return (
 		<div className="quick-filters">
-			{source !== QuickFiltersSource.INFRA_MONITORING && (
-				<section className="header">
-					<section className="left-actions">
-						<FilterOutlined />
-						<Typography.Text className="text">Filters for</Typography.Text>
-						<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
-							<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
-						</Tooltip>
-					</section>
+			{source !== QuickFiltersSource.INFRA_MONITORING &&
+				source !== QuickFiltersSource.API_MONITORING && (
+					<section className="header">
+						<section className="left-actions">
+							<FilterOutlined />
+							<Typography.Text className="text">Filters for</Typography.Text>
+							<Tooltip title={`Filter currently in sync with query ${lastQueryName}`}>
+								<Typography.Text className="sync-tag">{lastQueryName}</Typography.Text>
+							</Tooltip>
+						</section>
 
-					<section className="right-actions">
-						<Tooltip title="Reset All">
-							<SyncOutlined className="sync-icon" onClick={handleReset} />
-						</Tooltip>
-						<div className="divider-filter" />
-						<Tooltip title="Collapse Filters">
-							<VerticalAlignTopOutlined
-								rotate={270}
-								onClick={handleFilterVisibilityChange}
-							/>
-						</Tooltip>
+						<section className="right-actions">
+							<Tooltip title="Reset All">
+								<SyncOutlined className="sync-icon" onClick={handleReset} />
+							</Tooltip>
+							<div className="divider-filter" />
+							<Tooltip title="Collapse Filters">
+								<VerticalAlignTopOutlined
+									rotate={270}
+									onClick={handleFilterVisibilityChange}
+								/>
+							</Tooltip>
+						</section>
 					</section>
-				</section>
-			)}
+				)}
 
 			<section className="filters">
 				{config.map((filter) => {

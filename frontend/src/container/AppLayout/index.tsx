@@ -307,6 +307,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS_PIPELINES' ||
 		routeKey === 'LOGS_SAVE_VIEWS';
 
+	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
+
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
@@ -556,7 +558,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isAlertOverview() ||
 											isMessagingQueues() ||
 											isCloudIntegrationPage() ||
-											isInfraMonitoring()
+											isInfraMonitoring() ||
+											isApiMonitoringView()
 												? 0
 												: '0 1rem',
 
