@@ -426,7 +426,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										},
 									);
 
-									history.push(ROUTES.APPLICATION);
+									history.push(ROUTES.HOME);
 								}}
 							/>
 							<Typography.Text>Get Started (2/4)</Typography.Text>

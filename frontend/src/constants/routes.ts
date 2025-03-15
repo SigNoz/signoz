@@ -1,6 +1,7 @@
 const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
+	HOME: '/home',
 	SERVICE_METRICS: '/services/:servicename',
 	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
 	SERVICE_MAP: '/service-map',
@@ -47,7 +48,6 @@ const ROUTES = {
 	LOGS_EXPLORER: '/logs/logs-explorer',
 	LIVE_LOGS: '/logs/logs-explorer/live',
 	LOGS_PIPELINES: '/logs/pipelines',
-	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
@@ -69,6 +69,7 @@ const ROUTES = {
 	METRICS_EXPLORER: '/metrics-explorer/summary',
 	METRICS_EXPLORER_EXPLORER: '/metrics-explorer/explorer',
 	METRICS_EXPLORER_VIEWS: '/metrics-explorer/views',
+	HOME_PAGE: '/',
 } as const;
 
 export default ROUTES;

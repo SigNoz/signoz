@@ -1,12 +1,12 @@
 import { Page } from '@playwright/test';
 
-import attributeKeyServiceNameSuccessResponse from '../fixtures/api/traces/attributeKeysServiceName200.json';
-import attributeKeyNameSuccessResponse from '../fixtures/api/traces/attributeKeysName200.json';
 import attributeKeyDurationNanoSuccessResponse from '../fixtures/api/traces/attributeKeysDurationNano200.json';
-import attributeKeyResponseStatusCodeSuccessResponse from '../fixtures/api/traces/attributeKeysResponseStatusCode200.json';
 import attributeKeyHttpMethodSuccessResponse from '../fixtures/api/traces/attributeKeysHttpMethod200.json';
-import traceExplorerViewsSuccessResponse from '../fixtures/api/traces/traceExplorerViews200.json';
+import attributeKeyNameSuccessResponse from '../fixtures/api/traces/attributeKeysName200.json';
+import attributeKeyResponseStatusCodeSuccessResponse from '../fixtures/api/traces/attributeKeysResponseStatusCode200.json';
+import attributeKeyServiceNameSuccessResponse from '../fixtures/api/traces/attributeKeysServiceName200.json';
 import traceExplorerViewsPostSuccessResponse from '../fixtures/api/traces/traceExplorerViewPost200.json';
+import traceExplorerViewsSuccessResponse from '../fixtures/api/traces/traceExplorerViews200.json';
 import { JsonApplicationType } from '../fixtures/constant';
 
 export const queryRangeApiEndpoint = 'query_range';

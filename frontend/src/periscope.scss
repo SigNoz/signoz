@@ -36,6 +36,15 @@
 	&:disabled {
 		opacity: 0.5;
 	}
+
+	&.link {
+		color: var(--bg-vanilla-400);
+		border: none;
+		box-shadow: none;
+		background: transparent;
+		font-size: 11px;
+		font-weight: 400;
+	}
 }
 
 .periscope-tab {

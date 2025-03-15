@@ -8,6 +8,7 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	Home,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
@@ -34,6 +35,12 @@ export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
 	icon: <RocketOutlined rotate={45} />,
+};
+
+export const homeMenuItem = {
+	key: ROUTES.HOME,
+	label: 'Home',
+	icon: <Home size={16} />,
 };
 
 export const inviteMemberMenuItem = {
@@ -73,6 +80,11 @@ export const trySignozCloudMenuItem: SidebarItem = {
 };
 
 const menuItems: SidebarItem[] = [
+	{
+		key: ROUTES.HOME,
+		label: 'Home',
+		icon: <Home size={16} />,
+	},
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',

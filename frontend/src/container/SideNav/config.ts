@@ -58,4 +58,5 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES]: [
 		QueryParams.resourceAttributes,
 	],
+	[ROUTES.HOME]: [QueryParams.resourceAttributes],
 };
