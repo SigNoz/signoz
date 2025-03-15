@@ -1,10 +1,13 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { Color } from '@signozhq/design-tokens';
+import { Progress } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import {
 	BaseAutocompleteData,
@@ -58,63 +61,124 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 ];
 
+const getLastUsedRelativeTime = (lastRefresh: number): string => {
+	const currentTime = dayjs();
+	console.log('uncaught lastRefresh', { lastRefresh, currentTime });
+
+	const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
+
+	const minutedDiff = currentTime.diff(lastRefresh, 'minutes');
+	const hoursDiff = currentTime.diff(lastRefresh, 'hours');
+	const daysDiff = currentTime.diff(lastRefresh, 'days');
+	const monthsDiff = currentTime.diff(lastRefresh, 'months');
+
+	if (monthsDiff > 0) {
+		return `${monthsDiff} months ago`;
+	}
+
+	if (daysDiff > 0) {
+		return `${daysDiff} days ago`;
+	}
+
+	if (hoursDiff > 0) {
+		return `${hoursDiff}h ago`;
+	}
+
+	if (minutedDiff > 0) {
+		return `${minutedDiff}m ago`;
+	}
+
+	return `${secondsDiff}s ago`;
+};
+
 const columnProgressBarClassName = 'column-progress-bar';
 
 // Rename this to a proper name
 export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 	{
-		title: <div className="column-header domain-name-header">Domain</div>,
+		title: <div>Domain</div>,
 		dataIndex: 'domainName',
 		key: 'domainName',
 		width: 180,
 		ellipsis: true,
 		sorter: false,
 		className: 'column column-domain-name',
+		align: 'left',
 	},
 	{
-		title: <div className="column-header med-col">Endpoints in use</div>,
+		title: <div>Endpoints in use</div>,
 		dataIndex: 'endpointCount',
 		key: 'endpointCount',
 		width: 180,
 		ellipsis: true,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-header med-col">Last used</div>,
+		title: <div>Last used</div>,
 		dataIndex: 'lastUsed',
 		key: 'lastUsed',
 		width: 120,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column ${columnProgressBarClassName}`,
+		render: (lastUsed: number): string => getLastUsedRelativeTime(lastUsed),
 	},
 	{
-		title: <div className="column-header">Rate (/s)</div>,
+		title: (
+			<div>
+				Rate <span className="table-col-header-tag">/s</span>
+			</div>
+		),
 		dataIndex: 'rate',
 		key: 'rate',
 		width: 80,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column ${columnProgressBarClassName}`,
 	},
 	{
-		title: <div className="column-heade med-col">Error rate (%)</div>,
+		title: (
+			<div>
+				Error rate <span className="table-col-header-tag">%</span>
+			</div>
+		),
 		dataIndex: 'errorRate',
 		key: 'errorRate',
 		width: 120,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column ${columnProgressBarClassName}`,
+		render: (errorRate: number): React.ReactNode => {
+			if (!errorRate) return null;
+			return (
+				<Progress
+					percent={Number((errorRate * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): string => {
+						const errorRatePercent = Number((errorRate * 100).toFixed(1));
+						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar"
+				/>
+			);
+		},
 	},
 	{
-		title: <div className="column-header med-col">Avg. Latency (ms)</div>,
+		title: (
+			<div>
+				Avg. Latency <span className="table-col-header-tag">ms</span>
+			</div>
+		),
 		dataIndex: 'latency',
 		key: 'latency',
 		width: 120,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column ${columnProgressBarClassName}`,
 	},
 ];
@@ -129,7 +193,7 @@ export const hardcodedAttributeKeys: BaseAutocompleteData[] = [
 		isJSON: false,
 	},
 	{
-		key: 'service.name', // discuss about this with sagar once
+		key: 'service.name',
 		dataType: DataTypes.String,
 		type: 'resource',
 		isColumn: true,

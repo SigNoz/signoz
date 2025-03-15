@@ -29,20 +29,20 @@
 			padding: 8px;
 			display: flex;
 
-
 			justify-content: space-between;
 			align-items: center;
 			gap: 12px;
 		}
 
 		.query-builder-search-v2 {
-			width: 80%;
+			min-width: 80%;
+			flex: 1;
 		}
 	}
 
 	.api-monitoring-domain-list-table {
 		.ant-table {
-			.ant-table-thead>tr>th {
+			.ant-table-thead > tr > th {
 				padding: 12px;
 				font-weight: 500;
 				font-size: 12px;
@@ -66,7 +66,7 @@
 				}
 			}
 
-			.ant-table-thead>tr>th:has(.hostname-column-header) {
+			.ant-table-thead > tr > th:has(.hostname-column-header) {
 				background: var(--bg-ink-400);
 			}
 
@@ -110,7 +110,21 @@
 				}
 			}
 
-			.ant-table-tbody>tr:hover>td {
+			.progress-bar {
+				flex: 1;
+				margin-right: 8px;
+			}
+
+			.table-col-header-tag {
+				background-color: var(--bg-slate-300);
+				border-radius: 50px;
+				padding: 2px 6px;
+				color: var(--bg-vanilla-400);
+				z-index: 2;
+				text-transform: lowercase;
+			}
+
+			.ant-table-tbody > tr:hover > td {
 				background: rgba(255, 255, 255, 0.04);
 			}
 
@@ -131,11 +145,13 @@
 				text-align: right;
 			}
 
-			.ant-table-tbody>tr>td {
+			.ant-table-tbody > tr > td {
 				border-bottom: none;
 			}
 
-			.ant-table-thead>tr>th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+			.ant-table-thead
+				> tr
+				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -152,7 +168,6 @@
 			padding: 16px;
 			margin: 0;
 
-			// this is to offset intercom icon till we improve the design
 			padding-right: 72px;
 
 			.ant-pagination-item {
@@ -178,7 +193,7 @@
 				background: var(--bg-ink-500) !important;
 			}
 
-			.ant-table .ant-table-thead>tr>th {
+			.ant-table .ant-table-thead > tr > th {
 				padding: 4px 16px !important;
 			}
 		}
