@@ -1,8 +1,13 @@
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
+import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
+import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -22,6 +27,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 function WidgetGraph({
 	selectedWidget,
@@ -88,6 +94,43 @@ function WidgetGraph({
 
 	const isDarkMode = useIsDarkMode();
 
+	// context redirection to explorer pages
+	const graphClick = useGraphClickToShowButton({
+		graphRef,
+		isButtonEnabled: (selectedWidget?.query?.builder?.queryData ?? []).some(
+			(q) =>
+				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+		),
+		buttonClassName: 'view-onclick-show-button',
+	});
+
+	const navigateToExplorer = useNavigateToExplorer();
+	const navigateToExplorerPages = useNavigateToExplorerPages();
+	const { notifications } = useNotifications();
+
+	const graphClickHandler = (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		metric?: { [key: string]: string },
+		queryData?: { queryName: string; inFocusOrNot: boolean },
+	): void => {
+		handleGraphClick({
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+			metric,
+			queryData,
+			widget: selectedWidget,
+			navigateToExplorerPages,
+			navigateToExplorer,
+			notifications,
+			graphClick,
+		});
+	};
+
 	return (
 		<div
 			ref={graphRef}
@@ -110,6 +153,7 @@ function WidgetGraph({
 				setRequestData={setRequestData}
 				onDragSelect={onDragSelect}
 				selectedGraph={selectedGraph}
+				onClickHandler={graphClickHandler}
 			/>
 		</div>
 	);

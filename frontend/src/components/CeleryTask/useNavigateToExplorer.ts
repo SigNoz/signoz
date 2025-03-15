@@ -8,11 +8,16 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-export function useNavigateToTraces(): (
-	filters: TagFilterItem[],
-	startTime?: number,
-	endTime?: number,
-	sameTab?: boolean,
+export interface NavigateToExplorerProps {
+	filters: TagFilterItem[];
+	dataSource: DataSource;
+	startTime?: number;
+	endTime?: number;
+	sameTab?: boolean;
+}
+
+export function useNavigateToExplorer(): (
+	props: NavigateToExplorerProps,
 ) => void {
 	const { currentQuery } = useQueryBuilder();
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -20,31 +25,32 @@ export function useNavigateToTraces(): (
 	);
 
 	const prepareQuery = useCallback(
-		(selectedFilters: TagFilterItem[]): Query => ({
+		(selectedFilters: TagFilterItem[], dataSource: DataSource): Query => ({
 			...currentQuery,
 			builder: {
 				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
-					...item,
-					dataSource: DataSource.TRACES,
-					aggregateOperator: MetricAggregateOperator.NOOP,
-					filters: {
-						...item.filters,
-						items: selectedFilters,
-					},
-				})),
+				queryData: currentQuery.builder.queryData
+					.map((item) => ({
+						...item,
+						dataSource,
+						aggregateOperator: MetricAggregateOperator.NOOP,
+						filters: {
+							...item.filters,
+							items: selectedFilters,
+						},
+						groupBy: [],
+						disabled: false,
+					}))
+					.slice(0, 1),
+				queryFormulas: [],
 			},
 		}),
 		[currentQuery],
 	);
 
 	return useCallback(
-		(
-			filters: TagFilterItem[],
-			startTime?: number,
-			endTime?: number,
-			sameTab?: boolean,
-		): void => {
+		(props: NavigateToExplorerProps): void => {
+			const { filters, dataSource, startTime, endTime, sameTab } = props;
 			const urlParams = new URLSearchParams();
 			if (startTime && endTime) {
 				urlParams.set(QueryParams.startTime, startTime.toString());
@@ -55,16 +61,18 @@ export function useNavigateToTraces(): (
 			}
 
 			const JSONCompositeQuery = encodeURIComponent(
-				JSON.stringify(prepareQuery(filters)),
+				JSON.stringify(prepareQuery(filters, dataSource)),
 			);
 
-			const newTraceExplorerPath = `${
-				ROUTES.TRACES_EXPLORER
-			}?${urlParams.toString()}&${
+			const basePath =
+				dataSource === DataSource.TRACES
+					? ROUTES.TRACES_EXPLORER
+					: ROUTES.LOGS_EXPLORER;
+			const newExplorerPath = `${basePath}?${urlParams.toString()}&${
 				QueryParams.compositeQuery
 			}=${JSONCompositeQuery}`;
 
-			window.open(newTraceExplorerPath, sameTab ? '_self' : '_blank');
+			window.open(newExplorerPath, sameTab ? '_self' : '_blank');
 		},
 		[minTime, maxTime, prepareQuery],
 	);

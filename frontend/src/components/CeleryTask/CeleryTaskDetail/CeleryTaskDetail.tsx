@@ -10,10 +10,11 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 import CeleryTaskGraph from '../CeleryTaskGraph/CeleryTaskGraph';
 import { createFiltersFromData } from '../CeleryUtils';
-import { useNavigateToTraces } from '../useNavigateToTraces';
+import { useNavigateToExplorer } from '../useNavigateToExplorer';
 
 export type CeleryTaskData = {
 	entity: string;
@@ -55,7 +56,7 @@ export default function CeleryTaskDetail({
 	const startTime = taskData.timeRange[0];
 	const endTime = taskData.timeRange[1];
 
-	const navigateToTrace = useNavigateToTraces();
+	const navigateToExplorer = useNavigateToExplorer();
 
 	return (
 		<Drawer
@@ -105,7 +106,12 @@ export default function CeleryTaskDetail({
 						endTime,
 						source: widgetData.title,
 					});
-					navigateToTrace(filters, startTime, endTime);
+					navigateToExplorer({
+						filters,
+						dataSource: DataSource.TRACES,
+						startTime,
+						endTime,
+					});
 				}}
 				start={startTime}
 				end={endTime}
