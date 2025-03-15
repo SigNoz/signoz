@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Select, Spin, Table, Typography } from 'antd';
+import { Select, Spin, Table, Typography } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import {
 	EndPointsTableRowData,
@@ -9,7 +9,6 @@ import {
 } from 'container/ApiMonitoring/utils';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -114,8 +113,8 @@ function AllEndPoints({
 	const endPointsDataQuery = endPointsDataQueries[0];
 
 	const endPointsColumnsConfig = useMemo(
-		() => getEndPointsColumnsConfig(groupBy.length > 0),
-		[groupBy.length],
+		() => getEndPointsColumnsConfig(groupBy.length > 0, expandedRowKeys),
+		[groupBy.length, expandedRowKeys],
 	);
 
 	const expandedRowRender = (record: EndPointsTableRowData): JSX.Element => (
@@ -126,42 +125,6 @@ function AllEndPoints({
 			setSelectedView={setSelectedView}
 		/>
 	);
-
-	const expandRowIconRenderer = ({
-		expanded,
-		onExpand,
-		record,
-	}: {
-		expanded: boolean;
-		onExpand: (record: any, e: React.MouseEvent<HTMLButtonElement>) => void;
-		record: any;
-	}): JSX.Element | null => {
-		if (groupBy.length === 0) {
-			return null;
-		}
-
-		return expanded ? (
-			<Button
-				className="periscope-btn ghost"
-				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
-					onExpand(record, e)
-				}
-				role="button"
-			>
-				<ChevronDown size={14} />
-			</Button>
-		) : (
-			<Button
-				className="periscope-btn ghost"
-				onClick={(e: React.MouseEvent<HTMLButtonElement>): void =>
-					onExpand(record, e)
-				}
-				role="button"
-			>
-				<ChevronRight size={14} />
-			</Button>
-		);
-	};
 
 	const handleGroupByRowClick = (record: EndPointsTableRowData): void => {
 		if (expandedRowKeys.includes(record.key)) {
@@ -245,8 +208,8 @@ function AllEndPoints({
 					})}
 					expandable={{
 						expandedRowRender: groupBy.length > 0 ? expandedRowRender : undefined,
-						expandIcon: expandRowIconRenderer,
 						expandedRowKeys,
+						expandIconColumnIndex: -1,
 					}}
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'

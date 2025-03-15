@@ -9,6 +9,7 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -222,9 +223,9 @@ interface EndPointsResponseRow {
 	data: {
 		['http.url']: string;
 		[key: string]: string | number;
-		A: number;
-		B: number;
-		C: number;
+		A: number | string;
+		B: number | string;
+		C: number | string;
 	};
 }
 
@@ -440,15 +441,16 @@ export const getEndPointsQueryPayload = (
 export interface EndPointsTableRowData {
 	key: string;
 	endpointName: string;
-	callCount: number;
-	latency: number;
-	lastUsed: number;
+	callCount: number | string;
+	latency: number | string;
+	lastUsed: string;
 	groupedByMeta?: Record<string, string | number>;
 }
 
 // Add icons in the below column headers
 export const getEndPointsColumnsConfig = (
 	isGroupedByAttribute: boolean,
+	expandedRowKeys: React.Key[],
 ): ColumnType<EndPointsTableRowData>[] => [
 	{
 		title: (
@@ -462,27 +464,45 @@ export const getEndPointsColumnsConfig = (
 		ellipsis: true,
 		sorter: false,
 		className: 'column',
-		render: (text: string): React.ReactNode => (
-			<div className="endpoint-name-value">{text}</div>
+		render: (text: string, record: EndPointsTableRowData): React.ReactNode => (
+			<div className="endpoint-name-value">
+				{((): React.ReactNode => {
+					if (!isGroupedByAttribute) return null;
+					return expandedRowKeys.includes(record.key) ? (
+						<ChevronDown size={14} />
+					) : (
+						<ChevronRight size={14} />
+					);
+				})()}
+				{text}
+			</div>
 		),
 	},
 	{
-		title: <div>Number of calls</div>,
+		title: (
+			<div className="column-header">
+				Num of calls <ArrowUpDown size={14} />
+			</div>
+		),
 		dataIndex: 'callCount',
 		key: 'callCount',
 		width: 180,
 		ellipsis: true,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column`,
 	},
 	{
-		title: <div>Latency (ms)</div>,
+		title: (
+			<div>
+				Latency <span className="round-metric-tag">ms</span>
+			</div>
+		),
 		dataIndex: 'latency',
 		key: 'latency',
 		width: 120,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column`,
 	},
 	{
@@ -491,7 +511,7 @@ export const getEndPointsColumnsConfig = (
 		key: 'lastUsed',
 		width: 120,
 		sorter: false,
-		align: 'left',
+		align: 'right',
 		className: `column`,
 	},
 ];
@@ -506,8 +526,14 @@ export const formatEndPointsDataForTable = (
 			key: v4(),
 			endpointName: endpoint.data['http.url'],
 			callCount: endpoint.data.A,
-			latency: endpoint.data.B,
-			lastUsed: endpoint.data.C,
+			latency:
+				endpoint.data.B === 'n/a'
+					? '-'
+					: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
+			lastUsed:
+				endpoint.data.C === 'n/a'
+					? '-'
+					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
 		}));
 	}
 
@@ -522,8 +548,14 @@ export const formatEndPointsDataForTable = (
 			key: v4(),
 			endpointName: newEndpointName,
 			callCount: endpoint.data.A,
-			latency: endpoint.data.B,
-			lastUsed: endpoint.data.C,
+			latency:
+				endpoint.data.B === 'n/a'
+					? '-'
+					: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
+			lastUsed:
+				endpoint.data.C === 'n/a'
+					? '-'
+					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
 			groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
 				acc[attribute] = endpoint.data[attribute];
 				return acc;

@@ -53,6 +53,7 @@
 		border-radius: 50px;
 		border: 1px solid var(--Slate-400, #1d212d);
 		background: var(--Slate-500, #161922);
+		text-transform: lowercase;
 	}
 
 	.entity-detail-drawer__entity {
@@ -349,7 +350,7 @@
 
 			.ant-table-thead > tr > th:has(.endpoint-name-header) {
 				background: var(--Ink-300, #16181d);
-				opacity: 0.7;
+				opacity: 0.6;
 			}
 
 			.ant-table-cell {
@@ -362,7 +363,7 @@
 
 			.ant-table-cell:has(.endpoint-name-value) {
 				background: var(--Ink-300, #16181d);
-				opacity: 0.7;
+				opacity: 0.6;
 			}
 
 			.ant-table-tbody > tr:hover > td {
@@ -382,8 +383,11 @@
 				padding-right: 24px;
 			}
 
-			.column-header-right {
-				text-align: right;
+			.column-header {
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+				gap: 4px;
 			}
 
 			.ant-table-tbody > tr > td {
@@ -406,6 +410,12 @@
 
 			.table-row-dark {
 				background: var(--bg-ink-300);
+			}
+
+			.endpoint-name-value {
+				display: flex;
+				align-items: center;
+				gap: 4px;
 			}
 		}
 	}
