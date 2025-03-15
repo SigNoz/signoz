@@ -1,0 +1,187 @@
+{
+  "id": "api-gateway",
+  "title": "API Gateway",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_ApiGateway_4XXError_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4XXError_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4XXError_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_4XXError_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5XXError_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5XXError_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5XXError_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_5XXError_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheHitCount_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheHitCount_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheHitCount_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheHitCount_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheMissCount_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheMissCount_max",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheMissCount_min",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_CacheMissCount_sum",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Count_count",
+        "unit": "Count",
+        "type": "Gauge"
+      },
+      { "name": "aws_ApiGateway_Count_max", "unit": "Count", "type": "Gauge" },
+      { "name": "aws_ApiGateway_Count_min", "unit": "Count", "type": "Gauge" },
+      { "name": "aws_ApiGateway_Count_sum", "unit": "Count", "type": "Gauge" },
+      {
+        "name": "aws_ApiGateway_IntegrationLatency_count",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationLatency_max",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationLatency_min",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_IntegrationLatency_sum",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Latency_count",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Latency_max",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Latency_min",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      },
+      {
+        "name": "aws_ApiGateway_Latency_sum",
+        "unit": "Milliseconds",
+        "type": "Gauge"
+      }
+    ],
+    "logs": [
+      {
+        "name": "Account Id",
+        "path": "resources.cloud.account.id",
+        "type": "string"
+      },
+      {
+        "name": "Log Group Name",
+        "path": "resources.aws.cloudwatch.log_group_name",
+        "type": "string"
+      },
+      {
+        "name": "Log Stream Name",
+        "path": "resources.aws.cloudwatch.log_stream_name",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/ApiGateway"
+        }
+      ]
+    },
+    "aws_logs": {
+      "cloudwatch_logs_subscriptions": [
+        {
+          "log_group_name_prefix": "API-Gateway",
+          "filter_pattern": ""
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "API Gateway Overview",
+        "description": "Overview of API Gateway",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
