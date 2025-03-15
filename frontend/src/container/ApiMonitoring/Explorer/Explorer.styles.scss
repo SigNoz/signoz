@@ -66,7 +66,7 @@
 				}
 			}
 
-			.ant-table-thead > tr > th:has(.hostname-column-header) {
+			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
 				background: var(--bg-ink-400);
 			}
 
@@ -79,7 +79,7 @@
 				border-bottom: none;
 			}
 
-			.ant-table-cell:has(.hostname-column-value) {
+			.ant-table-cell:has(.domain-list-name-col-value) {
 				background: var(--bg-ink-400);
 			}
 
@@ -157,101 +157,6 @@
 
 			.ant-empty-normal {
 				visibility: hidden;
-			}
-		}
-
-		.ant-pagination {
-			position: fixed;
-			bottom: 0;
-			width: calc(100% - 64px);
-			background: var(--bg-ink-500);
-			padding: 16px;
-			margin: 0;
-
-			padding-right: 72px;
-
-			.ant-pagination-item {
-				border-radius: 4px;
-
-				&-active {
-					background: var(--bg-robin-500);
-					border-color: var(--bg-robin-500);
-
-					a {
-						color: var(--bg-ink-500) !important;
-					}
-				}
-			}
-		}
-
-		.ant-table-expanded-row {
-			&:hover {
-				background: var(--bg-ink-500);
-			}
-
-			.ant-table-cell {
-				background: var(--bg-ink-500) !important;
-			}
-
-			.ant-table .ant-table-thead > tr > th {
-				padding: 4px 16px !important;
-			}
-		}
-
-		.expanded-table-container {
-			border: 1px solid var(--bg-ink-400);
-			overflow-x: auto;
-			padding-left: 48px;
-
-			&::-webkit-scrollbar {
-				width: 0.1rem;
-				height: 0.1rem;
-			}
-
-			&::-webkit-scrollbar-track {
-				background: transparent;
-			}
-
-			&::-webkit-scrollbar-thumb {
-				background: var(--bg-ink-200);
-			}
-
-			&::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-ink-100);
-			}
-
-			.ant-table-expanded-row {
-				background: var(--bg-ink-500);
-
-				&:hover {
-					background: var(--bg-ink-500);
-				}
-
-				.ant-table-cell {
-					background: var(--bg-ink-500);
-				}
-			}
-
-			.expanded-table-footer {
-				display: flex;
-				justify-content: flex-start;
-				gap: 8px;
-				padding: 8px;
-				padding-left: 42px;
-				margin-top: 8px;
-
-				.periscope-btn {
-					font-size: 10px;
-
-					display: flex;
-					align-items: center;
-					gap: 4px;
-				}
-
-				.view-all-text {
-					font-size: 10px;
-					color: var(--bg-vanilla-400);
-				}
 			}
 		}
 	}
