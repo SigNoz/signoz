@@ -52,6 +52,7 @@
 	"SUPPORT": "SigNoz | Support",
 	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
+	"TRACES_FUNNELS": "SigNoz | Traces Funnels",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"SHORTCUTS": "SigNoz | Shortcuts",
 	"INTEGRATIONS": "SigNoz | Integrations",

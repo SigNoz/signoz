@@ -51,6 +51,7 @@ import {
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
+	TracesFunnels,
 	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
@@ -226,6 +227,13 @@ const routes: AppRoutes[] = [
 		component: TracesSaveViews,
 		isPrivate: true,
 		key: 'TRACES_SAVE_VIEWS',
+	},
+	{
+		path: ROUTES.TRACES_FUNNELS,
+		exact: true,
+		component: TracesFunnels,
+		isPrivate: true,
+		key: 'TRACES_FUNNELS',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
