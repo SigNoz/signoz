@@ -61,9 +61,8 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 ];
 
-const getLastUsedRelativeTime = (lastRefresh: number): string => {
+export const getLastUsedRelativeTime = (lastRefresh: number): string => {
 	const currentTime = dayjs();
-	console.log('uncaught lastRefresh', { lastRefresh, currentTime });
 
 	const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
 
@@ -73,11 +72,11 @@ const getLastUsedRelativeTime = (lastRefresh: number): string => {
 	const monthsDiff = currentTime.diff(lastRefresh, 'months');
 
 	if (monthsDiff > 0) {
-		return `${monthsDiff} months ago`;
+		return `${monthsDiff} ${monthsDiff === 1 ? 'month' : 'months'} ago`;
 	}
 
 	if (daysDiff > 0) {
-		return `${daysDiff} days ago`;
+		return `${daysDiff} ${daysDiff === 1 ? 'day' : 'days'} ago`;
 	}
 
 	if (hoursDiff > 0) {
@@ -90,8 +89,6 @@ const getLastUsedRelativeTime = (lastRefresh: number): string => {
 
 	return `${secondsDiff}s ago`;
 };
-
-const columnProgressBarClassName = 'column-progress-bar';
 
 // Rename this to a proper name
 export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
@@ -116,7 +113,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		ellipsis: true,
 		sorter: false,
 		align: 'right',
-		className: `column ${columnProgressBarClassName}`,
+		className: `column`,
 	},
 	{
 		title: <div>Last used</div>,
@@ -125,13 +122,13 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		width: '14.2%',
 		sorter: false,
 		align: 'right',
-		className: `column ${columnProgressBarClassName}`,
+		className: `column`,
 		render: (lastUsed: number): string => getLastUsedRelativeTime(lastUsed),
 	},
 	{
 		title: (
 			<div>
-				Rate <span className="table-col-header-tag">/s</span>
+				Rate <span className="round-metric-tag">/s</span>
 			</div>
 		),
 		dataIndex: 'rate',
@@ -139,12 +136,12 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		width: '14.2%',
 		sorter: false,
 		align: 'right',
-		className: `column ${columnProgressBarClassName}`,
+		className: `column`,
 	},
 	{
 		title: (
 			<div>
-				Error rate <span className="table-col-header-tag">%</span>
+				Error rate <span className="round-metric-tag">%</span>
 			</div>
 		),
 		dataIndex: 'errorRate',
@@ -152,29 +149,26 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		width: '14.2%',
 		sorter: false,
 		align: 'right',
-		className: `column ${columnProgressBarClassName}`,
-		render: (errorRate: number): React.ReactNode => {
-			if (!errorRate) return null;
-			return (
-				<Progress
-					percent={Number((errorRate * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					strokeColor={((): string => {
-						const errorRatePercent = Number((errorRate * 100).toFixed(1));
-						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			);
-		},
+		className: `column`,
+		render: (errorRate: number): React.ReactNode => (
+			<Progress
+				percent={Number((errorRate * 100).toFixed(1))}
+				strokeLinecap="butt"
+				size="small"
+				strokeColor={((): string => {
+					const errorRatePercent = Number((errorRate * 100).toFixed(1));
+					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					return Color.BG_FOREST_500;
+				})()}
+				className="progress-bar"
+			/>
+		),
 	},
 	{
 		title: (
 			<div>
-				Avg. Latency <span className="table-col-header-tag">ms</span>
+				Avg. Latency <span className="round-metric-tag">ms</span>
 			</div>
 		),
 		dataIndex: 'latency',
@@ -182,7 +176,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		width: '14.2%',
 		sorter: false,
 		align: 'right',
-		className: `column ${columnProgressBarClassName}`,
+		className: `column`,
 	},
 ];
 
@@ -458,7 +452,7 @@ export const getEndPointsColumnsConfig = (
 ): ColumnType<EndPointsTableRowData>[] => [
 	{
 		title: (
-			<div className="column-header endpoint-name-header">
+			<div className="endpoint-name-header">
 				{isGroupedByAttribute ? 'Endpoint group' : 'Endpoint'}
 			</div>
 		),
@@ -467,10 +461,13 @@ export const getEndPointsColumnsConfig = (
 		width: 180,
 		ellipsis: true,
 		sorter: false,
-		className: 'column column-endpoint-name',
+		className: 'column',
+		render: (text: string): React.ReactNode => (
+			<div className="endpoint-name-value">{text}</div>
+		),
 	},
 	{
-		title: <div className="column-header med-col">Number of calls</div>,
+		title: <div>Number of calls</div>,
 		dataIndex: 'callCount',
 		key: 'callCount',
 		width: 180,
@@ -480,7 +477,7 @@ export const getEndPointsColumnsConfig = (
 		className: `column`,
 	},
 	{
-		title: <div className="column-header med-col">Latency (ms)</div>,
+		title: <div>Latency (ms)</div>,
 		dataIndex: 'latency',
 		key: 'latency',
 		width: 120,
@@ -489,7 +486,7 @@ export const getEndPointsColumnsConfig = (
 		className: `column`,
 	},
 	{
-		title: <div className="column-header med-col">Last used</div>,
+		title: <div>Last used</div>,
 		dataIndex: 'lastUsed',
 		key: 'lastUsed',
 		width: 120,

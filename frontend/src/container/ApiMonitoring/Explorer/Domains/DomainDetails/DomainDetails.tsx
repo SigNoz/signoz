@@ -1,10 +1,11 @@
 import './DomainDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Divider, Drawer, Progress, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import { getLastUsedRelativeTime } from 'container/ApiMonitoring/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BarChart2, ScrollText, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useState } from 'react';
 
 import AllEndPoints from './AllEndPoints';
@@ -35,6 +36,7 @@ function DomainDetails({
 					<Typography.Text className="title">
 						{domainData.domainName}
 					</Typography.Text>
+					{/* add the navigation buttons for domain */}
 				</>
 			}
 			placement="right"
@@ -57,7 +59,7 @@ function DomainDetails({
 									type="secondary"
 									className="entity-details-metadata-label"
 								>
-									ENDPOINTS
+									EXTERNAL API
 								</Typography.Text>
 								<Typography.Text
 									type="secondary"
@@ -82,17 +84,38 @@ function DomainDetails({
 							<div className="values-row">
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={domainData.endpointCount}>
-										{domainData.endpointCount}
+										<span className="round-metric-tag">{domainData.endpointCount}</span>
 									</Tooltip>
 								</Typography.Text>
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={domainData.latency}>{domainData.latency}</Tooltip>
+									<Tooltip title={domainData.latency}>
+										<span className="round-metric-tag">
+											{(domainData.latency / 1000).toFixed(3)}s
+										</span>
+									</Tooltip>
+								</Typography.Text>
+								<Typography.Text className="entity-details-metadata-value error-rate">
+									<Tooltip title={domainData.errorRate}>
+										<Progress
+											percent={Number((domainData.errorRate * 100).toFixed(1))}
+											strokeLinecap="butt"
+											size="small"
+											strokeColor={((): string => {
+												const errorRatePercent = Number(
+													(domainData.errorRate * 100).toFixed(1),
+												);
+												if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+												if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+												return Color.BG_FOREST_500;
+											})()}
+											className="progress-bar"
+										/>
+									</Tooltip>
 								</Typography.Text>
 								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={domainData.errorRate}>{domainData.errorRate}</Tooltip>
-								</Typography.Text>
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={domainData.lastUsed}>{domainData.lastUsed}</Tooltip>
+									<Tooltip title={domainData.lastUsed}>
+										{getLastUsedRelativeTime(domainData.lastUsed)}
+									</Tooltip>
 								</Typography.Text>
 							</div>
 						</div>
@@ -111,23 +134,17 @@ function DomainDetails({
 								}
 								value={VIEW_TYPES.ALL_ENDPOINTS}
 							>
-								<div className="view-title">
-									<BarChart2 size={14} />
-									All Endpoints
-								</div>
+								<div className="view-title">All Endpoints</div>
 							</Radio.Button>
 							<Radio.Button
 								className={
 									selectedView === VIEW_TYPES.ENDPOINT_DETAILS
-										? 'selected_view tab'
+										? 'tab selected_view'
 										: 'tab'
 								}
 								value={VIEW_TYPES.ENDPOINT_DETAILS}
 							>
-								<div className="view-title">
-									<ScrollText size={14} />
-									Endpoint Details
-								</div>
+								<div className="view-title">Endpoint Details</div>
 							</Radio.Button>
 						</Radio.Group>
 					</div>

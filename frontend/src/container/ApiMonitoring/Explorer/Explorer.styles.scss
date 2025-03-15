@@ -115,12 +115,16 @@
 				margin-right: 8px;
 			}
 
-			.table-col-header-tag {
-				background-color: var(--bg-slate-300);
+			.round-metric-tag {
+				display: inline-flex;
+				padding: 2px 8px;
+				align-items: center;
+				gap: 6px;
+				width: fit-content;
+
 				border-radius: 50px;
-				padding: 2px 6px;
-				color: var(--bg-vanilla-400);
-				z-index: 2;
+				border: 1px solid var(--Slate-400, #1d212d);
+				background: var(--Slate-500, #161922);
 				text-transform: lowercase;
 			}
 

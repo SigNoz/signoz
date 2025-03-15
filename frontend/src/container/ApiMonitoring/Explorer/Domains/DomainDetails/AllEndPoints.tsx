@@ -190,61 +190,69 @@ function AllEndPoints({
 	);
 
 	return (
-		<div className="endpoints-attribute-search-container">
-			<div className="group-by-label"> Group by </div>
-			<Select
-				className="group-by-select"
-				loading={isLoadingGroupByFilters}
-				mode="multiple"
-				value={groupBy}
-				allowClear
-				maxTagCount="responsive"
-				placeholder="Search for attribute"
-				style={{ width: '100%' }}
-				options={groupByOptions}
-				onChange={handleGroupByChange}
-			/>
-			<Table
-				columns={endPointsColumnsConfig}
-				loading={{
-					spinning: endPointsDataQuery.isFetching || endPointsDataQuery.isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				dataSource={
-					endPointsDataQuery.isFetching || endPointsDataQuery.isLoading
-						? []
-						: formattedEndPointsData
-				}
-				locale={{
-					emptyText:
-						endPointsDataQuery.isFetching || endPointsDataQuery.isLoading ? null : (
-							<div className="no-filtered-hosts-message-container">
-								<div className="no-filtered-hosts-message-content">
-									<img
-										src="/Icons/emptyState.svg"
-										alt="thinking-emoji"
-										className="empty-state-svg"
-									/>
+		<div className="all-endpoints-container">
+			<div className="group-by-container">
+				<div className="group-by-label"> Group by </div>
+				<Select
+					className="group-by-select"
+					loading={isLoadingGroupByFilters}
+					mode="multiple"
+					value={groupBy}
+					allowClear
+					maxTagCount="responsive"
+					placeholder="Search for attribute"
+					style={{ width: '100%' }}
+					options={groupByOptions}
+					onChange={handleGroupByChange}
+				/>{' '}
+			</div>
+			<div className="endpoints-table-container">
+				<div className="endpoints-table-header">Endpoint overview</div>
+				<Table
+					columns={endPointsColumnsConfig}
+					loading={{
+						spinning: endPointsDataQuery.isFetching || endPointsDataQuery.isLoading,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					dataSource={
+						endPointsDataQuery.isFetching || endPointsDataQuery.isLoading
+							? []
+							: formattedEndPointsData
+					}
+					locale={{
+						emptyText:
+							endPointsDataQuery.isFetching || endPointsDataQuery.isLoading ? null : (
+								<div className="no-filtered-hosts-message-container">
+									<div className="no-filtered-hosts-message-content">
+										<img
+											src="/Icons/emptyState.svg"
+											alt="thinking-emoji"
+											className="empty-state-svg"
+										/>
 
-									<Typography.Text className="no-filtered-hosts-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
+										<Typography.Text className="no-filtered-hosts-message">
+											This query had no results. Edit your query and try again!
+										</Typography.Text>
+									</div>
 								</div>
-							</div>
-						),
-				}}
-				scroll={{ x: true }}
-				tableLayout="fixed"
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
-				})}
-				expandable={{
-					expandedRowRender: groupBy.length > 0 ? expandedRowRender : undefined,
-					expandIcon: expandRowIconRenderer,
-					expandedRowKeys,
-				}}
-			/>
+							),
+					}}
+					scroll={{ x: true }}
+					tableLayout="fixed"
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => handleRowClick(record),
+						className: 'clickable-row',
+					})}
+					expandable={{
+						expandedRowRender: groupBy.length > 0 ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
+					}}
+					rowClassName={(_, index): string =>
+						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
+					}
+				/>
+			</div>
 		</div>
 	);
 }
