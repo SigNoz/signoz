@@ -1,7 +1,10 @@
 ---
+<<<<<<< HEAD
 
 include:
   - test-app-docker-compose.yaml
+=======
+>>>>>>> 9eb10d73ffc966da17d4a3f6c82cded29d80ec6c
 
 services:
   zookeeper-1:
