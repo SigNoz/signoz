@@ -72,7 +72,7 @@ services:
     networks:
       - payapp
 
-  otel-collector-migrator:
+  otel-collector-migrator-sync:
     logging:
       driver: "json-file"
       options:
