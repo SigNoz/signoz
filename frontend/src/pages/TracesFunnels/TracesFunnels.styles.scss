@@ -6,6 +6,9 @@
 	display: flex;
 	justify-content: center;
 	width: 100%;
+	.ant-btn-icon {
+		margin: 0 !important;
+	}
 
 	&__content {
 		width: calc(100% - 30px);
@@ -17,6 +20,14 @@
 
 	&__list {
 		margin-top: 16px;
+	}
+	&__loading {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		.ant-skeleton-button {
+			height: 82px !important;
+		}
 	}
 }
 
