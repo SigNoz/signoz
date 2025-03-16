@@ -225,6 +225,7 @@ export const handleGraphClick = async ({
 					dataSource: result[key].dataSource as DataSource,
 					startTime: xValue,
 					endTime: xValue + (stepInterval ?? 60),
+					shouldResolveQuery: true,
 				}),
 		}));
 

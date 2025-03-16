@@ -1,4 +1,6 @@
 import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
@@ -6,13 +8,16 @@ import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
 interface UseUpdatedQueryOptions {
-	widget: Widgets;
+	widgetConfig: {
+		query: Query;
+		panelTypes: PANEL_TYPES;
+		timePreferance: timePreferenceType;
+	};
 	selectedDashboard?: any;
 }
 
@@ -33,14 +38,14 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 
 	const getUpdatedQuery = useCallback(
 		async ({
-			widget,
+			widgetConfig,
 			selectedDashboard,
 		}: UseUpdatedQueryOptions): Promise<Query> => {
 			// Prepare query payload with resolved variables
 			const { queryPayload } = prepareQueryRangePayload({
-				query: widget.query,
-				graphType: getGraphType(widget.panelTypes),
-				selectedTime: widget.timePreferance,
+				query: widgetConfig.query,
+				graphType: getGraphType(widgetConfig.panelTypes),
+				selectedTime: widgetConfig.timePreferance,
 				globalSelectedInterval,
 				variables: getDashboardVariables(selectedDashboard?.data?.variables),
 			});
@@ -49,7 +54,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			const queryResult = await queryRangeMutation.mutateAsync(queryPayload);
 
 			// Map query data from API response
-			return mapQueryDataFromApi(queryResult.compositeQuery, widget?.query);
+			return mapQueryDataFromApi(queryResult.compositeQuery, widgetConfig?.query);
 		},
 		[globalSelectedInterval, queryRangeMutation],
 	);

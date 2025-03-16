@@ -8,7 +8,6 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import useUpdatedQuery from './useResolveQuery';
 import { createFilterFromData, extractQueryNamesFromExpression } from './utils';
 
 type GraphClickMetaData = {
@@ -111,19 +110,13 @@ function useNavigateToExplorerPages(): (
 }> {
 	const { selectedDashboard } = useDashboard();
 	const { notifications } = useNotifications();
-	const { getUpdatedQuery } = useUpdatedQuery();
 
 	return useCallback(
 		async ({ widget, requestData }: NavigateToExplorerPagesProps) => {
 			try {
-				const updatedQuery = await getUpdatedQuery({
-					widget,
-					selectedDashboard,
-				});
-
 				// Return the finalFilters
 				return buildFilters(
-					updatedQuery,
+					widget.query,
 					requestData ?? { queryName: '', inFocusOrNot: false },
 				);
 			} catch (error) {

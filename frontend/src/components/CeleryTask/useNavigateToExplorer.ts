@@ -1,6 +1,9 @@
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -14,6 +17,7 @@ export interface NavigateToExplorerProps {
 	startTime?: number;
 	endTime?: number;
 	sameTab?: boolean;
+	shouldResolveQuery?: boolean;
 }
 
 export function useNavigateToExplorer(): (
@@ -48,9 +52,19 @@ export function useNavigateToExplorer(): (
 		[currentQuery],
 	);
 
+	const { getUpdatedQuery } = useUpdatedQuery();
+	const { selectedDashboard } = useDashboard();
+
 	return useCallback(
-		(props: NavigateToExplorerProps): void => {
-			const { filters, dataSource, startTime, endTime, sameTab } = props;
+		async (props: NavigateToExplorerProps): Promise<void> => {
+			const {
+				filters,
+				dataSource,
+				startTime,
+				endTime,
+				sameTab,
+				shouldResolveQuery,
+			} = props;
 			const urlParams = new URLSearchParams();
 			if (startTime && endTime) {
 				urlParams.set(QueryParams.startTime, startTime.toString());
@@ -60,9 +74,20 @@ export function useNavigateToExplorer(): (
 				urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 			}
 
-			const JSONCompositeQuery = encodeURIComponent(
-				JSON.stringify(prepareQuery(filters, dataSource)),
-			);
+			let preparedQuery = prepareQuery(filters, dataSource);
+
+			if (shouldResolveQuery) {
+				preparedQuery = await getUpdatedQuery({
+					widgetConfig: {
+						query: preparedQuery,
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						timePreferance: 'GLOBAL_TIME',
+					},
+					selectedDashboard,
+				});
+			}
+
+			const JSONCompositeQuery = encodeURIComponent(JSON.stringify(preparedQuery));
 
 			const basePath =
 				dataSource === DataSource.TRACES
@@ -74,6 +99,6 @@ export function useNavigateToExplorer(): (
 
 			window.open(newExplorerPath, sameTab ? '_self' : '_blank');
 		},
-		[minTime, maxTime, prepareQuery],
+		[prepareQuery, getUpdatedQuery, selectedDashboard, minTime, maxTime],
 	);
 }
