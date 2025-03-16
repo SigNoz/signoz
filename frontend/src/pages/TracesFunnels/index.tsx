@@ -1,8 +1,12 @@
 import './TracesFunnels.styles.scss';
 
+import { Skeleton } from 'antd';
+import { useFunnelsList } from 'hooks/useFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { ChangeEvent, useState } from 'react';
+import { FunnelData } from 'types/api/traceFunnels';
 
+import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState';
 import FunnelsList from './components/FunnelsList/FunnelsList';
 import Header from './components/Header/Header';
 import SearchBar from './components/SearchBar/SearchBar';
@@ -12,10 +16,19 @@ interface SortOrder {
 	order: 'ascend' | 'descend';
 }
 
-function TracesFunnels(): JSX.Element {
+interface TracesFunnelsContentRendererProps {
+	isLoading: boolean;
+	isError: boolean;
+	data: FunnelData[];
+}
+function TracesFunnelsContentRenderer({
+	isLoading,
+	isError,
+	data,
+}: TracesFunnelsContentRendererProps): JSX.Element {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [sortOrder, setSortOrder] = useState<SortOrder>({
-		columnKey: 'updatedAt',
+		columnKey: 'creation_timestamp',
 		order: 'descend',
 	});
 
@@ -49,44 +62,65 @@ function TracesFunnels(): JSX.Element {
 		});
 	};
 
-	// Mock data for now
-	// TODO(shaheer): check if we get updated at, and handle sorting based on that
-	const funnelsData = [
-		{
-			id: '28378e4f-1506-4161-8e34-d6ce22cb1b11',
-			funnel_name: 'Some funnel for testing',
-			creation_timestamp: 1741779728389876000,
-			user: 'John Doe',
-		},
-		{
-			id: '28378e4f-1506-4161-8e34-d6ce2sdfb1b11',
-			funnel_name: 'Instance Metrics - ECS',
-			creation_timestamp: 1741779728389876000,
-			user: 'John Doe',
-		},
-		{
-			id: '28378e4f-1506-4161-8e34-34dse22cb1b11',
-			funnel_name: 'Another dashboard',
-			creation_timestamp: 1741779728389876000,
-			user: 'John Doe',
-		},
-		// ... other funnel data
-	];
+	const handleCreateFunnel = (): void => {
+		console.log('create funnel');
+	};
+
+	if (isLoading) {
+		return (
+			<div className="traces-funnels__loading">
+				{Array(6)
+					.fill(0)
+					.map((item, index) => (
+						<Skeleton.Button
+							// eslint-disable-next-line react/no-array-index-key
+							key={`skeleton-item ${index}`}
+							active
+							size="large"
+							shape="default"
+							block
+							className="traces-funnels__loading-skeleton"
+						/>
+					))}
+			</div>
+		);
+	}
+
+	if (isError) {
+		return <div>Something went wrong</div>;
+	}
+
+	if (data.length === 0) {
+		return <FunnelsEmptyState onCreateFunnel={handleCreateFunnel} />;
+	}
+
+	return (
+		<>
+			<SearchBar
+				searchValue={searchValue}
+				sortOrder={sortOrder}
+				onSearch={handleSearch}
+				onSort={handleSort}
+			/>
+
+			<FunnelsList data={data} onDelete={handleDelete} onRename={handleRename} />
+		</>
+	);
+}
+
+function TracesFunnels(): JSX.Element {
+	const { data, isLoading, isError } = useFunnelsList();
+
+	const funnelsListData = data?.payload || [];
 
 	return (
 		<div className="traces-funnels">
 			<div className="traces-funnels__content">
 				<Header />
-				<SearchBar
-					searchValue={searchValue}
-					sortOrder={sortOrder}
-					onSearch={handleSearch}
-					onSort={handleSort}
-				/>
-				<FunnelsList
-					data={funnelsData}
-					onDelete={handleDelete}
-					onRename={handleRename}
+				<TracesFunnelsContentRenderer
+					isError={isError}
+					isLoading={isLoading}
+					data={funnelsListData}
 				/>
 			</div>
 		</div>

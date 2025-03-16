@@ -1,5 +1,5 @@
-import axios from 'api';
-import { AxiosResponse } from 'axios';
+// import axios from 'api';
+import axios, { AxiosResponse } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	CreateFunnelPayload,
@@ -7,7 +7,7 @@ import {
 	FunnelData,
 } from 'types/api/traceFunnels';
 
-const FUNNELS_BASE_PATH = '/trace-funnels';
+const FUNNELS_BASE_PATH = 'http://localhost:8080/api/v1/trace-funnels';
 
 export const createFunnel = async (
 	payload: CreateFunnelPayload,
@@ -25,25 +25,10 @@ export const createFunnel = async (
 	};
 };
 
-interface GetFunnelsListParams {
-	search?: string;
-}
-
-export const getFunnelsList = async ({
-	search = '',
-}: GetFunnelsListParams = {}): Promise<
+export const getFunnelsList = async (): Promise<
 	SuccessResponse<FunnelData[]> | ErrorResponse
 > => {
-	const params = new URLSearchParams();
-	if (search.length) {
-		params.set('search', search);
-	}
-
-	const response: AxiosResponse = await axios.get(
-		`${FUNNELS_BASE_PATH}/list${
-			params.toString() ? `?${params.toString()}` : ''
-		}`,
-	);
+	const response: AxiosResponse = await axios.get(`${FUNNELS_BASE_PATH}/list`);
 
 	return {
 		statusCode: 200,
@@ -64,46 +49,6 @@ export const getFunnelById = async (
 		statusCode: 200,
 		error: null,
 		message: '',
-		payload: response.data,
-	};
-};
-
-interface RenameFunnelPayload {
-	id: string;
-	funnel_name: string;
-}
-
-export const renameFunnel = async (
-	payload: RenameFunnelPayload,
-): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
-	const response: AxiosResponse = await axios.put(
-		`${FUNNELS_BASE_PATH}/${payload.id}/update`,
-		{ funnel_name: payload.funnel_name },
-	);
-
-	return {
-		statusCode: 200,
-		error: null,
-		message: 'Funnel renamed successfully',
-		payload: response.data,
-	};
-};
-
-interface DeleteFunnelPayload {
-	id: string;
-}
-
-export const deleteFunnel = async (
-	payload: DeleteFunnelPayload,
-): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
-	const response: AxiosResponse = await axios.delete(
-		`${FUNNELS_BASE_PATH}/delete/${payload.id}`,
-	);
-
-	return {
-		statusCode: 200,
-		error: null,
-		message: 'Funnel deleted successfully',
 		payload: response.data,
 	};
 };
