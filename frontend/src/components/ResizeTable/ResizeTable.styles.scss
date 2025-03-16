@@ -3,4 +3,10 @@
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
+
+	.ant-table-column-title {
+		white-space: normal;
+		overflow: auto;
+		text-overflow: ellipsis;
+	}
 }
