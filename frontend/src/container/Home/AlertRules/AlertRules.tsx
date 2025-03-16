@@ -102,7 +102,7 @@ export default function AlertRules({
 								window.open(
 									'https://signoz.io/docs/alerts/',
 									'_blank',
-									'noreferrer noopenner',
+									'noreferrer noopener',
 								);
 							}}
 						>
