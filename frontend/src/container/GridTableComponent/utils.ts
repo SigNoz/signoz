@@ -189,6 +189,7 @@ export function createColumnsAndDataSource(
 				title: !isEmpty(legend) ? legend : item.name,
 				width: QUERY_TABLE_CONFIG.width,
 				responsive: ['md'],
+				// ellipsis: true,
 				render: renderColumnCell && renderColumnCell[item.name],
 				sorter: (a: RowData, b: RowData): number => sortFunction(a, b, item),
 			};
