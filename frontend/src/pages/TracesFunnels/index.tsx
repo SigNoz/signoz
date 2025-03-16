@@ -17,18 +17,22 @@ interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;
 	isError: boolean;
 	data: FunnelData[];
-	onCreateFunnel: () => void;
+	onCreateFunnel?: () => void;
+	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
-function TracesFunnelsContentRenderer({
+export function TracesFunnelsContentRenderer({
 	isLoading,
 	isError,
 	data,
 	onCreateFunnel,
+	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
 }: TracesFunnelsContentRendererProps): JSX.Element {
 	if (isLoading) {
 		return (
 			<div className="traces-funnels__loading">
-				{Array(6)
+				{Array(2)
 					.fill(0)
 					.map((item, index) => (
 						<Skeleton.Button
@@ -49,12 +53,26 @@ function TracesFunnelsContentRenderer({
 		return <div>Something went wrong</div>;
 	}
 
-	if (data.length === 0) {
+	if (data.length === 0 && onCreateFunnel) {
 		return <FunnelsEmptyState onCreateFunnel={onCreateFunnel} />;
 	}
 
-	return <FunnelsList data={data} />;
+	return (
+		<FunnelsList
+			data={data}
+			onFunnelClick={onFunnelClick}
+			shouldRedirectToTracesListOnDeleteSuccess={
+				shouldRedirectToTracesListOnDeleteSuccess
+			}
+		/>
+	);
 }
+
+TracesFunnelsContentRenderer.defaultProps = {
+	onCreateFunnel: undefined,
+	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
+};
 
 function TracesFunnels(): JSX.Element {
 	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();
