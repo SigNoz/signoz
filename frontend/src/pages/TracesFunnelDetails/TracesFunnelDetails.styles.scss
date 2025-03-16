@@ -1,0 +1,28 @@
+.traces-funnel-details {
+	display: flex;
+	// 45px -> height of the tab bar
+	height: calc(100vh - 45px);
+
+	&__steps-config {
+		flex-shrink: 0;
+		width: 600px;
+		border-right: 1px solid var(--bg-slate-400);
+		position: relative;
+	}
+	&__steps-results {
+		width: 100%;
+		overflow-y: auto;
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
+	}
+}
+
+.lightMode {
+	.traces-funnel-details {
+		&__steps-config {
+			border-color: var(--bg-vanilla-300);
+		}
+	}
+}
