@@ -54,13 +54,6 @@ function TracesFunnelsContentRenderer({
 			message: 'Funnel deleted successfully',
 		});
 	};
-	const handleRename = (id: string): void => {
-		// Implement delete functionality here
-		console.log('rename', id);
-		notifications.success({
-			message: 'Funnel renamed successfully',
-		});
-	};
 
 	const handleCreateFunnel = (): void => {
 		console.log('create funnel');
@@ -103,7 +96,7 @@ function TracesFunnelsContentRenderer({
 				onSort={handleSort}
 			/>
 
-			<FunnelsList data={data} onDelete={handleDelete} onRename={handleRename} />
+			<FunnelsList data={data} onDelete={handleDelete} />
 		</>
 	);
 }

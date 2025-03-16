@@ -52,3 +52,24 @@ export const getFunnelById = async (
 		payload: response.data,
 	};
 };
+
+interface RenameFunnelPayload {
+	id: string;
+	funnel_name: string;
+}
+
+export const renameFunnel = async (
+	payload: RenameFunnelPayload,
+): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.put(
+		`${FUNNELS_BASE_PATH}/${payload.id}/update`,
+		{ funnel_name: payload.funnel_name },
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: 'Funnel renamed successfully',
+		payload: response.data,
+	};
+};
