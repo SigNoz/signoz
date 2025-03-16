@@ -98,7 +98,12 @@ export default function AlertRules({
 								logEvent('Homepage: Learn more clicked', {
 									source: 'Alert Rules',
 								});
-								window.open('https://signoz.io/docs/alerts/', '_blank');
+
+								window.open(
+									'https://signoz.io/docs/alerts/',
+									'_blank',
+									'noreferrer noopenner',
+								);
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />

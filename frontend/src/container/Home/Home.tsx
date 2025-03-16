@@ -119,6 +119,19 @@ export default function Home(): JSX.Element {
 	// Detect Infra Metrics - Hosts
 	const query = useMemo(() => {
 		const baseQuery = getHostListsQuery();
+
+		let queryStartTime = startTime;
+		let queryEndTime = endTime;
+
+		if (!startTime || !endTime) {
+			const now = new Date();
+			const startTime = new Date(now.getTime() - homeInterval);
+			const endTime = now;
+
+			queryStartTime = startTime.getTime();
+			queryEndTime = endTime.getTime();
+		}
+
 		return {
 			...baseQuery,
 			limit: 10,
@@ -127,8 +140,8 @@ export default function Home(): JSX.Element {
 				items: [],
 				op: 'AND',
 			},
-			start: startTime ? Math.floor(startTime) : Math.floor(Date.now()),
-			end: endTime ? Math.floor(endTime) : Math.floor(Date.now()),
+			start: queryStartTime,
+			end: queryEndTime,
 		};
 	}, [startTime, endTime]);
 
