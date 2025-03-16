@@ -8,6 +8,8 @@ import { CalendarClock, Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { nanoToMilli } from 'utils/timeUtils';
 
+import RenameFunnel from '../RenameFunnel/RenameFunnel';
+
 interface FunnelData {
 	id: string;
 	funnel_name: string;
@@ -18,15 +20,18 @@ interface FunnelData {
 interface FunnelListItemProps {
 	funnel: FunnelData;
 	onDelete: (id: string) => void;
-	onRename: (id: string) => void;
 }
 
 function FunnelListItem({
 	funnel,
 	onDelete,
-	onRename,
 }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
+
+	const handleRenameCancel = (): void => {
+		setIsRenameModalOpen(false);
+	};
 
 	return (
 		<div className="funnel-item">
@@ -46,7 +51,10 @@ function FunnelListItem({
 								type="text"
 								className="funnel-item__action-btn"
 								icon={<PencilLine size={14} />}
-								onClick={(): void => onRename(funnel.id)}
+								onClick={(): void => {
+									setIsPopoverOpen(false);
+									setIsRenameModalOpen(true);
+								}}
 							>
 								Rename
 							</Button>
@@ -89,6 +97,13 @@ function FunnelListItem({
 					<div>{funnel.user}</div>
 				</div>
 			</div>
+
+			<RenameFunnel
+				isOpen={isRenameModalOpen}
+				onClose={handleRenameCancel}
+				funnelId={funnel.id}
+				initialName={funnel.funnel_name}
+			/>
 		</div>
 	);
 }
@@ -96,23 +111,13 @@ function FunnelListItem({
 interface FunnelsListProps {
 	data: FunnelData[];
 	onDelete: (id: string) => void;
-	onRename: (id: string) => void;
 }
 
-function FunnelsList({
-	data,
-	onDelete,
-	onRename,
-}: FunnelsListProps): JSX.Element {
+function FunnelsList({ data, onDelete }: FunnelsListProps): JSX.Element {
 	return (
 		<div className="funnels-list">
 			{data.map((funnel) => (
-				<FunnelListItem
-					key={funnel.id}
-					funnel={funnel}
-					onDelete={onDelete}
-					onRename={onRename}
-				/>
+				<FunnelListItem key={funnel.id} funnel={funnel} onDelete={onDelete} />
 			))}
 		</div>
 	);
