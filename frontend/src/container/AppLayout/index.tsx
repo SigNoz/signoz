@@ -301,6 +301,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [activeLicenseV3?.key, manageCreditCard]);
 
+	const isHome = (): boolean => routeKey === 'HOME';
+
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
 		routeKey === 'LOGS_EXPLORER' ||
@@ -540,13 +542,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
-				<div className="app-content" data-overlayscrollbars-initialize>
+				<div
+					className={cx('app-content', {
+						'full-screen-content': renderFullScreen,
+					})}
+					data-overlayscrollbars-initialize
+				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
 								<ChildrenContainer
 									style={{
 										margin:
+											isHome() ||
 											isLogsView() ||
 											isTracesView() ||
 											isDashboardView() ||
