@@ -30,6 +30,7 @@
 		letter-spacing: -0.07px;
 		font-size: 14px;
 		font-weight: 500;
+		letter-spacing: -0.07px;
 	}
 
 	&__action-icon {
@@ -125,15 +126,9 @@
 		&__title {
 			color: var(--bg-ink-500);
 		}
-		&__actions {
-			.ant-popover-inner {
-				background: unset;
-				border: unset;
-			}
-		}
+
 		&__action-btn {
 			color: var(--bg-ink-400);
-			border: unset;
 
 			&:hover {
 				background: var(--bg-vanilla-200);

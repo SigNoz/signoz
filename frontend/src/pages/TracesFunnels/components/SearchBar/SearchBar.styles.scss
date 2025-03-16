@@ -132,16 +132,4 @@
 			}
 		}
 	}
-	.search__sort-btn {
-		background: var(--bg-vanilla-300);
-		color: var(--bg-ink-400);
-		border: unset;
-	}
-	.search__input,
-	.search__input input {
-		background: var(--bg-vanilla-100);
-		&::placeholder {
-			color: unset;
-		}
-	}
 }
