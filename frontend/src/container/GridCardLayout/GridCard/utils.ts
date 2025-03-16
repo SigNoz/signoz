@@ -203,7 +203,6 @@ export const handleGraphClick = async ({
 				queryName: queryData?.queryName || '',
 				inFocusOrNot: queryData?.inFocusOrNot || false,
 			},
-			navigateRequestType: 'specific',
 		});
 
 		const keys = Object.keys(result);

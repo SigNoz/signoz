@@ -19,7 +19,6 @@ type GraphClickMetaData = {
 export interface NavigateToExplorerPagesProps {
 	widget: Widgets;
 	requestData?: GraphClickMetaData;
-	navigateRequestType?: 'panel' | 'specific';
 }
 
 // Helper to create group by filters from request data
@@ -57,19 +56,11 @@ const buildQueryFilters = (
 export const buildFilters = (
 	query: Query,
 	requestData?: GraphClickMetaData,
-	navigateRequestType: 'panel' | 'specific' = 'panel',
 ): {
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 } => {
-	// Handle panel navigation
-	if (navigateRequestType === 'panel') {
-		return Object.fromEntries(
-			query.builder.queryData.map((q) => [q.queryName, buildQueryFilters(q, [])]),
-		);
-	}
-
 	// Handle specific query navigation
-	if (navigateRequestType === 'specific' && requestData?.queryName) {
+	if (requestData?.queryName) {
 		const queryData = query.builder.queryData.find(
 			(q) => q.queryName === requestData.queryName,
 		);
@@ -123,11 +114,7 @@ function useNavigateToExplorerPages(): (
 	const { getUpdatedQuery } = useUpdatedQuery();
 
 	return useCallback(
-		async ({
-			widget,
-			requestData,
-			navigateRequestType,
-		}: NavigateToExplorerPagesProps) => {
+		async ({ widget, requestData }: NavigateToExplorerPagesProps) => {
 			try {
 				const updatedQuery = await getUpdatedQuery({
 					widget,
@@ -138,7 +125,6 @@ function useNavigateToExplorerPages(): (
 				return buildFilters(
 					updatedQuery,
 					requestData ?? { queryName: '', inFocusOrNot: false },
-					navigateRequestType ?? 'panel',
 				);
 			} catch (error) {
 				notifications.error({
