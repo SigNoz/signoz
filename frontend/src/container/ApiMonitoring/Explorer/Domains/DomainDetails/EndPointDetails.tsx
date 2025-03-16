@@ -14,11 +14,11 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import DependentServices from './components/DependentServices';
+import EndPointDetailsZeroState from './components/EndPointDetailsZeroState';
 import EndPointMetrics from './components/EndPointMetrics';
 import EndPointsDropDown from './components/EndPointsDropDown';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeTable from './components/StatusCodeTable';
-import EndPointDetailsZeroState from './components/EndPointDetailsZeroState';
 
 function EndPointDetails({
 	domainName,
@@ -54,8 +54,8 @@ function EndPointDetails({
 	);
 
 	const endPointDetailsDataQueries = useQueries(
-		endPointDetailsQueryPayload.map((payload) => ({
-			queryKey: ['domain-endpoints-details', payload, ENTITY_VERSION_V4, 'DOMAIN'],
+		endPointDetailsQueryPayload.map((payload, index) => ({
+			queryKey: [`domain-endpoints-details-${index}`, payload, ENTITY_VERSION_V4],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
@@ -91,15 +91,8 @@ function EndPointDetails({
 	}
 
 	return (
-		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				gap: '12px',
-				paddingTop: '8px',
-			}}
-		>
-			<div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
+		<div className="endpoint-details-container">
+			<div className="endpoint-details-filters-container">
 				<EndPointsDropDown
 					selectedEndPointName={endPointName}
 					setSelectedEndPointName={setSelectedEndPointName}

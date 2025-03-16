@@ -1,4 +1,5 @@
-import { Tooltip, Typography } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import { getFormattedEndPointMetricsData } from 'container/ApiMonitoring/utils';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -20,11 +21,6 @@ function EndPointMetrics({
 			data?.payload?.data?.result[0].table.rows,
 		);
 	}, [data?.payload?.data?.result, isLoading, isRefetching, isError]);
-
-	// show appropriate loaders based on loading state
-	if (isLoading || isRefetching) {
-		return <div>Loading...</div>;
-	}
 
 	return (
 		<div className="entity-detail-drawer__entity">
@@ -58,16 +54,51 @@ function EndPointMetrics({
 
 				<div className="values-row">
 					<Typography.Text className="entity-details-metadata-value">
-						<Tooltip title={metricsData?.rate}>{metricsData?.rate}</Tooltip>
+						{isLoading || isRefetching ? (
+							<Skeleton.Button active size="small" />
+						) : (
+							<Tooltip title={metricsData?.rate}>
+								<span className="round-metric-tag">{metricsData?.rate}/sec</span>
+							</Tooltip>
+						)}
 					</Typography.Text>
 					<Typography.Text className="entity-details-metadata-value">
-						<Tooltip title={metricsData?.latency}>{metricsData?.latency}</Tooltip>
+						{isLoading || isRefetching ? (
+							<Skeleton.Button active size="small" />
+						) : (
+							<Tooltip title={metricsData?.latency}>
+								<span className="round-metric-tag">{metricsData?.latency}ms</span>
+							</Tooltip>
+						)}
+					</Typography.Text>
+					<Typography.Text className="entity-details-metadata-value error-rate">
+						{isLoading || isRefetching ? (
+							<Skeleton.Button active size="small" />
+						) : (
+							<Tooltip title={metricsData?.errorRate}>
+								<Progress
+									percent={Number((metricsData?.errorRate ?? 0 * 100).toFixed(1))}
+									strokeLinecap="butt"
+									size="small"
+									strokeColor={((): string => {
+										const errorRatePercent = Number(
+											(metricsData?.errorRate ?? 0 * 100).toFixed(1),
+										);
+										if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+										if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+										return Color.BG_FOREST_500;
+									})()}
+									className="progress-bar"
+								/>
+							</Tooltip>
+						)}
 					</Typography.Text>
 					<Typography.Text className="entity-details-metadata-value">
-						<Tooltip title={metricsData?.errorRate}>{metricsData?.errorRate}</Tooltip>
-					</Typography.Text>
-					<Typography.Text className="entity-details-metadata-value">
-						<Tooltip title={metricsData?.lastUsed}>{metricsData?.lastUsed}</Tooltip>
+						{isLoading || isRefetching ? (
+							<Skeleton.Button active size="small" />
+						) : (
+							<Tooltip title={metricsData?.lastUsed}>{metricsData?.lastUsed}</Tooltip>
+						)}
 					</Typography.Text>
 				</div>
 			</div>

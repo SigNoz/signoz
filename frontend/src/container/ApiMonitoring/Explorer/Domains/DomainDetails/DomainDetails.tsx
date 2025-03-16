@@ -87,6 +87,7 @@ function DomainDetails({
 										<span className="round-metric-tag">{domainData.endpointCount}</span>
 									</Tooltip>
 								</Typography.Text>
+								{/* // update the tooltip as well */}
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={domainData.latency}>
 										<span className="round-metric-tag">
@@ -94,6 +95,7 @@ function DomainDetails({
 										</span>
 									</Tooltip>
 								</Typography.Text>
+								{/* // update the tooltip as well */}
 								<Typography.Text className="entity-details-metadata-value error-rate">
 									<Tooltip title={domainData.errorRate}>
 										<Progress
@@ -112,6 +114,7 @@ function DomainDetails({
 										/>
 									</Tooltip>
 								</Typography.Text>
+								{/* // update the tooltip as well */}
 								<Typography.Text className="entity-details-metadata-value">
 									<Tooltip title={domainData.lastUsed}>
 										{getLastUsedRelativeTime(domainData.lastUsed)}

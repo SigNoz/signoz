@@ -1633,9 +1633,9 @@ export const getEndPointDetailsQueryPayload = (
 interface EndPointMetricsResponseRow {
 	data: {
 		A: number;
-		B: number;
+		B: number | string;
 		C: number;
-		D: number;
+		D: number | string;
 	};
 }
 
@@ -1643,23 +1643,23 @@ interface EndPointStatusCodeResponseRow {
 	data: {
 		response_status_code: string;
 		A: number;
-		B: number;
+		B: number | string;
 	};
 }
 
 interface EndPointMetricsData {
 	key: string;
 	rate: number;
-	latency: number;
+	latency: number | string;
 	errorRate: number;
-	lastUsed: number;
+	lastUsed: string;
 }
 
 interface EndPointStatusCodeData {
 	key: string;
 	statusCode: string;
 	count: number;
-	p99Latency: number;
+	p99Latency: number | string;
 }
 
 export const getFormattedEndPointMetricsData = (
@@ -1667,9 +1667,13 @@ export const getFormattedEndPointMetricsData = (
 ): EndPointMetricsData => ({
 	key: v4(),
 	rate: data[0].data.A,
-	latency: data[0].data.B,
+	latency:
+		data[0].data.B === 'n/a' ? '-' : Math.round(Number(data[0].data.B) / 1000000),
 	errorRate: data[0].data.C,
-	lastUsed: data[0].data.D,
+	lastUsed:
+		data[0].data.D === 'n/a'
+			? '-'
+			: getLastUsedRelativeTime(Math.floor(Number(data[0].data.D) / 1000000)),
 });
 
 export const getFormattedEndPointStatusCodeData = (
@@ -1679,24 +1683,34 @@ export const getFormattedEndPointStatusCodeData = (
 		key: v4(),
 		statusCode: row.data.response_status_code,
 		count: row.data.A,
-		p99Latency: row.data.B,
+		p99Latency:
+			row.data.B === 'n/a' ? '-' : Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
 	}));
 
 export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 	{
-		title: 'STATUS CODE',
+		title: <div className="status-code-header">STATUS CODE</div>,
 		dataIndex: 'statusCode',
 		key: 'statusCode',
+		render: (text): JSX.Element => (
+			<div className="status-code-value">{text}</div>
+		),
 	},
 	{
-		title: 'NUMBER OF CALLS',
+		title: (
+			<div className="column-header">
+				NUMBER OF CALLS <ArrowUpDown size={14} />
+			</div>
+		),
 		dataIndex: 'count',
 		key: 'count',
+		align: 'right',
 	},
 	{
 		title: 'P99',
 		dataIndex: 'p99Latency',
 		key: 'p99Latency',
+		align: 'right',
 	},
 ];
 

@@ -25,12 +25,17 @@ function StatusCodeTable({
 	}, [data?.payload?.data?.result, isLoading, isRefetching, isError]);
 
 	return (
-		<Table
-			loading={isLoading || isRefetching || statusCodeData.length === 0}
-			dataSource={statusCodeData || []}
-			columns={endPointStatusCodeColumns}
-			pagination={false}
-		/>
+		<div className="status-code-table-container">
+			<Table
+				loading={isLoading || isRefetching}
+				dataSource={statusCodeData || []}
+				columns={endPointStatusCodeColumns}
+				pagination={false}
+				rowClassName={(_, index): string =>
+					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
+				}
+			/>
+		</div>
 	);
 }
 

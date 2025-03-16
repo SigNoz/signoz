@@ -36,38 +36,40 @@ function DependentServices({
 			<div className="top-attributes-title">
 				<span className="title-wrapper">Dependent Services</span>
 			</div>
-			{renderItems.map((item) => (
-				<div className="top-attributes-item" key={item.key}>
-					<div className="top-attributes-item-progress">
-						<div className="top-attributes-item-key">{item.serviceName}</div>
-						<div className="top-attributes-item-count">{item.count}</div>
-						<div
-							className="top-attributes-item-progress-bar"
-							style={{ width: `${item.percentage}%` }}
-						/>
+			<div className="dependent-services-container">
+				{renderItems.map((item) => (
+					<div className="top-attributes-item" key={item.key}>
+						<div className="top-attributes-item-progress">
+							<div className="top-attributes-item-key">{item.serviceName}</div>
+							<div className="top-attributes-item-count">{item.count}</div>
+							<div
+								className="top-attributes-item-progress-bar"
+								style={{ width: `${item.percentage}%` }}
+							/>
+						</div>
+						<div className="top-attributes-item-percentage">
+							{item.percentage.toFixed(2)}%
+						</div>
 					</div>
-					<div className="top-attributes-item-percentage">
-						{item.percentage.toFixed(2)}%
-					</div>
-				</div>
-			))}
+				))}
 
-			{currentRenderCount < dependentServicesData.length && (
-				<div
-					className="top-attributes-load-more"
-					onClick={(): void => setCurrentRenderCount(dependentServicesData.length)}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							setCurrentRenderCount(dependentServicesData.length);
-						}
-					}}
-					role="button"
-					tabIndex={0}
-				>
-					<UnfoldVertical size={14} />
-					Show more...
-				</div>
-			)}
+				{currentRenderCount < dependentServicesData.length && (
+					<div
+						className="top-attributes-load-more"
+						onClick={(): void => setCurrentRenderCount(dependentServicesData.length)}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter') {
+								setCurrentRenderCount(dependentServicesData.length);
+							}
+						}}
+						role="button"
+						tabIndex={0}
+					>
+						<UnfoldVertical size={14} />
+						Show more...
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

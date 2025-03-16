@@ -97,16 +97,11 @@ function AllEndPoints({
 
 	const endPointsDataQueries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: [
-				'domain-endpoints',
-				payload,
-				ENTITY_VERSION_V4,
-				'DOMAIN',
-				groupBy,
-			],
+			queryKey: ['domain-all-endpoints', payload, ENTITY_VERSION_V4, groupBy],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
+			staleTime: 60 * 1000, // 1 minute stale time : optimize this part
 		})),
 	);
 
