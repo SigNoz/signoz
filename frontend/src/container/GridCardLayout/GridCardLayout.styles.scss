@@ -308,12 +308,14 @@
 	gap: 2px;
 	overflow: auto;
 	max-height: 150px;
-	width: 150px;
+	width: max-content;
 	max-width: 200px;
 
 	.menu-item {
 		cursor: pointer;
 		padding: 4px;
+		padding-right: 12px;
+
 		&:hover {
 			background-color: var(--bg-vanilla-200);
 			border-radius: 2px;

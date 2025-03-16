@@ -208,11 +208,18 @@ export const handleGraphClick = async ({
 
 		const keys = Object.keys(result);
 		const menuItems = keys.map((key) => ({
-			text: `View ${
-				(result[key].dataSource as DataSource) === DataSource.TRACES
-					? 'Traces'
-					: 'Logs'
-			}: ${key}`,
+			text:
+				keys.length === 1
+					? `View ${
+							(result[key].dataSource as DataSource) === DataSource.TRACES
+								? 'Traces'
+								: 'Logs'
+					  }`
+					: `View ${
+							(result[key].dataSource as DataSource) === DataSource.TRACES
+								? 'Traces'
+								: 'Logs'
+					  }: ${key}`,
 			onClick: (): void =>
 				navigateToExplorer({
 					filters: result[key].filters,
