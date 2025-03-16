@@ -41,7 +41,13 @@ export const hasColumnWidthsChanged = (
 			(widget) => widget.id === widgetId,
 		) as Widgets;
 
+		const newWidths = columnWidths[widgetId];
+		const existingWidths = dashboardWidget?.columnWidths;
+
+		// If both are empty/undefined, no change
+		if (isEmpty(newWidths) || isEmpty(existingWidths)) return false;
+
 		// Compare stored column widths with dashboard widget's column widths
-		return !isEqual(columnWidths[widgetId], dashboardWidget?.columnWidths);
+		return !isEqual(newWidths, existingWidths);
 	});
 };
