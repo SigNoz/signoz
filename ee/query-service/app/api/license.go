@@ -135,7 +135,7 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	type checkoutResponse struct {
 		Status string `json:"status"`
 		Data   struct {
-			RedirectURL string `json:"checkout_session_url"`
+			RedirectURL string `json:"url"`
 		} `json:"data"`
 	}
 
@@ -318,7 +318,7 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 	type portalResponse struct {
 		Status string `json:"status"`
 		Data   struct {
-			RedirectURL string `json:"portal_session_url"`
+			RedirectURL string `json:"url"`
 		} `json:"data"`
 	}
 
