@@ -38,7 +38,7 @@ import {
 } from './workspaceLocked.data';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const { user, licenses, isFetchingLicenses } = useAppContext();
+	const { user, isFetchingActiveLicenseV3, trialInfo } = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 
@@ -64,14 +64,14 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingLicenses) {
-			const shouldBlockWorkspace = licenses?.workSpaceBlock;
+		if (!isFetchingActiveLicenseV3) {
+			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
 			if (!shouldBlockWorkspace) {
 				history.push(ROUTES.APPLICATION);
 			}
 		}
-	}, [isFetchingLicenses, licenses]);
+	}, [isFetchingActiveLicenseV3, trialInfo?.workSpaceBlock]);
 
 	const { mutate: updateCreditCard, isLoading } = useMutation(
 		updateCreditCardApi,
@@ -307,7 +307,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-locked__container">
-					{isFetchingLicenses || !licenses ? (
+					{isFetchingActiveLicenseV3 || !trialInfo ? (
 						<Skeleton />
 					) : (
 						<>
@@ -322,7 +322,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											<br />
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(licenses?.gracePeriodEnd || Date.now())}
+												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
 										</Typography.Paragraph>

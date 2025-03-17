@@ -41,6 +41,10 @@ function App(): JSX.Element {
 		isFetchingUser,
 		isFetchingLicenses,
 		isFetchingFeatureFlags,
+		trialInfo,
+		activeLicenseV3,
+		isFetchingActiveLicenseV3,
+		activeLicenseV3FetchError,
 		userFetchError,
 		licensesFetchError,
 		featureFlagsFetchError,
@@ -60,7 +64,7 @@ function App(): JSX.Element {
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
-			if (!isFetchingLicenses && licenses && org) {
+			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
 				const orgName =
 					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
@@ -107,7 +111,7 @@ function App(): JSX.Element {
 					tenant_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
-					isPaidUser: !!licenses?.trialConvertedToSubscription,
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
 				posthog?.group('company', domain, {
@@ -117,7 +121,7 @@ function App(): JSX.Element {
 					tenant_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
-					isPaidUser: !!licenses?.trialConvertedToSubscription,
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
 				if (
@@ -133,7 +137,13 @@ function App(): JSX.Element {
 				}
 			}
 		},
-		[hostname, isFetchingLicenses, licenses, org],
+		[
+			hostname,
+			isFetchingActiveLicenseV3,
+			activeLicenseV3,
+			org,
+			trialInfo?.trialConvertedToSubscription,
+		],
 	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -206,7 +216,9 @@ function App(): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses
+			licenses &&
+			activeLicenseV3 &&
+			trialInfo
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
@@ -220,7 +232,7 @@ function App(): JSX.Element {
 						?.active || false;
 			}
 			const showAddCreditCardModal =
-				!isPremiumSupportEnabled && !licenses.trialConvertedToSubscription;
+				!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
 			if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
 				window.Intercom('boot', {
@@ -234,11 +246,13 @@ function App(): JSX.Element {
 		isLoggedInState,
 		user,
 		pathname,
-		licenses?.trialConvertedToSubscription,
+		trialInfo?.trialConvertedToSubscription,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		licenses,
+		activeLicenseV3,
+		trialInfo,
 	]);
 
 	useEffect(() => {
@@ -250,7 +264,12 @@ function App(): JSX.Element {
 	// if the user is in logged in state
 	if (isLoggedInState) {
 		// if the setup calls are loading then return a spinner
-		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
+		if (
+			isFetchingLicenses ||
+			isFetchingUser ||
+			isFetchingFeatureFlags ||
+			isFetchingActiveLicenseV3
+		) {
 			return <Spinner tip="Loading..." />;
 		}
 
@@ -258,7 +277,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (
-			(userFetchError || licensesFetchError) &&
+			(userFetchError || licensesFetchError || activeLicenseV3FetchError) &&
 			pathname !== ROUTES.SOMETHING_WENT_WRONG
 		) {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
@@ -268,7 +287,8 @@ function App(): JSX.Element {
 		if (
 			(!licenses || !user.email || !featureFlags) &&
 			!userFetchError &&
-			!licensesFetchError
+			!licensesFetchError &&
+			!activeLicenseV3FetchError
 		) {
 			return <Spinner tip="Loading..." />;
 		}

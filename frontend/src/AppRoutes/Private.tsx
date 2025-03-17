@@ -33,10 +33,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		user,
 		isLoggedIn: isLoggedInState,
 		isFetchingOrgPreferences,
-		licenses,
-		isFetchingLicenses,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
+		trialInfo,
 		featureFlags,
 	} = useAppContext();
 
@@ -134,16 +133,21 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingLicenses) {
+		if (!isFetchingActiveLicenseV3) {
 			const currentRoute = mapRoutes.get('current');
-			const shouldBlockWorkspace = licenses?.workSpaceBlock;
+			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
 			if (shouldBlockWorkspace && currentRoute) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isFetchingLicenses, licenses?.workSpaceBlock, mapRoutes, pathname]);
+	}, [
+		isFetchingActiveLicenseV3,
+		trialInfo?.workSpaceBlock,
+		mapRoutes,
+		pathname,
+	]);
 
 	const navigateToWorkSpaceSuspended = (route: any): void => {
 		const { path } = route;
@@ -236,15 +240,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
 			history.push(ROUTES.LOGIN);
 		}
-	}, [
-		licenses,
-		isLoggedInState,
-		pathname,
-		user,
-		isOldRoute,
-		currentRoute,
-		location,
-	]);
+	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

@@ -2,6 +2,7 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import getAllOrgPreferences from 'api/preferences/getAllOrgPreferences';
 import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
@@ -19,7 +20,11 @@ import {
 import { useQuery } from 'react-query';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
-import { LicenseV3ResModel } from 'types/api/licensesV3/getActive';
+import {
+	LicenseState,
+	LicenseV3ResModel,
+	TrialInfo,
+} from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { OrgPreference } from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
@@ -37,6 +42,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		activeLicenseV3,
 		setActiveLicenseV3,
 	] = useState<LicenseV3ResModel | null>(null);
+
+	const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
+
 	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(null);
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
 		null,
@@ -125,6 +133,36 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			activeLicenseV3Data.payload
 		) {
 			setActiveLicenseV3(activeLicenseV3Data.payload);
+
+			// trialStart: number;
+			// trialEnd: number;
+			// onTrial: boolean;
+			// workSpaceBlock: boolean;
+			// trialConvertedToSubscription: boolean;
+			// gracePeriodEnd: number;
+
+			const isOnTrial = dayjs(
+				activeLicenseV3Data.payload.free_until || Date.now(),
+			).isAfter(dayjs());
+
+			const trialInfo: TrialInfo = {
+				trialStart: activeLicenseV3Data.payload.valid_from,
+				trialEnd: dayjs(
+					activeLicenseV3Data.payload.free_until || Date.now(),
+				).unix(),
+				onTrial: isOnTrial,
+				workSpaceBlock:
+					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED,
+				trialConvertedToSubscription:
+					activeLicenseV3Data.payload.state !== LicenseState.ISSUED &&
+					activeLicenseV3Data.payload.state !== LicenseState.EVALUATING &&
+					activeLicenseV3Data.payload.state !== LicenseState.EVALUATION_EXPIRED,
+				gracePeriodEnd: dayjs(
+					activeLicenseV3Data.payload.event_queue.scheduled_at || Date.now(),
+				).unix(),
+			};
+
+			setTrialInfo(trialInfo);
 		}
 	}, [activeLicenseV3Data, isFetchingActiveLicenseV3]);
 
@@ -216,6 +254,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		setIsLoggedIn(false);
 		setUser(getUserDefaults());
 		setActiveLicenseV3(null);
+		setTrialInfo(null);
 		setLicenses(null);
 		setFeatureFlags(null);
 		setOrgPreferences(null);
@@ -229,6 +268,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			licenses,
 			activeLicenseV3,
 			featureFlags,
+			trialInfo,
 			orgPreferences,
 			isLoggedIn,
 			org,
@@ -248,6 +288,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			updateOrg,
 		}),
 		[
+			trialInfo,
 			activeLicenseV3,
 			activeLicenseV3FetchError,
 			featureFlags,

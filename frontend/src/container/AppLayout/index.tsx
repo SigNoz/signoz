@@ -70,14 +70,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const {
 		isLoggedIn,
 		user,
-		licenses,
-		isFetchingLicenses,
+		trialInfo,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 	} = useAppContext();
+
+	console.log('activeLicenseV3', activeLicenseV3);
+	console.log('trialInfo', trialInfo);
 
 	const { notifications } = useNotifications();
 
@@ -255,16 +257,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses &&
-			licenses.onTrial &&
-			!licenses.trialConvertedToSubscription &&
-			!licenses.workSpaceBlock &&
-			getRemainingDays(licenses.trialEnd) < 7
+			!isFetchingActiveLicenseV3 &&
+			activeLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
+			!trialInfo?.workSpaceBlock &&
+			getRemainingDays(trialInfo?.trialEnd) < 7
 		) {
 			setShowTrialExpiryBanner(true);
 		}
-	}, [isFetchingLicenses, licenses]);
+	}, [isFetchingActiveLicenseV3, activeLicenseV3, trialInfo]);
 
 	useEffect(() => {
 		if (
@@ -350,7 +352,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses
+			activeLicenseV3 &&
+			trialInfo
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
@@ -367,7 +370,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				isLoggedIn &&
 				!isPremiumSupportEnabled &&
 				isChatSupportEnabled &&
-				!licenses.trialConvertedToSubscription &&
+				!trialInfo?.trialConvertedToSubscription &&
 				isCloudUserVal
 			);
 		}
@@ -378,7 +381,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
-		licenses,
+		activeLicenseV3,
+		trialInfo,
 	]);
 
 	// Listen for API warnings
@@ -418,27 +422,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		};
 	}, []);
 
-	const isTrialUser = useMemo(
-		(): boolean =>
-			(!isFetchingLicenses &&
-				licenses &&
-				licenses.onTrial &&
-				!licenses.trialConvertedToSubscription) ||
-			false,
-		[licenses, isFetchingLicenses],
-	);
-
 	const handleDismissSlowApiWarning = (): void => {
 		setShowSlowApiWarning(false);
 
 		setLocalStorageApi(LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING, 'true');
 	};
 
+	console.log('trialInfo', trialInfo);
+
 	useEffect(() => {
 		if (
 			showSlowApiWarning &&
-			isTrialUser &&
-			!licenses?.trialConvertedToSubscription &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			!slowApiWarningShown
 		) {
 			setSlowApiWarningShown(true);
@@ -478,13 +474,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [
 		showSlowApiWarning,
 		notifications,
-		isTrialUser,
-		licenses?.trialConvertedToSubscription,
 		user.role,
 		isLoadingManageBilling,
 		handleFailedPayment,
 		slowApiWarningShown,
 		handleUpgrade,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
 	]);
 
 	return (
@@ -496,7 +492,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{showTrialExpiryBanner && !showPaymentFailedWarning && (
 				<div className="trial-expiry-banner">
 					You are in free trial period. Your free trial will end on{' '}
-					<span>{getFormattedDate(licenses?.trialEnd || Date.now())}.</span>
+					<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
 					{user.role === USER_ROLES.ADMIN ? (
 						<span>
 							{' '}

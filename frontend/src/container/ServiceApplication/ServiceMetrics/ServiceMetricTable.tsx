@@ -33,7 +33,7 @@ function ServiceMetricTable({
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
 
-	const { licenses, isFetchingLicenses } = useAppContext();
+	const { isFetchingActiveLicenseV3, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
@@ -70,9 +70,9 @@ function ServiceMetricTable({
 
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses?.onTrial &&
-			!licenses?.trialConvertedToSubscription &&
+			!isFetchingActiveLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -85,9 +85,9 @@ function ServiceMetricTable({
 	}, [
 		services,
 		isCloudUserVal,
-		isFetchingLicenses,
-		licenses?.onTrial,
-		licenses?.trialConvertedToSubscription,
+		isFetchingActiveLicenseV3,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
 	]);
 
 	const paginationConfig = {
