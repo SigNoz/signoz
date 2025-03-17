@@ -40,10 +40,10 @@ function SearchBar({
 							<Button
 								type="text"
 								className="sort-popover-content__button"
-								onClick={(): void => onSort('updatedAt')}
+								onClick={(): void => onSort('update_timestamp')}
 							>
 								Last updated
-								{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
+								{sortOrder.columnKey === 'update_timestamp' && <Check size={14} />}
 							</Button>
 						</div>
 					}
