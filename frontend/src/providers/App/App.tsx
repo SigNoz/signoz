@@ -134,13 +134,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		) {
 			setActiveLicenseV3(activeLicenseV3Data.payload);
 
-			// trialStart: number;
-			// trialEnd: number;
-			// onTrial: boolean;
-			// workSpaceBlock: boolean;
-			// trialConvertedToSubscription: boolean;
-			// gracePeriodEnd: number;
-
 			const isOnTrial = dayjs(
 				activeLicenseV3Data.payload.free_until || Date.now(),
 			).isAfter(dayjs());
