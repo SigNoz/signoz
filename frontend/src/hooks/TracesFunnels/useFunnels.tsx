@@ -29,9 +29,11 @@ export const useFunnelsList = ({
 		queryFn: () => getFunnelsList({ search: searchQuery }),
 	});
 
-export const useFunnelDetails = (
-	funnelId: string,
-): UseQueryResult<SuccessResponse<FunnelData> | ErrorResponse, unknown> =>
+export const useFunnelDetails = ({
+	funnelId,
+}: {
+	funnelId: string;
+}): UseQueryResult<SuccessResponse<FunnelData> | ErrorResponse, unknown> =>
 	useQuery({
 		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnelId],
 		queryFn: () => getFunnelById(funnelId),

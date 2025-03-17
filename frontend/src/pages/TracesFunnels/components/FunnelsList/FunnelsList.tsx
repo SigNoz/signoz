@@ -1,11 +1,14 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './FunnelsList.styles.scss';
 
 import { Button, Popover } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { CalendarClock, Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { generatePath, Link } from 'react-router-dom';
 import { FunnelData } from 'types/api/traceFunnels';
 import { nanoToMilli } from 'utils/timeUtils';
 
@@ -33,6 +36,14 @@ function FunnelItemPopover({
 	const handleRenameCancel = (): void => {
 		setIsRenameModalOpen(false);
 	};
+
+	const handleEllipsisClick = (
+		e: React.MouseEvent | React.KeyboardEvent,
+	): void => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+
 	return (
 		<>
 			<Popover
@@ -69,12 +80,14 @@ function FunnelItemPopover({
 				placement="bottomRight"
 				arrow={false}
 			>
-				<Ellipsis
-					className={cx('funnel-item__action-icon', {
-						'funnel-item__action-icon--active': isPopoverOpen,
-					})}
-					size={14}
-				/>
+				<div onClick={handleEllipsisClick} role="button" tabIndex={0}>
+					<Ellipsis
+						className={cx('funnel-item__action-icon', {
+							'funnel-item__action-icon--active': isPopoverOpen,
+						})}
+						size={14}
+					/>
+				</div>
 			</Popover>
 
 			<DeleteFunnel
@@ -97,7 +110,10 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	return (
-		<div className="funnel-item">
+		<Link
+			to={generatePath(ROUTES.TRACES_FUNNELS_DETAILS, { funnelId: funnel.id })}
+			className="funnel-item"
+		>
 			<div className="funnel-item__header">
 				<div className="funnel-item__title">
 					<div>{funnel.funnel_name}</div>
@@ -128,7 +144,7 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 					<div>{funnel.user}</div>
 				</div>
 			</div>
-		</div>
+		</Link>
 	);
 }
 
