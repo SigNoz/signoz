@@ -116,6 +116,12 @@ func buildFunnelFiltersWithLatency(funnel *Funnel) ([]FunnelStepFilter, error) {
 	return filters, nil
 }
 
+// escapeString escapes a string for safe use in SQL queries
+func escapeString(s string) string {
+	// Replace single quotes with double single quotes to escape them in SQL
+	return strings.ReplaceAll(s, "'", "''")
+}
+
 // generateFunnelSQL builds the ClickHouse SQL query for funnel validation
 func generateFunnelSQL(start, end int64, filters []FunnelStepFilter) string {
 	var expressions []string
@@ -128,8 +134,8 @@ func generateFunnelSQL(start, end int64, filters []FunnelStepFilter) string {
 
 	// Add service and span alias definitions from each filter.
 	for _, f := range filters {
-		expressions = append(expressions, fmt.Sprintf("'%s' AS service_%d", f.ServiceName, f.StepNumber))
-		expressions = append(expressions, fmt.Sprintf("'%s' AS span_%d", f.SpanName, f.StepNumber))
+		expressions = append(expressions, fmt.Sprintf("'%s' AS service_%d", escapeString(f.ServiceName), f.StepNumber))
+		expressions = append(expressions, fmt.Sprintf("'%s' AS span_%d", escapeString(f.SpanName), f.StepNumber))
 	}
 
 	// Add the CTE for each step.
@@ -174,15 +180,19 @@ func generateFunnelSQLWithLatency(start, end int64, filters []FunnelStepFilter) 
 	var expressions []string
 
 	// Define the base time variables
-	expressions = append(expressions, fmt.Sprintf("toUInt64('%d') AS start_time", start))
-	expressions = append(expressions, fmt.Sprintf("toUInt64('%d') AS end_time", end))
+	expressions = append(expressions, fmt.Sprintf("toUInt64(%d) AS start_time", start))
+	expressions = append(expressions, fmt.Sprintf("toUInt64(%d) AS end_time", end))
 	expressions = append(expressions, "toString(intDiv(start_time, 1000000000) - 1800) AS tsBucketStart")
 	expressions = append(expressions, "toString(intDiv(end_time, 1000000000)) AS tsBucketEnd")
 	expressions = append(expressions, "(end_time - start_time) / 1e9 AS total_time_seconds")
 
 	// Define service, span, and latency pointer mappings
 	for _, f := range filters {
-		expressions = append(expressions, fmt.Sprintf("('%s', '%s', '%s') AS s%d_config", f.ServiceName, f.SpanName, f.LatencyPointer, f.StepNumber))
+		expressions = append(expressions, fmt.Sprintf("('%s', '%s', '%s') AS s%d_config",
+			escapeString(f.ServiceName),
+			escapeString(f.SpanName),
+			escapeString(f.LatencyPointer),
+			f.StepNumber))
 	}
 
 	// Construct the WITH clause
@@ -263,7 +273,7 @@ func GetStepAnalytics(funnel *Funnel, timeRange TimeRange) (*v3.ClickHouseQuery,
 	var steps []string
 	for _, step := range funnel.Steps {
 		steps = append(steps, fmt.Sprintf("('%s', '%s')",
-			step.ServiceName, step.SpanName))
+			escapeString(step.ServiceName), escapeString(step.SpanName)))
 	}
 	stepsArray := fmt.Sprintf("array(%s)", strings.Join(steps, ","))
 
@@ -289,8 +299,8 @@ func GetStepAnalytics(funnel *Funnel, timeRange TimeRange) (*v3.ClickHouseQuery,
 		)`,
 			i+1,
 			TracesTable,
-			step.ServiceName,
-			step.SpanName,
+			escapeString(step.ServiceName),
+			escapeString(step.SpanName),
 			filterStr,
 		)
 		stepCTEs = append(stepCTEs, cte)
@@ -315,22 +325,22 @@ func GetStepAnalytics(funnel *Funnel, timeRange TimeRange) (*v3.ClickHouseQuery,
 		COUNT(CASE WHEN resource_string_service$$name = '%s'
 					   AND name = '%s'
 				   THEN trace_id END) AS total_s%d_spans`,
-			step.ServiceName, step.SpanName, i+1)
+			escapeString(step.ServiceName), escapeString(step.SpanName), i+1)
 
 		erroredSpansExpr := fmt.Sprintf(`
 		COUNT(CASE WHEN resource_string_service$$name = '%s'
 					   AND name = '%s'
 					   AND has_error = true
 				   THEN trace_id END) AS total_s%d_errored_spans`,
-			step.ServiceName, step.SpanName, i+1)
+			escapeString(step.ServiceName), escapeString(step.SpanName), i+1)
 
 		caseExpressions = append(caseExpressions, totalSpansExpr, erroredSpansExpr)
 	}
 
 	query := fmt.Sprintf(`
 	WITH
-		toUInt64('%d') AS start_time,
-		toUInt64('%d') AS end_time,
+		toUInt64(%d) AS start_time,
+		toUInt64(%d) AS end_time,
 		toString(intDiv(start_time, 1000000000) - 1800) AS tsBucketStart,
 		toString(intDiv(end_time, 1000000000)) AS tsBucketEnd,
 		%s AS funnel_steps,
@@ -407,8 +417,8 @@ func GetSlowestTraces(funnel *Funnel, stepAOrder int64, stepBOrder int64, timeRa
 
 	query := fmt.Sprintf(`
 	WITH
-		toUInt64('%d') AS start_time,
-		toUInt64('%d') AS end_time,
+		toUInt64(%d) AS start_time,
+		toUInt64(%d) AS end_time,
 		toString(intDiv(start_time, 1000000000) - 1800) AS tsBucketStart,
 		toString(intDiv(end_time, 1000000000)) AS tsBucketEnd
 	SELECT
@@ -448,10 +458,10 @@ func GetSlowestTraces(funnel *Funnel, stepAOrder int64, stepBOrder int64, timeRa
 		timeRange.EndTime,
 		TracesTable,
 		TracesTable,
-		stepA.ServiceName,
-		stepA.SpanName,
-		stepB.ServiceName,
-		stepB.SpanName,
+		escapeString(stepA.ServiceName),
+		escapeString(stepA.SpanName),
+		escapeString(stepB.ServiceName),
+		escapeString(stepB.SpanName),
 		stepAFilters,
 		stepBFilters,
 		havingClause,

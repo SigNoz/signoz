@@ -2,8 +2,10 @@ package traceFunnels
 
 import (
 	"fmt"
-	"github.com/google/uuid"
+	"sort"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type FunnelStore struct {
@@ -66,22 +68,14 @@ func (s *FunnelStore) UpdateFunnelSteps(id string, steps []FunnelStep, updatedBy
 	s.Lock()
 	defer s.Unlock()
 
-	var targetFunnel *Funnel
-	for _, funnel := range s.funnels {
-		if funnel.ID == id {
-			targetFunnel = funnel
-			break
-		}
-	}
-
-	if targetFunnel == nil {
+	funnel, ok := s.funnels[id]
+	if !ok {
 		return fmt.Errorf("funnel with ID %s not found", id)
 	}
 
-	targetFunnel.Steps = steps
-
-	targetFunnel.UpdatedAt = updatedAt * 1000000
-	targetFunnel.UpdatedBy = updatedBy
+	funnel.Steps = steps
+	funnel.UpdatedAt = updatedAt * 1000000
+	funnel.UpdatedBy = updatedBy
 
 	return nil
 }
@@ -133,18 +127,14 @@ func ValidateFunnelSteps(steps []FunnelStep) error {
 // NormalizeFunnelSteps ensures steps have sequential orders starting from 1
 // This sorts steps by order and then reassigns orders to be sequential
 func NormalizeFunnelSteps(steps []FunnelStep) []FunnelStep {
-	// Sort steps by order
+	// Create a copy of the input slice
 	sortedSteps := make([]FunnelStep, len(steps))
 	copy(sortedSteps, steps)
 
-	// Sort by order
-	for i := 0; i < len(sortedSteps); i++ {
-		for j := i + 1; j < len(sortedSteps); j++ {
-			if sortedSteps[i].StepOrder > sortedSteps[j].StepOrder {
-				sortedSteps[i], sortedSteps[j] = sortedSteps[j], sortedSteps[i]
-			}
-		}
-	}
+	// Sort using Go's built-in sort.Slice function
+	sort.Slice(sortedSteps, func(i, j int) bool {
+		return sortedSteps[i].StepOrder < sortedSteps[j].StepOrder
+	})
 
 	// Normalize orders to be sequential starting from 1
 	for i := 0; i < len(sortedSteps); i++ {
