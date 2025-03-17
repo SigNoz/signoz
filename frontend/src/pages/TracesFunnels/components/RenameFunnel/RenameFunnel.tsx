@@ -2,7 +2,7 @@ import './RenameFunnel.styles.scss';
 
 import { Input } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
-import { useRenameFunnel } from 'hooks/useFunnels/useFunnels';
+import { useRenameFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';

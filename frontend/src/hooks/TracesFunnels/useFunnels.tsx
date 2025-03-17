@@ -1,6 +1,5 @@
 import {
 	createFunnel,
-	deleteFunnel,
 	getFunnelById,
 	getFunnelsList,
 	renameFunnel,
@@ -10,6 +9,7 @@ import {
 	useMutation,
 	UseMutationResult,
 	useQuery,
+	useQueryClient,
 	UseQueryResult,
 } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -29,11 +29,9 @@ export const useFunnelsList = ({
 		queryFn: () => getFunnelsList({ search: searchQuery }),
 	});
 
-export const useFunnelDetails = ({
-	funnelId,
-}: {
-	funnelId: string;
-}): UseQueryResult<SuccessResponse<FunnelData> | ErrorResponse, unknown> =>
+export const useFunnelDetails = (
+	funnelId: string,
+): UseQueryResult<SuccessResponse<FunnelData> | ErrorResponse, unknown> =>
 	useQuery({
 		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnelId],
 		queryFn: () => getFunnelById(funnelId),
@@ -58,20 +56,12 @@ export const useRenameFunnel = (): UseMutationResult<
 	SuccessResponse<FunnelData> | ErrorResponse,
 	Error,
 	RenameFunnelPayload
-> =>
-	useMutation({
+> => {
+	const queryClient = useQueryClient();
+	return useMutation({
 		mutationFn: renameFunnel,
+		onSuccess: () => {
+			queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
+		},
 	});
-
-interface DeleteFunnelPayload {
-	id: string;
-}
-
-export const useDeleteFunnel = (): UseMutationResult<
-	SuccessResponse<FunnelData> | ErrorResponse,
-	Error,
-	DeleteFunnelPayload
-> =>
-	useMutation({
-		mutationFn: deleteFunnel,
-	});
+};
