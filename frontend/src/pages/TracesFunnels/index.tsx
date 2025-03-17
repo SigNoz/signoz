@@ -3,7 +3,7 @@ import './TracesFunnels.styles.scss';
 import { Skeleton } from 'antd';
 import { useFunnelsList } from 'hooks/useFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState';
@@ -40,11 +40,17 @@ function TracesFunnelsContentRenderer({
 	};
 
 	const handleSort = (key: string): void => {
-		setSortOrder({
-			columnKey: key,
-			order: 'descend',
+		setSortOrder((prev) => {
+			if (prev.columnKey === key) {
+				// Toggle order if same column
+				return {
+					columnKey: key,
+					order: prev.order === 'ascend' ? 'descend' : 'ascend',
+				};
+			}
+			// New column, default to 'descend'
+			return { columnKey: key, order: 'descend' };
 		});
-		// Implement sort functionality here
 	};
 
 	const handleDelete = (id: string): void => {
@@ -58,6 +64,26 @@ function TracesFunnelsContentRenderer({
 	const handleCreateFunnel = (): void => {
 		console.log('create funnel');
 	};
+
+	const sortedData = useMemo(
+		() =>
+			data.length > 0
+				? [...data].sort((a, b) => {
+						const { columnKey, order } = sortOrder;
+						let aValue = a[columnKey as keyof FunnelData];
+						let bValue = b[columnKey as keyof FunnelData];
+
+						// Fallback to creation timestamp if invalid key
+						if (typeof aValue !== 'number' || typeof bValue !== 'number') {
+							aValue = a.creation_timestamp;
+							bValue = b.creation_timestamp;
+						}
+
+						return order === 'ascend' ? aValue - bValue : bValue - aValue;
+				  })
+				: [],
+		[data, sortOrder],
+	);
 
 	if (isLoading) {
 		return (
@@ -96,7 +122,7 @@ function TracesFunnelsContentRenderer({
 				onSort={handleSort}
 			/>
 
-			<FunnelsList data={data} onDelete={handleDelete} />
+			<FunnelsList data={sortedData} onDelete={handleDelete} />
 		</>
 	);
 }
