@@ -9,7 +9,6 @@ import {
 	useMutation,
 	UseMutationResult,
 	useQuery,
-	useQueryClient,
 	UseQueryResult,
 } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -56,12 +55,7 @@ export const useRenameFunnel = (): UseMutationResult<
 	SuccessResponse<FunnelData> | ErrorResponse,
 	Error,
 	RenameFunnelPayload
-> => {
-	const queryClient = useQueryClient();
-	return useMutation({
+> =>
+	useMutation({
 		mutationFn: renameFunnel,
-		onSuccess: () => {
-			queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
-		},
 	});
-};

@@ -1,4 +1,4 @@
-.rename-funnel.signoz-modal {
+.funnel-modal.signoz-modal {
 	.ant-modal-header,
 	.ant-modal-body,
 	.ant-modal-footer {
@@ -11,15 +11,15 @@
 		margin: 0;
 		padding-top: 4px;
 
-		.rename-funnel__ok-btn,
-		.rename-funnel__cancel-btn {
+		.funnel-modal__ok-btn,
+		.funnel-modal__cancel-btn {
 			border-radius: 2px;
 			font-size: 12px;
 			line-height: 24px;
 			padding: 4px 8px;
 		}
 
-		.rename-funnel__ok-btn {
+		.funnel-modal__ok-btn {
 			width: 138px;
 			justify-content: center;
 			background-color: var(--bg-robin-500);
@@ -31,7 +31,7 @@
 			}
 		}
 
-		.rename-funnel__cancel-btn {
+		.funnel-modal__cancel-btn {
 			background-color: var(--bg-slate-500);
 			color: var(--bg-vanilla-400);
 			font-weight: 400;
@@ -41,7 +41,7 @@
 	}
 }
 
-.rename-funnel-content {
+.funnel-modal-content {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -68,7 +68,7 @@
 
 // Light mode styles
 .lightMode {
-	.rename-funnel-content {
+	.funnel-modal-content {
 		&__label {
 			color: var(--bg-ink-500);
 		}
