@@ -11,6 +11,7 @@ interface SearchBarProps {
 	};
 	onSearch: (e: ChangeEvent<HTMLInputElement>) => void;
 	onSort: (key: string) => void;
+	onCreateFunnel: () => void;
 }
 
 function SearchBar({
@@ -18,6 +19,7 @@ function SearchBar({
 	sortOrder,
 	onSearch,
 	onSort,
+	onCreateFunnel,
 }: SearchBarProps): JSX.Element {
 	return (
 		<div className="search">
@@ -70,7 +72,12 @@ function SearchBar({
 				value={searchQuery}
 				onChange={onSearch}
 			/>
-			<Button type="primary" icon={<Plus size={16} />} className="search__new-btn">
+			<Button
+				type="primary"
+				icon={<Plus size={16} />}
+				className="search__new-btn"
+				onClick={onCreateFunnel}
+			>
 				New funnel
 			</Button>
 		</div>

@@ -22,7 +22,7 @@ export interface FunnelData {
 
 export interface CreateFunnelPayload {
 	funnel_name: string;
-	user: string;
+	user?: string;
 	creation_timestamp: number;
 }
 

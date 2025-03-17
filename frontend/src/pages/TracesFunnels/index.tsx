@@ -5,8 +5,10 @@ import { useFunnelsList } from 'hooks/TracesFunnels/useFunnels';
 import useHandleTraceFunnelsSearch from 'hooks/TracesFunnels/useHandleTraceFunnelsSearch';
 import useHandleTraceFunnelsSort from 'hooks/TracesFunnels/useHandleTraceFunnelsSort';
 import { useNotifications } from 'hooks/useNotifications';
+import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
+import CreateFunnel from './components/CreateFunnel/CreateFunnel';
 import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState';
 import FunnelsList from './components/FunnelsList/FunnelsList';
 import Header from './components/Header/Header';
@@ -16,11 +18,13 @@ interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;
 	isError: boolean;
 	data: FunnelData[];
+	onCreateFunnel: () => void;
 }
 function TracesFunnelsContentRenderer({
 	isLoading,
 	isError,
 	data,
+	onCreateFunnel,
 }: TracesFunnelsContentRendererProps): JSX.Element {
 	const { notifications } = useNotifications();
 
@@ -30,10 +34,6 @@ function TracesFunnelsContentRenderer({
 		notifications.success({
 			message: 'Funnel deleted successfully',
 		});
-	};
-
-	const handleCreateFunnel = (): void => {
-		console.log('create funnel');
 	};
 
 	if (isLoading) {
@@ -61,7 +61,7 @@ function TracesFunnelsContentRenderer({
 	}
 
 	if (data.length === 0) {
-		return <FunnelsEmptyState onCreateFunnel={handleCreateFunnel} />;
+		return <FunnelsEmptyState onCreateFunnel={onCreateFunnel} />;
 	}
 
 	return <FunnelsList data={data} onDelete={handleDelete} />;
@@ -69,12 +69,17 @@ function TracesFunnelsContentRenderer({
 
 function TracesFunnels(): JSX.Element {
 	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
 	const { data, isLoading, isError } = useFunnelsList({ searchQuery });
 
 	const { sortOrder, handleSort, sortedData } = useHandleTraceFunnelsSort({
 		data: data?.payload || [],
 	});
+
+	const handleCreateFunnel = (): void => {
+		setIsCreateModalOpen(true);
+	};
 
 	return (
 		<div className="traces-funnels">
@@ -85,11 +90,17 @@ function TracesFunnels(): JSX.Element {
 					sortOrder={sortOrder}
 					onSearch={handleSearch}
 					onSort={handleSort}
+					onCreateFunnel={handleCreateFunnel}
 				/>
 				<TracesFunnelsContentRenderer
 					isError={isError}
 					isLoading={isLoading}
 					data={sortedData}
+					onCreateFunnel={handleCreateFunnel}
+				/>
+				<CreateFunnel
+					isOpen={isCreateModalOpen}
+					onClose={(): void => setIsCreateModalOpen(false)}
 				/>
 			</div>
 		</div>
