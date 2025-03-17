@@ -79,7 +79,7 @@ const supportChannels = [
 export default function Support(): JSX.Element {
 	const history = useHistory();
 	const { notifications } = useNotifications();
-	const { licenses, featureFlags } = useAppContext();
+	const { trialInfo, featureFlags } = useAppContext();
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
@@ -106,7 +106,7 @@ export default function Support(): JSX.Element {
 			?.active || false;
 
 	const showAddCreditCardModal =
-		!isPremiumChatSupportEnabled && !licenses?.trialConvertedToSubscription;
+		!isPremiumChatSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,

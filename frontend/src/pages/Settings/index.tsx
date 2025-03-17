@@ -12,13 +12,13 @@ import { getRoutes } from './utils';
 
 function SettingsPage(): JSX.Element {
 	const { pathname } = useLocation();
-	const { user, featureFlags, licenses } = useAppContext();
+	const { user, featureFlags, trialInfo } = useAppContext();
 	const {
 		isCloudUser: isCloudAccount,
 		isEECloudUser: isEECloudAccount,
 	} = useGetTenantLicense();
 
-	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
