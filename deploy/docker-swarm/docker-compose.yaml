@@ -115,8 +115,8 @@ services:
       - --config=/root/config/prometheus.yml
       - --use-logs-new-schema=true
       - --use-trace-new-schema=true
-    # ports:
-    #   - "8080:8080"     # signoz port
+    ports:
+      - "8080:8080"     # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
       - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
