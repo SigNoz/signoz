@@ -19,7 +19,7 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 
 	return (
 		<Link
-			to={generatePath(ROUTES.TRACES_FUNNELS_DETAILS, { funnelId: funnel.id })}
+			to={generatePath(ROUTES.TRACES_FUNNELS_DETAIL, { funnelId: funnel.id })}
 			className="funnel-item"
 		>
 			<div className="funnel-item__header">

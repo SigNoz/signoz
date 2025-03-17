@@ -5,7 +5,7 @@ function TracesFunnelDetails(): JSX.Element {
 	const { funnelId } = useParams<{ funnelId: string }>();
 	const { data } = useFunnelDetails({ funnelId });
 	return (
-		<div style={{ color: '#fff' }}>
+		<div style={{ color: 'var(--bg-vanilla-400)' }}>
 			TracesFunnelDetails, {JSON.stringify(data)}
 		</div>
 	);

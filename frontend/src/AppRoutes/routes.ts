@@ -247,11 +247,11 @@ const routes: AppRoutes[] = [
 		key: 'TRACES_FUNNELS',
 	},
 	{
-		path: ROUTES.TRACES_FUNNELS_DETAILS,
+		path: ROUTES.TRACES_FUNNELS_DETAIL,
 		exact: true,
 		component: TracesFunnelDetails,
 		isPrivate: true,
-		key: 'TRACES_FUNNELS_DETAILS',
+		key: 'TRACES_FUNNELS_DETAIL',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
