@@ -11,6 +11,8 @@
 		}
 		&,
 		input {
+		&,
+		input {
 			font-family: Inter;
 			background: var(--bg-ink-300);
 			font-size: 14px;
@@ -123,13 +125,27 @@
 				color: var(--bg-ink-400);
 			}
 
+
 			&__button {
 				color: var(--bg-ink-500);
+
 
 				&:hover {
 					background: var(--bg-vanilla-200);
 				}
 			}
+		}
+	}
+	.search__sort-btn {
+		background: var(--bg-vanilla-300);
+		color: var(--bg-ink-400);
+		border: unset;
+	}
+	.search__input,
+	.search__input input {
+		background: var(--bg-vanilla-100);
+		&::placeholder {
+			color: unset;
 		}
 	}
 }

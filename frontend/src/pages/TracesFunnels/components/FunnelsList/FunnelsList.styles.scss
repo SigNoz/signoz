@@ -126,9 +126,15 @@
 		&__title {
 			color: var(--bg-ink-500);
 		}
-
+		&__actions {
+			.ant-popover-inner {
+				background: unset;
+				border: unset;
+			}
+		}
 		&__action-btn {
 			color: var(--bg-ink-400);
+			border: unset;
 
 			&:hover {
 				background: var(--bg-vanilla-200);
