@@ -75,7 +75,8 @@ function RenameFunnel({
 				className: 'funnel-modal__cancel-btn',
 				onClick: handleCancel,
 			}}
-			getContainer={false}
+			getContainer={document.getElementById('root') || undefined}
+			destroyOnClose
 		>
 			<div className="funnel-modal-content">
 				<span className="funnel-modal-content__label">Enter a new name</span>
