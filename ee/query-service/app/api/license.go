@@ -52,9 +52,6 @@ type details struct {
 type Redirect struct {
 	RedirectURL string `json:"redirectURL"`
 }
-type CheckoutResponse struct {
-	Data Redirect `json:"data"`
-}
 
 type billingDetails struct {
 	Status string `json:"status"`
@@ -127,8 +124,8 @@ func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusNoContent, nil)
 }
 
-func getCheckoutPortalResponse(redirectURL string) *CheckoutResponse {
-	return &CheckoutResponse{Data: Redirect{RedirectURL: redirectURL}}
+func getCheckoutPortalResponse(redirectURL string) *Redirect {
+	return &Redirect{RedirectURL: redirectURL}
 }
 
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
