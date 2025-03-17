@@ -27,7 +27,6 @@ export type LicenseV3EventQueueResModel = {
 };
 
 export type LicenseV3ResModel = {
-	key: string;
 	status: LicenseStatus;
 	state: LicenseState;
 	event_queue: LicenseV3EventQueueResModel;
