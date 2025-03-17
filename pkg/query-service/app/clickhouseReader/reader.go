@@ -6178,7 +6178,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 					 FROM %s.%s 
 					 WHERE unix_milli BETWEEN ? AND ?) AS total_time_series
 				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ? %s
+				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') %s
 				GROUP BY metric_name
 			)
 			ORDER BY percentage DESC
