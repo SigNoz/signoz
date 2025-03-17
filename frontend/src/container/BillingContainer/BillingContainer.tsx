@@ -215,9 +215,6 @@ export default function BillingContainer(): JSX.Element {
 		onSuccess: processUsageData,
 	});
 
-	console.log('activeLicenseV3', activeLicenseV3);
-	console.log('trialInfo', trialInfo);
-
 	useEffect(() => {
 		const activeValidLicense =
 			licenses?.licenses?.find((license) => license.isCurrent === true) || null;
