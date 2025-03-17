@@ -97,6 +97,11 @@ func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// This ensures that the UI receives an empty array instead of null
+	if len(channels) == 0 {
+		channels = make([]*alertmanagertypes.Channel, 0)
+	}
+
 	render.Success(rw, http.StatusOK, channels)
 }
 
