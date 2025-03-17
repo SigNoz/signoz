@@ -6,5 +6,8 @@
 /frontend/src/container/MetricsApplication @srikanthccv
 /frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 /deploy/ @SigNoz/devops
-/sample-apps/ @SigNoz/devops
 .github @SigNoz/devops
+/pkg/config/ @grandwizard28
+/pkg/errors/ @grandwizard28
+/pkg/factory/ @grandwizard28
+/pkg/types/ @grandwizard28
