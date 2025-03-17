@@ -25,10 +25,25 @@ export const createFunnel = async (
 	};
 };
 
-export const getFunnelsList = async (): Promise<
+interface GetFunnelsListParams {
+	search?: string;
+}
+
+export const getFunnelsList = async ({
+	search = '',
+}: GetFunnelsListParams = {}): Promise<
 	SuccessResponse<FunnelData[]> | ErrorResponse
 > => {
-	const response: AxiosResponse = await axios.get(`${FUNNELS_BASE_PATH}/list`);
+	const params = new URLSearchParams();
+	if (search.length) {
+		params.set('search', search);
+	}
+
+	const response: AxiosResponse = await axios.get(
+		`${FUNNELS_BASE_PATH}/list${
+			params.toString() ? `?${params.toString()}` : ''
+		}`,
+	);
 
 	return {
 		statusCode: 200,

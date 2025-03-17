@@ -1,22 +1,16 @@
 import './TracesFunnels.styles.scss';
 
 import { Skeleton } from 'antd';
-import { useFunnelsList } from 'hooks/useFunnels/useFunnels';
+import { useFunnelsList } from 'hooks/TracesFunnels/useFunnels';
+import useHandleTraceFunnelsSearch from 'hooks/TracesFunnels/useHandleTraceFunnelsSearch';
+import useHandleTraceFunnelsSort from 'hooks/TracesFunnels/useHandleTraceFunnelsSort';
 import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { ChangeEvent, useMemo, useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState';
 import FunnelsList from './components/FunnelsList/FunnelsList';
 import Header from './components/Header/Header';
 import SearchBar from './components/SearchBar/SearchBar';
-
-interface SortOrder {
-	columnKey: string;
-	order: 'ascend' | 'descend';
-}
 
 interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;
@@ -28,36 +22,7 @@ function TracesFunnelsContentRenderer({
 	isError,
 	data,
 }: TracesFunnelsContentRendererProps): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
-
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [sortOrder, setSortOrder] = useState<SortOrder>({
-		columnKey: urlQuery.get('columnKey') || 'creation_timestamp',
-		order: (urlQuery.get('order') as 'ascend' | 'descend') || 'descend',
-	});
-
 	const { notifications } = useNotifications();
-
-	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
-		setSearchValue(e.target.value);
-		// Implement search functionality here
-	};
-
-	const handleSort = (key: string): void => {
-		setSortOrder((prev) => {
-			const newOrder: SortOrder =
-				prev.columnKey === key
-					? { columnKey: key, order: prev.order === 'ascend' ? 'descend' : 'ascend' }
-					: { columnKey: key, order: 'descend' };
-
-			urlQuery.set('columnKey', newOrder.columnKey);
-			urlQuery.set('order', newOrder.order);
-
-			return newOrder;
-		});
-		safeNavigate({ search: urlQuery.toString() });
-	};
 
 	const handleDelete = (id: string): void => {
 		// Implement delete functionality here
@@ -70,26 +35,6 @@ function TracesFunnelsContentRenderer({
 	const handleCreateFunnel = (): void => {
 		console.log('create funnel');
 	};
-
-	const sortedData = useMemo(
-		() =>
-			data.length > 0
-				? [...data].sort((a, b) => {
-						const { columnKey, order } = sortOrder;
-						let aValue = a[columnKey as keyof FunnelData];
-						let bValue = b[columnKey as keyof FunnelData];
-
-						// Fallback to creation timestamp if invalid key
-						if (typeof aValue !== 'number' || typeof bValue !== 'number') {
-							aValue = a.creation_timestamp;
-							bValue = b.creation_timestamp;
-						}
-
-						return order === 'ascend' ? aValue - bValue : bValue - aValue;
-				  })
-				: [],
-		[data, sortOrder],
-	);
 
 	if (isLoading) {
 		return (
@@ -119,33 +64,32 @@ function TracesFunnelsContentRenderer({
 		return <FunnelsEmptyState onCreateFunnel={handleCreateFunnel} />;
 	}
 
-	return (
-		<>
-			<SearchBar
-				searchValue={searchValue}
-				sortOrder={sortOrder}
-				onSearch={handleSearch}
-				onSort={handleSort}
-			/>
-
-			<FunnelsList data={sortedData} onDelete={handleDelete} />
-		</>
-	);
+	return <FunnelsList data={data} onDelete={handleDelete} />;
 }
 
 function TracesFunnels(): JSX.Element {
-	const { data, isLoading, isError } = useFunnelsList();
+	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();
 
-	const funnelsListData = data?.payload || [];
+	const { data, isLoading, isError } = useFunnelsList({ searchQuery });
+
+	const { sortOrder, handleSort, sortedData } = useHandleTraceFunnelsSort({
+		data: data?.payload || [],
+	});
 
 	return (
 		<div className="traces-funnels">
 			<div className="traces-funnels__content">
 				<Header />
+				<SearchBar
+					searchQuery={searchQuery}
+					sortOrder={sortOrder}
+					onSearch={handleSearch}
+					onSort={handleSort}
+				/>
 				<TracesFunnelsContentRenderer
 					isError={isError}
 					isLoading={isLoading}
-					data={funnelsListData}
+					data={sortedData}
 				/>
 			</div>
 		</div>
