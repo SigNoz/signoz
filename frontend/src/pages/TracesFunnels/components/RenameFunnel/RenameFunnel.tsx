@@ -75,6 +75,7 @@ function RenameFunnel({
 				className: 'funnel-modal__cancel-btn',
 				onClick: handleCancel,
 			}}
+			getContainer={false}
 		>
 			<div className="funnel-modal-content">
 				<span className="funnel-modal-content__label">Enter a new name</span>
@@ -82,6 +83,7 @@ function RenameFunnel({
 					className="funnel-modal-content__input"
 					value={newFunnelName}
 					onChange={(e): void => setNewFunnelName(e.target.value)}
+					autoFocus
 				/>
 			</div>
 		</SignozModal>
