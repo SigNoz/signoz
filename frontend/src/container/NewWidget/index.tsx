@@ -24,7 +24,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { defaultTo, isEmpty, isUndefined } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useAppContext } from 'providers/App/App';
@@ -315,7 +315,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	// request data should be handled by the parent and the child components should consume the same
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
-		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
+		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
 		updatedQuery.builder.queryData[0].pageSize = 10;
 
 		if (selectedWidget) {
