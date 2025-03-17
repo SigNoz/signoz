@@ -14,18 +14,18 @@ export interface MetricsTreeMapPayload {
 export interface MetricsTreeMapResponse {
 	status: string;
 	data: {
-		[TreemapViewType.CARDINALITY]: CardinalityData[];
-		[TreemapViewType.DATAPOINTS]: DatapointsData[];
+		[TreemapViewType.TIMESERIES]: TimeseriesData[];
+		[TreemapViewType.SAMPLES]: SamplesData[];
 	};
 }
 
-export interface CardinalityData {
+export interface TimeseriesData {
 	percentage: number;
 	total_value: number;
 	metric_name: string;
 }
 
-export interface DatapointsData {
+export interface SamplesData {
 	percentage: number;
 	metric_name: string;
 }

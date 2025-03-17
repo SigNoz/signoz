@@ -18,6 +18,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Compass, X } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
+import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Metadata from './Metadata';
@@ -135,8 +136,8 @@ function MetricDetails({
 						</div>
 						<div className="values-row">
 							<Typography.Text className="metric-details-grid-value">
-								<Tooltip title={metric?.samples}>
-									{metric?.samples.toLocaleString()}
+								<Tooltip title={metric?.samples.toLocaleString()}>
+									{formatNumberIntoHumanReadableFormat(metric?.samples)}
 								</Tooltip>
 							</Typography.Text>
 							<Typography.Text className="metric-details-grid-value">

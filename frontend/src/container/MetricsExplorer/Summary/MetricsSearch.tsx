@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Select, Tooltip } from 'antd';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { HardHat } from 'lucide-react';
@@ -27,12 +27,19 @@ function MetricsSearch({
 					hideShareModal
 				/>
 			</div>
-			<QueryBuilderSearch
-				query={query}
-				onChange={onChange}
-				suffixIcon={<HardHat size={16} />}
-				isMetricsExplorer
-			/>
+			<Tooltip
+				title="Use filters to refine metrics based on attributes. Example: service_name='api' - Shows metrics created by API service"
+				placement="bottom"
+			>
+				<div>
+					<QueryBuilderSearch
+						query={query}
+						onChange={onChange}
+						suffixIcon={<HardHat size={16} />}
+						isMetricsExplorer
+					/>
+				</div>
+			</Tooltip>
 		</div>
 	);
 }

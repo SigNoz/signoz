@@ -1,6 +1,6 @@
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
-import { Empty, Skeleton, Tooltip } from 'antd';
+import { Empty, Skeleton, Tooltip, Typography } from 'antd';
 import { stratify, treemapBinary } from 'd3-hierarchy';
 import { useMemo } from 'react';
 import { useWindowSize } from 'react-use';
@@ -36,9 +36,9 @@ function MetricsTreemap({
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
-			(viewType === TreemapViewType.CARDINALITY
-				? data?.data?.[TreemapViewType.CARDINALITY]
-				: data?.data?.[TreemapViewType.DATAPOINTS]) || [];
+			(viewType === TreemapViewType.TIMESERIES
+				? data?.data?.[TreemapViewType.TIMESERIES]
+				: data?.data?.[TreemapViewType.SAMPLES]) || [];
 		return transformTreemapData(extracedTreemapData, viewType);
 	}, [data, viewType]);
 
@@ -71,8 +71,15 @@ function MetricsTreemap({
 	}
 
 	return (
-		<div className="metrics-treemap">
-			<svg width={treemapWidth} height={TREEMAP_HEIGHT}>
+		<div className="metrics-treemap-container">
+			<Typography.Title level={4} className="metrics-treemap-title">
+				Metrics Treemap
+			</Typography.Title>
+			<svg
+				width={treemapWidth}
+				height={TREEMAP_HEIGHT}
+				className="metrics-treemap"
+			>
 				<rect
 					width={treemapWidth}
 					height={TREEMAP_HEIGHT}

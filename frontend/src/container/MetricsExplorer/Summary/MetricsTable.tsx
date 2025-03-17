@@ -47,6 +47,9 @@ function MetricsTable({
 
 	return (
 		<div className="metrics-table-container">
+			<Typography.Title level={4} className="metrics-table-title">
+				Metrics Table
+			</Typography.Title>
 			<Table
 				loading={{
 					spinning: isLoading,
