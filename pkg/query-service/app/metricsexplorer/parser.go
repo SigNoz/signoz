@@ -98,13 +98,6 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 	}
 	updateMetricsMetadataReq.MetricName = mux.Vars(r)["metric_name"]
 
-	if updateMetricsMetadataReq.Description == "" {
-		return nil, &model.ApiError{
-			Typ: model.ErrorBadData,
-			Err: fmt.Errorf("description is required"),
-		}
-	}
-
 	switch updateMetricsMetadataReq.MetricType {
 	case v3.MetricTypeSum:
 		if updateMetricsMetadataReq.Temporality == "" {
