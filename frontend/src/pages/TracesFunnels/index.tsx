@@ -4,7 +4,6 @@ import { Skeleton } from 'antd';
 import { useFunnelsList } from 'hooks/TracesFunnels/useFunnels';
 import useHandleTraceFunnelsSearch from 'hooks/TracesFunnels/useHandleTraceFunnelsSearch';
 import useHandleTraceFunnelsSort from 'hooks/TracesFunnels/useHandleTraceFunnelsSort';
-import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
@@ -26,16 +25,6 @@ function TracesFunnelsContentRenderer({
 	data,
 	onCreateFunnel,
 }: TracesFunnelsContentRendererProps): JSX.Element {
-	const { notifications } = useNotifications();
-
-	const handleDelete = (id: string): void => {
-		// Implement delete functionality here
-		console.log('delete', id);
-		notifications.success({
-			message: 'Funnel deleted successfully',
-		});
-	};
-
 	if (isLoading) {
 		return (
 			<div className="traces-funnels__loading">
@@ -64,13 +53,12 @@ function TracesFunnelsContentRenderer({
 		return <FunnelsEmptyState onCreateFunnel={onCreateFunnel} />;
 	}
 
-	return <FunnelsList data={data} onDelete={handleDelete} />;
+	return <FunnelsList data={data} />;
 }
 
 function TracesFunnels(): JSX.Element {
 	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-
 	const { data, isLoading, isError } = useFunnelsList({ searchQuery });
 
 	const { sortOrder, handleSort, sortedData } = useHandleTraceFunnelsSort({

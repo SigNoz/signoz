@@ -71,7 +71,7 @@ function DeleteFunnel({
 				className: 'funnel-modal__cancel-btn',
 				onClick: handleCancel,
 			}}
-			destroyOnClose
+			getContainer={false}
 		>
 			<div className="delete-funnel-modal-content">
 				Deleting the funnel would stop further analytics using this funnel. This is
