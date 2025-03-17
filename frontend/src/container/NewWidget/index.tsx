@@ -242,6 +242,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				columnWidths: columnWidths[selectedWidget?.id],
 			};
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		columnUnits,
 		currentQuery,
@@ -263,7 +264,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stackedBarChart,
 		isLogScale,
 		columnWidths,
-		selectedWidget,
 	]);
 
 	const closeModal = (): void => {
