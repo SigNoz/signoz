@@ -111,9 +111,10 @@ function LogsExplorerViews({
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const currentMinTimeRef = useRef<number>(minTime);
 
@@ -246,6 +247,11 @@ function LogsExplorerViews({
 		chartQueryKeyRef,
 	);
 
+	const queryTimeRangeRef = useRef<{
+		start: number;
+		end: number;
+	} | null>(null);
+
 	const {
 		data,
 		isLoading,
@@ -258,13 +264,19 @@ function LogsExplorerViews({
 		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
-			enabled: !isLimit && !!requestData,
+			enabled: !isLimit && !!requestData && !!queryTimeRangeRef.current,
 		},
 		{
 			...(activeLogId &&
 				!logs.length && {
 					start: minTime,
 					end: maxTime,
+				}),
+
+			...(selectedTime !== 'custom' &&
+				queryTimeRangeRef.current && {
+					start: Math.round(queryTimeRangeRef.current.start / 1e6),
+					end: Math.round(queryTimeRangeRef.current.end / 1e6),
 				}),
 		},
 		undefined,
@@ -539,6 +551,8 @@ function LogsExplorerViews({
 			requestData?.id !== stagedQuery?.id ||
 			currentMinTimeRef.current !== minTime
 		) {
+			if (logs.length) queryTimeRangeRef.current = null;
+
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
@@ -560,6 +574,7 @@ function LogsExplorerViews({
 		activeLogId,
 		panelType,
 		selectedView,
+		logs.length,
 	]);
 
 	const chartData = useMemo(() => {
@@ -663,6 +678,15 @@ function LogsExplorerViews({
 			}),
 		[logs, timezone.value],
 	);
+
+	useEffect(() => {
+		if (!queryTimeRangeRef.current && minTime && maxTime) {
+			queryTimeRangeRef.current = {
+				start: minTime,
+				end: maxTime,
+			};
+		}
+	}, [minTime, maxTime]);
 
 	return (
 		<div className="logs-explorer-views-container">
