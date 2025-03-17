@@ -1,5 +1,6 @@
 import {
 	createFunnel,
+	deleteFunnel,
 	getFunnelById,
 	getFunnelsList,
 	renameFunnel,
@@ -58,4 +59,17 @@ export const useRenameFunnel = (): UseMutationResult<
 > =>
 	useMutation({
 		mutationFn: renameFunnel,
+	});
+
+interface DeleteFunnelPayload {
+	id: string;
+}
+
+export const useDeleteFunnel = (): UseMutationResult<
+	SuccessResponse<FunnelData> | ErrorResponse,
+	Error,
+	DeleteFunnelPayload
+> =>
+	useMutation({
+		mutationFn: deleteFunnel,
 	});

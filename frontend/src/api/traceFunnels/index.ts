@@ -88,3 +88,22 @@ export const renameFunnel = async (
 		payload: response.data,
 	};
 };
+
+interface DeleteFunnelPayload {
+	id: string;
+}
+
+export const deleteFunnel = async (
+	payload: DeleteFunnelPayload,
+): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.delete(
+		`${FUNNELS_BASE_PATH}/deletes/${payload.id}`,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: 'Funnel deleted successfully',
+		payload: response.data,
+	};
+};

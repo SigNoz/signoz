@@ -9,27 +9,26 @@ import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 import { nanoToMilli } from 'utils/timeUtils';
 
+import DeleteFunnel from '../DeleteFunnel/DeleteFunnel';
 import RenameFunnel from '../RenameFunnel/RenameFunnel';
 
 interface FunnelListItemProps {
 	funnel: FunnelData;
-	onDelete: (id: string) => void;
 }
 
 interface FunnelItemPopoverProps {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isOpen: boolean) => void;
-	onDelete: (id: string) => void;
 	funnel: FunnelData;
 }
 
 function FunnelItemPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
-	onDelete,
 	funnel,
 }: FunnelItemPopoverProps): JSX.Element {
 	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
 	const handleRenameCancel = (): void => {
 		setIsRenameModalOpen(false);
@@ -58,7 +57,10 @@ function FunnelItemPopover({
 							type="text"
 							className="funnel-item__action-btn funnel-item__action-btn--delete"
 							icon={<Trash2 size={14} />}
-							onClick={(): void => onDelete(funnel.id)}
+							onClick={(): void => {
+								setIsPopoverOpen(false);
+								setIsDeleteModalOpen(true);
+							}}
 						>
 							Delete
 						</Button>
@@ -75,6 +77,12 @@ function FunnelItemPopover({
 				/>
 			</Popover>
 
+			<DeleteFunnel
+				isOpen={isDeleteModalOpen}
+				onClose={(): void => setIsDeleteModalOpen(false)}
+				funnelId={funnel.id}
+			/>
+
 			<RenameFunnel
 				isOpen={isRenameModalOpen}
 				onClose={handleRenameCancel}
@@ -85,10 +93,7 @@ function FunnelItemPopover({
 	);
 }
 
-function FunnelListItem({
-	funnel,
-	onDelete,
-}: FunnelListItemProps): JSX.Element {
+function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	return (
@@ -100,7 +105,6 @@ function FunnelListItem({
 				<FunnelItemPopover
 					isPopoverOpen={isPopoverOpen}
 					setIsPopoverOpen={setIsPopoverOpen}
-					onDelete={onDelete}
 					funnel={funnel}
 				/>
 			</div>
@@ -130,14 +134,13 @@ function FunnelListItem({
 
 interface FunnelsListProps {
 	data: FunnelData[];
-	onDelete: (id: string) => void;
 }
 
-function FunnelsList({ data, onDelete }: FunnelsListProps): JSX.Element {
+function FunnelsList({ data }: FunnelsListProps): JSX.Element {
 	return (
 		<div className="funnels-list">
 			{data.map((funnel) => (
-				<FunnelListItem key={funnel.id} funnel={funnel} onDelete={onDelete} />
+				<FunnelListItem key={funnel.id} funnel={funnel} />
 			))}
 		</div>
 	);
