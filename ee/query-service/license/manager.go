@@ -265,6 +265,10 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseRe
 	return license, nil
 }
 
+func (lm *Manager) GetActiveLicense() *model.LicenseV3 {
+	return lm.activeLicenseV3
+}
+
 // CheckFeature will be internally used by backend routines
 // for feature gating
 func (lm *Manager) CheckFeature(featureKey string) error {
