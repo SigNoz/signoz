@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './FunnelsList.styles.scss';
 
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
