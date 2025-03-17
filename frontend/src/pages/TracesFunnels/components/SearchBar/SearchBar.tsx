@@ -4,7 +4,7 @@ import { ArrowDownWideNarrow, Check, Plus, Search } from 'lucide-react';
 import { ChangeEvent } from 'react';
 
 interface SearchBarProps {
-	searchValue: string;
+	searchQuery: string;
 	sortOrder: {
 		columnKey: string;
 		order: 'ascend' | 'descend';
@@ -14,7 +14,7 @@ interface SearchBarProps {
 }
 
 function SearchBar({
-	searchValue,
+	searchQuery,
 	sortOrder,
 	onSearch,
 	onSort,
@@ -67,7 +67,7 @@ function SearchBar({
 						style={{ opacity: '0.4' }}
 					/>
 				}
-				value={searchValue}
+				value={searchQuery}
 				onChange={onSearch}
 			/>
 			<Button type="primary" icon={<Plus size={16} />} className="search__new-btn">
