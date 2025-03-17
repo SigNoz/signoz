@@ -255,10 +255,11 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			dashboardLayout.length > 0 &&
 			!isEqual(layouts, dashboardLayout);
 
-		const shouldSaveColumnWidths = hasColumnWidthsChanged(
-			columnWidths,
-			selectedDashboard,
-		);
+		const shouldSaveColumnWidths =
+			dashboardLayout &&
+			Array.isArray(dashboardLayout) &&
+			dashboardLayout.length > 0 &&
+			hasColumnWidthsChanged(columnWidths, selectedDashboard);
 
 		if (shouldSaveLayout || shouldSaveColumnWidths) {
 			onSaveHandler();
