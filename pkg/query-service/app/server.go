@@ -235,13 +235,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	_, err = opAmpModel.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB())
+	_, err = opAmpModel.InitDB(serverOptions.SigNoz.SQLStore.BunDB())
 	if err != nil {
 		return nil, err
 	}
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB: serverOptions.SigNoz.SQLStore.SQLxDB(),
+		DB: serverOptions.SigNoz.SQLStore.BunDB(),
 		AgentFeatures: []agentConf.AgentFeature{
 			logParsingPipelineController,
 		},

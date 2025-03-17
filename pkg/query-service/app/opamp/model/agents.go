@@ -1,18 +1,20 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
+	signozTypes "go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
-var db *sqlx.DB
+var db *bun.DB
 
 var AllAgents = Agents{
 	agentsById:  map[string]*Agent{},
@@ -30,7 +32,7 @@ func (a *Agents) Count() int {
 }
 
 // Initialize the database and create schema if needed
-func InitDB(qsDB *sqlx.DB) (*sqlx.DB, error) {
+func InitDB(qsDB *bun.DB) (*bun.DB, error) {
 	db = qsDB
 
 	AllAgents = Agents{
@@ -49,7 +51,7 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 
 	for instanceId := range agents.connections[conn] {
 		agent := agents.agentsById[instanceId]
-		agent.CurrentStatus = AgentStatusDisconnected
+		agent.CurrentStatus = signozTypes.AgentStatusDisconnected
 		agent.TerminatedAt = time.Now()
 		agent.Upsert()
 		delete(agents.agentsById, instanceId)
@@ -64,6 +66,24 @@ func (agents *Agents) FindAgent(agentID string) *Agent {
 	return agents.agentsById[agentID]
 }
 
+func (agents *Agents) getDefaultOrgID() (string, error) {
+	var orgID []string
+	err := db.NewSelect().Model((*signozTypes.Organization)(nil)).Column("id").Scan(context.Background(), &orgID)
+	if err != nil {
+		return "", err
+	}
+
+	if len(orgID) == 0 {
+		return "", nil
+	}
+
+	if len(orgID) != 1 {
+		return "", fmt.Errorf("expected exactly one organization, but found %d", len(orgID))
+	}
+
+	return orgID[0], nil
+}
+
 // FindOrCreateAgent returns the Agent instance associated with the given agentID.
 // If the Agent instance does not exist, it is created and added to the list of
 // Agent instances.
@@ -72,9 +92,12 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (
 	defer agents.mux.Unlock()
 	var created bool
 	agent, ok := agents.agentsById[agentID]
-	var err error
 	if !ok || agent == nil {
-		agent = New(agentID, conn)
+		orgID, err := agents.getDefaultOrgID()
+		if err != nil {
+			return nil, created, err
+		}
+		agent = New(orgID, agentID, conn)
 		err = agent.Upsert()
 		if err != nil {
 			return nil, created, err
@@ -112,14 +135,14 @@ func (agents *Agents) RecommendLatestConfigToAll(
 		)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf(
-				"could not generate conf recommendation for %v", agent.ID,
+				"could not generate conf recommendation for %v", agent.AgentID,
 			))
 		}
 
 		// Recommendation is same as current config
 		if string(newConfig) == agent.EffectiveConfig {
 			zap.L().Info(
-				"Recommended config same as current effective config for agent", zap.String("agentID", agent.ID),
+				"Recommended config same as current effective config for agent", zap.String("agentID", agent.AgentID),
 			)
 			return nil
 		}
@@ -144,7 +167,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 			RemoteConfig: newRemoteConfig,
 		})
 
-		ListenToConfigUpdate(agent.ID, confId, provider.ReportConfigDeploymentStatus)
+		ListenToConfigUpdate(agent.AgentID, confId, provider.ReportConfigDeploymentStatus)
 	}
 	return nil
 }

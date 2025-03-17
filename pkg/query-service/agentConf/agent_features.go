@@ -1,6 +1,9 @@
 package agentConf
 
-import "go.signoz.io/signoz/pkg/query-service/model"
+import (
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
+)
 
 // Interface for features implemented via agent config.
 // Eg: ingestion side signal pre-processing features like log processing pipelines etc
@@ -12,7 +15,7 @@ type AgentFeature interface {
 	// `configVersion` for the feature's settings
 	RecommendAgentConfig(
 		currentConfYaml []byte,
-		configVersion *ConfigVersion,
+		configVersion *types.AgentConfigVersion,
 	) (
 		recommendedConfYaml []byte,
 

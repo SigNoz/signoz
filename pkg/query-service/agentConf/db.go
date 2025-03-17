@@ -6,51 +6,43 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
-	db *sqlx.DB
+	db *bun.DB
 }
 
 func (r *Repo) GetConfigHistory(
-	ctx context.Context, typ ElementTypeDef, limit int,
-) ([]ConfigVersion, *model.ApiError) {
-	var c []ConfigVersion
-	err := r.db.SelectContext(ctx, &c, fmt.Sprintf(`SELECT 
-		version, 
-		id, 
-		element_type, 
-		COALESCE(created_by, -1) as created_by, 
-		created_at,
-		COALESCE((SELECT NAME FROM users 
- 		WHERE id = v.created_by), "unknown") created_by_name, 
-		active, 
-		is_valid, 
-		disabled, 
-		deploy_status, 
-		deploy_result,
-		coalesce(last_hash, '') as last_hash,
-		coalesce(last_config, '{}') as last_config
-		FROM agent_config_versions AS v
-		WHERE element_type = $1
-		ORDER BY created_at desc, version desc
-		limit %v`, limit),
-		typ)
+	ctx context.Context, typ types.ElementTypeDef, limit int,
+) ([]types.AgentConfigVersion, *model.ApiError) {
+	var c []types.AgentConfigVersion
+	err := r.db.NewSelect().
+		Model(&c).
+		ColumnExpr("version, id, element_type, COALESCE(created_by, -1) as created_by, created_at").
+		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("active, is_valid, disabled, deploy_status, deploy_result").
+		ColumnExpr("coalesce(last_hash, '') as last_hash, coalesce(last_config, '{}') as last_config").
+		TableExpr("agent_config_versions AS v").
+		Where("element_type = ?", typ).
+		OrderExpr("created_at DESC, version DESC").
+		Limit(limit).
+		Scan(ctx)
 
 	if err != nil {
 		return nil, model.InternalError(err)
 	}
 
-	incompleteStatuses := []DeployStatus{DeployInitiated, Deploying}
+	incompleteStatuses := []types.DeployStatus{types.DeployInitiated, types.Deploying}
 	for idx := 1; idx < len(c); idx++ {
 		if slices.Contains(incompleteStatuses, c[idx].DeployStatus) {
-			c[idx].DeployStatus = DeployStatusUnknown
+			c[idx].DeployStatus = types.DeployStatusUnknown
 		}
 	}
 
@@ -58,32 +50,27 @@ func (r *Repo) GetConfigHistory(
 }
 
 func (r *Repo) GetConfigVersion(
-	ctx context.Context, typ ElementTypeDef, v int,
-) (*ConfigVersion, *model.ApiError) {
-	var c ConfigVersion
-	err := r.db.GetContext(ctx, &c, `SELECT 
-		id, 
-		version, 
-		element_type,
-		COALESCE(created_by, -1) as created_by, 
-		created_at,
-		COALESCE((SELECT NAME FROM users 
-		WHERE id = v.created_by), "unknown") created_by_name,
-		active, 
-		is_valid, 
-		disabled, 
-		deploy_status, 
-		deploy_result,
-		coalesce(last_hash, '') as last_hash,
-		coalesce(last_config, '{}') as last_config
-		FROM agent_config_versions v 
-		WHERE element_type = $1 
-		AND version = $2`, typ, v)
+	ctx context.Context, typ types.ElementTypeDef, v int,
+) (*types.AgentConfigVersion, *model.ApiError) {
+	var c types.AgentConfigVersion
+	err := r.db.NewSelect().
+		Model(&c).
+		ColumnExpr("id, version, element_type").
+		ColumnExpr("COALESCE(created_by, -1) as created_by").
+		ColumnExpr("created_at").
+		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("active, is_valid, disabled, deploy_status, deploy_result").
+		ColumnExpr("coalesce(last_hash, '') as last_hash").
+		ColumnExpr("coalesce(last_config, '{}') as last_config").
+		TableExpr("agent_config_versions AS v").
+		Where("element_type = ?", typ).
+		Where("version = ?", v).
+		Scan(ctx)
 
-	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(err)
-	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, model.NotFoundError(err)
+		}
 		return nil, model.InternalError(err)
 	}
 
@@ -91,33 +78,25 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, typ ElementTypeDef,
-) (*ConfigVersion, *model.ApiError) {
-	var c ConfigVersion
-	err := r.db.GetContext(ctx, &c, `SELECT 
-		id, 
-		version, 
-		element_type, 
-		COALESCE(created_by, -1) as created_by, 
-		created_at,
-		COALESCE((SELECT NAME FROM users 
- 		WHERE id = v.created_by), "unknown") created_by_name, 
-		active, 
-		is_valid, 
-		disabled, 
-		deploy_status, 
-		deploy_result 
-		FROM agent_config_versions AS v
-		WHERE element_type = $1 
-		AND version = ( 
-			SELECT MAX(version) 
-			FROM agent_config_versions 
-			WHERE element_type=$2)`, typ, typ)
+	ctx context.Context, typ types.ElementTypeDef,
+) (*types.AgentConfigVersion, *model.ApiError) {
+	var c types.AgentConfigVersion
+	err := r.db.NewSelect().
+		Model(&c).
+		ColumnExpr("id, version, element_type").
+		ColumnExpr("COALESCE(created_by, -1) as created_by").
+		ColumnExpr("created_at").
+		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("active, is_valid, disabled, deploy_status, deploy_result").
+		TableExpr("agent_config_versions AS v").
+		Where("element_type = ?", typ).
+		Where("version = (SELECT MAX(version) FROM agent_config_versions WHERE element_type = ?)", typ).
+		Scan(ctx)
 
-	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(err)
-	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, model.NotFoundError(err)
+		}
 		return nil, model.InternalError(err)
 	}
 
@@ -125,7 +104,7 @@ func (r *Repo) GetLatestVersion(
 }
 
 func (r *Repo) insertConfig(
-	ctx context.Context, userId string, c *ConfigVersion, elements []string,
+	ctx context.Context, userId string, c *types.AgentConfigVersion, elements []string,
 ) (fnerr *model.ApiError) {
 
 	if string(c.ElementType) == "" {
@@ -135,7 +114,7 @@ func (r *Repo) insertConfig(
 	}
 
 	// allowing empty elements for logs - use case is deleting all pipelines
-	if len(elements) == 0 && c.ElementType != ElementTypeLogPipelines {
+	if len(elements) == 0 && c.ElementType != types.ElementTypeLogPipelines {
 		zap.L().Error("insert config called with no elements ", zap.String("ElementType", string(c.ElementType)))
 		return model.BadRequest(fmt.Errorf("config must have atleast one element"))
 	}
@@ -157,7 +136,7 @@ func (r *Repo) insertConfig(
 	}
 
 	if configVersion != nil {
-		c.Version = updateVersion(configVersion.Version)
+		c.Version = types.UpdateVersion(configVersion.Version)
 	} else {
 		// first version
 		c.Version = 1
@@ -166,57 +145,41 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.db.Exec("DELETE FROM agent_config_versions WHERE id = $1", c.ID)
-			r.db.Exec("DELETE FROM agent_config_elements WHERE version_id=$1", c.ID)
+			r.db.NewDelete().Model((*types.AgentConfigVersion)(nil)).Where("id = ?", c.ID).Exec(ctx)
+			r.db.NewDelete().Model((*types.AgentConfigElement)(nil)).Where("version_id = ?", c.ID).Exec(ctx)
 		}
 	}()
 
 	// insert config
-	configQuery := `INSERT INTO agent_config_versions(	
-		id, 
-		version, 
-		created_by,
-		element_type, 
-		active, 
-		is_valid, 
-		disabled,
-		deploy_status, 
-		deploy_result) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-
-	_, dbErr := r.db.ExecContext(ctx,
-		configQuery,
-		c.ID,
-		c.Version,
-		userId,
-		c.ElementType,
-		false,
-		false,
-		false,
-		c.DeployStatus,
-		c.DeployResult)
+	_, dbErr := r.db.NewInsert().
+		Model(&types.AgentConfigVersion{
+			ID:      c.ID,
+			Version: c.Version,
+			UserAuditable: types.UserAuditable{
+				CreatedBy: userId,
+			},
+			ElementType:  c.ElementType,
+			Active:       false, // default value
+			IsValid:      false, // default value
+			Disabled:     false, // default value
+			DeployStatus: c.DeployStatus,
+			DeployResult: c.DeployResult,
+		}).
+		Exec(ctx)
 
 	if dbErr != nil {
 		zap.L().Error("error in inserting config version: ", zap.Error(dbErr))
 		return model.InternalError(errors.Wrap(dbErr, "failed to insert ingestion rule"))
 	}
 
-	elementsQuery := `INSERT INTO agent_config_elements(	
-		id, 
-		version_id, 
-		element_type, 
-		element_id) 
-	VALUES ($1, $2, $3, $4)`
-
 	for _, e := range elements {
-		_, dbErr = r.db.ExecContext(
-			ctx,
-			elementsQuery,
-			uuid.NewString(),
-			c.ID,
-			c.ElementType,
-			e,
-		)
+		agentConfigElement := &types.AgentConfigElement{
+			ID:          uuid.NewString(),
+			VersionID:   c.ID,
+			ElementType: string(c.ElementType),
+			ElementID:   e,
+		}
+		_, dbErr = r.db.NewInsert().Model(agentConfigElement).Exec(ctx)
 		if dbErr != nil {
 			return model.InternalError(dbErr)
 		}
@@ -226,25 +189,25 @@ func (r *Repo) insertConfig(
 }
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
-	elementType ElementTypeDef,
+	elementType types.ElementTypeDef,
 	version int,
 	status string,
 	result string,
 	lastHash string,
 	lastconf string) *model.ApiError {
 
-	updateQuery := `UPDATE agent_config_versions
-	set deploy_status = $1, 
-	deploy_result = $2,
-	last_hash = COALESCE($3, last_hash),
-	last_config = $4
-	WHERE version=$5
-	AND element_type = $6`
-
-	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, lastconf, version, string(elementType))
+	_, err := r.db.NewUpdate().
+		Model((*types.AgentConfigVersion)(nil)).
+		Set("deploy_status = ?", status).
+		Set("deploy_result = ?", result).
+		Set("last_hash = COALESCE(?, last_hash)", lastHash).
+		Set("last_config = ?", lastconf).
+		Where("version = ?", version).
+		Where("element_type = ?", elementType).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("failed to update deploy status", zap.Error(err))
-		return model.BadRequest(fmt.Errorf("failed to  update deploy status"))
+		return model.BadRequest(fmt.Errorf("failed to update deploy status"))
 	}
 
 	return nil
@@ -254,12 +217,12 @@ func (r *Repo) updateDeployStatusByHash(
 	ctx context.Context, confighash string, status string, result string,
 ) *model.ApiError {
 
-	updateQuery := `UPDATE agent_config_versions
-	set deploy_status = $1, 
-	deploy_result = $2
-	WHERE last_hash=$4`
-
-	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
+	_, err := r.db.NewUpdate().
+		Model((*types.AgentConfigVersion)(nil)).
+		Set("deploy_status = ?", status).
+		Set("deploy_result = ?", result).
+		Where("last_hash = ?", confighash).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("failed to update deploy status", zap.Error(err))
 		return model.InternalError(errors.Wrap(err, "failed to update deploy status"))
