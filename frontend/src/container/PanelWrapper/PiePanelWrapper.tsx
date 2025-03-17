@@ -80,6 +80,17 @@ function PiePanelWrapper({
 
 	// Adjust the size to leave room for external labels
 	const radius = size * 0.35;
+	// Add inner radius for donut chart
+	const innerRadius = radius * 0.6;
+
+	// Calculate total value for center display
+	const totalValue = pieChartData.reduce(
+		(sum, data) => sum + parseFloat(data.value || '0'),
+		0,
+	);
+
+	// Format total for display
+	const formattedTotal = Math.round(totalValue).toString();
 
 	const getFillColor = (color: string): string => {
 		if (active === null) {
@@ -105,6 +116,7 @@ function PiePanelWrapper({
 										color: string;
 									}): number => parseFloat(data.value)}
 									outerRadius={radius}
+									innerRadius={innerRadius}
 									padAngle={0.01}
 									cornerRadius={3}
 									width={size}
@@ -230,6 +242,16 @@ function PiePanelWrapper({
 											})
 									}
 								</Pie>
+
+								<text
+									textAnchor="middle"
+									dy=".33em"
+									fontSize={radius * 0.3}
+									fontWeight="bold"
+									fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+								>
+									{formattedTotal}
+								</text>
 							</Group>
 						</svg>
 						{tooltipOpen && tooltipData && (
