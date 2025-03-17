@@ -142,7 +142,7 @@ func CheckoutSession(ctx context.Context, checkoutRequest *model.CheckoutRequest
 		return "", model.BadRequest(err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", constants.ZeusURL+"v2/subscriptions/me/sessions/checkout", bytes.NewBuffer(reqString))
+	req, err := http.NewRequestWithContext(ctx, "POST", C.GatewayUrl+"/v2/subscriptions/me/sessions/checkout", bytes.NewBuffer(reqString))
 	if err != nil {
 		return "", model.BadRequest(err)
 	}
@@ -186,7 +186,7 @@ func PortalSession(ctx context.Context, checkoutRequest *model.PortalRequest, li
 		return "", model.BadRequest(err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", constants.ZeusURL+"v2/subscriptions/me/sessions/portal", bytes.NewBuffer(reqString))
+	req, err := http.NewRequestWithContext(ctx, "POST", C.GatewayUrl+"/v2/subscriptions/me/sessions/portal", bytes.NewBuffer(reqString))
 	if err != nil {
 		return "", model.BadRequest(err)
 	}
