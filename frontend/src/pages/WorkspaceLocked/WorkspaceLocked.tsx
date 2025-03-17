@@ -26,6 +26,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -38,7 +39,12 @@ import {
 } from './workspaceLocked.data';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const { user, isFetchingActiveLicenseV3, trialInfo } = useAppContext();
+	const {
+		user,
+		isFetchingActiveLicenseV3,
+		trialInfo,
+		activeLicenseV3,
+	} = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 
@@ -67,11 +73,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 		if (!isFetchingActiveLicenseV3) {
 			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
-			if (!shouldBlockWorkspace) {
+			if (
+				!shouldBlockWorkspace ||
+				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
+			) {
 				history.push(ROUTES.APPLICATION);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, trialInfo?.workSpaceBlock]);
+	}, [
+		isFetchingActiveLicenseV3,
+		trialInfo?.workSpaceBlock,
+		activeLicenseV3?.platform,
+	]);
 
 	const { mutate: updateCreditCard, isLoading } = useMutation(
 		updateCreditCardApi,

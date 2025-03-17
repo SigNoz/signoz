@@ -11,7 +11,7 @@ import { useAppContext } from 'providers/App/App';
 import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { matchPath, useLocation } from 'react-router-dom';
-import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
 import { routePermission } from 'utils/permission';
@@ -132,12 +132,42 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	};
 
+	const navigateToWorkSpaceAccessRestricted = (route: any): void => {
+		const { path } = route;
+
+		if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
+			history.push(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
+		}
+	};
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const currentRoute = mapRoutes.get('current');
+
+			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
+			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+
+			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
+
+			const { platform } = activeLicenseV3;
+
+			if (isWorkspaceAccessRestricted && platform === LicensePlatform.CLOUD) {
+				navigateToWorkSpaceAccessRestricted(currentRoute);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
+
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3) {
 			const currentRoute = mapRoutes.get('current');
 			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
-			if (shouldBlockWorkspace && currentRoute) {
+			if (
+				shouldBlockWorkspace &&
+				currentRoute &&
+				activeLicenseV3?.platform === LicensePlatform.CLOUD
+			) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
@@ -145,6 +175,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	}, [
 		isFetchingActiveLicenseV3,
 		trialInfo?.workSpaceBlock,
+		activeLicenseV3?.platform,
 		mapRoutes,
 		pathname,
 	]);
@@ -161,10 +192,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
 			const currentRoute = mapRoutes.get('current');
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
 				activeLicenseV3.state === LicenseState.DEFAULTED;
 
-			if (shouldSuspendWorkspace && currentRoute) {
+			if (
+				shouldSuspendWorkspace &&
+				currentRoute &&
+				activeLicenseV3.platform === LicensePlatform.CLOUD
+			) {
 				navigateToWorkSpaceSuspended(currentRoute);
 			}
 		}

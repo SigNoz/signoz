@@ -53,7 +53,11 @@ import {
 } from 'types/actions/app';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { LicenseEvent } from 'types/api/licensesV3/getActive';
+import {
+	LicenseEvent,
+	LicensePlatform,
+	LicenseState,
+} from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
@@ -77,9 +81,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 	} = useAppContext();
-
-	console.log('activeLicenseV3', activeLicenseV3);
-	console.log('trialInfo', trialInfo);
 
 	const { notifications } = useNotifications();
 
@@ -255,6 +256,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
+	const [showWorkspaceRestricted, setShowWorkspaceRestricted] = useState(false);
+
 	useEffect(() => {
 		if (
 			!isFetchingActiveLicenseV3 &&
@@ -267,6 +270,33 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			setShowTrialExpiryBanner(true);
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3, trialInfo]);
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
+			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+			const isDefaulted = activeLicenseV3.state === LicenseState.DEFAULTED;
+			const isEvaluationExpired =
+				activeLicenseV3.state === LicenseState.EVALUATION_EXPIRED;
+
+			const isWorkspaceAccessRestricted =
+				isTerminated ||
+				isExpired ||
+				isCancelled ||
+				isDefaulted ||
+				isEvaluationExpired;
+
+			const { platform } = activeLicenseV3;
+
+			if (
+				isWorkspaceAccessRestricted &&
+				platform === LicensePlatform.SELF_HOSTED
+			) {
+				setShowWorkspaceRestricted(true);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
 
 	useEffect(() => {
 		if (
@@ -428,8 +458,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		setLocalStorageApi(LOCALSTORAGE.DONT_SHOW_SLOW_API_WARNING, 'true');
 	};
 
-	console.log('trialInfo', trialInfo);
-
 	useEffect(() => {
 		if (
 			showSlowApiWarning &&
@@ -483,6 +511,77 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		trialInfo?.trialConvertedToSubscription,
 	]);
 
+	const renderWorkspaceRestrictedBanner = (): JSX.Element => (
+		<div className="workspace-restricted-banner">
+			{activeLicenseV3?.state === LicenseState.TERMINATED && (
+				<>
+					Your SigNoz license is terminated, enterprise features have been disabled.
+					Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for new license
+				</>
+			)}
+			{activeLicenseV3?.state === LicenseState.EXPIRED && (
+				<>
+					Your SigNoz license has expired. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for renewal to
+					avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+			{activeLicenseV3?.state === LicenseState.CANCELLED && (
+				<>
+					Your SigNoz license is cancelled. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for reactivation
+					to avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+
+			{activeLicenseV3?.state === LicenseState.DEFAULTED && (
+				<>
+					Your SigNoz license is defaulted. Please clear the bill to continue using
+					the enterprise features. Contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> to avoid
+					termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+
+			{activeLicenseV3?.state === LicenseState.EVALUATION_EXPIRED && (
+				<>
+					Your SigNoz trial has ended. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for next steps to
+					avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+		</div>
+	);
+
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
 			<Helmet>
@@ -507,6 +606,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</div>
 			)}
+
+			{showWorkspaceRestricted && renderWorkspaceRestrictedBanner()}
 
 			{!showTrialExpiryBanner && showPaymentFailedWarning && (
 				<div className="payment-failed-banner">
