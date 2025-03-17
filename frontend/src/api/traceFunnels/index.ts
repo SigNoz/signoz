@@ -1,5 +1,5 @@
-// import axios from 'api';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'api';
+import { AxiosResponse } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	CreateFunnelPayload,
@@ -7,7 +7,7 @@ import {
 	FunnelData,
 } from 'types/api/traceFunnels';
 
-const FUNNELS_BASE_PATH = 'http://localhost:8080/api/v1/trace-funnels';
+const FUNNELS_BASE_PATH = '/trace-funnels';
 
 export const createFunnel = async (
 	payload: CreateFunnelPayload,
@@ -97,7 +97,7 @@ export const deleteFunnel = async (
 	payload: DeleteFunnelPayload,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.delete(
-		`${FUNNELS_BASE_PATH}/deletes/${payload.id}`,
+		`${FUNNELS_BASE_PATH}/delete/${payload.id}`,
 	);
 
 	return {
