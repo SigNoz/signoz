@@ -32,7 +32,7 @@ function ExpandedRow({
 	setSelectedEndPointName: (name: string) => void;
 	setSelectedView: (view: VIEWS) => void;
 }): JSX.Element {
-	const nestedColumns = useMemo(() => getEndPointsColumnsConfig(false), []);
+	const nestedColumns = useMemo(() => getEndPointsColumnsConfig(false, []), []);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
