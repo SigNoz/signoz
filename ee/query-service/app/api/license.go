@@ -3,14 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/http/render"
-	"go.uber.org/zap"
 )
 
 type DayWiseBreakdown struct {
@@ -227,71 +225,6 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 		GracePeriodEnd:               -1,
 		Licenses:                     licenses,
 	}
-
-	var currentActiveLicenseKey string
-
-	for _, license := range licenses {
-		if license.IsCurrent {
-			currentActiveLicenseKey = license.Key
-		}
-	}
-
-	// For the case when no license is applied i.e community edition
-	// There will be no trial details or license details
-	if currentActiveLicenseKey == "" {
-		ah.Respond(w, resp)
-		return
-	}
-
-	// Fetch trial details
-	hClient := &http.Client{}
-	url := fmt.Sprintf("%s/trial?licenseKey=%s", constants.LicenseSignozIo, currentActiveLicenseKey)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		zap.L().Error("Error while creating request for trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
-	trialResp, err := hClient.Do(req)
-	if err != nil {
-		zap.L().Error("Error while fetching trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid incorrectly blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-	defer trialResp.Body.Close()
-
-	trialRespBody, err := io.ReadAll(trialResp.Body)
-
-	if err != nil || trialResp.StatusCode != http.StatusOK {
-		zap.L().Error("Error while fetching trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid incorrectly blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-
-	// decode response body
-	var trialRespData model.SubscriptionServerResp
-
-	if err := json.Unmarshal(trialRespBody, &trialRespData); err != nil {
-		zap.L().Error("Error while decoding trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid incorrectly blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-
-	resp.TrialStart = trialRespData.Data.TrialStart
-	resp.TrialEnd = trialRespData.Data.TrialEnd
-	resp.OnTrial = trialRespData.Data.OnTrial
-	resp.WorkSpaceBlock = trialRespData.Data.WorkSpaceBlock
-	resp.TrialConvertedToSubscription = trialRespData.Data.TrialConvertedToSubscription
-	resp.GracePeriodEnd = trialRespData.Data.GracePeriodEnd
 
 	ah.Respond(w, resp)
 }
