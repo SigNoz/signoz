@@ -19,13 +19,14 @@ import {
 	FunnelData,
 } from 'types/api/traceFunnels';
 
-export const useFunnelsList = (): UseQueryResult<
-	SuccessResponse<FunnelData[]> | ErrorResponse,
-	unknown
-> =>
+export const useFunnelsList = ({
+	searchQuery,
+}: {
+	searchQuery: string;
+}): UseQueryResult<SuccessResponse<FunnelData[]> | ErrorResponse, unknown> =>
 	useQuery({
-		queryKey: [REACT_QUERY_KEY.GET_FUNNELS_LIST],
-		queryFn: getFunnelsList,
+		queryKey: [REACT_QUERY_KEY.GET_FUNNELS_LIST, searchQuery],
+		queryFn: () => getFunnelsList({ search: searchQuery }),
 	});
 
 export const useFunnelDetails = (
