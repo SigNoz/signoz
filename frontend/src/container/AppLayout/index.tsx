@@ -292,14 +292,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [user.role]);
 
 	const handleFailedPayment = useCallback((): void => {
-		if (activeLicenseV3?.key) {
-			manageCreditCard({
-				licenseKey: activeLicenseV3?.key || '',
-				successURL: window.location.origin,
-				cancelURL: window.location.origin,
-			});
-		}
-	}, [activeLicenseV3?.key, manageCreditCard]);
+		manageCreditCard({
+			url: window.location.href,
+		});
+	}, [manageCreditCard]);
 
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||

@@ -11,12 +11,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CreditCard, HelpCircle, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { License } from 'types/api/licenses/def';
 
 export interface LaunchChatSupportProps {
 	eventName: string;
@@ -42,13 +41,11 @@ function LaunchChatSupport({
 	const { notifications } = useNotifications();
 	const {
 		licenses,
-		isFetchingLicenses,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		isLoggedIn,
 	} = useAppContext();
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
@@ -104,14 +101,6 @@ function LaunchChatSupport({
 		licenses,
 	]);
 
-	useEffect(() => {
-		if (!isFetchingLicenses && licenses) {
-			const activeValidLicense =
-				licenses.licenses?.find((license) => license.isCurrent === true) || null;
-			setActiveLicense(activeValidLicense);
-		}
-	}, [isFetchingLicenses, licenses]);
-
 	const handleFacingIssuesClick = (): void => {
 		if (showAddCreditCardModal) {
 			logEvent('Disabled Chat Support: Clicked', {
@@ -164,9 +153,7 @@ function LaunchChatSupport({
 		});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			url: window.location.href,
 		});
 	};
 
