@@ -3,6 +3,8 @@ import './TracesFunnels.styles.scss';
 import { Skeleton } from 'antd';
 import { useFunnelsList } from 'hooks/useFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ChangeEvent, useMemo, useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
@@ -26,10 +28,13 @@ function TracesFunnelsContentRenderer({
 	isError,
 	data,
 }: TracesFunnelsContentRendererProps): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
+
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [sortOrder, setSortOrder] = useState<SortOrder>({
-		columnKey: 'creation_timestamp',
-		order: 'descend',
+		columnKey: urlQuery.get('columnKey') || 'creation_timestamp',
+		order: (urlQuery.get('order') as 'ascend' | 'descend') || 'descend',
 	});
 
 	const { notifications } = useNotifications();
@@ -41,16 +46,17 @@ function TracesFunnelsContentRenderer({
 
 	const handleSort = (key: string): void => {
 		setSortOrder((prev) => {
-			if (prev.columnKey === key) {
-				// Toggle order if same column
-				return {
-					columnKey: key,
-					order: prev.order === 'ascend' ? 'descend' : 'ascend',
-				};
-			}
-			// New column, default to 'descend'
-			return { columnKey: key, order: 'descend' };
+			const newOrder: SortOrder =
+				prev.columnKey === key
+					? { columnKey: key, order: prev.order === 'ascend' ? 'descend' : 'ascend' }
+					: { columnKey: key, order: 'descend' };
+
+			urlQuery.set('columnKey', newOrder.columnKey);
+			urlQuery.set('order', newOrder.order);
+
+			return newOrder;
 		});
+		safeNavigate({ search: urlQuery.toString() });
 	};
 
 	const handleDelete = (id: string): void => {
