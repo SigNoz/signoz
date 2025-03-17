@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './FunnelsList.styles.scss';
 
 import { Button, Popover } from 'antd';
@@ -10,7 +9,6 @@ import { CalendarClock, Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
 import { FunnelData } from 'types/api/traceFunnels';
-import { nanoToMilli } from 'utils/timeUtils';
 
 import DeleteFunnel from '../DeleteFunnel/DeleteFunnel';
 import RenameFunnel from '../RenameFunnel/RenameFunnel';
@@ -37,15 +35,14 @@ function FunnelItemPopover({
 		setIsRenameModalOpen(false);
 	};
 
-	const handleEllipsisClick = (
-		e: React.MouseEvent | React.KeyboardEvent,
-	): void => {
+	const preventDefault = (e: React.MouseEvent | React.KeyboardEvent): void => {
 		e.preventDefault();
 		e.stopPropagation();
 	};
 
 	return (
-		<>
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
+		<div onClick={preventDefault} role="button" tabIndex={0}>
 			<Popover
 				trigger="click"
 				rootClassName="funnel-item__actions"
@@ -80,14 +77,12 @@ function FunnelItemPopover({
 				placement="bottomRight"
 				arrow={false}
 			>
-				<div onClick={handleEllipsisClick} role="button" tabIndex={0}>
-					<Ellipsis
-						className={cx('funnel-item__action-icon', {
-							'funnel-item__action-icon--active': isPopoverOpen,
-						})}
-						size={14}
-					/>
-				</div>
+				<Ellipsis
+					className={cx('funnel-item__action-icon', {
+						'funnel-item__action-icon--active': isPopoverOpen,
+					})}
+					size={14}
+				/>
 			</Popover>
 
 			<DeleteFunnel
@@ -102,7 +97,7 @@ function FunnelItemPopover({
 				funnelId={funnel.id}
 				initialName={funnel.funnel_name}
 			/>
-		</>
+		</div>
 	);
 }
 
@@ -129,7 +124,7 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 				<div className="funnel-item__created-at">
 					<CalendarClock size={14} />
 					<div>
-						{dayjs(nanoToMilli(funnel.creation_timestamp)).format(
+						{dayjs(funnel.creation_timestamp).format(
 							DATE_TIME_FORMATS.FUNNELS_LIST_DATE,
 						)}
 					</div>
