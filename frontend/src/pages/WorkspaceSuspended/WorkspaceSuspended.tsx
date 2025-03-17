@@ -51,11 +51,9 @@ function WorkspaceSuspended(): JSX.Element {
 
 	const handleUpdateCreditCard = useCallback(async () => {
 		manageCreditCard({
-			licenseKey: activeLicenseV3?.key || '',
-			successURL: window.location.origin,
-			cancelURL: window.location.origin,
+			url: window.location.origin,
 		});
-	}, [activeLicenseV3?.key, manageCreditCard]);
+	}, [manageCreditCard]);
 
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {

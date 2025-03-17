@@ -6,6 +6,7 @@ import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -164,11 +165,15 @@ function DaemonSetDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: DaemonSets list details page visited', {
-			daemonSet: daemonSet?.daemonSetName,
-		});
+		if (daemonSet) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.DaemonSet,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [daemonSet]);
 
 	useEffect(() => {
 		setLogAndTracesFilters(initialFilters);
@@ -190,8 +195,10 @@ function DaemonSetDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: DaemonSets list details tab changed', {
-			daemonSet: daemonSet?.daemonSetName,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.DaemonSet,
 			view: e.target.value,
 		});
 	};
@@ -214,8 +221,10 @@ function DaemonSetDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: DaemonSets list details time updated', {
-				daemonSet: daemonSet?.daemonSetName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.DaemonSet,
 				interval,
 				view: selectedView,
 			});
@@ -239,9 +248,14 @@ function DaemonSetDetails({
 						item.key?.key !== QUERY_KEYS.K8S_DAEMON_SET_NAME,
 				);
 
-				logEvent('Infra Monitoring: DaemonSets list details logs filters applied', {
-					daemonSet: daemonSet?.daemonSetName,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.DaemonSet,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -266,12 +280,14 @@ function DaemonSetDetails({
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: DaemonSets list details traces filters applied',
-					{
-						daemonSet: daemonSet?.daemonSetName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.DaemonSet,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -298,12 +314,14 @@ function DaemonSetDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: DaemonSets list details events filters applied',
-					{
-						daemonSet: daemonSet?.daemonSetName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.DaemonSet,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -332,8 +350,10 @@ function DaemonSetDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: DaemonSets list details explore clicked', {
-			daemonSet: daemonSet?.daemonSetName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.DaemonSet,
 			view: selectedView,
 		});
 

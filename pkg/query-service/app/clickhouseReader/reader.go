@@ -49,7 +49,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
-	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/metrics"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -151,7 +150,6 @@ type ClickHouseReader struct {
 
 	promConfigFile string
 	promConfig     *config.Config
-	alertManager   am.Manager
 	featureFlags   interfaces.FeatureLookup
 
 	liveTailRefreshSeconds int
@@ -202,13 +200,6 @@ func NewReaderFromClickhouseConnection(
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickHouseReader {
-	alertManager, err := am.New()
-	if err != nil {
-		zap.L().Error("failed to initialize alert manager", zap.Error(err))
-		zap.L().Error("check if the alert manager URL is correctly set and valid")
-		os.Exit(1)
-	}
-
 	logsTableName := options.primary.LogsTable
 	logsLocalTableName := options.primary.LogsLocalTable
 	if useLogsNewSchema {
@@ -227,7 +218,6 @@ func NewReaderFromClickhouseConnection(
 		db:                      db,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
-		alertManager:            alertManager,
 		operationsTable:         options.primary.OperationsTable,
 		indexTable:              options.primary.IndexTable,
 		errorTable:              options.primary.ErrorTable,
@@ -1488,7 +1478,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	if err != nil {
 		zap.L().Info("cache miss for getWaterfallSpansForTraceWithMetadata", zap.String("traceID", traceID))
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
 		if err != nil {
 			return nil, err
 		}

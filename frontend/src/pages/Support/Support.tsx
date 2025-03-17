@@ -20,7 +20,6 @@ import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { License } from 'types/api/licenses/def';
 
 const { Title, Text } = Typography;
 
@@ -81,7 +80,6 @@ export default function Support(): JSX.Element {
 	const history = useHistory();
 	const { notifications } = useNotifications();
 	const { licenses, featureFlags } = useAppContext();
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
@@ -109,13 +107,6 @@ export default function Support(): JSX.Element {
 
 	const showAddCreditCardModal =
 		!isPremiumChatSupportEnabled && !licenses?.trialConvertedToSubscription;
-
-	useEffect(() => {
-		const activeValidLicense =
-			licenses?.licenses?.find((license) => license.isCurrent === true) || null;
-
-		setActiveLicense(activeValidLicense);
-	}, [licenses?.licenses]);
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
@@ -152,9 +143,7 @@ export default function Support(): JSX.Element {
 		});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			url: window.location.href,
 		});
 	};
 

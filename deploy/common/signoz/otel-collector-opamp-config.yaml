@@ -1,1 +1,1 @@
-server_endpoint: ws://query-service:4320/v1/opamp
+server_endpoint: ws://signoz:4320/v1/opamp

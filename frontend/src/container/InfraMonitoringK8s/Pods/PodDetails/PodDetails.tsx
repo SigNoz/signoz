@@ -8,6 +8,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sPodsData } from 'api/infraMonitoring/getK8sPodsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -167,11 +168,15 @@ function PodDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Pods list details page visited', {
-			pod: pod?.podUID,
-		});
+		if (pod) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Pod,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [pod]);
 
 	useEffect(() => {
 		setLogsAndTracesFilters(initialFilters);
@@ -193,8 +198,10 @@ function PodDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: Pods list details tab changed', {
-			pod: pod?.podUID,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Pod,
 			view: e.target.value,
 		});
 	};
@@ -217,8 +224,10 @@ function PodDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Pods list details time updated', {
-				pod: pod?.podUID,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Pod,
 				interval,
 				view: selectedView,
 			});
@@ -243,9 +252,14 @@ function PodDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details logs filters applied', {
-					pod: pod?.podUID,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Pod,
+						view: selectedView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -274,9 +288,14 @@ function PodDetails({
 					].includes(item.key?.key ?? ''),
 				);
 
-				logEvent('Infra Monitoring: Pods list details traces filters applied', {
-					pod: pod?.podUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Pod,
+						view: selectedView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -305,9 +324,14 @@ function PodDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Pods list details events filters applied', {
-					pod: pod?.podUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Pod,
+						view: selectedView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -336,8 +360,10 @@ function PodDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Pods list details explore clicked', {
-			pod: pod?.podUID,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Pod,
 			view: selectedView,
 		});
 

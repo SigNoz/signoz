@@ -326,9 +326,7 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			updateCreditCard({
-				licenseKey: activeLicense?.key || '',
-				successURL: window.location.href,
-				cancelURL: window.location.href,
+				url: window.location.href,
 			});
 		} else {
 			logEvent('Billing : Manage Billing', {
@@ -337,14 +335,11 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			manageCreditCard({
-				licenseKey: activeLicense?.key || '',
-				successURL: window.location.href,
-				cancelURL: window.location.href,
+				url: window.location.href,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		activeLicense?.key,
 		isFreeTrial,
 		licenses?.trialConvertedToSubscription,
 		manageCreditCard,

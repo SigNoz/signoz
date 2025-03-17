@@ -71,6 +71,7 @@ import {
 	PaginationProps,
 } from 'types/api/ingestionKeys/types';
 import { USER_ROLES } from 'types/roles';
+import { hasDatePassed } from 'utils/timeUtils';
 
 const { Option } = Select;
 
@@ -1242,8 +1243,22 @@ function MultiIngestionSettings(): JSX.Element {
 						<div className="ingestion-key-details">
 							<div className="ingestion-key-last-used-at">
 								<CalendarClock size={14} />
-								Expires on <Minus size={12} />
-								<Typography.Text>{expiresOn}</Typography.Text>
+
+								{hasDatePassed(expiresOn) ? (
+									<>
+										Expired on <Minus size={12} />
+										<Typography.Text>{expiresOn}</Typography.Text>
+									</>
+								) : (
+									<>
+										{expiresOn !== 'No Expiry' && (
+											<>
+												Expires on <Minus size={12} />
+											</>
+										)}
+										<Typography.Text>{expiresOn}</Typography.Text>
+									</>
+								)}
 							</div>
 						</div>
 					</div>

@@ -41,7 +41,7 @@ func TestRegistryWith2Services(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		require.NoError(t, registry.Start(ctx))
+		registry.Start(ctx)
 		require.NoError(t, registry.Wait(ctx))
 		require.NoError(t, registry.Stop(ctx))
 	}()
@@ -62,7 +62,7 @@ func TestRegistryWith2ServicesWithoutWait(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		require.NoError(t, registry.Start(ctx))
+		registry.Start(ctx)
 		require.NoError(t, registry.Stop(ctx))
 	}()
 

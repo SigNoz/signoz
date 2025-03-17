@@ -10,7 +10,10 @@ import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	OPERATORS,
+} from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
@@ -76,12 +79,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		},
 	);
 
-	const attributeValues: string[] = useMemo(
-		() =>
-			((Object.values(data?.payload || {}).find((el) => !!el) ||
-				[]) as string[]).filter((val) => !isEmpty(val)),
-		[data?.payload],
-	);
+	const attributeValues: string[] = useMemo(() => {
+		const dataType = filter.attributeKey.dataType || DataTypes.String;
+		const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+		return (data?.payload?.[key] || []).filter((val) => !isEmpty(val));
+	}, [data?.payload, filter.attributeKey.dataType]);
+
 	const currentAttributeKeys = attributeValues.slice(0, visibleItemsCount);
 
 	const setSearchTextDebounced = useDebouncedFn((...args) => {

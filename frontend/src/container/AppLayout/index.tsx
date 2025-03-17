@@ -292,14 +292,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [user.role]);
 
 	const handleFailedPayment = useCallback((): void => {
-		if (activeLicenseV3?.key) {
-			manageCreditCard({
-				licenseKey: activeLicenseV3?.key || '',
-				successURL: window.location.origin,
-				cancelURL: window.location.origin,
-			});
-		}
-	}, [activeLicenseV3?.key, manageCreditCard]);
+		manageCreditCard({
+			url: window.location.href,
+		});
+	}, [manageCreditCard]);
+
+	const isHome = (): boolean => routeKey === 'HOME';
 
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
@@ -540,13 +538,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
-				<div className="app-content" data-overlayscrollbars-initialize>
+				<div
+					className={cx('app-content', {
+						'full-screen-content': renderFullScreen,
+					})}
+					data-overlayscrollbars-initialize
+				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
 								<ChildrenContainer
 									style={{
 										margin:
+											isHome() ||
 											isLogsView() ||
 											isTracesView() ||
 											isDashboardView() ||

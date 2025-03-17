@@ -113,7 +113,6 @@ export function getAppContextMock(
 				status: '',
 				updated_at: '0',
 			},
-			key: 'does-not-matter',
 			state: LicenseState.ACTIVE,
 			status: LicenseStatus.VALID,
 			platform: LicensePlatform.CLOUD,
