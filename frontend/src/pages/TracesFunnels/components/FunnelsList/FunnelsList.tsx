@@ -6,20 +6,83 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { CalendarClock, Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { FunnelData } from 'types/api/traceFunnels';
 import { nanoToMilli } from 'utils/timeUtils';
 
 import RenameFunnel from '../RenameFunnel/RenameFunnel';
 
-interface FunnelData {
-	id: string;
-	funnel_name: string;
-	creation_timestamp: number;
-	user: string;
-}
-
 interface FunnelListItemProps {
 	funnel: FunnelData;
 	onDelete: (id: string) => void;
+}
+
+interface FunnelItemPopoverProps {
+	isPopoverOpen: boolean;
+	setIsPopoverOpen: (isOpen: boolean) => void;
+	onDelete: (id: string) => void;
+	funnel: FunnelData;
+}
+
+function FunnelItemPopover({
+	isPopoverOpen,
+	setIsPopoverOpen,
+	onDelete,
+	funnel,
+}: FunnelItemPopoverProps): JSX.Element {
+	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
+
+	const handleRenameCancel = (): void => {
+		setIsRenameModalOpen(false);
+	};
+	return (
+		<>
+			<Popover
+				trigger="click"
+				rootClassName="funnel-item__actions"
+				open={isPopoverOpen}
+				onOpenChange={setIsPopoverOpen}
+				content={
+					<div className="funnel-item__actions">
+						<Button
+							type="text"
+							className="funnel-item__action-btn"
+							icon={<PencilLine size={14} />}
+							onClick={(): void => {
+								setIsPopoverOpen(false);
+								setIsRenameModalOpen(true);
+							}}
+						>
+							Rename
+						</Button>
+						<Button
+							type="text"
+							className="funnel-item__action-btn funnel-item__action-btn--delete"
+							icon={<Trash2 size={14} />}
+							onClick={(): void => onDelete(funnel.id)}
+						>
+							Delete
+						</Button>
+					</div>
+				}
+				placement="bottomRight"
+				arrow={false}
+			>
+				<Ellipsis
+					className={cx('funnel-item__action-icon', {
+						'funnel-item__action-icon--active': isPopoverOpen,
+					})}
+					size={14}
+				/>
+			</Popover>
+
+			<RenameFunnel
+				isOpen={isRenameModalOpen}
+				onClose={handleRenameCancel}
+				funnelId={funnel.id}
+				initialName={funnel.funnel_name}
+			/>
+		</>
+	);
 }
 
 function FunnelListItem({
@@ -27,11 +90,6 @@ function FunnelListItem({
 	onDelete,
 }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
-
-	const handleRenameCancel = (): void => {
-		setIsRenameModalOpen(false);
-	};
 
 	return (
 		<div className="funnel-item">
@@ -39,45 +97,12 @@ function FunnelListItem({
 				<div className="funnel-item__title">
 					<div>{funnel.funnel_name}</div>
 				</div>
-
-				<Popover
-					trigger="click"
-					rootClassName="funnel-item__actions"
-					open={isPopoverOpen}
-					onOpenChange={setIsPopoverOpen}
-					content={
-						<div className="funnel-item__actions">
-							<Button
-								type="text"
-								className="funnel-item__action-btn"
-								icon={<PencilLine size={14} />}
-								onClick={(): void => {
-									setIsPopoverOpen(false);
-									setIsRenameModalOpen(true);
-								}}
-							>
-								Rename
-							</Button>
-							<Button
-								type="text"
-								className="funnel-item__action-btn funnel-item__action-btn--delete"
-								icon={<Trash2 size={14} />}
-								onClick={(): void => onDelete(funnel.id)}
-							>
-								Delete
-							</Button>
-						</div>
-					}
-					placement="bottomRight"
-					arrow={false}
-				>
-					<Ellipsis
-						className={cx('funnel-item__action-icon', {
-							'funnel-item__action-icon--active': isPopoverOpen,
-						})}
-						size={14}
-					/>
-				</Popover>
+				<FunnelItemPopover
+					isPopoverOpen={isPopoverOpen}
+					setIsPopoverOpen={setIsPopoverOpen}
+					onDelete={onDelete}
+					funnel={funnel}
+				/>
 			</div>
 
 			<div className="funnel-item__details">
@@ -97,13 +122,6 @@ function FunnelListItem({
 					<div>{funnel.user}</div>
 				</div>
 			</div>
-
-			<RenameFunnel
-				isOpen={isRenameModalOpen}
-				onClose={handleRenameCancel}
-				funnelId={funnel.id}
-				initialName={funnel.funnel_name}
-			/>
 		</div>
 	);
 }
