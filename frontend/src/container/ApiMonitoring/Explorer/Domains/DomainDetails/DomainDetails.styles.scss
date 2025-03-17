@@ -992,18 +992,28 @@
 	align-items: center;
 	justify-content: center;
 	gap: 4px;
+	height: 100%;
+
+	.end-point-details-zero-state-content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 4px;
+		height: 100%;
+	}
 
 	.end-point-details-zero-state-content-wrapper {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		justify-content: center;
+		align-items: flex-start;
+		justify-content: left;
 		gap: 12px;
 
-		.end-point-details-zero-state-content {
+		.end-point-details-zero-state-text-content {
 			display: flex;
 			flex-direction: column;
-			align-items: center;
+			align-items: flex-start;
 			justify-content: center;
 			gap: 8px;
 
@@ -1021,6 +1031,10 @@
 			.description {
 				color: var(--Vanilla-400, #c0c1c3);
 			}
+		}
+		
+		.ant-select {
+			width: 100%;
 		}
 	}
 }

@@ -1,3 +1,4 @@
+import EndPointsZeroStateIcon from 'assets/CustomIcons/EndPointsZeroStateIcon';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
@@ -14,17 +15,21 @@ function EndPointDetailsZeroState({
 }): JSX.Element {
 	return (
 		<div className="end-point-details-zero-state-wrapper">
-			<div className="end-point-details-zero-state-icon">Icon</div>
-			<div className="end-point-details-zero-state-content-wrapper">
-				<div className="end-point-details-zero-state-content">
-					<div className="title">No endpoint selected yet</div>
-					<div className="description">Select an endpoint to see the details</div>
+			<div className="end-point-details-zero-state-content">
+				<div className="end-point-details-zero-state-icon">
+					<EndPointsZeroStateIcon />
 				</div>
-				<EndPointsDropDown
-					selectedEndPointName={endPointName}
-					setSelectedEndPointName={setSelectedEndPointName}
-					endPointDropDownDataQuery={endPointDropDownDataQuery}
-				/>
+				<div className="end-point-details-zero-state-content-wrapper">
+					<div className="end-point-details-zero-state-text-content">
+						<div className="title">No endpoint selected yet</div>
+						<div className="description">Select an endpoint to see the details</div>
+					</div>
+					<EndPointsDropDown
+						selectedEndPointName={endPointName}
+						setSelectedEndPointName={setSelectedEndPointName}
+						endPointDropDownDataQuery={endPointDropDownDataQuery}
+					/>
+				</div>
 			</div>
 		</div>
 	);
