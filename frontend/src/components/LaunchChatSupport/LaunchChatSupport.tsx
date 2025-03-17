@@ -40,7 +40,7 @@ function LaunchChatSupport({
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { notifications } = useNotifications();
 	const {
-		licenses,
+		trialInfo,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
@@ -70,7 +70,7 @@ function LaunchChatSupport({
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses
+			trialInfo
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
@@ -87,7 +87,7 @@ function LaunchChatSupport({
 				isLoggedIn &&
 				!isPremiumSupportEnabled &&
 				isChatSupportEnabled &&
-				!licenses.trialConvertedToSubscription &&
+				!trialInfo.trialConvertedToSubscription &&
 				isCloudUserVal
 			);
 		}
@@ -98,7 +98,7 @@ function LaunchChatSupport({
 		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
-		licenses,
+		trialInfo,
 	]);
 
 	const handleFacingIssuesClick = (): void => {

@@ -59,7 +59,7 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, licenses } = useAppContext();
+	const { user, featureFlags, licenses, trialInfo } = useAppContext();
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -97,7 +97,7 @@ function SideNav(): JSX.Element {
 	const licenseStatus: string =
 		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
 
-	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===

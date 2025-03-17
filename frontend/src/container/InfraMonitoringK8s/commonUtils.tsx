@@ -184,7 +184,6 @@ export const getMetricsTableData = (data: any): any[] => {
 		const columnsData = (data?.payload.data.result[0] as any).table.columns;
 		const builderQueries = data.params?.compositeQuery?.builderQueries;
 		const columns = columnsData.map((columnData: any) => {
-			console.log({ columnData });
 			if (columnData.isValueColumn) {
 				return {
 					key: columnData.name,

@@ -229,6 +229,13 @@ export const WorkspaceSuspended = Loadable(
 		),
 );
 
+export const WorkspaceAccessRestricted = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "WorkspaceAccessRestricted" */ 'pages/WorkspaceAccessRestricted'
+		),
+);
+
 export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
