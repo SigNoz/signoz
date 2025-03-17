@@ -120,17 +120,17 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 				Err: fmt.Errorf("temporality is required when metric type is Histogram"),
 			}
 		}
-
-		if updateMetricsMetadataReq.IsMonotonic && updateMetricsMetadataReq.Temporality == v3.Delta {
+		if updateMetricsMetadataReq.Temporality != v3.Cumulative && updateMetricsMetadataReq.Temporality != v3.Delta {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: fmt.Errorf("histogram metrics with Delta temporality can't be monotonically increased"),
+				Err: fmt.Errorf("invalid value for temporality"),
 			}
 		}
-	case v3.MetricTypeGauge, v3.MetricTypeSummary:
-		if updateMetricsMetadataReq.Temporality == "" {
-			updateMetricsMetadataReq.Temporality = v3.Unspecified
-		}
+
+	case v3.MetricTypeGauge:
+		updateMetricsMetadataReq.Temporality = v3.Unspecified
+	case v3.MetricTypeSummary:
+		updateMetricsMetadataReq.Temporality = v3.Cumulative
 
 	default:
 		return nil, &model.ApiError{

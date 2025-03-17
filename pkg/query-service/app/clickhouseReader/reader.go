@@ -5955,6 +5955,7 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
 
+	// Build filter conditions (if any)
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
 	whereClause := ""
 	if conditions != nil {
@@ -5976,6 +5977,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY %s %s", req.OrderBy.ColumnName, req.OrderBy.Order)
 	}
 
+	// Determine which tables to use
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
 
@@ -5989,6 +5991,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
+		AND NOT startsWith(metric_name, 'signoz_')
 		%s
 		GROUP BY t.metric_name
 		%s
@@ -6021,60 +6024,86 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
+	// If no metrics were found, return early.
 	if len(metricNames) == 0 {
 		return &response, nil
 	}
 
+	// Build a comma-separated list of quoted metric names.
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
+	// If samples are being sorted by datapoints, update the ORDER clause.
 	if dataPointsOrder {
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY s.samples %s", req.OrderBy.Order)
 	} else {
 		orderByClauseFirstQuery = ""
 	}
 
+	var sampleQuery string
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf(
-		`SELECT 
+	// Updated query uses an inner join if filters exist
+	if whereClause != "" {
+		// Use join with the local time series table for additional filtering.
+		sb.WriteString(fmt.Sprintf(
+			`SELECT 
         s.samples,
         s.metric_name,
-        s.unix_milli AS lastReceived
+        s.lastReceived
+    FROM (
+        SELECT 
+            dm.metric_name,
+            %s AS samples,
+            MAX(dm.unix_milli) AS lastReceived
+        FROM %s.%s AS dm
+        INNER JOIN (
+            SELECT fingerprint
+            FROM %s.%s
+            WHERE metric_name IN (%s)
+            %s
+            GROUP BY fingerprint
+        ) AS ts ON dm.fingerprint = ts.fingerprint
+        WHERE dm.metric_name IN (%s)
+        AND dm.unix_milli BETWEEN ? AND ?
+        GROUP BY dm.metric_name
+    ) AS s `,
+			countExp,
+			signozMetricDBName, sampleTable,
+			signozMetricDBName, localTsTable,
+			metricsList,
+			whereClause,
+			metricsList))
+	} else {
+		// If no additional filters, no join is necessary.
+		sb.WriteString(fmt.Sprintf(
+			`SELECT 
+        s.samples,
+        s.metric_name,
+        s.lastReceived
     FROM (
         SELECT 
             metric_name,
             %s AS samples,
-            max(unix_milli) as unix_milli
+            MAX(unix_milli) AS lastReceived
         FROM %s.%s
-        `, countExp, signozMetricDBName, sampleTable))
-
-	// Conditionally add the fingerprint subquery if `whereClause` is present
-	if whereClause != "" {
-		sb.WriteString(fmt.Sprintf(
-			`WHERE fingerprint IN (
-            SELECT fingerprint 
-            FROM %s.%s
-            WHERE unix_milli BETWEEN ? AND ?
-            %s
-            AND metric_name IN (%s)
-            GROUP BY fingerprint
-        ) 
-        AND metric_name IN (%s) `,
-			signozMetricDBName, localTsTable, whereClause, metricsList, metricsList))
-	} else {
-		sb.WriteString(fmt.Sprintf(
-			`WHERE metric_name IN (%s) `, metricsList))
+        WHERE metric_name IN (%s)
+        AND unix_milli BETWEEN ? AND ?
+        GROUP BY metric_name
+    ) AS s `,
+			countExp,
+			signozMetricDBName, sampleTable,
+			metricsList))
 	}
 
-	sb.WriteString(`GROUP BY metric_name ) AS s `)
-
+	// Append ORDER BY clause if provided.
 	if orderByClauseFirstQuery != "" {
-		sb.WriteString(orderByClauseFirstQuery)
+		sb.WriteString(orderByClauseFirstQuery + " ")
 	}
 
-	sb.WriteString(fmt.Sprintf(" LIMIT %d;", req.Limit))
+	// Append LIMIT clause.
+	sb.WriteString(fmt.Sprintf("LIMIT %d;", req.Limit))
+	sampleQuery = sb.String()
 
-	sampleQuery := sb.String()
-
+	// Append the time boundaries for sampleQuery.
 	args = append(args, start, end)
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
 	if err != nil {
@@ -6114,6 +6143,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 	response.Metrics = filteredMetrics
 
+	// If ordering by samples, sort in-memory.
 	if dataPointsOrder {
 		sort.Slice(response.Metrics, func(i, j int) bool {
 			return response.Metrics[i].Samples > response.Metrics[j].Samples
@@ -6195,8 +6225,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	var args []interface{}
 
-	// Build the filter conditions
-	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
+	conditions, _ := utils.BuildFilterConditions(&req.Filters, "ts")
 	whereClause := ""
 	if conditions != nil {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
@@ -6206,26 +6235,22 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
 
-	// Construct the metrics query
 	queryLimit := 50 + req.Limit
 	metricsQuery := fmt.Sprintf(
 		`SELECT 
-		    t.metric_name AS metric_name,
-		    uniq(t.fingerprint) AS timeSeries
-		FROM %s.%s AS t
-		WHERE unix_milli BETWEEN ? AND ?
+		    ts.metric_name AS metric_name,
+		    uniq(ts.fingerprint) AS timeSeries
+		FROM %s.%s AS ts
+		WHERE NOT startsWith(ts.metric_name, 'signoz_')
 		%s
-		GROUP BY t.metric_name
+		GROUP BY ts.metric_name
 		ORDER BY timeSeries DESC
 		LIMIT %d;`,
 		signozMetricDBName, tsTable, whereClause, queryLimit,
 	)
 
-	args = append(args, start, end)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-
-	// Execute the metrics query
-	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
+	rows, err := r.db.Query(valueCtx, metricsQuery)
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -6256,7 +6281,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	// Format metric names for query
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
 
-	// Build query using string builder for better performance
+	// Build optimized query with JOIN but `unix_milli` filter only on the sample table
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf(
@@ -6272,46 +6297,45 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		FROM 
 		(
 			SELECT 
-				metric_name,
+				dm.metric_name,
 				%s AS samples
-			FROM %s.%s`,
+			FROM %s.%s AS dm`,
 		countExp, signozMetricDBName, sampleTable, // Total samples
 		countExp, signozMetricDBName, sampleTable, // Inner select samples
 	))
 
-	// Conditionally add the fingerprint subquery if whereClause is present
+	// Apply `unix_milli` filter **only** on the sample table (`dm`)
+	sb.WriteString(` WHERE dm.unix_milli BETWEEN ? AND ?`)
+
+	// Use JOIN instead of IN (subquery) when additional filters exist
 	if whereClause != "" {
 		sb.WriteString(fmt.Sprintf(
-			` WHERE fingerprint IN (
-				SELECT fingerprint 
-				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ?
+			` AND dm.fingerprint IN (
+				SELECT ts.fingerprint 
+				FROM %s.%s AS ts
+				WHERE ts.metric_name IN (%s)
 				%s
-				AND metric_name IN (%s)
-				GROUP BY fingerprint
-			)
-			AND metric_name IN (%s)`,
-			signozMetricDBName, localTsTable, whereClause, metricsList,
-			metricsList,
-		))
-	} else {
-		sb.WriteString(fmt.Sprintf(
-			` WHERE metric_name IN (%s)`,
-			metricsList,
+				GROUP BY ts.fingerprint
+			)`,
+			signozMetricDBName, localTsTable, metricsList, whereClause,
 		))
 	}
 
-	sb.WriteString(`
-			GROUP BY metric_name
+	// Apply metric filtering after all conditions
+	sb.WriteString(fmt.Sprintf(
+		` AND dm.metric_name IN (%s)
+			GROUP BY dm.metric_name
 		) AS s
 		JOIN TotalSamples t ON 1 = 1
 		ORDER BY percentage DESC
-		LIMIT ?;`)
+		LIMIT ?;`,
+		metricsList,
+	))
 
 	sampleQuery := sb.String()
 
-	// Add start and end time to args
-	args = append(args, start, end)
+	// Add start and end time to args (only for sample table)
+	args = append(args, start, end, start, end, req.Limit)
 
 	// Execute the sample percentage query
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
@@ -6844,6 +6868,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 		WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	fmt.Printf("Executing Query: %q\n", query)
 	row := r.db.QueryRow(valueCtx, query, metricName)
 	err = row.Scan(
 		&metricsMetadata.MetricName,

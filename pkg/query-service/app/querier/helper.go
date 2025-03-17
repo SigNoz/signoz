@@ -228,7 +228,7 @@ func (q *querier) runBuilderQuery(
 		return
 	}
 
-	if builderQuery.DataSource == v3.DataSourceMetrics {
+	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
 		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
 		if apiError == nil && metadata != nil {
 			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(metadata.MetricType)
