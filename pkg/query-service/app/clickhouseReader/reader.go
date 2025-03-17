@@ -6732,7 +6732,8 @@ LIMIT 40`, // added rand to get diff value every time we run this query
 
 func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError {
 	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataLocalTable)
-	err := r.db.Exec(ctx, delQuery, metricName)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.Exec(valueCtx, delQuery, metricName)
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6775,7 +6776,8 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model
 	}
 	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
 VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
-	err := r.db.Exec(ctx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt.UnixMilli())
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.Exec(valueCtx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt.UnixMilli())
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
@@ -6809,7 +6811,8 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 	}
 
 	var hasLE bool
-	err := r.db.QueryRow(ctx, query, args...).Scan(&hasLE)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.QueryRow(valueCtx, query, args...).Scan(&hasLE)
 	if err != nil {
 		return false, &model.ApiError{
 			Typ: "ClickHouseError",
@@ -6840,7 +6843,8 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 		FROM %s.%s 
 		WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 
-	row := r.db.QueryRow(ctx, query, metricName)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	row := r.db.QueryRow(valueCtx, query, metricName)
 	err = row.Scan(
 		&metricsMetadata.MetricName,
 		&metricsMetadata.MetricType,
@@ -6870,7 +6874,8 @@ func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
 	// Fetch all rows from ClickHouse
 	query := fmt.Sprintf(`SELECT metric_name, type, description , temporality, is_monotonic, unit
 		FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
-	err := r.db.Select(ctx, &allMetricsMetadata, query)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.Select(valueCtx, &allMetricsMetadata, query)
 	if err != nil {
 		errorList = append(errorList, err)
 		return errorList

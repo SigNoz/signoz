@@ -117,7 +117,7 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 		if updateMetricsMetadataReq.Temporality == "" {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: fmt.Errorf("temporality is required when metric type is Sum"),
+				Err: fmt.Errorf("temporality is required when metric type is Histogram"),
 			}
 		}
 
