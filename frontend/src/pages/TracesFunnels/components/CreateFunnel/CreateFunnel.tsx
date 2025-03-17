@@ -40,7 +40,7 @@ function CreateFunnel({ isOpen, onClose }: CreateFunnelProps): JSX.Element {
 					onClose();
 					if (data?.payload?.funnel_id) {
 						safeNavigate(
-							generatePath(ROUTES.TRACES_FUNNELS_DETAILS, {
+							generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
 								funnelId: data.payload.funnel_id,
 							}),
 						);
