@@ -116,9 +116,11 @@ function FunnelListItem({
 				</div>
 
 				<div className="funnel-item__user">
-					<div className="funnel-item__user-avatar">
-						{funnel.user.substring(0, 1).toUpperCase()}
-					</div>
+					{funnel.user && (
+						<div className="funnel-item__user-avatar">
+							{funnel.user.substring(0, 1).toUpperCase()}
+						</div>
+					)}
 					<div>{funnel.user}</div>
 				</div>
 			</div>
