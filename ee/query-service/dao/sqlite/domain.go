@@ -12,19 +12,9 @@ import (
 	"github.com/google/uuid"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
-
-// StoredDomain represents stored database record for org domain
-
-type StoredDomain struct {
-	Id        uuid.UUID `db:"id"`
-	Name      string    `db:"name"`
-	OrgId     string    `db:"org_id"`
-	Data      string    `db:"data"`
-	CreatedAt int64     `db:"created_at"`
-	UpdatedAt int64     `db:"updated_at"`
-}
 
 // GetDomainFromSsoResponse uses relay state received from IdP to fetch
 // user domain. The domain is further used to process validity of the response.
@@ -78,8 +68,12 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 // GetDomainByName returns org domain for a given domain name
 func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.OrgDomain, basemodel.BaseApiError) {
 
-	stored := StoredDomain{}
-	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE name=$1 LIMIT 1`, name)
+	stored := types.OrgDomain{}
+	err := m.DB().NewSelect().
+		Model(&stored).
+		Where("name = ?", name).
+		Limit(1).
+		Scan(ctx)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -88,7 +82,7 @@ func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.Org
 		return nil, model.InternalError(err)
 	}
 
-	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
+	domain := &model.OrgDomain{Id: uuid.MustParse(stored.ID), Name: stored.Name, OrgId: stored.OrgID}
 	if err := domain.LoadConfig(stored.Data); err != nil {
 		return nil, model.InternalError(err)
 	}
@@ -98,8 +92,12 @@ func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.Org
 // GetDomain returns org domain for a given domain id
 func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, basemodel.BaseApiError) {
 
-	stored := StoredDomain{}
-	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE id=$1 LIMIT 1`, id)
+	stored := types.OrgDomain{}
+	err := m.DB().NewSelect().
+		Model(&stored).
+		Where("id = ?", id).
+		Limit(1).
+		Scan(ctx)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -108,7 +106,7 @@ func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomai
 		return nil, model.InternalError(err)
 	}
 
-	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
+	domain := &model.OrgDomain{Id: uuid.MustParse(stored.ID), Name: stored.Name, OrgId: stored.OrgID}
 	if err := domain.LoadConfig(stored.Data); err != nil {
 		return nil, model.InternalError(err)
 	}
@@ -119,8 +117,11 @@ func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomai
 func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, basemodel.BaseApiError) {
 	domains := []model.OrgDomain{}
 
-	stored := []StoredDomain{}
-	err := m.DB().SelectContext(ctx, &stored, `SELECT * FROM org_domains WHERE org_id=$1`, orgId)
+	stored := []types.OrgDomain{}
+	err := m.DB().NewSelect().
+		Model(&stored).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -130,7 +131,7 @@ func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDo
 	}
 
 	for _, s := range stored {
-		domain := model.OrgDomain{Id: s.Id, Name: s.Name, OrgId: s.OrgId}
+		domain := model.OrgDomain{Id: uuid.MustParse(s.ID), Name: s.Name, OrgId: s.OrgID}
 		if err := domain.LoadConfig(s.Data); err != nil {
 			zap.L().Error("ListDomains() failed", zap.Error(err))
 		}
@@ -235,8 +236,12 @@ func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.O
 
 	parsedDomain := components[1]
 
-	stored := StoredDomain{}
-	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE name=$1 LIMIT 1`, parsedDomain)
+	stored := types.OrgDomain{}
+	err := m.DB().NewSelect().
+		Model(&stored).
+		Where("name = ?", parsedDomain).
+		Limit(1).
+		Scan(ctx)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -245,7 +250,7 @@ func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.O
 		return nil, model.InternalError(err)
 	}
 
-	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
+	domain := &model.OrgDomain{Id: uuid.MustParse(stored.ID), Name: stored.Name, OrgId: stored.OrgID}
 	if err := domain.LoadConfig(stored.Data); err != nil {
 		return nil, model.InternalError(err)
 	}

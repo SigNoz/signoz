@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basedao "go.signoz.io/signoz/pkg/query-service/dao"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -20,7 +20,7 @@ type ModelDao interface {
 	// SetFlagProvider sets the feature lookup provider
 	SetFlagProvider(flags baseint.FeatureLookup)
 
-	DB() *sqlx.DB
+	DB() *bun.DB
 
 	// auth methods
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
@@ -35,12 +35,12 @@ type ModelDao interface {
 	DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError
 	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError)
 
-	CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError)
-	UpdatePAT(ctx context.Context, p model.PAT, id string) basemodel.BaseApiError
+	CreatePAT(ctx context.Context, orgID string, p model.PAT) (model.PAT, basemodel.BaseApiError)
+	UpdatePAT(ctx context.Context, orgID string, p model.PAT, id string) basemodel.BaseApiError
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
-	UpdatePATLastUsed(ctx context.Context, pat string, lastUsed int64) basemodel.BaseApiError
-	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
-	GetUserByPAT(ctx context.Context, token string) (*types.GettableUser, basemodel.BaseApiError)
-	ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApiError)
-	RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError
+	UpdatePATLastUsed(ctx context.Context, orgID string, pat string, lastUsed int64) basemodel.BaseApiError
+	GetPATByID(ctx context.Context, orgID string, id string) (*model.PAT, basemodel.BaseApiError)
+	GetUserByPAT(ctx context.Context, orgID string, token string) (*types.GettableUser, basemodel.BaseApiError)
+	ListPATs(ctx context.Context, orgID string) ([]model.PAT, basemodel.BaseApiError)
+	RevokePAT(ctx context.Context, orgID string, id string, userID string) basemodel.BaseApiError
 }

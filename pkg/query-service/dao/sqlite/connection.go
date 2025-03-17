@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -14,13 +13,13 @@ import (
 )
 
 type ModelDaoSqlite struct {
-	db    *sqlx.DB
+	// db    *sqlx.DB
 	bundb *bun.DB
 }
 
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
-	mds := &ModelDaoSqlite{db: sqlStore.SQLxDB(), bundb: sqlStore.BunDB()}
+	mds := &ModelDaoSqlite{bundb: sqlStore.BunDB()}
 
 	ctx := context.Background()
 	if err := mds.initializeOrgPreferences(ctx); err != nil {
@@ -38,8 +37,8 @@ func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
 }
 
 // DB returns database connection
-func (mds *ModelDaoSqlite) DB() *sqlx.DB {
-	return mds.db
+func (mds *ModelDaoSqlite) DB() *bun.DB {
+	return mds.bundb
 }
 
 // initializeOrgPreferences initializes in-memory telemetry settings. It is planned to have
