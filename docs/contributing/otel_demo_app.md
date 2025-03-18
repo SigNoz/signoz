@@ -74,13 +74,13 @@ This spins up multiple microservices, with OpenTelemetry instrumentation enabled
 docker compose ps -a
 ```
 The result should look similar to this,
-![](/signoz/docs/contributing/img/docker_containers.png)
+![](/docs/contributing/img/docker_containers.png)
 
 ## Monitor with SigNoz
 1. Open your SigNoz account
-2. Navigate to Services to see multiple services listed down.
+2. Navigate to Services to see multiple services listed down as shown in the snapshot below.
 
-![](/signoz/docs/contributing/img/demo_services.png)
+![](/docs/contributing/img/demo_services.png)
 
 
 # Send data to SigNoz Cloud from OpenTelemetery Demo App [Kubernetes/ Helm charts]
@@ -144,21 +144,22 @@ kubectl create namespace otel-demo
 helm install my-otel-demo open-telemetry/opentelemetry-demo --namespace otel-demo -f values.yaml
 ```
 You should see a similar output on your terminal,
-![](/signoz/docs/contributing/img/otel_demo_helm.png)
+![](/docs/contributing/img/otel_demo_helm.png)
 
 To verify if all the pods are running,
 ```sh
 kubectl get pods -n otel-demo 
 ```
 The output should look similar to this,
-![](/signoz/docs/contributing/img/otel_demo_pods.png)
+
+![](/docs/contributing/img/otel_demo_pods.png)
 
 
 ## Monitor with SigNoz
 1. Open your SigNoz account
-2. Navigate to Services to see multiple services listed down.
+2. Navigate to Services to see multiple services listed down as shown in the snapshot below.
 
-![](/signoz/docs/contributing//img/demo_services.png)
+![](/docs/contributing//img/demo_services.png)
 
 
 # SigNoz Monitoring - Beyond the Cloud
