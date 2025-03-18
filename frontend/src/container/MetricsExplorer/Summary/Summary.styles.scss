@@ -6,7 +6,19 @@
 
 	.metrics-table-title,
 	.metrics-treemap-title {
-		margin-top: 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 16px;
+
+		.ant-typography {
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+
+		.lucide-info {
+			cursor: pointer;
+		}
 	}
 
 	.metrics-search-container {
@@ -17,6 +29,20 @@
 		.metrics-search-options {
 			display: flex;
 			justify-content: space-between;
+		}
+
+		.qb-search-container {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.lucide-info {
+				cursor: pointer;
+			}
+
+			.query-builder-search-container {
+				width: 100%;
+			}
 		}
 	}
 

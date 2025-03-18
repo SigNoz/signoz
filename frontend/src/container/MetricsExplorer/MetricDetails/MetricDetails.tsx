@@ -56,29 +56,21 @@ function MetricDetails({
 
 	const isMetricDetailsLoading = isLoading || isFetching;
 
-	const timeSeriesActiveTooltip = useMemo(
-		() => (
-			<div>
-				<Typography.Text>
-					Active time series are those that have received data points in the last 1
-					hour.
-				</Typography.Text>
-			</div>
-		),
-		[],
-	);
-
 	const timeSeries = useMemo(() => {
 		if (!metric) return null;
 		const timeSeriesActive = formatNumberToCompactFormat(metric.timeSeriesActive);
 		const timeSeriesTotal = formatNumberToCompactFormat(metric.timeSeriesTotal);
 
 		return (
-			<Tooltip title={timeSeriesActiveTooltip} placement="top">
+			<Tooltip
+				title="Active time series are those that have received data points in the last 1
+					hour."
+				placement="top"
+			>
 				<span>{`${timeSeriesTotal} ⎯ ${timeSeriesActive} active`}</span>
 			</Tooltip>
 		);
-	}, [metric, timeSeriesActiveTooltip]);
+	}, [metric]);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {
