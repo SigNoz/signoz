@@ -11,6 +11,7 @@ import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -20,18 +21,29 @@ import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import {
+	LicensePlatform,
+	LicenseV3ResModel,
+} from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 
+import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
 const homeInterval = 30 * 60 * 1000;
 
 // Extracted EmptyState component
 const EmptyState = memo(
-	({ user }: { user: IUser }): JSX.Element => (
+	({
+		user,
+		activeLicenseV3,
+	}: {
+		user: IUser;
+		activeLicenseV3: LicenseV3ResModel | null;
+	}): JSX.Element => (
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
@@ -48,19 +60,31 @@ const EmptyState = memo(
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={ROUTES.GET_STARTED}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								onClick={(): void => {
-									logEvent('Homepage: Get Started clicked', {
-										source: 'Service Metrics',
-									});
-								}}
-							>
-								Get Started &nbsp; <ArrowRight size={16} />
-							</Button>
-						</Link>
+						<Button
+							type="default"
+							className="periscope-btn secondary"
+							onClick={(): void => {
+								logEvent('Homepage: Get Started clicked', {
+									source: 'Service Metrics',
+								});
+
+								if (
+									activeLicenseV3 &&
+									activeLicenseV3.platform === LicensePlatform.CLOUD
+								) {
+									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+								} else {
+									window?.open(
+										DOCS_LINKS.ADD_DATA_SOURCE,
+										'_blank',
+										'noopener noreferrer',
+									);
+								}
+							}}
+						>
+							Get Started &nbsp; <ArrowRight size={16} />
+						</Button>
+
 						<Button
 							type="link"
 							className="learn-more-link"
@@ -122,7 +146,7 @@ function ServiceMetrics({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { user } = useAppContext();
+	const { user, activeLicenseV3 } = useAppContext();
 
 	const [timeRange, setTimeRange] = useState(() => {
 		const now = new Date().getTime();
@@ -311,7 +335,7 @@ function ServiceMetrics({
 				{servicesExist ? (
 					<ServicesListTable services={top5Services} onRowClick={handleRowClick} />
 				) : (
-					<EmptyState user={user} />
+					<EmptyState user={user} activeLicenseV3={activeLicenseV3} />
 				)}
 			</Card.Content>
 
