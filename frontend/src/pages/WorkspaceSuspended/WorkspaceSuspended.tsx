@@ -56,15 +56,15 @@ function WorkspaceSuspended(): JSX.Element {
 	}, [manageCreditCard]);
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+		if (!isFetchingActiveLicenseV3) {
 			const shouldSuspendWorkspace =
-				activeLicenseV3.state === LicenseState.DEFAULTED;
+				activeLicenseV3?.state === LicenseState.DEFAULTED;
 
 			if (
 				!shouldSuspendWorkspace ||
 				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.APPLICATION);
+				history.push(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);

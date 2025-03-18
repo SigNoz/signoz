@@ -6,7 +6,11 @@ import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData'
 import history from 'lib/history';
 import { Globe, Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
+import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
+
+import { DOCS_LINKS } from '../constants';
 
 function DataSourceInfo({
 	dataSentToSigNoz,
@@ -15,6 +19,8 @@ function DataSourceInfo({
 	dataSentToSigNoz: boolean;
 	isLoading: boolean;
 }): JSX.Element {
+	const { activeLicenseV3 } = useAppContext();
+
 	const notSendingData = !dataSentToSigNoz;
 
 	const {
@@ -77,12 +83,36 @@ function DataSourceInfo({
 								tabIndex={0}
 								onClick={(): void => {
 									logEvent('Homepage: Connect dataSource clicked', {});
-									history.push(ROUTES.GET_STARTED);
+
+									if (
+										activeLicenseV3 &&
+										activeLicenseV3.platform === LicensePlatform.CLOUD
+									) {
+										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									} else {
+										window?.open(
+											DOCS_LINKS.ADD_DATA_SOURCE,
+											'_blank',
+											'noopener noreferrer',
+										);
+									}
 								}}
 								onKeyDown={(e): void => {
 									if (e.key === 'Enter') {
 										logEvent('Homepage: Connect dataSource clicked', {});
-										history.push(ROUTES.GET_STARTED);
+
+										if (
+											activeLicenseV3 &&
+											activeLicenseV3.platform === LicensePlatform.CLOUD
+										) {
+											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										} else {
+											window?.open(
+												DOCS_LINKS.ADD_DATA_SOURCE,
+												'_blank',
+												'noopener noreferrer',
+											);
+										}
 									}
 								}}
 							>

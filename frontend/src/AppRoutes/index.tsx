@@ -44,7 +44,6 @@ function App(): JSX.Element {
 		trialInfo,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
-		activeLicenseV3FetchError,
 		userFetchError,
 		licensesFetchError,
 		featureFlagsFetchError,
@@ -264,12 +263,7 @@ function App(): JSX.Element {
 	// if the user is in logged in state
 	if (isLoggedInState) {
 		// if the setup calls are loading then return a spinner
-		if (
-			isFetchingLicenses ||
-			isFetchingUser ||
-			isFetchingFeatureFlags ||
-			isFetchingActiveLicenseV3
-		) {
+		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
 			return <Spinner tip="Loading..." />;
 		}
 
@@ -277,7 +271,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (
-			(userFetchError || licensesFetchError || activeLicenseV3FetchError) &&
+			(userFetchError || licensesFetchError) &&
 			pathname !== ROUTES.SOMETHING_WENT_WRONG
 		) {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
@@ -287,8 +281,7 @@ function App(): JSX.Element {
 		if (
 			(!licenses || !user.email || !featureFlags) &&
 			!userFetchError &&
-			!licensesFetchError &&
-			!activeLicenseV3FetchError
+			!licensesFetchError
 		) {
 			return <Spinner tip="Loading..." />;
 		}
