@@ -24,3 +24,11 @@ export const METRIC_TYPE_LABEL_MAP = {
 	[MetricType.SUMMARY]: 'Summary',
 	[MetricType.EXPONENTIAL_HISTOGRAM]: 'Exp. Histogram',
 };
+
+export const METRIC_TYPE_VALUES_MAP = {
+	[MetricType.SUM]: 'sum',
+	[MetricType.GAUGE]: 'gauge',
+	[MetricType.HISTOGRAM]: 'histogram',
+	[MetricType.SUMMARY]: 'summary',
+	[MetricType.EXPONENTIAL_HISTOGRAM]: 'exponential_histogram',
+};
