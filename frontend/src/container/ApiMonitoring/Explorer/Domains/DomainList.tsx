@@ -34,7 +34,6 @@ function DomainList({
 	handleChangeQueryData: HandleChangeQueryData;
 }): JSX.Element {
 	const [selectedDomainIndex, setSelectedDomainIndex] = useState<number>(-1);
-
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -123,10 +122,13 @@ function DomainList({
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"
-				onRow={(_, index): { onClick: () => void; className: string } => ({
+				onRow={(record, index): { onClick: () => void; className: string } => ({
 					onClick: (): void => {
 						if (index !== undefined) {
-							setSelectedDomainIndex(index);
+							const dataIndex = formattedDataForTable.findIndex(
+								(item) => item.key === record.key,
+							);
+							setSelectedDomainIndex(dataIndex);
 						}
 					},
 					className: 'expanded-clickable-row',
