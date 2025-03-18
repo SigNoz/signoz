@@ -18,6 +18,7 @@ import EndPointDetailsZeroState from './components/EndPointDetailsZeroState';
 import EndPointMetrics from './components/EndPointMetrics';
 import EndPointsDropDown from './components/EndPointsDropDown';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
+import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
 
 function EndPointDetails({
@@ -74,6 +75,8 @@ function EndPointDetails({
 		endPointLatencyOverTimeDataQuery,
 		endPointDropDownDataQuery,
 		endPointDependentServicesDataQuery,
+		endPointStatusCodeBarChartsDataQuery,
+		endPointStatusCodeLatencyBarChartsDataQuery,
 	] = useMemo(
 		() => [
 			endPointDetailsDataQueries[0],
@@ -82,6 +85,8 @@ function EndPointDetails({
 			endPointDetailsDataQueries[3],
 			endPointDetailsDataQueries[4],
 			endPointDetailsDataQueries[5],
+			endPointDetailsDataQueries[6],
+			endPointDetailsDataQueries[7],
 		],
 		[endPointDetailsDataQueries],
 	);
@@ -117,6 +122,12 @@ function EndPointDetails({
 					dependentServicesQuery={endPointDependentServicesDataQuery}
 				/>
 			)}
+			<StatusCodeBarCharts
+				endPointStatusCodeBarChartsDataQuery={endPointStatusCodeBarChartsDataQuery}
+				endPointStatusCodeLatencyBarChartsDataQuery={
+					endPointStatusCodeLatencyBarChartsDataQuery
+				}
+			/>
 			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
 			<MetricOverTimeGraph
 				metricOverTimeDataQuery={endPointRateOverTimeDataQuery}

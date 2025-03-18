@@ -1431,7 +1431,7 @@ export const getEndPointDetailsQueryPayload = (
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TABLE,
+		graphType: PANEL_TYPES.TIME_SERIES,
 		query: {
 			builder: {
 				queryData: [
@@ -1523,14 +1523,14 @@ export const getEndPointDetailsQueryPayload = (
 			queryType: EQueryType.QUERY_BUILDER,
 		},
 		variables: {},
-		formatForWeb: true,
+		formatForWeb: false,
 		start,
 		end,
 		step: 60,
 	},
 	{
 		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TABLE,
+		graphType: PANEL_TYPES.TIME_SERIES,
 		query: {
 			builder: {
 				queryData: [
@@ -1623,7 +1623,7 @@ export const getEndPointDetailsQueryPayload = (
 			queryType: EQueryType.QUERY_BUILDER,
 		},
 		variables: {},
-		formatForWeb: true,
+		formatForWeb: false,
 		start,
 		end,
 		step: 60,
@@ -1716,7 +1716,12 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 
 export const apiWidgetInfo = [
 	{ title: 'Rate over time', yAxisUnit: 'ops/s' },
-	{ title: 'Latency over time', yAxisUnit: 'ns' }, // TODO: check the format for proper label
+	{ title: 'Latency over time', yAxisUnit: 'ns' },
+];
+
+export const statusCodeWidgetInfo = [
+	{ yAxisUnit: 'calls' },
+	{ yAxisUnit: 'ns' },
 ];
 
 interface EndPointDropDownResponseRow {

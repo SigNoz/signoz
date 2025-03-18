@@ -875,6 +875,10 @@
 
 	border: 1px solid var(--bg-slate-500);
 
+	.header {
+		display: flex;
+		justify-content: space-between;
+	}
 	.graph-container {
 		height: 300px;
 	}
@@ -903,6 +907,33 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
+	}
+
+	.views-tabs {
+		color: var(--text-vanilla-400);
+
+		.ant-btn {
+			box-shadow: none;
+		}
+
+		.tab {
+			border: 1px solid var(--bg-slate-400);
+			width: 114px;
+		}
+
+		.tab::before {
+			background: var(--Ink-400, #121317)
+		}
+
+		.selected_view {
+			background: var(--Slate-400, #1d212d);
+			color: var(--text-vanilla-100);
+			border: 1px solid var(--bg-slate-400);
+		}
+
+		.selected_view::before {
+			background: var(--Ink-400, #121317)
+		}
 	}
 }
 
