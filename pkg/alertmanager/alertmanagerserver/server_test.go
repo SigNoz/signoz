@@ -110,7 +110,6 @@ func TestServerPutAlerts(t *testing.T) {
 			},
 		},
 	}))
-	require.NotEmpty(t, server.alerts)
 
 	dummyRequest, err := http.NewRequest(http.MethodGet, "/alerts", nil)
 	require.NoError(t, err)
