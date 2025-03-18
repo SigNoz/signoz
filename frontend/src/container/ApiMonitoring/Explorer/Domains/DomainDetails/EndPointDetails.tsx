@@ -14,7 +14,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import DependentServices from './components/DependentServices';
-import EndPointDetailsZeroState from './components/EndPointDetailsZeroState';
 import EndPointMetrics from './components/EndPointMetrics';
 import EndPointsDropDown from './components/EndPointsDropDown';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
@@ -90,15 +89,6 @@ function EndPointDetails({
 		],
 		[endPointDetailsDataQueries],
 	);
-	if (endPointName === '') {
-		return (
-			<EndPointDetailsZeroState
-				endPointName={endPointName}
-				setSelectedEndPointName={setSelectedEndPointName}
-				endPointDropDownDataQuery={endPointDropDownDataQuery}
-			/>
-		);
-	}
 
 	return (
 		<div className="endpoint-details-container">

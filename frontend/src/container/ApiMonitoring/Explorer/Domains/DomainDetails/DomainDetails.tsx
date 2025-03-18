@@ -11,7 +11,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
-import EndPointDetails from './EndPointDetails';
+import EndPointDetailsWrapper from './EndPointDetailsWrapper';
 
 function DomainDetails({
 	domainData,
@@ -51,15 +51,23 @@ function DomainDetails({
 					<Button.Group className="domain-details-drawer-header-ctas">
 						<Button
 							className="domain-navigate-cta"
-							onClick={(): void => setSelectedDomainIndex(selectedDomainIndex - 1)}
+							onClick={(): void => {
+								setSelectedDomainIndex(selectedDomainIndex - 1);
+								setSelectedEndPointName('');
+							}}
 							icon={<ArrowUp size={16} />}
 							disabled={selectedDomainIndex === 0}
+							title="Previous domain"
 						/>
 						<Button
 							className="domain-navigate-cta"
-							onClick={(): void => setSelectedDomainIndex(selectedDomainIndex + 1)}
+							onClick={(): void => {
+								setSelectedDomainIndex(selectedDomainIndex + 1);
+								setSelectedEndPointName('');
+							}}
 							icon={<ArrowDown size={16} />}
 							disabled={selectedDomainIndex === domainListLength - 1}
+							title="Next domain"
 						/>
 					</Button.Group>
 				</div>
@@ -116,7 +124,7 @@ function DomainDetails({
 					)}
 
 					{selectedView === VIEW_TYPES.ENDPOINT_DETAILS && (
-						<EndPointDetails
+						<EndPointDetailsWrapper
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={setSelectedEndPointName}

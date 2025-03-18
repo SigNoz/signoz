@@ -1630,6 +1630,95 @@ export const getEndPointDetailsQueryPayload = (
 	},
 ];
 
+export const getEndPointZeroStateQueryPayload = (
+	domainName: string,
+	start: number,
+	end: number,
+): GetQueryResultsProps[] => [
+	{
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TABLE,
+		query: {
+			builder: {
+				queryData: [
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'A',
+						aggregateOperator: 'count',
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							key: '',
+							isColumn: false,
+							type: '',
+						},
+						timeAggregation: 'count',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							items: [
+								{
+									id: '3db61dd6',
+									key: {
+										key: 'net.peer.name',
+										dataType: DataTypes.String,
+										type: 'tag',
+										isColumn: false,
+										isJSON: false,
+									},
+									op: '=',
+									value: domainName,
+								},
+							],
+							op: 'AND',
+						},
+						expression: 'A',
+						disabled: false,
+						stepInterval: 60,
+						having: [],
+						legend: '',
+						limit: null,
+						orderBy: [],
+						groupBy: [
+							{
+								key: 'http.url',
+								dataType: DataTypes.String,
+								type: 'tag',
+								isColumn: false,
+								isJSON: false,
+							},
+						],
+						reduceTo: 'avg',
+					},
+				],
+				queryFormulas: [],
+			},
+			clickhouse_sql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
+			promql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		variables: {},
+		formatForWeb: true,
+		start,
+		end,
+		step: 60,
+	},
+];
+
 interface EndPointMetricsResponseRow {
 	data: {
 		A: number;
