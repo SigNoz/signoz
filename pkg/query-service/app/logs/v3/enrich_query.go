@@ -92,7 +92,7 @@ func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
 		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
 			continue
 		}
-		EnrichLogsQuery(query, fields)
+		_ = EnrichLogsQuery(query, fields)
 	}
 }
 

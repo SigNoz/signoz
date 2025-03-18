@@ -96,12 +96,15 @@ const (
 	signozTSLocalTableNameV41Week = "time_series_v4_1week"
 	signozTSTableNameV41Week      = "distributed_time_series_v4_1week"
 
-	signozTableAttributesMetadata         = "distributed_attributes_metadata"
-	signozLocalTableAttributesMetadata    = "attributes_metadata"
-	minTimespanForProgressiveSearch       = time.Hour
-	minTimespanForProgressiveSearchMargin = time.Minute
-	maxProgressiveSteps                   = 4
-	charset                               = "abcdefghijklmnopqrstuvwxyz" +
+	signozTableAttributesMetadata      = "distributed_attributes_metadata"
+	signozLocalTableAttributesMetadata = "attributes_metadata"
+
+	signozUpdatedMetricsMetadataLocalTable = "updated_metadata"
+	signozUpdatedMetricsMetadataTable      = "distributed_updated_metadata"
+	minTimespanForProgressiveSearch        = time.Hour
+	minTimespanForProgressiveSearchMargin  = time.Minute
+	maxProgressiveSteps                    = 4
+	charset                                = "abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	NANOSECOND = 1000000000
 )
@@ -1140,7 +1143,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1288,7 +1291,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
@@ -2883,8 +2886,22 @@ func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
 }
 
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
-
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	var metricNamesToQuery []string
+	for _, metricName := range metricNames {
+		updatedMetadata, cacheErr := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		if cacheErr != nil {
+			zap.L().Info("Error in getting metrics cached metadata", zap.Error(cacheErr))
+		}
+		if updatedMetadata != nil {
+			if _, exists := metricNameToTemporality[metricName]; !exists {
+				metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+			}
+			metricNameToTemporality[metricName][updatedMetadata.Temporality] = true
+		} else {
+			metricNamesToQuery = append(metricNamesToQuery, metricName)
+		}
+	}
 
 	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableNameV41Day)
 
@@ -3714,6 +3731,13 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 			continue
 		}
 
+		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+		if apiError == nil && metadata != nil {
+			typ = string(metadata.MetricType)
+			isMonotonic = metadata.IsMonotonic
+			temporality = string(metadata.Temporality)
+		}
+
 		// Non-monotonic cumulative sums are treated as gauges
 		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
 			typ = "Gauge"
@@ -3832,6 +3856,18 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		}
 		if temporality == string(v3.Delta) {
 			deltaExists = true
+		}
+	}
+	metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
+	if apiError == nil && metadata != nil {
+		metricType = string(metadata.MetricType)
+		temporality = string(metadata.Temporality)
+		if temporality == string(v3.Delta) {
+			deltaExists = true
+		}
+		isMonotonic = metadata.IsMonotonic
+		if metadata.Description != "" {
+			description = metadata.Description
 		}
 	}
 
@@ -5919,6 +5955,7 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
 	var args []interface{}
 
+	// Build filter conditions (if any)
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
 	whereClause := ""
 	if conditions != nil {
@@ -5940,6 +5977,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY %s %s", req.OrderBy.ColumnName, req.OrderBy.Order)
 	}
 
+	// Determine which tables to use
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
 
@@ -5953,6 +5991,8 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
+		AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		%s
 		GROUP BY t.metric_name
 		%s
@@ -5985,60 +6025,86 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
+	// If no metrics were found, return early.
 	if len(metricNames) == 0 {
 		return &response, nil
 	}
 
+	// Build a comma-separated list of quoted metric names.
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
+	// If samples are being sorted by datapoints, update the ORDER clause.
 	if dataPointsOrder {
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY s.samples %s", req.OrderBy.Order)
 	} else {
 		orderByClauseFirstQuery = ""
 	}
 
+	var sampleQuery string
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf(
-		`SELECT 
+	if whereClause != "" {
+		sb.WriteString(fmt.Sprintf(
+			`SELECT 
+				s.samples,
+				s.metric_name,
+				s.lastReceived
+			FROM (
+				SELECT 
+					dm.metric_name,
+					%s AS samples,
+					MAX(dm.unix_milli) AS lastReceived
+				FROM %s.%s AS dm
+				WHERE dm.metric_name IN (%s)
+				AND dm.fingerprint IN (
+					SELECT fingerprint
+					FROM %s.%s
+					WHERE metric_name IN (%s)
+					AND __normalized = true
+					%s
+					GROUP BY fingerprint
+				)
+				AND dm.unix_milli BETWEEN ? AND ?
+				GROUP BY dm.metric_name
+			) AS s `,
+			countExp,
+			signozMetricDBName, sampleTable,
+			metricsList,
+			signozMetricDBName, localTsTable,
+			metricsList,
+			whereClause,
+		))
+	} else {
+		// If no filters, it is a simpler query.
+		sb.WriteString(fmt.Sprintf(
+			`SELECT 
         s.samples,
         s.metric_name,
-        s.unix_milli AS lastReceived
+        s.lastReceived
     FROM (
         SELECT 
             metric_name,
             %s AS samples,
-            max(unix_milli) as unix_milli
+            MAX(unix_milli) AS lastReceived
         FROM %s.%s
-        `, countExp, signozMetricDBName, sampleTable))
-
-	// Conditionally add the fingerprint subquery if `whereClause` is present
-	if whereClause != "" {
-		sb.WriteString(fmt.Sprintf(
-			`WHERE fingerprint IN (
-            SELECT fingerprint 
-            FROM %s.%s
-            WHERE unix_milli BETWEEN ? AND ?
-            %s
-            AND metric_name IN (%s)
-            GROUP BY fingerprint
-        ) 
-        AND metric_name IN (%s) `,
-			signozMetricDBName, localTsTable, whereClause, metricsList, metricsList))
-	} else {
-		sb.WriteString(fmt.Sprintf(
-			`WHERE metric_name IN (%s) `, metricsList))
+        WHERE metric_name IN (%s)
+        AND unix_milli BETWEEN ? AND ?
+        GROUP BY metric_name
+    ) AS s `,
+			countExp,
+			signozMetricDBName, sampleTable,
+			metricsList))
 	}
 
-	sb.WriteString(`GROUP BY metric_name ) AS s `)
-
+	// Append ORDER BY clause if provided.
 	if orderByClauseFirstQuery != "" {
-		sb.WriteString(orderByClauseFirstQuery)
+		sb.WriteString(orderByClauseFirstQuery + " ")
 	}
 
-	sb.WriteString(fmt.Sprintf(" LIMIT %d;", req.Limit))
+	// Append LIMIT clause.
+	sb.WriteString(fmt.Sprintf("LIMIT %d;", req.Limit))
+	sampleQuery = sb.String()
 
-	sampleQuery := sb.String()
-
+	// Append the time boundaries for sampleQuery.
 	args = append(args, start, end)
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
 	if err != nil {
@@ -6078,6 +6144,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 	response.Metrics = filteredMetrics
 
+	// If ordering by samples, sort in-memory.
 	if dataPointsOrder {
 		sort.Slice(response.Metrics, func(i, j int) bool {
 			return response.Metrics[i].Samples > response.Metrics[j].Samples
@@ -6110,9 +6177,9 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 					uniq(fingerprint) AS total_value,
 					(SELECT uniq(fingerprint) 
 					 FROM %s.%s 
-					 WHERE unix_milli BETWEEN ? AND ?) AS total_time_series
+					 WHERE unix_milli BETWEEN ? AND ? AND __normalized = true) AS total_time_series
 				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ? %s
+				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') AND __normalized = true %s
 				GROUP BY metric_name
 			)
 			ORDER BY percentage DESC
@@ -6159,8 +6226,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 	var args []interface{}
 
-	// Build the filter conditions
-	conditions, _ := utils.BuildFilterConditions(&req.Filters, "t")
+	conditions, _ := utils.BuildFilterConditions(&req.Filters, "ts")
 	whereClause := ""
 	if conditions != nil {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
@@ -6170,26 +6236,23 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
 
-	// Construct the metrics query
 	queryLimit := 50 + req.Limit
 	metricsQuery := fmt.Sprintf(
 		`SELECT 
-		    t.metric_name AS metric_name,
-		    uniq(t.fingerprint) AS timeSeries
-		FROM %s.%s AS t
-		WHERE unix_milli BETWEEN ? AND ?
+		    ts.metric_name AS metric_name,
+		    uniq(ts.fingerprint) AS timeSeries
+		FROM %s.%s AS ts
+		WHERE NOT startsWith(ts.metric_name, 'signoz_')
+		AND __normalized = true
 		%s
-		GROUP BY t.metric_name
+		GROUP BY ts.metric_name
 		ORDER BY timeSeries DESC
 		LIMIT %d;`,
 		signozMetricDBName, tsTable, whereClause, queryLimit,
 	)
 
-	args = append(args, start, end)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-
-	// Execute the metrics query
-	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
+	rows, err := r.db.Query(valueCtx, metricsQuery)
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -6220,7 +6283,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	// Format metric names for query
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
 
-	// Build query using string builder for better performance
+	// Build optimized query with JOIN but `unix_milli` filter only on the sample table
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf(
@@ -6236,46 +6299,46 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		FROM 
 		(
 			SELECT 
-				metric_name,
+				dm.metric_name,
 				%s AS samples
-			FROM %s.%s`,
+			FROM %s.%s AS dm`,
 		countExp, signozMetricDBName, sampleTable, // Total samples
 		countExp, signozMetricDBName, sampleTable, // Inner select samples
 	))
 
-	// Conditionally add the fingerprint subquery if whereClause is present
+	// Apply `unix_milli` filter **only** on the sample table (`dm`)
+	sb.WriteString(` WHERE dm.unix_milli BETWEEN ? AND ?`)
+
+	// Use JOIN instead of IN (subquery) when additional filters exist
 	if whereClause != "" {
 		sb.WriteString(fmt.Sprintf(
-			` WHERE fingerprint IN (
-				SELECT fingerprint 
-				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ?
+			` AND dm.fingerprint IN (
+				SELECT ts.fingerprint 
+				FROM %s.%s AS ts
+				WHERE ts.metric_name IN (%s)
+				AND __normalized = true
 				%s
-				AND metric_name IN (%s)
-				GROUP BY fingerprint
-			)
-			AND metric_name IN (%s)`,
-			signozMetricDBName, localTsTable, whereClause, metricsList,
-			metricsList,
-		))
-	} else {
-		sb.WriteString(fmt.Sprintf(
-			` WHERE metric_name IN (%s)`,
-			metricsList,
+				GROUP BY ts.fingerprint
+			)`,
+			signozMetricDBName, localTsTable, metricsList, whereClause,
 		))
 	}
 
-	sb.WriteString(`
-			GROUP BY metric_name
+	// Apply metric filtering after all conditions
+	sb.WriteString(fmt.Sprintf(
+		` AND dm.metric_name IN (%s)
+			GROUP BY dm.metric_name
 		) AS s
 		JOIN TotalSamples t ON 1 = 1
 		ORDER BY percentage DESC
-		LIMIT ?;`)
+		LIMIT ?;`,
+		metricsList,
+	))
 
 	sampleQuery := sb.String()
 
-	// Add start and end time to args
-	args = append(args, start, end)
+	// Add start and end time to args (only for sample table)
+	args = append(args, start, end, start, end, req.Limit)
 
 	// Execute the sample percentage query
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
@@ -6316,6 +6379,8 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 		FROM %s.%s
 		WHERE metric_name != ?
 		  AND unix_milli BETWEEN ? AND ?
+		 AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		GROUP BY metric_name
 		ORDER BY name_similarity DESC
 		LIMIT 30;`,
@@ -6362,6 +6427,8 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		WHERE metric_name = ?
 		  AND unix_milli between ? and ?
 		  AND NOT startsWith(kv.1, '__')
+		AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		GROUP BY label_key
 		LIMIT 50`, signozMetricDBName, tsTable)
 
@@ -6438,6 +6505,8 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		FROM %s.%s
 		WHERE rand() %% 100 < 10
 		AND unix_milli between ? and ?
+		AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		GROUP BY metric_name
 		ORDER BY weighted_match_count DESC, raw_match_count DESC
 		LIMIT 30
@@ -6692,4 +6761,165 @@ LIMIT 40`, // added rand to get diff value every time we run this query
 	}
 
 	return fingerprints, nil
+}
+
+func (r *ClickHouseReader) DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError {
+	delQuery := fmt.Sprintf(`ALTER TABLE %s.%s DELETE WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataLocalTable)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.Exec(valueCtx, delQuery, metricName)
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	r.cache.Remove(ctx, constants.UpdatedMetricsMetadataCachePrefix+metricName)
+	return nil
+}
+
+func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError {
+	if req.MetricType == v3.MetricTypeHistogram {
+		labels := []string{"le"}
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		if apiError != nil {
+			return apiError
+		}
+		if !hasLabels {
+			return &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("metric '%s' cannot be set as histogram type", req.MetricName),
+			}
+		}
+	}
+
+	if req.MetricType == v3.MetricTypeSummary {
+		labels := []string{"quantile"}
+		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
+		if apiError != nil {
+			return apiError
+		}
+		if !hasLabels {
+			return &model.ApiError{
+				Typ: model.ErrorBadData,
+				Err: fmt.Errorf("metric '%s' cannot be set as summary type", req.MetricName),
+			}
+		}
+	}
+
+	apiErr := r.DeleteMetricsMetadata(ctx, req.MetricName)
+	if apiErr != nil {
+		return apiErr
+	}
+	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
+VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.Exec(valueCtx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt.UnixMilli())
+	if err != nil {
+		return &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	err = r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+req.MetricName, req, -1)
+	if err != nil {
+		return &model.ApiError{Typ: "CachingErr", Err: err}
+	}
+	return nil
+}
+
+func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError) {
+	if len(labels) == 0 {
+		return true, nil
+	}
+
+	conditions := "metric_name = ?"
+	for range labels {
+		conditions += " AND JSONHas(labels, ?) = 1"
+	}
+
+	query := fmt.Sprintf(`
+        SELECT count(*) > 0 as has_le
+        FROM %s.%s
+        WHERE %s
+        LIMIT 1`, signozMetricDBName, signozTSTableNameV41Day, conditions)
+
+	args := make([]interface{}, 0, len(labels)+1)
+	args = append(args, metricName)
+	for _, label := range labels {
+		args = append(args, label)
+	}
+
+	var hasLE bool
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.QueryRow(valueCtx, query, args...).Scan(&hasLE)
+	if err != nil {
+		return false, &model.ApiError{
+			Typ: "ClickHouseError",
+			Err: fmt.Errorf("error checking summary labels: %v", err),
+		}
+	}
+	return hasLE, nil
+}
+
+func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metricName string) (*model.UpdateMetricsMetadata, *model.ApiError) {
+	metricsMetadata := new(model.UpdateMetricsMetadata)
+	cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metricName
+
+	// Try to get from cache first
+	retrieveStatus, err := r.cache.Retrieve(ctx, cacheKey, metricsMetadata, true)
+	if err == nil && retrieveStatus == cache.RetrieveStatusHit {
+		return metricsMetadata, nil
+	}
+
+	if err != nil {
+		zap.L().Info("Error retrieving metrics metadata from cache", zap.String("metric_name", metricName), zap.Error(err))
+	} else {
+		zap.L().Info("Cache miss for metrics metadata", zap.String("metric_name", metricName))
+	}
+
+	// Query from database if cache missed
+	query := fmt.Sprintf(`SELECT metric_name, type, description, temporality, is_monotonic, unit
+		FROM %s.%s 
+		WHERE metric_name = ?;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	fmt.Printf("Executing Query: %q\n", query)
+	row := r.db.QueryRow(valueCtx, query, metricName)
+	err = row.Scan(
+		&metricsMetadata.MetricName,
+		&metricsMetadata.MetricType,
+		&metricsMetadata.Description,
+		&metricsMetadata.Temporality,
+		&metricsMetadata.IsMonotonic,
+		&metricsMetadata.Unit,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // No data found
+		}
+		return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
+	}
+
+	// Try caching the result, but don't return error if caching fails
+	if cacheErr := r.cache.Store(ctx, cacheKey, metricsMetadata, -1); cacheErr != nil {
+		zap.L().Error("Failed to store metrics metadata in cache", zap.String("metric_name", metricName), zap.Error(cacheErr))
+	}
+
+	return metricsMetadata, nil
+}
+
+func (r *ClickHouseReader) PreloadMetricsMetadata(ctx context.Context) []error {
+	var allMetricsMetadata []model.UpdateMetricsMetadata
+	var errorList []error
+	// Fetch all rows from ClickHouse
+	query := fmt.Sprintf(`SELECT metric_name, type, description , temporality, is_monotonic, unit
+		FROM %s.%s;`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
+	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	err := r.db.Select(valueCtx, &allMetricsMetadata, query)
+	if err != nil {
+		errorList = append(errorList, err)
+		return errorList
+	}
+	for _, m := range allMetricsMetadata {
+		err := r.cache.Store(ctx, constants.UpdatedMetricsMetadataCachePrefix+m.MetricName, &m, -1)
+		if err != nil {
+			errorList = append(errorList, err)
+		}
+	}
+
+	return errorList
 }
