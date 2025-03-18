@@ -229,7 +229,7 @@ interface EndPointsResponseRow {
 	};
 }
 
-interface APIDomainsRowData {
+export interface APIDomainsRowData {
 	key: string;
 	domainName: React.ReactNode;
 	endpointCount: React.ReactNode;
@@ -1716,7 +1716,7 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 
 export const apiWidgetInfo = [
 	{ title: 'Rate over time', yAxisUnit: 'ops/s' },
-	{ title: 'Latency over time', yAxisUnit: 'ms' },
+	{ title: 'Latency over time', yAxisUnit: 'ns' }, // TODO: check the format for proper label
 ];
 
 interface EndPointDropDownResponseRow {

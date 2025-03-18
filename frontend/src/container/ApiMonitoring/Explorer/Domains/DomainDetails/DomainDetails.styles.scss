@@ -870,13 +870,27 @@
 
 .endpoint-details-card {
 	margin: 8px 0 1rem 0;
-	height: 300px;
+	height: 370px;
 	padding: 10px;
 
 	border: 1px solid var(--bg-slate-500);
 
+	.graph-container {
+		height: 300px;
+	}
+
 	.ant-card-body {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 		padding: 0;
+
+		color: var(--Vanilla-400, #c0c1c3);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px;
 	}
 
 	.chart-container {
@@ -1032,7 +1046,7 @@
 				color: var(--Vanilla-400, #c0c1c3);
 			}
 		}
-		
+
 		.ant-select {
 			width: 100%;
 		}

@@ -77,9 +77,11 @@ function MetricOverTimeGraph({
 
 	return (
 		<div>
-			<Typography.Text>{apiWidgetInfo[widgetInfoIndex].title}</Typography.Text>
-			<Card bordered className="endpoint-details-card" ref={graphRef}>
-				{renderCardContent(metricOverTimeDataQuery)}
+			<Card bordered className="endpoint-details-card">
+				<Typography.Text>{apiWidgetInfo[widgetInfoIndex].title}</Typography.Text>
+				<div className="graph-container" ref={graphRef}>
+					{renderCardContent(metricOverTimeDataQuery)}
+				</div>
 			</Card>
 		</div>
 	);

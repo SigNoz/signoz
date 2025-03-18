@@ -41,6 +41,11 @@ function EndPointDetails({
 		items: [],
 	});
 
+	const isServicesFilterApplied = useMemo(
+		() => filters.items.some((item) => item.key?.key === 'service.name'),
+		[filters],
+	);
+
 	const endPointDetailsQueryPayload = useMemo(
 		() =>
 			getEndPointDetailsQueryPayload(
@@ -107,9 +112,11 @@ function EndPointDetails({
 				</div>
 			</div>
 			<EndPointMetrics endPointMetricsDataQuery={endPointMetricsDataQuery} />
-			<DependentServices
-				dependentServicesQuery={endPointDependentServicesDataQuery}
-			/>
+			{!isServicesFilterApplied && (
+				<DependentServices
+					dependentServicesQuery={endPointDependentServicesDataQuery}
+				/>
+			)}
 			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
 			<MetricOverTimeGraph
 				metricOverTimeDataQuery={endPointRateOverTimeDataQuery}

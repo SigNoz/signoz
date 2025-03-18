@@ -18,6 +18,7 @@ import { HandleChangeQueryData } from 'types/common/operations.types';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	APIDomainsRowData,
 	columnsConfig,
 	formatDataForTable,
 	hardcodedAttributeKeys,
@@ -33,13 +34,17 @@ function DomainList({
 	showIP: boolean;
 	handleChangeQueryData: HandleChangeQueryData;
 }): JSX.Element {
-	const [selectedDomainData, setSelectedDomainData] = useState<any>(null);
+	const [
+		selectedDomainData,
+		setSelectedDomainData,
+	] = useState<APIDomainsRowData | null>(null);
 	// const [selectedDomainIndex, setSelectedDomainIndex] = useState<
 	// 	number | undefined
 	// >(undefined);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
 	const fetchApiOverview = async (): Promise<
 		SuccessResponse<any> | ErrorResponse
 	> => {

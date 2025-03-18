@@ -51,13 +51,13 @@ function Explorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className={cx('api-monitoring-page', 'filter-visible')}>
-				<section className={cx('api-quick-filter-left-section')}>
-					<div className={cx('api-quick-filters-header')}>
+				<section className="api-quick-filter-left-section">
+					<div className="api-quick-filters-header">
 						<FilterOutlined />
 						<Typography.Text>Filters</Typography.Text>
 					</div>
 
-					<div className={cx('api-quick-filters-header')}>
+					<div className="api-quick-filters-header">
 						<Typography.Text>Show IP addresses</Typography.Text>
 						<Switch
 							size="small"
