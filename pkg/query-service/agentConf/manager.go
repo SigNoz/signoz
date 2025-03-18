@@ -129,7 +129,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
-		m.updateDeployStatus(
+		_ = m.updateDeployStatus(
 			context.Background(),
 			featureType,
 			configVersion,
@@ -168,7 +168,7 @@ func (m *Manager) ReportConfigDeploymentStatus(
 			newStatus = string(DeployFailed)
 			message = fmt.Sprintf("%s: %s", agentId, err.Error())
 		}
-		m.updateDeployStatusByHash(
+		_ = m.updateDeployStatusByHash(
 			context.Background(), featureConfId, newStatus, message,
 		)
 	}
@@ -247,7 +247,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		_ = m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
 	case ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
@@ -265,7 +265,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 			return err
 		}
 
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		_ = m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
 	}
 
 	return nil
@@ -296,7 +296,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	_ = m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
 
@@ -320,7 +320,7 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 		message = fmt.Sprintf("%s: %s", agentId, err.Error())
 	}
 
-	m.updateDeployStatusByHash(context.Background(), hash, status, message)
+	_ = m.updateDeployStatusByHash(context.Background(), hash, status, message)
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
@@ -347,6 +347,6 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	_ = m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }

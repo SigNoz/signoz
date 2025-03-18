@@ -55,6 +55,7 @@ import {
 	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
+	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
 } from './pageComponents';
@@ -395,6 +396,13 @@ const routes: AppRoutes[] = [
 		component: WorkspaceSuspended,
 		isPrivate: true,
 		key: 'WORKSPACE_SUSPENDED',
+	},
+	{
+		path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
+		exact: true,
+		component: WorkspaceAccessRestricted,
+		isPrivate: true,
+		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
 		path: ROUTES.SHORTCUTS,

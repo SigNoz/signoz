@@ -84,14 +84,12 @@ func (dialect *SQLiteDialect) MigrateIntToBoolean(ctx context.Context, bun bun.I
 
 func (dialect *SQLiteDialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
 	var columnType string
-	var err error
 
-	err = bun.NewSelect().
+	err := bun.NewSelect().
 		ColumnExpr("type").
 		TableExpr("pragma_table_info(?)", table).
 		Where("name = ?", column).
 		Scan(ctx, &columnType)
-
 	if err != nil {
 		return "", err
 	}
