@@ -111,9 +111,10 @@ function LogsExplorerViews({
 		DEFAULT_PER_PAGE_VALUE,
 	);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const currentMinTimeRef = useRef<number>(minTime);
 
@@ -230,6 +231,11 @@ function LogsExplorerViews({
 		handleExplorerTabChange(panelType);
 	};
 
+	const queryTimeRangeRef = useRef<{
+		start: number;
+		end: number;
+	} | null>(null);
+
 	const {
 		data: listChartData,
 		isFetching: isFetchingListChartData,
@@ -239,9 +245,19 @@ function LogsExplorerViews({
 		PANEL_TYPES.TIME_SERIES,
 		DEFAULT_ENTITY_VERSION,
 		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+			enabled:
+				!!listChartQuery &&
+				panelType === PANEL_TYPES.LIST &&
+				// enable query when we have initial time range stored
+				!!queryTimeRangeRef.current,
 		},
-		{},
+		{
+			...(selectedTime !== 'custom' &&
+				queryTimeRangeRef.current && {
+					start: Math.round(queryTimeRangeRef.current.start / 1e6),
+					end: Math.round(queryTimeRangeRef.current.end / 1e6),
+				}),
+		},
 		undefined,
 		chartQueryKeyRef,
 	);
@@ -258,13 +274,25 @@ function LogsExplorerViews({
 		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
-			enabled: !isLimit && !!requestData,
+			enabled:
+				!isLimit &&
+				!!requestData &&
+				// enable query when we have initial time range stored
+				!!queryTimeRangeRef.current,
 		},
 		{
 			...(activeLogId &&
 				!logs.length && {
 					start: minTime,
 					end: maxTime,
+				}),
+
+			// For relative time ranges (non-custom), use stored time range
+			// to prevent recalculation based on current time
+			...(selectedTime !== 'custom' &&
+				queryTimeRangeRef.current && {
+					start: Math.round(queryTimeRangeRef.current.start / 1e6),
+					end: Math.round(queryTimeRangeRef.current.end / 1e6),
 				}),
 		},
 		undefined,
@@ -539,6 +567,9 @@ function LogsExplorerViews({
 			requestData?.id !== stagedQuery?.id ||
 			currentMinTimeRef.current !== minTime
 		) {
+			// Clear stored time range if logs exist to force recalculation
+			if (logs.length) queryTimeRangeRef.current = null;
+
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
@@ -560,6 +591,7 @@ function LogsExplorerViews({
 		activeLogId,
 		panelType,
 		selectedView,
+		logs.length,
 	]);
 
 	const chartData = useMemo(() => {
@@ -663,6 +695,16 @@ function LogsExplorerViews({
 			}),
 		[logs, timezone.value],
 	);
+
+	// Store initial time range when component mounts or after reset
+	useEffect(() => {
+		if (!queryTimeRangeRef.current && minTime && maxTime) {
+			queryTimeRangeRef.current = {
+				start: minTime,
+				end: maxTime,
+			};
+		}
+	}, [minTime, maxTime]);
 
 	return (
 		<div className="logs-explorer-views-container">
