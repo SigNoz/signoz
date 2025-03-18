@@ -13,7 +13,6 @@ import (
 )
 
 type ModelDaoSqlite struct {
-	// db    *sqlx.DB
 	bundb *bun.DB
 }
 

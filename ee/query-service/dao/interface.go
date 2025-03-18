@@ -25,15 +25,15 @@ type ModelDao interface {
 	// auth methods
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
 	PrepareSsoRedirect(ctx context.Context, redirectUri, email string, jwt *authtypes.JWT) (redirectURL string, apierr basemodel.BaseApiError)
-	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error)
+	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*types.GettableOrgDomain, error)
 
 	// org domain (auth domains) CRUD ops
-	ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, basemodel.BaseApiError)
-	GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, basemodel.BaseApiError)
-	CreateDomain(ctx context.Context, d *model.OrgDomain) basemodel.BaseApiError
-	UpdateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError
+	ListDomains(ctx context.Context, orgId string) ([]types.GettableOrgDomain, basemodel.BaseApiError)
+	GetDomain(ctx context.Context, id uuid.UUID) (*types.GettableOrgDomain, basemodel.BaseApiError)
+	CreateDomain(ctx context.Context, d *types.GettableOrgDomain) basemodel.BaseApiError
+	UpdateDomain(ctx context.Context, domain *types.GettableOrgDomain) basemodel.BaseApiError
 	DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError
-	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError)
+	GetDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, basemodel.BaseApiError)
 
 	CreatePAT(ctx context.Context, orgID string, p model.PAT) (model.PAT, basemodel.BaseApiError)
 	UpdatePAT(ctx context.Context, orgID string, p model.PAT, id string) basemodel.BaseApiError

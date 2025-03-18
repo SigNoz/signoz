@@ -53,7 +53,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 		},
 		ProfilePictureURL: "", // Currently unused
 		GroupID:           group.ID,
-		OrgID:             domain.OrgId,
+		OrgID:             domain.OrgID,
 	}
 
 	user, apiErr = m.CreateUser(ctx, user, false)

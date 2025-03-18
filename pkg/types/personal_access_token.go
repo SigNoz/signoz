@@ -19,12 +19,3 @@ type StorablePersonalAccessToken struct {
 	Revoked         bool   `json:"revoked" bun:"revoked,notnull,default:false"`
 	UpdatedByUserID string `json:"updatedByUserId" bun:"updated_by_user_id,type:text,notnull,default:''"`
 }
-type OrgDomain struct {
-	bun.BaseModel `bun:"table:org_domains"`
-
-	TimeAuditable
-	ID    string `json:"id" bun:"id,pk,type:text"`
-	OrgID string `json:"orgId" bun:"org_id,type:text,notnull"`
-	Name  string `json:"name" bun:"name,type:varchar(50),notnull,unique"`
-	Data  string `json:"data" bun:"data,type:text,notnull"`
-}
