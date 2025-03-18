@@ -130,7 +130,7 @@ func ParseUpdateMetricsMetadataParams(r *http.Request) (*metrics_explorer.Update
 		if updateMetricsMetadataReq.Temporality == "" {
 			return nil, &model.ApiError{
 				Typ: model.ErrorBadData,
-				Err: fmt.Errorf("temporality is required when metric type is exponantial hisotgram"),
+				Err: fmt.Errorf("temporality is required when metric type is exponential hisotgram"),
 			}
 		}
 		if updateMetricsMetadataReq.Temporality != v3.Cumulative && updateMetricsMetadataReq.Temporality != v3.Delta {

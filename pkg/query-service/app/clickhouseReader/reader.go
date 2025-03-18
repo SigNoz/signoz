@@ -6042,40 +6042,39 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	var sampleQuery string
 	var sb strings.Builder
 
-	// Updated query uses an inner join if filters exist
 	if whereClause != "" {
-		// Use join with the local time series table for additional filtering.
 		sb.WriteString(fmt.Sprintf(
 			`SELECT 
-        s.samples,
-        s.metric_name,
-        s.lastReceived
-    FROM (
-        SELECT 
-            dm.metric_name,
-            %s AS samples,
-            MAX(dm.unix_milli) AS lastReceived
-        FROM %s.%s AS dm
-        INNER JOIN (
-            SELECT fingerprint
-            FROM %s.%s
-            WHERE metric_name IN (%s)
-        	AND __normalized = true
-            %s
-            GROUP BY fingerprint
-        ) AS ts ON dm.fingerprint = ts.fingerprint
-        WHERE dm.metric_name IN (%s)
-        AND dm.unix_milli BETWEEN ? AND ?
-        GROUP BY dm.metric_name
-    ) AS s `,
+				s.samples,
+				s.metric_name,
+				s.lastReceived
+			FROM (
+				SELECT 
+					dm.metric_name,
+					%s AS samples,
+					MAX(dm.unix_milli) AS lastReceived
+				FROM %s.%s AS dm
+				WHERE dm.metric_name IN (%s)
+				AND dm.fingerprint IN (
+					SELECT fingerprint
+					FROM %s.%s
+					WHERE metric_name IN (%s)
+					AND __normalized = true
+					%s
+					GROUP BY fingerprint
+				)
+				AND dm.unix_milli BETWEEN ? AND ?
+				GROUP BY dm.metric_name
+			) AS s `,
 			countExp,
 			signozMetricDBName, sampleTable,
+			metricsList,
 			signozMetricDBName, localTsTable,
 			metricsList,
 			whereClause,
-			metricsList))
+		))
 	} else {
-		// If no additional filters, no join is necessary.
+		// If no filters, it is a simpler query.
 		sb.WriteString(fmt.Sprintf(
 			`SELECT 
         s.samples,
