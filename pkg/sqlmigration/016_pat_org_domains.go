@@ -7,6 +7,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 	"go.signoz.io/signoz/pkg/factory"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 )
 
 type updatePatAndOrgDomains struct {
@@ -42,12 +43,24 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 	}
 	defer tx.Rollback()
 
+	// get all org ids
+	var orgIDs []string
+	if err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
+		return err
+	}
+
 	// add org id to pat and org_domains table
-	for _, table := range []string{"personal_access_tokens"} {
-		if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, table, "org_id"); err != nil {
+	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "personal_access_tokens", "org_id"); err != nil {
+		return err
+	} else if !exists {
+		if _, err := tx.NewAddColumn().Table("personal_access_tokens").ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").Exec(ctx); err != nil {
 			return err
-		} else if !exists {
-			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").Exec(ctx); err != nil {
+		}
+
+		// check if there is one org ID if yes then set it to all dashboards.
+		if len(orgIDs) == 1 {
+			orgID := orgIDs[0]
+			if _, err := tx.NewUpdate().Table("personal_access_tokens").Set("org_id = ?", orgID).Where("org_id IS NULL").Exec(ctx); err != nil {
 				return err
 			}
 		}
