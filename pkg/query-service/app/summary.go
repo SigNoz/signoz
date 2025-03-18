@@ -56,7 +56,7 @@ func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, metricName)
 	if apiError != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		zap.L().Error("error getting metrics summary error", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -89,7 +89,7 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params, apiError := explorer.ParseTreeMapMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		zap.L().Error("error parsing heatmap metric params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -109,7 +109,7 @@ func (aH *APIHandler) GetRelatedMetrics(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	params, apiError := explorer.ParseRelatedMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		zap.L().Error("error parsing related metric params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -129,7 +129,7 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	params, apiError := explorer.ParseInspectMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiError.Err))
+		zap.L().Error("error parsing inspect metric params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -140,5 +140,25 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	aH.Respond(w, result)
+
+}
+
+func (aH *APIHandler) UpdateMetricsMetadata(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, _ := io.ReadAll(r.Body)
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	ctx := r.Context()
+	params, apiError := explorer.ParseUpdateMetricsMetadataParams(r)
+	if apiError != nil {
+		zap.L().Error("error parsing update metrics metadata params", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	apiError = aH.SummaryService.UpdateMetricsMetadata(ctx, params)
+	if apiError != nil {
+		zap.L().Error("error updating metrics metadata", zap.Error(apiError.Err))
+		RespondError(w, apiError, nil)
+		return
+	}
+	aH.Respond(w, nil)
 
 }
