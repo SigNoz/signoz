@@ -152,7 +152,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 			const { platform } = activeLicenseV3;
 
-			if (isWorkspaceAccessRestricted && platform === LicensePlatform.CLOUD) {
+			if (
+				isWorkspaceAccessRestricted &&
+				platform === LicensePlatform.CLOUD &&
+				currentRoute
+			) {
 				navigateToWorkSpaceAccessRestricted(currentRoute);
 			}
 		}
