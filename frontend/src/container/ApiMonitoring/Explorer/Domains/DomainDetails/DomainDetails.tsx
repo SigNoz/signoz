@@ -1,14 +1,15 @@
 import './DomainDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer, Progress, Radio, Tooltip, Typography } from 'antd';
+import { Divider, Drawer, Radio, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
-import { getLastUsedRelativeTime } from 'container/ApiMonitoring/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import AllEndPoints from './AllEndPoints';
+import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
 import EndPointDetails from './EndPointDetails';
 
@@ -21,6 +22,9 @@ function DomainDetails({
 }): JSX.Element {
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.ALL_ENDPOINTS);
 	const [selectedEndPointName, setSelectedEndPointName] = useState<string>('');
+	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
+		IBuilderQuery['groupBy']
+	>([]);
 	const isDarkMode = useIsDarkMode();
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
@@ -52,78 +56,7 @@ function DomainDetails({
 		>
 			{domainData && (
 				<>
-					<div className="entity-detail-drawer__entity">
-						<div className="entity-details-grid">
-							<div className="labels-row">
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									EXTERNAL API
-								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									AVERAGE LATENCY
-								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									ERROR RATE
-								</Typography.Text>
-								<Typography.Text
-									type="secondary"
-									className="entity-details-metadata-label"
-								>
-									LAST USED
-								</Typography.Text>
-							</div>
-
-							<div className="values-row">
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={domainData.endpointCount}>
-										<span className="round-metric-tag">{domainData.endpointCount}</span>
-									</Tooltip>
-								</Typography.Text>
-								{/* // update the tooltip as well */}
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={domainData.latency}>
-										<span className="round-metric-tag">
-											{(domainData.latency / 1000).toFixed(3)}s
-										</span>
-									</Tooltip>
-								</Typography.Text>
-								{/* // update the tooltip as well */}
-								<Typography.Text className="entity-details-metadata-value error-rate">
-									<Tooltip title={domainData.errorRate}>
-										<Progress
-											percent={Number((domainData.errorRate * 100).toFixed(1))}
-											strokeLinecap="butt"
-											size="small"
-											strokeColor={((): string => {
-												const errorRatePercent = Number(
-													(domainData.errorRate * 100).toFixed(1),
-												);
-												if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-												if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-												return Color.BG_FOREST_500;
-											})()}
-											className="progress-bar"
-										/>
-									</Tooltip>
-								</Typography.Text>
-								{/* // update the tooltip as well */}
-								<Typography.Text className="entity-details-metadata-value">
-									<Tooltip title={domainData.lastUsed}>
-										{getLastUsedRelativeTime(domainData.lastUsed)}
-									</Tooltip>
-								</Typography.Text>
-							</div>
-						</div>
-					</div>
-
+					<DomainMetrics domainData={domainData} />
 					<div className="views-tabs-container">
 						<Radio.Group
 							className="views-tabs"
@@ -156,6 +89,8 @@ function DomainDetails({
 							domainName={domainData.domainName}
 							setSelectedEndPointName={setSelectedEndPointName}
 							setSelectedView={setSelectedView}
+							groupBy={endPointsGroupBy}
+							setGroupBy={setEndPointsGroupBy}
 						/>
 					)}
 

@@ -19,18 +19,22 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import ErrorState from './components/ErrorState';
 import { VIEW_TYPES, VIEWS } from './constants';
 import ExpandedRow from './ExpandedRow';
-import ErrorState from './components/ErrorState';
 
 function AllEndPoints({
 	domainName,
 	setSelectedEndPointName,
 	setSelectedView,
+	groupBy,
+	setGroupBy,
 }: {
 	domainName: string;
 	setSelectedEndPointName: (name: string) => void;
 	setSelectedView: (tab: VIEWS) => void;
+	groupBy: IBuilderQuery['groupBy'];
+	setGroupBy: (groupBy: IBuilderQuery['groupBy']) => void;
 }): JSX.Element {
 	const {
 		data: groupByFiltersData,
@@ -43,7 +47,6 @@ function AllEndPoints({
 		tagType: '',
 	});
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>([]);
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
 	>([]);
@@ -67,7 +70,7 @@ function AllEndPoints({
 			}
 			setGroupBy(groupBy);
 		},
-		[groupByFiltersData],
+		[groupByFiltersData, setGroupBy],
 	);
 
 	useEffect(() => {
