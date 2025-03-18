@@ -38,7 +38,6 @@ type ModelDao interface {
 	CreatePAT(ctx context.Context, orgID string, p model.PAT) (model.PAT, basemodel.BaseApiError)
 	UpdatePAT(ctx context.Context, orgID string, p model.PAT, id string) basemodel.BaseApiError
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
-	UpdatePATLastUsed(ctx context.Context, orgID string, pat string, lastUsed int64) basemodel.BaseApiError
 	GetPATByID(ctx context.Context, orgID string, id string) (*model.PAT, basemodel.BaseApiError)
 	GetUserByPAT(ctx context.Context, orgID string, token string) (*types.GettableUser, basemodel.BaseApiError)
 	ListPATs(ctx context.Context, orgID string) ([]model.PAT, basemodel.BaseApiError)

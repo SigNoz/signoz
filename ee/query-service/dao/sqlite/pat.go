@@ -55,21 +55,6 @@ func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p model.PAT, id 
 	return nil
 }
 
-func (m *modelDao) UpdatePATLastUsed(ctx context.Context, orgID string, token string, lastUsed int64) basemodel.BaseApiError {
-	_, err := m.DB().NewUpdate().
-		Model(&types.StorablePersonalAccessToken{}).
-		Column("last_used").
-		Where("token = ?", token).
-		Where("org_id = ?", orgID).
-		Where("revoked = false").
-		Exec(ctx)
-	if err != nil {
-		zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))
-		return model.InternalError(fmt.Errorf("PAT last used update failed"))
-	}
-	return nil
-}
-
 func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]model.PAT, basemodel.BaseApiError) {
 	pats := []types.StorablePersonalAccessToken{}
 
