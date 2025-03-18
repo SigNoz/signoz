@@ -30,8 +30,8 @@ export interface MetricsListItemData {
 	description: string;
 	type: MetricType;
 	unit: string;
-	[TreemapViewType.CARDINALITY]: number;
-	[TreemapViewType.DATAPOINTS]: number;
+	[TreemapViewType.TIMESERIES]: number;
+	[TreemapViewType.SAMPLES]: number;
 	lastReceived: string;
 }
 
