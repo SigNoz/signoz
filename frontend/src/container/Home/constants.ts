@@ -15,6 +15,7 @@ export const checkListStepToPreferenceKeyMap = {
 };
 
 export const DOCS_LINKS = {
+	ADD_DATA_SOURCE: 'https://signoz.io/docs/instrumentation/overview/',
 	SEND_LOGS: 'https://signoz.io/docs/userguide/logs/',
 	SEND_TRACES: 'https://signoz.io/docs/userguide/traces/',
 	SEND_INFRA_METRICS:
@@ -32,6 +33,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		description: '',
 		completed: true,
 		isSkipped: false,
+		isSkippable: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_WORKSPACE,
 	},
 	{
@@ -41,7 +43,9 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		completed: false,
 		isSkipped: false,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.ADD_DATA_SOURCE,
-		toRoute: ROUTES.GET_STARTED,
+		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
+		docsLink: DOCS_LINKS.ADD_DATA_SOURCE,
+		isSkippable: true,
 	},
 	{
 		id: 'SEND_LOGS',
@@ -50,8 +54,9 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 			'Send your logs to SigNoz to get more visibility into how your resources interact.',
 		completed: false,
 		isSkipped: false,
+		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_LOGS,
-		toRoute: ROUTES.GET_STARTED,
+		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 		docsLink: DOCS_LINKS.SEND_LOGS,
 	},
 	{
@@ -61,8 +66,9 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 			'Send your traces to SigNoz to get more visibility into how your resources interact.',
 		completed: false,
 		isSkipped: false,
+		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_TRACES,
-		toRoute: ROUTES.GET_STARTED,
+		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 		docsLink: DOCS_LINKS.SEND_TRACES,
 	},
 	{
@@ -72,8 +78,9 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 			'Send your infra metrics to SigNoz to get more visibility into your infrastructure.',
 		completed: false,
 		isSkipped: false,
+		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SEND_INFRA_METRICS,
-		toRoute: ROUTES.GET_STARTED,
+		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 		docsLink: DOCS_LINKS.SEND_INFRA_METRICS,
 	},
 	{
@@ -83,6 +90,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 			'Setup alerts to get notified when your resources are not performing as expected.',
 		completed: false,
 		isSkipped: false,
+		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_ALERTS,
 		toRoute: ROUTES.ALERTS_NEW,
 		docsLink: DOCS_LINKS.SETUP_ALERTS,
@@ -94,6 +102,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 			'Save your views to get a quick overview of your data and share it with your team.',
 		completed: false,
 		isSkipped: false,
+		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_SAVED_VIEWS,
 		toRoute: ROUTES.LOGS_EXPLORER,
 		docsLink: DOCS_LINKS.SETUP_SAVED_VIEWS,
@@ -105,6 +114,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 			'Create dashboards to visualize your data and share it with your team.',
 		completed: false,
 		isSkipped: false,
+		isSkippable: true,
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.SETUP_DASHBOARDS,
 		toRoute: ROUTES.ALL_DASHBOARD,
 		docsLink: DOCS_LINKS.SETUP_DASHBOARDS,
