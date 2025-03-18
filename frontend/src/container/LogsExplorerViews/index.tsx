@@ -231,6 +231,11 @@ function LogsExplorerViews({
 		handleExplorerTabChange(panelType);
 	};
 
+	const queryTimeRangeRef = useRef<{
+		start: number;
+		end: number;
+	} | null>(null);
+
 	const {
 		data: listChartData,
 		isFetching: isFetchingListChartData,
@@ -240,17 +245,22 @@ function LogsExplorerViews({
 		PANEL_TYPES.TIME_SERIES,
 		DEFAULT_ENTITY_VERSION,
 		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+			enabled:
+				!!listChartQuery &&
+				panelType === PANEL_TYPES.LIST &&
+				// enable query when we have initial time range stored
+				!!queryTimeRangeRef.current,
 		},
-		{},
+		{
+			...(selectedTime !== 'custom' &&
+				queryTimeRangeRef.current && {
+					start: Math.round(queryTimeRangeRef.current.start / 1e6),
+					end: Math.round(queryTimeRangeRef.current.end / 1e6),
+				}),
+		},
 		undefined,
 		chartQueryKeyRef,
 	);
-
-	const queryTimeRangeRef = useRef<{
-		start: number;
-		end: number;
-	} | null>(null);
 
 	const {
 		data,
@@ -264,7 +274,11 @@ function LogsExplorerViews({
 		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
-			enabled: !isLimit && !!requestData && !!queryTimeRangeRef.current,
+			enabled:
+				!isLimit &&
+				!!requestData &&
+				// enable query when we have initial time range stored
+				!!queryTimeRangeRef.current,
 		},
 		{
 			...(activeLogId &&
@@ -273,6 +287,8 @@ function LogsExplorerViews({
 					end: maxTime,
 				}),
 
+			// For relative time ranges (non-custom), use stored time range
+			// to prevent recalculation based on current time
 			...(selectedTime !== 'custom' &&
 				queryTimeRangeRef.current && {
 					start: Math.round(queryTimeRangeRef.current.start / 1e6),
@@ -551,6 +567,7 @@ function LogsExplorerViews({
 			requestData?.id !== stagedQuery?.id ||
 			currentMinTimeRef.current !== minTime
 		) {
+			// Clear stored time range if logs exist to force recalculation
 			if (logs.length) queryTimeRangeRef.current = null;
 
 			const newRequestData = getRequestData(stagedQuery, {
@@ -679,6 +696,7 @@ function LogsExplorerViews({
 		[logs, timezone.value],
 	);
 
+	// Store initial time range when component mounts or after reset
 	useEffect(() => {
 		if (!queryTimeRangeRef.current && minTime && maxTime) {
 			queryTimeRangeRef.current = {
