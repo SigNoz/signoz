@@ -26,9 +26,9 @@ export const METRIC_TYPE_LABEL_MAP = {
 };
 
 export const METRIC_TYPE_VALUES_MAP = {
-	[MetricType.SUM]: 'sum',
-	[MetricType.GAUGE]: 'gauge',
-	[MetricType.HISTOGRAM]: 'histogram',
-	[MetricType.SUMMARY]: 'summary',
-	[MetricType.EXPONENTIAL_HISTOGRAM]: 'exponential_histogram',
+	[MetricType.SUM]: 'Sum',
+	[MetricType.GAUGE]: 'Gauge',
+	[MetricType.HISTOGRAM]: 'Histogram',
+	[MetricType.SUMMARY]: 'Summary',
+	[MetricType.EXPONENTIAL_HISTOGRAM]: 'ExponentialHistogram',
 };

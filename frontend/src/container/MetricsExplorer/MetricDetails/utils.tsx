@@ -43,7 +43,10 @@ export function determineIsMonotonic(
 	metricType: MetricType,
 	temporality: Temporality,
 ): boolean {
-	if (metricType === MetricType.HISTOGRAM) {
+	if (
+		metricType === MetricType.HISTOGRAM ||
+		metricType === MetricType.EXPONENTIAL_HISTOGRAM
+	) {
 		return true;
 	}
 	if (metricType === MetricType.GAUGE || metricType === MetricType.SUMMARY) {
