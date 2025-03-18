@@ -89,8 +89,45 @@ function PiePanelWrapper({
 		0,
 	);
 
-	// Format total for display
-	const formattedTotal = Math.round(totalValue).toString();
+	// Format total for display with the same unit as segments
+	const formattedTotal = getYAxisFormattedValue(
+		totalValue.toString(),
+		widget?.yAxisUnit || 'none',
+	);
+
+	// Extract numeric part and unit separately for styling
+	const matches = formattedTotal.match(/([\d.]+[KMB]?)(.*)$/);
+	const numericTotal = matches?.[1] || formattedTotal;
+	const unitTotal = matches?.[2]?.trim() || '';
+
+	// Dynamically calculate font size based on text length to prevent overflow
+	const getScaledFontSize = ({
+		text,
+		baseSize,
+		innerRadius,
+	}: {
+		text: string;
+		baseSize: number;
+		innerRadius: number;
+	}): number => {
+		if (!text) return baseSize;
+
+		const { length } = text;
+		// More aggressive scaling for very long numbers
+		const scaleFactor = Math.max(0.3, 1 - (length - 3) * 0.09);
+
+		// Ensure text fits in the inner circle (roughly)
+		const maxSize = innerRadius * 0.9; // Don't use more than 90% of inner radius
+
+		return Math.min(baseSize * scaleFactor, maxSize);
+	};
+
+	const numericFontSize = getScaledFontSize({
+		text: numericTotal,
+		baseSize: radius * 0.3,
+		innerRadius,
+	});
+	const unitFontSize = numericFontSize * 0.5; // Unit size is half of numeric size
 
 	const getFillColor = (color: string): string => {
 		if (active === null) {
@@ -243,14 +280,20 @@ function PiePanelWrapper({
 									}
 								</Pie>
 
+								{/* Add total value in the center */}
 								<text
 									textAnchor="middle"
-									dy=".33em"
-									fontSize={radius * 0.3}
-									fontWeight="bold"
+									dominantBaseline="central"
 									fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
 								>
-									{formattedTotal}
+									<tspan fontSize={numericFontSize} fontWeight="bold">
+										{numericTotal}
+									</tspan>
+									{unitTotal && (
+										<tspan fontSize={unitFontSize} opacity={0.9} dx={2}>
+											{unitTotal}
+										</tspan>
+									)}
 								</text>
 							</Group>
 						</svg>
