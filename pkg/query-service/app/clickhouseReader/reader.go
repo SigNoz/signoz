@@ -5992,6 +5992,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		FROM %s.%s AS t
 		WHERE unix_milli BETWEEN ? AND ?
 		AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		%s
 		GROUP BY t.metric_name
 		%s
@@ -6059,6 +6060,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
             SELECT fingerprint
             FROM %s.%s
             WHERE metric_name IN (%s)
+        	AND __normalized = true
             %s
             GROUP BY fingerprint
         ) AS ts ON dm.fingerprint = ts.fingerprint
@@ -6176,9 +6178,9 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 					uniq(fingerprint) AS total_value,
 					(SELECT uniq(fingerprint) 
 					 FROM %s.%s 
-					 WHERE unix_milli BETWEEN ? AND ?) AS total_time_series
+					 WHERE unix_milli BETWEEN ? AND ? AND __normalized = true) AS total_time_series
 				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') %s
+				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') AND __normalized = true %s
 				GROUP BY metric_name
 			)
 			ORDER BY percentage DESC
@@ -6242,6 +6244,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		    uniq(ts.fingerprint) AS timeSeries
 		FROM %s.%s AS ts
 		WHERE NOT startsWith(ts.metric_name, 'signoz_')
+		AND __normalized = true
 		%s
 		GROUP BY ts.metric_name
 		ORDER BY timeSeries DESC
@@ -6314,6 +6317,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 				SELECT ts.fingerprint 
 				FROM %s.%s AS ts
 				WHERE ts.metric_name IN (%s)
+				AND __normalized = true
 				%s
 				GROUP BY ts.fingerprint
 			)`,
@@ -6376,6 +6380,8 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 		FROM %s.%s
 		WHERE metric_name != ?
 		  AND unix_milli BETWEEN ? AND ?
+		 AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		GROUP BY metric_name
 		ORDER BY name_similarity DESC
 		LIMIT 30;`,
@@ -6422,6 +6428,8 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		WHERE metric_name = ?
 		  AND unix_milli between ? and ?
 		  AND NOT startsWith(kv.1, '__')
+		AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		GROUP BY label_key
 		LIMIT 50`, signozMetricDBName, tsTable)
 
@@ -6498,6 +6506,8 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 		FROM %s.%s
 		WHERE rand() %% 100 < 10
 		AND unix_milli between ? and ?
+		AND NOT startsWith(metric_name, 'signoz_')
+		AND __normalized = true
 		GROUP BY metric_name
 		ORDER BY weighted_match_count DESC, raw_match_count DESC
 		LIMIT 30
