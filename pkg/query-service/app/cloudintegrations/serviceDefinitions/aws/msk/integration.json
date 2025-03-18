@@ -5,7 +5,7 @@
     "overview": "file://overview.md",
     "supported_signals": {
       "metrics": true,
-      "logs": true
+      "logs": false
     },
     "data_collected": {
       "metrics": [
@@ -1072,14 +1072,6 @@
         "cloudwatch_metric_stream_filters": [
           {
             "Namespace": "AWS/Kafka"
-          }
-        ]
-      },
-      "aws_logs": {
-        "cloudwatch_logs_subscriptions": [
-          {
-            "log_group_name_prefix": "/aws/kafka",
-            "filter_pattern": ""
           }
         ]
       }
