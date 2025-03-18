@@ -21,6 +21,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { VIEW_TYPES, VIEWS } from './constants';
 import ExpandedRow from './ExpandedRow';
+import ErrorState from './components/ErrorState';
 
 function AllEndPoints({
 	domainName,
@@ -106,6 +107,13 @@ function AllEndPoints({
 	);
 
 	const endPointsDataQuery = endPointsDataQueries[0];
+	const {
+		data: allEndPointsData,
+		isLoading,
+		isRefetching,
+		isError,
+		refetch,
+	} = endPointsDataQuery;
 
 	const endPointsColumnsConfig = useMemo(
 		() => getEndPointsColumnsConfig(groupBy.length > 0, expandedRowKeys),
@@ -141,11 +149,19 @@ function AllEndPoints({
 	const formattedEndPointsData = useMemo(
 		() =>
 			formatEndPointsDataForTable(
-				endPointsDataQuery.data?.payload.data.result[0].table.rows,
+				allEndPointsData?.payload.data.result[0].table.rows,
 				groupBy,
 			),
-		[groupBy, endPointsDataQuery.data],
+		[groupBy, allEndPointsData],
 	);
+
+	if (isError) {
+		return (
+			<div className="all-endpoints-error-state-wrapper">
+				<ErrorState refetch={refetch} />
+			</div>
+		);
+	}
 
 	return (
 		<div className="all-endpoints-container">
@@ -169,17 +185,13 @@ function AllEndPoints({
 				<Table
 					columns={endPointsColumnsConfig}
 					loading={{
-						spinning: endPointsDataQuery.isFetching || endPointsDataQuery.isLoading,
+						spinning: isLoading || isRefetching,
 						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 					}}
-					dataSource={
-						endPointsDataQuery.isFetching || endPointsDataQuery.isLoading
-							? []
-							: formattedEndPointsData
-					}
+					dataSource={isLoading || isRefetching ? [] : formattedEndPointsData}
 					locale={{
 						emptyText:
-							endPointsDataQuery.isFetching || endPointsDataQuery.isLoading ? null : (
+							isLoading || isRefetching ? null : (
 								<div className="no-filtered-hosts-message-container">
 									<div className="no-filtered-hosts-message-content">
 										<img

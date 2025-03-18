@@ -4,13 +4,20 @@ import { getFormattedEndPointMetricsData } from 'container/ApiMonitoring/utils';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
+import ErrorState from './ErrorState';
 
 function EndPointMetrics({
 	endPointMetricsDataQuery,
 }: {
 	endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }): JSX.Element {
-	const { isLoading, isRefetching, isError, data } = endPointMetricsDataQuery;
+	const {
+		isLoading,
+		isRefetching,
+		isError,
+		data,
+		refetch,
+	} = endPointMetricsDataQuery;
 
 	const metricsData = useMemo(() => {
 		if (isLoading || isRefetching || isError) {
@@ -21,6 +28,10 @@ function EndPointMetrics({
 			data?.payload?.data?.result[0].table.rows,
 		);
 	}, [data?.payload?.data?.result, isLoading, isRefetching, isError]);
+
+	if (isError) {
+		return <ErrorState refetch={refetch} />;
+	}
 
 	return (
 		<div className="entity-detail-drawer__entity">

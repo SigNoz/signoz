@@ -3,6 +3,8 @@ import { UnfoldVertical } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
+import ErrorState from './ErrorState';
+import Skeleton from 'antd/lib/skeleton';
 
 interface DependentServicesProps {
 	dependentServicesQuery: UseQueryResult<SuccessResponse<any>, unknown>;
@@ -14,7 +16,13 @@ interface DependentServicesProps {
 function DependentServices({
 	dependentServicesQuery,
 }: DependentServicesProps): JSX.Element {
-	const { data } = dependentServicesQuery;
+	const {
+		data,
+		refetch,
+		isError,
+		isLoading,
+		isRefetching,
+	} = dependentServicesQuery;
 
 	const [currentRenderCount, setCurrentRenderCount] = useState(0);
 
@@ -30,6 +38,14 @@ function DependentServices({
 		() => dependentServicesData.slice(0, currentRenderCount),
 		[currentRenderCount, dependentServicesData],
 	);
+
+	if (isLoading || isRefetching) {
+		return <Skeleton />;
+	}
+
+	if (isError) {
+		return <ErrorState refetch={refetch} />;
+	}
 
 	return (
 		<div className="top-attributes-content">

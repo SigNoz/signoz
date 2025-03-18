@@ -7,12 +7,20 @@ import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
+import ErrorState from './ErrorState';
+
 function StatusCodeTable({
 	endPointStatusCodeDataQuery,
 }: {
 	endPointStatusCodeDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }): JSX.Element {
-	const { isLoading, isRefetching, isError, data } = endPointStatusCodeDataQuery;
+	const {
+		isLoading,
+		isRefetching,
+		isError,
+		data,
+		refetch,
+	} = endPointStatusCodeDataQuery;
 
 	const statusCodeData = useMemo(() => {
 		if (isLoading || isRefetching || isError) {
@@ -23,6 +31,10 @@ function StatusCodeTable({
 			data?.payload?.data?.result[0].table.rows,
 		);
 	}, [data?.payload?.data?.result, isLoading, isRefetching, isError]);
+
+	if (isError) {
+		return <ErrorState refetch={refetch} />;
+	}
 
 	return (
 		<div className="status-code-table-container">

@@ -13,6 +13,7 @@ import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Options } from 'uplot';
+import ErrorState from './ErrorState';
 
 function MetricOverTimeGraph({
 	metricOverTimeDataQuery,
@@ -57,9 +58,7 @@ function MetricOverTimeGraph({
 			}
 
 			if (query.error) {
-				const errorMessage =
-					(query.error as Error)?.message || 'Something went wrong';
-				return <div>{errorMessage}</div>;
+				return <ErrorState refetch={query.refetch} />;
 			}
 			return (
 				<div
