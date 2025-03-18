@@ -10,7 +10,7 @@ export function formatTimestampToReadableDate(timestamp: string): string {
 	const now = new Date();
 	const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-	if (diffInSeconds < 60) return 'Just now';
+	if (diffInSeconds < 60) return 'Few seconds ago';
 
 	const diffInMinutes = Math.floor(diffInSeconds / 60);
 	if (diffInMinutes < 60)

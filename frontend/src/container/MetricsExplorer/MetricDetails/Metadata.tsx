@@ -167,13 +167,15 @@ function Metadata({
 						setIsEditing(false);
 					} else {
 						notifications.error({
-							message: 'Failed to update metadata',
+							message:
+								'Failed to update metadata, please try again. If the issue persists, please contact support.',
 						});
 					}
 				},
 				onError: (): void =>
 					notifications.error({
-						message: 'Failed to update metadata',
+						message:
+							'Failed to update metadata, please try again. If the issue persists, please contact support.',
 					}),
 			},
 		);

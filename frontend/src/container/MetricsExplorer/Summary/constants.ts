@@ -12,7 +12,7 @@ export const TREEMAP_VIEW_OPTIONS: {
 	{ value: TreemapViewType.SAMPLES, label: 'Samples' },
 ];
 
-export const TREEMAP_HEIGHT = 300;
+export const TREEMAP_HEIGHT = 200;
 export const TREEMAP_SQUARE_PADDING = 5;
 
 export const TREEMAP_MARGINS = { TOP: 10, LEFT: 10, RIGHT: 10, BOTTOM: 10 };
