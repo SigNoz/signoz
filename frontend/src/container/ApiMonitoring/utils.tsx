@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { Color } from '@signozhq/design-tokens';
-import { Progress } from 'antd';
+import { Progress, Tag } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import {
 	FiltersType,
@@ -9,12 +9,14 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
@@ -474,7 +476,17 @@ export const getEndPointsColumnsConfig = (
 						<ChevronRight size={14} />
 					);
 				})()}
-				{text}
+				{isGroupedByAttribute
+					? text.split(',').map((value) => (
+							<Tag
+								key={value}
+								color={Color.BG_SLATE_100}
+								className="endpoint-group-tag-item"
+							>
+								{value === '' ? '<no-value>' : value}
+							</Tag>
+					  ))
+					: text}
 			</div>
 		),
 	},
@@ -543,7 +555,7 @@ export const formatEndPointsDataForTable = (
 	return data?.map((endpoint) => {
 		const newEndpointName = groupedByAttributeData
 			.map((attribute) => endpoint.data[attribute])
-			.join(', ');
+			.join(',');
 		return {
 			key: v4(),
 			endpointName: newEndpointName,
@@ -1860,4 +1872,148 @@ export const getFormattedDependentServicesData = (
 		count: row.data.A,
 		percentage: Number(((row.data.A / totalCount) * 100).toFixed(2)),
 	}));
+};
+
+const getStatusCodeClass = (statusCode: string): string => {
+	const code = parseInt(statusCode, 10);
+
+	if (Number.isNaN(code)) {
+		return 'Other';
+	}
+
+	if (code >= 200 && code < 300) {
+		return '200-299';
+	}
+
+	if (code >= 300 && code < 400) {
+		return '300-399';
+	}
+
+	if (code >= 400 && code < 500) {
+		return '400-499';
+	}
+
+	if (code >= 500 && code < 600) {
+		return '500-599';
+	}
+
+	return 'Other';
+};
+
+export const groupStatusCodes = (
+	seriesList: QueryData[],
+	aggregationType: 'sum' | 'average' = 'sum',
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+): QueryData[] => {
+	if (!seriesList?.length) {
+		return seriesList;
+	}
+
+	const result = cloneDeep(seriesList);
+
+	// Group series by status code class
+	const groupedSeries: Record<string, QueryData> = {};
+
+	// Initialize timestamp map to track all timestamps across all series
+	const allTimestamps = new Set<number>();
+
+	// First pass: collect all series and timestamps
+	result.forEach((series) => {
+		const statusCode = series.metric?.response_status_code;
+		if (!statusCode) return;
+
+		const statusClass = getStatusCodeClass(statusCode);
+
+		// Track all timestamps
+		series.values.forEach((value) => {
+			allTimestamps.add(value[0]);
+		});
+
+		// Initialize or update the grouped series
+		if (!groupedSeries[statusClass]) {
+			groupedSeries[statusClass] = {
+				metric: {
+					response_status_code: statusClass,
+				},
+				values: [],
+				queryName: series.queryName,
+				legend: series.legend || statusClass,
+			};
+		}
+	});
+
+	// Create a sorted array of all timestamps
+	const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+	// Initialize values and counters for each timestamp with zeros for each group
+	const timestampValues: Record<string, Record<number, number>> = {};
+	const timestampCounts: Record<string, Record<number, number>> = {};
+
+	Object.keys(groupedSeries).forEach((group) => {
+		timestampValues[group] = {};
+		timestampCounts[group] = {};
+		sortedTimestamps.forEach((timestamp) => {
+			timestampValues[group][timestamp] = 0;
+			timestampCounts[group][timestamp] = 0;
+		});
+	});
+
+	// Second pass: aggregate values by status class and timestamp
+	result.forEach((series) => {
+		const statusCode = series.metric?.response_status_code;
+		if (!statusCode) return;
+
+		const statusClass = getStatusCodeClass(statusCode);
+
+		series.values.forEach((value) => {
+			const timestamp = value[0];
+			const numValue = parseFloat(value[1]);
+			if (!Number.isNaN(numValue)) {
+				timestampValues[statusClass][timestamp] += numValue;
+				timestampCounts[statusClass][timestamp] += 1;
+			}
+		});
+	});
+
+	// Convert aggregated values back to series format
+	Object.keys(groupedSeries).forEach((group) => {
+		groupedSeries[group].values = sortedTimestamps.map((timestamp) => {
+			let finalValue: number;
+
+			if (aggregationType === 'average' && timestampCounts[group][timestamp] > 0) {
+				// Calculate average if aggregationType is average
+				finalValue =
+					timestampValues[group][timestamp] / timestampCounts[group][timestamp];
+			} else {
+				// Otherwise, use the sum
+				finalValue = timestampValues[group][timestamp];
+			}
+
+			return [timestamp, finalValue.toString()];
+		});
+	});
+
+	return Object.values(groupedSeries);
+};
+interface EndPointStatusCodePayloadData {
+	data: {
+		result: QueryData[];
+		newResult: any;
+		resultType: string;
+	};
+}
+
+export const getFormattedEndPointStatusCodeChartData = (
+	data: EndPointStatusCodePayloadData,
+	aggregationType: 'sum' | 'average' = 'sum',
+): EndPointStatusCodePayloadData => {
+	if (!data) {
+		return data;
+	}
+	return {
+		data: {
+			result: groupStatusCodes(data.data.result, aggregationType),
+			newResult: data.data.newResult,
+			resultType: data.data.resultType,
+		},
+	};
 };

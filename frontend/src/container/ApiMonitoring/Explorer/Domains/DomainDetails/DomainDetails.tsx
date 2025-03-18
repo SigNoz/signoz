@@ -54,6 +54,8 @@ function DomainDetails({
 							onClick={(): void => {
 								setSelectedDomainIndex(selectedDomainIndex - 1);
 								setSelectedEndPointName('');
+								setEndPointsGroupBy([]);
+								setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
 							}}
 							icon={<ArrowUp size={16} />}
 							disabled={selectedDomainIndex === 0}
@@ -64,6 +66,8 @@ function DomainDetails({
 							onClick={(): void => {
 								setSelectedDomainIndex(selectedDomainIndex + 1);
 								setSelectedEndPointName('');
+								setEndPointsGroupBy([]);
+								setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
 							}}
 							icon={<ArrowDown size={16} />}
 							disabled={selectedDomainIndex === domainListLength - 1}

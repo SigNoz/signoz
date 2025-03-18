@@ -2,7 +2,10 @@ import { Button, Card, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { statusCodeWidgetInfo } from 'container/ApiMonitoring/utils';
+import {
+	getFormattedEndPointStatusCodeChartData,
+	statusCodeWidgetInfo,
+} from 'container/ApiMonitoring/utils';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -47,18 +50,35 @@ function StatusCodeBarCharts({
 
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
+	const formattedEndPointStatusCodeBarChartsDataPayload = useMemo(
+		() =>
+			getFormattedEndPointStatusCodeChartData(
+				endPointStatusCodeBarChartsData?.payload,
+				'sum',
+			),
+		[endPointStatusCodeBarChartsData?.payload],
+	);
+
+	const formattedEndPointStatusCodeLatencyBarChartsDataPayload = useMemo(
+		() =>
+			getFormattedEndPointStatusCodeChartData(
+				endPointStatusCodeLatencyBarChartsData?.payload,
+				'average',
+			),
+		[endPointStatusCodeLatencyBarChartsData?.payload],
+	);
 
 	const chartData = useMemo(
 		() =>
 			getUPlotChartData(
 				currentWidgetInfoIndex === 0
-					? endPointStatusCodeBarChartsData?.payload
-					: endPointStatusCodeLatencyBarChartsData?.payload,
+					? formattedEndPointStatusCodeBarChartsDataPayload
+					: formattedEndPointStatusCodeLatencyBarChartsDataPayload,
 			),
 		[
-			endPointStatusCodeBarChartsData?.payload,
-			endPointStatusCodeLatencyBarChartsData?.payload,
 			currentWidgetInfoIndex,
+			formattedEndPointStatusCodeBarChartsDataPayload,
+			formattedEndPointStatusCodeLatencyBarChartsDataPayload,
 		],
 	);
 
@@ -67,8 +87,8 @@ function StatusCodeBarCharts({
 			getUPlotChartOptions({
 				apiResponse:
 					currentWidgetInfoIndex === 0
-						? endPointStatusCodeBarChartsData?.payload
-						: endPointStatusCodeLatencyBarChartsData?.payload,
+						? formattedEndPointStatusCodeBarChartsDataPayload
+						: formattedEndPointStatusCodeLatencyBarChartsDataPayload,
 				isDarkMode: true,
 				dimensions,
 				yAxisUnit: statusCodeWidgetInfo[currentWidgetInfoIndex].yAxisUnit,
@@ -79,12 +99,12 @@ function StatusCodeBarCharts({
 				panelType: PANEL_TYPES.BAR,
 			}),
 		[
-			endPointStatusCodeBarChartsData?.payload,
-			endPointStatusCodeLatencyBarChartsData?.payload,
 			minTime,
 			maxTime,
 			currentWidgetInfoIndex,
 			dimensions,
+			formattedEndPointStatusCodeBarChartsDataPayload,
+			formattedEndPointStatusCodeLatencyBarChartsDataPayload,
 		],
 	);
 
