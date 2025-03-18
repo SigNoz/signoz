@@ -29,6 +29,8 @@ func (s *StateStore) Set(ctx context.Context, orgID string, storeableState *aler
 }
 
 func (s *StateStore) Get(ctx context.Context, orgID string) (*alertmanagertypes.StoreableState, error) {
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
 	if _, ok := s.states[orgID]; !ok {
 		return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerStateNotFound, "state for orgID %q not found", orgID)
 	}
