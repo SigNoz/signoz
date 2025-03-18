@@ -69,7 +69,6 @@ import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
-	OrderByPayload,
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -155,14 +154,6 @@ function LogsExplorerViews({
 		dataSource: initialDataSource || DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
-
-	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
-		const timestampOrderBy = listQuery?.orderBy.find(
-			(item) => item.columnName === 'timestamp',
-		);
-
-		return timestampOrderBy || null;
-	}, [listQuery]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -289,7 +280,6 @@ function LogsExplorerViews({
 			query: Query | null,
 			params: {
 				page: number;
-				log: ILog | null;
 				pageSize: number;
 				filters: TagFilter;
 			},
@@ -348,46 +338,31 @@ function LogsExplorerViews({
 		[listQuery, activeLogId],
 	);
 
-	const handleEndReached = useCallback(
-		(index: number) => {
-			if (!listQuery) return;
+	const handleEndReached = useCallback(() => {
+		if (!listQuery) return;
 
-			if (isLimit) return;
-			if (logs.length < pageSize) return;
+		if (isLimit) return;
+		if (logs.length < pageSize) return;
 
-			const { limit, filters } = listQuery;
+		const { limit, filters } = listQuery;
 
-			const lastLog = logs[index];
+		const nextLogsLength = logs.length + pageSize;
 
-			const nextLogsLength = logs.length + pageSize;
+		const nextPageSize =
+			limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
 
-			const nextPageSize =
-				limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
+		if (!stagedQuery) return;
 
-			if (!stagedQuery) return;
+		const newRequestData = getRequestData(stagedQuery, {
+			filters,
+			page: page + 1,
+			pageSize: nextPageSize,
+		});
 
-			const newRequestData = getRequestData(stagedQuery, {
-				filters,
-				page: page + 1,
-				log: orderByTimestamp ? lastLog : null,
-				pageSize: nextPageSize,
-			});
+		setPage((prevPage) => prevPage + 1);
 
-			setPage((prevPage) => prevPage + 1);
-
-			setRequestData(newRequestData);
-		},
-		[
-			isLimit,
-			logs,
-			listQuery,
-			pageSize,
-			stagedQuery,
-			getRequestData,
-			page,
-			orderByTimestamp,
-		],
-	);
+		setRequestData(newRequestData);
+	}, [isLimit, logs, listQuery, pageSize, stagedQuery, getRequestData, page]);
 
 	useEffect(() => {
 		setQueryId(v4());
@@ -567,7 +542,6 @@ function LogsExplorerViews({
 			const newRequestData = getRequestData(stagedQuery, {
 				filters: listQuery?.filters || initialFilters,
 				page: 1,
-				log: null,
 				pageSize,
 			});
 
