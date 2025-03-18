@@ -1,0 +1,743 @@
+{
+    "description": "Overview of AWS Managed Streaming for Apache Kafka",
+    "image": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE0Ljk0OTQgMTMuOTQyQzE2LjIzMTggMTIuNDI1OCAxNy4zMjY4IDkuNzAyMiAxNi4xOTU2IDYuNTc0ODdDMTUuNjQ0MyA1LjA1MjQ1IDE1LjAyMTkgNC4yMDI0OSAxNC4yOTY5IDMuNjYyNTJDMTMuODU1NyAzLjMzMzc5IDEyLjA5MzMgMi41MDYzMyA5Ljc1OTY1IDIuODY3NTZDOC4wNTM0OSAzLjEzMjU1IDUuNzc0ODcgNC4yMDg3NCA0LjI5MzY5IDUuOTU5OUMyLjg1NzUyIDcuNjYxMDYgMS43NDg4MyA5LjAwNDc0IDEuNjk3NTggMTAuMzA5N0MxLjYzMTMzIDExLjk4ODMgMi44OTYyNyAxMy40MzA4IDMuMDUwMDEgMTMuNjY0NUMzLjMyMzc0IDE0LjA3OTUgNS4xOTExNSAxNi40NTE4IDguNjk5NzEgMTYuNTczMUMxMS43OTcgMTYuNjc5MyAxMy44MTQ0IDE1LjI4NDQgMTQuOTQ5NCAxMy45NDJaIiBmaWxsPSIjNDAzRDNFIi8+CjxwYXRoIGQ9Ik00LjU1MzYzIDIuNzM3NDdDMi45Mzc0NiAzLjg5MTE2IDEuMTIxMzEgNi4yNTEwMyAxLjQ0NzU0IDkuNTYwODZDMS42MDYyOCAxMS4xNzIgMi4wMDI1MSAxMi4xNDk1IDIuNTcxMjMgMTIuODUwN0MyLjkxNzQ2IDEzLjI3ODIgNC40MTk4OCAxNC41NDkzIDYuNzczNTEgMTQuNzM2OEM5LjE0NTg4IDE0LjkyNTYgMTAuOTQ5NSAxNC4zOTQ0IDEyLjgzMzIgMTMuMDg0NEMxNi42NjE3IDEwLjQyMDggMTYuMDk4IDYuMzkzNTMgMTUuOTM0MyA1LjkyNDhDMTUuNzcwNSA1LjQ1NjA3IDE0LjU0NDQgMi42OTYyMiAxMS4xNzMzIDEuNzE1MDJDOC4xOTg0NCAwLjg1MDA2OCA1Ljk4MzU1IDEuNzE1MDIgNC41NTM2MyAyLjczNzQ3WiIgZmlsbD0iIzVFNjM2NyIvPgo8cGF0aCBkPSJNNy4zOTM1MyAyLjk2MTA5QzUuNjE3MzcgMi44OTczNCAzLjkxOTk2IDQuMjg4NTIgMy43NTYyMiA2LjAwNTkzQzMuNTkyNDggNy43MjIwOSA0LjY1NDkyIDkuMDI5NTIgNi4zMDk4MyA5LjI5NTc2QzcuOTY0NzUgOS41NjA3NCA5Ljg3ODM5IDguNTU1OCAxMC4yNjM0IDYuNDUwOTFDMTAuNjYwOSA0LjI4MjI3IDkuMDg5NjkgMy4wMjIzNCA3LjM5MzUzIDIuOTYxMDlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNy45NDIxNyA1LjkwMTE1QzcuOTQyMTcgNS45MDExNSA4LjM2OTY1IDUuODEyNCA4LjQ1NDY1IDUuMTgyNDRDOC41MzgzOSA0LjU2MjQ3IDguMjMwOTEgNC4wMzM3NSA3LjUxMzQ1IDMuODQzNzZDNi43MzM0OSAzLjYzNzUyIDYuMjA0NzcgNC4wNjYyNSA2LjA2NzI3IDQuNTE3NDdDNS44NzYwMyA1LjE0NDk0IDYuMTU4NTIgNS40NDM2NyA2LjE1ODUyIDUuNDQzNjdDNi4xNTg1MiA1LjQ0MzY3IDUuMzkzNTYgNS42Mjc0MSA1LjMzMjMxIDYuNTI5ODdDNS4yNzQ4MSA3LjM4MTA3IDUuODU2MDMgNy44Mzg1NSA2LjQzOTc1IDcuOTc4NTRDNy4xNjA5NiA4LjE1MjI4IDcuOTc4NDIgNy45NTQ3OSA4LjE3ODQxIDcuMDM0ODRDOC4zNDQ2NSA2LjI3NzM4IDcuOTQyMTcgNS45MDExNSA3Ljk0MjE3IDUuOTAxMTVaIiBmaWxsPSIjMzAzMDMwIi8+CjxwYXRoIGQ9Ik02LjczOTgzIDQuNzUzNjJDNi42NzEwOSA1LjAxMjM1IDYuODA4NTggNS4yNjIzNCA3LjA3ODU3IDUuMzMxMDlDNy4zNjk4IDUuNDA0ODMgNy42MzQ3OSA1LjMwODU5IDcuNzA2MDMgNS4wMTExQzcuNzY4NTMgNC43NDczNyA3LjY0MzU0IDQuNTE0ODggNy4zMzYwNSA0LjQzOTg4QzcuMDgzNTcgNC4zNzczOSA2LjgxNDgzIDQuNDcxMTMgNi43Mzk4MyA0Ljc1MzYyWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTYuOTU5NzggNi4wMzk3NEM2LjYzMjMgNS45Mzg0OSA2LjE5OTgyIDYuMDY0NzMgNi4xMzEwNyA2LjUwNDcxQzYuMDYyMzMgNi45NDQ2OSA2LjMyNjA2IDcuMTY5NjggNi42NzEwNCA3LjIzMjE3QzcuMDE2MDMgNy4yOTQ2NyA3LjM0MjI2IDcuMTEzNDMgNy40MDYwMSA2Ljc2MDk1QzcuNDY4NSA2LjQwOTcyIDcuMjg2MDEgNi4xMzk3MyA2Ljk1OTc4IDYuMDM5NzRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K",
+    "layout": [
+        {
+            "h": 6,
+            "i": "238ff900-c0e4-4e29-83e3-d6acfcc9c6e5",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "h": 6,
+            "i": "e201e9c4-7a52-4558-a5f9-10d8686a6890",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 0
+        },
+        {
+            "h": 6,
+            "i": "fcf5c63c-5da6-4f96-9243-5f42980df049",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 6
+        },
+        {
+            "h": 6,
+            "i": "601ec1b7-f614-4678-b445-7f6b8fec2e16",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 6
+        },
+        {
+            "h": 6,
+            "i": "e2ab4538-bc01-4e96-b3e0-c7f73a2c972f",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 12
+        }
+    ],
+    "panelMap": {},
+    "tags": [],
+    "title": "msk-testing",
+    "uploadedGrafana": false,
+    "version": "v4",
+    "widgets": [
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {},
+            "description": "",
+            "fillSpans": false,
+            "id": "238ff900-c0e4-4e29-83e3-d6acfcc9c6e5",
+            "isStacked": false,
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "aws_Kafka_KafkaDataLogsDiskUsed_min--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "aws_Kafka_KafkaDataLogsDiskUsed_min",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "max",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "Broker_ID--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "Broker_ID",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "spaceAggregation": "avg",
+                            "stepInterval": 60,
+                            "timeAggregation": "max"
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "d3601f46-e1ad-4aed-91e9-efe7e695cf26",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Disk usage by broker",
+            "yAxisUnit": "none"
+        },
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {},
+            "description": "",
+            "fillSpans": false,
+            "id": "e201e9c4-7a52-4558-a5f9-10d8686a6890",
+            "isStacked": false,
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "aws_Kafka_CpuUser_sum--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "aws_Kafka_CpuUser_sum",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "Broker_ID--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "Broker_ID",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "spaceAggregation": "avg",
+                            "stepInterval": 60,
+                            "timeAggregation": "avg"
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "58dc10e9-221a-4c2a-a1ba-c42e68641d19",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "CPU (User) usage by broker",
+            "yAxisUnit": "none"
+        },
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {},
+            "description": "",
+            "fillSpans": false,
+            "id": "fcf5c63c-5da6-4f96-9243-5f42980df049",
+            "isStacked": false,
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "aws_Kafka_CpuSystem_sum--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "aws_Kafka_CpuSystem_sum",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "Broker_ID--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "Broker_ID",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "spaceAggregation": "avg",
+                            "stepInterval": 60,
+                            "timeAggregation": "avg"
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "a83aeaf9-4e55-4106-a01d-bb5fd70d8639",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "CPU (System) usage by broker",
+            "yAxisUnit": "none"
+        },
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {},
+            "description": "",
+            "fillSpans": false,
+            "id": "601ec1b7-f614-4678-b445-7f6b8fec2e16",
+            "isStacked": false,
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "aws_Kafka_NetworkTxPackets_min--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "aws_Kafka_NetworkTxPackets_min",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "Broker_ID--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "Broker_ID",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "spaceAggregation": "avg",
+                            "stepInterval": 60,
+                            "timeAggregation": "avg"
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "c3eb2821-ec0c-4a4d-8a0d-37eda0374897",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": " Network TX packets by broker",
+            "yAxisUnit": "none"
+        },
+        {
+            "bucketCount": 30,
+            "bucketWidth": 0,
+            "columnUnits": {},
+            "description": "",
+            "fillSpans": false,
+            "id": "e2ab4538-bc01-4e96-b3e0-c7f73a2c972f",
+            "isStacked": false,
+            "mergeAllActiveQueries": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregateAttribute": {
+                                "dataType": "float64",
+                                "id": "aws_Kafka_NetworkRxPackets_min--float64--Gauge--true",
+                                "isColumn": true,
+                                "isJSON": false,
+                                "key": "aws_Kafka_NetworkRxPackets_min",
+                                "type": "Gauge"
+                            },
+                            "aggregateOperator": "avg",
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filters": {
+                                "items": [],
+                                "op": "AND"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "Broker_ID--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "Broker_ID",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": [],
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "reduceTo": "avg",
+                            "spaceAggregation": "avg",
+                            "stepInterval": 60,
+                            "timeAggregation": "avg"
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "29a183d3-98d0-497f-abf4-88acc119a132",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "stackedBarChart": false,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Network RX packets by broker",
+            "yAxisUnit": "none"
+        }
+    ]
+}
