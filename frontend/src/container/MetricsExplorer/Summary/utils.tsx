@@ -20,14 +20,21 @@ import {
 import { useMemo } from 'react';
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';
+import MetricNameSearch from './MetricNameSearch';
+import MetricTypeSearch from './MetricTypeSearch';
 import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
 
 export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 	{
-		title: <div className="metric-name-column-header">METRIC</div>,
+		title: (
+			<div className="metric-name-column-header">
+				<span className="metric-name-column-header-text">METRIC</span>
+				<MetricNameSearch />
+			</div>
+		),
 		dataIndex: 'metric_name',
 		width: 400,
-		sorter: true,
+		sorter: false,
 		className: 'metric-name-column-header',
 		render: (value: string): React.ReactNode => (
 			<div className="metric-name-column-value">{value}</div>
@@ -44,9 +51,14 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		),
 	},
 	{
-		title: 'TYPE',
+		title: (
+			<div className="metric-type-column-header">
+				<span className="metric-type-column-header-text">TYPE</span>
+				<MetricTypeSearch />
+			</div>
+		),
 		dataIndex: 'metric_type',
-		sorter: true,
+		sorter: false,
 		width: 150,
 	},
 	{
