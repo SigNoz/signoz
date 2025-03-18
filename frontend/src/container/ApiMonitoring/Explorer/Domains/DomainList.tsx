@@ -133,6 +133,9 @@ function DomainList({
 					},
 					className: 'expanded-clickable-row',
 				})}
+				rowClassName={(_, index): string =>
+					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
+				}
 			/>
 			{selectedDomainIndex !== -1 && (
 				<DomainDetails

@@ -13,6 +13,7 @@ import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Options } from 'uplot';
+
 import ErrorState from './ErrorState';
 
 function MetricOverTimeGraph({

@@ -1,10 +1,11 @@
+import Skeleton from 'antd/lib/skeleton';
 import { getFormattedDependentServicesData } from 'container/ApiMonitoring/utils';
 import { UnfoldVertical } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
+
 import ErrorState from './ErrorState';
-import Skeleton from 'antd/lib/skeleton';
 
 interface DependentServicesProps {
 	dependentServicesQuery: UseQueryResult<SuccessResponse<any>, unknown>;

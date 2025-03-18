@@ -164,7 +164,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
 					return Color.BG_FOREST_500;
 				})()}
-				className="progress-bar"
+				className="progress-bar error-rate"
 			/>
 		),
 	},

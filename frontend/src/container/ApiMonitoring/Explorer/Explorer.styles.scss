@@ -47,8 +47,6 @@
 				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
-
-				background: var(--bg-ink-500);
 				border-bottom: none;
 
 				color: var(--Vanilla-400, #c0c1c3);
@@ -60,6 +58,7 @@
 				/* 163.636% */
 				letter-spacing: 0.44px;
 				text-transform: uppercase;
+				background: none;
 
 				&::before {
 					background-color: transparent;
@@ -67,7 +66,8 @@
 			}
 
 			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
-				background: var(--bg-ink-400);
+				background: var(--Ink-300, #16181d);
+				opacity: 0.6;
 			}
 
 			.ant-table-cell {
@@ -75,44 +75,12 @@
 				font-size: 13px;
 				line-height: 20px;
 				color: var(--bg-vanilla-100);
-				background: var(--bg-ink-500);
 				border-bottom: none;
 			}
 
 			.ant-table-cell:has(.domain-list-name-col-value) {
-				background: var(--bg-ink-400);
-			}
-
-			.hostname-column-value {
-				color: var(--bg-vanilla-100);
-				font-family: 'Geist Mono';
-				font-style: normal;
-				font-weight: 600;
-				line-height: 20px;
-				/* 142.857% */
-				letter-spacing: -0.07px;
-			}
-
-			.status-cell {
-				.active-tag {
-					color: var(--bg-forest-500);
-					padding: 4px 8px;
-					border-radius: 4px;
-					font-size: 12px;
-					font-weight: 500;
-				}
-			}
-
-			.progress-container {
-				.ant-progress-bg {
-					height: 8px !important;
-					border-radius: 4px;
-				}
-			}
-
-			.progress-bar {
-				flex: 1;
-				margin-right: 8px;
+				background: var(--Ink-300, #16181d);
+				opacity: 0.6;
 			}
 
 			.round-metric-tag {
@@ -161,6 +129,18 @@
 
 			.ant-empty-normal {
 				visibility: hidden;
+			}
+
+			.table-row-light {
+				background: none;
+			}
+
+			.table-row-dark {
+				background: var(--bg-ink-300);
+			}
+
+			.error-rate {
+				width: 120px;
 			}
 		}
 	}
