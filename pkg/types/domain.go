@@ -6,9 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"context"
-
-	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
@@ -16,7 +13,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/sso"
 	"go.signoz.io/signoz/ee/query-service/sso/saml"
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
 )
 
 type StorableOrgDomain struct {
@@ -191,58 +187,4 @@ func (od *GettableOrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err e
 		return "", fmt.Errorf("unsupported SSO config for the domain")
 	}
 
-}
-
-type SamlConfig struct {
-	SamlEntity string `json:"samlEntity"`
-	SamlIdp    string `json:"samlIdp"`
-	SamlCert   string `json:"samlCert"`
-}
-
-// GoogleOauthConfig contains a generic config to support oauth
-type GoogleOAuthConfig struct {
-	ClientID     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
-	RedirectURI  string `json:"redirectURI"`
-}
-
-const (
-	googleIssuerURL = "https://accounts.google.com"
-)
-
-func (g *GoogleOAuthConfig) GetProvider(domain string, siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	provider, err := oidc.NewProvider(ctx, googleIssuerURL)
-	if err != nil {
-		cancel()
-		return nil, fmt.Errorf("failed to get provider: %v", err)
-	}
-
-	// default to email and profile scope as we just use google auth
-	// to verify identity and start a session.
-	scopes := []string{"email"}
-
-	// this is the url google will call after login completion
-	redirectURL := fmt.Sprintf("%s://%s/%s",
-		siteUrl.Scheme,
-		siteUrl.Host,
-		"api/v1/complete/google")
-
-	return &sso.GoogleOAuthProvider{
-		RedirectURI: g.RedirectURI,
-		OAuth2Config: &oauth2.Config{
-			ClientID:     g.ClientID,
-			ClientSecret: g.ClientSecret,
-			Endpoint:     provider.Endpoint(),
-			Scopes:       scopes,
-			RedirectURL:  redirectURL,
-		},
-		Verifier: provider.Verifier(
-			&oidc.Config{ClientID: g.ClientID},
-		),
-		Cancel:       cancel,
-		HostedDomain: domain,
-	}, nil
 }

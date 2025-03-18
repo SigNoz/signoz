@@ -43,14 +43,18 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 	defer tx.Rollback()
 
 	// add org id to pat and org_domains table
-	for _, table := range []string{"personal_access_tokens", "org_domains"} {
+	for _, table := range []string{"personal_access_tokens"} {
 		if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, table, "org_id"); err != nil {
 			return err
 		} else if !exists {
-			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("org_id TEXT").Exec(ctx); err != nil {
+			if _, err := tx.NewAddColumn().Table(table).ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").Exec(ctx); err != nil {
 				return err
 			}
 		}
+	}
+
+	if err := updateOrgId(ctx, tx, "org_domains"); err != nil {
+		return err
 	}
 
 	// change created_at and updated_at from integer to timestamp
@@ -76,5 +80,34 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 }
 
 func (migration *updatePatAndOrgDomains) Down(ctx context.Context, db *bun.DB) error {
+	return nil
+}
+
+func updateOrgId(ctx context.Context, tx bun.Tx, table string) error {
+	// create new column i.e org_id_old
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN org_id_old TEXT`); err != nil {
+		return err
+	}
+
+	// copy data from old column to new column
+	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET org_id_old = org_id`); err != nil {
+		return err
+	}
+
+	// drop old column and foreign key constraint
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN org_id`); err != nil {
+		return err
+	}
+
+	// rename new column to org_id
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN org_id_old TO org_id`); err != nil {
+		return err
+	}
+
+	// add foreign key constraint
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD CONSTRAINT org_id_fk FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE`); err != nil {
+		return err
+	}
+
 	return nil
 }
