@@ -51,7 +51,7 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 		agent := agents.agentsById[instanceId]
 		agent.CurrentStatus = AgentStatusDisconnected
 		agent.TerminatedAt = time.Now()
-		agent.Upsert()
+		_ = agent.Upsert()
 		delete(agents.agentsById, instanceId)
 	}
 	delete(agents.connections, conn)
