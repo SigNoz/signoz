@@ -84,30 +84,35 @@ func (migration *updatePatAndOrgDomains) Down(ctx context.Context, db *bun.DB) e
 }
 
 func updateOrgId(ctx context.Context, tx bun.Tx, table string) error {
-	// create new column i.e org_id_old
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD COLUMN org_id_old TEXT`); err != nil {
+	if _, err := tx.NewCreateTable().
+		Model(&struct {
+			bun.BaseModel `bun:"table:org_domains_new"`
+
+			ID        string `bun:"id,pk,type:text"`
+			OrgID     string `bun:"org_id,type:text,notnull"`
+			Name      string `bun:"name,type:varchar(50),notnull,unique"`
+			CreatedAt int    `bun:"created_at,notnull"`
+			UpdatedAt int    `bun:"updated_at"`
+			Data      string `bun:"data,type:text,notnull"`
+		}{}).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
+		IfNotExists().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	// copy data from old column to new column
-	if _, err := tx.ExecContext(ctx, `UPDATE `+table+` SET org_id_old = org_id`); err != nil {
+	// copy data from org_domains to org_domains_new
+	if _, err := tx.ExecContext(ctx, `INSERT INTO org_domains_new (id, org_id, name, created_at, updated_at, data) SELECT id, org_id, name, created_at, updated_at, data FROM org_domains`); err != nil {
+		return err
+	}
+	// delete old table
+	if _, err := tx.NewDropTable().IfExists().Table("org_domains").Exec(ctx); err != nil {
 		return err
 	}
 
-	// drop old column and foreign key constraint
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` DROP COLUMN org_id`); err != nil {
+	// rename new table to org_domains
+	if _, err := tx.ExecContext(ctx, `ALTER TABLE org_domains_new RENAME TO org_domains`); err != nil {
 		return err
 	}
-
-	// rename new column to org_id
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN org_id_old TO org_id`); err != nil {
-		return err
-	}
-
-	// add foreign key constraint
-	if _, err := tx.ExecContext(ctx, `ALTER TABLE `+table+` ADD CONSTRAINT org_id_fk FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE`); err != nil {
-		return err
-	}
-
 	return nil
 }
