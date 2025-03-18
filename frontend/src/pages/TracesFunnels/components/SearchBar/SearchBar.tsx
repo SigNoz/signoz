@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Popover, Tooltip, Typography } from 'antd';
+import { Button, Input, Popover, Typography } from 'antd';
 import { ArrowDownWideNarrow, Check, Plus, Search } from 'lucide-react';
 import { ChangeEvent } from 'react';
 
@@ -23,42 +23,40 @@ function SearchBar({
 }: SearchBarProps): JSX.Element {
 	return (
 		<div className="search">
-			<Tooltip title="Sort">
-				<Popover
-					trigger="click"
-					content={
-						<div className="sort-popover-content">
-							<Typography.Text className="sort-popover-content__heading">
-								Sort By
-							</Typography.Text>
-							<Button
-								type="text"
-								className="sort-popover-content__button"
-								onClick={(): void => onSort('creation_timestamp')}
-							>
-								Last created
-								{sortOrder.columnKey === 'creation_timestamp' && <Check size={14} />}
-							</Button>
-							<Button
-								type="text"
-								className="sort-popover-content__button"
-								onClick={(): void => onSort('updated_timestamp')}
-							>
-								Last updated
-								{sortOrder.columnKey === 'updated_timestamp' && <Check size={14} />}
-							</Button>
-						</div>
-					}
-					rootClassName="sort-popover"
-					placement="bottomRight"
-					arrow={false}
-				>
-					<Button type="text" className="search__sort-btn">
-						<ArrowDownWideNarrow size={12} data-testid="sort-by" />
-						<div className="search__sort-btn-text">Sort</div>
-					</Button>
-				</Popover>
-			</Tooltip>
+			<Popover
+				trigger="click"
+				content={
+					<div className="sort-popover-content">
+						<Typography.Text className="sort-popover-content__heading">
+							Sort By
+						</Typography.Text>
+						<Button
+							type="text"
+							className="sort-popover-content__button"
+							onClick={(): void => onSort('creation_timestamp')}
+						>
+							Last created
+							{sortOrder.columnKey === 'creation_timestamp' && <Check size={14} />}
+						</Button>
+						<Button
+							type="text"
+							className="sort-popover-content__button"
+							onClick={(): void => onSort('updated_timestamp')}
+						>
+							Last updated
+							{sortOrder.columnKey === 'updated_timestamp' && <Check size={14} />}
+						</Button>
+					</div>
+				}
+				rootClassName="sort-popover"
+				placement="bottomRight"
+				arrow={false}
+			>
+				<Button type="text" className="search__sort-btn">
+					<ArrowDownWideNarrow size={12} data-testid="sort-by" />
+					<div className="search__sort-btn-text">Sort</div>
+				</Button>
+			</Popover>
 			<Input
 				className="search__input"
 				placeholder="Search by name, description, or tags..."
