@@ -8,7 +8,7 @@ This guide provides a step-by-step walkthrough for setting up the **OpenTelemetr
 
 # Send data to SigNoz Cloud from OpenTelemetery Demo App [Docker]
 
-You can follow the below guide if you intend to install the OTel Demo application with **docker**. Instead, if wish to install it using **Kubernetes/ Helm charts**, you can check the next section.
+You can follow the below guide if you intend to install the OTel Demo application with **docker**. Instead, if you wish to install it using **Kubernetes/ Helm charts**, you can check the next section.
 
 
 
