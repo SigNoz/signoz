@@ -49,7 +49,7 @@ function MetricNameSearch(): JSX.Element {
 				items: [
 					{
 						id: 'metric_name',
-						op: 'IN',
+						op: 'CONTAINS',
 						key: {
 							id: 'metric_name',
 							key: 'metric_name',
@@ -71,25 +71,42 @@ function MetricNameSearch(): JSX.Element {
 	);
 
 	const popoverItems = useMemo(() => {
+		const items: JSX.Element[] = [];
+		if (searchString) {
+			items.push(
+				<Menu.Item
+					key={searchString}
+					onClick={(): void => handleSelect(searchString)}
+				>
+					{searchString}
+				</Menu.Item>,
+			);
+		}
 		if (isLoadingMetricNameFilterValues) {
-			return <Spin />;
+			items.push(<Spin />);
+		} else if (isErrorMetricNameFilterValues) {
+			items.push(<Empty description="Error fetching metric names" />);
+		} else if (metricNameFilterValues?.length === 0) {
+			items.push(<Empty description="No metric names found" />);
+		} else {
+			items.push(
+				...metricNameFilterValues.map((filterValue) => (
+					<Menu.Item
+						key={filterValue}
+						onClick={(): void => handleSelect(filterValue)}
+					>
+						{filterValue}
+					</Menu.Item>
+				)),
+			);
 		}
-		if (isErrorMetricNameFilterValues) {
-			return <Empty description="Error fetching metric names" />;
-		}
-		if (metricNameFilterValues?.length === 0) {
-			return <Empty description="No metric names found" />;
-		}
-		return metricNameFilterValues.map((filterValue) => (
-			<Menu.Item key={filterValue} onClick={(): void => handleSelect(filterValue)}>
-				{filterValue}
-			</Menu.Item>
-		));
+		return items;
 	}, [
 		handleSelect,
 		isErrorMetricNameFilterValues,
 		isLoadingMetricNameFilterValues,
 		metricNameFilterValues,
+		searchString,
 	]);
 
 	const debouncedUpdate = useDebouncedFn((value) => {
