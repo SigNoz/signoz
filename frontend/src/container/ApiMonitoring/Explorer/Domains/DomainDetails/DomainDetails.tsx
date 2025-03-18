@@ -1,10 +1,10 @@
 import './DomainDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer, Radio, Typography } from 'antd';
+import { Button, Divider, Drawer, Radio, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from 'lucide-react';
+import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -16,9 +16,15 @@ import EndPointDetails from './EndPointDetails';
 function DomainDetails({
 	domainData,
 	handleClose,
+	selectedDomainIndex,
+	setSelectedDomainIndex,
+	domainListLength,
 }: {
 	domainData: any;
 	handleClose: () => void;
+	selectedDomainIndex: number;
+	setSelectedDomainIndex: (index: number) => void;
+	domainListLength: number;
 }): JSX.Element {
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.ALL_ENDPOINTS);
 	const [selectedEndPointName, setSelectedEndPointName] = useState<string>('');
@@ -35,13 +41,28 @@ function DomainDetails({
 		<Drawer
 			width="60%"
 			title={
-				<>
-					<Divider type="vertical" />
-					<Typography.Text className="title">
-						{domainData.domainName}
-					</Typography.Text>
-					{/* add the navigation buttons for domain */}
-				</>
+				<div className="domain-details-drawer-header">
+					<div className="domain-details-drawer-header-title">
+						<Divider type="vertical" />
+						<Typography.Text className="title">
+							{domainData.domainName}
+						</Typography.Text>
+					</div>
+					<Button.Group className="domain-details-drawer-header-ctas">
+						<Button
+							className="domain-navigate-cta"
+							onClick={(): void => setSelectedDomainIndex(selectedDomainIndex - 1)}
+							icon={<ArrowUp size={16} />}
+							disabled={selectedDomainIndex === 0}
+						/>
+						<Button
+							className="domain-navigate-cta"
+							onClick={(): void => setSelectedDomainIndex(selectedDomainIndex + 1)}
+							icon={<ArrowDown size={16} />}
+							disabled={selectedDomainIndex === domainListLength - 1}
+						/>
+					</Button.Group>
+				</div>
 			}
 			placement="right"
 			onClose={handleClose}

@@ -1,3 +1,19 @@
+.domain-details-drawer-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	.domain-navigate-cta {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--Slate-400, #1d212d);
+		background: var(--Ink-300, #16181d);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	}
+}
+
 .entity-detail-drawer {
 	border-left: 1px solid var(--bg-slate-500);
 	background: var(--bg-ink-400);

@@ -18,7 +18,6 @@ import { HandleChangeQueryData } from 'types/common/operations.types';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
-	APIDomainsRowData,
 	columnsConfig,
 	formatDataForTable,
 	hardcodedAttributeKeys,
@@ -34,13 +33,8 @@ function DomainList({
 	showIP: boolean;
 	handleChangeQueryData: HandleChangeQueryData;
 }): JSX.Element {
-	const [
-		selectedDomainData,
-		setSelectedDomainData,
-	] = useState<APIDomainsRowData | null>(null);
-	// const [selectedDomainIndex, setSelectedDomainIndex] = useState<
-	// 	number | undefined
-	// >(undefined);
+	const [selectedDomainIndex, setSelectedDomainIndex] = useState<number>(-1);
+
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -129,20 +123,23 @@ function DomainList({
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"
-				onRow={(record): { onClick: () => void; className: string } => ({
+				onRow={(_, index): { onClick: () => void; className: string } => ({
 					onClick: (): void => {
-						// setSelectedDomainIndex(index);
-						setSelectedDomainData(record); // TODO: update the selected domain data based on index later to support navigation
+						if (index !== undefined) {
+							setSelectedDomainIndex(index);
+						}
 					},
 					className: 'expanded-clickable-row',
 				})}
 			/>
-			{selectedDomainData && (
+			{selectedDomainIndex !== -1 && (
 				<DomainDetails
-					domainData={selectedDomainData}
+					domainData={formattedDataForTable[selectedDomainIndex]}
+					selectedDomainIndex={selectedDomainIndex}
+					setSelectedDomainIndex={setSelectedDomainIndex}
+					domainListLength={formattedDataForTable.length}
 					handleClose={(): void => {
-						setSelectedDomainData(null);
-						// setSelectedDomainIndex(undefined);
+						setSelectedDomainIndex(-1);
 					}}
 				/>
 			)}
