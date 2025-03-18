@@ -17,8 +17,10 @@ const useHandleTraceFunnelsSearch = (): {
 		const { value } = e.target;
 		setSearchQuery(value);
 
-		if (value) {
-			urlQuery.set('search', value);
+		const trimmedValue = value.trim();
+
+		if (trimmedValue) {
+			urlQuery.set('search', trimmedValue);
 		} else {
 			urlQuery.delete('search');
 		}

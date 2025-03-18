@@ -7,7 +7,7 @@ export interface FunnelStep {
 	span_name: string;
 	filters: TagFilter;
 	latency_pointer: 'start' | 'end';
-	latency_type: 'p95' | 'p99';
+	latency_type: 'p95' | 'p99' | 'p90';
 	has_errors: boolean;
 }
 
