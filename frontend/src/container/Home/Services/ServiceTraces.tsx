@@ -115,32 +115,30 @@ export default function ServiceTraces({
 
 					{user?.role !== USER_ROLES.VIEWER && (
 						<div className="empty-actions-container">
-							<Link to={ROUTES.GET_STARTED}>
-								<Button
-									type="default"
-									className="periscope-btn secondary"
-									onClick={(): void => {
-										logEvent('Homepage: Get Started clicked', {
-											source: 'Service Traces',
-										});
+							<Button
+								type="default"
+								className="periscope-btn secondary"
+								onClick={(): void => {
+									logEvent('Homepage: Get Started clicked', {
+										source: 'Service Traces',
+									});
 
-										if (
-											activeLicenseV3 &&
-											activeLicenseV3.platform === LicensePlatform.CLOUD
-										) {
-											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-										} else {
-											window?.open(
-												DOCS_LINKS.ADD_DATA_SOURCE,
-												'_blank',
-												'noopener noreferrer',
-											);
-										}
-									}}
-								>
-									Get Started &nbsp; <ArrowRight size={16} />
-								</Button>
-							</Link>
+									if (
+										activeLicenseV3 &&
+										activeLicenseV3.platform === LicensePlatform.CLOUD
+									) {
+										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									} else {
+										window?.open(
+											DOCS_LINKS.ADD_DATA_SOURCE,
+											'_blank',
+											'noopener noreferrer',
+										);
+									}
+								}}
+							>
+								Get Started &nbsp; <ArrowRight size={16} />
+							</Button>
 
 							<Button
 								type="link"

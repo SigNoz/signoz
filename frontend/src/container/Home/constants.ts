@@ -45,7 +45,7 @@ export const defaultChecklistItemsState: ChecklistItem[] = [
 		skippedPreferenceKey: checkListStepToPreferenceKeyMap.ADD_DATA_SOURCE,
 		toRoute: ROUTES.GET_STARTED_WITH_CLOUD,
 		docsLink: DOCS_LINKS.ADD_DATA_SOURCE,
-		isSkippable: true,
+		isSkippable: false,
 	},
 	{
 		id: 'SEND_LOGS',

@@ -127,7 +127,7 @@ function HomeChecklist({
 												)}
 											</div>
 
-											{!item.isSkipped && !item.isSkippable && (
+											{!item.isSkipped && item.isSkippable && (
 												<div className="whats-next-checklist-item-action-buttons-container">
 													<Button
 														type="link"
