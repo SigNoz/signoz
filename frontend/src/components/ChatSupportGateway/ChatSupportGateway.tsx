@@ -4,32 +4,18 @@ import logEvent from 'api/common/logEvent';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
 import { CreditCard, X } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { License } from 'types/api/licenses/def';
 
 export default function ChatSupportGateway(): JSX.Element {
 	const { notifications } = useNotifications();
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
-
-	const { licenses, isFetchingLicenses } = useAppContext();
-
-	useEffect(() => {
-		if (!isFetchingLicenses && licenses) {
-			const activeValidLicense =
-				licenses.licenses?.find((license) => license.isCurrent === true) || null;
-
-			setActiveLicense(activeValidLicense);
-		}
-	}, [licenses, isFetchingLicenses]);
 
 	const handleBillingOnSuccess = (
 		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
@@ -66,9 +52,7 @@ export default function ChatSupportGateway(): JSX.Element {
 		});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			url: window.location.href,
 		});
 	};
 
