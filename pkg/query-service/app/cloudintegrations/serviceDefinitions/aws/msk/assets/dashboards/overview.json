@@ -599,7 +599,7 @@
             "stackedBarChart": false,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": " Network TX packets by broker",
+            "title": "Network TX packets by broker",
             "yAxisUnit": "none"
         },
         {

@@ -1081,7 +1081,7 @@
         {
           "id": "overview",
           "title": "AWS MSK Overview",
-          "description": "Overview of MSK Lambda",
+          "description": "Overview of AWS MSK",
           "image": "file://assets/dashboards/overview.png",
           "definition": "file://assets/dashboards/overview.json"
         }
