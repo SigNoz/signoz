@@ -82,7 +82,7 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 			}
 			r.Body.Close() //  must close
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &postData)
+			_ = json.Unmarshal(bodyBytes, &postData)
 
 		} else {
 			return nil, false

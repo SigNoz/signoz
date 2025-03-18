@@ -166,8 +166,8 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.db.Exec("DELETE FROM agent_config_versions WHERE id = $1", c.ID)
-			r.db.Exec("DELETE FROM agent_config_elements WHERE version_id=$1", c.ID)
+			_, _ = r.db.Exec("DELETE FROM agent_config_versions WHERE id = $1", c.ID)
+			_, _ = r.db.Exec("DELETE FROM agent_config_elements WHERE version_id=$1", c.ID)
 		}
 	}()
 
