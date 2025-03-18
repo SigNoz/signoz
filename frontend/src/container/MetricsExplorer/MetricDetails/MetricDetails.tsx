@@ -18,10 +18,10 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Compass, X } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
+import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Metadata from './Metadata';
-import TopAttributes from './TopAttributes';
 import { MetricDetailsProps } from './types';
 import {
 	formatNumberToCompactFormat,
@@ -60,7 +60,16 @@ function MetricDetails({
 		if (!metric) return null;
 		const timeSeriesActive = formatNumberToCompactFormat(metric.timeSeriesActive);
 		const timeSeriesTotal = formatNumberToCompactFormat(metric.timeSeriesTotal);
-		return `${timeSeriesActive} ⎯ ${timeSeriesTotal} active`;
+
+		return (
+			<Tooltip
+				title="Active time series are those that have received data points in the last 1
+					hour."
+				placement="top"
+			>
+				<span>{`${timeSeriesTotal} ⎯ ${timeSeriesActive} active`}</span>
+			</Tooltip>
+		);
 	}, [metric]);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
@@ -72,17 +81,6 @@ function MetricDetails({
 			);
 		}
 	}, [metricName, safeNavigate]);
-
-	const top5Attributes = useMemo(() => {
-		if (!metric) return [];
-		const totalSum =
-			metric?.attributes.reduce((acc, curr) => acc + curr.valueCount, 0) || 0;
-		return metric?.attributes.slice(0, 5).map((attr) => ({
-			key: attr.key,
-			count: attr.valueCount,
-			percentage: totalSum === 0 ? 0 : (attr.valueCount / totalSum) * 100,
-		}));
-	}, [metric]);
 
 	const isMetricDetailsError = metricDetailsError || !metric;
 
@@ -99,6 +97,8 @@ function MetricDetails({
 						onClick={goToMetricsExplorerwithSelectedMetric}
 						icon={<Compass size={16} />}
 						disabled={!metricName}
+						target="_blank"
+						rel="noopener noreferrer"
 					>
 						Open in Explorer
 					</Button>
@@ -124,7 +124,7 @@ function MetricDetails({
 					<div className="metric-details-content-grid">
 						<div className="labels-row">
 							<Typography.Text type="secondary" className="metric-details-grid-label">
-								DATAPOINTS
+								SAMPLES
 							</Typography.Text>
 							<Typography.Text type="secondary" className="metric-details-grid-label">
 								TIME SERIES
@@ -135,8 +135,8 @@ function MetricDetails({
 						</div>
 						<div className="values-row">
 							<Typography.Text className="metric-details-grid-value">
-								<Tooltip title={metric?.samples}>
-									{metric?.samples.toLocaleString()}
+								<Tooltip title={metric?.samples.toLocaleString()}>
+									{formatNumberIntoHumanReadableFormat(metric?.samples)}
 								</Tooltip>
 							</Typography.Text>
 							<Typography.Text className="metric-details-grid-value">
@@ -151,7 +151,6 @@ function MetricDetails({
 						dashboards={metric.dashboards}
 						alerts={metric.alerts}
 					/>
-					<TopAttributes items={top5Attributes} title="Top 5 Attributes" />
 					<Metadata
 						metricName={metric?.name}
 						metadata={metric.metadata}
