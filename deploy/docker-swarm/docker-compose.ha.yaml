@@ -174,13 +174,13 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:v0.76.1
+    image: signoz/signoz:v0.76.2
     command:
       - --config=/root/config/prometheus.yml
       - --use-logs-new-schema=true
       - --use-trace-new-schema=true
     ports:
-      - "8080:8080"     # signoz port
+      - "8080:8080" # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
       - ../common/signoz/prometheus.yml:/root/config/prometheus.yml
