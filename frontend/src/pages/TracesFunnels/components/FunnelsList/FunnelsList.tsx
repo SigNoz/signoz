@@ -16,12 +16,12 @@ interface FunnelListItemProps {
 
 function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
+		funnelId: funnel.id,
+	});
 
 	return (
-		<Link
-			to={generatePath(ROUTES.TRACES_FUNNELS_DETAIL, { funnelId: funnel.id })}
-			className="funnel-item"
-		>
+		<Link to={funnelDetailsLink} className="funnel-item">
 			<div className="funnel-item__header">
 				<div className="funnel-item__title">
 					<div>{funnel.funnel_name}</div>
