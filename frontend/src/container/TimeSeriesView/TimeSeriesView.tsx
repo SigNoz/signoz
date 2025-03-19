@@ -6,6 +6,7 @@ import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
@@ -187,7 +188,15 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					!isFilterApplied && <NoLogs dataSource={dataSource} />}
+					!isFilterApplied &&
+					dataSource !== DataSource.METRICS && <NoLogs dataSource={dataSource} />}
+
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
 
 				{!isLoading &&
 					!isError &&

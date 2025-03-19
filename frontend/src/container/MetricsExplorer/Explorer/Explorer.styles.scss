@@ -22,7 +22,11 @@
 
 	.query-section {
 		max-height: 450px;
-		overflow-y: scroll;
+		overflow-y: auto;
+
+		.rc-virtual-list-holder {
+			height: 150px;
+		}
 	}
 
 	.explore-tabs {
@@ -51,17 +55,31 @@
 	}
 
 	.explore-content {
+		.ant-space {
+			margin-top: 10px;
+			margin-bottom: 20px;
+		}
+
+		.empty-metrics-search {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+		}
+
 		.time-series-container {
 			display: flex;
 			gap: 10px;
 			width: 100%;
 			height: fit-content;
 			overflow-y: scroll;
+		}
 
-			.time-series-view {
-				min-width: 100%;
-				width: 100%;
-			}
+		.time-series-view {
+			min-width: 100%;
+			width: 100%;
 		}
 
 		.related-metrics-container {
