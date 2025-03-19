@@ -95,6 +95,7 @@ function FullView({
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 			tableParams: {
 				pagination: {
 					offset: 0,
