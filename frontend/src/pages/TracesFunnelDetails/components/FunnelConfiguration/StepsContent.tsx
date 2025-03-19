@@ -33,6 +33,7 @@ function StepsContent(): JSX.Element {
 				))}
 				{steps.length < 3 && (
 					<Step
+						className="steps-content__add-step"
 						description={
 							<Button
 								type="default"
