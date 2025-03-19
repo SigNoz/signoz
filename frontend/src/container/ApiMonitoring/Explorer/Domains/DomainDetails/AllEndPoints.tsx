@@ -21,8 +21,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ErrorState from './components/ErrorState';
+import ExpandedRow from './components/ExpandedRow';
 import { VIEW_TYPES, VIEWS } from './constants';
-import ExpandedRow from './ExpandedRow';
 
 function AllEndPoints({
 	domainName,

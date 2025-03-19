@@ -177,3 +177,43 @@
 		margin-top: 8px;
 	}
 }
+
+.lightMode {
+	.api-monitoring-domain-list-table {
+		.ant-table {
+			.ant-table-thead > tr > th {
+				background: var(--bg-vanilla-100);
+				color: var(--text-ink-300);
+			}
+
+			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-table-cell {
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-500);
+			}
+
+			.ant-table-cell:has(.domain-list-name-col-value) {
+				background: var(--bg-vanilla-100);
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: rgba(0, 0, 0, 0.04);
+			}
+
+			.table-row-light {
+				background: none;
+			}
+
+			.table-row-dark {
+				background: none;
+			}
+
+			.round-metric-tag {
+				color: var(--bg-vanilla-100);
+			}
+		}
+	}
+}

@@ -66,6 +66,7 @@ function EndPointDetails({
 			queryKey: [
 				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
 				payload,
+				filters,
 				ENTITY_VERSION_V4,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>

@@ -6,6 +6,7 @@ import {
 	getFormattedEndPointStatusCodeChartData,
 	statusCodeWidgetInfo,
 } from 'container/ApiMonitoring/utils';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -82,6 +83,8 @@ function StatusCodeBarCharts({
 		],
 	);
 
+	const isDarkMode = useIsDarkMode();
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -89,7 +92,7 @@ function StatusCodeBarCharts({
 					currentWidgetInfoIndex === 0
 						? formattedEndPointStatusCodeBarChartsDataPayload
 						: formattedEndPointStatusCodeLatencyBarChartsDataPayload,
-				isDarkMode: true,
+				isDarkMode,
 				dimensions,
 				yAxisUnit: statusCodeWidgetInfo[currentWidgetInfoIndex].yAxisUnit,
 				softMax: null,
@@ -105,6 +108,7 @@ function StatusCodeBarCharts({
 			dimensions,
 			formattedEndPointStatusCodeBarChartsDataPayload,
 			formattedEndPointStatusCodeLatencyBarChartsDataPayload,
+			isDarkMode,
 		],
 	);
 

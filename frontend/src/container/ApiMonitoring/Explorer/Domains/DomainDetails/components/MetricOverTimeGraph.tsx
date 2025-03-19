@@ -3,6 +3,7 @@ import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { apiWidgetInfo } from 'container/ApiMonitoring/utils';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -36,11 +37,13 @@ function MetricOverTimeGraph({
 		data?.payload,
 	]);
 
+	const isDarkMode = useIsDarkMode();
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
 				apiResponse: data?.payload,
-				isDarkMode: true,
+				isDarkMode,
 				dimensions,
 				yAxisUnit: apiWidgetInfo[widgetInfoIndex].yAxisUnit,
 				softMax: null,
@@ -49,7 +52,7 @@ function MetricOverTimeGraph({
 				maxTimeScale: Math.floor(maxTime / 1e9),
 				panelType: PANEL_TYPES.TIME_SERIES,
 			}),
-		[data?.payload, minTime, maxTime, widgetInfoIndex, dimensions],
+		[data?.payload, minTime, maxTime, widgetInfoIndex, dimensions, isDarkMode],
 	);
 
 	const renderCardContent = useCallback(

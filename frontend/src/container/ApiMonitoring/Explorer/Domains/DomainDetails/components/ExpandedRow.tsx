@@ -20,7 +20,7 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { VIEW_TYPES, VIEWS } from './constants';
+import { VIEW_TYPES, VIEWS } from '../constants';
 
 function ExpandedRow({
 	domainName,
