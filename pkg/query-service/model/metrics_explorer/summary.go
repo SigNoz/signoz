@@ -31,8 +31,8 @@ type TreeMapMetricsRequest struct {
 type MetricDetail struct {
 	MetricName   string `json:"metric_name"`
 	Description  string `json:"description"`
-	MetricType   string `json:"metric_type"`
-	MetricUnit   string `json:"metric_unit"`
+	MetricType   string `json:"type"`
+	MetricUnit   string `json:"unit"`
 	TimeSeries   uint64 `json:"timeseries"`
 	Samples      uint64 `json:"samples"`
 	LastReceived int64  `json:"lastReceived"`
