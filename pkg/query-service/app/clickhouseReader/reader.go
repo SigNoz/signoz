@@ -5971,8 +5971,6 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		if req.Limit < 50 {
 			firstQueryLimit = 50
 		}
-	} else if req.OrderBy.ColumnName == "metric_type" {
-		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY type %s", req.OrderBy.Order)
 	} else {
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY %s %s", req.OrderBy.ColumnName, req.OrderBy.Order)
 	}
@@ -5985,8 +5983,8 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		`SELECT 
 		    t.metric_name AS metric_name,
 		    ANY_VALUE(t.description) AS description,
-		    ANY_VALUE(t.type) AS type,
-		    ANY_VALUE(t.unit),
+		    ANY_VALUE(t.type) AS metric_type,
+		    ANY_VALUE(t.unit) AS metric_unit,
 		    uniq(t.fingerprint) AS timeseries,
 			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t
@@ -6013,7 +6011,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 
 	for rows.Next() {
 		var metric metrics_explorer.MetricDetail
-		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.Type, &metric.Unit, &metric.TimeSeries, &response.Total); err != nil {
+		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.MetricType, &metric.MetricUnit, &metric.TimeSeries, &response.Total); err != nil {
 			zap.L().Error("Error scanning metric row", zap.Error(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}

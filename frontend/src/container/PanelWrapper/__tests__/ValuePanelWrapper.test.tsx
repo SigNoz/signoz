@@ -8,6 +8,14 @@ import {
 	valuePanelWidget,
 } from './valuePanelWrapperHelper';
 
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+
 describe('Value panel wrappper tests', () => {
 	it('should render value panel correctly with yaxis unit', () => {
 		const { getByText } = render(
@@ -19,7 +27,8 @@ describe('Value panel wrappper tests', () => {
 		);
 
 		// selected y axis unit as miliseconds (ms)
-		expect(getByText('295 ms')).toBeInTheDocument();
+		expect(getByText('295')).toBeInTheDocument();
+		expect(getByText('ms')).toBeInTheDocument();
 	});
 
 	it('should render tooltip when there are conflicting thresholds', () => {

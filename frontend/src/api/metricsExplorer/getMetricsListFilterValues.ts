@@ -2,7 +2,6 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export interface MetricsListFilterValuesPayload {
 	filterAttributeKeyDataType: string;
@@ -14,7 +13,7 @@ export interface MetricsListFilterValuesPayload {
 export interface MetricsListFilterValuesResponse {
 	status: string;
 	data: {
-		FilterValues: BaseAutocompleteData[];
+		filterValues: string[];
 	};
 }
 

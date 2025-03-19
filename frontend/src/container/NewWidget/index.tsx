@@ -24,7 +24,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { defaultTo, isEmpty, isUndefined } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useAppContext } from 'providers/App/App';
@@ -320,7 +320,25 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	// request data should be handled by the parent and the child components should consume the same
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
-		if (selectedWidget && selectedGraph !== PANEL_TYPES.LIST) {
+		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
+		updatedQuery.builder.queryData[0].pageSize = 10;
+
+		if (selectedWidget) {
+			if (selectedGraph === PANEL_TYPES.LIST) {
+				return {
+					query: updatedQuery,
+					graphType: PANEL_TYPES.LIST,
+					selectedTime: selectedTime.enum || 'GLOBAL_TIME',
+					globalSelectedInterval,
+					variables: getDashboardVariables(selectedDashboard?.data.variables),
+					tableParams: {
+						pagination: {
+							offset: 0,
+							limit: updatedQuery.builder.queryData[0].limit || 0,
+						},
+					},
+				};
+			}
 			return {
 				selectedTime: selectedWidget?.timePreferance,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
@@ -332,8 +350,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 			};
 		}
-		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
-		updatedQuery.builder.queryData[0].pageSize = 10;
 
 		// If stagedQuery exists, don't re-run the query (e.g. when clicking on Add to Dashboard from logs and traces explorer)
 		if (!stagedQuery) {
@@ -341,15 +357,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 		return {
 			query: updatedQuery,
-			graphType: PANEL_TYPES.LIST,
+			graphType: selectedGraph,
 			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 			globalSelectedInterval,
-			tableParams: {
-				pagination: {
-					offset: 0,
-					limit: updatedQuery.builder.queryData[0].limit || 0,
-				},
-			},
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		};
 	});
 

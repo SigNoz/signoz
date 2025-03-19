@@ -80,6 +80,22 @@
 				background: var(--bg-ink-400);
 			}
 
+			.metric-name-column-header,
+			.metric-type-column-header {
+				display: flex;
+				justify-content: space-between;
+
+				.metric-name-column-header-text,
+				.metric-type-column-header-text {
+					line-height: 32px;
+				}
+
+				.ant-btn {
+					margin-left: 4px;
+					padding: 0;
+				}
+			}
+
 			.ant-table-cell {
 				padding: 12px;
 				font-size: 13px;
@@ -262,4 +278,27 @@
 	font-size: 12px;
 	padding: 5px 10px;
 	align-self: flex-end;
+}
+
+.ant-popover-inner {
+	padding: 0 !important;
+}
+
+.metric-name-search-popover {
+	.metric-name-search-popover-menu {
+		height: 200px;
+		width: 300px;
+		overflow-y: scroll;
+	}
+
+	.ant-menu {
+		.ant-spin,
+		.ant-empty {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			margin-top: 16px;
+		}
+	}
 }
