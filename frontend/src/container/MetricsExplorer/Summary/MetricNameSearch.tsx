@@ -1,11 +1,11 @@
-import { Button, Empty, Input, Menu, Popover, Spin } from 'antd';
+import { Button, Empty, Input, InputRef, Menu, Popover, Spin } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetMetricsListFilterValues } from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Search } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 function MetricNameSearch(): JSX.Element {
@@ -19,6 +19,14 @@ function MetricNameSearch(): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const [searchString, setSearchString] = useState<string>('');
 	const [debouncedSearchString, setDebouncedSearchString] = useState<string>('');
+	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+	const inputRef = useRef<InputRef | null>(null);
+
+	useEffect(() => {
+		if (isPopoverOpen && inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, [isPopoverOpen]);
 
 	const {
 		data: metricNameFilterValuesData,
@@ -68,6 +76,31 @@ function MetricNameSearch(): JSX.Element {
 	const metricNameFilterValues = useMemo(
 		() => metricNameFilterValuesData?.payload?.data?.filterValues || [],
 		[metricNameFilterValuesData],
+	);
+
+	const handleKeyDown = useCallback(
+		(event: React.KeyboardEvent<HTMLInputElement>) => {
+			if (!isPopoverOpen) return;
+
+			if (event.key === 'ArrowDown') {
+				event.preventDefault();
+				setHighlightedIndex((prev) =>
+					prev < metricNameFilterValues.length - 1 ? prev + 1 : 0,
+				);
+			} else if (event.key === 'ArrowUp') {
+				event.preventDefault();
+				setHighlightedIndex((prev) =>
+					prev > 0 ? prev - 1 : metricNameFilterValues.length - 1,
+				);
+			} else if (
+				event.key === 'Enter' &&
+				highlightedIndex >= 0 &&
+				metricNameFilterValues[highlightedIndex]
+			) {
+				handleSelect(metricNameFilterValues[highlightedIndex]);
+			}
+		},
+		[highlightedIndex, metricNameFilterValues, handleSelect, isPopoverOpen],
 	);
 
 	const popoverItems = useMemo(() => {
@@ -126,6 +159,8 @@ function MetricNameSearch(): JSX.Element {
 		() => (
 			<div className="metric-name-search-popover">
 				<Input
+					ref={inputRef}
+					onKeyDown={handleKeyDown}
 					placeholder="Search..."
 					value={searchString}
 					onChange={handleInputChange}
@@ -134,7 +169,7 @@ function MetricNameSearch(): JSX.Element {
 				<Menu className="metric-name-search-popover-menu">{popoverItems}</Menu>
 			</div>
 		),
-		[searchString, handleInputChange, popoverItems],
+		[handleKeyDown, searchString, handleInputChange, popoverItems],
 	);
 
 	return (
