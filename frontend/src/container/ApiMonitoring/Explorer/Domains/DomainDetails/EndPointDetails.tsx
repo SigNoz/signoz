@@ -37,12 +37,35 @@ function EndPointDetails({
 	);
 
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
-	const query = currentQuery?.builder?.queryData[0] || null;
 
 	const [filters, setFilters] = useState<IBuilderQuery['filters']>({
 		op: 'AND',
 		items: [],
 	});
+
+	// Manually update the query to include the filters
+	// Because using the hook is causing the global domain
+	// query to be updated and causing main domain list to
+	// refetch with the filters of endpoints
+
+	const updatedCurrentQuery = useMemo(
+		() => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						filters,
+					},
+				],
+			},
+		}),
+		[filters, currentQuery],
+	);
+
+	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	const isServicesFilterApplied = useMemo(
 		() => filters.items.some((item) => item.key?.key === 'service.name'),
@@ -112,7 +135,6 @@ function EndPointDetails({
 					<QueryBuilderSearchV2
 						query={query}
 						onChange={(searchFilters): void => {
-							console.log('uncaught filter handler', searchFilters);
 							setFilters(searchFilters);
 						}}
 						placeholder="Search for filters..."
