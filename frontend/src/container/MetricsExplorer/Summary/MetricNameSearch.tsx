@@ -172,6 +172,13 @@ function MetricNameSearch(): JSX.Element {
 		[handleKeyDown, searchString, handleInputChange, popoverItems],
 	);
 
+	useEffect(() => {
+		if (!isPopoverOpen) {
+			setSearchString('');
+			setDebouncedSearchString('');
+		}
+	}, [isPopoverOpen]);
+
 	return (
 		<Popover
 			content={popoverContent}
