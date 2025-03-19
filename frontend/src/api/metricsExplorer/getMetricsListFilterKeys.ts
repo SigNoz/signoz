@@ -23,13 +23,14 @@ export const getMetricsListFilterKeys = async (
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<MetricsListFilterKeysResponse> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
-			`/metrics/filters/keys?searchText=${params.searchText}&limit=${params.limit}`,
-			{
-				signal,
-				headers,
+		const response = await axios.get('/metrics/filters/keys', {
+			params: {
+				searchText: params.searchText,
+				limit: params.limit,
 			},
-		);
+			signal,
+			headers,
+		});
 
 		return {
 			statusCode: 200,
