@@ -566,13 +566,13 @@ func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT)
 
 	user, err := authenticateLogin(ctx, request, jwt)
 	if err != nil {
-		zap.L().Error("Failed to authenticate login request", zap.Error(err))
+		zap.L().Warn("Failed to authenticate login request", zap.Error(err))
 		return nil, err
 	}
 
 	userjwt, err := GenerateJWTForUser(&user.User, jwt)
 	if err != nil {
-		zap.L().Error("Failed to generate JWT against login creds", zap.Error(err))
+		zap.L().Warn("Failed to generate JWT against login creds", zap.Error(err))
 		return nil, err
 	}
 
