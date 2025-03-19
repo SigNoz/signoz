@@ -255,7 +255,7 @@
 		position: absolute;
 		left: -3px;
 		top: 50px;
-		bottom: -120px;
+		bottom: -80px;
 		width: 1px;
 		background: linear-gradient(
 			to bottom,
@@ -1086,6 +1086,7 @@
 
 .ingestion-setup-details-links {
 	display: flex;
+	flex-direction: row;
 	align-items: center;
 	gap: 8px;
 	margin-bottom: 24px;
@@ -1104,11 +1105,396 @@
 
 .lightMode {
 	.ingestion-setup-details-links {
-		background: var(--bg-vanilla-100);
 		color: var(--bg-robin-500);
 
 		.learn-more {
 			color: var(--bg-robin-500);
 		}
+	}
+}
+
+.onboarding-header-container-close-icon {
+	color: var(--bg-vanilla-100);
+}
+
+.lightMode {
+	.setup-flow {
+		&__header {
+			background: rgba(255, 255, 255, 0.9);
+			backdrop-filter: blur(20px);
+
+			&--sticky {
+				background: rgba(255, 255, 255, 0.9);
+			}
+		}
+
+		&__question-block {
+			color: var(--text-ink-300);
+			background-color: var(--bg-vanilla-100);
+
+			&:before {
+				background-color: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-vanilla-300);
+				color: var(--text-ink-300);
+			}
+		}
+
+		&__heading {
+			color: var(--text-ink-300);
+		}
+
+		&__description {
+			color: var(--text-ink-300);
+		}
+
+		&__radio-custom {
+			background-color: var(--bg-vanilla-100);
+			color: var(--text-ink-300);
+			background: var(--bg-vanilla-100);
+			cursor: pointer;
+			box-shadow: 0px 4px 4px 0px rgba(255, 255, 255, 0.19);
+
+			&:hover {
+				background: var(--bg-robin-500);
+				box-shadow: 0 4px 8px rgba(58, 134, 255, 0.2);
+			}
+
+			&__text {
+				color: var(--text-ink-300);
+			}
+
+			&--selected {
+				background: var(--bg-robin-500);
+				border-color: var(--bg-robin-500);
+				color: var(--text-ink-300);
+				box-shadow: 0 4px 10px rgba(58, 134, 255, 0.4);
+			}
+
+			&--animating {
+				animation: selectPulse 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+			}
+		}
+
+		&__category {
+			width: 100%;
+			color: var(--text-ink-300);
+		}
+
+		&__content-container {
+			display: flex;
+		}
+
+		&__category-filter {
+			margin-left: 20px;
+		}
+
+		&__category-filter-item {
+			color: var(--text-ink-300);
+
+			&--selected {
+				color: var(--text-ink-300);
+			}
+		}
+
+		@media (max-width: 600px) {
+			&__description {
+				color: var(--text-ink-300);
+			}
+		}
+	}
+
+	.question-block {
+		color: var(--text-ink-300);
+		background-color: transparent !important;
+
+		&:before {
+			background-color: var(--bg-robin-100);
+			border: 1px solid var(--bg-vanilla-300);
+			color: var(--text-ink-300);
+		}
+
+		&.answered {
+			&:before {
+				background-color: rgba(78, 116, 248);
+				color: var(--bg-vanilla-100);
+			}
+		}
+
+		&:after {
+			content: '';
+			position: absolute;
+			left: -3px;
+			top: 50px;
+			bottom: -80px;
+			width: 1px;
+			background: linear-gradient(
+				to bottom,
+				var(--bg-robin-400) 0%,
+				var(--bg-robin-400) 50%,
+				transparent 50%,
+				transparent 100%
+			);
+			background-size: 2px 10px;
+		}
+	}
+
+	@keyframes selectPulse {
+		0% {
+			background-color: var(--bg-ink-400);
+			border-color: var(--bg-robin-500);
+		}
+		20% {
+			background-color: rgba(58, 134, 255, 0.5);
+			border-color: var(--bg-robin-500);
+		}
+		40% {
+			background-color: var(--bg-ink-400);
+			border-color: var(--bg-robin-500);
+		}
+		60% {
+			background-color: rgba(58, 134, 255, 0.8);
+			border-color: var(--bg-robin-500);
+		}
+		100% {
+			background-color: var(--bg-robin-500);
+			border-color: var(--bg-robin-500);
+		}
+	}
+
+	.onboarding-v2 {
+		.get-help-btn {
+			border: 1px solid var(--bg-vanilla-300) !important;
+			color: var(--bg-ink-300) !important;
+
+			&:focus-visible {
+				outline: none !important;
+				outline-offset: 0px !important;
+			}
+
+			&.rounded-btn {
+				border-radius: 50px;
+			}
+
+			&:hover {
+				border: 1px solid var(--bg-vanilla-300) !important;
+				color: var(--text-robin-500) !important;
+			}
+
+			&.primary {
+				background: var(--bg-robin-500);
+				color: var(--text-vanilla-200) !important;
+				border: none !important;
+
+				&:hover {
+					color: var(--text-vanilla-100) !important;
+				}
+			}
+
+			&.outlined {
+				border: none !important;
+				color: var(--text-vanilla-400) !important;
+
+				&:hover {
+					color: var(--text-robin-400) !important;
+				}
+			}
+
+			&.full-width {
+				width: 100%;
+			}
+		}
+	}
+
+	.onboarding-title,
+	.onboarding-filters-title,
+	.onboarding-filters-item-title {
+		color: var(--text-ink-400) !important;
+
+		&.selected {
+			color: var(--bg-robin-500) !important;
+		}
+	}
+
+	.onboarding-text {
+		color: var(--text-ink-400);
+	}
+
+	.onboarding-data-source-button {
+		color: var(--text-ink-300);
+		background: var(--bg-vanilla-300);
+		box-shadow: 0px 4px 4px 0px rgba(255, 255, 255, 0.19);
+
+		&:hover {
+			border: 1px solid var(--bg-robin-500) !important;
+			color: var(--text-robin-500) !important;
+			background: var(--bg-vanilla-200) !important;
+			box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+		}
+
+		&:active {
+			border: 1px solid var(--bg-robin-500) !important;
+			color: var(--text-robin-500) !important;
+			background: var(--bg-vanilla-200) !important;
+			box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+		}
+
+		&:focus {
+			border: 1px solid var(--bg-robin-500) !important;
+			color: var(--text-robin-500) !important;
+			box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+			background: var(--bg-vanilla-200) !important;
+		}
+
+		&.selected {
+			border: 1px solid var(--bg-robin-500) !important;
+
+			color: var(--text-robin-500) !important;
+			box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+			background: var(--bg-vanilla-200) !important;
+		}
+	}
+
+	.questionaire-footer {
+		background-color: var(--bg-vanilla-100);
+	}
+
+	.onboarding-configure-product-description {
+		background-color: var(--bg-vanilla-100);
+	}
+
+	.onboarding-data-source-search {
+		margin-top: 12px;
+		margin-bottom: 24px;
+
+		.ant-input {
+			background: var(--bg-vanilla-100);
+			border: 1px solid var(--bg-vanilla-300);
+			height: 40px;
+		}
+	}
+
+	.onboarding-add-data-source-container {
+		.onboarding-question {
+			color: var(--text-ink-300);
+		}
+
+		.question-title {
+			color: var(--text-ink-300);
+		}
+
+		.question-sub-title {
+			color: var(--text-ink-400);
+		}
+	}
+
+	.onboarding-product-setup-container {
+		&_left-section {
+			.perlian-bg {
+				background: radial-gradient(circle, var(--text-ink-400) 10%, transparent 0);
+				background-size: 12px 12px;
+				opacity: 1;
+				-webkit-mask-image: radial-gradient(
+					circle at 50% 0,
+					rgba(255, 255, 255, 0.1) 0,
+					rgba(255, 255, 255, 0) 56.77%
+				);
+			}
+
+			.ant-btn-default {
+				background: var(--bg-vanilla-100);
+			}
+		}
+
+		&_right-section {
+			.invite-user-section-content {
+				.ant-btn {
+					background: var(--bg-vanilla-100);
+				}
+
+				.need-help-section-content-divider {
+					color: var(--text-ink-400);
+				}
+			}
+
+			.need-help-section-content {
+				background: rgba(255, 255, 255, 0.1);
+
+				.ant-typography {
+					color: var(--bg-robin-500);
+				}
+			}
+
+			.configure-product-ingestion-section-content {
+				.ingestion-endpoint-section {
+					background: var(--bg-vanilla-100);
+					box-shadow: 0px 4px 4px 0px rgba(255, 255, 255, 0.19) inset;
+					border: 1px solid var(--bg-vanilla-300);
+
+					.ingestion-endpoint-section-header {
+						background-color: var(--bg-vanilla-100);
+					}
+
+					.ingestion-endpoint-info-section {
+						background-color: var(--bg-vanilla-100);
+					}
+
+					.ingestion-endpoint-section-title {
+						background-color: var(--bg-vanilla-100);
+					}
+				}
+
+				.ingestion-key-details-section {
+					background: rgba(255, 255, 255, 1);
+				}
+
+				.ingestion-endpoint-section-error-container {
+					background: var(--bg-vanilla-100);
+				}
+			}
+		}
+	}
+
+	.onboarding-data-source-category-container {
+		.onboarding-data-source-category-item {
+			.ant-typography {
+				color: var(--text-ink-400);
+			}
+		}
+	}
+
+	.onboarding-configure-container {
+		.configure-product-docs-section {
+			border: 1px solid var(--bg-vanilla-300);
+
+			.loading-container {
+				.loading-text {
+					color: var(--text-ink-300);
+				}
+			}
+		}
+
+		.configure-product-ingestion-section {
+			.configure-product-ingestion-section-content {
+				background-color: var(--bg-vanilla-100);
+			}
+		}
+	}
+
+	.invite-team-member-modal {
+		.ant-modal-content {
+			background-color: var(--bg-vanilla-100);
+		}
+
+		.ant-modal-title {
+			background-color: var(--bg-vanilla-100);
+		}
+
+		.invite-team-member-modal-content {
+			background-color: var(--bg-vanilla-100);
+		}
+	}
+
+	.onboarding-header-container-close-icon {
+		color: var(--bg-ink-300);
 	}
 }

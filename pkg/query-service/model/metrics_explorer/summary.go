@@ -149,3 +149,23 @@ type RelatedMetrics struct {
 	Dashboards []Dashboard      `json:"dashboards"`
 	Alerts     []Alert          `json:"alerts"`
 }
+
+type InspectMetricsRequest struct {
+	MetricName string       `json:"metricName"`
+	Filters    v3.FilterSet `json:"filters"`
+	Start      int64        `json:"start"`
+	End        int64        `json:"end"`
+}
+
+type InspectMetricsResponse struct {
+	Series *[]v3.Series `json:"series,omitempty"`
+}
+
+type UpdateMetricsMetadataRequest struct {
+	MetricName  string         `json:"metricName"`
+	MetricType  v3.MetricType  `json:"metricType"`
+	Description string         `json:"description"`
+	Unit        string         `json:"unit"`
+	Temporality v3.Temporality `json:"temporality"`
+	IsMonotonic bool           `json:"isMonotonic"`
+}

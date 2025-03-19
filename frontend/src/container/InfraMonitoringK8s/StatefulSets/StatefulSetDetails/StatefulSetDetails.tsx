@@ -6,6 +6,7 @@ import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -167,11 +168,15 @@ function StatefulSetDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: StatefulSets list details page visited', {
-			statefulSet: statefulSet?.statefulSetName,
-		});
+		if (statefulSet) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.StatefulSet,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [statefulSet]);
 
 	useEffect(() => {
 		setLogAndTracesFilters(initialFilters);
@@ -193,8 +198,10 @@ function StatefulSetDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: StatefulSets list details tab changed', {
-			statefulSet: statefulSet?.statefulSetName,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.StatefulSet,
 			view: e.target.value,
 		});
 	};
@@ -217,8 +224,10 @@ function StatefulSetDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: StatefulSets list details time updated', {
-				statefulSet: statefulSet?.statefulSetName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.StatefulSet,
 				interval,
 				view: selectedView,
 			});
@@ -242,12 +251,14 @@ function StatefulSetDetails({
 						item.key?.key !== QUERY_KEYS.K8S_STATEFUL_SET_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: StatefulSets list details logs filters applied',
-					{
-						statefulSet: statefulSet?.statefulSetName,
-					},
-				);
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.StatefulSet,
+						view: 'logs',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -272,12 +283,14 @@ function StatefulSetDetails({
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: StatefulSets list details traces filters applied',
-					{
-						statefulSet: statefulSet?.statefulSetName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.StatefulSet,
+						view: 'traces',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -304,12 +317,14 @@ function StatefulSetDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: StatefulSets list details events filters applied',
-					{
-						statefulSet: statefulSet?.statefulSetName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.StatefulSet,
+						view: 'logs',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -338,8 +353,10 @@ function StatefulSetDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: StatefulSets list details explore clicked', {
-			statefulSet: statefulSet?.statefulSetName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.StatefulSet,
 			view: selectedView,
 		});
 

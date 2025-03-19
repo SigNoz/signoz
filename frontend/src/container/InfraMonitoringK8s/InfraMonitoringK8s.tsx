@@ -7,6 +7,7 @@ import { Collapse, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
@@ -70,10 +71,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		handleChangeQueryData('filters', query.builder.queryData[0].filters);
 		setQuickFiltersLastUpdated(Date.now());
 
-		logEvent(
-			`Infra Monitoring: K8s ${selectedCategory} list quick filters applied`,
-			{},
-		);
+		logEvent(InfraMonitoringEvents.FilterApplied, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: selectedCategory,
+			view: InfraMonitoringEvents.QuickFiltersView,
+		});
 	};
 
 	const items: CollapseProps['items'] = [

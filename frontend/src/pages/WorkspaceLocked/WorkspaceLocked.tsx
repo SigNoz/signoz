@@ -23,10 +23,10 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { License } from 'types/api/licenses/def';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -39,9 +39,13 @@ import {
 } from './workspaceLocked.data';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const { user, licenses, isFetchingLicenses } = useAppContext();
+	const {
+		user,
+		isFetchingActiveLicenseV3,
+		trialInfo,
+		activeLicenseV3,
+	} = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const { notifications } = useNotifications();
 
 	const { t } = useTranslation(['workspaceLocked']);
@@ -66,19 +70,21 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (!isFetchingLicenses) {
-			const shouldBlockWorkspace = licenses?.workSpaceBlock;
+		if (!isFetchingActiveLicenseV3) {
+			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
 
-			if (!shouldBlockWorkspace) {
-				history.push(ROUTES.APPLICATION);
+			if (
+				!shouldBlockWorkspace ||
+				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
+			) {
+				history.push(ROUTES.HOME);
 			}
-
-			const activeValidLicense =
-				licenses?.licenses?.find((license) => license.isCurrent === true) || null;
-
-			setActiveLicense(activeValidLicense);
 		}
-	}, [isFetchingLicenses, licenses]);
+	}, [
+		isFetchingActiveLicenseV3,
+		trialInfo?.workSpaceBlock,
+		activeLicenseV3?.platform,
+	]);
 
 	const { mutate: updateCreditCard, isLoading } = useMutation(
 		updateCreditCardApi,
@@ -103,12 +109,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.origin,
-			cancelURL: window.location.origin,
+			url: window.location.href,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeLicense?.key, updateCreditCard]);
+	}, [updateCreditCard]);
 
 	const handleExtendTrial = (): void => {
 		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
@@ -316,7 +320,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				width="65%"
 			>
 				<div className="workspace-locked__container">
-					{isFetchingLicenses || !licenses ? (
+					{isFetchingActiveLicenseV3 || !trialInfo ? (
 						<Skeleton />
 					) : (
 						<>
@@ -331,7 +335,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 											<br />
 											{t('yourDataIsSafe')}{' '}
 											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(licenses?.gracePeriodEnd || Date.now())}
+												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
 										</Typography.Paragraph>

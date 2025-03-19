@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sClustersData } from 'api/infraMonitoring/getK8sClustersList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -150,11 +151,15 @@ function ClusterDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Clusters list details page visited', {
-			cluster: cluster?.clusterUID,
-		});
+		if (cluster) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Cluster,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [cluster]);
 
 	useEffect(() => {
 		setLogsAndTracesFilters(initialFilters);
@@ -176,8 +181,10 @@ function ClusterDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: Clusters list details tab changed', {
-			cluster: cluster?.clusterUID,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Cluster,
 			view: e.target.value,
 		});
 	};
@@ -200,8 +207,10 @@ function ClusterDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Clusters list details time updated', {
-				cluster: cluster?.clusterUID,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Cluster,
 				interval,
 				view: selectedView,
 			});
@@ -222,9 +231,14 @@ function ClusterDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
-				logEvent('Infra Monitoring: Clusters list details logs filters applied', {
-					cluster: cluster?.clusterUID,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						view: InfraMonitoringEvents.LogsView,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -249,9 +263,14 @@ function ClusterDetails({
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
 				);
 
-				logEvent('Infra Monitoring: Clusters list details traces filters applied', {
-					cluster: cluster?.clusterUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						view: InfraMonitoringEvents.TracesView,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -280,9 +299,14 @@ function ClusterDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Clusters list details events filters applied', {
-					cluster: cluster?.clusterUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						view: InfraMonitoringEvents.EventsView,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -313,8 +337,10 @@ function ClusterDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Clusters list details explore clicked', {
-			cluster: cluster?.clusterUID,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Cluster,
 			view: selectedView,
 		});
 

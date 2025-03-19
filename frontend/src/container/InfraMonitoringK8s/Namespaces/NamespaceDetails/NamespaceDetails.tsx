@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -152,11 +153,15 @@ function NamespaceDetails({
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Namespaces list details page visited', {
-			namespace: namespace?.namespaceName,
-		});
+		if (namespace) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Namespace,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [namespace]);
 
 	useEffect(() => {
 		setLogAndTracesFilters(initialFilters);
@@ -178,8 +183,10 @@ function NamespaceDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		logEvent('Infra Monitoring: Namespaces list details tab changed', {
-			namespace: namespace?.namespaceName,
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Namespace,
 			view: e.target.value,
 		});
 	};
@@ -202,8 +209,10 @@ function NamespaceDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Namespaces list details time updated', {
-				namespace: namespace?.namespaceName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Namespace,
 				interval,
 				view: selectedView,
 			});
@@ -226,9 +235,14 @@ function NamespaceDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 
-				logEvent('Infra Monitoring: Namespaces list details logs filters applied', {
-					namespace: namespace?.namespaceName,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Namespace,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -253,12 +267,14 @@ function NamespaceDetails({
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: Namespaces list details traces filters applied',
-					{
-						namespace: namespace?.namespaceName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Namespace,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -285,12 +301,14 @@ function NamespaceDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: Namespaces list details events filters applied',
-					{
-						namespace: namespace?.namespaceName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Namespace,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -319,8 +337,10 @@ function NamespaceDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Namespaces list details explore clicked', {
-			namespace: namespace?.namespaceName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Namespace,
 			view: selectedView,
 		});
 

@@ -1,7 +1,8 @@
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
-import { Empty, Skeleton, Tooltip } from 'antd';
+import { Empty, Skeleton, Tooltip, Typography } from 'antd';
 import { stratify, treemapBinary } from 'd3-hierarchy';
+import { Info } from 'lucide-react';
 import { useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 
@@ -10,7 +11,7 @@ import {
 	TREEMAP_MARGINS,
 	TREEMAP_SQUARE_PADDING,
 } from './constants';
-import { TreemapProps, TreemapTile, TreemapViewType } from './types';
+import { MetricsTreemapProps, TreemapTile, TreemapViewType } from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
@@ -21,7 +22,8 @@ function MetricsTreemap({
 	viewType,
 	data,
 	isLoading,
-}: TreemapProps): JSX.Element {
+	openMetricDetails,
+}: MetricsTreemapProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
 	const treemapWidth = useMemo(
@@ -35,9 +37,9 @@ function MetricsTreemap({
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
-			(viewType === TreemapViewType.CARDINALITY
-				? data?.data?.[TreemapViewType.CARDINALITY]
-				: data?.data?.[TreemapViewType.DATAPOINTS]) || [];
+			(viewType === TreemapViewType.TIMESERIES
+				? data?.data?.[TreemapViewType.TIMESERIES]
+				: data?.data?.[TreemapViewType.SAMPLES]) || [];
 		return transformTreemapData(extracedTreemapData, viewType);
 	}, [data, viewType]);
 
@@ -70,8 +72,21 @@ function MetricsTreemap({
 	}
 
 	return (
-		<div className="metrics-treemap">
-			<svg width={treemapWidth} height={TREEMAP_HEIGHT}>
+		<div className="metrics-treemap-container">
+			<div className="metrics-treemap-title">
+				<Typography.Title level={4}>Proportion View</Typography.Title>
+				<Tooltip
+					title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
+					placement="right"
+				>
+					<Info size={16} />
+				</Tooltip>
+			</div>
+			<svg
+				width={treemapWidth}
+				height={TREEMAP_HEIGHT}
+				className="metrics-treemap"
+			>
 				<rect
 					width={treemapWidth}
 					height={TREEMAP_HEIGHT}
@@ -93,6 +108,9 @@ function MetricsTreemap({
 								.map((node, i) => {
 									const nodeWidth = node.x1 - node.x0 - TREEMAP_SQUARE_PADDING;
 									const nodeHeight = node.y1 - node.y0 - TREEMAP_SQUARE_PADDING;
+									if (nodeWidth < 0 || nodeHeight < 0) {
+										return null;
+									}
 									return (
 										<Group
 											// eslint-disable-next-line react/no-array-index-key
@@ -109,6 +127,7 @@ function MetricsTreemap({
 														width={nodeWidth}
 														height={nodeHeight}
 														style={getTreemapTileStyle(node.data)}
+														onClick={(): void => openMetricDetails(node.data.id)}
 													>
 														<div style={getTreemapTileTextStyle()}>
 															{`${node.data.displayValue}%`}

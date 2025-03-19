@@ -134,21 +134,21 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				// Don't return here - we need to snapshot our state first.
 			}
 
-			state, err := server.stateStore.Get(ctx, server.orgID)
+			storableSilences, err := server.stateStore.Get(ctx, server.orgID)
 			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 				return 0, err
 			}
 
-			if state == nil {
-				state = alertmanagertypes.NewStoreableState(server.orgID)
+			if storableSilences == nil {
+				storableSilences = alertmanagertypes.NewStoreableState(server.orgID)
 			}
 
-			c, err := state.Set(alertmanagertypes.SilenceStateName, server.silences)
+			c, err := storableSilences.Set(alertmanagertypes.SilenceStateName, server.silences)
 			if err != nil {
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, server.orgID, state)
+			return c, server.stateStore.Set(ctx, server.orgID, storableSilences)
 		})
 
 	}()
@@ -163,21 +163,21 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				// Don't return without saving the current state.
 			}
 
-			state, err := server.stateStore.Get(ctx, server.orgID)
+			storableNFLog, err := server.stateStore.Get(ctx, server.orgID)
 			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 				return 0, err
 			}
 
-			if state == nil {
-				state = alertmanagertypes.NewStoreableState(server.orgID)
+			if storableNFLog == nil {
+				storableNFLog = alertmanagertypes.NewStoreableState(server.orgID)
 			}
 
-			c, err := state.Set(alertmanagertypes.NFLogStateName, server.nflog)
+			c, err := storableNFLog.Set(alertmanagertypes.NFLogStateName, server.nflog)
 			if err != nil {
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, server.orgID, state)
+			return c, server.stateStore.Set(ctx, server.orgID, storableNFLog)
 		})
 	}()
 
@@ -218,7 +218,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = template.FromGlobs(config.Templates)
+	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
 	if err != nil {
 		return err
 	}

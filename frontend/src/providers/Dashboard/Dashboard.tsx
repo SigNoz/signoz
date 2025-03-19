@@ -273,7 +273,7 @@ export function DashboardProvider({
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
 				const updatedDashboardData = transformDashboardVariables(data);
-				const updatedDate = dayjs(updatedDashboardData.updated_at);
+				const updatedDate = dayjs(updatedDashboardData.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.isLocked || false);
 
@@ -321,7 +321,7 @@ export function DashboardProvider({
 
 							dashboardRef.current = updatedDashboardData;
 
-							updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
+							updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
 
 							setLayouts(
 								sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
@@ -334,7 +334,7 @@ export function DashboardProvider({
 					modalRef.current = modal;
 				} else {
 					// normal flow
-					updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
+					updatedTimeRef.current = dayjs(updatedDashboardData.updatedAt);
 
 					dashboardRef.current = updatedDashboardData;
 

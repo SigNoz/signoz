@@ -10,9 +10,12 @@ const updateUserPreference = async (
 ): Promise<
 	SuccessResponse<UpdateUserPreferenceResponseProps> | ErrorResponse
 > => {
-	const response = await axios.put(`/user/preferences`, {
-		preference_value: preferencePayload.value,
-	});
+	const response = await axios.put(
+		`/user/preferences/${preferencePayload.preferenceID}`,
+		{
+			preference_value: preferencePayload.value,
+		},
+	);
 
 	return {
 		statusCode: 200,

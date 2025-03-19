@@ -2,6 +2,10 @@ package rules
 
 import (
 	"context"
+	"database/sql"
+	"go.signoz.io/signoz/pkg/cache"
+	"go.signoz.io/signoz/pkg/cache/memorycache"
+	"go.signoz.io/signoz/pkg/factory/factorytest"
 	"strings"
 	"testing"
 	"time"
@@ -1224,6 +1228,9 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
 
+		cacheCols := make([]cmock.ColumnType, 0)
+		mock.ExpectQueryRow(".*").WillReturnRow(cmock.NewRow(cacheCols, nil)).WillReturnError(sql.ErrNoRows)
+
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
@@ -1241,8 +1248,8 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
-
+		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -1324,6 +1331,9 @@ func TestThresholdRuleNoData(t *testing.T) {
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
 
+		cacheCols := make([]cmock.ColumnType, 0)
+		mock.ExpectQueryRow(".*").WillReturnRow(cmock.NewRow(cacheCols, nil)).WillReturnError(sql.ErrNoRows)
+
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
@@ -1338,9 +1348,9 @@ func TestThresholdRuleNoData(t *testing.T) {
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
-
+		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), readerCache)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{

@@ -128,6 +128,8 @@ func (middleware *Logging) getLogCommentKVs(r *http.Request) map[string]string {
 			if tab == "" {
 				tab = "OVER_METRICS"
 			}
+		} else if strings.Contains(path, "/metrics") {
+			page = "metrics-explorer"
 		}
 	} else {
 		client = "api"

@@ -46,10 +46,10 @@ export interface IDashboardVariable {
 export interface Dashboard {
 	id: number;
 	uuid: string;
-	created_at: string;
-	updated_at: string;
-	created_by: string;
-	updated_by: string;
+	createdAt: string;
+	updatedAt: string;
+	createdBy: string;
+	updatedBy: string;
 	data: DashboardData;
 	isLocked?: boolean;
 }
