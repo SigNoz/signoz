@@ -1,8 +1,8 @@
 # Configuring OpenTelemetry Demo App with SigNoz
 
-[The OpenTelemetry Astronomy Shop](https://github.com/open-telemetry/opentelemetry-demo) is an e-commerce web application, with **15 core microservices** in a **distributed system**. Designed as a **polyglot** environment, it leverages a diverse set of programming languages, including Go, Python, .NET, Java, and others, showcasing cross-language instrumentation with OpenTelemetry.
+[The OpenTelemetry Astronomy Shop](https://github.com/open-telemetry/opentelemetry-demo) is an e-commerce web application, with **15 core microservices** in a **distributed system**. Designed as a **polyglot** environment, it leverages a diverse set of programming languages, including Go, Python, .NET, Java, and others, showcasing cross-language instrumentation with OpenTelemetry. The intention is to get a quickstart application to send data and experience SigNoz firsthand.
 
-This guide provides a step-by-step walkthrough for setting up the **OpenTelemetry Demo App** with **SigNoz** as backend for observability. It outlines steps to export telemetry data to **SigNoz self-hosted with Docker**, **SigNoz self-hosted with Kubernetes** and **SigNoz cloud**.
+This guide provides a step-by-step walkthrough for setting up the **OpenTelemetry Demo App** with **SigNoz** as backend for observability. It outlines steps to export telemetry data to **SigNoz self-hosted with Docker**, **SigNoz self-hosted with Kubernetes** and **SigNoz cloud**. 
 
 # Send data to SigNoz Self-hosted with Docker
 
@@ -11,7 +11,7 @@ In this guide you will install the OTel demo application using Docker and send t
 
 ## Prerequisites
 - Docker and Docker Compose installed
-- 6 GB of RAM for the application [as per Opentelemetry documentation]
+- 6 GB of RAM for the application [as per OpenTelemetry documentation]
 - Nice to have Docker Desktop, for easy monitoring
 
 
@@ -53,13 +53,13 @@ service:
 The SigNoz OTel collector [sigNoz's otel-collector service] listens at 4317 port on localhost. When the OTel demo app is running within a Docker container and needs to transmit telemetry data to SigNoz, it cannot directly reference 'localhost' as this would refer to the container's own internal network. Instead, Docker provides a special DNS name, `host.docker.internal`, which resolves to the host machine's IP address from within containers. By configuring the OpenTelemetry Demo application to send data to `host.docker.internal:4317`, we establish a network path that allows the containerized application to transmit telemetry data across the container boundary to the SigNoz OTel collector running on the host machine's port 4317.
 
 >
-> Note: When merging extra configuration values with the existing collector config (`src/otel-collector/otelcol-config.yml`), objects are merged and arrays are replaced resulting in previous pipeline configurations getting overriden.
+> Note: When merging extra configuration values with the existing collector config (`src/otel-collector/otelcol-config.yml`), objects are merged and arrays are replaced resulting in previous pipeline configurations getting overridden.
  The spanmetrics exporter must be included in the array of exporters for the traces pipeline if overridden. Not including this exporter will result in an error.
 >
 
 ## Start the OpenTelemetry Demo App
 
-Both SigNoz and OTel demo app [frontent-proxy service, to be accurate] share common port allocation at 8080. To prevent port allocation conflicts, modify the OTel demo application config to use port 8081 as the `ENVOY_PORT` value as shown below, and run docker compose command.
+Both SigNoz and OTel demo app [frontend-proxy service, to be accurate] share common port allocation at 8080. To prevent port allocation conflicts, modify the OTel demo application config to use port 8081 as the `ENVOY_PORT` value as shown below, and run docker compose command.
 
 ```sh
 ENVOY_PORT=8081 docker compose up -d
@@ -76,7 +76,7 @@ The result should look similar to this,
 Navigate to `http://localhost:8081/` where you can access OTel demo app UI. Generate some traffic to send to SigNoz [Docker].
 
 ## Monitor with SigNoz [Docker]
-Signoz exposes it's UI at `http://localhost:8080/`. You should be able to see multiple services listed down as shown in the snapshot below.
+Signoz exposes its UI at `http://localhost:8080/`. You should be able to see multiple services listed down as shown in the snapshot below.
 
 
 ![](/docs/img/demo-services.png)
@@ -165,7 +165,7 @@ Signoz exposes it's UI at `http://localhost:8080/`. You should be able to see mu
 
 ![](/docs/img/demo-services.png)
 
-This verifies that your OTel demo app is successfully sending telemetry data to SigNoz [Docker] as expected. 
+This verifies that your OTel demo app is successfully sending telemetry data to SigNoz [Kubernetes] as expected. 
 
 
 # Send data to SigNoz Cloud
@@ -244,7 +244,7 @@ helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm
 ```
 The OpenTelemetry Collector’s configuration is exposed in the Helm chart. All additions made will be merged into the default configuration. We use this capability to add SigNoz as an exporter, and make pipelines as desired.
 
-For this we have to create a `values.yml` which will override the existing configurations that comes with the Helm chart.
+For this we have to create a `values.yaml` which will override the existing configurations that comes with the Helm chart.
 ```sh
 opentelemetry-collector:
   config:
@@ -254,7 +254,7 @@ opentelemetry-collector:
         tls:
           insecure: false
         headers:
-          signoz-acess-token: <SIGNOZ-KEY>
+          signoz-access-token: <SIGNOZ-KEY>
       debug:
         verbosity: detailed
     service:
@@ -278,7 +278,7 @@ kubectl create namespace otel-demo
 helm install my-otel-demo open-telemetry/opentelemetry-demo --namespace otel-demo -f values.yaml
 ```
 You should see a similar output on your terminal,
-![](/docs/contributing/img/otel-demo-helm.png)
+![](/docs/img/otel-demo-helm.png)
 
 To verify if all the pods are running,
 ```sh
@@ -312,4 +312,4 @@ If you’re eager to deepen your expertise in OpenTelemetry, explore this [blog]
 
 Don't forget to check our OpenTelemetry [track](https://signoz.io/resource-center/opentelemetry/), guaranteed to take you from a newbie to sensei in no time!
 
-Also from a fellow OTel fan to another, we at [SigNoz](https://signoz.io/) are building an opensource, OTel native, observability platform (one of it's kind). So, show us love - star us on [GitHub](https://github.com/SigNoz/signoz), nitpick our [docs](https://signoz.io/docs/introduction/), or just tell your app we’re the ones who’ll catch its crashes mid-flight and finally shush all the 3am panic calls!
+Also from a fellow OTel fan to another, we at [SigNoz](https://signoz.io/) are building an opensource, OTel native, observability platform (one of its kind). So, show us love - star us on [GitHub](https://github.com/SigNoz/signoz), nitpick our [docs](https://signoz.io/docs/introduction/), or just tell your app we’re the ones who’ll catch its crashes mid-flight and finally shush all the 3am panic calls!
