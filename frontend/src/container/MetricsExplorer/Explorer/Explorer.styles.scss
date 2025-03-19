@@ -22,7 +22,11 @@
 
 	.query-section {
 		max-height: 450px;
-		overflow-y: scroll;
+		overflow-y: auto;
+
+		.rc-virtual-list-holder {
+			height: 150px;
+		}
 	}
 
 	.explore-tabs {
