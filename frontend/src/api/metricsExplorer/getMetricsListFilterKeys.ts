@@ -12,15 +12,24 @@ export interface MetricsListFilterKeysResponse {
 	};
 }
 
+export interface GetMetricsListFilterKeysParams {
+	searchText: string;
+	limit?: number;
+}
+
 export const getMetricsListFilterKeys = async (
+	params: GetMetricsListFilterKeysParams,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 ): Promise<SuccessResponse<MetricsListFilterKeysResponse> | ErrorResponse> => {
 	try {
-		const response = await axios.get('/metrics/filters/keys', {
-			signal,
-			headers,
-		});
+		const response = await axios.get(
+			`/metrics/filters/keys?searchText=${params.searchText}&limit=${params.limit}`,
+			{
+				signal,
+				headers,
+			},
+		);
 
 		return {
 			statusCode: 200,

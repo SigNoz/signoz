@@ -22,6 +22,7 @@ function MetricsTreemap({
 	viewType,
 	data,
 	isLoading,
+	isError,
 	openMetricDetails,
 }: MetricsTreemapProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
@@ -60,12 +61,20 @@ function MetricsTreemap({
 	if (
 		!data ||
 		!data.data ||
-		data?.status === 'error' ||
 		(data?.status === 'success' && !data?.data?.[viewType])
 	) {
 		return (
 			<Empty
 				description="No metrics found"
+				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+			/>
+		);
+	}
+
+	if (data?.status === 'error' || isError) {
+		return (
+			<Empty
+				description="Error fetching metrics. If the problem persists, please contact support."
 				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
 			/>
 		);

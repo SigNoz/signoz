@@ -16,6 +16,7 @@ import { metricsTableColumns } from './utils';
 
 function MetricsTable({
 	isLoading,
+	isError,
 	data,
 	pageSize,
 	currentPage,
@@ -76,7 +77,9 @@ function MetricsTable({
 								className="empty-state-svg"
 							/>
 							<Typography.Text className="no-metrics-message">
-								This query had no results. Edit your query and try again!
+								{isError
+									? 'Error fetching metrics. If the problem persists, please contact support.'
+									: 'This query had no results. Edit your query and try again!'}
 							</Typography.Text>
 						</div>
 					),
