@@ -17,6 +17,7 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
+	Home,
 	InfrastructureMonitoring,
 	IngestionSettings,
 	InstalledIntegrations,
@@ -56,6 +57,7 @@ import {
 	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
+	WorkspaceAccessRestricted,
 	WorkspaceBlocked,
 	WorkspaceSuspended,
 } from './pageComponents';
@@ -81,6 +83,13 @@ const routes: AppRoutes[] = [
 		component: OnboardingV2,
 		isPrivate: true,
 		key: 'GET_STARTED_WITH_CLOUD',
+	},
+	{
+		path: ROUTES.HOME,
+		exact: true,
+		component: Home,
+		isPrivate: true,
+		key: 'HOME',
 	},
 	{
 		path: ROUTES.ONBOARDING,
@@ -403,6 +412,13 @@ const routes: AppRoutes[] = [
 		component: WorkspaceSuspended,
 		isPrivate: true,
 		key: 'WORKSPACE_SUSPENDED',
+	},
+	{
+		path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
+		exact: true,
+		component: WorkspaceAccessRestricted,
+		isPrivate: true,
+		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
 		path: ROUTES.SHORTCUTS,

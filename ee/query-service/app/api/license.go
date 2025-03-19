@@ -3,13 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"go.signoz.io/signoz/ee/query-service/constants"
+	"go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/http/render"
-	"go.uber.org/zap"
 )
 
 type DayWiseBreakdown struct {
@@ -46,6 +45,10 @@ type details struct {
 	Breakdown []usageResponse `json:"breakdown"`
 	BaseFee   float64         `json:"baseFee"`
 	BillTotal float64         `json:"billTotal"`
+}
+
+type Redirect struct {
+	RedirectURL string `json:"redirectURL"`
 }
 
 type billingDetails struct {
@@ -119,36 +122,31 @@ func (ah *APIHandler) refreshLicensesV3(w http.ResponseWriter, r *http.Request) 
 	render.Success(w, http.StatusNoContent, nil)
 }
 
+func getCheckoutPortalResponse(redirectURL string) *Redirect {
+	return &Redirect{RedirectURL: redirectURL}
+}
+
 func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 
-	type checkoutResponse struct {
-		Status string `json:"status"`
-		Data   struct {
-			RedirectURL string `json:"redirectURL"`
-		} `json:"data"`
+	checkoutRequest := &model.CheckoutRequest{}
+	if err := json.NewDecoder(r.Body).Decode(checkoutRequest); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
-	hClient := &http.Client{}
-	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/checkout", r.Body)
+	license := ah.LM().GetActiveLicense()
+	if license == nil {
+		RespondError(w, model.BadRequestStr("cannot proceed with checkout without license key"), nil)
+		return
+	}
+
+	redirectUrl, err := signozio.CheckoutSession(r.Context(), checkoutRequest, license.Key)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
-		return
-	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
-	licenseResp, err := hClient.Do(req)
-	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, err, nil)
 		return
 	}
 
-	// decode response body
-	var resp checkoutResponse
-	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
-		RespondError(w, model.InternalError(err), nil)
-		return
-	}
-
-	ah.Respond(w, resp.Data)
+	ah.Respond(w, getCheckoutPortalResponse(redirectUrl))
 }
 
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
@@ -228,102 +226,28 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 		Licenses:                     licenses,
 	}
 
-	var currentActiveLicenseKey string
-
-	for _, license := range licenses {
-		if license.IsCurrent {
-			currentActiveLicenseKey = license.Key
-		}
-	}
-
-	// For the case when no license is applied i.e community edition
-	// There will be no trial details or license details
-	if currentActiveLicenseKey == "" {
-		ah.Respond(w, resp)
-		return
-	}
-
-	// Fetch trial details
-	hClient := &http.Client{}
-	url := fmt.Sprintf("%s/trial?licenseKey=%s", constants.LicenseSignozIo, currentActiveLicenseKey)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		zap.L().Error("Error while creating request for trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
-	trialResp, err := hClient.Do(req)
-	if err != nil {
-		zap.L().Error("Error while fetching trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid incorrectly blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-	defer trialResp.Body.Close()
-
-	trialRespBody, err := io.ReadAll(trialResp.Body)
-
-	if err != nil || trialResp.StatusCode != http.StatusOK {
-		zap.L().Error("Error while fetching trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid incorrectly blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-
-	// decode response body
-	var trialRespData model.SubscriptionServerResp
-
-	if err := json.Unmarshal(trialRespBody, &trialRespData); err != nil {
-		zap.L().Error("Error while decoding trial details", zap.Error(err))
-		// If there is an error in fetching trial details, we will still return the license details
-		// to avoid incorrectly blocking the UI
-		ah.Respond(w, resp)
-		return
-	}
-
-	resp.TrialStart = trialRespData.Data.TrialStart
-	resp.TrialEnd = trialRespData.Data.TrialEnd
-	resp.OnTrial = trialRespData.Data.OnTrial
-	resp.WorkSpaceBlock = trialRespData.Data.WorkSpaceBlock
-	resp.TrialConvertedToSubscription = trialRespData.Data.TrialConvertedToSubscription
-	resp.GracePeriodEnd = trialRespData.Data.GracePeriodEnd
-
 	ah.Respond(w, resp)
 }
 
 func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 
-	type checkoutResponse struct {
-		Status string `json:"status"`
-		Data   struct {
-			RedirectURL string `json:"redirectURL"`
-		} `json:"data"`
+	portalRequest := &model.PortalRequest{}
+	if err := json.NewDecoder(r.Body).Decode(portalRequest); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
 	}
 
-	hClient := &http.Client{}
-	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/portal", r.Body)
+	license := ah.LM().GetActiveLicense()
+	if license == nil {
+		RespondError(w, model.BadRequestStr("cannot request the portal session without license key"), nil)
+		return
+	}
+
+	redirectUrl, err := signozio.PortalSession(r.Context(), portalRequest, license.Key)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
-		return
-	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
-	licenseResp, err := hClient.Do(req)
-	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, err, nil)
 		return
 	}
 
-	// decode response body
-	var resp checkoutResponse
-	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
-		RespondError(w, model.InternalError(err), nil)
-		return
-	}
-
-	ah.Respond(w, resp.Data)
+	ah.Respond(w, getCheckoutPortalResponse(redirectUrl))
 }

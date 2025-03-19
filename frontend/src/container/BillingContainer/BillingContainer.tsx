@@ -138,8 +138,10 @@ export default function BillingContainer(): JSX.Element {
 		user,
 		org,
 		licenses,
-		isFetchingLicenses,
-		licensesFetchError,
+		trialInfo,
+		isFetchingActiveLicenseV3,
+		activeLicenseV3,
+		activeLicenseV3FetchError,
 	} = useAppContext();
 	const { notifications } = useNotifications();
 
@@ -182,7 +184,7 @@ export default function BillingContainer(): JSX.Element {
 
 			setData(formattedUsageData);
 
-			if (!licenses?.onTrial) {
+			if (!trialInfo?.onTrial) {
 				const remainingDays = getRemainingDays(billingPeriodEnd) - 1;
 
 				setHeaderText(
@@ -196,7 +198,7 @@ export default function BillingContainer(): JSX.Element {
 
 			setApiResponse(data?.payload || {});
 		},
-		[licenses?.onTrial],
+		[trialInfo?.onTrial],
 	);
 
 	const isSubscriptionPastDue =
@@ -219,24 +221,29 @@ export default function BillingContainer(): JSX.Element {
 
 		setActiveLicense(activeValidLicense);
 
-		if (!isFetchingLicenses && licenses?.onTrial && !licensesFetchError) {
-			const remainingDays = getRemainingDays(licenses?.trialEnd);
+		if (
+			!isFetchingActiveLicenseV3 &&
+			!activeLicenseV3FetchError &&
+			trialInfo?.onTrial
+		) {
+			const remainingDays = getRemainingDays(trialInfo?.trialEnd);
 
 			setIsFreeTrial(true);
 			setBillAmount(0);
 			setDaysRemaining(remainingDays > 0 ? remainingDays : 0);
 			setHeaderText(
 				`You are in free trial period. Your free trial will end on ${getFormattedDate(
-					licenses?.trialEnd,
+					trialInfo?.trialEnd,
 				)}`,
 			);
 		}
 	}, [
 		licenses?.licenses,
-		licenses?.onTrial,
-		licenses?.trialEnd,
-		isFetchingLicenses,
-		licensesFetchError,
+		activeLicenseV3,
+		trialInfo?.onTrial,
+		trialInfo?.trialEnd,
+		isFetchingActiveLicenseV3,
+		activeLicenseV3FetchError,
 	]);
 
 	const columns: ColumnsType<DataType> = [
@@ -319,16 +326,14 @@ export default function BillingContainer(): JSX.Element {
 	});
 
 	const handleBilling = useCallback(async () => {
-		if (!licenses?.trialConvertedToSubscription) {
+		if (!trialInfo?.trialConvertedToSubscription) {
 			logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
 			updateCreditCard({
-				licenseKey: activeLicense?.key || '',
-				successURL: window.location.href,
-				cancelURL: window.location.href,
+				url: window.location.href,
 			});
 		} else {
 			logEvent('Billing : Manage Billing', {
@@ -337,16 +342,13 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			manageCreditCard({
-				licenseKey: activeLicense?.key || '',
-				successURL: window.location.href,
-				cancelURL: window.location.href,
+				url: window.location.href,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		activeLicense?.key,
 		isFreeTrial,
-		licenses?.trialConvertedToSubscription,
+		trialInfo?.trialConvertedToSubscription,
 		manageCreditCard,
 		updateCreditCard,
 	]);
@@ -414,9 +416,9 @@ export default function BillingContainer(): JSX.Element {
 
 	const showGracePeriodMessage =
 		!isLoading &&
-		!licenses?.trialConvertedToSubscription &&
-		!licenses?.onTrial &&
-		licenses?.gracePeriodEnd;
+		!trialInfo?.trialConvertedToSubscription &&
+		!trialInfo?.onTrial &&
+		trialInfo?.gracePeriodEnd;
 
 	return (
 		<div className="billing-container">
@@ -466,14 +468,14 @@ export default function BillingContainer(): JSX.Element {
 							disabled={isLoading}
 							onClick={handleBilling}
 						>
-							{licenses?.trialConvertedToSubscription
+							{trialInfo?.trialConvertedToSubscription
 								? t('manage_billing')
 								: t('upgrade_plan')}
 						</Button>
 					</Flex>
 				</Flex>
 
-				{licenses?.onTrial && licenses?.trialConvertedToSubscription && (
+				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
 					<Typography.Text
 						ellipsis
 						style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
@@ -500,11 +502,11 @@ export default function BillingContainer(): JSX.Element {
 				{!isLoading &&
 				!isFetchingBillingData &&
 				billingData &&
-				licenses?.gracePeriodEnd &&
+				trialInfo?.gracePeriodEnd &&
 				showGracePeriodMessage ? (
 					<Alert
 						message={`Your data is safe with us until ${getFormattedDate(
-							licenses?.gracePeriodEnd || Date.now(),
+							trialInfo?.gracePeriodEnd || Date.now(),
 						)}. Please upgrade plan now to retain your data.`}
 						type="info"
 						showIcon
@@ -540,7 +542,7 @@ export default function BillingContainer(): JSX.Element {
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
-			{!licenses?.trialConvertedToSubscription && (
+			{!trialInfo?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">
 					<Row
 						justify="space-between"

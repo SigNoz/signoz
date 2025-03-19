@@ -41,7 +41,7 @@ func (migration *updateDashboardAndSavedViews) Up(ctx context.Context, db *bun.D
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	// get all org ids
 	var orgIDs []string

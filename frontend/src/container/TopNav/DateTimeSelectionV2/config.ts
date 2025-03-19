@@ -175,6 +175,7 @@ export const getOptions = (routes: string): Option[] => {
 export const routesToHideBreadCrumbs = [ROUTES.SUPPORT, ROUTES.ALL_DASHBOARD];
 
 export const routesToSkip = [
+	ROUTES.HOME,
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
 	ROUTES.TRACE_DETAIL,
@@ -227,6 +228,7 @@ export const routesToSkip = [
 	ROUTES.METRICS_EXPLORER_VIEWS,
 	ROUTES.CHANNELS_NEW,
 	ROUTES.CHANNELS_EDIT,
+	ROUTES.WORKSPACE_ACCESS_RESTRICTED,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];

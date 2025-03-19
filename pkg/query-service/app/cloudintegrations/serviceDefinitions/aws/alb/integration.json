@@ -1,6 +1,6 @@
 {
   "id": "alb",
-  "title": "Application ELB",
+  "title": "ALB",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supported_signals": {
