@@ -289,12 +289,6 @@
 		height: 200px;
 		width: 300px;
 		overflow-y: scroll;
-
-		.ant-menu-item:focus,
-		.highlighted {
-			background-color: var(--bg-robin-500);
-			color: var(--bg-ink-500);
-		}
 	}
 
 	.ant-menu {

@@ -1,4 +1,13 @@
-import { Button, Empty, Input, InputRef, Menu, Popover, Spin } from 'antd';
+import {
+	Button,
+	Empty,
+	Input,
+	InputRef,
+	Menu,
+	MenuRef,
+	Popover,
+	Spin,
+} from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetMetricsListFilterValues } from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -20,6 +29,7 @@ function MetricNameSearch(): JSX.Element {
 	const [searchString, setSearchString] = useState<string>('');
 	const [debouncedSearchString, setDebouncedSearchString] = useState<string>('');
 	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+	const menuRef = useRef<MenuRef | null>(null);
 	const inputRef = useRef<InputRef | null>(null);
 
 	useEffect(() => {
@@ -27,6 +37,7 @@ function MetricNameSearch(): JSX.Element {
 			setTimeout(() => {
 				inputRef.current?.focus();
 			}, 0); // Ensures focus happens after popover opens
+			setHighlightedIndex(-1);
 		}
 	}, [isPopoverOpen]);
 
@@ -81,36 +92,32 @@ function MetricNameSearch(): JSX.Element {
 	);
 
 	const handleKeyDown = useCallback(
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(event: React.KeyboardEvent<HTMLInputElement>) => {
 			if (!isPopoverOpen) return;
 
 			if (event.key === 'ArrowDown') {
 				event.preventDefault();
-				if (highlightedIndex === -1) {
-					setHighlightedIndex(0);
-				} else {
-					setHighlightedIndex((prev) =>
-						prev < metricNameFilterValues.length - 1 ? prev + 1 : 0,
-					);
-				}
+				setHighlightedIndex((prev) => {
+					const nextIndex = prev < metricNameFilterValues.length - 1 ? prev + 1 : 0;
+					menuRef.current?.focus();
+					return nextIndex;
+				});
 			} else if (event.key === 'ArrowUp') {
 				event.preventDefault();
-				setHighlightedIndex((prev) =>
-					prev > 0 ? prev - 1 : metricNameFilterValues.length - 1,
-				);
-			} else if (
-				event.key === 'Enter' &&
-				highlightedIndex >= 0 &&
-				metricNameFilterValues[highlightedIndex]
-			) {
-				handleSelect(metricNameFilterValues[highlightedIndex]);
-			} else if (
-				event.key === 'Enter' &&
-				highlightedIndex === -1 &&
-				searchString
-			) {
-				handleSelect(searchString);
+				setHighlightedIndex((prev) => {
+					const prevIndex = prev > 0 ? prev - 1 : metricNameFilterValues.length - 1;
+					menuRef.current?.focus();
+					return prevIndex;
+				});
+			} else if (event.key === 'Enter') {
+				event.preventDefault();
+				// If there is a highlighted item, select it
+				if (highlightedIndex >= 0 && metricNameFilterValues[highlightedIndex]) {
+					handleSelect(metricNameFilterValues[highlightedIndex]);
+				} else if (highlightedIndex === -1 && searchString) {
+					// If there is no highlighted item and there is a search string, select the search string
+					handleSelect(searchString);
+				}
 			}
 		},
 		[
@@ -188,7 +195,9 @@ function MetricNameSearch(): JSX.Element {
 					onChange={handleInputChange}
 					bordered
 				/>
-				<Menu className="metric-name-search-popover-menu">{popoverItems}</Menu>
+				<Menu ref={menuRef} className="metric-name-search-popover-menu">
+					{popoverItems}
+				</Menu>
 			</div>
 		),
 		[handleKeyDown, searchString, handleInputChange, popoverItems],
