@@ -24,8 +24,6 @@ interface UseUpdatedQueryOptions {
 interface UseUpdatedQueryResult {
 	getUpdatedQuery: (options: UseUpdatedQueryOptions) => Promise<Query>;
 	isLoading: boolean;
-	isError: boolean;
-	error: unknown;
 }
 
 function useUpdatedQuery(): UseUpdatedQueryResult {
@@ -62,8 +60,6 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 	return {
 		getUpdatedQuery,
 		isLoading: queryRangeMutation.isLoading,
-		isError: queryRangeMutation.isError,
-		error: queryRangeMutation.error,
 	};
 }
 
