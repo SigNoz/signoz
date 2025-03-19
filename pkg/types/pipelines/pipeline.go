@@ -15,7 +15,7 @@ import (
 )
 
 type StoreablePipeline struct {
-	bun.BaseModel `bun:"table:pipelines"`
+	bun.BaseModel `bun:"table:pipelines,alias:p"`
 
 	types.UserAuditable
 	types.TimeAuditable

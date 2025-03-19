@@ -99,14 +99,13 @@ func (r *Repo) getPipelinesByVersion(
 	var errors []error
 	storablePipelines := []pipelines.StoreablePipeline{}
 	err := r.sqlStore.BunDB().NewSelect().
-		Table("pipelines").
 		Model(&storablePipelines).
-		Join("JOIN agent_config_elements e ON pipelines.id = e.element_id").
+		Join("JOIN agent_config_elements e ON p.id = e.element_id").
 		Join("JOIN agent_config_versions v ON v.id = e.version_id").
 		Where("e.element_type = ?", logPipelines). // TODO: nitya - add org_id to this as well
 		Where("v.version = ?", version).           // TODO: nitya - add org_id to this as well
-		Where("pipelines.org_id = ?", orgID).
-		Order("pipelines.order_id ASC").
+		Where("p.org_id = ?", orgID).
+		Order("p.order_id ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, []error{fmt.Errorf("failed to get drop pipelines from db: %v", err)}
