@@ -2,13 +2,15 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	Query,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { v4 } from 'uuid';
 
-import { createFilterFromData, extractQueryNamesFromExpression } from './utils';
+import { extractQueryNamesFromExpression } from './utils';
 
 type GraphClickMetaData = {
 	[key: string]: string | boolean;
@@ -22,13 +24,22 @@ export interface NavigateToExplorerPagesProps {
 
 // Helper to create group by filters from request data
 const createGroupByFilters = (
-	groupBy: { key: string }[],
+	groupBy: BaseAutocompleteData[],
 	requestData: GraphClickMetaData,
 ): TagFilterItem[] =>
 	groupBy
 		.map((gb) => {
 			const value = requestData[gb.key];
-			return value ? createFilterFromData({ [gb.key]: value }) : [];
+			return value
+				? [
+						{
+							id: v4(),
+							key: gb,
+							op: '=',
+							value,
+						},
+				  ]
+				: [];
 		})
 		.flat();
 
