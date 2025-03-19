@@ -1,36 +1,30 @@
 import { Button, Collapse, Input, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ResizeTable } from 'components/ResizeTable';
-import ROUTES from 'constants/routes';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Search } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AllAttributesProps } from './types';
-import { getMetricDetailsQuery } from './utils';
 
-function AllAttributes({
-	attributes,
-	metricName,
-}: AllAttributesProps): JSX.Element {
+function AllAttributes({ attributes }: AllAttributesProps): JSX.Element {
 	const [searchString, setSearchString] = useState('');
 	const [activeKey, setActiveKey] = useState<string | string[]>(
 		'all-attributes',
 	);
 
-	const { safeNavigate } = useSafeNavigate();
+	// const { safeNavigate } = useSafeNavigate();
 
-	const goToMetricsExploreWithAppliedAttribute = useCallback(
-		(key: string, value: string) => {
-			const compositeQuery = getMetricDetailsQuery(metricName, { key, value });
-			const encodedCompositeQuery = JSON.stringify(compositeQuery);
-			safeNavigate(
-				`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
-			);
-		},
-		[metricName, safeNavigate],
-	);
+	// const goToMetricsExploreWithAppliedAttribute = useCallback(
+	// 	(key: string, value: string) => {
+	// 		const compositeQuery = getMetricDetailsQuery(metricName, { key, value });
+	// 		const encodedCompositeQuery = JSON.stringify(compositeQuery);
+	// 		safeNavigate(
+	// 			`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
+	// 		);
+	// 	},
+	// 	[metricName, safeNavigate],
+	// );
 
 	const filteredAttributes = useMemo(
 		() =>
@@ -87,9 +81,10 @@ function AllAttributes({
 							<Button
 								key={attribute}
 								type="text"
-								onClick={(): void => {
-									goToMetricsExploreWithAppliedAttribute(field.key, attribute);
-								}}
+								// TODO: Enable this once we have fixed the redirect issue
+								// onClick={(): void => {
+								// 	goToMetricsExploreWithAppliedAttribute(field.key, attribute);
+								// }}
 							>
 								<Typography.Text>{attribute}</Typography.Text>
 							</Button>
@@ -98,7 +93,7 @@ function AllAttributes({
 				),
 			},
 		],
-		[goToMetricsExploreWithAppliedAttribute],
+		[],
 	);
 
 	const items = useMemo(

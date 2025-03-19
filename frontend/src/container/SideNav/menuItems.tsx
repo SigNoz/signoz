@@ -8,6 +8,7 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	HardDrive,
 	Home,
 	Layers2,
 	LayoutGrid,
@@ -88,7 +89,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChart2 size={16} />,
+		icon: <HardDrive size={16} />,
 	},
 	{
 		key: ROUTES.TRACES_EXPLORER,

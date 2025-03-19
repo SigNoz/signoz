@@ -87,6 +87,7 @@ function Summary(): JSX.Element {
 		data: metricsData,
 		isLoading: isMetricsLoading,
 		isFetching: isMetricsFetching,
+		isError: isMetricsError,
 	} = useGetMetricsList(metricsListQuery, {
 		enabled: !!metricsListQuery,
 	});
@@ -95,6 +96,7 @@ function Summary(): JSX.Element {
 		data: treeMapData,
 		isLoading: isTreeMapLoading,
 		isFetching: isTreeMapFetching,
+		isError: isTreeMapError,
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
 		enabled: !!metricsTreemapQuery,
 	});
@@ -160,11 +162,13 @@ function Summary(): JSX.Element {
 				<MetricsTreemap
 					data={treeMapData?.payload}
 					isLoading={isTreeMapLoading || isTreeMapFetching}
+					isError={isTreeMapError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
+					isError={isMetricsError}
 					data={formattedMetricsData}
 					pageSize={pageSize}
 					currentPage={currentPage}
