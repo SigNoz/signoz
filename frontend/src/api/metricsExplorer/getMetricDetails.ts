@@ -27,8 +27,8 @@ export interface MetricDetails {
 }
 
 export enum Temporality {
-	CUMULATIVE = 'cumulative',
-	DELTA = 'delta',
+	CUMULATIVE = 'Cumulative',
+	DELTA = 'Delta',
 }
 
 export interface MetricDetailsAttribute {
