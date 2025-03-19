@@ -108,7 +108,7 @@ func (r *Repo) getPipelinesByVersion(
 		Order("p.order_id ASC").
 		Scan(ctx)
 	if err != nil {
-		return nil, []error{fmt.Errorf("failed to get drop pipelines from db: %v", err)}
+		return nil, []error{fmt.Errorf("failed to get pipelines from db: %v", err)}
 	}
 
 	gettablePipelines := make([]pipelines.GettablePipeline, len(storablePipelines))

@@ -25,10 +25,6 @@ func TestRegexForStrptimeLayout(t *testing.T) {
 			str:            "26-11-2023",
 			shouldMatch:    true,
 		}, {
-			strptimeLayout: "%d-%m-%Y",
-			str:            "26-11-2023",
-			shouldMatch:    true,
-		}, {
 			strptimeLayout: "%d/%m/%y",
 			str:            "11/03/02",
 			shouldMatch:    true,
@@ -53,7 +49,7 @@ func TestRegexForStrptimeLayout(t *testing.T) {
 
 		output, err := expr.Run(program, map[string]string{})
 		require.Nil(err, test.strptimeLayout)
-		require.Equal(output, test.shouldMatch, test.strptimeLayout)
+		require.Equal(test.shouldMatch, output, test.strptimeLayout)
 
 	}
 }
