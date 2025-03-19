@@ -3,76 +3,27 @@ package logparsingpipeline
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/antonmedv/expr"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 )
-
-func TestRegexForStrptimeLayout(t *testing.T) {
-	require := require.New(t)
-
-	var testCases = []struct {
-		strptimeLayout string
-		str            string
-		shouldMatch    bool
-	}{
-		{
-			strptimeLayout: "%Y-%m-%dT%H:%M:%S.%f%z",
-			str:            "2023-11-26T12:03:28.239907+0530",
-			shouldMatch:    true,
-		}, {
-			strptimeLayout: "%d-%m-%Y",
-			str:            "26-11-2023",
-			shouldMatch:    true,
-		}, {
-			strptimeLayout: "%d-%m-%Y",
-			str:            "26-11-2023",
-			shouldMatch:    true,
-		}, {
-			strptimeLayout: "%d/%m/%y",
-			str:            "11/03/02",
-			shouldMatch:    true,
-		}, {
-			strptimeLayout: "%A, %d. %B %Y %I:%M%p",
-			str:            "Tuesday, 21. November 2006 04:30PM11/03/02",
-			shouldMatch:    true,
-		}, {
-			strptimeLayout: "%A, %d. %B %Y %I:%M%p",
-			str:            "some random text",
-			shouldMatch:    false,
-		},
-	}
-
-	for _, test := range testCases {
-		regex, err := RegexForStrptimeLayout(test.strptimeLayout)
-		require.Nil(err, test.strptimeLayout)
-
-		code := fmt.Sprintf(`"%s" matches "%s"`, test.str, regex)
-		program, err := expr.Compile(code)
-		require.Nil(err, test.strptimeLayout)
-
-		output, err := expr.Run(program, map[string]string{})
-		require.Nil(err, test.strptimeLayout)
-		require.Equal(output, test.shouldMatch, test.strptimeLayout)
-
-	}
-}
 
 func TestTimestampParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -87,11 +38,11 @@ func TestTimestampParsingProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var timestampParserOp PipelineOperator
+	var timestampParserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,

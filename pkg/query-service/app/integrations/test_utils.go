@@ -5,12 +5,12 @@ import (
 	"slices"
 	"testing"
 
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/types"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 )
 
 func NewTestIntegrationsManager(t *testing.T) *Manager {
@@ -59,7 +59,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 			},
 			Assets: IntegrationAssets{
 				Logs: LogsAssets{
-					Pipelines: []logparsingpipeline.PostablePipeline{
+					Pipelines: []pipelines.PostablePipeline{
 						{
 							Name:    "pipeline1",
 							Alias:   "pipeline1",
@@ -78,7 +78,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 									},
 								},
 							},
-							Config: []logparsingpipeline.PipelineOperator{
+							Config: []pipelines.PipelineOperator{
 								{
 									OrderId: 1,
 									ID:      "add",
@@ -127,7 +127,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 			},
 			Assets: IntegrationAssets{
 				Logs: LogsAssets{
-					Pipelines: []logparsingpipeline.PostablePipeline{
+					Pipelines: []pipelines.PostablePipeline{
 						{
 							Name:    "pipeline2",
 							Alias:   "pipeline2",
@@ -146,7 +146,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 									},
 								},
 							},
-							Config: []logparsingpipeline.PipelineOperator{
+							Config: []pipelines.PipelineOperator{
 								{
 									OrderId: 1,
 									ID:      "add",

@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 )
 
 const (
@@ -22,15 +23,15 @@ const (
 // only alphabets, digits and `-` are used when translating pipeline identifiers
 var badCharsForCollectorConfName = regexp.MustCompile("[^a-zA-Z0-9-]")
 
-func CollectorConfProcessorName(p Pipeline) string {
+func CollectorConfProcessorName(p pipelines.GettablePipeline) string {
 	normalizedAlias := badCharsForCollectorConfName.ReplaceAllString(p.Alias, "-")
 	return constants.LogsPPLPfx + normalizedAlias
 }
 
-func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
+func PreparePipelineProcessor(gettablePipelines []pipelines.GettablePipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
 	names := []string{}
-	for pipelineIdx, v := range pipelines {
+	for pipelineIdx, v := range gettablePipelines {
 		if !v.Enabled {
 			continue
 		}
@@ -49,11 +50,11 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 			return nil, nil, errors.Wrap(err, "failed to parse pipeline filter")
 		}
 
-		router := []PipelineOperator{
+		router := []pipelines.PipelineOperator{
 			{
 				ID:   "router_signoz",
 				Type: "router",
-				Routes: &[]Route{
+				Routes: &[]pipelines.Route{
 					{
 						Output: operators[0].ID,
 						Expr:   filterExpr,
@@ -66,13 +67,13 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 		v.Config = append(router, operators...)
 
 		// noop operator is needed as the default operator so that logs are not dropped
-		noop := PipelineOperator{
+		noop := pipelines.PipelineOperator{
 			ID:   NOOP,
 			Type: NOOP,
 		}
 		v.Config = append(v.Config, noop)
 
-		processor := Processor{
+		processor := pipelines.Processor{
 			Operators: v.Config,
 		}
 		name := CollectorConfProcessorName(v)
@@ -88,8 +89,8 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	return processors, names, nil
 }
 
-func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
-	filteredOp := []PipelineOperator{}
+func getOperators(ops []pipelines.PipelineOperator) ([]pipelines.PipelineOperator, error) {
+	filteredOp := []pipelines.PipelineOperator{}
 	for i, operator := range ops {
 		if operator.Enabled {
 			if len(filteredOp) > 0 {
@@ -179,7 +180,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				operator.If = parseFromNotNilCheck
 
 				if operator.LayoutType == "strptime" {
-					regex, err := RegexForStrptimeLayout(operator.Layout)
+					regex, err := pipelines.RegexForStrptimeLayout(operator.Layout)
 					if err != nil {
 						return nil, fmt.Errorf(
 							"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
@@ -224,7 +225,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 	return filteredOp, nil
 }
 
-func cleanTraceParser(operator *PipelineOperator) {
+func cleanTraceParser(operator *pipelines.PipelineOperator) {
 	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
 		operator.TraceId = nil
 	}

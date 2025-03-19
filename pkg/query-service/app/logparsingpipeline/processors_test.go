@@ -13,6 +13,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 )
 
 // Tests for pipeline processors other than the ones
@@ -21,12 +22,14 @@ import (
 func TestRegexProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -41,11 +44,11 @@ func TestRegexProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -86,12 +89,14 @@ func TestRegexProcessor(t *testing.T) {
 func TestGrokProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -106,11 +111,11 @@ func TestGrokProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -151,12 +156,14 @@ func TestGrokProcessor(t *testing.T) {
 func TestJSONProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -171,11 +178,11 @@ func TestJSONProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -215,12 +222,14 @@ func TestJSONProcessor(t *testing.T) {
 func TestTraceParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -235,12 +244,12 @@ func TestTraceParsingProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
 	// Start with JSON serialized trace parser to validate deserialization too
-	var traceParserOp PipelineOperator
+	var traceParserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -322,12 +331,14 @@ func TestTraceParsingProcessor(t *testing.T) {
 func TestAddProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -342,11 +353,11 @@ func TestAddProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -385,12 +396,14 @@ func TestAddProcessor(t *testing.T) {
 func TestRemoveProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -405,11 +418,11 @@ func TestRemoveProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -448,12 +461,14 @@ func TestRemoveProcessor(t *testing.T) {
 func TestCopyProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -468,11 +483,11 @@ func TestCopyProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,
@@ -512,12 +527,14 @@ func TestCopyProcessor(t *testing.T) {
 func TestMoveProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []Pipeline{
+	testPipelines := []pipelines.GettablePipeline{
 		{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+			StoreablePipeline: pipelines.StoreablePipeline{
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -532,11 +549,11 @@ func TestMoveProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{},
+			Config: []pipelines.PipelineOperator{},
 		},
 	}
 
-	var parserOp PipelineOperator
+	var parserOp pipelines.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,

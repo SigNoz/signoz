@@ -14,7 +14,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -23,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 	"go.uber.org/zap"
 )
 
@@ -176,10 +176,10 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// After saving a user created pipeline, pipelines response should include
 	// both user created pipelines and pipelines for installed integrations.
-	postablePipelines := logparsingpipeline.PostablePipelines{
-		Pipelines: []logparsingpipeline.PostablePipeline{
+	postablePipelines := pipelines.PostablePipelines{
+		Pipelines: []pipelines.PostablePipeline{
 			{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -197,7 +197,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 						},
 					},
 				},
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelines.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -223,7 +223,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)
 	slices.Reverse(postable.Pipelines)
 	for i := range postable.Pipelines {
-		postable.Pipelines[i].OrderId = i + 1
+		postable.Pipelines[i].OrderID = i + 1
 	}
 
 	pipelinesTB.PostPipelinesToQS(postable)
@@ -256,7 +256,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
-	postable.Pipelines[0].Config = []logparsingpipeline.PipelineOperator{}
+	postable.Pipelines[0].Config = []pipelines.PipelineOperator{}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -270,7 +270,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Greater(len(firstPipeline.Config), 0)
 
 	// should not be able to delete integrations pipeline
-	postable.Pipelines = []logparsingpipeline.PostablePipeline{postable.Pipelines[1]}
+	postable.Pipelines = []pipelines.PostablePipeline{postable.Pipelines[1]}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -596,21 +596,21 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 }
 
-func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
-	result := logparsingpipeline.PostablePipelines{}
+func postableFromPipelines(gettablePipelines []pipelines.GettablePipeline) pipelines.PostablePipelines {
+	result := pipelines.PostablePipelines{}
 
-	for _, p := range pipelines {
-		postable := logparsingpipeline.PostablePipeline{
-			Id:      p.Id,
-			OrderId: p.OrderId,
+	for _, p := range gettablePipelines {
+		postable := pipelines.PostablePipeline{
+			ID:      p.ID,
+			OrderID: p.OrderID,
 			Name:    p.Name,
 			Alias:   p.Alias,
 			Enabled: p.Enabled,
 			Config:  p.Config,
 		}
 
-		if p.Description != nil {
-			postable.Description = *p.Description
+		if p.Description != "" {
+			postable.Description = p.Description
 		}
 
 		if p.Filter != nil {

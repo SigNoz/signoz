@@ -1,4 +1,4 @@
-package logparsingpipeline
+package pipelines
 
 import (
 	"errors"

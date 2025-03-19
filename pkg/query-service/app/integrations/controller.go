@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 )
 
 type Controller struct {
@@ -124,7 +124,7 @@ func (c *Controller) Uninstall(
 
 func (c *Controller) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+) ([]pipelines.GettablePipeline, *model.ApiError) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	coreModel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 	"go.uber.org/zap"
 )
 
@@ -164,7 +165,7 @@ func checkDuplicateString(pipeline []string) bool {
 
 func GenerateCollectorConfigWithPipelines(
 	config []byte,
-	pipelines []Pipeline,
+	pipelines []pipelines.GettablePipeline,
 ) ([]byte, *coreModel.ApiError) {
 	var collectorConf map[string]interface{}
 	err := yaml.Unmarshal([]byte(config), &collectorConf)

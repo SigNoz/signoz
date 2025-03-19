@@ -14,11 +14,12 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/types/pipelines"
 )
 
 func SimulatePipelinesProcessing(
 	ctx context.Context,
-	pipelines []Pipeline,
+	pipelines []pipelines.GettablePipeline,
 	logs []model.SignozLog,
 ) (
 	output []model.SignozLog, collectorWarnAndErrorLogs []string, apiErr *model.ApiError,
