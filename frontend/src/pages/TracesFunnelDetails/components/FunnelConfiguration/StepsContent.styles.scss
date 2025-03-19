@@ -1,0 +1,114 @@
+.steps-content {
+	&__description {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	&__add-btn {
+		border-radius: 2px;
+		border: 1px solid var(--bg-ink-200);
+		background: var(--bg-ink-200);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		padding: 6px 12px;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+
+		.ant-btn-icon {
+			margin-inline-end: 0 !important;
+		}
+	}
+
+	.ant-steps-item {
+		&:last-child {
+			.ant-steps-item-icon {
+				margin-left: 10px;
+				margin-right: 20px;
+				width: 12px;
+				height: 12px;
+			}
+			.ant-steps-icon {
+				display: none;
+			}
+		}
+	}
+
+	.ant-steps-item-process .ant-steps-item-icon,
+	.ant-steps-item-icon {
+		margin-left: 6px;
+		height: 20px;
+		width: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background-color: var(--bg-ink-400) !important;
+
+		& > .ant-steps-icon {
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.065px;
+			color: var(--bg-vanilla-400);
+		}
+	}
+
+	.ant-steps-item-tail {
+		padding: 20px 0 0 !important;
+
+		&::after {
+			background-color: var(--bg-ink-400) !important;
+		}
+	}
+
+	.latency-step-marker {
+		&::before {
+			content: '';
+			position: absolute;
+			left: 10px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 12px;
+			height: 12px;
+			background-color: var(--bg-ink-400);
+			border-radius: 50%;
+			z-index: 1;
+		}
+	}
+}
+
+// Light mode styles
+.lightMode {
+	.steps-content {
+		&__add-btn {
+			background: var(--bg-vanilla-300);
+			border: none;
+			color: var(--bg-ink-400);
+
+			&:hover {
+				background: var(--bg-vanilla-400);
+			}
+		}
+
+		.ant-steps-item-icon {
+			background-color: var(--bg-vanilla-400) !important;
+
+			.ant-steps-icon {
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.ant-steps-item-tail::after {
+			background-color: var(--bg-vanilla-400) !important;
+		}
+
+		.inter-step-config::before {
+			background-color: var(--bg-vanilla-400);
+		}
+
+		.latency-step-marker::before {
+			background-color: var(--bg-vanilla-400);
+		}
+	}
+}
