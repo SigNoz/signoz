@@ -17,13 +17,12 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useMemo, useState } from 'react';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
 
 import QuerySection from './QuerySection';
-import RelatedMetrics from './RelatedMetrics';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 
@@ -51,15 +50,6 @@ function Explorer(): JSX.Element {
 	const handleToggleShowOneChartPerQuery = (): void =>
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
 
-	const metricNames = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length === 0) {
-			return [];
-		}
-		return stagedQuery.builder.queryData.map(
-			(query) => query.aggregateAttribute.key,
-		);
-	}, [stagedQuery]);
-
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
@@ -84,7 +74,20 @@ function Explorer(): JSX.Element {
 				options.selectColumns,
 			);
 
-			updateDashboard(updatedDashboard, {
+			const newDashboard: Dashboard = {
+				...updatedDashboard,
+				data: {
+					...updatedDashboard.data,
+					widgets: [
+						{
+							...(updatedDashboard.data?.widgets?.[0] as Widgets),
+							yAxisUnit: exportDefaultQuery.unit,
+						},
+					],
+				},
+			};
+
+			updateDashboard(newDashboard, {
 				onSuccess: (data) => {
 					if (data.error) {
 						const message =
@@ -159,7 +162,8 @@ function Explorer(): JSX.Element {
 					>
 						<Typography.Text>Time series</Typography.Text>
 					</Button>
-					<Button
+					{/* TODO: Enable once we have resolved all related metrics issues */}
+					{/* <Button
 						value={ExplorerTabs.RELATED_METRICS}
 						className={classNames('tab', {
 							'selected-view': selectedTab === ExplorerTabs.RELATED_METRICS,
@@ -167,15 +171,16 @@ function Explorer(): JSX.Element {
 						onClick={(): void => setSelectedTab(ExplorerTabs.RELATED_METRICS)}
 					>
 						<Typography.Text>Related</Typography.Text>
-					</Button>
+					</Button> */}
 				</Button.Group>
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
 						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
 					)}
-					{selectedTab === ExplorerTabs.RELATED_METRICS && (
+					{/* TODO: Enable once we have resolved all related metrics issues */}
+					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
 						<RelatedMetrics metricNames={metricNames} />
-					)}
+					)} */}
 				</div>
 			</div>
 			<ExplorerOptionWrapper

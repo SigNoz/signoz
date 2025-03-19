@@ -51,6 +51,11 @@
 	}
 
 	.explore-content {
+		.ant-space {
+			margin-top: 10px;
+			margin-bottom: 20px;
+		}
+
 		.empty-metrics-search {
 			display: flex;
 			flex-direction: column;
@@ -71,10 +76,6 @@
 		.time-series-view {
 			min-width: 100%;
 			width: 100%;
-
-			.ant-space {
-				margin: 10px 0;
-			}
 		}
 
 		.related-metrics-container {

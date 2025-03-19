@@ -132,7 +132,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const getWidget = useCallback(() => {
+	const currentWidget = useMemo(() => {
 		const widgetId = query.get('widgetId');
 		const selectedWidget = widgets?.find((e) => e.id === widgetId);
 		return defaultTo(
@@ -141,7 +141,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		) as Widgets;
 	}, [query, selectedGraph, widgets]);
 
-	const [selectedWidget, setSelectedWidget] = useState(getWidget());
+	const [selectedWidget, setSelectedWidget] = useState(currentWidget);
 
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
@@ -152,6 +152,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [yAxisUnit, setYAxisUnit] = useState<string>(
 		selectedWidget?.yAxisUnit || 'none',
 	);
+
+	useEffect(() => {
+		setSelectedWidget(currentWidget);
+		setYAxisUnit(currentWidget?.yAxisUnit || 'none');
+	}, [currentWidget]);
 
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
