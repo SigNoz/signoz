@@ -46,8 +46,8 @@ export interface MetricsListItemRowData {
 }
 
 export enum TreemapViewType {
-	CARDINALITY = 'timeseries',
-	DATAPOINTS = 'samples',
+	TIMESERIES = 'timeseries',
+	SAMPLES = 'samples',
 }
 
 export interface TreemapTile {

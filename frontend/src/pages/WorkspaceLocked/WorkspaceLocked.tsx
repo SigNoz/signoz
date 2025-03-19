@@ -77,7 +77,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				!shouldBlockWorkspace ||
 				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.APPLICATION);
+				history.push(ROUTES.HOME);
 			}
 		}
 	}, [
