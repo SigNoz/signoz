@@ -4,10 +4,14 @@
 	width: 100%;
 
 	.app-content {
-		width: 100%;
+		width: calc(100% - 64px); // width of the sidebar
 		z-index: 0;
 
 		margin: 0 auto;
+
+		&.full-screen-content {
+			width: 100% !important;
+		}
 
 		.content-container {
 			position: relative;
@@ -102,7 +106,8 @@
 }
 
 .trial-expiry-banner,
-.slow-api-warning-banner {
+.slow-api-warning-banner,
+.workspace-restricted-banner {
 	padding: 8px;
 	background-color: #f25733;
 	color: white;

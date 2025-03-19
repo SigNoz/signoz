@@ -138,11 +138,15 @@ func (service *Service) TestAlert(ctx context.Context, orgID string, alert *aler
 }
 
 func (service *Service) Stop(ctx context.Context) error {
+	var errs []error
 	for _, server := range service.servers {
-		server.Stop(ctx)
+		if err := server.Stop(ctx); err != nil {
+			errs = append(errs, err)
+			service.settings.Logger().Error("failed to stop alertmanager server", "error", err)
+		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (service *Service) newServer(ctx context.Context, orgID string) (*alertmanagerserver.Server, error) {
@@ -180,7 +184,9 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 	if err := config.SetGlobalConfig(service.config.Global); err != nil {
 		return nil, err
 	}
-	config.SetRouteConfig(service.config.Route)
+	if err := config.SetRouteConfig(service.config.Route); err != nil {
+		return nil, err
+	}
 
 	return config, nil
 }

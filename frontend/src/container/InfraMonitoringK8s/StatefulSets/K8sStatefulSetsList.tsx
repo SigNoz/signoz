@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sStatefulSetsListPayload } from 'api/infraMonitoring/getsK8sStatefulSetsList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sStatefulSetsList } from 'hooks/infraMonitoring/useGetK8sStatefulSetsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -42,7 +43,6 @@ import {
 	getK8sStatefulSetsListQuery,
 	K8sStatefulSetsRowData,
 } from './utils';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sStatefulSetsList({
 	isFiltersVisible,
@@ -245,11 +245,6 @@ function K8sStatefulSetsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
-		totalCount,
-		pageSize,
-	]);
-
 	const handleTableChange: TableProps<K8sStatefulSetsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -260,10 +255,10 @@ function K8sStatefulSetsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
-				logEvent('Infra Monitoring: K8s statefulSets list page number changed', {
-					page: pagination.current,
-					pageSize,
-					numberOfPages,
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.StatefulSet,
 				});
 			}
 
@@ -276,7 +271,7 @@ function K8sStatefulSetsList({
 				setOrderBy(null);
 			}
 		},
-		[numberOfPages, pageSize],
+		[],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -290,14 +285,25 @@ function K8sStatefulSetsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s statefulSets list filters applied', {});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.StatefulSet,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s statefulSets list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.StatefulSet,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedStatefulSetData = useMemo(() => {
 		if (!selectedStatefulSetUID) return null;
@@ -328,8 +334,10 @@ function K8sStatefulSetsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s statefulSet list item clicked', {
-			statefulSetName: record.statefulsetName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.StatefulSet,
 		});
 	};
 
@@ -458,7 +466,11 @@ function K8sStatefulSetsList({
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 
-			logEvent('Infra Monitoring: K8s statefulSets list group by changed', {});
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.StatefulSet,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -477,10 +489,10 @@ function K8sStatefulSetsList({
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
-		logEvent('Infra Monitoring: K8s statefulSets list page number changed', {
-			page,
-			pageSize,
-			numberOfPages,
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.StatefulSet,
 		});
 	};
 

@@ -18,8 +18,6 @@ export interface RelatedMetricsProps {
 
 export interface RelatedMetricsCardProps {
 	metric: RelatedMetricWithQueryResult;
-	options: uPlot.Options;
-	chartData: any[];
 }
 
 export interface UseGetRelatedMetricsGraphsProps {

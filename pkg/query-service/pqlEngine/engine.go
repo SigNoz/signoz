@@ -40,10 +40,10 @@ func FromReader(ch interfaces.Reader) (*PqlEngine, error) {
 func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 
 	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
+	_ = logLevel.Set("debug")
 
 	allowedFormat := promlog.AllowedFormat{}
-	allowedFormat.Set("logfmt")
+	_ = allowedFormat.Set("logfmt")
 
 	promlogConfig := promlog.Config{
 		Level:  &logLevel,
@@ -80,7 +80,7 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 	)
 	fanoutStorage := pstorage.NewFanout(logger, remoteStorage)
 
-	remoteStorage.ApplyConfig(config)
+	_ = remoteStorage.ApplyConfig(config)
 
 	return &PqlEngine{
 		engine:        e,

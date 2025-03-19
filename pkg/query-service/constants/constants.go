@@ -76,6 +76,7 @@ var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
+var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
 
 // TODO(srikanthccv): remove after backfilling is done
 func UseMetricsPreAggregation() bool {
@@ -226,6 +227,8 @@ const (
 	SIGNOZ_TIMESERIES_v4_TABLENAME             = "distributed_time_series_v4"
 	SIGNOZ_TIMESERIES_v4_1WEEK_TABLENAME       = "distributed_time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME        = "distributed_time_series_v4_6hrs"
+	SIGNOZ_ATTRIBUTES_METADATA_TABLENAME       = "distributed_attributes_metadata"
+	SIGNOZ_ATTRIBUTES_METADATA_LOCAL_TABLENAME = "attributes_metadata"
 )
 
 // alert related constants
@@ -723,3 +726,5 @@ var MaterializedDataTypeMap = map[string]string{
 	"int64":   "number",
 	"float64": "number",
 }
+
+const InspectMetricsMaxTimeDiff = 1800000

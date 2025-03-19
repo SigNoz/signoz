@@ -19,7 +19,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 function WorkspaceSuspended(): JSX.Element {
@@ -51,20 +51,20 @@ function WorkspaceSuspended(): JSX.Element {
 
 	const handleUpdateCreditCard = useCallback(async () => {
 		manageCreditCard({
-			licenseKey: activeLicenseV3?.key || '',
-			successURL: window.location.origin,
-			cancelURL: window.location.origin,
+			url: window.location.origin,
 		});
-	}, [activeLicenseV3?.key, manageCreditCard]);
+	}, [manageCreditCard]);
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+		if (!isFetchingActiveLicenseV3) {
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.DEFAULTED;
+				activeLicenseV3?.state === LicenseState.DEFAULTED;
 
-			if (!shouldSuspendWorkspace) {
-				history.push(ROUTES.APPLICATION);
+			if (
+				!shouldSuspendWorkspace ||
+				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
+			) {
+				history.push(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);

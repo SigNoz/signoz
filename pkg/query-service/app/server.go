@@ -101,11 +101,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
 		return nil, err
 	}
 
-	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
 		return nil, err
 	}
 
@@ -253,6 +253,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
+
+	errorList := reader.PreloadMetricsMetadata(context.Background())
+	for _, er := range errorList {
+		zap.L().Error("preload metrics updated metadata failed", zap.Error(er))
+	}
 
 	return s, nil
 }

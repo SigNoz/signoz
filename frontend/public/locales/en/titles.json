@@ -1,6 +1,7 @@
 {
 	"SIGN_UP": "SigNoz | Sign Up",
 	"LOGIN": "SigNoz | Login",
+	"HOME": "SigNoz | Home",
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
 	"GET_STARTED_OLD": "SigNoz | Get Started",
@@ -49,6 +50,7 @@
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
 	"WORKSPACE_SUSPENDED": "SigNoz | Workspace Suspended",
+	"WORKSPACE_ACCESS_RESTRICTED": "SigNoz | Workspace Access Restricted",
 	"SUPPORT": "SigNoz | Support",
 	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",

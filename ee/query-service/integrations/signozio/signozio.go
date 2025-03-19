@@ -47,7 +47,7 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 
 	req, err := http.NewRequest("GET", C.GatewayUrl+"/v2/licenses/me", nil)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to create request: %w", err)))
+		return nil, model.BadRequest(errors.Wrap(err, "failed to create request"))
 	}
 
 	// Setting the custom header
@@ -55,7 +55,7 @@ func ValidateLicenseV3(licenseKey string) (*model.LicenseV3, *model.ApiError) {
 
 	response, err := client.Do(req)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to make post request: %w", err)))
+		return nil, model.BadRequest(errors.Wrap(err, "failed to make post request"))
 	}
 
 	body, err := io.ReadAll(response.Body)
@@ -126,10 +126,98 @@ func SendUsage(ctx context.Context, usage model.UsagePayload) *model.ApiError {
 	case 200, 201:
 		return nil
 	case 400, 401:
-		return model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
+		return model.BadRequest(errors.Wrap(errors.New(string(body)),
 			"bad request error received from license.signoz.io"))
 	default:
-		return model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
+		return model.InternalError(errors.Wrap(errors.New(string(body)),
 			"internal error received from license.signoz.io"))
+	}
+}
+
+func CheckoutSession(ctx context.Context, checkoutRequest *model.CheckoutRequest, licenseKey string) (string, *model.ApiError) {
+	hClient := &http.Client{}
+
+	reqString, err := json.Marshal(checkoutRequest)
+	if err != nil {
+		return "", model.BadRequest(err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", C.GatewayUrl+"/v2/subscriptions/me/sessions/checkout", bytes.NewBuffer(reqString))
+	if err != nil {
+		return "", model.BadRequest(err)
+	}
+	req.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
+
+	response, err := hClient.Do(req)
+	if err != nil {
+		return "", model.BadRequest(err)
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to read checkout response from %v", C.GatewayUrl)))
+	}
+	defer response.Body.Close()
+
+	switch response.StatusCode {
+	case 201:
+		a := CheckoutResponse{}
+		err = json.Unmarshal(body, &a)
+		if err != nil {
+			return "", model.BadRequest(errors.Wrap(err, "failed to unmarshal zeus checkout response"))
+		}
+		return a.Data.RedirectURL, nil
+	case 400:
+		return "", model.BadRequest(errors.Wrap(errors.New(string(body)),
+			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
+	case 401:
+		return "", model.Unauthorized(errors.Wrap(errors.New(string(body)),
+			fmt.Sprintf("unauthorized request error received from %v", C.GatewayUrl)))
+	default:
+		return "", model.InternalError(errors.Wrap(errors.New(string(body)),
+			fmt.Sprintf("internal request error received from %v", C.GatewayUrl)))
+	}
+}
+
+func PortalSession(ctx context.Context, checkoutRequest *model.PortalRequest, licenseKey string) (string, *model.ApiError) {
+	hClient := &http.Client{}
+
+	reqString, err := json.Marshal(checkoutRequest)
+	if err != nil {
+		return "", model.BadRequest(err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", C.GatewayUrl+"/v2/subscriptions/me/sessions/portal", bytes.NewBuffer(reqString))
+	if err != nil {
+		return "", model.BadRequest(err)
+	}
+	req.Header.Set("X-Signoz-Cloud-Api-Key", licenseKey)
+
+	response, err := hClient.Do(req)
+	if err != nil {
+		return "", model.BadRequest(err)
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", model.BadRequest(errors.Wrap(err, fmt.Sprintf("failed to read portal response from %v", C.GatewayUrl)))
+	}
+	defer response.Body.Close()
+
+	switch response.StatusCode {
+	case 201:
+		a := CheckoutResponse{}
+		err = json.Unmarshal(body, &a)
+		if err != nil {
+			return "", model.BadRequest(errors.Wrap(err, "failed to unmarshal zeus portal response"))
+		}
+		return a.Data.RedirectURL, nil
+	case 400:
+		return "", model.BadRequest(errors.Wrap(errors.New(string(body)),
+			fmt.Sprintf("bad request error received from %v", C.GatewayUrl)))
+	case 401:
+		return "", model.Unauthorized(errors.Wrap(errors.New(string(body)),
+			fmt.Sprintf("unauthorized request error received from %v", C.GatewayUrl)))
+	default:
+		return "", model.InternalError(errors.Wrap(errors.New(string(body)),
+			fmt.Sprintf("internal request error received from %v", C.GatewayUrl)))
 	}
 }
