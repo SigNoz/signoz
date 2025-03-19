@@ -177,11 +177,11 @@ For example, if you see that there are issues with infrastructure metrics of you
 
 Jaeger only does distributed tracing. SigNoz supports metrics, traces and logs - all the 3 pillars of observability.
 
-Moreover, SigNoz has few more advanced features wrt Jaeger:
+Moreover, SigNoz has few more advanced features than Jaeger:
 
-- Jaegar UI doesn’t show any metrics on traces or on filtered traces
-- Jaeger can’t get aggregates on filtered traces. For example, p99 latency of requests which have tag - customer_type='premium'. This can be done easily on SigNoz
-- You can also go from traces to logs easily in SigNoz
+- Jaeger UI doesn’t show any metrics on traces or on filtered traces.
+- Jaeger can’t get aggregates on filtered traces. For example, p99 latency of requests which have tag - customer_type='premium'. This can be done easily on SigNoz.
+- Jaeger doesn't allow you to go from traces to logs easily.
 
 <p>&nbsp  </p>
 
@@ -198,7 +198,7 @@ We have published benchmarks comparing Elastic with SigNoz. Check it out [here](
 
 - SigNoz supports aggregations on high-cardinality data over a huge volume while loki doesn’t.
 - SigNoz supports indexes over high cardinality data and has no limitations on the number of indexes, while Loki reaches max streams with a few indexes added to it.
-- Searching over a huge volume of data is difficult and slow in Loki compared to SigNoz
+- Searching over a huge volume of data is difficult and slow in Loki compared to SigNoz.
 
 We have published benchmarks comparing Loki with SigNoz. Check it out [here](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)
 
