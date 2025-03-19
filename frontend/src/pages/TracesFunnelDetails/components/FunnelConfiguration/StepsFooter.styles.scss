@@ -1,0 +1,48 @@
+.steps-footer {
+	border-top: 1px solid var(--bg-slate-500);
+	padding: 16px;
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 64px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	&__left {
+		display: flex;
+		gap: 6px;
+		align-items: center;
+	}
+	&__right {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__button {
+		border: none;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		.ant-btn-icon {
+			margin-inline-end: 0 !important;
+		}
+		&--save {
+			background-color: var(--bg-slate-400);
+		}
+		&--run {
+			background-color: var(--bg-robin-500);
+		}
+	}
+}
+
+.lightMode {
+	.steps-footer {
+		border-top: 1px solid var(--bg-vanilla-300);
+		&__button--save {
+			background: var(--bg-vanilla-400);
+		}
+	}
+}
