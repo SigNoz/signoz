@@ -66,7 +66,7 @@ function EndPointDetails({
 			queryKey: [
 				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
 				payload,
-				filters,
+				filters.items,
 				ENTITY_VERSION_V4,
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
@@ -111,7 +111,10 @@ function EndPointDetails({
 				<div className="endpoint-details-filters-container-search">
 					<QueryBuilderSearchV2
 						query={query}
-						onChange={(searchFilters): void => setFilters(searchFilters)}
+						onChange={(searchFilters): void => {
+							console.log('uncaught filter handler', searchFilters);
+							setFilters(searchFilters);
+						}}
 						placeholder="Search for filters..."
 					/>
 				</div>

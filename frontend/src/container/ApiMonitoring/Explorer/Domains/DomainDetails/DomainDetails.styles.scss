@@ -351,6 +351,28 @@
 				white-space: nowrap;
 			}
 		}
+
+		.no-filtered-endpoints-message-container {
+			height: 30vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+
+			.no-filtered-endpoints-message-content {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				justify-content: center;
+
+				width: fit-content;
+				padding: 24px;
+			}
+
+			.no-filtered-endpoints-message {
+				margin-top: 8px;
+			}
+		}
 	}
 }
 
@@ -482,6 +504,28 @@
 				white-space: nowrap;
 			}
 		}
+
+		.no-status-code-data-message-container {
+			height: 30vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+
+			.no-status-code-data-message-content {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				justify-content: center;
+
+				width: fit-content;
+				padding: 24px;
+			}
+
+			.no-status-code-data-message {
+				margin-top: 8px;
+			}
+		}
 	}
 }
 
@@ -492,7 +536,7 @@
 	justify-content: center;
 	height: 100%;
 	width: 100%;
-	padding: 16px;
+	padding: 16px 0px 16px 0px;
 
 	border-radius: 6px;
 	border: 1px dashed var(--bg-slate-500);
@@ -546,6 +590,7 @@
 		flex-direction: column;
 		gap: 10px;
 		padding: 0;
+		height: 100%;
 
 		color: var(--text-vanilla-400);
 		font-family: Inter;
@@ -685,6 +730,28 @@
 			align-items: center;
 			gap: 12px;
 			cursor: pointer;
+		}
+
+		.no-dependent-services-message-container {
+			height: 30vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+
+			.no-dependent-services-message-content {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				justify-content: center;
+
+				width: fit-content;
+				padding: 24px;
+			}
+
+			.no-dependent-services-message {
+				margin-top: 8px;
+			}
 		}
 	}
 }
@@ -920,7 +987,7 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: var(--bg-vanilla-100);
+					background-color: var(--bg-vanilla-300);
 					border: 1px solid var(--bg-slate-300);
 				}
 			}
@@ -936,18 +1003,6 @@
 	}
 
 	.error-state-container {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		width: 100%;
-		padding: 16px;
-
-		border-radius: 6px;
-		border: 1px dashed var(--bg-slate-500);
-		font-family: 'Inter';
-
 		.error-state-content-wrapper {
 			.refresh-cta {
 				background: var(--bg-vanilla-100);

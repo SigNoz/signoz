@@ -1,4 +1,4 @@
-import { Table } from 'antd';
+import { Table, Typography } from 'antd';
 import {
 	endPointStatusCodeColumns,
 	getFormattedEndPointStatusCodeData,
@@ -46,6 +46,24 @@ function StatusCodeTable({
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 				}
+				locale={{
+					emptyText:
+						isLoading || isRefetching ? null : (
+							<div className="no-status-code-data-message-container">
+								<div className="no-status-code-data-message-content">
+									<img
+										src="/Icons/emptyState.svg"
+										alt="thinking-emoji"
+										className="empty-state-svg"
+									/>
+
+									<Typography.Text className="no-status-code-data-message">
+										This query had no results. Edit your query and try again!
+									</Typography.Text>
+								</div>
+							</div>
+						),
+				}}
 			/>
 		</div>
 	);

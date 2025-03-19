@@ -1750,7 +1750,7 @@ interface EndPointStatusCodeResponseRow {
 
 interface EndPointMetricsData {
 	key: string;
-	rate: number;
+	rate: number | string;
 	latency: number | string;
 	errorRate: number;
 	lastUsed: string;
@@ -1767,12 +1767,12 @@ export const getFormattedEndPointMetricsData = (
 	data: EndPointMetricsResponseRow[],
 ): EndPointMetricsData => ({
 	key: v4(),
-	rate: data[0].data.A,
+	rate: data[0].data.D === 'n/a' || !data[0].data.D ? '-' : data[0].data.A,
 	latency:
 		data[0].data.B === 'n/a' ? '-' : Math.round(Number(data[0].data.B) / 1000000),
 	errorRate: data[0].data.C,
 	lastUsed:
-		data[0].data.D === 'n/a'
+		data[0].data.D === 'n/a' || !data[0].data.D
 			? '-'
 			: getLastUsedRelativeTime(Math.floor(Number(data[0].data.D) / 1000000)),
 });

@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import Skeleton from 'antd/lib/skeleton';
 import { getFormattedDependentServicesData } from 'container/ApiMonitoring/utils';
 import { UnfoldVertical } from 'lucide-react';
@@ -54,21 +55,37 @@ function DependentServices({
 				<span className="title-wrapper">Dependent Services</span>
 			</div>
 			<div className="dependent-services-container">
-				{renderItems.map((item) => (
-					<div className="top-services-item" key={item.key}>
-						<div className="top-services-item-progress">
-							<div className="top-services-item-key">{item.serviceName}</div>
-							<div className="top-services-item-count">{item.count}</div>
-							<div
-								className="top-services-item-progress-bar"
-								style={{ width: `${item.percentage}%` }}
+				{renderItems.length === 0 ? (
+					<div className="no-dependent-services-message-container">
+						<div className="no-dependent-services-message-content">
+							<img
+								src="/Icons/emptyState.svg"
+								alt="thinking-emoji"
+								className="empty-state-svg"
 							/>
-						</div>
-						<div className="top-services-item-percentage">
-							{item.percentage.toFixed(2)}%
+
+							<Typography.Text className="no-dependent-services-message">
+								This query had no results. Edit your query and try again!
+							</Typography.Text>
 						</div>
 					</div>
-				))}
+				) : (
+					renderItems.map((item) => (
+						<div className="top-services-item" key={item.key}>
+							<div className="top-services-item-progress">
+								<div className="top-services-item-key">{item.serviceName}</div>
+								<div className="top-services-item-count">{item.count}</div>
+								<div
+									className="top-services-item-progress-bar"
+									style={{ width: `${item.percentage}%` }}
+								/>
+							</div>
+							<div className="top-services-item-percentage">
+								{item.percentage.toFixed(2)}%
+							</div>
+						</div>
+					))
+				)}
 
 				{currentRenderCount < dependentServicesData.length && (
 					<div

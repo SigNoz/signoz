@@ -202,15 +202,15 @@ function AllEndPoints({
 					locale={{
 						emptyText:
 							isLoading || isRefetching ? null : (
-								<div className="no-filtered-hosts-message-container">
-									<div className="no-filtered-hosts-message-content">
+								<div className="no-filtered-endpoints-message-container">
+									<div className="no-filtered-endpoints-message-content">
 										<img
 											src="/Icons/emptyState.svg"
 											alt="thinking-emoji"
 											className="empty-state-svg"
 										/>
 
-										<Typography.Text className="no-filtered-hosts-message">
+										<Typography.Text className="no-filtered-endpoints-message">
 											This query had no results. Edit your query and try again!
 										</Typography.Text>
 									</div>

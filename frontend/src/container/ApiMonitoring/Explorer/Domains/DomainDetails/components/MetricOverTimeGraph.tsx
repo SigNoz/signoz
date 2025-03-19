@@ -64,14 +64,17 @@ function MetricOverTimeGraph({
 			if (query.error) {
 				return <ErrorState refetch={query.refetch} />;
 			}
+
 			return (
-				<div
-					className={cx('chart-container', {
-						'no-data-container':
-							!query.isLoading && !query?.data?.payload?.data?.result?.length,
-					})}
-				>
-					<Uplot options={options as Options} data={chartData} />
+				<div className="graph-container" ref={graphRef}>
+					<div
+						className={cx('chart-container', {
+							'no-data-container':
+								!query.isLoading && !query?.data?.payload?.data?.result?.length,
+						})}
+					>
+						<Uplot options={options as Options} data={chartData} />
+					</div>
 				</div>
 			);
 		},
@@ -82,9 +85,7 @@ function MetricOverTimeGraph({
 		<div>
 			<Card bordered className="endpoint-details-card">
 				<Typography.Text>{apiWidgetInfo[widgetInfoIndex].title}</Typography.Text>
-				<div className="graph-container" ref={graphRef}>
-					{renderCardContent(metricOverTimeDataQuery)}
-				</div>
+				{renderCardContent(metricOverTimeDataQuery)}
 			</Card>
 		</div>
 	);
