@@ -82,6 +82,9 @@
 
 			.metric-name-column-header,
 			.metric-type-column-header {
+				display: flex;
+				justify-content: space-between;
+
 				.metric-name-column-header-text,
 				.metric-type-column-header-text {
 					line-height: 32px;

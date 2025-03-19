@@ -35,7 +35,6 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		dataIndex: 'metric_name',
 		width: 400,
 		sorter: false,
-		className: 'metric-name-column-header',
 		render: (value: string): React.ReactNode => (
 			<div className="metric-name-column-value">{value}</div>
 		),
