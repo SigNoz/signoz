@@ -23,8 +23,10 @@ function MetricNameSearch(): JSX.Element {
 	const inputRef = useRef<InputRef | null>(null);
 
 	useEffect(() => {
-		if (isPopoverOpen && inputRef.current) {
-			inputRef.current.focus();
+		if (isPopoverOpen) {
+			setTimeout(() => {
+				inputRef.current?.focus();
+			}, 0); // Ensures focus happens after popover opens
 		}
 	}, [isPopoverOpen]);
 
@@ -79,14 +81,19 @@ function MetricNameSearch(): JSX.Element {
 	);
 
 	const handleKeyDown = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(event: React.KeyboardEvent<HTMLInputElement>) => {
 			if (!isPopoverOpen) return;
 
 			if (event.key === 'ArrowDown') {
 				event.preventDefault();
-				setHighlightedIndex((prev) =>
-					prev < metricNameFilterValues.length - 1 ? prev + 1 : 0,
-				);
+				if (highlightedIndex === -1) {
+					setHighlightedIndex(0);
+				} else {
+					setHighlightedIndex((prev) =>
+						prev < metricNameFilterValues.length - 1 ? prev + 1 : 0,
+					);
+				}
 			} else if (event.key === 'ArrowUp') {
 				event.preventDefault();
 				setHighlightedIndex((prev) =>
@@ -98,9 +105,21 @@ function MetricNameSearch(): JSX.Element {
 				metricNameFilterValues[highlightedIndex]
 			) {
 				handleSelect(metricNameFilterValues[highlightedIndex]);
+			} else if (
+				event.key === 'Enter' &&
+				highlightedIndex === -1 &&
+				searchString
+			) {
+				handleSelect(searchString);
 			}
 		},
-		[highlightedIndex, metricNameFilterValues, handleSelect, isPopoverOpen],
+		[
+			isPopoverOpen,
+			highlightedIndex,
+			metricNameFilterValues,
+			searchString,
+			handleSelect,
+		],
 	);
 
 	const popoverItems = useMemo(() => {
@@ -110,6 +129,7 @@ function MetricNameSearch(): JSX.Element {
 				<Menu.Item
 					key={searchString}
 					onClick={(): void => handleSelect(searchString)}
+					className={highlightedIndex === 0 ? 'highlighted' : ''}
 				>
 					{searchString}
 				</Menu.Item>,
@@ -123,10 +143,11 @@ function MetricNameSearch(): JSX.Element {
 			items.push(<Empty description="No metric names found" />);
 		} else {
 			items.push(
-				...metricNameFilterValues.map((filterValue) => (
+				...metricNameFilterValues.map((filterValue, index) => (
 					<Menu.Item
 						key={filterValue}
 						onClick={(): void => handleSelect(filterValue)}
+						className={highlightedIndex === index ? 'highlighted' : ''}
 					>
 						{filterValue}
 					</Menu.Item>
@@ -136,6 +157,7 @@ function MetricNameSearch(): JSX.Element {
 		return items;
 	}, [
 		handleSelect,
+		highlightedIndex,
 		isErrorMetricNameFilterValues,
 		isLoadingMetricNameFilterValues,
 		metricNameFilterValues,
