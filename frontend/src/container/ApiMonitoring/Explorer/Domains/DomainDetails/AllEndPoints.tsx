@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Select, Spin, Table, Typography } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	EndPointsTableRowData,
 	formatEndPointsDataForTable,
@@ -22,7 +23,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import ErrorState from './components/ErrorState';
 import { VIEW_TYPES, VIEWS } from './constants';
 import ExpandedRow from './ExpandedRow';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 function AllEndPoints({
 	domainName,
@@ -159,7 +159,7 @@ function AllEndPoints({
 	const formattedEndPointsData = useMemo(
 		() =>
 			formatEndPointsDataForTable(
-				allEndPointsData?.payload.data.result[0].table.rows,
+				allEndPointsData?.payload.data.result[0].table?.rows,
 				groupBy,
 			),
 		[groupBy, allEndPointsData],

@@ -97,7 +97,7 @@ function ExpandedRow({
 						dataSource={
 							groupedByRowQuery?.data
 								? formatEndPointsDataForTable(
-										groupedByRowQuery.data?.payload.data.result[0].table.rows,
+										groupedByRowQuery.data?.payload.data.result[0].table?.rows,
 										[],
 								  )
 								: []

@@ -224,11 +224,8 @@ interface APIMonitoringResponseRow {
 
 interface EndPointsResponseRow {
 	data: {
-		['http.url']: string;
-		[key: string]: string | number;
-		A: number | string;
-		B: number | string;
-		C: number | string;
+		['http.url']?: string;
+		[key: string]: string | number | undefined;
 	};
 }
 
@@ -530,15 +527,17 @@ export const getEndPointsColumnsConfig = (
 ];
 
 export const formatEndPointsDataForTable = (
-	data: EndPointsResponseRow[],
+	data: EndPointsResponseRow[] | undefined,
 	groupBy: BaseAutocompleteData[],
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): EndPointsTableRowData[] => {
+	if (!data) return [];
 	const isGroupedByAttribute = groupBy.length > 0;
 	if (!isGroupedByAttribute) {
 		return data?.map((endpoint) => ({
 			key: v4(),
-			endpointName: endpoint.data['http.url'],
-			callCount: endpoint.data.A,
+			endpointName: endpoint.data['http.url'] || '',
+			callCount: endpoint.data.A || '-',
 			latency:
 				endpoint.data.B === 'n/a'
 					? '-'
@@ -560,7 +559,7 @@ export const formatEndPointsDataForTable = (
 		return {
 			key: v4(),
 			endpointName: newEndpointName,
-			callCount: endpoint.data.A,
+			callCount: endpoint.data.A || '-',
 			latency:
 				endpoint.data.B === 'n/a'
 					? '-'
@@ -570,7 +569,7 @@ export const formatEndPointsDataForTable = (
 					? '-'
 					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
 			groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
-				acc[attribute] = endpoint.data[attribute];
+				acc[attribute] = endpoint.data[attribute] || '';
 				return acc;
 			}, {} as Record<string, string | number>),
 		};
