@@ -178,6 +178,13 @@ The most easiest way to send data to SigNoz is via the cloud. This is a quick gu
 ## 2. Docker based deployment of OTel demo app
 
 If you have installed the OTel demo application using docker, follow the steps below to send data to SigNoz Cloud.
+### Clone the OpenTelemetry Demo App Repository
+Clone the OTel demo app to any folder of your choice.
+```sh
+# Clone the OpenTelemetry Demo repository
+git clone https://github.com/open-telemetry/opentelemetry-demo.git
+cd opentelemetry-demo
+```
 
 ### Modify OpenTelemetry Collector Config
 
