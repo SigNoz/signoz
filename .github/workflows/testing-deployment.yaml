@@ -49,8 +49,7 @@ jobs:
           # This is added to include the scenerio when new commit in PR is force-pushed
           git branch -D ${GITHUB_BRANCH}
           git checkout --track origin/${GITHUB_BRANCH}
-          make build-ee-query-service-amd64
-          make build-frontend-amd64
+          make build-signoz-amd64
           make run-testing
           EOF
           gcloud beta compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --ssh-key-expire-after=15m --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"

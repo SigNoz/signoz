@@ -59,7 +59,7 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, licenses } = useAppContext();
+	const { user, featureFlags, licenses, trialInfo } = useAppContext();
 
 	const isOnboardingV3Enabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
@@ -97,7 +97,7 @@ function SideNav(): JSX.Element {
 	const licenseStatus: string =
 		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
 
-	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
@@ -352,7 +352,7 @@ function SideNav(): JSX.Element {
 							// eslint-disable-next-line react/no-unknown-property
 							onClick={(event: MouseEvent): void => {
 								// Current home page
-								onClickHandler(ROUTES.APPLICATION, event);
+								onClickHandler(ROUTES.HOME, event);
 							}}
 						>
 							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
@@ -366,7 +366,7 @@ function SideNav(): JSX.Element {
 					</div>
 				</div>
 
-				{isCloudUserVal && (
+				{isCloudUserVal && user?.role !== USER_ROLES.VIEWER && (
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"

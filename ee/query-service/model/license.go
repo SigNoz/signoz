@@ -236,3 +236,11 @@ func ConvertLicenseV3ToLicenseV2(l *LicenseV3) *License {
 	}
 
 }
+
+type CheckoutRequest struct {
+	SuccessURL string `json:"url"`
+}
+
+type PortalRequest struct {
+	SuccessURL string `json:"url"`
+}

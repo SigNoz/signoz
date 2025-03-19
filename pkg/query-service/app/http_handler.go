@@ -223,7 +223,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
-	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
 
 	aH := &APIHandler{
@@ -635,6 +634,12 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddlewar
 		Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/metrics/related",
 		am.ViewAccess(ah.GetRelatedMetrics)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/inspect",
+		am.ViewAccess(ah.GetInspectMetricsData)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
+		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
 }
 
