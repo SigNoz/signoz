@@ -20,17 +20,15 @@
 		}
 	}
 
-	.ant-steps-item {
-		&:last-child {
-			.ant-steps-item-icon {
-				margin-left: 10px;
-				margin-right: 20px;
-				width: 12px;
-				height: 12px;
-			}
-			.ant-steps-icon {
-				display: none;
-			}
+	.ant-steps-item.steps-content__add-step {
+		.ant-steps-item-icon {
+			margin-left: 10px;
+			margin-right: 20px;
+			width: 12px;
+			height: 12px;
+		}
+		.ant-steps-icon {
+			display: none;
 		}
 	}
 
