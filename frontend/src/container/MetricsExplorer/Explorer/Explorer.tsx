@@ -17,7 +17,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useMemo, useState } from 'react';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
@@ -74,20 +74,7 @@ function Explorer(): JSX.Element {
 				options.selectColumns,
 			);
 
-			const newDashboard: Dashboard = {
-				...updatedDashboard,
-				data: {
-					...updatedDashboard.data,
-					widgets: [
-						{
-							...(updatedDashboard.data?.widgets?.[0] as Widgets),
-							yAxisUnit: exportDefaultQuery.unit,
-						},
-					],
-				},
-			};
-
-			updateDashboard(newDashboard, {
+			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
 					if (data.error) {
 						const message =
