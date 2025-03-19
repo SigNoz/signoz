@@ -11,5 +11,10 @@
 	}
 	&__steps-results {
 		width: 100%;
+		overflow-y: auto;
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
 	}
 }
