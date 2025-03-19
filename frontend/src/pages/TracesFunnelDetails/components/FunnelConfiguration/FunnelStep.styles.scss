@@ -1,0 +1,14 @@
+.funnel-step {
+	width: 532px;
+	height: 147px;
+	background: var(--bg-ink-400);
+	color: var(--bg-vanilla-400);
+	padding: 16px;
+}
+
+.lightMode {
+	.funnel-step {
+		background: var(--bg-vanilla-400);
+		color: var(--bg-ink-400);
+	}
+}

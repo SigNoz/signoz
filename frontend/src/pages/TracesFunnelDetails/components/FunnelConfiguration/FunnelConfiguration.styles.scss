@@ -1,0 +1,26 @@
+.funnel-configuration {
+	&__steps-wrapper {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+	}
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 16px;
+		border-bottom: 1px solid var(--bg-slate-400);
+	}
+
+	.funnel-item__action-icon {
+		opacity: 1;
+	}
+	&__steps {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 16px;
+	}
+}
