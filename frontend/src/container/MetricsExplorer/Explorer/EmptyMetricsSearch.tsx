@@ -7,7 +7,7 @@ export default function EmptyMetricsSearch(): JSX.Element {
 			<Empty
 				description={
 					<Typography.Title level={5}>
-						Please build and run a valid query to view its metrics
+						Please build and run query to see the result
 					</Typography.Title>
 				}
 			/>
