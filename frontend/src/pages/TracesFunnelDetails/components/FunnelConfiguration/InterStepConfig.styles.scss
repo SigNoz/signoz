@@ -1,0 +1,27 @@
+.inter-step-config {
+	display: flex;
+	align-items: center;
+	width: 532px;
+	height: 32px;
+	background-color: var(--bg-ink-400);
+	padding: 16px;
+	&::before {
+		content: '';
+		position: absolute;
+		left: 10px;
+		bottom: 16px;
+		transform: translateY(-50%);
+		width: 12px;
+		height: 12px;
+		background-color: var(--bg-ink-400);
+		border-radius: 50%;
+		z-index: 1;
+	}
+}
+
+.lightMode {
+	.inter-step-config {
+		background-color: var(--bg-vanilla-400);
+		color: var(--bg-ink-400);
+	}
+}
