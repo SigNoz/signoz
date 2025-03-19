@@ -45,7 +45,6 @@ function App(): JSX.Element {
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
 		userFetchError,
-		licensesFetchError,
 		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
 		featureFlags,
@@ -270,19 +269,12 @@ function App(): JSX.Element {
 		// if the required calls fails then return a something went wrong error
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
-		if (
-			(userFetchError || licensesFetchError) &&
-			pathname !== ROUTES.SOMETHING_WENT_WRONG
-		) {
+		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
-		if (
-			(!licenses || !user.email || !featureFlags) &&
-			!userFetchError &&
-			!licensesFetchError
-		) {
+		if ((!user.email || !featureFlags) && !userFetchError) {
 			return <Spinner tip="Loading..." />;
 		}
 	}
