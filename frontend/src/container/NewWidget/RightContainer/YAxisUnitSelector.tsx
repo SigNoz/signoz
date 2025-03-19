@@ -39,6 +39,7 @@ function YAxisUnitSelector({
 				rootClassName="y-axis-root-popover"
 				options={options}
 				allowClear
+				value={findCategoryById(defaultValue)?.name}
 				defaultValue={findCategoryById(defaultValue)?.name}
 				onClear={handleClear}
 				onSelect={onSelectHandler}
