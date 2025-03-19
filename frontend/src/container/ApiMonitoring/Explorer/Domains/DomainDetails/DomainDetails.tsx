@@ -83,7 +83,7 @@ function DomainDetails({
 				overscrollBehavior: 'contain',
 				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
-			className="entity-detail-drawer"
+			className="domain-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>

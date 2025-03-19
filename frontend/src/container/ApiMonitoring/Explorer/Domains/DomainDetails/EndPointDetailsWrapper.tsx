@@ -1,4 +1,5 @@
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getEndPointZeroStateQueryPayload } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useMemo } from 'react';
@@ -36,8 +37,13 @@ function EndPointDetailsWrapper({
 	);
 
 	const endPointZeroStateDataQueries = useQueries(
-		endPointZeroStateQueryPayload.map((payload, index) => ({
-			queryKey: [`domain-endpoints-details-${index}`, payload, ENTITY_VERSION_V4],
+		endPointZeroStateQueryPayload.map((payload) => ({
+			queryKey: [
+				// Since only one query here
+				REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
+				payload,
+				ENTITY_VERSION_V4,
+			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
@@ -52,7 +58,6 @@ function EndPointDetailsWrapper({
 	if (endPointName === '') {
 		return (
 			<EndPointDetailsZeroState
-				endPointName={endPointName}
 				setSelectedEndPointName={setSelectedEndPointName}
 				endPointDropDownDataQuery={endPointZeroStateDataQuery}
 			/>

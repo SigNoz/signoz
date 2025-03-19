@@ -5,11 +5,9 @@ import { SuccessResponse } from 'types/api';
 import EndPointsDropDown from './EndPointsDropDown';
 
 function EndPointDetailsZeroState({
-	endPointName,
 	setSelectedEndPointName,
 	endPointDropDownDataQuery,
 }: {
-	endPointName: string;
 	setSelectedEndPointName: (endPointName: string) => void;
 	endPointDropDownDataQuery: UseQueryResult<SuccessResponse<any>>;
 }): JSX.Element {
@@ -25,7 +23,6 @@ function EndPointDetailsZeroState({
 						<div className="description">Select an endpoint to see the details</div>
 					</div>
 					<EndPointsDropDown
-						selectedEndPointName={endPointName}
 						setSelectedEndPointName={setSelectedEndPointName}
 						endPointDropDownDataQuery={endPointDropDownDataQuery}
 					/>

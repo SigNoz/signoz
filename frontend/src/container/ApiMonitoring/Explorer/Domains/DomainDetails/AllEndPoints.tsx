@@ -22,6 +22,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import ErrorState from './components/ErrorState';
 import { VIEW_TYPES, VIEWS } from './constants';
 import ExpandedRow from './ExpandedRow';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 function AllEndPoints({
 	domainName,
@@ -99,9 +100,15 @@ function AllEndPoints({
 		[groupBy, domainName, minTime, maxTime],
 	);
 
+	// Since only one query here
 	const endPointsDataQueries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['domain-all-endpoints', payload, ENTITY_VERSION_V4, groupBy],
+			queryKey: [
+				REACT_QUERY_KEY.GET_ENDPOINTS_LIST_BY_DOMAIN,
+				payload,
+				ENTITY_VERSION_V4,
+				groupBy,
+			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,

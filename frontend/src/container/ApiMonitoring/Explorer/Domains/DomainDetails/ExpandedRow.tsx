@@ -2,6 +2,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	createFiltersForSelectedRowData,
 	EndPointsTableRowData,
@@ -72,10 +73,9 @@ function ExpandedRow({
 		groupedByRowDataQueryPayload
 			? groupedByRowDataQueryPayload.map((payload) => ({
 					queryKey: [
-						`domain-endpoints-nested-expanded-row-${domainName}-${selectedRowData?.key}`,
+						`${REACT_QUERY_KEY.GET_NESTED_ENDPOINTS_LIST}-${domainName}-${selectedRowData?.key}`,
 						payload,
 						ENTITY_VERSION_V4,
-						'DOMAIN',
 						selectedRowData?.key,
 					],
 					queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>

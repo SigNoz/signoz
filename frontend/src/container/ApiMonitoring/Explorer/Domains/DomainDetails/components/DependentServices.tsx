@@ -49,22 +49,22 @@ function DependentServices({
 	}
 
 	return (
-		<div className="top-attributes-content">
-			<div className="top-attributes-title">
+		<div className="top-services-content">
+			<div className="top-services-title">
 				<span className="title-wrapper">Dependent Services</span>
 			</div>
 			<div className="dependent-services-container">
 				{renderItems.map((item) => (
-					<div className="top-attributes-item" key={item.key}>
-						<div className="top-attributes-item-progress">
-							<div className="top-attributes-item-key">{item.serviceName}</div>
-							<div className="top-attributes-item-count">{item.count}</div>
+					<div className="top-services-item" key={item.key}>
+						<div className="top-services-item-progress">
+							<div className="top-services-item-key">{item.serviceName}</div>
+							<div className="top-services-item-count">{item.count}</div>
 							<div
-								className="top-attributes-item-progress-bar"
+								className="top-services-item-progress-bar"
 								style={{ width: `${item.percentage}%` }}
 							/>
 						</div>
-						<div className="top-attributes-item-percentage">
+						<div className="top-services-item-percentage">
 							{item.percentage.toFixed(2)}%
 						</div>
 					</div>
@@ -72,7 +72,7 @@ function DependentServices({
 
 				{currentRenderCount < dependentServicesData.length && (
 					<div
-						className="top-attributes-load-more"
+						className="top-services-load-more"
 						onClick={(): void => setCurrentRenderCount(dependentServicesData.length)}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {

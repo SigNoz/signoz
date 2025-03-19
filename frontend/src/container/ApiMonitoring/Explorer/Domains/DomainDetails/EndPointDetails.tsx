@@ -1,6 +1,9 @@
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
+import {
+	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
+	getEndPointDetailsQueryPayload,
+} from 'container/ApiMonitoring/utils';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useMemo, useState } from 'react';
@@ -60,7 +63,11 @@ function EndPointDetails({
 
 	const endPointDetailsDataQueries = useQueries(
 		endPointDetailsQueryPayload.map((payload, index) => ({
-			queryKey: [`domain-endpoints-details-${index}`, payload, ENTITY_VERSION_V4],
+			queryKey: [
+				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
+				payload,
+				ENTITY_VERSION_V4,
+			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 			enabled: !!payload,
@@ -93,12 +100,14 @@ function EndPointDetails({
 	return (
 		<div className="endpoint-details-container">
 			<div className="endpoint-details-filters-container">
-				<EndPointsDropDown
-					selectedEndPointName={endPointName}
-					setSelectedEndPointName={setSelectedEndPointName}
-					endPointDropDownDataQuery={endPointDropDownDataQuery}
-				/>
-				<div style={{ flex: 1 }}>
+				<div className="endpoint-details-filters-container-dropdown">
+					<EndPointsDropDown
+						selectedEndPointName={endPointName}
+						setSelectedEndPointName={setSelectedEndPointName}
+						endPointDropDownDataQuery={endPointDropDownDataQuery}
+					/>
+				</div>
+				<div className="endpoint-details-filters-container-search">
 					<QueryBuilderSearchV2
 						query={query}
 						onChange={(searchFilters): void => setFilters(searchFilters)}

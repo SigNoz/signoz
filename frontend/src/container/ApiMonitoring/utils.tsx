@@ -7,6 +7,7 @@ import {
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
@@ -2017,3 +2018,14 @@ export const getFormattedEndPointStatusCodeChartData = (
 		},
 	};
 };
+
+export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
+	REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_RATE_OVER_TIME_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_LATENCY_OVER_TIME_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
+	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
+];

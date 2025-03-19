@@ -34,37 +34,37 @@ function EndPointMetrics({
 	}
 
 	return (
-		<div className="entity-detail-drawer__entity">
-			<div className="entity-details-grid">
+		<div className="domain-detail-drawer__endpoint">
+			<div className="domain-details-grid">
 				<div className="labels-row">
 					<Typography.Text
 						type="secondary"
-						className="entity-details-metadata-label"
+						className="domain-details-metadata-label"
 					>
 						Rate
 					</Typography.Text>
 					<Typography.Text
 						type="secondary"
-						className="entity-details-metadata-label"
+						className="domain-details-metadata-label"
 					>
 						AVERAGE LATENCY
 					</Typography.Text>
 					<Typography.Text
 						type="secondary"
-						className="entity-details-metadata-label"
+						className="domain-details-metadata-label"
 					>
 						ERROR RATE
 					</Typography.Text>
 					<Typography.Text
 						type="secondary"
-						className="entity-details-metadata-label"
+						className="domain-details-metadata-label"
 					>
 						LAST USED
 					</Typography.Text>
 				</div>
 
 				<div className="values-row">
-					<Typography.Text className="entity-details-metadata-value">
+					<Typography.Text className="domain-details-metadata-value">
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -73,7 +73,7 @@ function EndPointMetrics({
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="entity-details-metadata-value">
+					<Typography.Text className="domain-details-metadata-value">
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -82,7 +82,7 @@ function EndPointMetrics({
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="entity-details-metadata-value error-rate">
+					<Typography.Text className="domain-details-metadata-value error-rate">
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -104,7 +104,7 @@ function EndPointMetrics({
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="entity-details-metadata-value">
+					<Typography.Text className="domain-details-metadata-value">
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (

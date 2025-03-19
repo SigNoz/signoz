@@ -6,6 +6,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useMemo, useState } from 'react';
@@ -68,7 +69,7 @@ function DomainList({
 	};
 
 	const { data, isLoading, isFetching } = useQuery(
-		['apiOverview', minTime, maxTime, query, showIP],
+		[REACT_QUERY_KEY.GET_DOMAINS_LIST, minTime, maxTime, query, showIP],
 		fetchApiOverview,
 	);
 
