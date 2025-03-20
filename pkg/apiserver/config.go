@@ -43,6 +43,8 @@ func newConfig() factory.Config {
 		Logging: Logging{
 			ExcludedRoutes: []string{
 				"/api/v1/health",
+				"/api/v1/version",
+				"/",
 			},
 		},
 	}

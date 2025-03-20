@@ -155,7 +155,7 @@ func (lm *Manager) ValidatorV3(ctx context.Context) {
 	tick := time.NewTicker(validationFrequency)
 	defer tick.Stop()
 
-	lm.ValidateV3(ctx)
+	_ = lm.ValidateV3(ctx)
 	for {
 		select {
 		case <-lm.done:
@@ -165,7 +165,7 @@ func (lm *Manager) ValidatorV3(ctx context.Context) {
 			case <-lm.done:
 				return
 			case <-tick.C:
-				lm.ValidateV3(ctx)
+				_ = lm.ValidateV3(ctx)
 			}
 		}
 
@@ -263,6 +263,10 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseRe
 	// license is valid, activate it
 	lm.SetActiveV3(license)
 	return license, nil
+}
+
+func (lm *Manager) GetActiveLicense() *model.LicenseV3 {
+	return lm.activeLicenseV3
 }
 
 // CheckFeature will be internally used by backend routines

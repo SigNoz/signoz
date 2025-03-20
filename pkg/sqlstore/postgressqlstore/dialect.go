@@ -84,14 +84,13 @@ func (dialect *PGDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, 
 
 func (dialect *PGDialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
 	var columnType string
-	var err error
-	err = bun.NewSelect().
+
+	err := bun.NewSelect().
 		ColumnExpr("data_type").
 		TableExpr("information_schema.columns").
 		Where("table_name = ?", table).
 		Where("column_name = ?", column).
 		Scan(ctx, &columnType)
-
 	if err != nil {
 		return "", err
 	}

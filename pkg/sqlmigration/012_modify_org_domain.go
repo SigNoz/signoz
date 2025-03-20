@@ -38,7 +38,7 @@ func (migration *modifyOrgDomain) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	// rename old column
 	if _, err := tx.ExecContext(ctx, `ALTER TABLE org_domains RENAME COLUMN updated_at TO updated_at_old`); err != nil {

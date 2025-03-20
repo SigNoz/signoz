@@ -42,7 +42,7 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	// update apdex settings table
 	if err := updateApdexSettings(ctx, tx); err != nil {

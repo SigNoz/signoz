@@ -11,7 +11,10 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { METRIC_TYPE_LABEL_MAP } from '../Summary/constants';
+import {
+	METRIC_TYPE_LABEL_MAP,
+	METRIC_TYPE_VALUES_MAP,
+} from '../Summary/constants';
 import { MetricTypeRenderer } from '../Summary/utils';
 import { METRIC_METADATA_KEYS } from './constants';
 import { MetadataProps } from './types';
@@ -29,7 +32,6 @@ function Metadata({
 	] = useState<UpdateMetricMetadataProps>({
 		metricType: metadata?.metric_type || MetricType.SUM,
 		description: metadata?.description || '',
-		unit: metadata?.unit || '',
 		temporality: metadata?.temporality || Temporality.CUMULATIVE,
 	});
 	const { notifications } = useNotifications();
@@ -82,7 +84,7 @@ function Metadata({
 				ellipsis: true,
 				className: 'metric-metadata-value',
 				render: (field: { value: string; key: string }): JSX.Element => {
-					if (!isEditing) {
+					if (!isEditing || field.key === 'unit') {
 						if (field.key === 'metric_type') {
 							return (
 								<div>
@@ -95,9 +97,9 @@ function Metadata({
 					if (field.key === 'metric_type') {
 						return (
 							<Select
-								options={Object.entries(METRIC_TYPE_LABEL_MAP).map(([key, value]) => ({
+								options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
 									value: key,
-									label: value,
+									label: METRIC_TYPE_LABEL_MAP[key as MetricType],
 								}))}
 								value={metricMetadata.metricType}
 								onChange={(value): void => {
@@ -167,13 +169,15 @@ function Metadata({
 						setIsEditing(false);
 					} else {
 						notifications.error({
-							message: 'Failed to update metadata',
+							message:
+								'Failed to update metadata, please try again. If the issue persists, please contact support.',
 						});
 					}
 				},
 				onError: (): void =>
 					notifications.error({
-						message: 'Failed to update metadata',
+						message:
+							'Failed to update metadata, please try again. If the issue persists, please contact support.',
 					}),
 			},
 		);

@@ -80,7 +80,7 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
 		return nil, "", errors.Wrap(err, "could not unmarshal baseConf")
 	}
 
-	k.Set("extensions.zpages.endpoint", ta.ZPagesEndpoint)
+	_ = k.Set("extensions.zpages.endpoint", ta.ZPagesEndpoint)
 	recommendedYaml, err := k.Marshal(yaml.Parser())
 	if err != nil {
 		return nil, "", errors.Wrap(err, "could not marshal recommended conf")

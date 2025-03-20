@@ -13,9 +13,9 @@ export interface APIKeyProps {
 	role: string;
 	token: string;
 	id: string;
-	createdAt: number;
+	createdAt: string;
 	createdByUser?: User;
-	updatedAt?: number;
+	updatedAt?: string;
 	updatedByUser?: User;
 	lastUsed?: number;
 }

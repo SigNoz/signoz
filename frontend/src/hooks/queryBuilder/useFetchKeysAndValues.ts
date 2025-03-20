@@ -129,7 +129,7 @@ export const useFetchKeysAndValues = (
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !shouldUseSuggestions,
+			enabled: isMetricsExplorer ? false : isQueryEnabled && !shouldUseSuggestions,
 		},
 		isInfraMonitoring, // isInfraMonitoring
 		entity, // infraMonitoringEntity
@@ -155,9 +155,15 @@ export const useFetchKeysAndValues = (
 		data: metricsListFilterKeysData,
 		isFetching: isFetchingMetricsListFilterKeys,
 		status: fetchingMetricsListFilterKeysStatus,
-	} = useGetMetricsListFilterKeys({
-		enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
-	});
+	} = useGetMetricsListFilterKeys(
+		{
+			searchText: searchKey,
+		},
+		{
+			enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
+			queryKey: [searchKey],
+		},
+	);
 
 	function isAttributeValuesResponse(
 		payload: any,

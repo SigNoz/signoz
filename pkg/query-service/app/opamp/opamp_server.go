@@ -71,7 +71,7 @@ func (srv *Server) Stop() {
 		defer cleanup()
 	}
 
-	srv.server.Stop(context.Background())
+	_ = srv.server.Stop(context.Background())
 }
 
 func (srv *Server) onDisconnect(conn types.Connection) {

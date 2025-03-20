@@ -4,9 +4,11 @@ import {
 	Table,
 	TablePaginationConfig,
 	TableProps,
+	Tooltip,
 	Typography,
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import { Info } from 'lucide-react';
 import { useCallback } from 'react';
 
 import { MetricsListItemRowData, MetricsTableProps } from './types';
@@ -14,6 +16,7 @@ import { metricsTableColumns } from './utils';
 
 function MetricsTable({
 	isLoading,
+	isError,
 	data,
 	pageSize,
 	currentPage,
@@ -37,8 +40,8 @@ function MetricsTable({
 				});
 			} else {
 				setOrderBy({
-					columnName: 'type',
-					order: 'asc',
+					columnName: 'samples',
+					order: 'desc',
 				});
 			}
 		},
@@ -47,6 +50,17 @@ function MetricsTable({
 
 	return (
 		<div className="metrics-table-container">
+			<div className="metrics-table-title">
+				<Typography.Title level={4} className="metrics-table-title">
+					List View
+				</Typography.Title>
+				<Tooltip
+					title="The table displays all metrics in the selected time range. Each row represents a unique metric, and its metric name, and metadata like description, type, unit, and samples/timeseries cardinality observed in the selected time range."
+					placement="right"
+				>
+					<Info size={16} />
+				</Tooltip>
+			</div>
 			<Table
 				loading={{
 					spinning: isLoading,
@@ -62,9 +76,10 @@ function MetricsTable({
 								alt="thinking-emoji"
 								className="empty-state-svg"
 							/>
-
 							<Typography.Text className="no-metrics-message">
-								This query had no results. Edit your query and try again!
+								{isError
+									? 'Error fetching metrics. If the problem persists, please contact support.'
+									: 'This query had no results. Edit your query and try again!'}
 							</Typography.Text>
 						</div>
 					),

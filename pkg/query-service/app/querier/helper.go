@@ -228,6 +228,17 @@ func (q *querier) runBuilderQuery(
 		return
 	}
 
+	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
+		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
+		if apiError != nil {
+			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
+		}
+		if updatedMetadata, exist := metadata[builderQuery.AggregateAttribute.Key]; exist {
+			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(updatedMetadata.MetricType)
+			builderQuery.Temporality = updatedMetadata.Temporality
+		}
+	}
+
 	// What is happening here?
 	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
 	// If the query is not cached, we execute the query and return the result without caching it.

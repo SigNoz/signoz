@@ -1,16 +1,17 @@
 import './Summary.styles.scss';
 
 import * as Sentry from '@sentry/react';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetMetricsTreeMap } from 'hooks/metricsExplorer/useGetMetricsTreeMap';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import MetricDetails from '../MetricDetails';
@@ -28,11 +29,11 @@ function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
 	const [orderBy, setOrderBy] = useState<OrderByPayload>({
-		columnName: 'type',
-		order: 'asc',
+		columnName: 'samples',
+		order: 'desc',
 	});
 	const [heatmapView, setHeatmapView] = useState<TreemapViewType>(
-		TreemapViewType.CARDINALITY,
+		TreemapViewType.TIMESERIES,
 	);
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
@@ -43,7 +44,7 @@ function Summary(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const { currentQuery } = useQueryBuilder();
+	const currentQuery = initialQueriesMap[DataSource.METRICS];
 	const queryFilters = useMemo(
 		() =>
 			currentQuery?.builder?.queryData[0]?.filters || {
@@ -87,6 +88,7 @@ function Summary(): JSX.Element {
 		data: metricsData,
 		isLoading: isMetricsLoading,
 		isFetching: isMetricsFetching,
+		isError: isMetricsError,
 	} = useGetMetricsList(metricsListQuery, {
 		enabled: !!metricsListQuery,
 	});
@@ -95,18 +97,10 @@ function Summary(): JSX.Element {
 		data: treeMapData,
 		isLoading: isTreeMapLoading,
 		isFetching: isTreeMapFetching,
+		isError: isTreeMapError,
 	} = useGetMetricsTreeMap(metricsTreemapQuery, {
 		enabled: !!metricsTreemapQuery,
 	});
-
-	// Reset the filters when the component mounts
-	useEffect(() => {
-		handleChangeQueryData('filters', {
-			op: 'AND',
-			items: [],
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
 
 	const handleFilterChange = useCallback(
 		(value: TagFilter) => {
@@ -169,11 +163,13 @@ function Summary(): JSX.Element {
 				<MetricsTreemap
 					data={treeMapData?.payload}
 					isLoading={isTreeMapLoading || isTreeMapFetching}
+					isError={isTreeMapError}
 					viewType={heatmapView}
 					openMetricDetails={openMetricDetails}
 				/>
 				<MetricsTable
 					isLoading={isMetricsLoading || isMetricsFetching}
+					isError={isMetricsError}
 					data={formattedMetricsData}
 					pageSize={pageSize}
 					currentPage={currentPage}
