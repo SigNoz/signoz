@@ -104,6 +104,8 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		metricDetailsDTO.Metadata.MetricType = metadata.Type
 		metricDetailsDTO.Metadata.Description = metadata.Description
 		metricDetailsDTO.Metadata.Unit = metadata.Unit
+		metricDetailsDTO.Metadata.Temporality = metadata.Temporality
+		metricDetailsDTO.Metadata.Monotonic = metadata.IsMonotonic
 		return nil
 	})
 

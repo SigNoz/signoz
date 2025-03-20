@@ -65,6 +65,8 @@ type Metadata struct {
 	MetricType  string `json:"metric_type"`
 	Description string `json:"description"`
 	Unit        string `json:"unit"`
+	Temporality string `json:"temporality"`
+	Monotonic   bool   `json:"monotonic"`
 }
 
 // Alert represents individual alerts associated with the metric.

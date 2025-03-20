@@ -231,9 +231,12 @@ func (q *querier) runBuilderQuery(
 
 	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
 		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
-		if apiError == nil && metadata != nil {
-			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(metadata.MetricType)
-			builderQuery.Temporality = metadata.Temporality
+		if apiError != nil {
+			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
+		}
+		if updatedMetadata, exist := metadata[builderQuery.AggregateAttribute.Key]; exist {
+			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(updatedMetadata.MetricType)
+			builderQuery.Temporality = updatedMetadata.Temporality
 		}
 	}
 
