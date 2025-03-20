@@ -2,7 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/uptrace/bun"
@@ -60,31 +59,6 @@ func MustNew(
 		panic(err)
 	}
 	return migrations
-}
-
-func WrapIfNotExists(ctx context.Context, db *bun.DB, table string, column string) func(q *bun.AddColumnQuery) *bun.AddColumnQuery {
-	return func(q *bun.AddColumnQuery) *bun.AddColumnQuery {
-		if db.Dialect().Name() != dialect.SQLite {
-			return q.IfNotExists()
-		}
-
-		var result string
-		err := db.
-			NewSelect().
-			ColumnExpr("name").
-			Table("pragma_table_info").
-			Where("arg = ?", table).
-			Where("name = ?", column).
-			Scan(ctx, &result)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return q
-			}
-			return q.Err(err)
-		}
-
-		return q.Err(ErrNoExecute)
-	}
 }
 
 func GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
