@@ -48,6 +48,8 @@ function FullView({
 	tableProcessedDataRef,
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
+	onClickHandler,
+	setCurrentGraphRef,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { selectedTime: globalSelectedTime } = useSelector<
@@ -59,6 +61,10 @@ function FullView({
 	const location = useLocation();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		setCurrentGraphRef(fullViewRef);
+	}, [setCurrentGraphRef]);
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
@@ -249,6 +255,7 @@ function FullView({
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						searchTerm={searchTerm}
+						onClickHandler={onClickHandler}
 					/>
 				</GraphContainer>
 			</div>
