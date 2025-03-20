@@ -57,7 +57,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 
 	"go.uber.org/zap"
 
@@ -4548,7 +4548,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	req := pipelines.PostablePipelines{}
+	req := pipelinetypes.PostablePipelines{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -4557,7 +4557,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	createPipeline := func(
 		ctx context.Context,
-		postable []pipelines.PostablePipeline,
+		postable []pipelinetypes.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")

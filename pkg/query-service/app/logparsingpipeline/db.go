@@ -12,7 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 	"go.uber.org/zap"
 )
 
@@ -32,8 +32,8 @@ func NewRepo(sqlStore sqlstore.SQLStore) Repo {
 
 // insertPipeline stores a given postable pipeline to database
 func (r *Repo) insertPipeline(
-	ctx context.Context, orgID string, postable *pipelines.PostablePipeline,
-) (*pipelines.GettablePipeline, *model.ApiError) {
+	ctx context.Context, orgID string, postable *pipelinetypes.PostablePipeline,
+) (*pipelinetypes.GettablePipeline, *model.ApiError) {
 	if err := postable.IsValid(); err != nil {
 		return nil, model.BadRequest(errors.Wrap(err,
 			"pipeline is not valid",
@@ -58,8 +58,8 @@ func (r *Repo) insertPipeline(
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get email from context"))
 	}
 
-	insertRow := &pipelines.GettablePipeline{
-		StoreablePipeline: pipelines.StoreablePipeline{
+	insertRow := &pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
 			OrgID:        orgID,
 			ID:           uuid.New().String(),
 			OrderID:      postable.OrderID,
@@ -95,9 +95,9 @@ func (r *Repo) insertPipeline(
 // getPipelinesByVersion returns pipelines associated with a given version
 func (r *Repo) getPipelinesByVersion(
 	ctx context.Context, orgID string, version int,
-) ([]pipelines.GettablePipeline, []error) {
+) ([]pipelinetypes.GettablePipeline, []error) {
 	var errors []error
-	storablePipelines := []pipelines.StoreablePipeline{}
+	storablePipelines := []pipelinetypes.StoreablePipeline{}
 	err := r.sqlStore.BunDB().NewSelect().
 		Model(&storablePipelines).
 		Join("JOIN agent_config_elements e ON p.id = e.element_id").
@@ -111,7 +111,7 @@ func (r *Repo) getPipelinesByVersion(
 		return nil, []error{fmt.Errorf("failed to get pipelines from db: %v", err)}
 	}
 
-	gettablePipelines := make([]pipelines.GettablePipeline, len(storablePipelines))
+	gettablePipelines := make([]pipelinetypes.GettablePipeline, len(storablePipelines))
 	if len(storablePipelines) == 0 {
 		return gettablePipelines, nil
 	}
@@ -146,8 +146,8 @@ func (r *Repo) GetDefaultOrgID(ctx context.Context) (string, *model.ApiError) {
 // GetPipelines returns pipeline and errors (if any)
 func (r *Repo) GetPipeline(
 	ctx context.Context, orgID string, id string,
-) (*pipelines.GettablePipeline, *model.ApiError) {
-	storablePipelines := []pipelines.StoreablePipeline{}
+) (*pipelinetypes.GettablePipeline, *model.ApiError) {
+	storablePipelines := []pipelinetypes.StoreablePipeline{}
 
 	err := r.sqlStore.BunDB().NewSelect().
 		Model(&storablePipelines).
@@ -165,7 +165,7 @@ func (r *Repo) GetPipeline(
 	}
 
 	if len(storablePipelines) == 1 {
-		gettablePipeline := pipelines.GettablePipeline{}
+		gettablePipeline := pipelinetypes.GettablePipeline{}
 		gettablePipeline.StoreablePipeline = storablePipelines[0]
 		if err := gettablePipeline.ParseRawConfig(); err != nil {
 			zap.L().Error("invalid pipeline config found", zap.String("id", id), zap.Error(err))
@@ -187,7 +187,7 @@ func (r *Repo) GetPipeline(
 
 func (r *Repo) DeletePipeline(ctx context.Context, orgID string, id string) error {
 	_, err := r.sqlStore.BunDB().NewDelete().
-		Model(&pipelines.StoreablePipeline{}).
+		Model(&pipelinetypes.StoreablePipeline{}).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)

@@ -1,4 +1,4 @@
-package pipelines
+package pipelinetypes
 
 import (
 	"encoding/json"

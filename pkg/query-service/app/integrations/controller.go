@@ -8,7 +8,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 )
 
 type Controller struct {
@@ -124,7 +124,7 @@ func (c *Controller) Uninstall(
 
 func (c *Controller) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
-) ([]pipelines.GettablePipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
 }
 

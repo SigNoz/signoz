@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 )
 
 const IntegrationPipelineIdSeparator string = "--"
@@ -20,7 +20,7 @@ func AliasForIntegrationPipeline(
 
 // Returns ptr to integration_id string if `p` is a pipeline for an installed integration.
 // Returns null otherwise.
-func IntegrationIdForPipeline(p pipelines.GettablePipeline) *string {
+func IntegrationIdForPipeline(p pipelinetypes.GettablePipeline) *string {
 	if strings.HasPrefix(p.Alias, constants.IntegrationPipelineIdPrefix) {
 		parts := strings.Split(p.Alias, IntegrationPipelineIdSeparator)
 		if len(parts) < 2 {

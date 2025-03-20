@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 )
 
 func TestPipelinePreview(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []pipelines.GettablePipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			StoreablePipeline: pipelines.StoreablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
@@ -39,7 +39,7 @@ func TestPipelinePreview(t *testing.T) {
 					},
 				},
 			},
-			Config: []pipelines.PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId: 1,
 					ID:      "add",
@@ -52,7 +52,7 @@ func TestPipelinePreview(t *testing.T) {
 			},
 		},
 		{
-			StoreablePipeline: pipelines.StoreablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				OrderID: 2,
 				Name:    "pipeline2",
 				Alias:   "pipeline2",
@@ -72,7 +72,7 @@ func TestPipelinePreview(t *testing.T) {
 					},
 				},
 			},
-			Config: []pipelines.PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId: 1,
 					ID:      "add",
@@ -151,9 +151,9 @@ func TestPipelinePreview(t *testing.T) {
 func TestGrokParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []pipelines.GettablePipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			StoreablePipeline: pipelines.StoreablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
@@ -173,7 +173,7 @@ func TestGrokParsingProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []pipelines.PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					OrderId:   1,
 					ID:        "grok",

@@ -22,7 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 	"go.uber.org/zap"
 )
 
@@ -176,8 +176,8 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// After saving a user created pipeline, pipelines response should include
 	// both user created pipelines and pipelines for installed integrations.
-	postablePipelines := pipelines.PostablePipelines{
-		Pipelines: []pipelines.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
 				OrderID: 1,
 				Name:    "pipeline1",
@@ -197,7 +197,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 						},
 					},
 				},
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -256,7 +256,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
-	postable.Pipelines[0].Config = []pipelines.PipelineOperator{}
+	postable.Pipelines[0].Config = []pipelinetypes.PipelineOperator{}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -270,7 +270,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Greater(len(firstPipeline.Config), 0)
 
 	// should not be able to delete integrations pipeline
-	postable.Pipelines = []pipelines.PostablePipeline{postable.Pipelines[1]}
+	postable.Pipelines = []pipelinetypes.PostablePipeline{postable.Pipelines[1]}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -596,11 +596,11 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 }
 
-func postableFromPipelines(gettablePipelines []pipelines.GettablePipeline) pipelines.PostablePipelines {
-	result := pipelines.PostablePipelines{}
+func postableFromPipelines(gettablePipelines []pipelinetypes.GettablePipeline) pipelinetypes.PostablePipelines {
+	result := pipelinetypes.PostablePipelines{}
 
 	for _, p := range gettablePipelines {
-		postable := pipelines.PostablePipeline{
+		postable := pipelinetypes.PostablePipeline{
 			ID:      p.ID,
 			OrderID: p.OrderID,
 			Name:    p.Name,

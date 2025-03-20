@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 )
 
 func TestTimestampParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
-	testPipelines := []pipelines.GettablePipeline{
+	testPipelines := []pipelinetypes.GettablePipeline{
 		{
-			StoreablePipeline: pipelines.StoreablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
@@ -38,11 +38,11 @@ func TestTimestampParsingProcessor(t *testing.T) {
 					},
 				},
 			},
-			Config: []pipelines.PipelineOperator{},
+			Config: []pipelinetypes.PipelineOperator{},
 		},
 	}
 
-	var timestampParserOp pipelines.PipelineOperator
+	var timestampParserOp pipelinetypes.PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{
 			"orderId": 1,

@@ -15,7 +15,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types/authtypes"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 	"go.uber.org/zap"
 )
 
@@ -23,12 +23,12 @@ import (
 type LogParsingPipelineController struct {
 	Repo
 
-	GetIntegrationPipelines func(context.Context) ([]pipelines.GettablePipeline, *model.ApiError)
+	GetIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError)
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
-	getIntegrationPipelines func(context.Context) ([]pipelines.GettablePipeline, *model.ApiError),
+	getIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
@@ -41,15 +41,15 @@ func NewLogParsingPipelinesController(
 type PipelinesResponse struct {
 	*agentConf.ConfigVersion
 
-	Pipelines []pipelines.GettablePipeline `json:"pipelines"`
-	History   []agentConf.ConfigVersion    `json:"history"`
+	Pipelines []pipelinetypes.GettablePipeline `json:"pipelines"`
+	History   []agentConf.ConfigVersion        `json:"history"`
 }
 
 // ApplyPipelines stores new or changed pipelines and initiates a new config update
 func (ic *LogParsingPipelineController) ApplyPipelines(
 	ctx context.Context,
 	orgID string,
-	postable []pipelines.PostablePipeline,
+	postable []pipelinetypes.PostablePipeline,
 ) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
 	claims, ok := authtypes.ClaimsFromContext(ctx)
@@ -57,7 +57,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context"))
 	}
 
-	var pipelines []pipelines.GettablePipeline
+	var pipelines []pipelinetypes.GettablePipeline
 
 	// scan through postable pipelines, to select the existing pipelines or insert missing ones
 	for idx, r := range postable {
@@ -96,7 +96,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 func (ic *LogParsingPipelineController) ValidatePipelines(
 	ctx context.Context,
-	postedPipelines []pipelines.PostablePipeline,
+	postedPipelines []pipelinetypes.PostablePipeline,
 ) *model.ApiError {
 	for _, p := range postedPipelines {
 		if err := p.IsValid(); err != nil {
@@ -106,10 +106,10 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 
 	// Also run a collector simulation to ensure config is fit
 	// for e2e use with a collector
-	gettablePipelines := []pipelines.GettablePipeline{}
+	gettablePipelines := []pipelinetypes.GettablePipeline{}
 	for _, pp := range postedPipelines {
-		gettablePipelines = append(gettablePipelines, pipelines.GettablePipeline{
-			StoreablePipeline: pipelines.StoreablePipeline{
+		gettablePipelines = append(gettablePipelines, pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
 				ID:          uuid.New().String(),
 				OrderID:     pp.OrderID,
 				Enabled:     pp.Enabled,
@@ -139,8 +139,8 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	ctx context.Context, version int,
-) ([]pipelines.GettablePipeline, *model.ApiError) {
-	result := []pipelines.GettablePipeline{}
+) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
+	result := []pipelinetypes.GettablePipeline{}
 
 	// todo(nitya): remove this once we fix agents in multitenancy
 	defaultOrgID, err := ic.GetDefaultOrgID(ctx)
@@ -168,10 +168,10 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 
 	// Filter out any integration pipelines included in pipelines saved by user
 	// if the corresponding integration is no longer installed.
-	ipAliases := utils.MapSlice(integrationPipelines, func(p pipelines.GettablePipeline) string {
+	ipAliases := utils.MapSlice(integrationPipelines, func(p pipelinetypes.GettablePipeline) string {
 		return p.Alias
 	})
-	result = utils.FilterSlice(result, func(p pipelines.GettablePipeline) bool {
+	result = utils.FilterSlice(result, func(p pipelinetypes.GettablePipeline) bool {
 		if !strings.HasPrefix(p.Alias, constants.IntegrationPipelineIdPrefix) {
 			return true
 		}
@@ -182,7 +182,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	// Users are allowed to enable/disable and reorder integration pipelines while
 	// saving the pipeline list.
 	for _, ip := range integrationPipelines {
-		userPipelineIdx := slices.IndexFunc(result, func(p pipelines.GettablePipeline) bool {
+		userPipelineIdx := slices.IndexFunc(result, func(p pipelinetypes.GettablePipeline) bool {
 			return p.Alias == ip.Alias
 		})
 		if userPipelineIdx >= 0 {
@@ -229,8 +229,8 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 }
 
 type PipelinesPreviewRequest struct {
-	Pipelines []pipelines.GettablePipeline `json:"pipelines"`
-	Logs      []model.SignozLog            `json:"logs"`
+	Pipelines []pipelinetypes.GettablePipeline `json:"pipelines"`
+	Logs      []model.SignozLog                `json:"logs"`
 }
 
 type PipelinesPreviewResponse struct {

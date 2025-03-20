@@ -28,7 +28,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/pipelines"
+	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -63,15 +63,15 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		},
 	}
 
-	postablePipelines := pipelines.PostablePipelines{
-		Pipelines: []pipelines.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
 				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  pipelineFilterSet,
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -88,7 +88,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 				Alias:   "pipeline2",
 				Enabled: true,
 				Filter:  pipelineFilterSet,
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "remove",
@@ -180,8 +180,8 @@ func TestLogPipelinesHistory(t *testing.T) {
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(0, len(getPipelinesResp.History))
 
-	postablePipelines := pipelines.PostablePipelines{
-		Pipelines: []pipelines.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
 				OrderID: 1,
 				Name:    "pipeline1",
@@ -201,7 +201,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 						},
 					},
 				},
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -223,7 +223,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 
 	postablePipelines.Pipelines[0].Config = append(
 		postablePipelines.Pipelines[0].Config,
-		pipelines.PipelineOperator{
+		pipelinetypes.PipelineOperator{
 			OrderId: 2,
 			ID:      "remove",
 			Type:    "remove",
@@ -260,18 +260,18 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 	testCases := []struct {
 		Name                       string
-		Pipeline                   pipelines.PostablePipeline
+		Pipeline                   pipelinetypes.PostablePipeline
 		ExpectedResponseStatusCode int
 	}{
 		{
 			Name: "Valid Pipeline",
-			Pipeline: pipelines.PostablePipeline{
+			Pipeline: pipelinetypes.PostablePipeline{
 				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -287,13 +287,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 		},
 		{
 			Name: "Invalid orderId",
-			Pipeline: pipelines.PostablePipeline{
+			Pipeline: pipelinetypes.PostablePipeline{
 				OrderID: 0,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -309,13 +309,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 		},
 		{
 			Name: "Invalid filter",
-			Pipeline: pipelines.PostablePipeline{
+			Pipeline: pipelinetypes.PostablePipeline{
 				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  &v3.FilterSet{},
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -331,13 +331,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 		},
 		{
 			Name: "Invalid operator field",
-			Pipeline: pipelines.PostablePipeline{
+			Pipeline: pipelinetypes.PostablePipeline{
 				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -352,13 +352,13 @@ func TestLogPipelinesValidation(t *testing.T) {
 			ExpectedResponseStatusCode: 400,
 		}, {
 			Name: "Invalid from field path",
-			Pipeline: pipelines.PostablePipeline{
+			Pipeline: pipelinetypes.PostablePipeline{
 				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  validPipelineFilterSet,
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "move",
@@ -378,8 +378,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			testbed := NewLogPipelinesTestBed(t, nil)
 			testbed.PostPipelinesToQSExpectingStatusCode(
-				pipelines.PostablePipelines{
-					Pipelines: []pipelines.PostablePipeline{tc.Pipeline},
+				pipelinetypes.PostablePipelines{
+					Pipelines: []pipelinetypes.PostablePipeline{tc.Pipeline},
 				},
 				tc.ExpectedResponseStatusCode,
 			)
@@ -395,8 +395,8 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 	require.Equal(0, len(getPipelinesResp.Pipelines))
 	require.Equal(0, len(getPipelinesResp.History))
 
-	postablePipelines := pipelines.PostablePipelines{
-		Pipelines: []pipelines.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
 				OrderID: 1,
 				Name:    "pipeline1",
@@ -416,7 +416,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 						},
 					},
 				},
-				Config: []pipelines.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -533,7 +533,7 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipeline
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
-	postablePipelines pipelines.PostablePipelines,
+	postablePipelines pipelinetypes.PostablePipelines,
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
 	req, err := AuthenticatedRequestForTest(
@@ -583,7 +583,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQS(
-	postablePipelines pipelines.PostablePipelines,
+	postablePipelines pipelinetypes.PostablePipelines,
 ) *logparsingpipeline.PipelinesResponse {
 	return tb.PostPipelinesToQSExpectingStatusCode(
 		postablePipelines, 200,
@@ -632,7 +632,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 }
 
 func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
-	pipelines []pipelines.GettablePipeline,
+	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	lastMsg := tb.opampClientConn.LatestMsgFromServer()
 	assertPipelinesRecommendedInRemoteConfig(
@@ -643,7 +643,7 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 func assertPipelinesRecommendedInRemoteConfig(
 	t *testing.T,
 	msg *protobufs.ServerToAgent,
-	gettablePipelines []pipelines.GettablePipeline,
+	gettablePipelines []pipelinetypes.GettablePipeline,
 ) {
 	collectorConfigFiles := msg.RemoteConfig.Config.ConfigMap
 	require.Equal(
@@ -702,7 +702,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 
 		// find logparsingpipeline.Pipeline whose processor is being validated here
 		pipelineIdx := slices.IndexFunc(
-			gettablePipelines, func(p pipelines.GettablePipeline) bool {
+			gettablePipelines, func(p pipelinetypes.GettablePipeline) bool {
 				return logparsingpipeline.CollectorConfProcessorName(p) == procName
 			},
 		)
@@ -728,7 +728,7 @@ func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig
 }
 
 func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
-	pipelines []pipelines.GettablePipeline,
+	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
@@ -766,7 +766,7 @@ func unmarshalPipelinesResponse(apiResponse *app.ApiResponse) (
 
 func assertPipelinesResponseMatchesPostedPipelines(
 	t *testing.T,
-	postablePipelines pipelines.PostablePipelines,
+	postablePipelines pipelinetypes.PostablePipelines,
 	pipelinesResp *logparsingpipeline.PipelinesResponse,
 ) {
 	require.Equal(
