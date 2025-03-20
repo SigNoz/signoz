@@ -91,7 +91,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		if err == nil {
 			break
 		}
-		zap.L().Error("Failed to find or create agent retrying....", zap.String("agentID", agentID), zap.Error(err))
+		zap.L().Error("Failed to find or create agent retrying....", zap.String("agentID", agentID), zap.Error(err), zap.Duration("backoff", sleep))
 		time.Sleep(sleep)
 		sleep *= 2
 	}
