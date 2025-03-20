@@ -6,6 +6,7 @@ toolchain go1.22.7
 
 require (
 	dario.cat/mergo v1.0.1
+	github.com/AfterShip/clickhouse-sql-parser v0.4.4
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
