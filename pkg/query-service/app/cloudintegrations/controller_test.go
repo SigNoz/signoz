@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {

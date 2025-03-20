@@ -9,11 +9,11 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/pkg/collectorsimulator"
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
 	"github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func SimulatePipelinesProcessing(

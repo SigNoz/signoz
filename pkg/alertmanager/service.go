@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 type Service struct {

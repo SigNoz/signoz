@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	opentracing "github.com/opentracing/opentracing-go"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 

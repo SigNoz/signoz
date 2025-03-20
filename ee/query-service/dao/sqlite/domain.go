@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	ossTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/ee/types"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	ossTypes "go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 

@@ -3,8 +3,8 @@ package integrations
 import (
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 )
 
 const IntegrationPipelineIdSeparator string = "--"

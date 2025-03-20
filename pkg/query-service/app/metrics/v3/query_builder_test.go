@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/require"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestBuildQuery(t *testing.T) {

@@ -3,11 +3,11 @@ package sqlite
 import (
 	"fmt"
 
+	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
+	basedsql "github.com/SigNoz/signoz/pkg/query-service/dao/sqlite"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
-	basedao "go.signoz.io/signoz/pkg/query-service/dao"
-	basedsql "go.signoz.io/signoz/pkg/query-service/dao/sqlite"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type modelDao struct {

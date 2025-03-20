@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/converter"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
-	"go.signoz.io/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/query-service/converter"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"go.uber.org/zap"
 )
 
