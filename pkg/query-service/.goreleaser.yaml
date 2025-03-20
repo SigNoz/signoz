@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+version: 2
+
+project_name: signoz-community
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: signoz
+    binary: bin/signoz
+    main: pkg/query-service/main.go
+    env:
+      - CGO_ENABLED=1
+      - >-
+        {{- if eq .Os "linux" }}
+          {{- if eq .Arch "arm64" }}CC=aarch64-linux-gnu-gcc{{- end }}
+        {{- end }}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    goarm64:
+      - v8.0
+    ldflags:
+      - -s -w
+      - -X github.com/SigNoz/signoz/pkg/query-service/version.version={{ .Version }}
+      - -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }}
+      - -X main.builtBy=goreleaser
+      - -X go.signoz.io/signoz/pkg/query-service/version.buildVersion={{ .Version }}
+      - -X go.signoz.io/signoz/pkg/query-service/version.buildHash={{ .ShortCommit }}
+      - -X go.signoz.io/signoz/pkg/query-service/version.buildTime={{ .Date }}
+      - -X go.signoz.io/signoz/pkg/query-service/version.gitBranch={{ .Branch }}
+      - >-
+        {{- if eq .Os "linux" }}-linkmode external -extldflags '-static'{{- end }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    tags:
+      - timetzdata
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{- .Os }}_{{- .Arch }}
+    wrap_in_directory: true
+    strip_binary_directory: false
+    files:
+      - src: README.md
+        dst: README.md
+      - src: LICENSE
+        dst: LICENSE
+      - src: frontend/build
+        dst: web
+      - src: conf
+        dst: conf
+      - src: templates
+        dst: templates
+
+release:
+  name_template: "v{{ .Version }}"
+  draft: false
+  prerelease: auto

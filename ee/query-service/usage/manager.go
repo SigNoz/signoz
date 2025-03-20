@@ -165,7 +165,7 @@ func (lm *Manager) UploadUsage() {
 		usageData.CollectorID = usage.CollectorID
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
-		usageData.Tenant = usage.Tenant
+		usageData.Tenant = "default"
 		usageData.OrgName = orgName
 		usageData.TenantId = lm.tenantID
 		usagesPayload = append(usagesPayload, usageData)

@@ -7,6 +7,7 @@ import {
 
 export interface MetricsTableProps {
 	isLoading: boolean;
+	isError: boolean;
 	data: MetricsListItemRowData[];
 	pageSize: number;
 	currentPage: number;
@@ -26,6 +27,7 @@ export interface MetricsSearchProps {
 export interface MetricsTreemapProps {
 	data: MetricsTreeMapResponse | null | undefined;
 	isLoading: boolean;
+	isError: boolean;
 	viewType: TreemapViewType;
 	openMetricDetails: (metricName: string) => void;
 }
@@ -46,8 +48,8 @@ export interface MetricsListItemRowData {
 }
 
 export enum TreemapViewType {
-	CARDINALITY = 'timeseries',
-	DATAPOINTS = 'samples',
+	TIMESERIES = 'timeseries',
+	SAMPLES = 'samples',
 }
 
 export interface TreemapTile {

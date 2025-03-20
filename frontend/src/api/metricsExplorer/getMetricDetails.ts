@@ -16,13 +16,19 @@ export interface MetricDetails {
 	timeSeriesActive: number;
 	lastReceived: string;
 	attributes: MetricDetailsAttribute[];
-	metadata: {
+	metadata?: {
 		metric_type: MetricType;
 		description: string;
 		unit: string;
+		temporality: Temporality;
 	};
 	alerts: MetricDetailsAlert[] | null;
 	dashboards: MetricDetailsDashboard[] | null;
+}
+
+export enum Temporality {
+	CUMULATIVE = 'Cumulative',
+	DELTA = 'Delta',
 }
 
 export interface MetricDetailsAttribute {

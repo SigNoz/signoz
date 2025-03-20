@@ -82,6 +82,8 @@ apiserver:
     # List of routes to exclude from request responselogging.
     excluded_routes:
       - /api/v1/health
+      - /api/v1/version
+      - /
 
 
 ##################### TelemetryStore #####################

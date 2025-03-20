@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sJobsListPayload } from 'api/infraMonitoring/getK8sJobsList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sJobsList } from 'hooks/infraMonitoring/useGetK8sJobsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -234,11 +235,6 @@ function K8sJobsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const numberOfPages = useMemo(() => Math.ceil(totalCount / pageSize), [
-		totalCount,
-		pageSize,
-	]);
-
 	const handleTableChange: TableProps<K8sJobsRowData>['onChange'] = useCallback(
 		(
 			pagination: TablePaginationConfig,
@@ -247,10 +243,10 @@ function K8sJobsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
-				logEvent('Infra Monitoring: K8s jobs list page number changed', {
-					page: pagination.current,
-					pageSize,
-					numberOfPages,
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Job,
 				});
 			}
 
@@ -263,7 +259,7 @@ function K8sJobsList({
 				setOrderBy(null);
 			}
 		},
-		[numberOfPages, pageSize],
+		[],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -277,14 +273,25 @@ function K8sJobsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s jobs list filters applied', {});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Job,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s jobs list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Job,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedJobData = useMemo(() => {
 		if (groupBy.length > 0) {
@@ -303,8 +310,10 @@ function K8sJobsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s job list item clicked', {
-			jobName: record.jobName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Job,
 		});
 	};
 
@@ -433,7 +442,11 @@ function K8sJobsList({
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
 
-			logEvent('Infra Monitoring: K8s jobs list group by changed', {});
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Job,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -452,10 +465,10 @@ function K8sJobsList({
 	const onPaginationChange = (page: number, pageSize: number): void => {
 		setCurrentPage(page);
 		setPageSize(pageSize);
-		logEvent('Infra Monitoring: K8s jobs list page number changed', {
-			page,
-			pageSize,
-			numberOfPages,
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Job,
 		});
 	};
 

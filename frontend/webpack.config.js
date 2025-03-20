@@ -119,10 +119,23 @@ const config = {
 				],
 			},
 			{
-				test: /\.(jpe?g|png|gif|svg)$/i,
+				test: /\.(png|jpe?g|gif|svg)$/i,
 				use: [
-					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
-					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
+					{
+						loader: 'file-loader',
+					},
+					{
+						loader: 'image-webpack-loader',
+						options: {
+							bypassOnDebug: true,
+							optipng: {
+								optimizationLevel: 7,
+							},
+							gifsicle: {
+								interlaced: false,
+							},
+						},
+					},
 				],
 			},
 			{

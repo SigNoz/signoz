@@ -1,14 +1,11 @@
-import { Skeleton, Typography } from 'antd';
-import Uplot from 'components/Uplot';
+import { Empty, Skeleton, Typography } from 'antd';
+import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { DataSource } from 'types/common/queryBuilder';
 
 import DashboardsAndAlertsPopover from '../MetricDetails/DashboardsAndAlertsPopover';
 import { RelatedMetricsCardProps } from './types';
 
-function RelatedMetricsCard({
-	metric,
-	options,
-	chartData,
-}: RelatedMetricsCardProps): JSX.Element {
+function RelatedMetricsCard({ metric }: RelatedMetricsCardProps): JSX.Element {
 	const { queryResult } = metric;
 
 	if (queryResult.isLoading) {
@@ -27,13 +24,20 @@ function RelatedMetricsCard({
 				{metric.name}
 			</Typography.Text>
 			{queryResult.isLoading ? <Skeleton /> : null}
-			{queryResult.error ? (
+			{queryResult.isError ? (
 				<div className="related-metrics-card-error">
-					<Typography.Text>Something went wrong</Typography.Text>
+					<Empty description="Error fetching metric data" />
 				</div>
 			) : null}
 			{!queryResult.isLoading && !queryResult.error && (
-				<Uplot options={options} data={chartData} />
+				<TimeSeriesView
+					isFilterApplied={false}
+					isError={queryResult.isError}
+					isLoading={queryResult.isLoading}
+					data={queryResult.data}
+					yAxisUnit="ms"
+					dataSource={DataSource.METRICS}
+				/>
 			)}
 			<DashboardsAndAlertsPopover
 				dashboards={metric.dashboards}

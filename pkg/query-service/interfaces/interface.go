@@ -126,7 +126,7 @@ type Reader interface {
 	GetMetricsLastReceived(ctx context.Context, metricName string) (int64, *model.ApiError)
 	GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError)
 	GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError)
-	GetAttributesForMetricName(ctx context.Context, metricName string) (*[]metrics_explorer.Attribute, *model.ApiError)
+	GetAttributesForMetricName(ctx context.Context, metricName string, start, end *int64) (*[]metrics_explorer.Attribute, *model.ApiError)
 
 	ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError)
 
@@ -135,6 +135,16 @@ type Reader interface {
 
 	GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError)
 	GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError)
+
+	GetMetricsAllResourceAttributes(ctx context.Context, start int64, end int64) (map[string]uint64, *model.ApiError)
+	GetInspectMetricsFingerprints(ctx context.Context, attributes []string, req *metrics_explorer.InspectMetricsRequest) ([]string, *model.ApiError)
+	GetInspectMetrics(ctx context.Context, req *metrics_explorer.InspectMetricsRequest, fingerprints []string) (*metrics_explorer.InspectMetricsResponse, *model.ApiError)
+
+	DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError
+	UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError
+	GetUpdatedMetricsMetadata(ctx context.Context, metricName string) (*model.UpdateMetricsMetadata, *model.ApiError)
+
+	CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError)
 }
 
 type Querier interface {
@@ -149,4 +159,6 @@ type QueryCache interface {
 	FindMissingTimeRanges(start, end int64, step int64, cacheKey string) []querycache.MissInterval
 	FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []querycache.MissInterval
 	MergeWithCachedSeriesData(cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	StoreSeriesInCache(cacheKey string, series []querycache.CachedSeriesData)
+	MergeWithCachedSeriesDataV2(cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
 }

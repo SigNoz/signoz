@@ -23,7 +23,6 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 as uuid } from 'uuid';
 
 import QuerySection from './QuerySection';
-import RelatedMetrics from './RelatedMetrics';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 
@@ -38,8 +37,8 @@ function Explorer(): JSX.Element {
 	const { notifications } = useNotifications();
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
 	const { options } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		storageKey: LOCALSTORAGE.METRICS_LIST_OPTIONS,
+		dataSource: DataSource.METRICS,
 		aggregateOperator: 'noop',
 	});
 
@@ -50,15 +49,6 @@ function Explorer(): JSX.Element {
 
 	const handleToggleShowOneChartPerQuery = (): void =>
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
-
-	const metricNames = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length === 0) {
-			return [];
-		}
-		return stagedQuery.builder.queryData.map(
-			(query) => query.aggregateAttribute.key,
-		);
-	}, [stagedQuery]);
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -159,7 +149,8 @@ function Explorer(): JSX.Element {
 					>
 						<Typography.Text>Time series</Typography.Text>
 					</Button>
-					<Button
+					{/* TODO: Enable once we have resolved all related metrics issues */}
+					{/* <Button
 						value={ExplorerTabs.RELATED_METRICS}
 						className={classNames('tab', {
 							'selected-view': selectedTab === ExplorerTabs.RELATED_METRICS,
@@ -167,15 +158,16 @@ function Explorer(): JSX.Element {
 						onClick={(): void => setSelectedTab(ExplorerTabs.RELATED_METRICS)}
 					>
 						<Typography.Text>Related</Typography.Text>
-					</Button>
+					</Button> */}
 				</Button.Group>
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
 						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
 					)}
-					{selectedTab === ExplorerTabs.RELATED_METRICS && (
+					{/* TODO: Enable once we have resolved all related metrics issues */}
+					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
 						<RelatedMetrics metricNames={metricNames} />
-					)}
+					)} */}
 				</div>
 			</div>
 			<ExplorerOptionWrapper

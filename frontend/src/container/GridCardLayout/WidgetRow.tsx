@@ -44,7 +44,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 	const { user } = useAppContext();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.created_by === user?.email
+		selectedDashboard?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);

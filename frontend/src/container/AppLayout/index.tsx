@@ -53,7 +53,11 @@ import {
 } from 'types/actions/app';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { LicenseEvent } from 'types/api/licensesV3/getActive';
+import {
+	LicenseEvent,
+	LicensePlatform,
+	LicenseState,
+} from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
@@ -70,8 +74,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const {
 		isLoggedIn,
 		user,
-		licenses,
-		isFetchingLicenses,
+		trialInfo,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
 		featureFlags,
@@ -253,18 +256,47 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
+	const [showWorkspaceRestricted, setShowWorkspaceRestricted] = useState(false);
+
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses &&
-			licenses.onTrial &&
-			!licenses.trialConvertedToSubscription &&
-			!licenses.workSpaceBlock &&
-			getRemainingDays(licenses.trialEnd) < 7
+			!isFetchingActiveLicenseV3 &&
+			activeLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
+			!trialInfo?.workSpaceBlock &&
+			getRemainingDays(trialInfo?.trialEnd) < 7
 		) {
 			setShowTrialExpiryBanner(true);
 		}
-	}, [isFetchingLicenses, licenses]);
+	}, [isFetchingActiveLicenseV3, activeLicenseV3, trialInfo]);
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
+			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+			const isDefaulted = activeLicenseV3.state === LicenseState.DEFAULTED;
+			const isEvaluationExpired =
+				activeLicenseV3.state === LicenseState.EVALUATION_EXPIRED;
+
+			const isWorkspaceAccessRestricted =
+				isTerminated ||
+				isExpired ||
+				isCancelled ||
+				isDefaulted ||
+				isEvaluationExpired;
+
+			const { platform } = activeLicenseV3;
+
+			if (
+				isWorkspaceAccessRestricted &&
+				platform === LicensePlatform.SELF_HOSTED
+			) {
+				setShowWorkspaceRestricted(true);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
 
 	useEffect(() => {
 		if (
@@ -292,14 +324,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [user.role]);
 
 	const handleFailedPayment = useCallback((): void => {
-		if (activeLicenseV3?.key) {
-			manageCreditCard({
-				licenseKey: activeLicenseV3?.key || '',
-				successURL: window.location.origin,
-				cancelURL: window.location.origin,
-			});
-		}
-	}, [activeLicenseV3?.key, manageCreditCard]);
+		manageCreditCard({
+			url: window.location.href,
+		});
+	}, [manageCreditCard]);
+
+	const isHome = (): boolean => routeKey === 'HOME';
 
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
@@ -354,7 +384,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses
+			activeLicenseV3 &&
+			trialInfo
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
@@ -371,7 +402,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				isLoggedIn &&
 				!isPremiumSupportEnabled &&
 				isChatSupportEnabled &&
-				!licenses.trialConvertedToSubscription &&
+				!trialInfo?.trialConvertedToSubscription &&
 				isCloudUserVal
 			);
 		}
@@ -382,7 +413,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
-		licenses,
+		activeLicenseV3,
+		trialInfo,
 	]);
 
 	// Listen for API warnings
@@ -422,16 +454,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		};
 	}, []);
 
-	const isTrialUser = useMemo(
-		(): boolean =>
-			(!isFetchingLicenses &&
-				licenses &&
-				licenses.onTrial &&
-				!licenses.trialConvertedToSubscription) ||
-			false,
-		[licenses, isFetchingLicenses],
-	);
-
 	const handleDismissSlowApiWarning = (): void => {
 		setShowSlowApiWarning(false);
 
@@ -441,8 +463,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (
 			showSlowApiWarning &&
-			isTrialUser &&
-			!licenses?.trialConvertedToSubscription &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			!slowApiWarningShown
 		) {
 			setSlowApiWarningShown(true);
@@ -482,14 +504,85 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [
 		showSlowApiWarning,
 		notifications,
-		isTrialUser,
-		licenses?.trialConvertedToSubscription,
 		user.role,
 		isLoadingManageBilling,
 		handleFailedPayment,
 		slowApiWarningShown,
 		handleUpgrade,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
 	]);
+
+	const renderWorkspaceRestrictedBanner = (): JSX.Element => (
+		<div className="workspace-restricted-banner">
+			{activeLicenseV3?.state === LicenseState.TERMINATED && (
+				<>
+					Your SigNoz license is terminated, enterprise features have been disabled.
+					Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for new license
+				</>
+			)}
+			{activeLicenseV3?.state === LicenseState.EXPIRED && (
+				<>
+					Your SigNoz license has expired. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for renewal to
+					avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+			{activeLicenseV3?.state === LicenseState.CANCELLED && (
+				<>
+					Your SigNoz license is cancelled. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for reactivation
+					to avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+
+			{activeLicenseV3?.state === LicenseState.DEFAULTED && (
+				<>
+					Your SigNoz license is defaulted. Please clear the bill to continue using
+					the enterprise features. Contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> to avoid
+					termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+
+			{activeLicenseV3?.state === LicenseState.EVALUATION_EXPIRED && (
+				<>
+					Your SigNoz trial has ended. Please contact support at{' '}
+					<a href="mailto:support@signoz.io">support@signoz.io</a> for next steps to
+					avoid termination of license as per our{' '}
+					<a
+						href="https://signoz.io/terms-of-service"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						terms of service
+					</a>
+				</>
+			)}
+		</div>
+	);
 
 	return (
 		<Layout className={cx(isDarkMode ? 'darkMode' : 'lightMode')}>
@@ -500,7 +593,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{showTrialExpiryBanner && !showPaymentFailedWarning && (
 				<div className="trial-expiry-banner">
 					You are in free trial period. Your free trial will end on{' '}
-					<span>{getFormattedDate(licenses?.trialEnd || Date.now())}.</span>
+					<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
 					{user.role === USER_ROLES.ADMIN ? (
 						<span>
 							{' '}
@@ -515,6 +608,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</div>
 			)}
+
+			{showWorkspaceRestricted && renderWorkspaceRestrictedBanner()}
 
 			{!showTrialExpiryBanner && showPaymentFailedWarning && (
 				<div className="payment-failed-banner">
@@ -542,13 +637,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
-				<div className="app-content" data-overlayscrollbars-initialize>
+				<div
+					className={cx('app-content', {
+						'full-screen-content': renderFullScreen,
+					})}
+					data-overlayscrollbars-initialize
+				>
 					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent data-overlayscrollbars-initialize>
 							<OverlayScrollbar>
 								<ChildrenContainer
 									style={{
 										margin:
+											isHome() ||
 											isLogsView() ||
 											isTracesView() ||
 											isDashboardView() ||
