@@ -185,8 +185,15 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(...args): void =>
-							onGraphClick(celerySlowestTasksTableWidgetData, ...args)
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+							onGraphClick(
+								celerySlowestTasksTableWidgetData,
+								xValue,
+								yValue,
+								mouseX,
+								mouseY,
+								data,
+							)
 						}
 						customSeries={getCustomSeries}
 						dataAvailable={checkIfDataExists}
@@ -198,8 +205,15 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(...args): void =>
-							onGraphClick(celeryFailedTasksTableWidgetData, ...args)
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+							onGraphClick(
+								celeryFailedTasksTableWidgetData,
+								xValue,
+								yValue,
+								mouseX,
+								mouseY,
+								data,
+							)
 						}
 						customSeries={getCustomSeries}
 					/>
@@ -210,8 +224,15 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(...args): void =>
-							onGraphClick(celeryRetryTasksTableWidgetData, ...args)
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+							onGraphClick(
+								celeryRetryTasksTableWidgetData,
+								xValue,
+								yValue,
+								mouseX,
+								mouseY,
+								data,
+							)
 						}
 						customSeries={getCustomSeries}
 					/>
@@ -222,8 +243,15 @@ function CeleryTaskBar({
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(...args): void =>
-							onGraphClick(celerySuccessTasksTableWidgetData, ...args)
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+							onGraphClick(
+								celerySuccessTasksTableWidgetData,
+								xValue,
+								yValue,
+								mouseX,
+								mouseY,
+								data,
+							)
 						}
 						customSeries={getCustomSeries}
 					/>
