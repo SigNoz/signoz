@@ -1,14 +1,16 @@
 const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
+	HOME: '/home',
 	SERVICE_METRICS: '/services/:servicename',
 	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
-	GET_STARTED: '/get-started',
 	ONBOARDING: '/onboarding',
+	GET_STARTED: '/get-started',
+	GET_STARTED_WITH_CLOUD: '/get-started-with-signoz-cloud',
 	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
 	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
@@ -46,7 +48,6 @@ const ROUTES = {
 	LOGS_EXPLORER: '/logs/logs-explorer',
 	LIVE_LOGS: '/logs/logs-explorer/live',
 	LOGS_PIPELINES: '/logs/pipelines',
-	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
@@ -68,6 +69,8 @@ const ROUTES = {
 	METRICS_EXPLORER: '/metrics-explorer/summary',
 	METRICS_EXPLORER_EXPLORER: '/metrics-explorer/explorer',
 	METRICS_EXPLORER_VIEWS: '/metrics-explorer/views',
+	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
+	HOME_PAGE: '/',
 } as const;
 
 export default ROUTES;

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <p>Hi {{.CustomerName}},</p>
+    <p>You have been invited to join SigNoz project by {{.InviterName}} ({{.InviterEmail}}).</p>
+    <p>Please click on the following button to accept the invitation:</p>
+    <a href="{{.Link}}" style="background-color: #000000; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block;">Accept Invitation</a>
+    <p>Button not working? Paste the following link into your browser:</p>
+    <p>{{.Link}}</p>
+    <p>Follow docs here 👉 to <a href="https://signoz.io/docs/cloud/">Get Started with SigNoz Cloud</a></p>
+    <p>Thanks,</p>
+    <p>SigNoz Team</p>
+</body>
+</html>

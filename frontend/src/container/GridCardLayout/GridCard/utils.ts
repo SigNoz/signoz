@@ -1,10 +1,17 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { NotificationInstance } from 'antd/es/notification/interface';
+import { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExplorer';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import getLabelName from 'lib/getLabelName';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
+import { DataSource } from 'types/common/queryBuilder';
 
+import { GraphClickProps } from '../useGraphClickToShowButton';
+import { NavigateToExplorerPagesProps } from '../useNavigateToExplorerPages';
 import { LegendEntryProps } from './FullView/types';
 import {
 	showAllDataSet,
@@ -150,4 +157,84 @@ export const isDataAvailableByPanelType = (
 	};
 
 	return Boolean(getPanelData()?.length);
+};
+
+interface HandleGraphClickParams {
+	xValue: number;
+	yValue: number;
+	mouseX: number;
+	mouseY: number;
+	metric?: { [key: string]: string };
+	queryData?: { queryName: string; inFocusOrNot: boolean };
+	widget: Widgets;
+	navigateToExplorerPages: (
+		props: NavigateToExplorerPagesProps,
+	) => Promise<{
+		[queryName: string]: {
+			filters: TagFilterItem[];
+			dataSource?: string;
+		};
+	}>;
+	navigateToExplorer: (props: NavigateToExplorerProps) => void;
+	notifications: NotificationInstance;
+	graphClick: (props: GraphClickProps) => void;
+}
+
+export const handleGraphClick = async ({
+	xValue,
+	yValue,
+	mouseX,
+	mouseY,
+	metric,
+	queryData,
+	widget,
+	navigateToExplorerPages,
+	navigateToExplorer,
+	notifications,
+	graphClick,
+}: HandleGraphClickParams): Promise<void> => {
+	const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
+
+	try {
+		const result = await navigateToExplorerPages({
+			widget,
+			requestData: {
+				...metric,
+				queryName: queryData?.queryName || '',
+				inFocusOrNot: queryData?.inFocusOrNot || false,
+			},
+		});
+
+		const keys = Object.keys(result);
+		const menuItems = keys.map((key) => ({
+			text:
+				keys.length === 1
+					? `View ${
+							(result[key].dataSource as DataSource) === DataSource.TRACES
+								? 'Traces'
+								: 'Logs'
+					  }`
+					: `View ${
+							(result[key].dataSource as DataSource) === DataSource.TRACES
+								? 'Traces'
+								: 'Logs'
+					  }: ${key}`,
+			onClick: (): void =>
+				navigateToExplorer({
+					filters: result[key].filters,
+					dataSource: result[key].dataSource as DataSource,
+					startTime: xValue,
+					endTime: xValue + (stepInterval ?? 60),
+					shouldResolveQuery: true,
+				}),
+		}));
+
+		graphClick({ xValue, yValue, mouseX, mouseY, metric, queryData, menuItems });
+	} catch (error) {
+		notifications.error({
+			message: 'Failed to process graph click',
+			description:
+				error instanceof Error ? error.message : 'Unknown error occurred',
+		});
+	}
 };

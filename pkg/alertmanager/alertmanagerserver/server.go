@@ -66,7 +66,7 @@ type Server struct {
 
 func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
 	server := &Server{
-		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/server"),
+		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
 		registry:   registry,
 		srvConfig:  srvConfig,
 		orgID:      orgID,
@@ -84,7 +84,10 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 	silencesSnapshot := ""
 	if state != nil {
-		silencesSnapshot = state.Silences
+		silencesSnapshot, err = state.Get(alertmanagertypes.SilenceStateName)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
 	}
 	// Initialize silences
 	server.silences, err = silence.New(silence.Options{
@@ -103,7 +106,10 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 	nflogSnapshot := ""
 	if state != nil {
-		nflogSnapshot = state.NFLog
+		nflogSnapshot, err = state.Get(alertmanagertypes.NFLogStateName)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
 	}
 
 	// Initialize notification log
@@ -128,21 +134,21 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				// Don't return here - we need to snapshot our state first.
 			}
 
-			state, err := server.stateStore.Get(ctx, server.orgID)
+			storableSilences, err := server.stateStore.Get(ctx, server.orgID)
 			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 				return 0, err
 			}
 
-			if state == nil {
-				state = alertmanagertypes.NewStoreableState(server.orgID)
+			if storableSilences == nil {
+				storableSilences = alertmanagertypes.NewStoreableState(server.orgID)
 			}
 
-			c, err := state.Set(alertmanagertypes.SilenceStateName, server.silences)
+			c, err := storableSilences.Set(alertmanagertypes.SilenceStateName, server.silences)
 			if err != nil {
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, server.orgID, state)
+			return c, server.stateStore.Set(ctx, server.orgID, storableSilences)
 		})
 
 	}()
@@ -157,21 +163,21 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 				// Don't return without saving the current state.
 			}
 
-			state, err := server.stateStore.Get(ctx, server.orgID)
+			storableNFLog, err := server.stateStore.Get(ctx, server.orgID)
 			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 				return 0, err
 			}
 
-			if state == nil {
-				state = alertmanagertypes.NewStoreableState(server.orgID)
+			if storableNFLog == nil {
+				storableNFLog = alertmanagertypes.NewStoreableState(server.orgID)
 			}
 
-			c, err := state.Set(alertmanagertypes.NFLogStateName, server.nflog)
+			c, err := storableNFLog.Set(alertmanagertypes.NFLogStateName, server.nflog)
 			if err != nil {
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, server.orgID, state)
+			return c, server.stateStore.Set(ctx, server.orgID, storableNFLog)
 		})
 	}()
 
@@ -212,12 +218,12 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = template.FromGlobs(config.Templates)
+	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
 	if err != nil {
 		return err
 	}
 
-	server.tmpl.ExternalURL = server.srvConfig.ExternalUrl
+	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -308,7 +314,51 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 }
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	return alertmanagertypes.TestReceiver(ctx, receiver, server.tmpl, server.logger)
+	return alertmanagertypes.TestReceiver(ctx, receiver, server.alertmanagerConfig, server.tmpl, server.logger, alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now()))
+}
+
+func (server *Server) TestAlert(ctx context.Context, postableAlert *alertmanagertypes.PostableAlert, receivers []string) error {
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(alertmanagertypes.PostableAlerts{postableAlert}, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
+	if err != nil {
+		return errors.Join(err...)
+	}
+
+	if len(alerts) != 1 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "expected 1 alert, got %d", len(alerts))
+	}
+
+	ch := make(chan error, len(receivers))
+	for _, receiverName := range receivers {
+		go func(receiverName string) {
+			receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
+			if err != nil {
+				ch <- err
+				return
+			}
+			ch <- alertmanagertypes.TestReceiver(ctx, receiver, server.alertmanagerConfig, server.tmpl, server.logger, alerts[0])
+		}(receiverName)
+	}
+
+	var errs []error
+	for i := 0; i < len(receivers); i++ {
+		if err := <-ch; err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if errs != nil {
+		return errors.Join(errs...)
+	}
+
+	return nil
+}
+
+func (server *Server) Hash() string {
+	if server.alertmanagerConfig == nil {
+		return ""
+	}
+
+	return server.alertmanagerConfig.StoreableConfig().Hash
 }
 
 func (server *Server) Stop(ctx context.Context) error {

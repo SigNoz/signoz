@@ -13,7 +13,6 @@ import (
 	"go.signoz.io/signoz/pkg/http/middleware"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -23,6 +22,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -349,7 +349,7 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 	require.GreaterOrEqual(dashboards[0].UpdatedAt.Unix(), tsBeforeInstallation)
 
 	// Should be able to get installed integrations dashboard by id
-	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].Uuid)
+	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].UUID)
 	require.GreaterOrEqual(dd.CreatedAt.Unix(), tsBeforeInstallation)
 	require.GreaterOrEqual(dd.UpdatedAt.Unix(), tsBeforeInstallation)
 	require.Equal(*dd, dashboards[0])
@@ -367,7 +367,7 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 
 type IntegrationsTestBed struct {
 	t              *testing.T
-	testUser       *model.User
+	testUser       *types.User
 	qsHttpHandler  http.Handler
 	mockClickhouse mockhouse.ClickConnMockCommon
 }
@@ -463,7 +463,7 @@ func (tb *IntegrationsTestBed) RequestQSToUninstallIntegration(
 	tb.RequestQS("/api/v1/integrations/uninstall", request)
 }
 
-func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
+func (tb *IntegrationsTestBed) GetDashboardsFromQS() []types.Dashboard {
 	result := tb.RequestQS("/api/v1/dashboards", nil)
 
 	dataJson, err := json.Marshal(result.Data)
@@ -471,7 +471,7 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	dashboards := []dashboards.Dashboard{}
+	dashboards := []types.Dashboard{}
 	err = json.Unmarshal(dataJson, &dashboards)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
@@ -480,7 +480,7 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
 	return dashboards
 }
 
-func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *dashboards.Dashboard {
+func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *types.Dashboard {
 	result := tb.RequestQS(fmt.Sprintf("/api/v1/dashboards/%s", dashboardUuid), nil)
 
 	dataJson, err := json.Marshal(result.Data)
@@ -488,7 +488,7 @@ func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *das
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	dashboard := dashboards.Dashboard{}
+	dashboard := types.Dashboard{}
 	err = json.Unmarshal(dataJson, &dashboard)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")

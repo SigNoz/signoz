@@ -28,6 +28,7 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.HOME_PAGE]: [QueryParams.resourceAttributes],
 	[ROUTES.GET_STARTED]: [QueryParams.resourceAttributes],
 	[ROUTES.ONBOARDING]: [QueryParams.resourceAttributes],
+	[ROUTES.GET_STARTED_WITH_CLOUD]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_ALL_ALERT]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_LICENSES]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGIN]: [QueryParams.resourceAttributes],
@@ -57,4 +58,5 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES]: [
 		QueryParams.resourceAttributes,
 	],
+	[ROUTES.HOME]: [QueryParams.resourceAttributes],
 };

@@ -1,20 +1,20 @@
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import logEvent from 'api/common/logEvent';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
-import { identity, pickBy } from 'lodash-es';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
@@ -24,7 +24,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
+import { extractDomain } from 'utils/app';
 
 import PrivateRoute from './Private';
 import defaultRoutes, {
@@ -41,6 +41,9 @@ function App(): JSX.Element {
 		isFetchingUser,
 		isFetchingLicenses,
 		isFetchingFeatureFlags,
+		trialInfo,
+		activeLicenseV3,
+		isFetchingActiveLicenseV3,
 		userFetchError,
 		licensesFetchError,
 		featureFlagsFetchError,
@@ -50,32 +53,36 @@ function App(): JSX.Element {
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 
-	const { trackPageView } = useAnalytics();
-
 	const { hostname, pathname } = window.location;
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser: isCloudUserVal,
+		isEECloudUser: isEECloudUserVal,
+	} = useGetTenantLicense();
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
-			if (!isFetchingLicenses && licenses && org) {
+			if (!isFetchingActiveLicenseV3 && activeLicenseV3 && org) {
 				const orgName =
 					org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
 				const { name, email, role } = user;
 
+				const domain = extractDomain(email);
+				const hostNameParts = hostname.split('.');
+
 				const identifyPayload = {
 					email,
 					name,
 					company_name: orgName,
-					role,
+					tenant_id: hostNameParts[0],
+					data_region: hostNameParts[1],
+					tenant_url: hostname,
+					company_domain: domain,
 					source: 'signoz-ui',
+					role,
 				};
-
-				const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
-				const domain = extractDomain(email);
-				const hostNameParts = hostname.split('.');
 
 				const groupTraits = {
 					name: orgName,
@@ -86,8 +93,13 @@ function App(): JSX.Element {
 					source: 'signoz-ui',
 				};
 
-				window.analytics.identify(email, sanitizedIdentifyPayload);
-				window.analytics.group(domain, groupTraits);
+				if (email) {
+					logEvent('Email Identified', identifyPayload, 'identify');
+				}
+
+				if (domain) {
+					logEvent('Domain Identified', groupTraits, 'group');
+				}
 
 				posthog?.identify(email, {
 					email,
@@ -98,7 +110,7 @@ function App(): JSX.Element {
 					tenant_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
-					isPaidUser: !!licenses?.trialConvertedToSubscription,
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
 				posthog?.group('company', domain, {
@@ -108,7 +120,7 @@ function App(): JSX.Element {
 					tenant_url: hostname,
 					company_domain: domain,
 					source: 'signoz-ui',
-					isPaidUser: !!licenses?.trialConvertedToSubscription,
+					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
 				if (
@@ -124,7 +136,13 @@ function App(): JSX.Element {
 				}
 			}
 		},
-		[hostname, isFetchingLicenses, licenses, org],
+		[
+			hostname,
+			isFetchingActiveLicenseV3,
+			activeLicenseV3,
+			org,
+			trialInfo?.trialConvertedToSubscription,
+		],
 	);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -150,7 +168,7 @@ function App(): JSX.Element {
 
 			let updatedRoutes = defaultRoutes;
 			// if the user is a cloud user
-			if (isCloudUserVal || isEECloudUser()) {
+			if (isCloudUserVal || isEECloudUserVal) {
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
@@ -175,6 +193,7 @@ function App(): JSX.Element {
 		isCloudUserVal,
 		isFetchingLicenses,
 		isFetchingUser,
+		isEECloudUserVal,
 	]);
 
 	useEffect(() => {
@@ -187,9 +206,7 @@ function App(): JSX.Element {
 				hide_default_launcher: false,
 			});
 		}
-
-		trackPageView(pathname);
-	}, [pathname, trackPageView]);
+	}, [pathname]);
 
 	useEffect(() => {
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
@@ -198,7 +215,9 @@ function App(): JSX.Element {
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses
+			licenses &&
+			activeLicenseV3 &&
+			trialInfo
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
@@ -212,7 +231,7 @@ function App(): JSX.Element {
 						?.active || false;
 			}
 			const showAddCreditCardModal =
-				!isPremiumSupportEnabled && !licenses.trialConvertedToSubscription;
+				!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
 			if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
 				window.Intercom('boot', {
@@ -226,11 +245,13 @@ function App(): JSX.Element {
 		isLoggedInState,
 		user,
 		pathname,
-		licenses?.trialConvertedToSubscription,
+		trialInfo?.trialConvertedToSubscription,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		licenses,
+		activeLicenseV3,
+		trialInfo,
 	]);
 
 	useEffect(() => {
@@ -241,9 +262,6 @@ function App(): JSX.Element {
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
-		if (pathname === ROUTES.HOME_PAGE) {
-			history.replace(ROUTES.APPLICATION);
-		}
 		// if the setup calls are loading then return a spinner
 		if (isFetchingLicenses || isFetchingUser || isFetchingFeatureFlags) {
 			return <Spinner tip="Loading..." />;

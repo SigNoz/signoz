@@ -1,5 +1,9 @@
 import Loadable from 'components/Loadable';
 
+export const Home = Loadable(
+	() => import(/* webpackChunkName: "Home" */ 'pages/HomePage/HomePage'),
+);
+
 export const ServicesTablePage = Loadable(
 	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
@@ -71,6 +75,10 @@ export const Onboarding = Loadable(
 
 export const OrgOnboarding = Loadable(
 	() => import(/* webpackChunkName: "OrgOnboarding" */ 'pages/OrgOnboarding'),
+);
+
+export const OnboardingV2 = Loadable(
+	() => import(/* webpackChunkName: "Onboarding V2" */ 'pages/OnboardingPageV2'),
 );
 
 export const DashboardPage = Loadable(
@@ -218,6 +226,13 @@ export const WorkspaceSuspended = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "WorkspaceSuspended" */ 'pages/WorkspaceSuspended/WorkspaceSuspended'
+		),
+);
+
+export const WorkspaceAccessRestricted = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "WorkspaceAccessRestricted" */ 'pages/WorkspaceAccessRestricted'
 		),
 );
 

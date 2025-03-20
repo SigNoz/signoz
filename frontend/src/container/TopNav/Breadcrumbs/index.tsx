@@ -4,11 +4,13 @@ import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 
 const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.APPLICATION]: 'Services',
+	[ROUTES.HOME]: 'Home',
 	[ROUTES.TRACE]: 'Traces',
 	[ROUTES.TRACES_EXPLORER]: 'Traces Explorer',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
 	[ROUTES.GET_STARTED]: 'Get Started',
+	[ROUTES.GET_STARTED_WITH_CLOUD]: 'Get Started',
 	[ROUTES.ALL_CHANNELS]: 'Channels',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
@@ -29,6 +31,7 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 	[ROUTES.WORKSPACE_SUSPENDED]: 'Workspace Suspended',
+	[ROUTES.WORKSPACE_ACCESS_RESTRICTED]: 'Workspace Access Restricted',
 	[ROUTES.MESSAGING_QUEUES_OVERVIEW]: 'Messaging Queues',
 };
 
@@ -56,7 +59,7 @@ function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
 
 	const breadcrumbItems = [
 		<Breadcrumb.Item key="home">
-			<Link to="/services">Home</Link>
+			<Link to="/home">Home</Link>
 		</Breadcrumb.Item>,
 	].concat(extraBreadcrumbItems);
 

@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { DefaultOptionType } from 'antd/es/select';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -67,9 +68,13 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 
 			const uniqueValues = [
 				...new Set(
-					responses.flatMap(
-						({ payload }) => Object.values(payload || {}).find((el) => !!el) || [],
-					),
+					responses.flatMap(({ payload }) => {
+						if (!payload) return [];
+
+						const dataType = filterAttributeKeyDataType || DataTypes.String;
+						const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+						return key ? payload[key] || [] : [];
+					}),
 				),
 			];
 

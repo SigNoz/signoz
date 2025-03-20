@@ -8,7 +8,7 @@ import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
-import { onGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
+import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -25,7 +26,7 @@ import {
 	createFiltersFromData,
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
-import { useNavigateToTraces } from '../useNavigateToTraces';
+import { useNavigateToExplorer } from '../useNavigateToExplorer';
 import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
 
 interface TabData {
@@ -122,6 +123,8 @@ function CeleryTaskLatencyGraph({
 		setSelectedTimeStamp(selectTime);
 	}, []);
 
+	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
+
 	const onGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] => (
 			xValue,
@@ -137,26 +140,27 @@ function CeleryTaskLatencyGraph({
 				value,
 			});
 
-			return onGraphClickHandler(handleSetTimeStamp)(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				type,
-			);
+			return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
 		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
 
-	const navigateToTraces = useNavigateToTraces();
+	const navigateToExplorer = useNavigateToExplorer();
 
 	const goToTraces = useCallback(() => {
 		const { start, end } = getStartAndEndTimesInMilliseconds(selectedTimeStamp);
 		const filters = createFiltersFromData({
 			[entityData?.entity as string]: entityData?.value,
 		});
-		navigateToTraces(filters, start, end, true);
-	}, [entityData, navigateToTraces, selectedTimeStamp]);
+		navigateToExplorer({
+			filters,
+			dataSource: DataSource.TRACES,
+			startTime: start,
+			endTime: end,
+			sameTab: true,
+		});
+	}, [entityData, navigateToExplorer, selectedTimeStamp]);
 
 	return (
 		<Card

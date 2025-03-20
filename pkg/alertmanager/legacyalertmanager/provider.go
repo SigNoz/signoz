@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/tidwall/gjson"
 	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerbatcher"
 	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
@@ -16,6 +18,11 @@ import (
 	"go.signoz.io/signoz/pkg/sqlstore"
 	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
+
+type postableAlert struct {
+	*alertmanagertypes.PostableAlert
+	Receivers []string `json:"receivers"`
+}
 
 const (
 	alertsPath       string = "/v1/alerts"
@@ -29,6 +36,8 @@ type provider struct {
 	client      *http.Client
 	configStore alertmanagertypes.ConfigStore
 	batcher     *alertmanagerbatcher.Batcher
+	url         *url.URL
+	orgID       string
 }
 
 func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
@@ -49,6 +58,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		},
 		configStore: configStore,
 		batcher:     alertmanagerbatcher.New(settings.Logger(), alertmanagerbatcher.NewConfig()),
+		url:         config.Legacy.ApiURL,
 	}, nil
 }
 
@@ -57,22 +67,35 @@ func (provider *provider) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer provider.batcher.Stop(ctx)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case alerts := <-provider.batcher.C:
-			if err := provider.putAlerts(ctx, "", alerts); err != nil {
-				provider.settings.Logger().Error("failed to send alerts to alertmanager", "error", err)
+	for alerts := range provider.batcher.C {
+		// For the first time, we need to get the orgID from the config store.
+		// Since this is the legacy alertmanager, we get the first org from the store.
+		if provider.orgID == "" {
+			orgIDs, err := provider.configStore.ListOrgs(ctx)
+			if err != nil {
+				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
+				continue
 			}
+
+			if len(orgIDs) == 0 {
+				provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", "no orgs found")
+				continue
+			}
+
+			provider.orgID = orgIDs[0]
+		}
+
+		if err := provider.putAlerts(ctx, provider.orgID, alerts); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to send alerts to alertmanager", "error", err)
 		}
 	}
+
+	return nil
 }
 
-func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
-	url := provider.config.Legacy.URL.JoinPath(alertsPath)
+func (provider *provider) GetAlerts(ctx context.Context, orgID string, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.DeprecatedGettableAlerts, error) {
+	url := provider.url.JoinPath(alertsPath)
 	url.RawQuery = params.RawQuery
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
@@ -92,23 +115,52 @@ func (provider *provider) GetAlerts(ctx context.Context, orgID string, params al
 		return nil, err
 	}
 
-	var alerts alertmanagertypes.GettableAlerts
-	if err := json.Unmarshal(body, &alerts); err != nil {
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("bad response status %v", resp.Status)
+	}
+
+	var alerts alertmanagertypes.DeprecatedGettableAlerts
+	if err := json.Unmarshal([]byte(gjson.GetBytes(body, "data").Raw), &alerts); err != nil {
 		return nil, err
 	}
 
 	return alerts, nil
 }
 
-func (provider *provider) PutAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
-	provider.batcher.Send(ctx, alerts...)
+func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	provider.batcher.Add(ctx, alerts...)
 	return nil
 }
 
-func (provider *provider) putAlerts(ctx context.Context, _ string, alerts alertmanagertypes.PostableAlerts) error {
-	url := provider.config.Legacy.URL.JoinPath(alertsPath)
+func (provider *provider) putAlerts(ctx context.Context, orgID string, alerts alertmanagertypes.PostableAlerts) error {
+	cfg, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
 
-	body, err := json.Marshal(alerts)
+	var legacyAlerts []postableAlert
+	for _, alert := range alerts {
+		ruleID, ok := alert.Alert.Labels[alertmanagertypes.RuleIDMatcherName]
+		if !ok {
+			provider.settings.Logger().WarnContext(ctx, "cannot find ruleID for alert, skipping sending alert to alertmanager", "alert", alert)
+			continue
+		}
+
+		receivers := cfg.ReceiverNamesFromRuleID(ruleID)
+		if len(receivers) == 0 {
+			provider.settings.Logger().WarnContext(ctx, "cannot find receivers for alert, skipping sending alert to alertmanager", "ruleID", ruleID, "alert", alert)
+			continue
+		}
+
+		legacyAlerts = append(legacyAlerts, postableAlert{
+			PostableAlert: alert,
+			Receivers:     receivers,
+		})
+	}
+
+	url := provider.url.JoinPath(alertsPath)
+
+	body, err := json.Marshal(legacyAlerts)
 	if err != nil {
 		return err
 	}
@@ -135,9 +187,44 @@ func (provider *provider) putAlerts(ctx context.Context, _ string, alerts alertm
 }
 
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
-	url := provider.config.Legacy.URL.JoinPath(testReceiverPath)
+	url := provider.url.JoinPath(testReceiverPath)
 
-	body, err := json.Marshal(receiver)
+	body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := provider.client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close() //nolint:errcheck
+
+	// Any HTTP status 2xx is OK.
+	if resp.StatusCode/100 != 2 {
+		return fmt.Errorf("bad response status %v", resp.Status)
+	}
+
+	return nil
+}
+
+func (provider *provider) TestAlert(ctx context.Context, orgID string, alert *alertmanagertypes.PostableAlert, receivers []string) error {
+	url := provider.url.JoinPath(alertsPath)
+
+	legacyAlerts := make([]postableAlert, 1)
+	legacyAlerts[0] = postableAlert{
+		PostableAlert: alert,
+		Receivers:     receivers,
+	}
+
+	body, err := json.Marshal(legacyAlerts)
 	if err != nil {
 		return err
 	}
@@ -164,50 +251,52 @@ func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiv
 }
 
 func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
+	return provider.configStore.ListChannels(ctx, orgID)
+}
+
+func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
+	channels, err := provider.configStore.ListAllChannels(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	channels := config.Channels()
-	channelList := make([]*alertmanagertypes.Channel, 0, len(channels))
 	for _, channel := range channels {
-		channelList = append(channelList, channel)
+		if err := channel.MSTeamsV2ToMSTeams(); err != nil {
+			return nil, err
+		}
 	}
 
-	return channelList, nil
+	return channels, nil
 }
 
 func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
-	if err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	err = channel.Update(receiver)
+	if err != nil {
+		return err
+	}
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	err = config.UpdateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
-	if err != nil {
+	if err := config.UpdateReceiver(receiver); err != nil {
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config, func(ctx context.Context) error {
-		url := provider.config.Legacy.URL.JoinPath(routesPath)
+	err = provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		url := provider.url.JoinPath(routesPath)
 
-		body, err := json.Marshal(receiver)
+		body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 		if err != nil {
 			return err
 		}
@@ -230,8 +319,12 @@ func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID str
 			return fmt.Errorf("bad response status %v", resp.Status)
 		}
 
+		if err := provider.configStore.Set(ctx, config); err != nil {
+			return err
+		}
+
 		return nil
-	})
+	}))
 	if err != nil {
 		return err
 	}
@@ -240,20 +333,21 @@ func (provider *provider) UpdateChannelByReceiver(ctx context.Context, orgID str
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+	channel := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	err = config.CreateReceiver(alertmanagertypes.NewRouteFromReceiver(receiver), receiver)
-	if err != nil {
+	if err := config.CreateReceiver(receiver); err != nil {
 		return err
 	}
 
-	err = provider.configStore.Set(ctx, config, func(ctx context.Context) error {
-		url := provider.config.Legacy.URL.JoinPath(routesPath)
+	return provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		url := provider.url.JoinPath(routesPath)
 
-		body, err := json.Marshal(receiver)
+		body, err := json.Marshal(alertmanagertypes.MSTeamsV2ReceiverToMSTeamsReceiver(receiver))
 		if err != nil {
 			return err
 		}
@@ -276,34 +370,31 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 			return fmt.Errorf("bad response status %v", resp.Status)
 		}
 
+		if err := provider.configStore.Set(ctx, config); err != nil {
+			return err
+		}
+
 		return nil
-	})
+	}))
+}
+
+func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	channels := config.Channels()
-	channel, err := alertmanagertypes.GetChannelByID(channels, channelID)
-	if err != nil {
+	if err := config.DeleteReceiver(channel.Name); err != nil {
 		return err
 	}
 
-	err = config.DeleteReceiver(channel.Name)
-	if err != nil {
-		return err
-	}
-
-	err = provider.configStore.Set(ctx, config, func(ctx context.Context) error {
-		url := provider.config.Legacy.URL.JoinPath(routesPath)
+	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		url := provider.url.JoinPath(routesPath)
 
 		body, err := json.Marshal(map[string]string{"name": channel.Name})
 		if err != nil {
@@ -328,15 +419,32 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 			return fmt.Errorf("bad response status %v", resp.Status)
 		}
 
+		if err := provider.configStore.Set(ctx, config); err != nil {
+			return err
+		}
+
 		return nil
-	})
+	}))
+}
+
+func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {
+	return provider.configStore.Set(ctx, config)
+}
+
+func (provider *provider) Stop(ctx context.Context) error {
+	provider.batcher.Stop(ctx)
+	return nil
+}
+
+func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
+	return provider.configStore.Get(ctx, orgID)
+}
+
+func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (provider *provider) Stop(ctx context.Context) error {
-	return nil
+	return provider.configStore.Set(ctx, config)
 }

@@ -26,7 +26,7 @@ func TestServerSetConfigAndStop(t *testing.T) {
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore())
 	require.NoError(t, err)
 
-	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{}, "1")
+	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
 	require.NoError(t, err)
 
 	assert.NoError(t, server.SetConfig(context.Background(), amConfig))
@@ -37,7 +37,7 @@ func TestServerTestReceiverTypeWebhook(t *testing.T) {
 	server, err := New(context.Background(), slog.New(slog.NewTextHandler(io.Discard, nil)), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore())
 	require.NoError(t, err)
 
-	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{}, "1")
+	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
 	require.NoError(t, err)
 
 	webhookListener, err := net.Listen("tcp", "localhost:0")
@@ -87,7 +87,7 @@ func TestServerPutAlerts(t *testing.T) {
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(&config.Route{Receiver: "test-receiver", Continue: true}, alertmanagertypes.Receiver{
+	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
 		Name: "test-receiver",
 		WebhookConfigs: []*config.WebhookConfig{
 			{
@@ -110,7 +110,6 @@ func TestServerPutAlerts(t *testing.T) {
 			},
 		},
 	}))
-	require.NotEmpty(t, server.alerts)
 
 	dummyRequest, err := http.NewRequest(http.MethodGet, "/alerts", nil)
 	require.NoError(t, err)

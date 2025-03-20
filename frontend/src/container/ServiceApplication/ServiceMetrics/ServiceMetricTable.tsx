@@ -5,6 +5,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
@@ -14,7 +15,6 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -33,8 +33,8 @@ function ServiceMetricTable({
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
 
-	const { licenses, isFetchingLicenses } = useAppContext();
-	const isCloudUserVal = isCloudUser();
+	const { isFetchingActiveLicenseV3, trialInfo } = useAppContext();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
 		queryKey: [
@@ -70,9 +70,9 @@ function ServiceMetricTable({
 
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses?.onTrial &&
-			!licenses?.trialConvertedToSubscription &&
+			!isFetchingActiveLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -85,9 +85,9 @@ function ServiceMetricTable({
 	}, [
 		services,
 		isCloudUserVal,
-		isFetchingLicenses,
-		licenses?.onTrial,
-		licenses?.trialConvertedToSubscription,
+		isFetchingActiveLicenseV3,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
 	]);
 
 	const paginationConfig = {
@@ -114,6 +114,7 @@ function ServiceMetricTable({
 				loading={isLoading}
 				dataSource={services}
 				rowKey="serviceName"
+				className="service-metrics-table"
 			/>
 		</>
 	);

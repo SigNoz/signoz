@@ -8,12 +8,6 @@ jobs:
   remove:
     runs-on: ubuntu-latest
     steps:
-      - name: Remove label ok-to-test from PR
-        uses: buildsville/add-remove-label@v2.0.0
-        with:
-          label: ok-to-test
-          type: remove
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Remove label testing-deploy from PR
         uses: buildsville/add-remove-label@v2.0.0
         with:

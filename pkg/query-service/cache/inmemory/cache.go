@@ -47,7 +47,7 @@ func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 	if !found {
 		return
 	}
-	c.cc.Replace(cacheKey, item, ttl)
+	_ = c.cc.Replace(cacheKey, item, ttl)
 }
 
 // Remove removes the cache entry

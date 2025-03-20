@@ -4,6 +4,7 @@ import './QueryBuilderSearchV2.styles.scss';
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
@@ -737,9 +738,11 @@ function QueryBuilderSearchV2(
 					values.push(tagValue[tagValue.length - 1]);
 			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			values.push(
-				...(Object.values(attributeValues?.payload || {}).find((el) => !!el) || []),
-			);
+			if (attributeValues?.payload) {
+				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
+				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+				values.push(...(attributeValues?.payload?.[key] || []));
+			}
 
 			setDropdownOptions(
 				values.map((val) => ({

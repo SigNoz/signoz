@@ -173,6 +173,7 @@ function EditAlertChannels({
 	const prepareEmailRequest = useCallback(
 		() => ({
 			name: selectedConfig?.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
 			to: selectedConfig.to || '',
 			html: selectedConfig.html || '',
 			headers: selectedConfig.headers || {},
@@ -208,6 +209,7 @@ function EditAlertChannels({
 	const preparePagerRequest = useCallback(
 		() => ({
 			name: selectedConfig.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
 			routing_key: selectedConfig.routing_key,
 			client: selectedConfig.client,
 			client_url: selectedConfig.client_url,
@@ -261,6 +263,7 @@ function EditAlertChannels({
 	const prepareOpsgenieRequest = useCallback(
 		() => ({
 			name: selectedConfig.name || '',
+			send_resolved: selectedConfig?.send_resolved || false,
 			api_key: selectedConfig.api_key || '',
 			message: selectedConfig.message || '',
 			description: selectedConfig.description || '',

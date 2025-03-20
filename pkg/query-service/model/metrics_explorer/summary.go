@@ -31,8 +31,8 @@ type TreeMapMetricsRequest struct {
 type MetricDetail struct {
 	MetricName   string `json:"metric_name"`
 	Description  string `json:"description"`
-	Type         string `json:"type"`
-	Unit         string `json:"unit"`
+	MetricType   string `json:"type"`
+	MetricUnit   string `json:"unit"`
 	TimeSeries   uint64 `json:"timeseries"`
 	Samples      uint64 `json:"samples"`
 	LastReceived int64  `json:"lastReceived"`
@@ -121,4 +121,51 @@ var AvailableColumnFilterMap = map[string]bool{
 	"metric_name": true,
 	"metric_unit": true,
 	"metric_type": true,
+}
+
+type RelatedMetricsScore struct {
+	AttributeSimilarity float64
+	NameSimilarity      float64
+	Filters             [][]string
+	MetricType          v3.MetricType
+	Temporality         v3.Temporality
+	IsMonotonic         bool
+}
+
+type RelatedMetricsRequest struct {
+	CurrentMetricName string       `json:"currentMetricName"`
+	Start             int64        `json:"start"`
+	End               int64        `json:"end"`
+	Filters           v3.FilterSet `json:"filters"`
+}
+
+type RelatedMetricsResponse struct {
+	RelatedMetrics []RelatedMetrics `json:"related_metrics"`
+}
+
+type RelatedMetrics struct {
+	Name       string           `json:"name"`
+	Query      *v3.BuilderQuery `json:"query"`
+	Dashboards []Dashboard      `json:"dashboards"`
+	Alerts     []Alert          `json:"alerts"`
+}
+
+type InspectMetricsRequest struct {
+	MetricName string       `json:"metricName"`
+	Filters    v3.FilterSet `json:"filters"`
+	Start      int64        `json:"start"`
+	End        int64        `json:"end"`
+}
+
+type InspectMetricsResponse struct {
+	Series *[]v3.Series `json:"series,omitempty"`
+}
+
+type UpdateMetricsMetadataRequest struct {
+	MetricName  string         `json:"metricName"`
+	MetricType  v3.MetricType  `json:"metricType"`
+	Description string         `json:"description"`
+	Unit        string         `json:"unit"`
+	Temporality v3.Temporality `json:"temporality"`
+	IsMonotonic bool           `json:"isMonotonic"`
 }

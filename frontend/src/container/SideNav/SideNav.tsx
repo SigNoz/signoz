@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -28,7 +29,7 @@ import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
+import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -58,7 +59,11 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, licenses } = useAppContext();
+	const { user, featureFlags, licenses, trialInfo } = useAppContext();
+
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
 
 	const [licenseTag, setLicenseTag] = useState('');
 
@@ -82,14 +87,17 @@ function SideNav(): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser: isCloudUserVal,
+		isEECloudUser: isEECloudUserVal,
+	} = useGetTenantLicense();
 
 	const { t } = useTranslation('');
 
 	const licenseStatus: string =
 		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
 
-	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
@@ -131,10 +139,15 @@ function SideNav(): JSX.Element {
 			menuRoute: '/get-started',
 			menuLabel: 'Get Started',
 		});
+
+		const onboaringRoute = isOnboardingV3Enabled
+			? ROUTES.GET_STARTED_WITH_CLOUD
+			: ROUTES.GET_STARTED;
+
 		if (isCtrlMetaKey(event)) {
-			openInNewTab('/get-started');
+			openInNewTab(onboaringRoute);
 		} else {
-			history.push(`/get-started`);
+			history.push(onboaringRoute);
 		}
 	};
 
@@ -266,14 +279,17 @@ function SideNav(): JSX.Element {
 		let updatedUserManagementItems: UserManagementMenuItems[] = [
 			manageLicenseMenuItem,
 		];
-		if (isCloudUserVal || isEECloudUser()) {
+		if (isCloudUserVal || isEECloudUserVal) {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
 					?.active || false;
+
 			if (!isOnboardingEnabled) {
 				updatedMenuItems = updatedMenuItems.filter(
 					(item) =>
-						item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+						item.key !== ROUTES.GET_STARTED &&
+						item.key !== ROUTES.ONBOARDING &&
+						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
 				);
 			}
 
@@ -318,6 +334,7 @@ function SideNav(): JSX.Element {
 		featureFlags,
 		isCloudUserVal,
 		isCurrentVersionError,
+		isEECloudUserVal,
 		isLatestVersion,
 		licenses?.licenses,
 		onClickVersionHandler,
@@ -335,7 +352,7 @@ function SideNav(): JSX.Element {
 							// eslint-disable-next-line react/no-unknown-property
 							onClick={(event: MouseEvent): void => {
 								// Current home page
-								onClickHandler(ROUTES.APPLICATION, event);
+								onClickHandler(ROUTES.HOME, event);
 							}}
 						>
 							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
@@ -349,7 +366,7 @@ function SideNav(): JSX.Element {
 					</div>
 				</div>
 
-				{isCloudUserVal && (
+				{isCloudUserVal && user?.role !== USER_ROLES.VIEWER && (
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"

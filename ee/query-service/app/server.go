@@ -17,14 +17,17 @@ import (
 	eemiddleware "go.signoz.io/signoz/ee/http/middleware"
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/auth"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/rules"
+	"go.signoz.io/signoz/pkg/alertmanager"
 	"go.signoz.io/signoz/pkg/http/middleware"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/signoz"
+	"go.signoz.io/signoz/pkg/sqlstore"
+	"go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.signoz.io/signoz/pkg/web"
 
@@ -44,7 +47,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
@@ -110,7 +112,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
 		return nil, err
 	}
 
@@ -118,7 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
 		return nil, err
 	}
 
@@ -175,8 +177,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath,
-		baseconst.GetAlertManagerApiPrefix(),
+	rm, err := makeRulesManager(
+		serverOptions.PromConfigPath,
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
@@ -185,6 +187,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		lm,
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,
+		serverOptions.SigNoz.Alertmanager,
+		serverOptions.SigNoz.SQLStore,
 	)
 
 	if err != nil {
@@ -267,7 +271,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		JWT:                           serverOptions.Jwt,
 	}
 
-	apiHandler, err := api.NewAPIHandler(apiOpts)
+	apiHandler, err := api.NewAPIHandler(apiOpts, serverOptions.SigNoz)
 	if err != nil {
 		return nil, err
 	}
@@ -300,6 +304,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
+	errorList := qb.PreloadMetricsMetadata(context.Background())
+	for _, er := range errorList {
+		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+	}
+
 	return s, nil
 }
 
@@ -308,7 +317,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	r := baseapp.NewRouter()
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore.BunDB(), []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -340,14 +349,14 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 
 	// add auth middleware
-	getUserFromRequest := func(ctx context.Context) (*basemodel.UserPayload, error) {
-		user, err := auth.GetUserFromRequestContext(ctx, apiHandler)
+	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
+		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if user.User.OrgId == "" {
+		if user.User.OrgID == "" {
 			return nil, basemodel.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
@@ -356,7 +365,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore.BunDB(), []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -529,7 +538,6 @@ func (s *Server) Stop() error {
 
 func makeRulesManager(
 	promConfigPath,
-	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
@@ -537,39 +545,34 @@ func makeRulesManager(
 	disableRules bool,
 	fm baseint.FeatureLookup,
 	useLogsNewSchema bool,
-	useTraceNewSchema bool) (*baserules.Manager, error) {
-
+	useTraceNewSchema bool,
+	alertmanager alertmanager.Alertmanager,
+	sqlstore sqlstore.SQLStore,
+) (*baserules.Manager, error) {
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pql engine : %v", err)
 	}
 
-	// notifier opts
-	notifierOpts := basealm.NotifierOptions{
-		QueueCapacity:    10000,
-		Timeout:          1 * time.Second,
-		AlertManagerURLs: []string{alertManagerURL},
-	}
-
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		NotifierOpts: notifierOpts,
-		PqlEngine:    pqle,
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       zap.L(),
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
-		Cache:        cache,
-		EvalDelay:    baseconst.GetEvalDelay(),
-
+		PqlEngine:           pqle,
+		RepoURL:             ruleRepoURL,
+		DBConn:              db,
+		Context:             context.Background(),
+		Logger:              zap.L(),
+		DisableRules:        disableRules,
+		FeatureFlags:        fm,
+		Reader:              ch,
+		Cache:               cache,
+		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		UseLogsNewSchema:    useLogsNewSchema,
 		UseTraceNewSchema:   useTraceNewSchema,
 		PrepareTestRuleFunc: rules.TestNotification,
+		Alertmanager:        alertmanager,
+		SQLStore:            sqlstore,
 	}
 
 	// create Manager
