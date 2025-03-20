@@ -1,29 +1,27 @@
-package model
+package types
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"net/url"
-	"golang.org/x/oauth2"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"go.signoz.io/signoz/ee/query-service/sso"
+	"golang.org/x/oauth2"
 )
 
-// SamlConfig contans SAML params to generate and respond to the requests 
-// from SAML provider
 type SamlConfig struct {
 	SamlEntity string `json:"samlEntity"`
 	SamlIdp    string `json:"samlIdp"`
 	SamlCert   string `json:"samlCert"`
 }
 
-// GoogleOauthConfig contains a generic config to support oauth 
+// GoogleOauthConfig contains a generic config to support oauth
 type GoogleOAuthConfig struct {
 	ClientID     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
 	RedirectURI  string `json:"redirectURI"`
 }
-
 
 const (
 	googleIssuerURL = "https://accounts.google.com"
@@ -40,7 +38,7 @@ func (g *GoogleOAuthConfig) GetProvider(domain string, siteUrl *url.URL) (sso.OA
 	}
 
 	// default to email and profile scope as we just use google auth
-	// to verify identity and start a session. 
+	// to verify identity and start a session.
 	scopes := []string{"email"}
 
 	// this is the url google will call after login completion
@@ -61,8 +59,7 @@ func (g *GoogleOAuthConfig) GetProvider(domain string, siteUrl *url.URL) (sso.OA
 		Verifier: provider.Verifier(
 			&oidc.Config{ClientID: g.ClientID},
 		),
-		Cancel:                         cancel,
-		HostedDomain:                  domain,
+		Cancel:       cancel,
+		HostedDomain: domain,
 	}, nil
 }
-
