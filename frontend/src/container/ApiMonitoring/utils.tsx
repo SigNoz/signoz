@@ -1921,7 +1921,6 @@ export const getFormattedChartData = (
 ): MetricRangePayloadProps => {
 	const result = cloneDeep(data);
 	if (result?.data?.result) {
-		console.log('uncaught result', result);
 		result.data.result = result?.data?.result?.map((series, index) => ({
 			...series,
 			legend: newLegendArray[index],
