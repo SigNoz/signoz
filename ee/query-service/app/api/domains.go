@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
+	"go.signoz.io/signoz/ee/types"
 )
 
 func (ah *APIHandler) listDomainsByOrg(w http.ResponseWriter, r *http.Request) {

@@ -7,10 +7,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/ee/types"
 	basedao "go.signoz.io/signoz/pkg/query-service/dao"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
+	ossTypes "go.signoz.io/signoz/pkg/types"
 	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
@@ -39,7 +40,7 @@ type ModelDao interface {
 	UpdatePAT(ctx context.Context, orgID string, p model.PAT, id string) basemodel.BaseApiError
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
 	GetPATByID(ctx context.Context, orgID string, id string) (*model.PAT, basemodel.BaseApiError)
-	GetUserByPAT(ctx context.Context, orgID string, token string) (*types.GettableUser, basemodel.BaseApiError)
+	GetUserByPAT(ctx context.Context, orgID string, token string) (*ossTypes.GettableUser, basemodel.BaseApiError)
 	ListPATs(ctx context.Context, orgID string) ([]model.PAT, basemodel.BaseApiError)
 	RevokePAT(ctx context.Context, orgID string, id string, userID string) basemodel.BaseApiError
 }

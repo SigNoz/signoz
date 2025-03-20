@@ -57,7 +57,7 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 			return err
 		}
 
-		// check if there is one org ID if yes then set it to all dashboards.
+		// check if there is one org ID if yes then set it to all personal_access_tokens.
 		if len(orgIDs) == 1 {
 			orgID := orgIDs[0]
 			if _, err := tx.NewUpdate().Table("personal_access_tokens").Set("org_id = ?", orgID).Where("org_id IS NULL").Exec(ctx); err != nil {

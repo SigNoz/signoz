@@ -11,8 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/ee/types"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
+	ossTypes "go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -163,7 +164,7 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *types.GettableOrgDo
 		Name:          domain.Name,
 		OrgID:         domain.OrgID,
 		Data:          string(configJson),
-		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		TimeAuditable: ossTypes.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 
 	_, err = m.DB().NewInsert().
@@ -197,7 +198,7 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *types.GettableOrgDo
 		Name:          domain.Name,
 		OrgID:         domain.OrgID,
 		Data:          string(configJson),
-		TimeAuditable: types.TimeAuditable{UpdatedAt: time.Now()},
+		TimeAuditable: ossTypes.TimeAuditable{UpdatedAt: time.Now()},
 	}
 
 	_, err = m.DB().NewUpdate().

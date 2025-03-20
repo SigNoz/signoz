@@ -12,13 +12,14 @@ import (
 	"github.com/uptrace/bun"
 	"go.signoz.io/signoz/ee/query-service/sso"
 	"go.signoz.io/signoz/ee/query-service/sso/saml"
+	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
 type StorableOrgDomain struct {
 	bun.BaseModel `bun:"table:org_domains"`
 
-	TimeAuditable
+	types.TimeAuditable
 	ID    uuid.UUID `json:"id" bun:"id,pk,type:text"`
 	OrgID string    `json:"orgId" bun:"org_id,type:text,notnull"`
 	Name  string    `json:"name" bun:"name,type:varchar(50),notnull,unique"`
@@ -42,7 +43,7 @@ type GettableOrgDomain struct {
 	SamlConfig       *SamlConfig        `json:"samlConfig"`
 	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
 
-	Org *Organization
+	Org *types.Organization
 }
 
 func (od *GettableOrgDomain) String() string {
