@@ -5909,8 +5909,8 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 	const baseQueryTemplate = `
 SELECT 
     kv.1 AS key,
-    arrayMap(x -> trim(BOTH '"' FROM x), groupUniqArray(10000)(kv.2)) AS values,
-    length(groupUniqArray(1000)(kv.2)) AS valueCount
+    arrayMap(x -> trim(BOTH '"' FROM x), groupUniqArray(1000)(kv.2)) AS values,
+    length(groupUniqArray(10000)(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
 WHERE metric_name = ? AND __normalized=true`
