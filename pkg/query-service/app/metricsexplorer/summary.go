@@ -54,7 +54,7 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, params *metric
 	case "metric_name":
 		var filterValues []string
 		request := v3.AggregateAttributeRequest{DataSource: v3.DataSourceMetrics, SearchText: params.SearchText, Limit: params.Limit}
-		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true)
+		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true, true)
 		if err != nil {
 			return nil, model.InternalError(err)
 		}
@@ -104,6 +104,8 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		metricDetailsDTO.Metadata.MetricType = metadata.Type
 		metricDetailsDTO.Metadata.Description = metadata.Description
 		metricDetailsDTO.Metadata.Unit = metadata.Unit
+		metricDetailsDTO.Metadata.Temporality = metadata.Temporality
+		metricDetailsDTO.Metadata.Monotonic = metadata.IsMonotonic
 		return nil
 	})
 
