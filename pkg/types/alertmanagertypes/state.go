@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 // State is the type alias for the State type from the alertmanager package.

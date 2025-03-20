@@ -8,15 +8,15 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/query-service/formatter"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
+	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/formatter"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
-	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 

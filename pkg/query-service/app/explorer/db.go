@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 

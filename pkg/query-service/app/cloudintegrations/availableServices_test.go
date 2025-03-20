@@ -3,8 +3,8 @@ package cloudintegrations
 import (
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func TestAvailableServices(t *testing.T) {

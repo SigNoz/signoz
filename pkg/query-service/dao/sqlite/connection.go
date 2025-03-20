@@ -3,12 +3,12 @@ package sqlite
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 

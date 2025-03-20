@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 

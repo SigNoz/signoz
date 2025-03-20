@@ -7,14 +7,14 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 

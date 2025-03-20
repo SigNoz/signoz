@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 

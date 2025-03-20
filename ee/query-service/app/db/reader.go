@@ -7,9 +7,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"go.signoz.io/signoz/pkg/cache"
-	basechr "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/cache"
+	basechr "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 )
 
 type ClickhouseReader struct {

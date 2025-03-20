@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"gopkg.in/yaml.v3"
 )
 
