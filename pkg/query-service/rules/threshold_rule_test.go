@@ -2,7 +2,7 @@ package rules
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
 	"go.signoz.io/signoz/pkg/cache"
 	"go.signoz.io/signoz/pkg/cache/memorycache"
 	"go.signoz.io/signoz/pkg/factory/factorytest"
@@ -1227,10 +1227,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
-
-		cacheCols := make([]cmock.ColumnType, 0)
-		mock.ExpectQueryRow(".*").WillReturnRow(cmock.NewRow(cacheCols, nil)).WillReturnError(sql.ErrNoRows)
-
+		mock.ExpectQuery(".*").WillReturnError(fmt.Errorf("error"))
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
@@ -1331,8 +1328,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
 
-		cacheCols := make([]cmock.ColumnType, 0)
-		mock.ExpectQueryRow(".*").WillReturnRow(cmock.NewRow(cacheCols, nil)).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(".*").WillReturnError(fmt.Errorf("error"))
 
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here

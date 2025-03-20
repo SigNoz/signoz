@@ -3875,6 +3875,9 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		if updatedMetadata.Description != "" {
 			description = updatedMetadata.Description
 		}
+		if updatedMetadata.Unit != "" {
+			unit = updatedMetadata.Unit
+		}
 	}
 
 	query = fmt.Sprintf("SELECT JSONExtractString(labels, 'le') as le from %s.%s WHERE metric_name=$1 AND unix_milli >= $2 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $3 GROUP BY le ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
@@ -5868,14 +5871,24 @@ func (r *ClickHouseReader) GetMetricsLastReceived(ctx context.Context, metricNam
     MAX(unix_milli) AS last_received_time
 FROM %s.%s
 WHERE metric_name = ?
-`, signozMetricDBName, signozSampleTableName)
+`, signozMetricDBName, signozSamplesAgg30mLocalTableName)
 	var lastReceived int64
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	err := r.db.QueryRow(valueCtx, query, metricName).Scan(&lastReceived)
 	if err != nil {
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	return lastReceived, nil // Convert to uint64 before returning
+	query = fmt.Sprintf(`SELECT 
+    MAX(unix_milli) AS last_received_time
+FROM %s.%s
+WHERE metric_name = ? and unix_milli > ?
+`, signozMetricDBName, signozSampleTableName)
+	var finalLastReceived int64
+	err = r.db.QueryRow(valueCtx, query, metricName, lastReceived).Scan(&finalLastReceived)
+	if err != nil {
+		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
+	}
+	return finalLastReceived, nil // Convert to uint64 before returning
 }
 
 func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError) {
@@ -5897,7 +5910,7 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 SELECT 
     kv.1 AS key,
     arrayMap(x -> trim(BOTH '"' FROM x), groupUniqArray(10000)(kv.2)) AS values,
-    length(groupUniqArray(10000)(kv.2)) AS valueCount
+    length(groupUniqArray(1000)(kv.2)) AS valueCount
 FROM %s.%s
 ARRAY JOIN arrayFilter(x -> NOT startsWith(x.1, '__'), JSONExtractKeysAndValuesRaw(labels)) AS kv
 WHERE metric_name = ? AND __normalized=true`
@@ -6262,6 +6275,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		FROM %s.%s AS ts
 		WHERE NOT startsWith(ts.metric_name, 'signoz_')
 		AND __normalized = true
+		AND unix_milli BETWEEN ? AND ?
 		%s
 		GROUP BY ts.metric_name
 		ORDER BY timeSeries DESC
@@ -6270,7 +6284,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	rows, err := r.db.Query(valueCtx, metricsQuery)
+	rows, err := r.db.Query(valueCtx, metricsQuery, start, end)
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -6908,9 +6922,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 			cachedMetadata[metricName] = metadata
 		} else {
 			if err != nil {
-				zap.L().Info("Error retrieving metrics metadata from cache", zap.String("metric_name", metricName), zap.Error(err))
-			} else {
-				zap.L().Info("Cache miss for metrics metadata", zap.String("metric_name", metricName))
+				zap.L().Error("Error retrieving metrics metadata from cache", zap.String("metric_name", metricName), zap.Error(err))
 			}
 			missingMetrics = append(missingMetrics, metricName)
 		}
@@ -6927,7 +6939,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 		rows, err := r.db.Query(valueCtx, query)
 		if err != nil {
-			return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
+			return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error querying metrics metadata: %v", err)}
 		}
 		defer rows.Close()
 
@@ -6941,7 +6953,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 				&metadata.IsMonotonic,
 				&metadata.Unit,
 			); err != nil {
-				return nil, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metrics metadata: %v", err)}
+				return cachedMetadata, &model.ApiError{Typ: "ClickhouseErr", Err: fmt.Errorf("error scanning metrics metadata: %v", err)}
 			}
 
 			// Cache the result for future requests.
