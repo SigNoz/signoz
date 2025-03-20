@@ -8,7 +8,7 @@ import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
-import { Edit2, Save } from 'lucide-react';
+import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -104,12 +104,12 @@ function Metadata({
 									value: key,
 									label: METRIC_TYPE_LABEL_MAP[key as MetricType],
 								}))}
-								value={metricMetadata.metricType}
+								defaultValue={metricMetadata.metricType}
 								onChange={(value): void => {
-									setMetricMetadata({
-										...metricMetadata,
+									setMetricMetadata((prev) => ({
+										...prev,
 										metricType: value as MetricType,
-									});
+									}));
 								}}
 							/>
 						);
@@ -121,12 +121,12 @@ function Metadata({
 									value: key,
 									label: key,
 								}))}
-								value={metricMetadata.temporality}
+								defaultValue={metricMetadata.temporality}
 								onChange={(value): void => {
-									setMetricMetadata({
-										...metricMetadata,
+									setMetricMetadata((prev) => ({
+										...prev,
 										temporality: value as Temporality,
-									});
+									}));
 								}}
 							/>
 						);
@@ -134,13 +134,16 @@ function Metadata({
 					return (
 						<Input
 							name={field.key}
-							value={
+							defaultValue={
 								metricMetadata[
 									field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
 								]
 							}
 							onChange={(e): void => {
-								setMetricMetadata({ ...metricMetadata, [field.key]: e.target.value });
+								setMetricMetadata((prev) => ({
+									...prev,
+									[field.key]: e.target.value,
+								}));
 							}}
 						/>
 					);
@@ -195,33 +198,49 @@ function Metadata({
 	const actionButton = useMemo(() => {
 		if (isEditing) {
 			return (
+				<div className="action-menu">
+					<Button
+						className="action-button"
+						type="text"
+						onClick={(e): void => {
+							e.stopPropagation();
+							setIsEditing(false);
+						}}
+						disabled={isUpdatingMetricsMetadata}
+					>
+						<X size={14} />
+						<Typography.Text>Cancel</Typography.Text>
+					</Button>
+					<Button
+						className="action-button"
+						type="text"
+						onClick={(e): void => {
+							e.stopPropagation();
+							handleSave();
+						}}
+						disabled={isUpdatingMetricsMetadata}
+					>
+						<Save size={14} />
+						<Typography.Text>Save</Typography.Text>
+					</Button>
+				</div>
+			);
+		}
+		return (
+			<div className="action-menu">
 				<Button
 					className="action-button"
 					type="text"
 					onClick={(e): void => {
 						e.stopPropagation();
-						handleSave();
+						setIsEditing(true);
 					}}
 					disabled={isUpdatingMetricsMetadata}
 				>
-					<Save size={14} />
-					<Typography.Text>Save</Typography.Text>
+					<Edit2 size={14} />
+					<Typography.Text>Edit</Typography.Text>
 				</Button>
-			);
-		}
-		return (
-			<Button
-				className="action-button"
-				type="text"
-				onClick={(e): void => {
-					e.stopPropagation();
-					setIsEditing(true);
-				}}
-				disabled={isUpdatingMetricsMetadata}
-			>
-				<Edit2 size={14} />
-				<Typography.Text>Edit</Typography.Text>
-			</Button>
+			</div>
 		);
 	}, [handleSave, isEditing, isUpdatingMetricsMetadata]);
 
