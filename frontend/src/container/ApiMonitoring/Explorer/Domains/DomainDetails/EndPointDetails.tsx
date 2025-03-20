@@ -157,10 +157,12 @@ function EndPointDetails({
 			<MetricOverTimeGraph
 				metricOverTimeDataQuery={endPointRateOverTimeDataQuery}
 				widgetInfoIndex={0}
+				endPointName={endPointName}
 			/>
 			<MetricOverTimeGraph
 				metricOverTimeDataQuery={endPointLatencyOverTimeDataQuery}
 				widgetInfoIndex={1}
+				endPointName={endPointName}
 			/>
 		</div>
 	);

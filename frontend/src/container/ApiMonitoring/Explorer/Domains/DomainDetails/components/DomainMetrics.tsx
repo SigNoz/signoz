@@ -51,6 +51,7 @@ function DomainMetrics({ domainData }: { domainData: any }): JSX.Element {
 					<Typography.Text className="domain-details-metadata-value error-rate">
 						<Tooltip title={domainData.errorRate}>
 							<Progress
+								status="active"
 								percent={Number((domainData.errorRate * 100).toFixed(1))}
 								strokeLinecap="butt"
 								size="small"

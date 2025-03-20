@@ -159,7 +159,7 @@ function AllEndPoints({
 	const formattedEndPointsData = useMemo(
 		() =>
 			formatEndPointsDataForTable(
-				allEndPointsData?.payload.data.result[0].table?.rows,
+				allEndPointsData?.payload?.data?.result[0]?.table?.rows,
 				groupBy,
 			),
 		[groupBy, allEndPointsData],

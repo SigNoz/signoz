@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -156,6 +157,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		className: `column`,
 		render: (errorRate: number): React.ReactNode => (
 			<Progress
+				status="active"
 				percent={Number((errorRate * 100).toFixed(1))}
 				strokeLinecap="butt"
 				size="small"
@@ -447,6 +449,26 @@ export interface EndPointsTableRowData {
 	groupedByMeta?: Record<string, string | number>;
 }
 
+export const extractPortAndEndpoint = (
+	url: string,
+): { port: string; endpoint: string } => {
+	try {
+		// Create a URL object to parse the URL
+		const parsedUrl = new URL(url);
+
+		// Extract the port (will be empty string if not specified)
+		const port = parsedUrl.port || '-';
+
+		// Extract the pathname (endpoint) + query params
+		const endpoint = parsedUrl.pathname + parsedUrl.search;
+
+		return { port, endpoint };
+	} catch (error) {
+		// If URL parsing fails, return default values
+		return { port: '-', endpoint: url };
+	}
+};
+
 // Add icons in the below column headers
 export const getEndPointsColumnsConfig = (
 	isGroupedByAttribute: boolean,
@@ -464,29 +486,44 @@ export const getEndPointsColumnsConfig = (
 		ellipsis: true,
 		sorter: false,
 		className: 'column',
-		render: (text: string, record: EndPointsTableRowData): React.ReactNode => (
-			<div className="endpoint-name-value">
-				{((): React.ReactNode => {
-					if (!isGroupedByAttribute) return null;
-					return expandedRowKeys.includes(record.key) ? (
-						<ChevronDown size={14} />
-					) : (
-						<ChevronRight size={14} />
-					);
-				})()}
-				{isGroupedByAttribute
-					? text.split(',').map((value) => (
-							<Tag
-								key={value}
-								color={Color.BG_SLATE_100}
-								className="endpoint-group-tag-item"
-							>
-								{value === '' ? '<no-value>' : value}
-							</Tag>
-					  ))
-					: text}
-			</div>
-		),
+		render: (text: string, record: EndPointsTableRowData): React.ReactNode => {
+			const endPointName = isGroupedByAttribute
+				? text
+				: extractPortAndEndpoint(record.endpointName).endpoint;
+			return (
+				<div className="endpoint-name-value">
+					{((): React.ReactNode => {
+						if (!isGroupedByAttribute) return null;
+						return expandedRowKeys.includes(record.key) ? (
+							<ChevronDown size={14} />
+						) : (
+							<ChevronRight size={14} />
+						);
+					})()}
+					{isGroupedByAttribute
+						? text.split(',').map((value) => (
+								<Tag
+									key={value}
+									color={Color.BG_SLATE_100}
+									className="endpoint-group-tag-item"
+								>
+									{value === '' ? '<no-value>' : value}
+								</Tag>
+						  ))
+						: endPointName}
+				</div>
+			);
+		},
+	},
+	{
+		title: <div className="column-header">Port</div>,
+		dataIndex: 'port',
+		key: 'port',
+		width: 180,
+		ellipsis: true,
+		sorter: false,
+		align: 'right',
+		className: `column`,
 	},
 	{
 		title: (
@@ -534,19 +571,23 @@ export const formatEndPointsDataForTable = (
 	if (!data) return [];
 	const isGroupedByAttribute = groupBy.length > 0;
 	if (!isGroupedByAttribute) {
-		return data?.map((endpoint) => ({
-			key: v4(),
-			endpointName: endpoint.data['http.url'] || '',
-			callCount: endpoint.data.A || '-',
-			latency:
-				endpoint.data.B === 'n/a'
-					? '-'
-					: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
-			lastUsed:
-				endpoint.data.C === 'n/a'
-					? '-'
-					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
-		}));
+		return data?.map((endpoint) => {
+			const { port } = extractPortAndEndpoint(endpoint.data['http.url'] || '');
+			return {
+				key: v4(),
+				endpointName: endpoint.data['http.url'] || '',
+				port,
+				callCount: endpoint.data.A || '-',
+				latency:
+					endpoint.data.B === 'n/a'
+						? '-'
+						: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
+				lastUsed:
+					endpoint.data.C === 'n/a'
+						? '-'
+						: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
+			};
+		});
 	}
 
 	const groupedByAttributeData = groupBy.map((attribute) => attribute.key);
@@ -1874,6 +1915,22 @@ export const getFormattedDependentServicesData = (
 	}));
 };
 
+export const getFormattedChartData = (
+	data: MetricRangePayloadProps,
+	newLegendArray: string[],
+): MetricRangePayloadProps => {
+	const result = cloneDeep(data);
+	if (result?.data?.result) {
+		console.log('uncaught result', result);
+		result.data.result = result?.data?.result?.map((series, index) => ({
+			...series,
+			legend: newLegendArray[index],
+		}));
+	}
+
+	return result;
+};
+
 const getStatusCodeClass = (statusCode: string): string => {
 	const code = parseInt(statusCode, 10);
 
@@ -2011,9 +2068,9 @@ export const getFormattedEndPointStatusCodeChartData = (
 	}
 	return {
 		data: {
-			result: groupStatusCodes(data.data.result, aggregationType),
-			newResult: data.data.newResult,
-			resultType: data.data.resultType,
+			result: groupStatusCodes(data?.data?.result, aggregationType),
+			newResult: data?.data?.newResult,
+			resultType: data?.data?.resultType,
 		},
 	};
 };

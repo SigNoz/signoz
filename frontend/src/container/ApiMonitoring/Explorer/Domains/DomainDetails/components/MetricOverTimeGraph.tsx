@@ -2,7 +2,11 @@ import { Card, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { apiWidgetInfo } from 'container/ApiMonitoring/utils';
+import {
+	apiWidgetInfo,
+	extractPortAndEndpoint,
+	getFormattedChartData,
+} from 'container/ApiMonitoring/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
@@ -20,9 +24,11 @@ import ErrorState from './ErrorState';
 function MetricOverTimeGraph({
 	metricOverTimeDataQuery,
 	widgetInfoIndex,
+	endPointName,
 }: {
 	metricOverTimeDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 	widgetInfoIndex: number;
+	endPointName: string;
 }): JSX.Element {
 	const { data } = metricOverTimeDataQuery;
 
@@ -33,8 +39,15 @@ function MetricOverTimeGraph({
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 
-	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
-		data?.payload,
+	const { endpoint } = extractPortAndEndpoint(endPointName);
+
+	const formattedChartData = useMemo(
+		() => getFormattedChartData(data?.payload, [endpoint]),
+		[data?.payload, endpoint],
+	);
+
+	const chartData = useMemo(() => getUPlotChartData(formattedChartData), [
+		formattedChartData,
 	]);
 
 	const isDarkMode = useIsDarkMode();
@@ -42,7 +55,7 @@ function MetricOverTimeGraph({
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
-				apiResponse: data?.payload,
+				apiResponse: formattedChartData,
 				isDarkMode,
 				dimensions,
 				yAxisUnit: apiWidgetInfo[widgetInfoIndex].yAxisUnit,
@@ -52,7 +65,14 @@ function MetricOverTimeGraph({
 				maxTimeScale: Math.floor(maxTime / 1e9),
 				panelType: PANEL_TYPES.TIME_SERIES,
 			}),
-		[data?.payload, minTime, maxTime, widgetInfoIndex, dimensions, isDarkMode],
+		[
+			formattedChartData,
+			minTime,
+			maxTime,
+			widgetInfoIndex,
+			dimensions,
+			isDarkMode,
+		],
 	);
 
 	const renderCardContent = useCallback(
