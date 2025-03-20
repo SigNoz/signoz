@@ -183,7 +183,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore.SQLxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err

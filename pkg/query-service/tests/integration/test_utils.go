@@ -207,6 +207,13 @@ func AuthenticatedRequestForTest(
 	}
 
 	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
+
+	ctx, err := jwt.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+
 	return req, nil
 }
 
