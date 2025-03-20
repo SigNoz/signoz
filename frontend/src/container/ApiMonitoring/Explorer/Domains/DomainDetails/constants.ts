@@ -1,0 +1,9 @@
+export enum VIEWS {
+	ALL_ENDPOINTS = 'all_endpoints',
+	ENDPOINT_DETAILS = 'endpoint_details',
+}
+
+export const VIEW_TYPES = {
+	ALL_ENDPOINTS: VIEWS.ALL_ENDPOINTS,
+	ENDPOINT_DETAILS: VIEWS.ENDPOINT_DETAILS,
+};
