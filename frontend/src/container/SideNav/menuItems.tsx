@@ -8,6 +8,7 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	HardDrive,
 	Home,
 	Layers2,
 	LayoutGrid,
@@ -88,7 +89,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChart2 size={16} />,
+		icon: <HardDrive size={16} />,
 	},
 	{
 		key: ROUTES.TRACES_EXPLORER,
@@ -100,13 +101,12 @@ const menuItems: SidebarItem[] = [
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
 	},
-	// TODO - Enable this when the metrics explorer feature is read for release
-	// {
-	// 	key: ROUTES.METRICS_EXPLORER,
-	// 	label: 'Metrics',
-	// 	icon: <BarChart2 size={16} />,
-	// 	isNew: true,
-	// },
+	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics',
+		icon: <BarChart2 size={16} />,
+		isNew: true,
+	},
 	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',

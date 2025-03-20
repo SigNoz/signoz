@@ -2,31 +2,20 @@ import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Divider,
-	Drawer,
-	Empty,
-	Skeleton,
-	Tooltip,
-	Typography,
-} from 'antd';
-import ROUTES from 'constants/routes';
+import { Divider, Drawer, Empty, Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Compass, X } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { X } from 'lucide-react';
+import { useMemo } from 'react';
 
+import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Metadata from './Metadata';
-import TopAttributes from './TopAttributes';
 import { MetricDetailsProps } from './types';
 import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
-	getMetricDetailsQuery,
 } from './utils';
 
 function MetricDetails({
@@ -35,7 +24,7 @@ function MetricDetails({
 	metricName,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { safeNavigate } = useSafeNavigate();
+	// const { safeNavigate } = useSafeNavigate();
 
 	const {
 		data,
@@ -60,29 +49,27 @@ function MetricDetails({
 		if (!metric) return null;
 		const timeSeriesActive = formatNumberToCompactFormat(metric.timeSeriesActive);
 		const timeSeriesTotal = formatNumberToCompactFormat(metric.timeSeriesTotal);
-		return `${timeSeriesActive} ⎯ ${timeSeriesTotal} active`;
+
+		return (
+			<Tooltip
+				title="Active time series are those that have received data points in the last 1
+					hour."
+				placement="top"
+			>
+				<span>{`${timeSeriesTotal} ⎯ ${timeSeriesActive} active`}</span>
+			</Tooltip>
+		);
 	}, [metric]);
 
-	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
-		if (metricName) {
-			const compositeQuery = getMetricDetailsQuery(metricName);
-			const encodedCompositeQuery = JSON.stringify(compositeQuery);
-			safeNavigate(
-				`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
-			);
-		}
-	}, [metricName, safeNavigate]);
-
-	const top5Attributes = useMemo(() => {
-		if (!metric) return [];
-		const totalSum =
-			metric?.attributes.reduce((acc, curr) => acc + curr.valueCount, 0) || 0;
-		return metric?.attributes.slice(0, 5).map((attr) => ({
-			key: attr.key,
-			count: attr.valueCount,
-			percentage: totalSum === 0 ? 0 : (attr.valueCount / totalSum) * 100,
-		}));
-	}, [metric]);
+	// const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
+	// 	if (metricName) {
+	// 		const compositeQuery = getMetricDetailsQuery(metricName);
+	// 		const encodedCompositeQuery = JSON.stringify(compositeQuery);
+	// 		safeNavigate(
+	// 			`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
+	// 		);
+	// 	}
+	// }, [metricName, safeNavigate]);
 
 	const isMetricDetailsError = metricDetailsError || !metric;
 
@@ -95,13 +82,16 @@ function MetricDetails({
 						<Divider type="vertical" />
 						<Typography.Text>{metric?.name}</Typography.Text>
 					</div>
-					<Button
+					{/* TODO: Enable this once we have fixed the redirect issue */}
+					{/* <Button
 						onClick={goToMetricsExplorerwithSelectedMetric}
 						icon={<Compass size={16} />}
 						disabled={!metricName}
+						target="_blank"
+						rel="noopener noreferrer"
 					>
 						Open in Explorer
-					</Button>
+					</Button> */}
 				</div>
 			}
 			placement="right"
@@ -124,7 +114,7 @@ function MetricDetails({
 					<div className="metric-details-content-grid">
 						<div className="labels-row">
 							<Typography.Text type="secondary" className="metric-details-grid-label">
-								DATAPOINTS
+								SAMPLES
 							</Typography.Text>
 							<Typography.Text type="secondary" className="metric-details-grid-label">
 								TIME SERIES
@@ -135,8 +125,8 @@ function MetricDetails({
 						</div>
 						<div className="values-row">
 							<Typography.Text className="metric-details-grid-value">
-								<Tooltip title={metric?.samples}>
-									{metric?.samples.toLocaleString()}
+								<Tooltip title={metric?.samples.toLocaleString()}>
+									{formatNumberIntoHumanReadableFormat(metric?.samples)}
 								</Tooltip>
 							</Typography.Text>
 							<Typography.Text className="metric-details-grid-value">
@@ -151,7 +141,6 @@ function MetricDetails({
 						dashboards={metric.dashboards}
 						alerts={metric.alerts}
 					/>
-					<TopAttributes items={top5Attributes} title="Top 5 Attributes" />
 					<Metadata
 						metricName={metric?.name}
 						metadata={metric.metadata}

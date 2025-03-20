@@ -7,8 +7,8 @@ import {
 	MetricType,
 } from 'api/metricsExplorer/getMetricsList';
 import {
-	CardinalityData,
-	DatapointsData,
+	SamplesData,
+	TimeseriesData,
 } from 'api/metricsExplorer/getMetricsTreeMap';
 import {
 	BarChart,
@@ -20,15 +20,21 @@ import {
 import { useMemo } from 'react';
 
 import { METRIC_TYPE_LABEL_MAP } from './constants';
+import MetricNameSearch from './MetricNameSearch';
+import MetricTypeSearch from './MetricTypeSearch';
 import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
 
 export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 	{
-		title: <div className="metric-name-column-header">METRIC</div>,
+		title: (
+			<div className="metric-name-column-header">
+				<span className="metric-name-column-header-text">METRIC</span>
+				<MetricNameSearch />
+			</div>
+		),
 		dataIndex: 'metric_name',
 		width: 400,
-		sorter: true,
-		className: 'metric-name-column-header',
+		sorter: false,
 		render: (value: string): React.ReactNode => (
 			<div className="metric-name-column-value">{value}</div>
 		),
@@ -37,11 +43,21 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		title: 'DESCRIPTION',
 		dataIndex: 'description',
 		width: 400,
+		render: (value: string): React.ReactNode => (
+			<Tooltip title={value}>
+				<div className="metric-description-column-value">{value}</div>
+			</Tooltip>
+		),
 	},
 	{
-		title: 'TYPE',
+		title: (
+			<div className="metric-type-column-header">
+				<span className="metric-type-column-header-text">TYPE</span>
+				<MetricTypeSearch />
+			</div>
+		),
 		dataIndex: 'metric_type',
-		sorter: true,
+		sorter: false,
 		width: 150,
 	},
 	{
@@ -50,14 +66,14 @@ export const metricsTableColumns: ColumnType<MetricsListItemRowData>[] = [
 		width: 150,
 	},
 	{
-		title: 'DATAPOINTS',
-		dataIndex: TreemapViewType.DATAPOINTS,
+		title: 'SAMPLES',
+		dataIndex: TreemapViewType.SAMPLES,
 		width: 150,
 		sorter: true,
 	},
 	{
-		title: 'CARDINALITY',
-		dataIndex: TreemapViewType.CARDINALITY,
+		title: 'TIME SERIES',
+		dataIndex: TreemapViewType.TIMESERIES,
 		width: 150,
 		sorter: true,
 	},
@@ -138,6 +154,26 @@ function ValidateRowValueWrapper({
 	return <div>{children}</div>;
 }
 
+export const formatNumberIntoHumanReadableFormat = (num: number): string => {
+	function format(num: number, divisor: number, suffix: string): string {
+		const value = num / divisor;
+		return value % 1 === 0
+			? `${value}${suffix}+`
+			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}+`;
+	}
+
+	if (num >= 1_000_000_000) {
+		return format(num, 1_000_000_000, 'B');
+	}
+	if (num >= 1_000_000) {
+		return format(num, 1_000_000, 'M');
+	}
+	if (num >= 1_000) {
+		return format(num, 1_000, 'K');
+	}
+	return num.toString();
+};
+
 export const formatDataForMetricsTable = (
 	data: MetricsListItemData[],
 ): MetricsListItemRowData[] =>
@@ -159,25 +195,28 @@ export const formatDataForMetricsTable = (
 				{metric.unit}
 			</ValidateRowValueWrapper>
 		),
-		[TreemapViewType.DATAPOINTS]: (
-			<ValidateRowValueWrapper value={metric[TreemapViewType.DATAPOINTS]}>
-				{metric[TreemapViewType.DATAPOINTS].toLocaleString()}
+		[TreemapViewType.SAMPLES]: (
+			<ValidateRowValueWrapper value={metric[TreemapViewType.SAMPLES]}>
+				<Tooltip title={metric[TreemapViewType.SAMPLES].toLocaleString()}>
+					{formatNumberIntoHumanReadableFormat(metric[TreemapViewType.SAMPLES])}
+				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		[TreemapViewType.CARDINALITY]: (
-			<ValidateRowValueWrapper value={metric[TreemapViewType.CARDINALITY]}>
-				{metric[TreemapViewType.CARDINALITY]}
+		[TreemapViewType.TIMESERIES]: (
+			<ValidateRowValueWrapper value={metric[TreemapViewType.TIMESERIES]}>
+				<Tooltip title={metric[TreemapViewType.TIMESERIES].toLocaleString()}>
+					{formatNumberIntoHumanReadableFormat(metric[TreemapViewType.TIMESERIES])}
+				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
 	}));
 
 export const transformTreemapData = (
-	data: CardinalityData[] | DatapointsData[],
+	data: TimeseriesData[] | SamplesData[],
 	viewType: TreemapViewType,
 ): TreemapTile[] => {
-	const totalSize = (data as (CardinalityData | DatapointsData)[]).reduce(
-		(acc: number, item: CardinalityData | DatapointsData) =>
-			acc + item.percentage,
+	const totalSize = (data as (TimeseriesData | SamplesData)[]).reduce(
+		(acc: number, item: TimeseriesData | SamplesData) => acc + item.percentage,
 		0,
 	);
 
