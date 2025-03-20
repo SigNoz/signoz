@@ -118,7 +118,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		return "", apiErr
 	}
 
-	allPats, err := ah.AppDao().ListPATs(ctx)
+	allPats, err := ah.AppDao().ListPATs(ctx, orgId)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -136,15 +136,19 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 	)
 
 	newPAT := model.PAT{
-		Token:     generatePATToken(),
-		UserID:    integrationUser.ID,
-		Name:      integrationPATName,
-		Role:      baseconstants.ViewerGroup,
-		ExpiresAt: 0,
-		CreatedAt: time.Now().Unix(),
-		UpdatedAt: time.Now().Unix(),
+		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
+			Token:     generatePATToken(),
+			UserID:    integrationUser.ID,
+			Name:      integrationPATName,
+			Role:      baseconstants.ViewerGroup,
+			ExpiresAt: 0,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+		},
 	}
-	integrationPAT, err := ah.AppDao().CreatePAT(ctx, newPAT)
+	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
