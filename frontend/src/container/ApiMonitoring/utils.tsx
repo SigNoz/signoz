@@ -226,7 +226,6 @@ interface APIMonitoringResponseRow {
 
 interface EndPointsResponseRow {
 	data: {
-		['http.url']?: string;
 		[key: string]: string | number | undefined;
 	};
 }
@@ -572,10 +571,12 @@ export const formatEndPointsDataForTable = (
 	const isGroupedByAttribute = groupBy.length > 0;
 	if (!isGroupedByAttribute) {
 		return data?.map((endpoint) => {
-			const { port } = extractPortAndEndpoint(endpoint.data['http.url'] || '');
+			const { port } = extractPortAndEndpoint(
+				(endpoint.data['http.url'] as string) || '',
+			);
 			return {
 				key: v4(),
-				endpointName: endpoint.data['http.url'] || '',
+				endpointName: (endpoint.data['http.url'] as string) || '',
 				port,
 				callCount: endpoint.data.A || '-',
 				latency:
