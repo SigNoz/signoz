@@ -3733,7 +3733,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(
 
 		metadata, apiError := r.GetUpdatedMetricsMetadata(ctx, metricName)
 		if apiError != nil {
-			zap.L().Error("Error in getting metric cached metadata", zap.Error(apiError))
+			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
 		}
 		if updatedMetadata, exist := metadata[metricName]; exist {
 			typ = string(updatedMetadata.MetricType)
