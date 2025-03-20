@@ -32,7 +32,7 @@ function Metadata({
 	] = useState<UpdateMetricMetadataProps>({
 		metricType: metadata?.metric_type || MetricType.SUM,
 		description: metadata?.description || '',
-		temporality: metadata?.temporality || Temporality.CUMULATIVE,
+		temporality: metadata?.temporality,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -46,7 +46,10 @@ function Metadata({
 	const tableData = useMemo(
 		() =>
 			metadata
-				? Object.keys(metadata)
+				? Object.keys({
+						...metadata,
+						temporality: metadata?.temporality,
+				  })
 						// Filter out isMonotonic as user input is not required
 						.filter((key) => key !== 'isMonotonic')
 						.map((key) => ({
@@ -161,7 +164,7 @@ function Metadata({
 			},
 			{
 				onSuccess: (response): void => {
-					if (response?.payload?.success) {
+					if (response?.statusCode === 200) {
 						notifications.success({
 							message: 'Metadata updated successfully',
 						});
