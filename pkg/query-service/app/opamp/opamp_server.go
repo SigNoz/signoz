@@ -2,6 +2,7 @@ package opamp
 
 import (
 	"context"
+	"time"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
@@ -81,10 +82,18 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
-	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
-	if err != nil {
-		zap.L().Error("Failed to find or create agent", zap.String("agentID", agentID), zap.Error(err))
-		// TODO: handle error
+	sleep := 1 * time.Second
+	var agent *model.Agent
+	var created bool
+	var err error
+	for {
+		agent, created, err = srv.agents.FindOrCreateAgent(agentID, conn)
+		if err == nil {
+			break
+		}
+		zap.L().Error("Failed to find or create agent retrying....", zap.String("agentID", agentID), zap.Error(err))
+		time.Sleep(sleep)
+		sleep *= 2
 	}
 
 	if created {
