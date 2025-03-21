@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
+	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 

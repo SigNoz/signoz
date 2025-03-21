@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 func TestSuccess(t *testing.T) {

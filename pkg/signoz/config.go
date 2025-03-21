@@ -8,17 +8,17 @@ import (
 	"reflect"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/apiserver"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/telemetrystore"
-	"go.signoz.io/signoz/pkg/web"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/web"
 )
 
 // Config defines the entire input configuration of signoz.

@@ -8,9 +8,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	coreModel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/cache/status"
 	"github.com/go-redis/redis/v8"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.uber.org/zap"
 )
 

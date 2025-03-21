@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 )
 
 // A Rule encapsulates a vector expression which is evaluated at a specified

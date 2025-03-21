@@ -1,8 +1,8 @@
 package model
 
 import (
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 const SSO = "SSO"

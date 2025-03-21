@@ -325,7 +325,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({
-			url: window.location.href,
+			url: window.location.origin,
 		});
 	}, [manageCreditCard]);
 

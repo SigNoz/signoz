@@ -1,4 +1,4 @@
-module go.signoz.io/signoz
+module github.com/SigNoz/signoz
 
 go 1.22.0
 

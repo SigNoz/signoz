@@ -3,8 +3,8 @@ package api
 import (
 	"testing"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/stretchr/testify/assert"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func TestMergeFeatureSets(t *testing.T) {

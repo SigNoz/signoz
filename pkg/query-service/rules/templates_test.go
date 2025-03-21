@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
 )
 
 func TestTemplateExpander(t *testing.T) {

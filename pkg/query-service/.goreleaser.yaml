@@ -33,10 +33,10 @@ builds:
       - -X github.com/SigNoz/signoz/pkg/query-service/version.version={{ .Version }}
       - -X main.commit={{ .Commit }} -X main.date={{ .CommitDate }}
       - -X main.builtBy=goreleaser
-      - -X go.signoz.io/signoz/pkg/query-service/version.buildVersion={{ .Version }}
-      - -X go.signoz.io/signoz/pkg/query-service/version.buildHash={{ .ShortCommit }}
-      - -X go.signoz.io/signoz/pkg/query-service/version.buildTime={{ .Date }}
-      - -X go.signoz.io/signoz/pkg/query-service/version.gitBranch={{ .Branch }}
+      - -X github.com/SigNoz/signoz/pkg/query-service/version.buildVersion={{ .Version }}
+      - -X github.com/SigNoz/signoz/pkg/query-service/version.buildHash={{ .ShortCommit }}
+      - -X github.com/SigNoz/signoz/pkg/query-service/version.buildTime={{ .Date }}
+      - -X github.com/SigNoz/signoz/pkg/query-service/version.gitBranch={{ .Branch }}
       - >-
         {{- if eq .Os "linux" }}-linkmode external -extldflags '-static'{{- end }}
     mod_timestamp: "{{ .CommitTimestamp }}"

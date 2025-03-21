@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestSeverityParsingProcessor(t *testing.T) {

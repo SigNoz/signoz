@@ -11,8 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/model"
 )
 
 var C *Client
