@@ -537,6 +537,8 @@ const generateTableColumns = (
 			dataIndex: item.dataIndex,
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
+			responsive: ['md'],
+			// ellipsis: true,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
 				const valueA = Number(

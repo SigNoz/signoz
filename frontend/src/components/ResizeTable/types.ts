@@ -9,6 +9,8 @@ import { TableDataSource } from './contants';
 
 export interface ResizeTableProps extends TableProps<any> {
 	onDragColumn?: (fromIndex: number, toIndex: number) => void;
+	widgetId?: string;
+	shouldPersistColumnWidths?: boolean;
 }
 export interface DynamicColumnTableProps extends TableProps<any> {
 	tablesource: typeof TableDataSource[keyof typeof TableDataSource];
