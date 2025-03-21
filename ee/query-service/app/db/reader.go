@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	basechr "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 type ClickhouseReader struct {
@@ -20,8 +21,7 @@ type ClickhouseReader struct {
 
 func NewDataConnector(
 	localDB *sqlx.DB,
-	ch clickhouse.Conn,
-	promConfigPath string,
+	telemetryStore telemetrystore.TelemetryStore,
 	lm interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
@@ -29,14 +29,10 @@ func NewDataConnector(
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickhouseReader {
-	chReader := basechr.NewReader(localDB, ch, promConfigPath, lm, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	chReader := basechr.NewReader(localDB, telemetryStore, lm, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 	return &ClickhouseReader{
-		conn:             ch,
+		conn:             telemetryStore.ClickhouseDB(),
 		appdb:            localDB,
 		ClickHouseReader: chReader,
 	}
-}
-
-func (r *ClickhouseReader) Start(readerReady chan bool) {
-	r.ClickHouseReader.Start(readerReady)
 }

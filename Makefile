@@ -74,6 +74,10 @@ go-run-enterprise: ## Runs the enterprise go backend server
 		--use-logs-new-schema true \
 		--use-trace-new-schema true
 
+.PHONY: go-test
+go-test: ## Runs go unit tests
+	@go test -race ./...
+
 .PHONY: go-run-community
 go-run-community: ## Runs the community go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \

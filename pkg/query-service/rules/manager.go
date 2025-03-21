@@ -21,9 +21,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
@@ -76,8 +76,7 @@ func prepareTaskName(ruleId interface{}) string {
 
 // ManagerOptions bundles options for the Manager.
 type ManagerOptions struct {
-	PqlEngine *pqle.PqlEngine
-
+	TelemetryStore telemetrystore.TelemetryStore
 	// RepoURL is used to generate a backlink in sent alert messages
 	RepoURL string
 
@@ -180,7 +179,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.TelemetryStore.PrometheusEngine(),
 			WithSQLStore(opts.SQLStore),
 		)
 
