@@ -7,80 +7,137 @@ import (
 )
 
 func TestIsAllQueriesDisabled(t *testing.T) {
-	testCases := []*v3.CompositeQuery{
+	type testCase struct {
+		compositeQuery *v3.CompositeQuery
+		expectedErr    bool
+	}
+
+	testCases := []testCase{
 		{
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"query1": {
-					Disabled: true,
+			compositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"query1": {
+						Disabled: true,
+					},
+					"query2": {
+						Disabled: true,
+					},
 				},
-				"query2": {
-					Disabled: true,
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+			},
+			expectedErr: true,
+		},
+		{
+			compositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+			},
+			expectedErr: true,
+		},
+		{
+			compositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"query1": {
+						Disabled:     true,
+						QueryName:    "query1",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "durationNano",
+						},
+						AggregateOperator: v3.AggregateOperatorP95,
+						DataSource:        v3.DataSourceTraces,
+						Expression:        "query1",
+					},
+					"query2": {
+						Disabled:     false,
+						QueryName:    "query2",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "durationNano",
+						},
+						AggregateOperator: v3.AggregateOperatorP95,
+						DataSource:        v3.DataSourceTraces,
+						Expression:        "query2",
+					},
 				},
 			},
-			QueryType: v3.QueryTypeBuilder,
-		},
-		nil,
-		{
-			QueryType: v3.QueryTypeBuilder,
+			expectedErr: false,
 		},
 		{
-			QueryType: v3.QueryTypeBuilder,
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"query1": {
-					Disabled: true,
-				},
-				"query2": {
-					Disabled: false,
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PanelType: v3.PanelTypeGraph,
+			},
+			expectedErr: true,
+		},
+		{
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PanelType: v3.PanelTypeGraph,
+				PromQueries: map[string]*v3.PromQuery{
+					"query3": {
+						Disabled: false,
+						Query:    "query3",
+					},
 				},
 			},
+			expectedErr: true,
 		},
 		{
-			QueryType: v3.QueryTypePromQL,
-		},
-		{
-			QueryType: v3.QueryTypePromQL,
-			PromQueries: map[string]*v3.PromQuery{
-				"query3": {
-					Disabled: false,
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PanelType: v3.PanelTypeGraph,
+				PromQueries: map[string]*v3.PromQuery{
+					"query3": {
+						Disabled: true,
+					},
 				},
 			},
+			expectedErr: true,
 		},
 		{
-			QueryType: v3.QueryTypePromQL,
-			PromQueries: map[string]*v3.PromQuery{
-				"query3": {
-					Disabled: true,
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				PanelType: v3.PanelTypeGraph,
+			},
+			expectedErr: true,
+		},
+		{
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				PanelType: v3.PanelTypeGraph,
+				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+					"query4": {
+						Disabled: false,
+						Query:    "query4",
+					},
 				},
 			},
+			expectedErr: false,
 		},
 		{
-			QueryType: v3.QueryTypeClickHouseSQL,
-		},
-		{
-			QueryType: v3.QueryTypeClickHouseSQL,
-			ClickHouseQueries: map[string]*v3.ClickHouseQuery{
-				"query4": {
-					Disabled: false,
+			compositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				PanelType: v3.PanelTypeGraph,
+				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+					"query4": {
+						Disabled: true,
+					},
 				},
 			},
-		},
-		{
-			QueryType: v3.QueryTypeClickHouseSQL,
-			ClickHouseQueries: map[string]*v3.ClickHouseQuery{
-				"query4": {
-					Disabled: true,
-				},
-			},
+			expectedErr: true,
 		},
 	}
 
-	expectedResult := []bool{true, false, false, false, false, false, true, false, false, true}
-
-	for index, compositeQuery := range testCases {
-		expected := expectedResult[index]
-		actual := isAllQueriesDisabled(compositeQuery)
-		if actual != expected {
-			t.Errorf("Expected %v, but got %v", expected, actual)
+	for idx, testCase := range testCases {
+		err := testCase.compositeQuery.Validate()
+		if err != nil {
+			if !testCase.expectedErr {
+				t.Errorf("Expected nil for test case %d, but got %v", idx, err)
+			}
 		}
 	}
 }
