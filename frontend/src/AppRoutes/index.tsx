@@ -52,6 +52,7 @@ function App(): JSX.Element {
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const [canShowNotFound, setCanShowNotFound] = useState(false);
 
 	const { hostname, pathname } = window.location;
 
@@ -59,9 +60,6 @@ function App(): JSX.Element {
 		isCloudUser: isCloudUserVal,
 		isEECloudUser: isEECloudUserVal,
 	} = useGetTenantLicense();
-
-	const shouldShowNotFound =
-		isFetchingUser || isFetchingLicenses || isFetchingFeatureFlags;
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -188,6 +186,7 @@ function App(): JSX.Element {
 				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
 			}
 			setRoutes(updatedRoutes);
+			setCanShowNotFound(true);
 		}
 	}, [
 		isLoggedInState,
@@ -313,7 +312,7 @@ function App(): JSX.Element {
 																/>
 															))}
 
-															{shouldShowNotFound && <Route path="*" component={NotFound} />}
+															{canShowNotFound && <Route path="*" component={NotFound} />}
 														</Switch>
 													</Suspense>
 												</AppLayout>
