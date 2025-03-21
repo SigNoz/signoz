@@ -3,7 +3,6 @@ package telemetrystore
 import (
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -21,7 +20,7 @@ type Config struct {
 	Clickhouse ClickhouseConfig `mapstructure:"clickhouse"`
 
 	// Prometheus is the prometheus configuration
-	Prometheus promengine.Config `mapstructure:"prometheus" yaml:"prometheus"`
+	Prometheus promengine.Config `mapstructure:"prometheus"`
 }
 
 type ConnectionConfig struct {
@@ -85,8 +84,17 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
-	if !strings.HasPrefix(c.Prometheus.RemoteReadConfig.URL.String(), c.Clickhouse.DSN) {
-		return fmt.Errorf("prometheus remote_read_url must start with clickhouse dsn")
+	dsn, err := url.Parse(c.Clickhouse.DSN)
+	if err != nil {
+		return err
+	}
+
+	if c.Prometheus.RemoteReadConfig.URL.Host != dsn.Host {
+		return fmt.Errorf("mismatch between host in prometheus.remote_read.url %q and clickhouse.dsn %q", c.Prometheus.RemoteReadConfig.URL.Host, dsn.Host)
+	}
+
+	if c.Prometheus.RemoteReadConfig.URL.Scheme != dsn.Scheme {
+		return fmt.Errorf("mismatch between scheme in prometheus.remote_read.url %q and clickhouse.dsn %q", c.Prometheus.RemoteReadConfig.URL.Scheme, dsn.Scheme)
 	}
 
 	return nil
