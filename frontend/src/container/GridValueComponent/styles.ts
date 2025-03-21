@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 interface Props {
 	isDashboardPage: boolean;
+	children?: React.ReactNode;
 }
 
 export const ValueContainer = styled.div`

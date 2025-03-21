@@ -9,9 +9,15 @@ interface TableHeaderCellStyledProps {
 	$isDarkMode: boolean;
 	$isLogIndicator?: boolean;
 	fontSize?: FontSize;
+	children?: React.ReactNode;
 }
 
-export const TableStyled = styled.table`
+interface TableStyledProps {
+	children?: React.ReactNode;
+	style?: React.CSSProperties;
+}
+
+export const TableStyled = styled.table<TableStyledProps>`
 	width: 100%;
 `;
 
@@ -38,6 +44,7 @@ export const TableRowStyled = styled.tr<{
 	$isActiveLog: boolean;
 	$isDarkMode: boolean;
 	$logType: string;
+	children?: React.ReactNode;
 }>`
 	td {
 		${({ $isActiveLog, $isDarkMode, $logType }): string =>
