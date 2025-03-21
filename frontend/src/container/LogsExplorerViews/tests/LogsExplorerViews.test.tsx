@@ -2,7 +2,7 @@ import ROUTES from 'constants/routes';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, RenderResult } from 'tests/test-utils';
@@ -21,8 +21,10 @@ jest.mock('react-router-dom', () => ({
 
 const lodsQueryServerRequest = (): void =>
 	server.use(
-		rest.post(queryRangeURL, (req, res, ctx) =>
-			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
+		http.post(queryRangeURL, () =>
+			HttpResponse.json(logsQueryRangeSuccessResponse, {
+				status: 200,
+			}),
 		),
 	);
 

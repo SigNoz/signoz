@@ -14,7 +14,7 @@ import {
 	queryRangeForTraceView,
 } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import {
 	act,
@@ -465,8 +465,8 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 describe('TracesExplorer - ', () => {
 	it('should render the traces explorer page', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(queryRangeForTimeSeries)),
+			http.post('http://localhost/api/v3/query_range', () =>
+				HttpResponse.json(queryRangeForTimeSeries, { status: 200 }),
 			),
 		);
 		const { findByText, getByText } = render(<TracesExplorer />);
@@ -513,8 +513,8 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - list view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(queryRangeForListView)),
+			http.post('http://localhost/api/v3/query_range', () =>
+				HttpResponse.json(queryRangeForListView, { status: 200 }),
 			),
 		);
 
@@ -536,8 +536,8 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - table view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(queryRangeForTableView)),
+			http.post('http://localhost/api/v3/query_range', () =>
+				HttpResponse.json(queryRangeForTableView, { status: 200 }),
 			),
 		);
 		render(
@@ -554,8 +554,8 @@ describe('TracesExplorer - ', () => {
 
 	it('trace explorer - trace view', async () => {
 		server.use(
-			rest.post('http://localhost/api/v3/query_range', (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(queryRangeForTraceView)),
+			http.post('http://localhost/api/v3/query_range', () =>
+				HttpResponse.json(queryRangeForTraceView, { status: 200 }),
 			),
 		);
 		const { getByText, getAllByText } = render(

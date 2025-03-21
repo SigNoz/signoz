@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 interface Props {
 	isDarkMode: boolean;
+	children?: React.ReactNode;
 }
 export const StyledLabel = styled.div<Props>`
 	padding: 0 0.6875rem;

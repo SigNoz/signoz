@@ -1,7 +1,7 @@
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
-export const LegendsContainer = styled.div`
+export const LegendsContainer = styled.div<{ id?: string }>`
 	height: 10%;
 
 	* {

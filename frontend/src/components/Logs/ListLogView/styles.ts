@@ -6,10 +6,13 @@ import { getActiveLogBackground } from 'utils/logs';
 
 interface LogTextProps {
 	linesPerRow?: number;
+	dangerouslySetInnerHTML?: { __html: string };
+	className?: string;
 }
 
 interface LogContainerProps {
 	fontSize: FontSize;
+	children?: React.ReactNode;
 }
 
 export const Container = styled(Card)<{

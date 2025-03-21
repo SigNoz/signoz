@@ -3,6 +3,8 @@ import styled from 'styled-components';
 
 interface Props {
 	height: CSSProperties['height'];
+	style?: CSSProperties;
+	children?: React.ReactNode;
 }
 
 export const SpinerStyle = styled.div<Props>`

@@ -6,6 +6,7 @@ interface TableBodyContentProps {
 	linesPerRow: number;
 	fontSize: FontSize;
 	isDarkMode?: boolean;
+	dangerouslySetInnerHTML?: { __html: string };
 }
 
 export const TableBodyContent = styled.div<TableBodyContentProps>`

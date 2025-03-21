@@ -21,6 +21,7 @@ export const FormItem = styled(Form.Item)`
 
 interface Props {
 	refreshButtonHidden: boolean;
+	children?: React.ReactNode;
 }
 
 export const RefreshTextContainer = styled.div<Props>`

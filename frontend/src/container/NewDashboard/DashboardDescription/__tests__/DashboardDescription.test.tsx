@@ -1,6 +1,6 @@
 import { getNonIntegrationDashboardById } from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
@@ -72,8 +72,10 @@ describe('Dashboard landing page actions header tests', () => {
 		};
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		server.use(
-			rest.get('http://localhost/api/v1/dashboards/4', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json(getNonIntegrationDashboardById)),
+			http.get('http://localhost/api/v1/dashboards/4', () =>
+				HttpResponse.json(getNonIntegrationDashboardById, {
+					status: 200,
+				}),
 			),
 		);
 		const { getByTestId } = render(

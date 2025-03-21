@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 // https://virtuoso.dev/mocking-in-tests/
 import { VirtuosoMockContext } from 'react-virtuoso';
@@ -75,8 +75,8 @@ jest.mock('hooks/useSafeNavigate', () => ({
 
 const logsQueryServerRequest = (): void =>
 	server.use(
-		rest.post(queryRangeURL, (req, res, ctx) =>
-			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
+		http.post(queryRangeURL, () =>
+			HttpResponse.json(logsQueryRangeSuccessResponse, { status: 200 }),
 		),
 	);
 

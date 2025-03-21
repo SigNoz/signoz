@@ -6,6 +6,11 @@ export const VariableItemRow = styled(Row)`
 	margin-bottom: 1rem;
 `;
 
-export const LabelContainer = styled.div`
+interface LabelContainerProps {
+	style?: React.CSSProperties;
+	children?: React.ReactNode;
+}
+
+export const LabelContainer = styled.div<LabelContainerProps>`
 	width: 200px;
 `;

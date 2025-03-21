@@ -7,7 +7,7 @@ import {
 	dashboardSuccessResponse,
 } from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
@@ -186,8 +186,8 @@ describe('dashboard list page', () => {
 		};
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		server.use(
-			rest.get('http://localhost/api/v1/dashboards', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json(dashboardEmptyState)),
+			http.get('http://localhost/api/v1/dashboards', () =>
+				HttpResponse.json(dashboardEmptyState, { status: 200 }),
 			),
 		);
 		const { getByText, getByTestId } = render(
