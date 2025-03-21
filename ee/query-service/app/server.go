@@ -136,7 +136,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// set license manager as feature flag provider in dao
 	modelDao.SetFlagProvider(lm)
-	readerReady := make(chan bool)
 
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
@@ -171,7 +170,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
-	<-readerReady
 	rm, err := makeRulesManager(
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),

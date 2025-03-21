@@ -39,6 +39,8 @@ func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
 	return logger
 }
 
+var _ log.Logger = (*gokitLogger)(nil)
+
 type gokitLogger struct {
 	handler    slog.Handler
 	messageKey string
@@ -49,26 +51,30 @@ func NewGoKitLoggerFromSlogHandler(handler slog.Handler, messageKey string) log.
 }
 
 func (l *gokitLogger) Log(keyvals ...any) error {
-	var attrs []slog.Attr
 	var (
+		attrs   []slog.Attr
 		message string
 		gkl     level.Value
 	)
+
 	for i := 1; i < len(keyvals); i += 2 {
-		key, ok := keyvals[i-1].(string)
 		// go-kit/log keys don't have to be strings, but slog keys do.
 		// Convert the go-kit key to a string with fmt.Sprint.
+		key, ok := keyvals[i-1].(string)
 		if !ok {
 			key = fmt.Sprint(keyvals[i-1])
 		}
+
 		if l.messageKey != "" && key == l.messageKey {
 			message = fmt.Sprint(keyvals[i])
 			continue
 		}
+
 		if l, ok := keyvals[i].(level.Value); ok {
 			gkl = l
 			continue
 		}
+
 		attrs = append(attrs, slog.Any(key, keyvals[i]))
 	}
 
@@ -86,7 +92,11 @@ func (l *gokitLogger) Log(keyvals ...any) error {
 		}
 	}
 
-	r := slog.NewRecord(time.Time{}, sl, message, 0)
+	if !l.handler.Enabled(context.Background(), sl) {
+		return nil
+	}
+
+	r := slog.NewRecord(time.Now(), sl, message, 0)
 	r.AddAttrs(attrs...)
 	return l.handler.Handle(context.Background(), r)
 }

@@ -3,9 +3,9 @@ package promengine
 import "net/url"
 
 type ActiveQueryTrackerConfig struct {
-	Enabled       bool   `mapstructure:"enabled" yaml:"enabled"`
-	Path          string `mapstructure:"path" yaml:"path"`
-	MaxConcurrent int    `mapstructure:"max_concurrent" yaml:"max_concurrent"`
+	Enabled       bool   `mapstructure:"enabled"`
+	Path          string `mapstructure:"path"`
+	MaxConcurrent int    `mapstructure:"max_concurrent"`
 }
 
 type RemoteReadConfig struct {
