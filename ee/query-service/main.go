@@ -89,6 +89,7 @@ func main() {
 		MaxIdleConns: maxIdleConns,
 		MaxOpenConns: maxOpenConns,
 		DialTimeout:  dialTimeout,
+		Config:       promConfigPath,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -110,7 +111,7 @@ func main() {
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
 	if err != nil {
-		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
 
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
