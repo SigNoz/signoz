@@ -68,7 +68,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.TelemetryStore.PrometheusEngine(),
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),

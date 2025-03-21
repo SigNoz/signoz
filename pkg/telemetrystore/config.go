@@ -2,28 +2,40 @@ package telemetrystore
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/promengine"
 )
 
 type Config struct {
 	// Provider is the provider to use
 	Provider string `mapstructure:"provider"`
+
 	// Connection is the connection configuration
 	Connection ConnectionConfig `mapstructure:",squash"`
+
 	// Clickhouse is the clickhouse configuration
-	ClickHouse ClickHouseConfig `mapstructure:"clickhouse"`
+	Clickhouse ClickhouseConfig `mapstructure:"clickhouse"`
+
+	// Prometheus is the prometheus configuration
+	Prometheus promengine.Config `mapstructure:"prometheus" yaml:"prometheus"`
 }
 
 type ConnectionConfig struct {
 	// MaxOpenConns is the maximum number of open connections to the database.
-	MaxOpenConns int           `mapstructure:"max_open_conns"`
-	MaxIdleConns int           `mapstructure:"max_idle_conns"`
-	DialTimeout  time.Duration `mapstructure:"dial_timeout"`
+	MaxOpenConns int `mapstructure:"max_open_conns"`
+
+	// MaxIdleConns is the maximum number of connections in the idle connection pool.
+	MaxIdleConns int `mapstructure:"max_idle_conns"`
+
+	// DialTimeout is the timeout for dialing a new connection.
+	DialTimeout time.Duration `mapstructure:"dial_timeout"`
 }
 
-type ClickHouseQuerySettings struct {
+type QuerySettings struct {
 	MaxExecutionTime                    int `mapstructure:"max_execution_time"`
 	MaxExecutionTimeLeaf                int `mapstructure:"max_execution_time_leaf"`
 	TimeoutBeforeCheckingExecutionSpeed int `mapstructure:"timeout_before_checking_execution_speed"`
@@ -31,15 +43,16 @@ type ClickHouseQuerySettings struct {
 	MaxResultRowsForCHQuery             int `mapstructure:"max_result_rows_for_ch_query"`
 }
 
-type ClickHouseConfig struct {
+type ClickhouseConfig struct {
+	// DSN is the database source name.
 	DSN string `mapstructure:"dsn"`
 
-	QuerySettings ClickHouseQuerySettings `mapstructure:"settings"`
+	// QuerySettings is the query settings for clickhouse.
+	QuerySettings QuerySettings `mapstructure:"settings"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
 	return factory.NewConfigFactory(factory.MustNewName("telemetrystore"), newConfig)
-
 }
 
 func newConfig() factory.Config {
@@ -50,15 +63,30 @@ func newConfig() factory.Config {
 			MaxIdleConns: 50,
 			DialTimeout:  5 * time.Second,
 		},
-		ClickHouse: ClickHouseConfig{
+		Clickhouse: ClickhouseConfig{
 			DSN: "tcp://localhost:9000",
 		},
+		Prometheus: promengine.Config{
+			RemoteReadConfig: promengine.RemoteReadConfig{
+				URL: &url.URL{
+					Scheme: "tcp",
+					Host:   "localhost:9000",
+					Path:   "/signoz_metrics",
+				},
+			},
+			ActiveQueryTrackerConfig: promengine.ActiveQueryTrackerConfig{
+				Enabled:       true,
+				Path:          "",
+				MaxConcurrent: 20,
+			},
+		},
 	}
+
 }
 
 func (c Config) Validate() error {
-	if c.Provider != "clickhouse" {
-		return fmt.Errorf("provider: %q is not supported", c.Provider)
+	if !strings.HasPrefix(c.Prometheus.RemoteReadConfig.URL.String(), c.Clickhouse.DSN) {
+		return fmt.Errorf("prometheus remote_read_url must start with clickhouse dsn")
 	}
 
 	return nil
