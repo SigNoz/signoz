@@ -60,6 +60,9 @@ function App(): JSX.Element {
 		isEECloudUser: isEECloudUserVal,
 	} = useGetTenantLicense();
 
+	const shouldShowNotFound =
+		isFetchingUser || isFetchingLicenses || isFetchingFeatureFlags;
+
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
 			// wait for the required data to be loaded before doing init for anything!
@@ -310,7 +313,7 @@ function App(): JSX.Element {
 																/>
 															))}
 
-															<Route path="*" component={NotFound} />
+															{shouldShowNotFound && <Route path="*" component={NotFound} />}
 														</Switch>
 													</Suspense>
 												</AppLayout>
