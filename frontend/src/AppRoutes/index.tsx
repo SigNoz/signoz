@@ -260,6 +260,10 @@ function App(): JSX.Element {
 		}
 	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
 
+	const isOss = featureFlags?.some(
+		(flag) => flag.name === FeatureKeys.OSS && flag.active,
+	);
+
 	// if the user is in logged in state
 	if (isLoggedInState) {
 		// if the setup calls are loading then return a spinner
@@ -271,7 +275,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (
-			(userFetchError || licensesFetchError) &&
+			(userFetchError || (licensesFetchError && featureFlags && !isOss)) && // oss query service does not have licenses API
 			pathname !== ROUTES.SOMETHING_WENT_WRONG
 		) {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
