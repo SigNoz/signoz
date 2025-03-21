@@ -50,8 +50,8 @@ function Metadata({
 						...metadata,
 						temporality: metadata?.temporality,
 				  })
-						// Filter out isMonotonic as user input is not required
-						.filter((key) => key !== 'isMonotonic')
+						// Filter out monotonic as user input is not required
+						.filter((key) => key !== 'monotonic')
 						.map((key) => ({
 							key,
 							value: {
@@ -74,7 +74,9 @@ function Metadata({
 				className: 'metric-metadata-key',
 				render: (field: string): JSX.Element => (
 					<FieldRenderer
-						field={METRIC_METADATA_KEYS[field as keyof typeof METRIC_METADATA_KEYS]}
+						field={
+							METRIC_METADATA_KEYS[field as keyof typeof METRIC_METADATA_KEYS] || ''
+						}
 					/>
 				),
 			},
