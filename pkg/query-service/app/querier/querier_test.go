@@ -1345,7 +1345,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup mock
-			telemeteryStore, err := telemetrystoretest.New(sqlmock.QueryMatcherRegexp)
+			telemetryStore, err := telemetrystoretest.New(sqlmock.QueryMatcherRegexp)
 			require.NoError(t, err)
 
 			// Configure mock responses
@@ -1355,7 +1355,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					values = append(values, []any{&ts, &testName})
 				}
 				// if len(values) > 0 {
-				telemeteryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
+				telemetryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
 					cmock.NewRows(cols, values),
 				)
 				// }
@@ -1365,7 +1365,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			reader := clickhouseReader.NewReaderFromClickhouseConnection(
 				options,
 				nil,
-				telemeteryStore,
+				telemetryStore,
 				featureManager.StartManager(),
 				"",
 				true,
@@ -1415,7 +1415,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			}
 
 			// Verify mock expectations
-			err = telemeteryStore.Mock().ExpectationsWereMet()
+			err = telemetryStore.Mock().ExpectationsWereMet()
 			require.NoError(t, err, "Mock expectations were not met")
 		})
 	}
