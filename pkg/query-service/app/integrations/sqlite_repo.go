@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type InstalledIntegrationsSqliteRepo struct {

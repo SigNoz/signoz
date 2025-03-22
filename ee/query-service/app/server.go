@@ -12,47 +12,47 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/jmoiron/sqlx"
 
+	eemiddleware "github.com/SigNoz/signoz/ee/http/middleware"
+	"github.com/SigNoz/signoz/ee/query-service/app/api"
+	"github.com/SigNoz/signoz/ee/query-service/app/db"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/interfaces"
+	"github.com/SigNoz/signoz/ee/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	eemiddleware "go.signoz.io/signoz/ee/http/middleware"
-	"go.signoz.io/signoz/ee/query-service/app/api"
-	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/auth"
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
-	"go.signoz.io/signoz/ee/query-service/interfaces"
-	"go.signoz.io/signoz/ee/query-service/rules"
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
-	"go.signoz.io/signoz/pkg/web"
 
-	licensepkg "go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/usage"
+	licensepkg "github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/usage"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	baseexplorer "github.com/SigNoz/signoz/pkg/query-service/app/explorer"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -317,7 +317,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	r := baseapp.NewRouter()
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore.BunDB(), []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -350,7 +350,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	// add auth middleware
 	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
-		user, err := auth.GetUserFromRequestContext(ctx, apiHandler)
+		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err
@@ -365,7 +365,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore.BunDB(), []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,

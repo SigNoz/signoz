@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/http/render"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 func (ah *APIHandler) lockDashboard(w http.ResponseWriter, r *http.Request) {

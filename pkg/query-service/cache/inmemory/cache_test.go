@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/cache/status"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
 )
 
 // TestNew tests the New function

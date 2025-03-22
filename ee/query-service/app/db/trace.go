@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strconv"
 
-	"go.signoz.io/signoz/ee/query-service/model"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

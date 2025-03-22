@@ -71,6 +71,7 @@ const ROUTES = {
 	METRICS_EXPLORER: '/metrics-explorer/summary',
 	METRICS_EXPLORER_EXPLORER: '/metrics-explorer/explorer',
 	METRICS_EXPLORER_VIEWS: '/metrics-explorer/views',
+	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
 	HOME_PAGE: '/',
 } as const;

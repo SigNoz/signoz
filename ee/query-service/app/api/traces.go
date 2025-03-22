@@ -3,10 +3,10 @@ package api
 import (
 	"net/http"
 
-	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/model"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/app/db"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

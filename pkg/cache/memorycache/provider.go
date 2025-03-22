@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/factory"
 	go_cache "github.com/patrickmn/go-cache"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 type provider struct {

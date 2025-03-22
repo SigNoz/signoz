@@ -1,4 +1,4 @@
-package model
+package types
 
 import (
 	"encoding/json"
@@ -6,14 +6,25 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/SigNoz/signoz/ee/query-service/sso"
+	"github.com/SigNoz/signoz/ee/query-service/sso/saml"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
-	"go.signoz.io/signoz/ee/query-service/sso"
-	"go.signoz.io/signoz/ee/query-service/sso/saml"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+type StorableOrgDomain struct {
+	bun.BaseModel `bun:"table:org_domains"`
+
+	types.TimeAuditable
+	ID    uuid.UUID `json:"id" bun:"id,pk,type:text"`
+	OrgID string    `json:"orgId" bun:"org_id,type:text,notnull"`
+	Name  string    `json:"name" bun:"name,type:varchar(50),notnull,unique"`
+	Data  string    `json:"-" bun:"data,type:text,notnull"`
+}
 
 type SSOType string
 
@@ -22,13 +33,12 @@ const (
 	GoogleAuth SSOType = "GOOGLE_AUTH"
 )
 
-// OrgDomain identify org owned web domains for auth and other purposes
-type OrgDomain struct {
-	Id         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	OrgId      string    `json:"orgId"`
-	SsoEnabled bool      `json:"ssoEnabled"`
-	SsoType    SSOType   `json:"ssoType"`
+// GettableOrgDomain identify org owned web domains for auth and other purposes
+type GettableOrgDomain struct {
+	StorableOrgDomain
+
+	SsoEnabled bool    `json:"ssoEnabled"`
+	SsoType    SSOType `json:"ssoType"`
 
 	SamlConfig       *SamlConfig        `json:"samlConfig"`
 	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
@@ -36,18 +46,18 @@ type OrgDomain struct {
 	Org *types.Organization
 }
 
-func (od *OrgDomain) String() string {
-	return fmt.Sprintf("[%s]%s-%s ", od.Name, od.Id.String(), od.SsoType)
+func (od *GettableOrgDomain) String() string {
+	return fmt.Sprintf("[%s]%s-%s ", od.Name, od.ID.String(), od.SsoType)
 }
 
 // Valid is used a pipeline function to check if org domain
 // loaded from db is valid
-func (od *OrgDomain) Valid(err error) error {
+func (od *GettableOrgDomain) Valid(err error) error {
 	if err != nil {
 		return err
 	}
 
-	if od.Id == uuid.Nil || od.OrgId == "" {
+	if od.ID == uuid.Nil || od.OrgID == "" {
 		return fmt.Errorf("both id and orgId are required")
 	}
 
@@ -55,9 +65,9 @@ func (od *OrgDomain) Valid(err error) error {
 }
 
 // ValidNew cheks if the org domain is valid for insertion in db
-func (od *OrgDomain) ValidNew() error {
+func (od *GettableOrgDomain) ValidNew() error {
 
-	if od.OrgId == "" {
+	if od.OrgID == "" {
 		return fmt.Errorf("orgId is required")
 	}
 
@@ -69,7 +79,7 @@ func (od *OrgDomain) ValidNew() error {
 }
 
 // LoadConfig loads config params from json text
-func (od *OrgDomain) LoadConfig(jsondata string) error {
+func (od *GettableOrgDomain) LoadConfig(jsondata string) error {
 	d := *od
 	err := json.Unmarshal([]byte(jsondata), &d)
 	if err != nil {
@@ -79,21 +89,21 @@ func (od *OrgDomain) LoadConfig(jsondata string) error {
 	return nil
 }
 
-func (od *OrgDomain) GetSAMLEntityID() string {
+func (od *GettableOrgDomain) GetSAMLEntityID() string {
 	if od.SamlConfig != nil {
 		return od.SamlConfig.SamlEntity
 	}
 	return ""
 }
 
-func (od *OrgDomain) GetSAMLIdpURL() string {
+func (od *GettableOrgDomain) GetSAMLIdpURL() string {
 	if od.SamlConfig != nil {
 		return od.SamlConfig.SamlIdp
 	}
 	return ""
 }
 
-func (od *OrgDomain) GetSAMLCert() string {
+func (od *GettableOrgDomain) GetSAMLCert() string {
 	if od.SamlConfig != nil {
 		return od.SamlConfig.SamlCert
 	}
@@ -102,7 +112,7 @@ func (od *OrgDomain) GetSAMLCert() string {
 
 // PrepareGoogleOAuthProvider creates GoogleProvider that is used in
 // requesting OAuth and also used in processing response from google
-func (od *OrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
+func (od *GettableOrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
 	if od.GoogleAuthConfig == nil {
 		return nil, fmt.Errorf("GOOGLE OAUTH is not setup correctly for this domain")
 	}
@@ -111,7 +121,7 @@ func (od *OrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCall
 }
 
 // PrepareSamlRequest creates a request accordingly gosaml2
-func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServiceProvider, error) {
+func (od *GettableOrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServiceProvider, error) {
 
 	// this is the url Idp will call after login completion
 	acs := fmt.Sprintf("%s://%s/%s",
@@ -136,9 +146,9 @@ func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServicePro
 	return saml.PrepareRequest(issuer, acs, sourceUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
 }
 
-func (od *OrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
+func (od *GettableOrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
 
-	fmtDomainId := strings.Replace(od.Id.String(), "-", ":", -1)
+	fmtDomainId := strings.Replace(od.ID.String(), "-", ":", -1)
 
 	// build redirect url from window.location sent by frontend
 	redirectURL := fmt.Sprintf("%s://%s%s", siteUrl.Scheme, siteUrl.Host, siteUrl.Path)

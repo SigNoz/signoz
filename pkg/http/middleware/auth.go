@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 

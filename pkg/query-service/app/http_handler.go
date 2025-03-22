@@ -18,11 +18,11 @@ import (
 	"text/template"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	errorsV2 "go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/http/render"
-	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
-	"go.signoz.io/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/signoz"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -30,44 +30,44 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
-	"go.signoz.io/signoz/pkg/query-service/app/logs"
-	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
-	"go.signoz.io/signoz/pkg/query-service/app/metrics"
-	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/app/querier"
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/contextlinks"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
+	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
+	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
+	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
+	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/version"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/version"
 )
 
 type status string
@@ -296,7 +296,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	return aH, nil
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -305,13 +305,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -319,7 +319,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -365,7 +365,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -482,7 +482,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -551,8 +551,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
@@ -4686,7 +4684,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:

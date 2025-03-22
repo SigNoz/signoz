@@ -3,8 +3,8 @@ package formatter
 import (
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/query-service/converter"
 	"github.com/dustin/go-humanize"
-	"go.signoz.io/signoz/pkg/query-service/converter"
 )
 
 type dataFormatter struct {
