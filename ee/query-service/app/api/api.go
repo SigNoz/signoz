@@ -19,9 +19,9 @@ import (
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/query-service/version"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
 
@@ -200,9 +200,8 @@ func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *ba
 }
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := basemodel.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: ah.SetupCompleted,
 	}

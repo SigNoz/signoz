@@ -15,9 +15,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/version"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"google.golang.org/grpc"
@@ -132,8 +132,6 @@ func main() {
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 
-	version.PrintVersion()
-
 	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
 		Uris: []string{"env:"},
 		ProviderFactories: []config.ProviderFactory{
@@ -148,6 +146,8 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
+
+	version.Info.PrettyPrint(config.Version)
 
 	signoz, err := signoz.New(
 		context.Background(),

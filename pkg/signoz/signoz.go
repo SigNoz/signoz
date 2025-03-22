@@ -34,12 +34,13 @@ func New(
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
-	instrumentation, err := instrumentation.New(ctx, version.Build{}, config.Instrumentation)
+	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
 	if err != nil {
 		return nil, err
 	}
 
-	instrumentation.Logger().DebugContext(ctx, "starting signoz", "config", config)
+	instrumentation.Logger().InfoContext(ctx, "starting signoz", "version", version.Info.Version, "variant", version.Info.Variant, "commit", version.Info.Hash, "branch", version.Info.Branch, "go", version.Info.GoVersion, "time", version.Info.Time)
+	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", "config", config)
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
