@@ -1,4 +1,4 @@
-name: push
+name: build
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - v*
 
 jobs:
-  image-build-and-push-signoz:
+  enterprise:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -49,35 +49,21 @@ jobs:
       - name: docker-tag
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+            echo "VERSION=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
-            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+            echo "VERSION=latest" >> $GITHUB_ENV
           else
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+            echo "VERSION=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
           fi
       - name: cross-compilation-tools
         run: |
           set -ex
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-      - name: publish-signoz
-        run: make build-push-signoz
-      - name: qs-docker-tag
-        run: |
-          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            tag="${{ steps.branch-name.outputs.tag }}"
-            tag="${tag:1}"
-            echo "DOCKER_TAG=${tag}" >> $GITHUB_ENV
-          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
-            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
-          else
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
-          fi
-      - name: publish-query-service
-        run: |
-          SIGNOZ_DOCKER_IMAGE=query-service make build-push-signoz
+      - name: publish
+        run: make docker-buildx-enterprise
 
-  image-build-and-push-signoz-community:
+  community:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -105,30 +91,16 @@ jobs:
       - name: docker-tag
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+            echo "VERSION=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
-            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+            echo "VERSION=latest" >> $GITHUB_ENV
           else
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+            echo "VERSION=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
           fi
       - name: cross-compilation-tools
         run: |
           set -ex
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-      - name: publish-signoz-community
-        run: make build-push-signoz-community
-      - name: qs-docker-tag
-        run: |
-          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            tag="${{ steps.branch-name.outputs.tag }}"
-            tag="${tag:1}"
-            echo "DOCKER_TAG=${tag}-oss" >> $GITHUB_ENV
-          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
-            echo "DOCKER_TAG=latest-oss" >> $GITHUB_ENV
-          else
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}-oss" >> $GITHUB_ENV
-          fi
-      - name: publish-query-service-oss
-        run: |
-          SIGNOZ_COMMUNITY_DOCKER_IMAGE=query-service make build-push-signoz-community
+      - name: publish
+        run: make docker-buildx-community

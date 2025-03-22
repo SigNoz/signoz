@@ -35,7 +35,7 @@ jobs:
           read -r -d '' COMMAND <<EOF || true
           echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
           echo "GITHUB_SHA: ${GITHUB_SHA}"
-          export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
+          export VERSION="${GITHUB_SHA:0:7}" # needed for child process to access it
           export DEV_BUILD="1"
           export PATH="/usr/local/go/bin/:$PATH" # needed for Golang to work
           docker system prune --force

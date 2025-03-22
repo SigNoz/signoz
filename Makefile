@@ -28,10 +28,10 @@ GO_BUILD_LDFLAGS_ENTERPRISE 	= $(GO_BUILD_VERSION_LDFLAGS) -X github.com/SigNoz/
 
 DOCKER_BUILD_ARCHS_COMMUNITY 	= $(addprefix docker-build-community-,$(ARCHS))
 DOCKERFILE_COMMUNITY 			= $(SRC)/pkg/query-service/Dockerfile
-DOCKER_REGISTRY_COMMUNITY 		= docker.io/signoz/signoz-community
+DOCKER_REGISTRY_COMMUNITY 		?= docker.io/signoz/signoz-community
 DOCKER_BUILD_ARCHS_ENTERPRISE 	= $(addprefix docker-build-enterprise-,$(ARCHS))
 DOCKERFILE_ENTERPRISE 			= $(SRC)/ee/query-service/Dockerfile
-DOCKER_REGISTRY_ENTERPRISE 		= docker.io/signoz/signoz
+DOCKER_REGISTRY_ENTERPRISE 		?= docker.io/signoz/signoz
 JS_BUILD_CONTEXT 				= $(SRC)/frontend
 
 ##############################################################
