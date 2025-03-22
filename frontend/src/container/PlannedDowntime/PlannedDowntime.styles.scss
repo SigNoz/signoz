@@ -274,7 +274,9 @@
 	.ant-table-cell {
 		padding: 0 !important;
 		border: 0 !important;
-		width: 736px;
+		min-width: 736px !important;
+                max-width: 736px !important;
+                width: 736px !important;
 	}
 
 	.ant-table-tbody {
