@@ -966,6 +966,7 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
+						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
