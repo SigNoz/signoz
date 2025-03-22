@@ -79,6 +79,13 @@ run-go: ## Runs the go backend server
 		--use-logs-new-schema true \
 		--use-trace-new-schema true
 
+##############################################################
+# test commands
+##############################################################
+.PHONY: test-go
+test-go: ## Runs go unit tests
+	@go test -race ./...
+
 all: build-push-frontend build-push-signoz
 
 # Steps to build static files of frontend
@@ -174,9 +181,6 @@ check-no-ee-references:
 	else \
 		echo "No references to 'ee' packages found in 'pkg' directory"; \
 	fi
-
-test:
-	go test ./pkg/...
 
 ########################################################
 # Goreleaser

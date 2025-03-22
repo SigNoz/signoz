@@ -66,7 +66,6 @@ sqlstore:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
 
-
 ##################### APIServer #####################
 apiserver:
   timeout:
@@ -85,20 +84,30 @@ apiserver:
       - /api/v1/version
       - /
 
-
 ##################### TelemetryStore #####################
 telemetrystore:
-  # Specifies the telemetrystore provider to use.
-  provider: clickhouse
   # Maximum number of idle connections in the connection pool.
   max_idle_conns: 50
   # Maximum number of open connections to the database.
   max_open_conns: 100
   # Maximum time to wait for a connection to be established.
   dial_timeout: 5s
+  prometheus:
+    remote_read:
+      # The URL to use for remote read. It must be a clickhouse dsn pointing to the database where metrics is stored.
+      url: tcp://localhost:9000/signoz_metrics
+    active_query_tracker:
+      # Whether to enable the active query tracker.
+      enabled: true
+      # The path to use for the active query tracker.
+      path: ""
+      # The maximum number of concurrent queries.
+      max_concurrent: 20
+  # Specifies the telemetrystore provider to use.
+  provider: clickhouse
   clickhouse:
-    # The DSN to use for ClickHouse.
-    dsn: http://localhost:9000
+    # The DSN to use for clickhouse.
+    dsn: tcp://localhost:9000
 
 ##################### Alertmanager #####################
 alertmanager:

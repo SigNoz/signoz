@@ -19,6 +19,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/web"
+	"github.com/go-kit/log"
+	promconfig "github.com/prometheus/prometheus/config"
 )
 
 // Config defines the entire input configuration of signoz.
@@ -45,7 +47,7 @@ type Config struct {
 	APIServer apiserver.Config `mapstructure:"apiserver"`
 
 	// TelemetryStore config
-	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
+	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore" yaml:"telemetrystore"`
 
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
@@ -57,6 +59,7 @@ type DeprecatedFlags struct {
 	MaxIdleConns int
 	MaxOpenConns int
 	DialTimeout  time.Duration
+	Config       string
 }
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
@@ -140,7 +143,7 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ClickHouseUrl") != "" {
 		fmt.Println("[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
-		config.TelemetryStore.ClickHouse.DSN = os.Getenv("ClickHouseUrl")
+		config.TelemetryStore.Clickhouse.DSN = os.Getenv("ClickHouseUrl")
 	}
 
 	if deprecatedFlags.MaxIdleConns != 50 {
@@ -170,5 +173,19 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 
 	if os.Getenv("ALERTMANAGER_API_CHANNEL_PATH") != "" {
 		fmt.Println("[Deprecated] env ALERTMANAGER_API_CHANNEL_PATH is deprecated and scheduled for complete removal.")
+	}
+
+	if deprecatedFlags.Config != "" {
+		fmt.Println("[Deprecated] flag --config is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_PROMETHEUS_REMOTE__READ_URL instead.")
+		cfg, err := promconfig.LoadFile(deprecatedFlags.Config, false, false, log.NewNopLogger())
+		if err != nil {
+			fmt.Println("Error parsing config, using value set in SIGNOZ_TELEMETRYSTORE_PROMETHEUS_REMOTE__READ_URL")
+		} else {
+			if len(cfg.RemoteReadConfigs) != 1 {
+				fmt.Println("Error finding remote read config, using value set in SIGNOZ_TELEMETRYSTORE_PROMETHEUS_REMOTE__READ_URL")
+			} else {
+				config.TelemetryStore.Prometheus.RemoteReadConfig.URL = cfg.RemoteReadConfigs[0].URL.URL
+			}
+		}
 	}
 }

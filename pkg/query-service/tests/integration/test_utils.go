@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
@@ -39,14 +40,14 @@ func NewMockClickhouseReader(
 ) {
 	require.NotNil(t, testDB)
 
-	mockDB, err := mockhouse.NewClickHouseWithQueryMatcher(nil, sqlmock.QueryMatcherRegexp)
+	telemetryStore, err := telemetrystoretest.New(sqlmock.QueryMatcherRegexp)
+	require.NoError(t, err)
 
 	require.Nil(t, err, "could not init mock clickhouse")
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
-		mockDB,
 		clickhouseReader.NewOptions("", ""),
 		testDB,
-		"",
+		telemetryStore,
 		featureFlags,
 		"",
 		true,
@@ -55,7 +56,7 @@ func NewMockClickhouseReader(
 		nil,
 	)
 
-	return reader, mockDB
+	return reader, telemetryStore.Mock()
 }
 
 func addLogsQueryExpectation(

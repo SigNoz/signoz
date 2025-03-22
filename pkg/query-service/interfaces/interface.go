@@ -9,7 +9,6 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
 )
 
@@ -85,10 +84,6 @@ type Reader interface {
 		ctx context.Context,
 		req *v3.QBFilterSuggestionsRequest,
 	) (*v3.QBFilterSuggestionsResponse, *model.ApiError)
-
-	// Connection needed for rules, not ideal but required
-	GetQueryEngine() *promql.Engine
-	GetFanoutStorage() *storage.Storage
 
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error

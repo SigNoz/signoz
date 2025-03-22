@@ -6,13 +6,15 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/promengine"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 type provider struct {
-	settings       factory.ScopedProviderSettings
-	clickHouseConn clickhouse.Conn
-	hooks          []telemetrystore.TelemetryStoreHook
+	settings         factory.ScopedProviderSettings
+	clickHouseConn   clickhouse.Conn
+	prometheusEngine promengine.PromEngine
+	hooks            []telemetrystore.TelemetryStoreHook
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
@@ -33,7 +35,7 @@ func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.Telemetr
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hooks ...telemetrystore.TelemetryStoreHook) (telemetrystore.TelemetryStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
-	options, err := clickhouse.ParseDSN(config.ClickHouse.DSN)
+	options, err := clickhouse.ParseDSN(config.Clickhouse.DSN)
 	if err != nil {
 		return nil, err
 	}
@@ -46,75 +48,85 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
+	engine, err := promengine.New(settings.Logger(), config.Prometheus)
+	if err != nil {
+		return nil, err
+	}
+
 	return &provider{
-		settings:       settings,
-		clickHouseConn: chConn,
-		hooks:          hooks,
+		settings:         settings,
+		clickHouseConn:   chConn,
+		hooks:            hooks,
+		prometheusEngine: engine,
 	}, nil
 }
 
-func (p *provider) ClickHouseDB() clickhouse.Conn {
+func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
 }
 
-func (p provider) Close() error {
+func (p *provider) PrometheusEngine() promengine.PromEngine {
+	return p.prometheusEngine
+}
+
+func (p *provider) Close() error {
 	return p.clickHouseConn.Close()
 }
 
-func (p provider) Ping(ctx context.Context) error {
+func (p *provider) Ping(ctx context.Context) error {
 	return p.clickHouseConn.Ping(ctx)
 }
 
-func (p provider) Stats() driver.Stats {
+func (p *provider) Stats() driver.Stats {
 	return p.clickHouseConn.Stats()
 }
 
-func (p provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
+func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
 	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
 	rows, err := p.clickHouseConn.Query(ctx, query, args...)
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, rows, err)
 	return rows, err
 }
 
-func (p provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
+func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
 	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
 	row := p.clickHouseConn.QueryRow(ctx, query, args...)
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, nil)
 	return row
 }
 
-func (p provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
 	err := p.clickHouseConn.Select(ctx, dest, query, args...)
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
 	return err
 }
 
-func (p provider) Exec(ctx context.Context, query string, args ...interface{}) error {
+func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
 	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
 	err := p.clickHouseConn.Exec(ctx, query, args...)
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
 	return err
 }
 
-func (p provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
+func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
 	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
 	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...)
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
 	return err
 }
 
-func (p provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
+func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
 	ctx, query, args := telemetrystore.WrapBeforeQuery(p.hooks, ctx, query)
 	batch, err := p.clickHouseConn.PrepareBatch(ctx, query, opts...)
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
 	return batch, err
 }
 
-func (p provider) ServerVersion() (*driver.ServerVersion, error) {
+func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 	return p.clickHouseConn.ServerVersion()
 }
 
-func (p provider) Contributors() []string {
+func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
 }

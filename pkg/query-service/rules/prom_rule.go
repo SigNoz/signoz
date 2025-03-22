@@ -8,21 +8,22 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/promengine"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/prometheus/prometheus/promql"
+	pql "github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
 )
 
 type PromRule struct {
 	*BaseRule
-	pqlEngine *pqle.PqlEngine
+	pqlEngine promengine.PromEngine
 }
 
 func NewPromRule(
@@ -30,7 +31,7 @@ func NewPromRule(
 	postableRule *PostableRule,
 	logger *zap.Logger,
 	reader interfaces.Reader,
-	pqlEngine *pqle.PqlEngine,
+	pqlEngine promengine.PromEngine,
 	opts ...RuleOption,
 ) (*PromRule, error) {
 
@@ -108,7 +109,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 	zap.L().Info("evaluating promql query", zap.String("name", r.Name()), zap.String("query", q))
-	res, err := r.pqlEngine.RunAlertQuery(ctx, q, start, end, interval)
+	res, err := r.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
@@ -304,6 +305,43 @@ func (r *PromRule) String() string {
 	}
 
 	return string(byt)
+}
+
+func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (pql.Matrix, error) {
+	q, err := r.pqlEngine.Engine().NewRangeQuery(ctx, r.pqlEngine.Storage(), nil, qs, start, end, interval)
+	if err != nil {
+		return nil, err
+	}
+
+	res := q.Exec(ctx)
+
+	if res.Err != nil {
+		return nil, res.Err
+	}
+
+	switch typ := res.Value.(type) {
+	case pql.Vector:
+		series := make([]pql.Series, 0, len(typ))
+		value := res.Value.(pql.Vector)
+		for _, smpl := range value {
+			series = append(series, pql.Series{
+				Metric: smpl.Metric,
+				Floats: []pql.FPoint{{T: smpl.T, F: smpl.F}},
+			})
+		}
+		return series, nil
+	case pql.Scalar:
+		value := res.Value.(pql.Scalar)
+		series := make([]pql.Series, 0, 1)
+		series = append(series, pql.Series{
+			Floats: []pql.FPoint{{T: value.T, F: value.V}},
+		})
+		return series, nil
+	case pql.Matrix:
+		return res.Value.(pql.Matrix), nil
+	default:
+		return nil, fmt.Errorf("rule result is not a vector or scalar")
+	}
 }
 
 func toCommonSeries(series promql.Series) v3.Series {

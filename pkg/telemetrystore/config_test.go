@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN", "http://localhost:9000")
+	t.Setenv("SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN", "tcp://localhost:9000")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS", "60")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS", "150")
 	t.Setenv("SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT", "5s")
@@ -33,22 +33,18 @@ func TestNewWithEnvProvider(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	actual := &Config{}
-	err = conf.Unmarshal("telemetrystore", actual)
-
+	actual := Config{}
+	err = conf.Unmarshal("telemetrystore", &actual)
 	require.NoError(t, err)
 
-	expected := &Config{
-		Provider: "clickhouse",
-		Connection: ConnectionConfig{
-			MaxOpenConns: 150,
-			MaxIdleConns: 60,
-			DialTimeout:  5 * time.Second,
-		},
-		ClickHouse: ClickHouseConfig{
-			DSN: "http://localhost:9000",
-		},
-	}
+	assert.NoError(t, actual.Validate())
+
+	expected := NewConfigFactory().New().(Config)
+	expected.Provider = "clickhouse"
+	expected.Connection.MaxOpenConns = 150
+	expected.Connection.MaxIdleConns = 60
+	expected.Connection.DialTimeout = 5 * time.Second
+	expected.Clickhouse.DSN = "tcp://localhost:9000"
 
 	assert.Equal(t, expected, actual)
 }
@@ -74,14 +70,14 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	actual := &Config{}
-	err = conf.Unmarshal("telemetrystore", actual)
+	actual := Config{}
+	err = conf.Unmarshal("telemetrystore", &actual)
 
 	require.NoError(t, err)
 
-	expected := &Config{
-		ClickHouse: ClickHouseConfig{
-			QuerySettings: ClickHouseQuerySettings{
+	expected := Config{
+		Clickhouse: ClickhouseConfig{
+			QuerySettings: QuerySettings{
 				MaxExecutionTime:                    10,
 				MaxExecutionTimeLeaf:                10,
 				TimeoutBeforeCheckingExecutionSpeed: 10,
@@ -91,5 +87,5 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected.ClickHouse.QuerySettings, actual.ClickHouse.QuerySettings)
+	assert.Equal(t, expected.Clickhouse.QuerySettings, actual.Clickhouse.QuerySettings)
 }
