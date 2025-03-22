@@ -19,7 +19,24 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="api_key" label={t('field_opsgenie_api_key')} required>
+			<Form.Item
+				name="api_key"
+				label={t('field_opsgenie_api_key')}
+				tooltip={{
+					title: (
+						<div
+							dangerouslySetInnerHTML={{
+								__html: t('tooltip_opsgenie_api_key').replace(
+									/\[([^\]]+)\]\(([^)]+)\)/g,
+									'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+								),
+							}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+			>
 				<Input
 					onChange={handleInputChange('api_key')}
 					data-testid="opsgenie-api-key-textbox"

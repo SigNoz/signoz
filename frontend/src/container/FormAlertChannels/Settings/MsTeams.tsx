@@ -9,7 +9,24 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="webhook_url" label={t('field_webhook_url')}>
+			<Form.Item
+				name="webhook_url"
+				label={t('field_webhook_url')}
+				tooltip={{
+					title: (
+						<div
+							dangerouslySetInnerHTML={{
+								__html: t('tooltip_ms_teams_url').replace(
+									/\[([^\]]+)\]\(([^)]+)\)/g,
+									'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+								),
+							}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+			>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
