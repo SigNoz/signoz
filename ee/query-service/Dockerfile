@@ -4,8 +4,8 @@ FROM alpine:3.20.3
 # Add Maintainer Info
 LABEL maintainer="signoz"
 
-# define arguments that can be passed during build time
-ARG TARGETOS TARGETARCH
+ARG OS="linux"
+ARG ARCH
 
 # add ca-certificates in case you need them
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
@@ -14,7 +14,7 @@ RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 WORKDIR /root
 
 # copy the signoz binary
-COPY ee/query-service/bin/signoz-${TARGETOS}-${TARGETARCH} /root/signoz
+COPY ./target/${OS}-${ARCH}/signoz /root/signoz
 
 # copy prometheus YAML config
 COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
