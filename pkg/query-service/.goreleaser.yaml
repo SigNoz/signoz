@@ -30,7 +30,7 @@ builds:
       - v8.0
     ldflags:
       - -s -w
-      - -X github.com/SigNoz/signoz/pkg/version.version={{ .Version }}
+      - -X github.com/SigNoz/signoz/pkg/version.version=v{{ .Version }}
       - -X github.com/SigNoz/signoz/pkg/version.variant=community
       - -X github.com/SigNoz/signoz/pkg/version.hash={{ .ShortCommit }}
       - -X github.com/SigNoz/signoz/pkg/version.time={{ .CommitTimestamp }}
@@ -61,6 +61,6 @@ archives:
         dst: templates
 
 release:
-  name_template: "{{ .Version }}"
+  name_template: "v{{ .Version }}"
   draft: false
   prerelease: auto
