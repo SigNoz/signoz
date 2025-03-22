@@ -34,7 +34,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-  build:
+  build-community:
     if: |
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
@@ -46,8 +46,27 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
+      - name: qemu-install
+        uses: docker/setup-qemu-action@v3
       - name: docker-build
         shell: bash
         run: |
           make docker-build-community
+  build-enterprise:
+    if: |
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: go-install
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: qemu-install
+        uses: docker/setup-qemu-action@v3
+      - name: docker-build
+        shell: bash
+        run: |
           make docker-build-enterprise
