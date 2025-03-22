@@ -2,7 +2,7 @@
 # variables
 ##############################################################
 SHELL                   := /bin/bash
-SRC						?= .
+SRC						?= $(shell pwd)
 NAME					?= signoz
 OS                      ?= $(shell uname -s | tr '[A-Z]' '[a-z]')
 ARCH                    ?= $(shell uname -m | sed 's/x86_64/amd64/g' | sed 's/aarch64/arm64/g')
