@@ -54,6 +54,13 @@ jobs:
             echo "GH_IS_TAG=false" >> $GITHUB_ENV
             echo "GH_BRANCH_NAME=${GH_REF#$PREFIX}" >> $GITHUB_ENV
           fi
+      - name: set-version
+        run: |
+          if [ '${{ env.GH_IS_TAG }}' == 'true' ]; then
+            echo "VERSION=${{ env.GH_TAG }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${{ env.GH_BRANCH_NAME }}" >> $GITHUB_ENV
+          fi
       - name: cross-compilation-tools
         run: |
           set -ex
@@ -94,6 +101,13 @@ jobs:
             PREFIX="refs/heads/"
             echo "GH_IS_TAG=false" >> $GITHUB_ENV
             echo "GH_BRANCH_NAME=${GH_REF#$PREFIX}" >> $GITHUB_ENV
+          fi
+      - name: set-version
+        run: |
+          if [ '${{ env.GH_IS_TAG }}' == 'true' ]; then
+            echo "VERSION=${{ env.GH_TAG }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${{ env.GH_BRANCH_NAME }}" >> $GITHUB_ENV
           fi
       - name: cross-compilation-tools
         run: |
