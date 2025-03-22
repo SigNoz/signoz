@@ -177,7 +177,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				panelMap: { ...currentPanelMap },
 				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
 				widgets: selectedDashboard?.data?.widgets?.map((widget) => {
-					if (columnWidths[widget.id]) {
+					if (columnWidths?.[widget.id]) {
 						return {
 							...widget,
 							columnWidths: columnWidths[widget.id],

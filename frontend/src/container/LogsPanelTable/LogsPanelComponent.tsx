@@ -86,7 +86,7 @@ function LogsPanelComponent({
 				formatTimezoneAdjustedTimestamp,
 			),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[widget],
+		[widget.selectedLogFields],
 	);
 
 	const dataLength =
@@ -224,7 +224,7 @@ function LogsPanelComponent({
 						<ResizeTable
 							pagination={false}
 							tableLayout="fixed"
-							scroll={{ x: `calc(50vw - 10px)` }}
+							scroll={{ x: `max-content` }}
 							sticky
 							loading={queryResponse.isFetching}
 							style={tableStyles}

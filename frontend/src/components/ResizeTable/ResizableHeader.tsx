@@ -10,7 +10,12 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
 
 	const handle = useMemo(
-		() => <SpanStyle onClick={(e): void => e.stopPropagation()} />,
+		() => (
+			<SpanStyle
+				onClick={(e): void => e.stopPropagation()}
+				className="resize-handle"
+			/>
+		),
 		[],
 	);
 

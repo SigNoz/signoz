@@ -61,7 +61,7 @@ function TracesTableComponent({
 				formatTimezoneAdjustedTimestamp,
 			),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[widget],
+		[widget.selectedTracesFields],
 	);
 
 	const dataLength =

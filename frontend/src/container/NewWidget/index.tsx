@@ -239,7 +239,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				selectedLogFields,
 				selectedTracesFields,
 				isLogScale,
-				columnWidths: columnWidths[selectedWidget?.id],
+				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps

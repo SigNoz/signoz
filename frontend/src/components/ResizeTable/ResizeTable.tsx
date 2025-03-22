@@ -2,6 +2,7 @@
 
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import cx from 'classnames';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
@@ -43,7 +44,7 @@ function ResizeTable({
 	const updateAllColumnWidths = useRef(
 		debounce((widthsConfig: Record<string, number>) => {
 			if (!widgetId || !shouldPersistColumnWidths) return;
-			setColumnWidths((prev) => ({
+			setColumnWidths?.((prev) => ({
 				...prev,
 				[widgetId]: widthsConfig,
 			}));
@@ -92,6 +93,7 @@ function ResizeTable({
 			...restProps,
 			components: { header: { cell: ResizableHeader } },
 			columns: mergedColumns,
+			className: cx('resize-main-table', restProps.className),
 		};
 
 		set(
