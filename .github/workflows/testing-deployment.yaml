@@ -49,7 +49,7 @@ jobs:
           # This is added to include the scenerio when new commit in PR is force-pushed
           git branch -D ${GITHUB_BRANCH}
           git checkout --track origin/${GITHUB_BRANCH}
-          make build-signoz-amd64
-          make run-testing
+          make docker-build-enterprise-amd64
+          docker-compose -f deploy/docker/docker-compose.testing.yaml up --build -d
           EOF
           gcloud beta compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --ssh-key-expire-after=15m --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"

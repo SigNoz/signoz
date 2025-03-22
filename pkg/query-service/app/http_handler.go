@@ -67,7 +67,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
-	"github.com/SigNoz/signoz/pkg/query-service/version"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 type status string
@@ -1895,9 +1895,8 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := model.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: aH.SetupCompleted,
 	}
