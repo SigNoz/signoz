@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type cloudProviderAccountsRepository interface {

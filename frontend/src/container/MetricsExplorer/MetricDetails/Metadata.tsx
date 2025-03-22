@@ -8,10 +8,13 @@ import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useUpdateMetricMetadata } from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import { useNotifications } from 'hooks/useNotifications';
-import { Edit2, Save } from 'lucide-react';
+import { Edit2, Save, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { METRIC_TYPE_LABEL_MAP } from '../Summary/constants';
+import {
+	METRIC_TYPE_LABEL_MAP,
+	METRIC_TYPE_VALUES_MAP,
+} from '../Summary/constants';
 import { MetricTypeRenderer } from '../Summary/utils';
 import { METRIC_METADATA_KEYS } from './constants';
 import { MetadataProps } from './types';
@@ -29,8 +32,7 @@ function Metadata({
 	] = useState<UpdateMetricMetadataProps>({
 		metricType: metadata?.metric_type || MetricType.SUM,
 		description: metadata?.description || '',
-		unit: metadata?.unit || '',
-		temporality: metadata?.temporality || Temporality.CUMULATIVE,
+		temporality: metadata?.temporality,
 	});
 	const { notifications } = useNotifications();
 	const {
@@ -44,9 +46,12 @@ function Metadata({
 	const tableData = useMemo(
 		() =>
 			metadata
-				? Object.keys(metadata)
-						// Filter out isMonotonic as user input is not required
-						.filter((key) => key !== 'isMonotonic')
+				? Object.keys({
+						...metadata,
+						temporality: metadata?.temporality,
+				  })
+						// Filter out monotonic as user input is not required
+						.filter((key) => key !== 'monotonic')
 						.map((key) => ({
 							key,
 							value: {
@@ -69,7 +74,9 @@ function Metadata({
 				className: 'metric-metadata-key',
 				render: (field: string): JSX.Element => (
 					<FieldRenderer
-						field={METRIC_METADATA_KEYS[field as keyof typeof METRIC_METADATA_KEYS]}
+						field={
+							METRIC_METADATA_KEYS[field as keyof typeof METRIC_METADATA_KEYS] || ''
+						}
 					/>
 				),
 			},
@@ -82,7 +89,7 @@ function Metadata({
 				ellipsis: true,
 				className: 'metric-metadata-value',
 				render: (field: { value: string; key: string }): JSX.Element => {
-					if (!isEditing) {
+					if (!isEditing || field.key === 'unit') {
 						if (field.key === 'metric_type') {
 							return (
 								<div>
@@ -95,16 +102,16 @@ function Metadata({
 					if (field.key === 'metric_type') {
 						return (
 							<Select
-								options={Object.entries(METRIC_TYPE_LABEL_MAP).map(([key, value]) => ({
+								options={Object.entries(METRIC_TYPE_VALUES_MAP).map(([key]) => ({
 									value: key,
-									label: value,
+									label: METRIC_TYPE_LABEL_MAP[key as MetricType],
 								}))}
-								value={metricMetadata.metricType}
+								defaultValue={metricMetadata.metricType}
 								onChange={(value): void => {
-									setMetricMetadata({
-										...metricMetadata,
+									setMetricMetadata((prev) => ({
+										...prev,
 										metricType: value as MetricType,
-									});
+									}));
 								}}
 							/>
 						);
@@ -116,12 +123,12 @@ function Metadata({
 									value: key,
 									label: key,
 								}))}
-								value={metricMetadata.temporality}
+								defaultValue={metricMetadata.temporality}
 								onChange={(value): void => {
-									setMetricMetadata({
-										...metricMetadata,
+									setMetricMetadata((prev) => ({
+										...prev,
 										temporality: value as Temporality,
-									});
+									}));
 								}}
 							/>
 						);
@@ -129,13 +136,16 @@ function Metadata({
 					return (
 						<Input
 							name={field.key}
-							value={
+							defaultValue={
 								metricMetadata[
 									field.key as Exclude<keyof UpdateMetricMetadataProps, 'isMonotonic'>
 								]
 							}
 							onChange={(e): void => {
-								setMetricMetadata({ ...metricMetadata, [field.key]: e.target.value });
+								setMetricMetadata((prev) => ({
+									...prev,
+									[field.key]: e.target.value,
+								}));
 							}}
 						/>
 					);
@@ -159,7 +169,7 @@ function Metadata({
 			},
 			{
 				onSuccess: (response): void => {
-					if (response?.payload?.success) {
+					if (response?.statusCode === 200) {
 						notifications.success({
 							message: 'Metadata updated successfully',
 						});
@@ -167,13 +177,15 @@ function Metadata({
 						setIsEditing(false);
 					} else {
 						notifications.error({
-							message: 'Failed to update metadata',
+							message:
+								'Failed to update metadata, please try again. If the issue persists, please contact support.',
 						});
 					}
 				},
 				onError: (): void =>
 					notifications.error({
-						message: 'Failed to update metadata',
+						message:
+							'Failed to update metadata, please try again. If the issue persists, please contact support.',
 					}),
 			},
 		);
@@ -188,33 +200,49 @@ function Metadata({
 	const actionButton = useMemo(() => {
 		if (isEditing) {
 			return (
+				<div className="action-menu">
+					<Button
+						className="action-button"
+						type="text"
+						onClick={(e): void => {
+							e.stopPropagation();
+							setIsEditing(false);
+						}}
+						disabled={isUpdatingMetricsMetadata}
+					>
+						<X size={14} />
+						<Typography.Text>Cancel</Typography.Text>
+					</Button>
+					<Button
+						className="action-button"
+						type="text"
+						onClick={(e): void => {
+							e.stopPropagation();
+							handleSave();
+						}}
+						disabled={isUpdatingMetricsMetadata}
+					>
+						<Save size={14} />
+						<Typography.Text>Save</Typography.Text>
+					</Button>
+				</div>
+			);
+		}
+		return (
+			<div className="action-menu">
 				<Button
 					className="action-button"
 					type="text"
 					onClick={(e): void => {
 						e.stopPropagation();
-						handleSave();
+						setIsEditing(true);
 					}}
 					disabled={isUpdatingMetricsMetadata}
 				>
-					<Save size={14} />
-					<Typography.Text>Save</Typography.Text>
+					<Edit2 size={14} />
+					<Typography.Text>Edit</Typography.Text>
 				</Button>
-			);
-		}
-		return (
-			<Button
-				className="action-button"
-				type="text"
-				onClick={(e): void => {
-					e.stopPropagation();
-					setIsEditing(true);
-				}}
-				disabled={isUpdatingMetricsMetadata}
-			>
-				<Edit2 size={14} />
-				<Typography.Text>Edit</Typography.Text>
-			</Button>
+			</div>
 		);
 	}, [handleSave, isEditing, isUpdatingMetricsMetadata]);
 

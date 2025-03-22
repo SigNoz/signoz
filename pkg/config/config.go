@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 func New(ctx context.Context, resolverConfig ResolverConfig, configFactories []factory.ConfigFactory) (*Conf, error) {

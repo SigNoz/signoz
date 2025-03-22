@@ -6,13 +6,13 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 func TestBatcherWithOneAlertAndDefaultConfigs(t *testing.T) {
 	batcher := New(slog.New(slog.NewTextHandler(io.Discard, nil)), NewConfig())
-	batcher.Start(context.Background())
+	_ = batcher.Start(context.Background())
 
 	batcher.Add(context.Background(), &alertmanagertypes.PostableAlert{Alert: alertmanagertypes.AlertModel{
 		Labels: map[string]string{"alertname": "test"},
@@ -26,7 +26,7 @@ func TestBatcherWithOneAlertAndDefaultConfigs(t *testing.T) {
 
 func TestBatcherWithBatchSize(t *testing.T) {
 	batcher := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Config{Size: 2, Capacity: 4})
-	batcher.Start(context.Background())
+	_ = batcher.Start(context.Background())
 
 	var alerts alertmanagertypes.PostableAlerts
 	for i := 0; i < 4; i++ {
@@ -46,7 +46,7 @@ func TestBatcherWithBatchSize(t *testing.T) {
 
 func TestBatcherWithCClosed(t *testing.T) {
 	batcher := New(slog.New(slog.NewTextHandler(io.Discard, nil)), Config{Size: 2, Capacity: 4})
-	batcher.Start(context.Background())
+	_ = batcher.Start(context.Background())
 
 	var alerts alertmanagertypes.PostableAlerts
 	for i := 0; i < 4; i++ {

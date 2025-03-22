@@ -3,8 +3,8 @@ package dao
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type ModelDao interface {
@@ -36,8 +36,6 @@ type Queries interface {
 
 	GetApdexSettings(ctx context.Context, orgID string, services []string) ([]types.ApdexSettings, *model.ApiError)
 
-	GetIngestionKeys(ctx context.Context) ([]model.IngestionKey, *model.ApiError)
-
 	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError)
 }
 
@@ -63,6 +61,4 @@ type Mutations interface {
 	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
 
 	SetApdexSettings(ctx context.Context, orgID string, set *types.ApdexSettings) *model.ApiError
-
-	InsertIngestionKey(ctx context.Context, ingestionKey *model.IngestionKey) *model.ApiError
 }

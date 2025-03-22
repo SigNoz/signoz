@@ -6,9 +6,8 @@ import { MetricType } from './getMetricsList';
 
 export interface UpdateMetricMetadataProps {
 	description: string;
-	unit: string;
 	metricType: MetricType;
-	temporality: Temporality;
+	temporality?: Temporality;
 	isMonotonic?: boolean;
 }
 
@@ -21,7 +20,7 @@ const updateMetricMetadata = async (
 	metricName: string,
 	props: UpdateMetricMetadataProps,
 ): Promise<SuccessResponse<UpdateMetricMetadataResponse> | ErrorResponse> => {
-	const response = await axios.put(`/metrics/${metricName}/metadata`, {
+	const response = await axios.post(`/metrics/${metricName}/metadata`, {
 		...props,
 	});
 

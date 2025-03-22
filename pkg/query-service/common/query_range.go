@@ -7,10 +7,10 @@ import (
 	"time"
 	"unicode"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 )
 
 func AdjustedMetricTimeRange(start, end, step int64, mq v3.BuilderQuery) (int64, int64) {
@@ -47,7 +47,7 @@ func PastDayRoundOff() int64 {
 func MinAllowedStepInterval(start, end int64) int64 {
 	step := (end - start) / constants.MaxAllowedPointsInTimeSeries / 1000
 	if step < 60 {
-		return step
+		return 60
 	}
 	// return the nearest lower multiple of 60
 	return step - step%60

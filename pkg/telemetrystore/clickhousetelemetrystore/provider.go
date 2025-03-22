@@ -5,8 +5,8 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 type provider struct {
@@ -31,7 +31,7 @@ func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.Telemetr
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hooks ...telemetrystore.TelemetryStoreHook) (telemetrystore.TelemetryStore, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
 	options, err := clickhouse.ParseDSN(config.ClickHouse.DSN)
 	if err != nil {

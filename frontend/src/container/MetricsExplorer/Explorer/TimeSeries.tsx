@@ -2,11 +2,12 @@ import classNames from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter/BuilderUnits';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -55,6 +56,8 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 		[showOneChartPerQuery, stagedQuery],
 	);
 
+	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
 			queryKey: [
@@ -98,29 +101,36 @@ function TimeSeries({ showOneChartPerQuery }: TimeSeriesProps): JSX.Element {
 		[showOneChartPerQuery, queries],
 	);
 
+	const onUnitChangeHandler = (value: string): void => {
+		setYAxisUnit(value);
+	};
+
 	return (
-		<div
-			className={classNames({
-				'time-series-container': changeLayoutForOneChartPerQuery,
-			})}
-		>
-			{responseData.map((datapoint, index) => (
-				<div
-					className="time-series-view"
-					// eslint-disable-next-line react/no-array-index-key
-					key={index}
-				>
-					<TimeSeriesView
-						isFilterApplied={false}
-						isError={queries[index].isError}
-						isLoading={queries[index].isLoading}
-						data={datapoint}
-						yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
-						dataSource={DataSource.METRICS}
-					/>
-				</div>
-			))}
-		</div>
+		<>
+			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			<div
+				className={classNames({
+					'time-series-container': changeLayoutForOneChartPerQuery,
+				})}
+			>
+				{responseData.map((datapoint, index) => (
+					<div
+						className="time-series-view"
+						// eslint-disable-next-line react/no-array-index-key
+						key={index}
+					>
+						<TimeSeriesView
+							isFilterApplied={false}
+							isError={queries[index].isError}
+							isLoading={queries[index].isLoading}
+							data={datapoint}
+							yAxisUnit={yAxisUnit}
+							dataSource={DataSource.METRICS}
+						/>
+					</div>
+				))}
+			</div>
+		</>
 	);
 }
 

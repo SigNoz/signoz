@@ -16,8 +16,8 @@ import (
 
 	"golang.org/x/text/cases"
 
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 )
 
 // this file contains all the methods and structs

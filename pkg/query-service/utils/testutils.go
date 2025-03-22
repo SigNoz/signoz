@@ -5,15 +5,15 @@ import (
 	"os"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	_ "github.com/mattn/go-sqlite3"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/factory/factorytest"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
 )
 
 func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath string) {
@@ -49,6 +49,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewModifyOrgDomainFactory(),
 			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
 			sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlStore),
+			sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlStore),
 		),
 	)
 	if err != nil {
@@ -70,7 +71,7 @@ func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	if err != nil {
 		t.Fatalf("could not initialize dao: %v", err)
 	}
-	dashboards.InitDB(sqlStore.BunDB())
+	_ = dashboards.InitDB(sqlStore.BunDB())
 
 	return sqlStore
 }

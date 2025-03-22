@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 var (

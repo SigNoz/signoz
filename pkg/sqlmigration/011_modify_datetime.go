@@ -3,9 +3,9 @@ package sqlmigration
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 type modifyDatetime struct{}
@@ -37,7 +37,7 @@ func (migration *modifyDatetime) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	tables := []string{"dashboards", "rules", "planned_maintenance", "ttl_status", "saved_views"}
 	columns := []string{"created_at", "updated_at"}

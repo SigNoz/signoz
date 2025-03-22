@@ -3,8 +3,8 @@ package inmemory
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/cache/status"
 	go_cache "github.com/patrickmn/go-cache"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
 )
 
 // cache implements the Cache interface
@@ -47,7 +47,7 @@ func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 	if !found {
 		return
 	}
-	c.cc.Replace(cacheKey, item, ttl)
+	_ = c.cc.Replace(cacheKey, item, ttl)
 }
 
 // Remove removes the cache entry

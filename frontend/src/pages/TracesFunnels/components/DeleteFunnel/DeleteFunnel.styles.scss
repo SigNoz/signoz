@@ -1,0 +1,25 @@
+.signoz-modal.delete-funnel-modal {
+	.funnel-modal__ok-btn {
+		background: var(--bg-cherry-500) !important;
+	}
+	.delete-funnel-modal-content {
+		color: var(--bg-vanilla-400);
+		font-size: 14px;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+	}
+	.ant-modal-header {
+		padding-bottom: 8px;
+		border-bottom: 0;
+	}
+	.ant-modal-body {
+		padding-top: 0;
+		padding-bottom: 24px;
+	}
+}
+
+.lightMode {
+	.delete-funnel-modal-content {
+		color: var(--bg-ink-100) !important;
+	}
+}
