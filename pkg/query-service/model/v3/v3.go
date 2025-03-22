@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -1412,7 +1412,7 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 // The source page name is used to identify the page that initiated the query
 // The source page could be "traces", "logs", "metrics".
 type SavedView struct {
-	UUID           string          `json:"uuid,omitempty"`
+	UUID           valuer.UUID     `json:"uuid,omitempty"`
 	Name           string          `json:"name"`
 	Category       string          `json:"category"`
 	CreatedAt      time.Time       `json:"createdAt"`
@@ -1432,9 +1432,6 @@ func (eq *SavedView) Validate() error {
 		return fmt.Errorf("composite query is required")
 	}
 
-	if eq.UUID == "" {
-		eq.UUID = uuid.New().String()
-	}
 	return eq.CompositeQuery.Validate()
 }
 
