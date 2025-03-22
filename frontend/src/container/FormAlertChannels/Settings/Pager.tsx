@@ -10,7 +10,24 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	return (
 		<>
-			<Form.Item name="routing_key" label={t('field_pager_routing_key')} required>
+			<Form.Item
+				name="routing_key"
+				label={t('field_pager_routing_key')}
+				tooltip={{
+					title: (
+						<div
+							dangerouslySetInnerHTML={{
+								__html: t('tooltip_pager_routing_key').replace(
+									/\[([^\]]+)\]\(([^)]+)\)/g,
+									'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+								),
+							}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+			>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
