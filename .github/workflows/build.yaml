@@ -41,19 +41,18 @@ jobs:
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
           echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
           echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
-      - uses: benjlevesque/short-sha@v2.2
-        id: short-sha
-      - name: branch-name
-        id: branch-name
-        uses: tj-actions/branch-names@v7.0.7
-      - name: docker-tag
+      - name: github-ref-info
+        shell: bash
         run: |
-          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            echo "VERSION=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
-          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
-            echo "VERSION=latest" >> $GITHUB_ENV
+          GH_REF=${{ github.ref }}
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            PREFIX="refs/tags/"
+            echo "GH_IS_TAG=true" >> $GITHUB_ENV
+            echo "GH_TAG=${GH_REF#$PREFIX}" >> $GITHUB_ENV
           else
-            echo "VERSION=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+            PREFIX="refs/heads/"
+            echo "GH_IS_TAG=false" >> $GITHUB_ENV
+            echo "GH_BRANCH_NAME=${GH_REF#$PREFIX}" >> $GITHUB_ENV
           fi
       - name: cross-compilation-tools
         run: |
@@ -83,19 +82,18 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: benjlevesque/short-sha@v2.2
-        id: short-sha
-      - name: branch-name
-        id: branch-name
-        uses: tj-actions/branch-names@v7.0.7
-      - name: docker-tag
+      - name: github-ref-info
+        shell: bash
         run: |
-          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            echo "VERSION=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
-          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
-            echo "VERSION=latest" >> $GITHUB_ENV
+          GH_REF=${{ github.ref }}
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            PREFIX="refs/tags/"
+            echo "GH_IS_TAG=true" >> $GITHUB_ENV
+            echo "GH_TAG=${GH_REF#$PREFIX}" >> $GITHUB_ENV
           else
-            echo "VERSION=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+            PREFIX="refs/heads/"
+            echo "GH_IS_TAG=false" >> $GITHUB_ENV
+            echo "GH_BRANCH_NAME=${GH_REF#$PREFIX}" >> $GITHUB_ENV
           fi
       - name: cross-compilation-tools
         run: |
