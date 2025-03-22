@@ -563,6 +563,7 @@ function NamespaceDetails({
 							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="namespaceTraces"
+							category={InfraMonitoringEvents.Namespace}
 							queryKeyFilters={[QUERY_KEYS.K8S_NAMESPACE_NAME]}
 						/>
 					)}

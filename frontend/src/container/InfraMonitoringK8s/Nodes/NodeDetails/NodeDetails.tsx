@@ -564,6 +564,7 @@ function NodeDetails({
 							selectedInterval={selectedInterval}
 							queryKeyFilters={[QUERY_KEYS.K8S_NODE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME]}
 							queryKey="nodeTraces"
+							category={InfraMonitoringEvents.Node}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

@@ -605,6 +605,7 @@ function PodDetails({
 							tracesFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="podTraces"
+							category={InfraMonitoringEvents.Pod}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_POD_NAME,
 								QUERY_KEYS.K8S_CLUSTER_NAME,

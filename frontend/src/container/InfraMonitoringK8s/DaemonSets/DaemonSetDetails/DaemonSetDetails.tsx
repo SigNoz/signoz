@@ -590,6 +590,7 @@ function DaemonSetDetails({
 							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="daemonsetTraces"
+							category={InfraMonitoringEvents.DaemonSet}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_DAEMON_SET_NAME,
 								QUERY_KEYS.K8S_NAMESPACE_NAME,
