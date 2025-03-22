@@ -3,14 +3,14 @@ LABEL maintainer="signoz"
 WORKDIR /root
 
 ARG OS="linux"
-ARG ARCH
+ARG TARGETARCH
 
 RUN apk update && \
 	apk add ca-certificates && \
 	rm -rf /var/cache/apk/*
 
 
-COPY ./target/${OS}-${ARCH}/signoz-community /root/signoz
+COPY ./target/${OS}-${TARGETARCH}/signoz-community /root/signoz
 COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
 COPY pkg/query-service/templates /root/templates
 COPY frontend/build/ /etc/signoz/web/
