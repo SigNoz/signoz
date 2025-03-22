@@ -2,6 +2,7 @@
 import './QueryBuilderSearchV2.styles.scss';
 
 import { Typography } from 'antd';
+import cx from 'classnames';
 import {
 	ArrowDown,
 	ArrowUp,
@@ -25,6 +26,7 @@ interface ICustomDropdownProps {
 	exampleQueries: TagFilter[];
 	onChange: (value: TagFilter) => void;
 	currentFilterItem?: ITag;
+	isLogsDataSource: boolean;
 }
 
 export default function QueryBuilderSearchDropdown(
@@ -38,11 +40,14 @@ export default function QueryBuilderSearchDropdown(
 		exampleQueries,
 		options,
 		onChange,
+		isLogsDataSource,
 	} = props;
 	const userOs = getUserOperatingSystem();
 	return (
 		<>
-			<div className="content">
+			<div
+				className={cx('content', { 'non-logs-data-source': !isLogsDataSource })}
+			>
 				{!currentFilterItem?.key ? (
 					<div className="suggested-filters">Suggested Filters</div>
 				) : !currentFilterItem?.op ? (
