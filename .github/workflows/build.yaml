@@ -14,7 +14,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: setup
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: "1.22"
       - name: setup-qemu
@@ -69,7 +69,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: setup-go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: "1.22"
       - name: setup-qemu

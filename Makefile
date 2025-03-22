@@ -116,7 +116,7 @@ docker-build-community: $(DOCKER_BUILD_ARCHS_COMMUNITY)
 $(DOCKER_BUILD_ARCHS_COMMUNITY): docker-build-community-%: go-build-community-% js-build
 	@echo ">> building docker image for $(NAME)-community"
 	@docker build -t "$(DOCKER_REGISTRY_COMMUNITY):$(VERSION)-$*" \
-		--build-arg ARCH="$*" \
+		--build-arg TARGETARCH="$*" \
 		-f $(DOCKERFILE_COMMUNITY) $(SRC)
 
 .PHONY: docker-buildx-community
@@ -124,7 +124,6 @@ docker-buildx-community: ## Builds the docker image for community using buildx
 docker-buildx-community: go-build-community js-build
 	@echo ">> building docker image for $(NAME)-community"
 	@docker buildx build --file $(DOCKERFILE_COMMUNITY) \
-		--build-arg ARCH="$*" \
 		--progress plain \
 		--platform linux/arm64,linux/amd64 \
 		--push \
@@ -136,7 +135,7 @@ docker-build-enterprise: $(DOCKER_BUILD_ARCHS_ENTERPRISE)
 $(DOCKER_BUILD_ARCHS_ENTERPRISE): docker-build-enterprise-%: go-build-enterprise-% js-build
 	@echo ">> building docker image for $(NAME)"
 	@docker build -t "$(DOCKER_REGISTRY_ENTERPRISE):$(VERSION)-$*" \
-		--build-arg ARCH="$*" \
+		--build-arg TARGETARCH="$*" \
 		-f $(DOCKERFILE_ENTERPRISE) $(SRC)
 
 .PHONY: docker-buildx-enterprise
@@ -144,7 +143,6 @@ docker-buildx-enterprise: ## Builds the docker image for enterprise using buildx
 docker-buildx-enterprise: go-build-enterprise js-build
 	@echo ">> building docker image for $(NAME)"
 	@docker buildx build --file $(DOCKERFILE_ENTERPRISE) \
-		--build-arg ARCH="$*" \
 		--progress plain \
 		--platform linux/arm64,linux/amd64 \
 		--push \
