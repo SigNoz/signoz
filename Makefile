@@ -11,8 +11,6 @@ BRANCH_NAME             ?= $(subst /,-,$(shell git rev-parse --abbrev-ref HEAD))
 VERSION                 ?= $(BRANCH_NAME)-$(COMMIT_SHORT_SHA)
 TIMESTAMP               ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 ARCHS					= amd64 arm64
-TMP_DIR                 ?= $(shell pwd)/tmp
-BIN_DIR                 ?= $(shell pwd)/tmp/bin
 TARGET_DIR              ?= $(shell pwd)/target
 
 ZEUS_URL					   		?= https://api.signoz.cloud
@@ -39,14 +37,8 @@ JS_BUILD_CONTEXT 				= $(SRC)/frontend
 ##############################################################
 # directories
 ##############################################################
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
-
 $(TARGET_DIR):
 	mkdir -p $(TARGET_DIR)
-
-$(TMP_DIR):
-	mkdir -p $(TMP_DIR)
 
 ##############################################################
 # common commands
