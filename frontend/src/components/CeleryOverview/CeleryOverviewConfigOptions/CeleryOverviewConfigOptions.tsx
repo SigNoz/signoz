@@ -16,8 +16,9 @@ export interface SelectOptionConfig {
 	queryParam: QueryParams;
 	filterType: string | string[];
 	shouldSetQueryParams?: boolean;
-	onChange?: (value: string[]) => void;
-	values?: string[];
+	onChange?: (value: string | string[]) => void;
+	values?: string | string[];
+	isMultiple?: boolean;
 }
 
 export function FilterSelect({
@@ -27,6 +28,7 @@ export function FilterSelect({
 	values,
 	shouldSetQueryParams,
 	onChange,
+	isMultiple,
 }: SelectOptionConfig): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		filterType,
@@ -41,7 +43,8 @@ export function FilterSelect({
 			key={filterType.toString()}
 			placeholder={placeholder}
 			showSearch
-			mode="multiple"
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...(isMultiple ? { mode: 'multiple' } : {})}
 			options={options}
 			loading={isFetching}
 			className="config-select-option"
@@ -66,7 +69,13 @@ export function FilterSelect({
 			onChange={(value): void => {
 				handleSearch('');
 				if (shouldSetQueryParams) {
-					setQueryParamsFromOptions(value, urlQuery, history, location, queryParam);
+					setQueryParamsFromOptions(
+						value as string[],
+						urlQuery,
+						history,
+						location,
+						queryParam,
+					);
 				}
 				onChange?.(value);
 			}}
@@ -78,6 +87,7 @@ FilterSelect.defaultProps = {
 	shouldSetQueryParams: true,
 	onChange: (): void => {},
 	values: [],
+	isMultiple: true,
 };
 
 function CeleryOverviewConfigOptions(): JSX.Element {
