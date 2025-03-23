@@ -58,8 +58,8 @@ devenv-clickhouse: ## Run clickhouse in devenv
 ##############################################################
 # go commands
 ##############################################################
-.PHONY: go-run
-go-run: ## Runs the go backend server
+.PHONY: go-run-enterprise
+go-run-enterprise: ## Runs the enterprise go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
 	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
 	SIGNOZ_WEB_ENABLED=false \
@@ -68,8 +68,24 @@ go-run: ## Runs the go backend server
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	go run -race \
-		$(GO_BUILD_CONTEXT_ENTERPRISE )/main.go \
-		--config ./pkg/query-service/config/prometheus.yml \
+		$(GO_BUILD_CONTEXT_ENTERPRISE)/main.go \
+		--config ./conf/prometheus.yml \
+		--cluster cluster \
+		--use-logs-new-schema true \
+		--use-trace-new-schema true
+
+.PHONY: go-run-community
+go-run-community: ## Runs the community go backend server
+	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
+	SIGNOZ_WEB_ENABLED=false \
+	SIGNOZ_JWT_SECRET=secret \
+	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
+	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
+	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
+	go run -race \
+		$(GO_BUILD_CONTEXT_COMMUNITY)/main.go \
+		--config ./conf/prometheus.yml \
 		--cluster cluster \
 		--use-logs-new-schema true \
 		--use-trace-new-schema true
