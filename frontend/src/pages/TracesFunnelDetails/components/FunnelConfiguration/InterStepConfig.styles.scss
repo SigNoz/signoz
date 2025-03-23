@@ -1,10 +1,8 @@
 .inter-step-config {
 	display: flex;
 	align-items: center;
-	width: 532px;
-	height: 32px;
-	background-color: var(--bg-ink-400);
-	padding: 16px;
+	// height: 32px;
+	// padding: 16px;
 	&::before {
 		content: '';
 		position: absolute;
@@ -16,6 +14,23 @@
 		background-color: var(--bg-ink-400);
 		border-radius: 50%;
 		z-index: 1;
+	}
+	&__label {
+		color: var(--Vanilla-400, #c0c1c3);
+		font-size: 14px;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+		flex-shrink: 0;
+	}
+	&__divider {
+		width: 100%;
+		.ant-divider {
+			margin: 0;
+			border-color: var(--bg-slate-400);
+		}
+	}
+	&__latency-options {
+		flex-shrink: 0;
 	}
 }
 
