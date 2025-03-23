@@ -97,6 +97,6 @@ service:
       processors: [resourcedetection, batch]
       exporters: [otlp]
     logs:
-      receivers: [otlp, tcplog/docker]
+      receivers: [otlp]
       processors: [resourcedetection, batch]
       exporters: [otlp]
