@@ -11,7 +11,7 @@ RUN apk update && \
 
 
 COPY ./target/${OS}-${TARGETARCH}/signoz-community /root/signoz
-COPY ./config/prometheus.yml /root/config/prometheus.yml
+COPY ./conf/prometheus.yml /root/config/prometheus.yml
 COPY ./templates/email /root/templates
 COPY frontend/build/ /etc/signoz/web/
 
