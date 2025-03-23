@@ -13,7 +13,7 @@
 		flex-shrink: 0;
 	}
 	&__divider {
-		width: 270px;
+		width: 100%;
 		.ant-divider {
 			margin: 0;
 			border-color: var(--bg-slate-400);
@@ -22,6 +22,7 @@
 	&__time-range {
 		width: 192px;
 		height: 32px;
+		flex-shrink: 0;
 		.timeSelection-input {
 			.ant-input-prefix > svg {
 				height: 12px;
