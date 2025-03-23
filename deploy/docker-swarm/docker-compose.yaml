@@ -2,6 +2,7 @@ version: "3"
 x-common: &common
   networks:
     - signoz-net
+    - dokploy-network
   deploy:
     restart_policy:
       condition: on-failure
@@ -160,7 +161,7 @@ services:
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
     deploy:
-      replicas: 3
+      replicas: 1
     depends_on:
       - clickhouse
       - schema-migrator
@@ -181,6 +182,9 @@ services:
 networks:
   signoz-net:
     name: signoz-net
+  dokploy-network:
+    name: dokploy-network
+    external: true
 volumes:
   clickhouse:
     name: signoz-clickhouse
