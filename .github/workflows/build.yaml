@@ -58,6 +58,8 @@ jobs:
         run: |
           if [ '${{ env.GH_IS_TAG }}' == 'true' ]; then
             echo "VERSION=${{ env.GH_TAG }}" >> $GITHUB_ENV
+          elif [ '${{ env.GH_BRANCH_NAME }}' == 'main' ]; then
+            echo "VERSION=latest" >> $GITHUB_ENV
           else
             echo "VERSION=${{ env.GH_BRANCH_NAME }}" >> $GITHUB_ENV
           fi
@@ -106,6 +108,8 @@ jobs:
         run: |
           if [ '${{ env.GH_IS_TAG }}' == 'true' ]; then
             echo "VERSION=${{ env.GH_TAG }}" >> $GITHUB_ENV
+          elif [ '${{ env.GH_BRANCH_NAME }}' == 'main' ]; then
+            echo "VERSION=latest" >> $GITHUB_ENV
           else
             echo "VERSION=${{ env.GH_BRANCH_NAME }}" >> $GITHUB_ENV
           fi
