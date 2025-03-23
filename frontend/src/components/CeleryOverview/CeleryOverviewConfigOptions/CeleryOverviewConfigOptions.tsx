@@ -15,12 +15,18 @@ export interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
 	filterType: string | string[];
+	shouldSetQueryParams?: boolean;
+	onChange?: (value: string[]) => void;
+	values?: string[];
 }
 
 export function FilterSelect({
 	placeholder,
 	queryParam,
 	filterType,
+	values,
+	shouldSetQueryParams,
+	onChange,
 }: SelectOptionConfig): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		filterType,
@@ -43,7 +49,11 @@ export function FilterSelect({
 			maxTagCount={4}
 			allowClear
 			maxTagPlaceholder={SelectMaxTagPlaceholder}
-			value={getValuesFromQueryParams(queryParam, urlQuery) || []}
+			value={
+				!shouldSetQueryParams && !!values?.length
+					? values
+					: getValuesFromQueryParams(queryParam, urlQuery) || []
+			}
 			notFoundContent={
 				isFetching ? (
 					<span>
@@ -55,11 +65,20 @@ export function FilterSelect({
 			}
 			onChange={(value): void => {
 				handleSearch('');
-				setQueryParamsFromOptions(value, urlQuery, history, location, queryParam);
+				if (shouldSetQueryParams) {
+					setQueryParamsFromOptions(value, urlQuery, history, location, queryParam);
+				}
+				onChange?.(value);
 			}}
 		/>
 	);
 }
+
+FilterSelect.defaultProps = {
+	shouldSetQueryParams: true,
+	onChange: (): void => {},
+	values: [],
+};
 
 function CeleryOverviewConfigOptions(): JSX.Element {
 	const selectConfigs: SelectOptionConfig[] = [
