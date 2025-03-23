@@ -1,34 +1,42 @@
 import './FunnelStep.styles.scss';
 
-import { Select, Switch } from 'antd';
+import { Dropdown, Space, Switch } from 'antd';
+import { MenuProps } from 'antd/lib';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { GripVertical, HardHat } from 'lucide-react';
+import { ChevronDown, GripVertical, HardHat } from 'lucide-react';
+import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useState } from 'react';
+import { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
 
-export const LatencyPointers: { value: string; key: string }[] = [
-	{
-		value: 'start_of_span',
-		key: 'Start of span',
-	},
-	{
-		value: 'end_of_span',
-		key: 'End of span',
-	},
-];
+import FunnelStepPopover from './FunnelStepPopover';
 
-const { Option } = Select;
+interface FunnelStepProps {
+	funnelId: string;
+	step: FunnelStepData;
+}
 
-function FunnelStep(): JSX.Element {
+function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 	const query = currentQuery?.builder?.queryData[0] || null;
 
 	const [isErrorsEnabled, setIsErrorsEnabled] = useState(false);
 	const [selectedLatencyPointer, setSelectedLatencyPointer] = useState(
 		LatencyPointers[0].value,
+	);
+
+	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
+		(option) => ({
+			key: option.value,
+			label: option.key,
+			style:
+				option.value === selectedLatencyPointer
+					? { backgroundColor: 'var(--bg-slate-100)' }
+					: {},
+		}),
 	);
 
 	const handleSwitchChange = (): void => {
@@ -39,8 +47,34 @@ function FunnelStep(): JSX.Element {
 		setSelectedLatencyPointer(option);
 	};
 
+	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+
 	return (
 		<div className="funnel-step">
+			{!!step.title || step.description ? (
+				<div className="funnel-step__header">
+					<div className="funnel-step-details">
+						<div className="funnel-step-details__title">{step.title}</div>
+						<div className="funnel-step-details__description">{step.description}</div>
+					</div>
+					<div className="funnel-step-actions">
+						<FunnelStepPopover
+							isPopoverOpen={isPopoverOpen}
+							setIsPopoverOpen={setIsPopoverOpen}
+							funnelId={funnelId}
+							stepId={step.id}
+						/>
+					</div>
+				</div>
+			) : (
+				<FunnelStepPopover
+					isPopoverOpen={isPopoverOpen}
+					setIsPopoverOpen={setIsPopoverOpen}
+					funnelId={funnelId}
+					stepId={step.id}
+					className="step-popover"
+				/>
+			)}
 			<div className="funnel-step__content">
 				<div className="drag-icon">
 					<GripVertical size={14} color="var(--bg-slate-200)" />
@@ -87,18 +121,22 @@ function FunnelStep(): JSX.Element {
 				</div>
 				<div className="latency-pointer">
 					<div className="latency-pointer__label">Latency pointer</div>
-					<Select
-						className="latency-pointer__select"
-						value={selectedLatencyPointer}
-						onChange={handleSelectedLatencyPointer}
-						style={{ width: 100 }}
+					<Dropdown
+						menu={{
+							items: latencyPointerItems,
+							onClick: ({ key }): void => handleSelectedLatencyPointer(key),
+						}}
+						trigger={['click']}
 					>
-						{LatencyPointers.map((option) => (
-							<Option key={option.value} value={option.value}>
-								{option.key}
-							</Option>
-						))}
-					</Select>
+						<Space>
+							{
+								LatencyPointers.find(
+									(option) => option.value === selectedLatencyPointer,
+								)?.key
+							}
+							<ChevronDown size={14} color="var(--bg-vanilla-400)" />
+						</Space>
+					</Dropdown>
 				</div>
 			</div>
 		</div>

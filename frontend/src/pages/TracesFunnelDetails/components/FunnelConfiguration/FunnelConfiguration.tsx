@@ -30,7 +30,7 @@ function FunnelConfiguration({
 			<div className="funnel-configuration__steps-wrapper">
 				<div className="funnel-configuration__steps">
 					<StepsHeader />
-					<StepsContent />
+					<StepsContent stepsData={funnel.steps} />
 				</div>
 				<StepsFooter />
 			</div>
