@@ -11,13 +11,13 @@ import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useHistory, useLocation } from 'react-router-dom';
 
-interface SelectOptionConfig {
+export interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
 	filterType: string | string[];
 }
 
-function FilterSelect({
+export function FilterSelect({
 	placeholder,
 	queryParam,
 	filterType,

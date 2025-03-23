@@ -14,6 +14,7 @@
 		display: flex;
 		align-items: center;
 		gap: 6px;
+		margin-top: 2px;
 
 		.ant-btn-icon {
 			margin-inline-end: 0 !important;
@@ -22,7 +23,7 @@
 
 	.ant-steps-item.steps-content__add-step {
 		.ant-steps-item-icon {
-			margin-left: 10px;
+			margin-left: 4px;
 			margin-right: 20px;
 			width: 12px;
 			height: 12px;
@@ -34,7 +35,7 @@
 
 	.ant-steps-item-process .ant-steps-item-icon,
 	.ant-steps-item-icon {
-		margin-left: 6px;
+		// margin-left: 6px;
 		height: 20px;
 		width: 20px;
 		display: flex;
@@ -52,6 +53,12 @@
 		}
 	}
 
+	.ant-steps.ant-steps-vertical
+		> .ant-steps-item
+		> .ant-steps-item-container
+		> .ant-steps-item-tail {
+		inset-inline-start: 9px;
+	}
 	.ant-steps-item-tail {
 		padding: 20px 0 0 !important;
 

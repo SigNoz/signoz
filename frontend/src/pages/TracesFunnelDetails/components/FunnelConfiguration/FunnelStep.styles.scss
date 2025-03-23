@@ -1,9 +1,102 @@
+.traces-funnel-where-filter {
+	.keyboard-shortcuts {
+		display: none !important;
+	}
+}
+
 .funnel-step {
-	width: 532px;
-	height: 147px;
 	background: var(--bg-ink-400);
 	color: var(--bg-vanilla-400);
-	padding: 16px;
+	border: 1px solid var(--bg-slate-500);
+	border-radius: 6px;
+	&__content {
+		display: flex;
+		align-items: baseline;
+		gap: 6px;
+		padding: 16px;
+		padding-left: 6px;
+		.drag-icon {
+			cursor: grab;
+		}
+		.filters {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			.ant-select-selector {
+				background: var(--bg-ink-300);
+				border: 1px solid var(--bg-slate-500);
+				.ant-select-selection-placeholder {
+					font-size: 12px;
+					line-height: 16px;
+				}
+			}
+			&__service-and-span {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				.ant-select-selection-placeholder {
+					color: var(--bg-vanilla-400);
+				}
+				.ant-select-multiple {
+					width: 239px;
+				}
+			}
+			&__where-filter {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				.label {
+					color: var(--bg-vanilla-400);
+					font-size: 14px;
+					line-height: 20px;
+					font-weight: 400;
+				}
+				.query-builder-search-v2 {
+					width: 100%;
+				}
+			}
+		}
+		.ant-steps.ant-steps-vertical > .ant-steps-item .ant-steps-item-description {
+			padding-bottom: 16px;
+		}
+	}
+	&__footer {
+		display: flex;
+		align-items: center;
+		border-top: 1px solid var(--bg-slate-500);
+
+		.error {
+			display: flex;
+			align-items: center;
+			padding: 10.5px 12px 10.5px 16px;
+			gap: 50px;
+			border-right: 1px solid var(--bg-slate-500);
+		}
+		.error__label,
+		.latency-pointer__label,
+		.latency-pointer__select .ant-select-selector {
+			color: var(--bg-vanilla-400);
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
+		.latency-pointer {
+			padding: 10.5px 16px 10.5px 12px;
+			width: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			&__select {
+				&.ant-select {
+					width: 125px !important;
+					height: 20px;
+					.ant-select-selector {
+						border: none;
+					}
+				}
+			}
+		}
+	}
 }
 
 .lightMode {
