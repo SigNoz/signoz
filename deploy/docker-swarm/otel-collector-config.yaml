@@ -1,4 +1,7 @@
 receivers:
+  httplogreceiver/json:
+    endpoint: 0.0.0.0:8082
+    source: json
   otlp:
     protocols:
       grpc:
@@ -96,6 +99,6 @@ service:
       processors: [batch]
       exporters: [clickhousemetricswrite/prometheus, signozclickhousemetrics]
     logs:
-      receivers: [otlp]
+      receivers: [otlp, httplogreceiver/json]
       processors: [batch]
       exporters: [clickhouselogsexporter]
