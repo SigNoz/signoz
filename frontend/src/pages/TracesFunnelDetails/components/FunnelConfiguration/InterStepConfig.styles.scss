@@ -1,8 +1,9 @@
 .inter-step-config {
 	display: flex;
 	align-items: center;
-	// height: 32px;
-	// padding: 16px;
+	.ant-form-item {
+		margin-bottom: 0;
+	}
 	&::before {
 		content: '';
 		position: absolute;

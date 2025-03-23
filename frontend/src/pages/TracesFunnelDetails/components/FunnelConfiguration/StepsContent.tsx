@@ -4,7 +4,7 @@ import { Button, Steps } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PlusIcon } from 'lucide-react';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 import { v4 } from 'uuid';
 
@@ -14,10 +14,20 @@ import InterStepConfig from './InterStepConfig';
 const { Step } = Steps;
 
 interface StepsContentProps {
-	stepsData: FunnelStepData[] | undefined;
+	initialSteps: FunnelStepData[];
 }
-function StepsContent({ stepsData }: StepsContentProps): JSX.Element {
-	const [steps, setSteps] = useState(stepsData || initialStepsData);
+
+function StepsContent({ initialSteps }: StepsContentProps): JSX.Element {
+	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
+
+	const handleStepChange = (
+		index: number,
+		newStep: Partial<FunnelStepData>,
+	): void => {
+		setSteps((prev) =>
+			prev.map((step, i) => (i === index ? { ...step, ...newStep } : step)),
+		);
+	};
 
 	const handleAddStep = (): void => {
 		setSteps((prev) => [
@@ -25,6 +35,18 @@ function StepsContent({ stepsData }: StepsContentProps): JSX.Element {
 			{ ...initialStepsData[0], id: v4(), funnel_order: 3 },
 		]);
 	};
+
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			if (steps !== initialSteps) {
+				// Debounced API call for auto-save
+				// saveStepsToAPI(steps);
+				console.log('steps debounced', steps);
+			}
+		}, 1000);
+
+		return (): void => clearTimeout(handler);
+	}, [steps, initialSteps]);
 
 	return (
 		<div className="steps-content">
@@ -35,9 +57,20 @@ function StepsContent({ stepsData }: StepsContentProps): JSX.Element {
 							key={`step-${index + 1}`}
 							description={
 								<div className="steps-content__description">
-									<FunnelStep funnelId="1" step={step} />
+									<FunnelStep
+										funnelId="1"
+										stepData={step}
+										index={index}
+										onStepChange={handleStepChange}
+									/>
 									{/* Display InterStepConfig only between steps */}
-									{index < steps.length - 1 && <InterStepConfig />}
+									{index < steps.length - 1 && (
+										<InterStepConfig
+											index={index}
+											onStepChange={handleStepChange}
+											step={step}
+										/>
+									)}
 								</div>
 							}
 						/>

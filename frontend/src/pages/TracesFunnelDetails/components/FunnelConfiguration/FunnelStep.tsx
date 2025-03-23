@@ -1,6 +1,6 @@
 import './FunnelStep.styles.scss';
 
-import { Dropdown, Space, Switch } from 'antd';
+import { Dropdown, Form, Space, Switch } from 'antd';
 import { MenuProps } from 'antd/lib';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
@@ -9,7 +9,6 @@ import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSea
 import { ChevronDown, GripVertical, HardHat } from 'lucide-react';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useMemo, useState } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -17,46 +16,31 @@ import FunnelStepPopover from './FunnelStepPopover';
 
 interface FunnelStepProps {
 	funnelId: string;
-	step: FunnelStepData;
+	stepData: FunnelStepData;
+	index: number;
+	onStepChange: (index: number, newValues: Partial<FunnelStepData>) => void;
 }
 
-function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
+function FunnelStep({
+	funnelId,
+	stepData,
+	index,
+	onStepChange,
+}: FunnelStepProps): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
-
-	const [hasError, setHasError] = useState(false);
-	const [selectedLatencyPointer, setSelectedLatencyPointer] = useState(
-		LatencyPointers[0].value,
-	);
 
 	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
 		(option) => ({
 			key: option.value,
 			label: option.key,
 			style:
-				option.value === selectedLatencyPointer
+				option.value === stepData.latency_pointer
 					? { backgroundColor: 'var(--bg-slate-100)' }
 					: {},
 		}),
 	);
 
-	const handleSwitchChange = (): void => {
-		setHasError((prev) => !prev);
-	};
-
-	const handleSelectedLatencyPointer = (option: string): void => {
-		setSelectedLatencyPointer(option);
-	};
-
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-
-	const [serviceName, setServiceName] = useState<string[]>([step.service_name]);
-	const [spanName, setSpanName] = useState<string[]>([step.span_name]);
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>(
-		step.filters ?? {
-			op: 'AND',
-			items: [],
-		},
-	);
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -67,30 +51,35 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 					{
 						...currentQuery.builder.queryData[0],
 						dataSource: DataSource.TRACES,
-						filters,
+						filters: stepData.filters ?? {
+							op: 'AND',
+							items: [],
+						},
 					},
 				],
 			},
 		}),
-		[filters, currentQuery],
+		[stepData.filters, currentQuery],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
 		<div className="funnel-step">
-			{!!step.title || step.description ? (
+			{!!stepData.title || stepData.description ? (
 				<div className="funnel-step__header">
 					<div className="funnel-step-details">
-						<div className="funnel-step-details__title">{step.title}</div>
-						<div className="funnel-step-details__description">{step.description}</div>
+						<div className="funnel-step-details__title">{stepData.title}</div>
+						<div className="funnel-step-details__description">
+							{stepData.description}
+						</div>
 					</div>
 					<div className="funnel-step-actions">
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
 							funnelId={funnelId}
-							stepId={step.id}
+							stepId={stepData.id}
 						/>
 					</div>
 				</div>
@@ -99,7 +88,7 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 					isPopoverOpen={isPopoverOpen}
 					setIsPopoverOpen={setIsPopoverOpen}
 					funnelId={funnelId}
-					stepId={step.id}
+					stepId={stepData.id}
 					className="step-popover"
 				/>
 			)}
@@ -110,36 +99,46 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 				<div className="filters">
 					<div className="filters__service-and-span">
 						<div className="service">
-							<FilterSelect
-								placeholder="Select Service"
-								queryParam={QueryParams.service}
-								filterType="serviceName"
-								shouldSetQueryParams={false}
-								values={serviceName}
-								onChange={(item): void => setServiceName(item)}
-							/>
+							<Form.Item name={['steps', stepData.id, 'service_name']}>
+								<FilterSelect
+									placeholder="Select Service"
+									queryParam={QueryParams.service}
+									filterType="serviceName"
+									shouldSetQueryParams={false}
+									values={stepData.service_name}
+									isMultiple={false}
+									onChange={(v): void =>
+										onStepChange(index, { service_name: v as string })
+									}
+								/>
+							</Form.Item>
 						</div>
 						<div className="span">
-							<FilterSelect
-								placeholder="Select Span name"
-								queryParam={QueryParams.spanName}
-								filterType="name"
-								shouldSetQueryParams={false}
-								values={spanName}
-								onChange={(item): void => setSpanName(item)}
-							/>
+							<Form.Item name={['steps', stepData.id, 'span_name']}>
+								<FilterSelect
+									placeholder="Select Span name"
+									queryParam={QueryParams.spanName}
+									filterType="name"
+									shouldSetQueryParams={false}
+									values={stepData.span_name}
+									isMultiple={false}
+									onChange={(v): void => onStepChange(index, { span_name: v as string })}
+								/>
+							</Form.Item>
 						</div>
 					</div>
 					<div className="filters__where-filter">
 						<div className="label">Where</div>
-						<QueryBuilderSearchV2
-							query={query}
-							onChange={(query): void => setFilters(query)}
-							hasPopupContainer={false}
-							placeholder="Search for filters..."
-							suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
-							rootClassName="traces-funnel-where-filter"
-						/>
+						<Form.Item name={['steps', stepData.id, 'filters']}>
+							<QueryBuilderSearchV2
+								query={query}
+								onChange={(query): void => onStepChange(index, { filters: query })}
+								hasPopupContainer={false}
+								placeholder="Search for filters..."
+								suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
+								rootClassName="traces-funnel-where-filter"
+							/>
+						</Form.Item>
 					</div>
 				</div>
 			</div>
@@ -149,8 +148,10 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 					<Switch
 						className="error__switch"
 						size="small"
-						checked={hasError}
-						onChange={handleSwitchChange}
+						checked={stepData.has_errors}
+						onChange={(): void =>
+							onStepChange(index, { has_errors: !stepData.has_errors })
+						}
 					/>
 				</div>
 				<div className="latency-pointer">
@@ -158,14 +159,17 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 					<Dropdown
 						menu={{
 							items: latencyPointerItems,
-							onClick: ({ key }): void => handleSelectedLatencyPointer(key),
+							onClick: ({ key }): void =>
+								onStepChange(index, {
+									latency_pointer: key as FunnelStepData['latency_pointer'],
+								}),
 						}}
 						trigger={['click']}
 					>
 						<Space>
 							{
 								LatencyPointers.find(
-									(option) => option.value === selectedLatencyPointer,
+									(option) => option.value === stepData.latency_pointer,
 								)?.key
 							}
 							<ChevronDown size={14} color="var(--bg-vanilla-400)" />

@@ -53,6 +53,10 @@
 		gap: 6px;
 		padding: 16px;
 		padding-left: 6px;
+		.ant-form-item {
+			margin: 0;
+			width: 100%;
+		}
 		.drag-icon {
 			cursor: grab;
 		}
@@ -75,7 +79,7 @@
 				.ant-select-selection-placeholder {
 					color: var(--bg-vanilla-400);
 				}
-				.ant-select-multiple {
+				.ant-select {
 					width: 239px;
 				}
 			}

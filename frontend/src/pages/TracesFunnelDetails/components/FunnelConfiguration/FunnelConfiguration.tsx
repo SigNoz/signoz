@@ -1,5 +1,6 @@
 import './FunnelConfiguration.styles.scss';
 
+import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
 import { useState } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
@@ -30,7 +31,7 @@ function FunnelConfiguration({
 			<div className="funnel-configuration__steps-wrapper">
 				<div className="funnel-configuration__steps">
 					<StepsHeader />
-					<StepsContent stepsData={funnel.steps} />
+					<StepsContent initialSteps={funnel.steps ?? initialStepsData} />
 				</div>
 				<StepsFooter />
 			</div>
