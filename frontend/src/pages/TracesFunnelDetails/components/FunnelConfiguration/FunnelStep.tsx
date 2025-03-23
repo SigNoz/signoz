@@ -8,7 +8,8 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { ChevronDown, GripVertical, HardHat } from 'lucide-react';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -21,9 +22,8 @@ interface FunnelStepProps {
 
 function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
-	const query = currentQuery?.builder?.queryData[0] || null;
 
-	const [isErrorsEnabled, setIsErrorsEnabled] = useState(false);
+	const [hasError, setHasError] = useState(false);
 	const [selectedLatencyPointer, setSelectedLatencyPointer] = useState(
 		LatencyPointers[0].value,
 	);
@@ -40,7 +40,7 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 	);
 
 	const handleSwitchChange = (): void => {
-		setIsErrorsEnabled(!isErrorsEnabled);
+		setHasError((prev) => !prev);
 	};
 
 	const handleSelectedLatencyPointer = (option: string): void => {
@@ -48,6 +48,34 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 	};
 
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
+
+	const [serviceName, setServiceName] = useState<string[]>([step.service_name]);
+	const [spanName, setSpanName] = useState<string[]>([step.span_name]);
+	const [filters, setFilters] = useState<IBuilderQuery['filters']>(
+		step.filters ?? {
+			op: 'AND',
+			items: [],
+		},
+	);
+
+	const updatedCurrentQuery = useMemo(
+		() => ({
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: [
+					{
+						...currentQuery.builder.queryData[0],
+						dataSource: DataSource.TRACES,
+						filters,
+					},
+				],
+			},
+		}),
+		[filters, currentQuery],
+	);
+
+	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
 		<div className="funnel-step">
@@ -86,6 +114,9 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 								placeholder="Select Service"
 								queryParam={QueryParams.service}
 								filterType="serviceName"
+								shouldSetQueryParams={false}
+								values={serviceName}
+								onChange={(item): void => setServiceName(item)}
 							/>
 						</div>
 						<div className="span">
@@ -93,6 +124,9 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 								placeholder="Select Span name"
 								queryParam={QueryParams.spanName}
 								filterType="name"
+								shouldSetQueryParams={false}
+								values={spanName}
+								onChange={(item): void => setSpanName(item)}
 							/>
 						</div>
 					</div>
@@ -100,7 +134,7 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 						<div className="label">Where</div>
 						<QueryBuilderSearchV2
 							query={query}
-							onChange={(query): void => console.log('change', query)}
+							onChange={(query): void => setFilters(query)}
 							hasPopupContainer={false}
 							placeholder="Search for filters..."
 							suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
@@ -115,7 +149,7 @@ function FunnelStep({ funnelId, step }: FunnelStepProps): JSX.Element {
 					<Switch
 						className="error__switch"
 						size="small"
-						checked={isErrorsEnabled}
+						checked={hasError}
 						onChange={handleSwitchChange}
 					/>
 				</div>
