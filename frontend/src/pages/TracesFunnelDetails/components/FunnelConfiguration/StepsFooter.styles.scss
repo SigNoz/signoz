@@ -15,6 +15,14 @@
 		display: flex;
 		gap: 6px;
 		align-items: center;
+		font-size: 14px;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+	}
+	&__valid-traces {
+		&--none {
+			color: var(--text-amber-500);
+		}
 	}
 	&__right {
 		display: flex;

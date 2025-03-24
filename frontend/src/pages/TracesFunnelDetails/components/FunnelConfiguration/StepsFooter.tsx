@@ -1,16 +1,31 @@
 import './StepsFooter.styles.scss';
 
 import { Button } from 'antd';
+import cx from 'classnames';
 import { Check, Cone, Play } from 'lucide-react';
 
-function StepsFooter(): JSX.Element {
+interface StepsFooterProps {
+	stepsCount: number;
+	validTracesCount: number;
+}
+
+function StepsFooter({
+	stepsCount,
+	validTracesCount,
+}: StepsFooterProps): JSX.Element {
 	return (
 		<div className="steps-footer">
 			<div className="steps-footer__left">
 				<Cone className="funnel-icon" size={14} />
-				<span>2 steps</span>
+				<span>{stepsCount} steps</span>
 				<span>·</span>
-				<span>5 valid traces</span>
+				<span
+					className={cx('steps-footer__valid-traces', {
+						'steps-footer__valid-traces--none': validTracesCount === 0,
+					})}
+				>
+					{validTracesCount} valid traces
+				</span>
 			</div>
 			<div className="steps-footer__right">
 				<Button
