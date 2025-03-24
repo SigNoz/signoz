@@ -36,7 +36,7 @@ jobs:
           echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> .env
           echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> .env
       - name: build-frontend
-        run: make build-frontend-static
+        run:  make js-build
       - name: upload-frontend-artifact
         uses: actions/upload-artifact@v4
         with:
