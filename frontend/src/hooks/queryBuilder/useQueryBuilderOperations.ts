@@ -194,14 +194,15 @@ export const useQueryOperations: UseQueryOperations = ({
 				if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.SUM) {
 					newQuery.aggregateOperator = MetricAggregateOperator.RATE;
 					newQuery.timeAggregation = MetricAggregateOperator.RATE;
+					newQuery.spaceAggregation = MetricAggregateOperator.SUM;
 				} else if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.GAUGE) {
 					newQuery.aggregateOperator = MetricAggregateOperator.AVG;
 					newQuery.timeAggregation = MetricAggregateOperator.AVG;
+					newQuery.spaceAggregation = MetricAggregateOperator.AVG;
 				} else {
-					newQuery.timeAggregation = '';
+					newQuery.timeAggregation = MetricAggregateOperator.RATE;
+					newQuery.spaceAggregation = MetricAggregateOperator.SUM;
 				}
-
-				newQuery.spaceAggregation = '';
 			}
 
 			handleSetQueryData(index, newQuery);
