@@ -126,7 +126,7 @@ alertmanager:
     # The poll interval for periodically syncing the alertmanager with the config in the store.
     poll_interval: 1m
     # The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
-    external_url: http://localhost:9093
+    external_url: http://localhost:8080
     # The global configuration for the alertmanager. All the exahustive fields can be found in the upstream: https://github.com/prometheus/alertmanager/blob/efa05feffd644ba4accb526e98a8c6545d26a783/config/config.go#L833
     global:
       # ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
