@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/go-redis/redis/v8"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 

@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 )
 
 // Connector defines methods for interaction

@@ -18,11 +18,14 @@ import (
 	"text/template"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	errorsV2 "go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/http/render"
-	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
-	"go.signoz.io/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/traceFunnels"
+	"github.com/google/uuid"
+
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/signoz"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -30,44 +33,45 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
-	"go.signoz.io/signoz/pkg/query-service/app/logs"
-	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
-	"go.signoz.io/signoz/pkg/query-service/app/metrics"
-	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/app/querier"
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/contextlinks"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
+	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
+	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
+	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
+	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/version"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 type status string
@@ -223,7 +227,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
-	//explorerCache := metricsexplorer.NewExplorerCache(metricsexplorer.WithCache(opts.Cache))
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
 
 	aH := &APIHandler{
@@ -297,7 +300,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	return aH, nil
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -306,13 +309,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -320,7 +323,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -366,7 +369,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -483,7 +486,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -552,8 +555,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
@@ -638,6 +639,9 @@ func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddlewar
 		Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/metrics/inspect",
 		am.ViewAccess(ah.GetInspectMetricsData)).
+		Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
+		am.ViewAccess(ah.UpdateMetricsMetadata)).
 		Methods(http.MethodPost)
 }
 
@@ -1895,9 +1899,8 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := model.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: aH.SetupCompleted,
 	}
@@ -4459,6 +4462,11 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 }
 
 func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -4470,9 +4478,9 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), claims.OrgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background())
+		payload, apierr = aH.listLogsPipelines(context.Background(), claims.OrgID)
 	}
 
 	if apierr != nil {
@@ -4483,7 +4491,7 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
@@ -4513,7 +4521,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID string, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
@@ -4534,7 +4542,13 @@ func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 
 func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
-	req := logparsingpipeline.PostablePipelines{}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	req := pipelinetypes.PostablePipelines{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -4543,7 +4557,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	createPipeline := func(
 		ctx context.Context,
-		postable []logparsingpipeline.PostablePipeline,
+		postable []pipelinetypes.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
@@ -4554,7 +4568,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, validationErr
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, claims.OrgID, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
@@ -4684,7 +4698,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -5561,4 +5575,547 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	aH.Respond(w, resp)
+}
+
+// RegisterTraceFunnelsRoutes adds trace funnels routes
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *AuthMiddleware) {
+
+	// Main messaging queues router
+	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+
+	// API endpoints
+	traceFunnelsRouter.HandleFunc("/new-funnel", aH.handleNewFunnel).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/steps/update", aH.handleUpdateFunnelStep).Methods("PUT")
+	traceFunnelsRouter.HandleFunc("/list", aH.handleListFunnels).Methods("GET")
+	traceFunnelsRouter.HandleFunc("/get/{funnel_id}", aH.handleGetFunnel).Methods("GET")
+	traceFunnelsRouter.HandleFunc("/delete/{funnel_id}", aH.handleDeleteFunnel).Methods("DELETE")
+	traceFunnelsRouter.HandleFunc("/save", aH.handleSaveFunnel).Methods("POST")
+
+	//// Analytics endpoints
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", func(w http.ResponseWriter, r *http.Request) {
+		aH.handleSlowTraces(w, r, false)
+	}).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", func(w http.ResponseWriter, r *http.Request) {
+		aH.handleSlowTraces(w, r, true)
+	}).Methods("POST")
+
+}
+
+// handleNewFunnel creates a new funnel without steps
+// Steps should be added separately using the update endpoint
+func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
+	var req traceFunnels.NewFunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	userID := claims.UserID
+	orgID := claims.OrgID
+
+	// Validate timestamp is provided and in milliseconds format
+	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "creation_timestamp"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Check for name collision in the SQLite database
+	var count int
+
+	err := aH.Signoz.SQLStore.SQLDB().QueryRow(
+		"SELECT COUNT(*) FROM saved_views WHERE name = ? AND created_by = ? AND category = 'funnel'",
+		req.Name, userID,
+	).Scan(&count)
+
+	if err != nil {
+		zap.L().Error("Error checking for funnel name collision in SQLite: %v", zap.Error(err))
+	} else if count > 0 {
+		http.Error(w, fmt.Sprintf("funnel with name '%s' already exists for user '%s' in the database", req.Name, userID), http.StatusBadRequest)
+		return
+	}
+
+	funnel := &traceFunnels.Funnel{
+		ID:        uuid.New().String(),
+		Name:      req.Name,
+		CreatedAt: req.Timestamp * 1000000, // Convert milliseconds to nanoseconds for internal storage
+		CreatedBy: userID,
+		OrgID:     orgID,
+		Steps:     make([]traceFunnels.FunnelStep, 0),
+	}
+
+	funnelData, err := json.Marshal(funnel)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal funnel data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	createdAt := time.Unix(0, funnel.CreatedAt).UTC().Format(time.RFC3339)
+
+	// Insert new funnel
+	_, err = aH.Signoz.SQLStore.SQLDB().Exec(
+		"INSERT INTO saved_views (uuid, name, category, created_by, updated_by, source_page, data, created_at, updated_at, org_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		funnel.ID, funnel.Name, "funnel", userID, userID, "trace-funnels", string(funnelData), createdAt, createdAt, orgID,
+	)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to save funnel to database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := traceFunnels.NewFunnelResponse{
+		ID:        funnel.ID,
+		Name:      funnel.Name,
+		CreatedAt: funnel.CreatedAt / 1000000,
+		CreatedBy: funnel.CreatedBy,
+		OrgID:     orgID,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleUpdateFunnelStep adds or updates steps for an existing funnel
+// Steps are identified by their step_order, which must be unique within a funnel
+func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Request) {
+	var req traceFunnels.FunnelStepRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	userID := claims.UserID
+
+	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "updated_timestamp"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	aH.Signoz.SQLStore.SQLxDB()
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+
+	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	// Process each step in the request
+	for i := range req.Steps {
+		if req.Steps[i].StepOrder < 1 {
+			req.Steps[i].StepOrder = int64(i + 1) // Default to sequential ordering if not specified
+		}
+	}
+
+	if err := traceFunnels.ValidateFunnelSteps(req.Steps); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Normalize step orders
+	req.Steps = traceFunnels.NormalizeFunnelSteps(req.Steps)
+
+	// Update the funnel with new steps
+	funnel.Steps = req.Steps
+	funnel.UpdatedAt = req.Timestamp * 1000000
+	funnel.UpdatedBy = userID
+
+	funnelData, err := json.Marshal(funnel)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal funnel data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	updatedAt := time.Unix(0, funnel.UpdatedAt).UTC().Format(time.RFC3339)
+
+	_, err = aH.Signoz.SQLStore.SQLDB().Exec(
+		"UPDATE saved_views SET data = ?, updated_by = ?, updated_at = ? WHERE uuid = ? AND category = 'funnel'",
+		string(funnelData), userID, updatedAt, req.FunnelID,
+	)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to update funnel in database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"id":                 funnel.ID,
+		"funnel_name":        funnel.Name,
+		"creation_timestamp": funnel.CreatedAt / 1000000,
+		"user_id":            funnel.CreatedBy,
+		"org_id":             funnel.OrgID,
+		"updated_timestamp":  req.Timestamp,
+		"updated_by":         userID,
+		"steps":              funnel.Steps,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
+	orgID := r.URL.Query().Get("org_id")
+
+	var dbFunnels []*traceFunnels.Funnel
+	var err error
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+
+	if orgID != "" {
+		dbFunnels, err = dbClient.ListFunnelsFromDB(orgID)
+	} else {
+		dbFunnels, err = dbClient.ListAllFunnelsFromDB()
+	}
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error fetching funnels from database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to response format with additional metadata
+	response := make([]map[string]interface{}, 0, len(dbFunnels))
+	for _, f := range dbFunnels {
+		funnelInfo := map[string]interface{}{
+			"id":                 f.ID,
+			"funnel_name":        f.Name,
+			"creation_timestamp": f.CreatedAt / 1000000,
+			"user_id":            f.CreatedBy,
+			"org_id":             f.OrgID,
+		}
+
+		if f.UpdatedAt > 0 {
+			funnelInfo["updated_timestamp"] = f.UpdatedAt / 1000000
+		}
+		if f.UpdatedBy != "" {
+			funnelInfo["updated_by"] = f.UpdatedBy
+		}
+
+		var extraData, tags string
+		err := aH.Signoz.SQLStore.SQLDB().QueryRow(
+			"SELECT IFNULL(extra_data, ''), IFNULL(tags, '') FROM saved_views WHERE uuid = ? AND category = 'funnel'",
+			f.ID,
+		).Scan(&extraData, &tags)
+
+		if err == nil && tags != "" {
+			funnelInfo["tags"] = tags
+		}
+
+		if err == nil && extraData != "" {
+			var extraDataMap map[string]interface{}
+			if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
+				if description, ok := extraDataMap["description"].(string); ok {
+					funnelInfo["description"] = description
+				}
+			}
+		}
+
+		response = append(response, funnelInfo)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var extraData, tags string
+
+	err = aH.Signoz.SQLStore.SQLDB().QueryRow(
+		"SELECT IFNULL(extra_data, ''), IFNULL(tags, '') FROM saved_views WHERE uuid = ? AND category = 'funnel'",
+		funnel.ID,
+	).Scan(&extraData, &tags)
+
+	response := map[string]interface{}{
+		"id":                 funnel.ID,
+		"funnel_name":        funnel.Name,
+		"creation_timestamp": funnel.CreatedAt / 1000000,
+		"user_id":            funnel.CreatedBy,
+		"org_id":             funnel.OrgID,
+		"steps":              funnel.Steps,
+	}
+
+	if funnel.UpdatedAt > 0 {
+		response["updated_timestamp"] = funnel.UpdatedAt / 1000000
+	}
+	if funnel.UpdatedBy != "" {
+		response["updated_by"] = funnel.UpdatedBy
+	}
+
+	if err == nil && tags != "" {
+		response["tags"] = tags
+	}
+
+	if err == nil && extraData != "" {
+		var extraDataMap map[string]interface{}
+		if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
+			if description, ok := extraDataMap["description"].(string); ok {
+				response["description"] = description
+			}
+		}
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	err := dbClient.DeleteFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to delete funnel: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+// handleSaveFunnel saves a funnel to the SQLite database
+// Only requires funnel_id and optional description
+func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
+	var req traceFunnels.SaveFunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	updateTimestamp := req.Timestamp
+	if updateTimestamp == 0 {
+		updateTimestamp = time.Now().UnixMilli()
+	} else {
+		if !traceFunnels.ValidateTimestampIsMilliseconds(updateTimestamp) {
+			http.Error(w, "timestamp must be in milliseconds format (13 digits)", http.StatusBadRequest)
+			return
+		}
+	}
+
+	funnel.UpdatedAt = updateTimestamp * 1000000 // Convert ms to ns
+
+	if req.UserID != "" {
+		funnel.UpdatedBy = req.UserID
+	}
+	extraData := ""
+	if req.Description != "" {
+		descriptionJSON, err := json.Marshal(map[string]string{"description": req.Description})
+		if err != nil {
+			http.Error(w, "failed to marshal description: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		extraData = string(descriptionJSON)
+	}
+
+	orgID := req.OrgID
+	if orgID == "" {
+		orgID = funnel.OrgID
+	}
+
+	if err := dbClient.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var createdAt, updatedAt, tags, extraDataFromDB string
+	err = aH.Signoz.SQLStore.SQLDB().QueryRow(
+		"SELECT created_at, updated_at, IFNULL(tags, ''), IFNULL(extra_data, '') FROM saved_views WHERE uuid = ? AND category = 'funnel'",
+		funnel.ID,
+	).Scan(&createdAt, &updatedAt, &tags, &extraDataFromDB)
+
+	if err != nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "success",
+			"id":     funnel.ID,
+			"name":   funnel.Name,
+		})
+		return
+	}
+
+	response := map[string]string{
+		"status":     "success",
+		"id":         funnel.ID,
+		"name":       funnel.Name,
+		"created_at": createdAt,
+		"updated_at": updatedAt,
+		"created_by": funnel.CreatedBy,
+		"updated_by": funnel.UpdatedBy,
+		"org_id":     funnel.OrgID,
+	}
+
+	if tags != "" {
+		response["tags"] = tags
+	}
+
+	if extraDataFromDB != "" {
+		var extraDataMap map[string]interface{}
+		if err := json.Unmarshal([]byte(extraDataFromDB), &extraDataMap); err == nil {
+			if description, ok := extraDataMap["description"].(string); ok {
+				response["description"] = description
+			}
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(funnel.Steps) < 2 {
+		http.Error(w, "funnel must have at least 2 steps", http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.ValidateTraces(funnel, timeRange)
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	aH.Respond(w, results)
+}
+
+// Analytics handlers
+func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.ValidateTracesWithLatency(funnel, timeRange)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	// Get funnel directly from SQLite database
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.GetStepAnalytics(funnel, timeRange)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleSlowTraces(w http.ResponseWriter, r *http.Request, withErrors bool) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var req traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	stepAExists, stepBExists := false, false
+	for _, step := range funnel.Steps {
+		if step.StepOrder == req.StepAOrder {
+			stepAExists = true
+		}
+		if step.StepOrder == req.StepBOrder {
+			stepBExists = true
+		}
+	}
+
+	if !stepAExists || !stepBExists {
+		http.Error(w, fmt.Sprintf("One or both steps not found. Step A Order: %d, Step B Order: %d", req.StepAOrder, req.StepBOrder), http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.GetSlowestTraces(funnel, req.StepAOrder, req.StepBOrder, req.TimeRange, withErrors)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	aH.Respond(w, results)
 }

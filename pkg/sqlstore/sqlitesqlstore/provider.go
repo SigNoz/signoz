@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type provider struct {
@@ -36,7 +36,7 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlitesqlstore")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlitesqlstore")
 
 	sqldb, err := sql.Open("sqlite3", "file:"+config.Sqlite.Path+"?_foreign_keys=true")
 	if err != nil {

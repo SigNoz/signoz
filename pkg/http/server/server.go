@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +38,7 @@ func New(logger *zap.Logger, cfg Config, handler http.Handler) (*Server, error) 
 
 	return &Server{
 		srv:     srv,
-		logger:  logger.Named("go.signoz.io/pkg/http/server"),
+		logger:  logger.Named("github.com/SigNoz/pkg/http/server"),
 		handler: handler,
 		cfg:     cfg,
 	}, nil

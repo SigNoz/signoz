@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -18,8 +20,6 @@ import (
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 var (
@@ -66,7 +66,7 @@ type Server struct {
 
 func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore) (*Server, error) {
 	server := &Server{
-		logger:     logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		logger:     logger.With("pkg", "github.com/SigNoz/pkg/alertmanager/alertmanagerserver"),
 		registry:   registry,
 		srvConfig:  srvConfig,
 		orgID:      orgID,

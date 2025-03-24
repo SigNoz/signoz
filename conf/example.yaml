@@ -3,6 +3,12 @@
 # Do not modify this file
 #
 
+##################### Version #####################
+version:
+  banner:
+    # Whether to enable the version banner on startup.
+    enabled: true
+
 ##################### Instrumentation #####################
 instrumentation:
   logs:
@@ -82,6 +88,8 @@ apiserver:
     # List of routes to exclude from request responselogging.
     excluded_routes:
       - /api/v1/health
+      - /api/v1/version
+      - /
 
 
 ##################### TelemetryStore #####################

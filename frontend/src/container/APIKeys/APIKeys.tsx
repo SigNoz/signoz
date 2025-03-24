@@ -339,12 +339,15 @@ function APIKeys(): JSX.Element {
 						? getFormattedTime(APIKey?.lastUsed)
 						: 'Never';
 
-				const createdOn = getFormattedTime(APIKey.createdAt);
+				const createdOn = new Date(APIKey.createdAt).toLocaleString();
 
 				const expiresIn =
 					APIKey.expiresAt === 0
 						? Number.POSITIVE_INFINITY
-						: getDateDifference(APIKey?.createdAt, APIKey?.expiresAt);
+						: getDateDifference(
+								new Date(APIKey?.createdAt).getTime() / 1000,
+								APIKey?.expiresAt,
+						  );
 
 				const isExpired = isExpiredToken(APIKey.expiresAt);
 
@@ -354,9 +357,9 @@ function APIKeys(): JSX.Element {
 						: getFormattedTime(APIKey.expiresAt);
 
 				const updatedOn =
-					!APIKey.updatedAt || APIKey.updatedAt === 0
+					!APIKey.updatedAt || APIKey.updatedAt === ''
 						? null
-						: getFormattedTime(APIKey?.updatedAt);
+						: new Date(APIKey.updatedAt).toLocaleString();
 
 				const items: CollapseProps['items'] = [
 					{
@@ -835,7 +838,9 @@ function APIKeys(): JSX.Element {
 						{activeAPIKey?.createdAt && (
 							<Row>
 								<Col span={8}>Created on</Col>
-								<Col span={16}>{getFormattedTime(activeAPIKey?.createdAt)}</Col>
+								<Col span={16}>
+									{new Date(activeAPIKey?.createdAt).toLocaleString()}
+								</Col>
 							</Row>
 						)}
 

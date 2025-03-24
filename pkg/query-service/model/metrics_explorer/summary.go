@@ -1,7 +1,7 @@
 package metrics_explorer
 
 import (
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 type SummaryListMetricsRequest struct {
@@ -31,8 +31,8 @@ type TreeMapMetricsRequest struct {
 type MetricDetail struct {
 	MetricName   string `json:"metric_name"`
 	Description  string `json:"description"`
-	Type         string `json:"type"`
-	Unit         string `json:"unit"`
+	MetricType   string `json:"type"`
+	MetricUnit   string `json:"unit"`
 	TimeSeries   uint64 `json:"timeseries"`
 	Samples      uint64 `json:"samples"`
 	LastReceived int64  `json:"lastReceived"`
@@ -65,6 +65,8 @@ type Metadata struct {
 	MetricType  string `json:"metric_type"`
 	Description string `json:"description"`
 	Unit        string `json:"unit"`
+	Temporality string `json:"temporality"`
+	Monotonic   bool   `json:"monotonic"`
 }
 
 // Alert represents individual alerts associated with the metric.
@@ -159,4 +161,13 @@ type InspectMetricsRequest struct {
 
 type InspectMetricsResponse struct {
 	Series *[]v3.Series `json:"series,omitempty"`
+}
+
+type UpdateMetricsMetadataRequest struct {
+	MetricName  string         `json:"metricName"`
+	MetricType  v3.MetricType  `json:"metricType"`
+	Description string         `json:"description"`
+	Unit        string         `json:"unit"`
+	Temporality v3.Temporality `json:"temporality"`
+	IsMonotonic bool           `json:"isMonotonic"`
 }

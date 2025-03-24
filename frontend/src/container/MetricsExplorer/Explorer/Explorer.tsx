@@ -1,9 +1,8 @@
 import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Button, Switch, Typography } from 'antd';
+import { Switch } from 'antd';
 import axios from 'axios';
-import classNames from 'classnames';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
@@ -23,7 +22,6 @@ import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToD
 import { v4 as uuid } from 'uuid';
 
 import QuerySection from './QuerySection';
-import RelatedMetrics from './RelatedMetrics';
 import TimeSeries from './TimeSeries';
 import { ExplorerTabs } from './types';
 
@@ -44,21 +42,10 @@ function Explorer(): JSX.Element {
 	});
 
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(false);
-	const [selectedTab, setSelectedTab] = useState<ExplorerTabs>(
-		ExplorerTabs.TIME_SERIES,
-	);
+	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 
 	const handleToggleShowOneChartPerQuery = (): void =>
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
-
-	const metricNames = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length === 0) {
-			return [];
-		}
-		return stagedQuery.builder.queryData.map(
-			(query) => query.aggregateAttribute.key,
-		);
-	}, [stagedQuery]);
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -149,7 +136,8 @@ function Explorer(): JSX.Element {
 					</div>
 				</div>
 				<QuerySection />
-				<Button.Group className="explore-tabs">
+				{/* TODO: Enable once we have resolved all related metrics issues */}
+				{/* <Button.Group className="explore-tabs">
 					<Button
 						value={ExplorerTabs.TIME_SERIES}
 						className={classNames('tab', {
@@ -168,14 +156,15 @@ function Explorer(): JSX.Element {
 					>
 						<Typography.Text>Related</Typography.Text>
 					</Button>
-				</Button.Group>
+				</Button.Group> */}
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
 						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />
 					)}
-					{selectedTab === ExplorerTabs.RELATED_METRICS && (
+					{/* TODO: Enable once we have resolved all related metrics issues */}
+					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
 						<RelatedMetrics metricNames={metricNames} />
-					)}
+					)} */}
 				</div>
 			</div>
 			<ExplorerOptionWrapper

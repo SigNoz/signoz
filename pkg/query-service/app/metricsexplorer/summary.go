@@ -10,13 +10,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -54,7 +54,7 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, params *metric
 	case "metric_name":
 		var filterValues []string
 		request := v3.AggregateAttributeRequest{DataSource: v3.DataSourceMetrics, SearchText: params.SearchText, Limit: params.Limit}
-		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true)
+		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true, true)
 		if err != nil {
 			return nil, model.InternalError(err)
 		}
@@ -104,6 +104,8 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		metricDetailsDTO.Metadata.MetricType = metadata.Type
 		metricDetailsDTO.Metadata.Description = metadata.Description
 		metricDetailsDTO.Metadata.Unit = metadata.Unit
+		metricDetailsDTO.Metadata.Temporality = metadata.Temporality
+		metricDetailsDTO.Metadata.Monotonic = metadata.IsMonotonic
 		return nil
 	})
 
@@ -540,4 +542,24 @@ func (receiver *SummaryService) GetInspectMetrics(ctx context.Context, params *m
 	}
 
 	return baseResponse, nil
+}
+
+func (receiver *SummaryService) UpdateMetricsMetadata(ctx context.Context, params *metrics_explorer.UpdateMetricsMetadataRequest) *model.ApiError {
+	if params.MetricType == v3.MetricTypeSum && !params.IsMonotonic && params.Temporality == v3.Cumulative {
+		params.MetricType = v3.MetricTypeGauge
+	}
+	metadata := model.UpdateMetricsMetadata{
+		MetricName:  params.MetricName,
+		MetricType:  params.MetricType,
+		Temporality: params.Temporality,
+		Unit:        params.Unit,
+		Description: params.Description,
+		IsMonotonic: params.IsMonotonic,
+		CreatedAt:   time.Now(),
+	}
+	apiError := receiver.reader.UpdateMetricsMetadata(ctx, &metadata)
+	if apiError != nil {
+		return apiError
+	}
+	return nil
 }

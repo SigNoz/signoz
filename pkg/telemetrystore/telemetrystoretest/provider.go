@@ -2,8 +2,8 @@ package telemetrystoretest
 
 import (
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
-	"go.signoz.io/signoz/pkg/telemetrystore"
 )
 
 var _ telemetrystore.TelemetryStore = (*Provider)(nil)

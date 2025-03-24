@@ -3,6 +3,7 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -10,10 +11,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
 
+import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
 const homeInterval = 30 * 60 * 1000;
@@ -29,7 +32,7 @@ export default function ServiceTraces({
 		(state) => state.globalTime,
 	);
 
-	const { user } = useAppContext();
+	const { user, activeLicenseV3 } = useAppContext();
 
 	const now = new Date().getTime();
 	const [timeRange, setTimeRange] = useState({
@@ -112,19 +115,30 @@ export default function ServiceTraces({
 
 					{user?.role !== USER_ROLES.VIEWER && (
 						<div className="empty-actions-container">
-							<Link to={ROUTES.GET_STARTED}>
-								<Button
-									type="default"
-									className="periscope-btn secondary"
-									onClick={(): void => {
-										logEvent('Homepage: Get Started clicked', {
-											source: 'Service Traces',
-										});
-									}}
-								>
-									Get Started &nbsp; <ArrowRight size={16} />
-								</Button>
-							</Link>
+							<Button
+								type="default"
+								className="periscope-btn secondary"
+								onClick={(): void => {
+									logEvent('Homepage: Get Started clicked', {
+										source: 'Service Traces',
+									});
+
+									if (
+										activeLicenseV3 &&
+										activeLicenseV3.platform === LicensePlatform.CLOUD
+									) {
+										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									} else {
+										window?.open(
+											DOCS_LINKS.ADD_DATA_SOURCE,
+											'_blank',
+											'noopener noreferrer',
+										);
+									}
+								}}
+							>
+								Get Started &nbsp; <ArrowRight size={16} />
+							</Button>
 
 							<Button
 								type="link"
@@ -146,7 +160,7 @@ export default function ServiceTraces({
 				</div>
 			</div>
 		),
-		[user?.role],
+		[user?.role, activeLicenseV3],
 	);
 
 	const renderDashboardsList = useCallback(

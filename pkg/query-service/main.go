@@ -6,16 +6,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/config/envprovider"
+	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	prommodel "github.com/prometheus/common/model"
-	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/config/envprovider"
-	"go.signoz.io/signoz/pkg/config/fileprovider"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -75,7 +75,6 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	version.PrintVersion()
 
 	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
 		Uris: []string{"env:"},
@@ -91,6 +90,8 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
+
+	version.Info.PrettyPrint(config.Version)
 
 	signoz, err := signoz.New(
 		context.Background(),

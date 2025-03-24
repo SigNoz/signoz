@@ -1,11 +1,14 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './HomeChecklist.styles.scss';
 
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
 
 export type ChecklistItem = {
@@ -14,6 +17,7 @@ export type ChecklistItem = {
 	description: string;
 	completed: boolean;
 	isSkipped: boolean;
+	isSkippable?: boolean;
 	skippedPreferenceKey?: string;
 	toRoute?: string;
 	docsLink?: string;
@@ -28,7 +32,7 @@ function HomeChecklist({
 	onSkip: (item: ChecklistItem) => void;
 	isLoading: boolean;
 }): JSX.Element {
-	const { user } = useAppContext();
+	const { user, activeLicenseV3 } = useAppContext();
 
 	const [completedChecklistItems, setCompletedChecklistItems] = useState<
 		ChecklistItem[]
@@ -79,19 +83,32 @@ function HomeChecklist({
 									{user?.role !== USER_ROLES.VIEWER && (
 										<div className="whats-next-checklist-item-action-buttons">
 											<div className="whats-next-checklist-item-action-buttons-container">
-												<Link to={item.toRoute || ''}>
-													<Button
-														type="default"
-														className="periscope-btn secondary"
-														onClick={(): void => {
-															logEvent('Welcome Checklist: Get started clicked', {
-																step: item.id,
-															});
-														}}
-													>
-														Get Started &nbsp; <ArrowRight size={16} />
-													</Button>
-												</Link>
+												<Button
+													type="default"
+													className="periscope-btn secondary"
+													onClick={(): void => {
+														logEvent('Welcome Checklist: Get started clicked', {
+															step: item.id,
+														});
+
+														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
+															history.push(item.toRoute || '');
+														} else if (
+															activeLicenseV3 &&
+															activeLicenseV3.platform === LicensePlatform.CLOUD
+														) {
+															history.push(item.toRoute || '');
+														} else {
+															window?.open(
+																item.docsLink || '',
+																'_blank',
+																'noopener noreferrer',
+															);
+														}
+													}}
+												>
+													Get Started &nbsp; <ArrowRight size={16} />
+												</Button>
 
 												{item.docsLink && (
 													<Button
@@ -102,7 +119,7 @@ function HomeChecklist({
 																step: item.id,
 															});
 
-															window?.open(item.docsLink, '_blank');
+															window?.open(item.docsLink, '_blank', 'noopener noreferrer');
 														}}
 													>
 														<BookOpenText size={16} />
@@ -110,7 +127,7 @@ function HomeChecklist({
 												)}
 											</div>
 
-											{!item.isSkipped && (
+											{!item.isSkipped && item.isSkippable && (
 												<div className="whats-next-checklist-item-action-buttons-container">
 													<Button
 														type="link"

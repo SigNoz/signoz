@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/resource"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var logOperators = map[v3.FilterOperator]string{

@@ -3,11 +3,11 @@ package sqlite
 import (
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
-	basedao "go.signoz.io/signoz/pkg/query-service/dao"
-	basedsql "go.signoz.io/signoz/pkg/query-service/dao/sqlite"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/sqlstore"
+	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
+	basedsql "github.com/SigNoz/signoz/pkg/query-service/dao/sqlite"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/uptrace/bun"
 )
 
 type modelDao struct {
@@ -41,6 +41,6 @@ func InitDB(sqlStore sqlstore.SQLStore) (*modelDao, error) {
 	return m, nil
 }
 
-func (m *modelDao) DB() *sqlx.DB {
+func (m *modelDao) DB() *bun.DB {
 	return m.ModelDaoSqlite.DB()
 }

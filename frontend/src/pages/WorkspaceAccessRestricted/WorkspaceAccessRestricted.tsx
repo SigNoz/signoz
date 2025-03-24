@@ -11,10 +11,10 @@ function WorkspaceAccessRestricted(): JSX.Element {
 	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
 
 	useEffect(() => {
-		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
-			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
-			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+		if (!isFetchingActiveLicenseV3) {
+			const isTerminated = activeLicenseV3?.state === LicenseState.TERMINATED;
+			const isExpired = activeLicenseV3?.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicenseV3?.state === LicenseState.CANCELLED;
 
 			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
 
@@ -22,7 +22,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 				!isWorkspaceAccessRestricted ||
 				activeLicenseV3.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.APPLICATION);
+				history.push(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);

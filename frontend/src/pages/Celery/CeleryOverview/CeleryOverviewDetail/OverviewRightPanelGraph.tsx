@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
-import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
@@ -18,6 +18,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -82,7 +83,7 @@ export default function OverviewRightPanelGraph({
 		setSelectedTimeStamp(selectTime);
 	}, []);
 
-	const navigateToTraces = useNavigateToTraces();
+	const navigateToExplorer = useNavigateToExplorer();
 
 	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
 
@@ -100,13 +101,14 @@ export default function OverviewRightPanelGraph({
 	const goToTraces = useCallback(
 		(widget: Widgets) => {
 			const { stepInterval } = widget?.query?.builder?.queryData?.[0] ?? {};
-			navigateToTraces(
-				filters ?? [],
-				selectedTimeStamp,
-				selectedTimeStamp + (stepInterval ?? 60),
-			);
+			navigateToExplorer({
+				filters: filters ?? [],
+				dataSource: DataSource.TRACES,
+				startTime: selectedTimeStamp,
+				endTime: selectedTimeStamp + (stepInterval ?? 60),
+			});
 		},
-		[navigateToTraces, filters, selectedTimeStamp],
+		[navigateToExplorer, filters, selectedTimeStamp],
 	);
 
 	const { getCustomSeries } = useGetGraphCustomSeries({

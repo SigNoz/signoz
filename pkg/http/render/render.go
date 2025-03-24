@@ -3,8 +3,8 @@ package render
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	jsoniter "github.com/json-iterator/go"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary

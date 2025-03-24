@@ -2,16 +2,20 @@ package rules
 
 import (
 	"context"
+	"fmt"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
@@ -1223,7 +1227,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
-
+		mock.ExpectQuery(".*").WillReturnError(fmt.Errorf("error"))
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
@@ -1241,8 +1245,8 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
-
+		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -1324,6 +1328,8 @@ func TestThresholdRuleNoData(t *testing.T) {
 	for idx, c := range cases {
 		rows := cmock.NewRows(cols, c.values)
 
+		mock.ExpectQuery(".*").WillReturnError(fmt.Errorf("error"))
+
 		// We are testing the eval logic after the query is run
 		// so we don't care about the query string here
 		queryString := "SELECT any"
@@ -1338,9 +1344,9 @@ func TestThresholdRuleNoData(t *testing.T) {
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
-
+		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(mock, options, nil, "", fm, "", true, true, time.Duration(time.Second), readerCache)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
