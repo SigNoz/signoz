@@ -28,3 +28,15 @@
 		margin-top: 8px;
 	}
 }
+
+.lightMode {
+	.empty-funnel-results {
+		&__title {
+			color: var(--bg-ink-400);
+		}
+
+		&__description {
+			color: var(--bg-ink-300);
+		}
+	}
+}

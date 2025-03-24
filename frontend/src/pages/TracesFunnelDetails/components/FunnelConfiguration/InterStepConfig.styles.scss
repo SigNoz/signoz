@@ -37,7 +37,20 @@
 
 .lightMode {
 	.inter-step-config {
-		background-color: var(--bg-vanilla-400);
+		background-color: var(--bg-vanilla-200);
 		color: var(--bg-ink-400);
+		&::before {
+			background-color: var(--bg-vanilla-400);
+		}
+
+		&__label {
+			color: var(--bg-ink-300);
+		}
+
+		&__divider {
+			.ant-divider {
+				border-color: var(--bg-vanilla-400);
+			}
+		}
 	}
 }

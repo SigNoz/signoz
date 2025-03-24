@@ -148,7 +148,58 @@
 
 .lightMode {
 	.funnel-step {
-		background: var(--bg-vanilla-400);
+		background: var(--bg-vanilla-300);
 		color: var(--bg-ink-400);
+		border-color: var(--bg-vanilla-400);
+
+		.step-popover {
+			background: var(--bg-vanilla-100);
+		}
+
+		&__header {
+			.funnel-step-details {
+				&__title {
+					color: var(--bg-ink-400);
+				}
+				&__description {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+
+		&__content {
+			.filters {
+				.ant-select-selector {
+					background: var(--bg-vanilla-300);
+					border-color: var(--bg-vanilla-400);
+				}
+				&__service-and-span {
+					.ant-select-selection-placeholder {
+						color: var(--bg-ink-400);
+					}
+				}
+				&__where-filter {
+					.label {
+						color: var(--bg-ink-400);
+					}
+				}
+			}
+		}
+
+		&__footer {
+			&,
+			.error {
+				border-color: var(--bg-vanilla-400);
+			}
+			.error__label,
+			.latency-pointer__label {
+				color: var(--bg-ink-400);
+			}
+			.latency-pointer {
+				.ant-space-item {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
 	}
 }

@@ -92,13 +92,15 @@
 .lightMode {
 	.funnel-step-modal {
 		.ant-modal-content {
-			background: var(--bg-vanilla-400);
 			.ant-modal-header {
-				background: var(--bg-vanilla-400);
 				.ant-modal-title {
 					color: var(--bg-ink-400);
 				}
 			}
+		}
+
+		&__ok-btn {
+			background: var(--bg-robin-500) !important;
 		}
 
 		&__cancel-btn {
