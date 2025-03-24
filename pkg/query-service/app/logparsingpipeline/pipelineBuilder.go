@@ -6,13 +6,13 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
-	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 )
 
 const (

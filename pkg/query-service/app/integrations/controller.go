@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 )
 
 type Controller struct {

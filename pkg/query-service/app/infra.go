@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 func (aH *APIHandler) getHostAttributeKeys(w http.ResponseWriter, r *http.Request) {

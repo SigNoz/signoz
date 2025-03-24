@@ -6,11 +6,11 @@ import (
 	"io"
 	"net/http"
 
-	"go.signoz.io/signoz/ee/query-service/anomaly"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/ee/query-service/anomaly"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 

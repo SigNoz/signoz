@@ -13,8 +13,8 @@ import (
 	"io/fs"
 	"path"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	koanfJson "github.com/knadh/koanf/parsers/json"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )

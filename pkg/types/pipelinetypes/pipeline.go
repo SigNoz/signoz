@@ -7,11 +7,11 @@ import (
 	"slices"
 	"strings"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 type StoreablePipeline struct {

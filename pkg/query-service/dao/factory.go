@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"go.signoz.io/signoz/pkg/query-service/dao/sqlite"
-	"go.signoz.io/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/query-service/dao/sqlite"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
 var db ModelDao

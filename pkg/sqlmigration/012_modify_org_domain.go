@@ -3,10 +3,10 @@ package sqlmigration
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 type modifyOrgDomain struct{}

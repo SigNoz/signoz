@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/go-kit/log"
 	pmodel "github.com/prometheus/common/model"
 	"github.com/prometheus/common/promlog"
@@ -12,7 +13,6 @@ import (
 	pql "github.com/prometheus/prometheus/promql"
 	pstorage "github.com/prometheus/prometheus/storage"
 	premote "github.com/prometheus/prometheus/storage/remote"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
 )
 
 type PqlEngine struct {

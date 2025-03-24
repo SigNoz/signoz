@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/types/pipelinetypes"
 )
 
 var prepareProcessorTestData = []struct {

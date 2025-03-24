@@ -11,14 +11,14 @@ import (
 
 	"sync"
 
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
-	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/model"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 

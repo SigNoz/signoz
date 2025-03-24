@@ -8,13 +8,13 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	filterprocessor "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
+	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
-	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )

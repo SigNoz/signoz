@@ -3,8 +3,8 @@ package anomaly
 import (
 	"context"
 
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 )
 
 type HourlyProvider struct {
