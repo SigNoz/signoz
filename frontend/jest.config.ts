@@ -24,12 +24,12 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color|api)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color|api|uuid)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
-	testEnvironment: 'jest-environment-jsdom',
+	testEnvironment: 'jest-fixed-jsdom',
 	testEnvironmentOptions: {
 		'jest-playwright': {
 			browsers: ['chromium', 'firefox', 'webkit'],

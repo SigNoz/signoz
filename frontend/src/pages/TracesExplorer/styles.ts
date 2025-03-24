@@ -1,6 +1,11 @@
 import styled from 'styled-components';
 
-export const Container = styled.div`
+interface ContainerProps {
+	children?: React.ReactNode;
+	className?: string;
+}
+
+export const Container = styled.div<ContainerProps>`
 	margin: 1rem 0;
 `;
 

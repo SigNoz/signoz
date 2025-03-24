@@ -1,6 +1,6 @@
 import { licensesSuccessWorkspaceLockedResponse } from 'mocks-server/__mockdata__/licenses';
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { act, render, screen } from 'tests/test-utils';
 
 import WorkspaceLocked from '.';
@@ -10,8 +10,8 @@ describe('WorkspaceLocked', () => {
 
 	test('Should render the component', async () => {
 		server.use(
-			rest.get(apiURL, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
+			http.get(apiURL, () =>
+				HttpResponse.json(licensesSuccessWorkspaceLockedResponse, { status: 200 }),
 			),
 		);
 
@@ -35,8 +35,8 @@ describe('WorkspaceLocked', () => {
 
 	test('Render for Admin', async () => {
 		server.use(
-			rest.get(apiURL, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
+			http.get(apiURL, () =>
+				HttpResponse.json(licensesSuccessWorkspaceLockedResponse, { status: 200 }),
 			),
 		);
 
@@ -53,8 +53,8 @@ describe('WorkspaceLocked', () => {
 
 	test('Render for non Admin', async () => {
 		server.use(
-			rest.get(apiURL, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
+			http.get(apiURL, () =>
+				HttpResponse.json(licensesSuccessWorkspaceLockedResponse, { status: 200 }),
 			),
 		);
 

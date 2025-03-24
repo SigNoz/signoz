@@ -1,5 +1,5 @@
 import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { act, render, screen } from 'tests/test-utils';
 
 import ServicesUsingMetrics from './index';
@@ -25,18 +25,16 @@ describe('ServicesUsingMetrics', () => {
 		expect(loadingText).toBeInTheDocument();
 	});
 
-	test('should not render is the data is not prsent', async () => {
+	test('should not render if the data is not prsent', async () => {
 		server.use(
-			rest.post(
-				'http://localhost/api/v1/service/top_level_operations',
-				(req, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({
-							SampleApp: ['GET'],
-							TestApp: ['GET'],
-						}),
-					),
+			http.post('http://localhost/api/v1/service/top_level_operations', () =>
+				HttpResponse.json(
+					{
+						SampleApp: ['GET'],
+						TestApp: ['GET'],
+					},
+					{ status: 200 },
+				),
 			),
 		);
 		render(<ServicesUsingMetrics />);

@@ -2,7 +2,12 @@ import { Color } from '@signozhq/design-tokens';
 import { Typography } from 'antd';
 import styled from 'styled-components';
 
-export const ListContainer = styled.div<{ $isDarkMode: boolean }>`
+interface ListContainerProps {
+	$isDarkMode: boolean;
+	children?: React.ReactNode;
+}
+
+export const ListContainer = styled.div<ListContainerProps>`
 	position: relative;
 	height: 21rem;
 	overflow: hidden;

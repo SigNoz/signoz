@@ -23,7 +23,12 @@ import {
 	TableData,
 } from './utils';
 
-const ButtonWrapper = styled.div`
+interface ButtonWrapperProps {
+	className?: string;
+	children?: React.ReactNode;
+}
+
+const ButtonWrapper = styled.div<ButtonWrapperProps>`
 	position: absolute;
 	right: 0;
 	top: 50%;
