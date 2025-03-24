@@ -1,4 +1,3 @@
-import EndPointsZeroStateIcon from 'assets/CustomIcons/EndPointsZeroStateIcon';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
@@ -14,9 +13,13 @@ function EndPointDetailsZeroState({
 	return (
 		<div className="end-point-details-zero-state-wrapper">
 			<div className="end-point-details-zero-state-content">
-				<div className="end-point-details-zero-state-icon">
-					<EndPointsZeroStateIcon />
-				</div>
+				<img
+					src="/Icons/no-data.svg"
+					alt="no-data"
+					width={32}
+					height={32}
+					className="end-point-details-zero-state-icon"
+				/>
 				<div className="end-point-details-zero-state-content-wrapper">
 					<div className="end-point-details-zero-state-text-content">
 						<div className="title">No endpoint selected yet</div>

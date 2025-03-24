@@ -1,5 +1,4 @@
 import { Button, Typography } from 'antd';
-import EndPointsErrorStateIcon from 'assets/CustomIcons/EndPointsErrorStateIcon';
 import { RotateCw } from 'lucide-react';
 
 function ErrorState({ refetch }: { refetch: () => void }): JSX.Element {
@@ -8,7 +7,7 @@ function ErrorState({ refetch }: { refetch: () => void }): JSX.Element {
 			<div className="error-state-content-wrapper">
 				<div className="error-state-content">
 					<div className="icon">
-						<EndPointsErrorStateIcon />
+						<img src="/Icons/awwSnap.svg" alt="awwSnap" width={32} height={32} />
 					</div>
 					<div className="error-state-text">
 						<Typography.Text>Uh-oh :/ We ran into an error.</Typography.Text>

@@ -1014,4 +1014,18 @@
 			}
 		}
 	}
+
+	.end-point-details-zero-state-wrapper {
+		.end-point-details-zero-state-content-wrapper {
+			.end-point-details-zero-state-text-content {
+				.title {
+					color: var(--text-ink-300);
+				}
+
+				.description {
+					color: var(--text-ink-100);
+				}
+			}
+		}
+	}
 }
