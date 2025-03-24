@@ -48,13 +48,13 @@ function AddFunnelDescriptionModal({
 					]);
 					notifications.success({
 						message: 'Success',
-						description: 'Funnel step details updated successfully',
+						description: 'Funnel description saved successfully',
 					});
 					handleCancel();
 				},
 				onError: (error) => {
 					notifications.error({
-						message: 'Failed to update funnel step details',
+						message: 'Failed to save funnel description',
 						description: error.message,
 					});
 				},
@@ -65,7 +65,7 @@ function AddFunnelDescriptionModal({
 	return (
 		<SignozModal
 			open={isOpen}
-			title="Add funnel step details"
+			title="Add funnel description"
 			width={384}
 			onCancel={handleCancel}
 			rootClassName="funnel-step-modal funnel-modal signoz-modal"

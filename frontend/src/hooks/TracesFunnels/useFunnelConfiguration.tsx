@@ -128,7 +128,7 @@ export default function useFunnelConfiguration({
 			{
 				...initialStepsData[0],
 				id: v4(),
-				funnel_order: prev.length + 1, // More dynamic order calculation
+				step_order: prev.length + 1,
 			},
 		]);
 	}, []);

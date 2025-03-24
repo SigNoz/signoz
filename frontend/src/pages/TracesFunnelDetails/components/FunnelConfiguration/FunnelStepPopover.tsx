@@ -11,7 +11,6 @@ interface FunnelStepPopoverProps {
 	setIsPopoverOpen: (isOpen: boolean) => void;
 	className?: string;
 	funnelId: string;
-	stepId: string;
 	stepOrder: number;
 	stepsCount: number;
 	onStepRemove: () => void;
@@ -68,7 +67,6 @@ function FunnelStepPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
 	funnelId,
-	stepId,
 	stepOrder,
 	className,
 	onStepRemove,
@@ -83,10 +81,6 @@ function FunnelStepPopover({
 		e.preventDefault();
 		e.stopPropagation();
 	};
-
-	console.log('funnelId', funnelId);
-	console.log('stepId', stepId);
-	console.log('isAddDetailsModalOpen', isAddDetailsModalOpen);
 
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events

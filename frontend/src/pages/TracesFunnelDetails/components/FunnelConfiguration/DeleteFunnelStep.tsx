@@ -1,4 +1,3 @@
-import 'pages/TracesFunnels/components/RenameFunnel/RenameFunnel.styles.scss';
 import './DeleteFunnelStep.styles.scss';
 
 import SignozModal from 'components/SignozModal/SignozModal';

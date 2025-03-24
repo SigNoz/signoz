@@ -1,7 +1,7 @@
 .steps-content {
 	height: calc(
-		100vh - 219px
-	); // 64px (footer) + 12 (steps gap) + 32 (steps header) + 16 (steps padding) + 50 (breadcrumb) + 45 (steps footer) = 219px
+		100vh - 253px
+	); // 64px (footer) + 12 (steps gap) + 32 (steps header) + 16 (steps padding) + 50 (breadcrumb) + 34 (description) + 45 (steps footer) = 219px
 	overflow-y: auto;
 	&__description {
 		display: flex;

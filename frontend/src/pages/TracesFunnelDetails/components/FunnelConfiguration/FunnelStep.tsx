@@ -86,7 +86,6 @@ function FunnelStep({
 						isPopoverOpen={isPopoverOpen}
 						setIsPopoverOpen={setIsPopoverOpen}
 						funnelId={funnelId}
-						stepId={stepData.id}
 						stepOrder={stepData.step_order}
 						onStepRemove={(): void => onStepRemove(index)}
 						stepsCount={stepsCount}

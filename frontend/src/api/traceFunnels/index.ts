@@ -58,7 +58,7 @@ export const getFunnelById = async (
 	funnelId: string,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.get(
-		`/trace-funnels/get/${funnelId}`,
+		`${FUNNELS_BASE_PATH}/get/${funnelId}`,
 	);
 
 	return {
