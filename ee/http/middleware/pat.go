@@ -25,7 +25,6 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 		var values []string
 		var patToken string
 		var pat types.StorablePersonalAccessToken
-		var updateLastUsed bool
 
 		for _, header := range p.headers {
 			values = append(values, r.Header.Get(header))
@@ -74,13 +73,10 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		// update last used only if SIGNOZ-API-KEY was present and successful
-		if updateLastUsed {
-			pat.LastUsed = time.Now().Unix()
-			_, err = p.db.NewUpdate().Model(&pat).Column("last_used").Where("token = ?", patToken).Where("revoked = false").Exec(r.Context())
-			if err != nil {
-				zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))
-			}
+		pat.LastUsed = time.Now().Unix()
+		_, err = p.db.NewUpdate().Model(&pat).Column("last_used").Where("token = ?", patToken).Where("revoked = false").Exec(r.Context())
+		if err != nil {
+			zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))
 		}
 
 	})

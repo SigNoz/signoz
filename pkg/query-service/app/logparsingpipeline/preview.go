@@ -10,6 +10,7 @@ import (
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
 	"github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -18,7 +19,7 @@ import (
 
 func SimulatePipelinesProcessing(
 	ctx context.Context,
-	pipelines []Pipeline,
+	pipelines []pipelinetypes.GettablePipeline,
 	logs []model.SignozLog,
 ) (
 	output []model.SignozLog, collectorWarnAndErrorLogs []string, apiErr *model.ApiError,
