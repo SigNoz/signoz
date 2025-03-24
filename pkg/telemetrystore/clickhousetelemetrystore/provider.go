@@ -48,7 +48,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	engine, err := promengine.New(settings.Logger(), config.Prometheus)
+	engine, err := promengine.New(settings.Logger(), config.Clickhouse.Prometheus)
 	if err != nil {
 		return nil, err
 	}
