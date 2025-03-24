@@ -1,13 +1,8 @@
 import './FunnelConfiguration.styles.scss';
 
-import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
-import useDebounce from 'hooks/useDebounce';
-import { useNotifications } from 'hooks/useNotifications';
-import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
+import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
-import { useCallback, useEffect, useState } from 'react';
-import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
-import { v4 } from 'uuid';
+import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelBreadcrumb from './FunnelBreadcrumb';
 import StepsContent from './StepsContent';
@@ -21,57 +16,15 @@ interface FunnelConfigurationProps {
 function FunnelConfiguration({
 	funnel,
 }: FunnelConfigurationProps): JSX.Element {
-	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-
-	const initialSteps = funnel.steps?.length ? funnel.steps : initialStepsData;
-
-	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
-
-	// Add debounced steps
-	const debouncedSteps = useDebounce(steps, 1000);
-
-	const { notifications } = useNotifications();
-
-	const updateStepsMutation = useUpdateFunnelSteps(funnel.id, notifications);
-
-	// Extract comparison logic
-	const areStepsChanged = useCallback(
-		() => JSON.stringify(debouncedSteps) !== JSON.stringify(initialSteps),
-		[debouncedSteps, initialSteps],
-	);
-
-	// Extract mutation payload preparation
-	const prepareUpdatePayload = useCallback(
-		() => ({
-			funnel_id: funnel.id,
-			steps: debouncedSteps,
-			updated_timestamp: Date.now(),
-		}),
-		[funnel.id, debouncedSteps],
-	);
-
-	const handleStepChange = (
-		index: number,
-		newStep: Partial<FunnelStepData>,
-	): void => {
-		setSteps((prev) =>
-			prev.map((step, i) => (i === index ? { ...step, ...newStep } : step)),
-		);
-	};
-
-	const handleAddStep = (): void => {
-		setSteps((prev) => [
-			...prev,
-			{ ...initialStepsData[0], id: v4(), funnel_order: 3 },
-		]);
-	};
-
-	useEffect(() => {
-		if (areStepsChanged()) {
-			updateStepsMutation.mutate(prepareUpdatePayload());
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSteps, areStepsChanged, prepareUpdatePayload]);
+	const {
+		isPopoverOpen,
+		setIsPopoverOpen,
+		steps,
+		handleAddStep,
+		handleStepChange,
+		validTracesCount,
+		isValidateStepsMutationLoading,
+	} = useFunnelConfiguration({ funnel });
 
 	return (
 		<div className="funnel-configuration">
@@ -92,7 +45,11 @@ function FunnelConfiguration({
 						handleAddStep={handleAddStep}
 					/>
 				</div>
-				<StepsFooter stepsCount={steps.length} validTracesCount={0} />
+				<StepsFooter
+					stepsCount={steps.length}
+					validTracesCount={validTracesCount}
+					isLoading={isValidateStepsMutationLoading}
+				/>
 			</div>
 		</div>
 	);

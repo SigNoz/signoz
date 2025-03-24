@@ -130,3 +130,35 @@ export const updateFunnelSteps = async (
 		payload: response.data,
 	};
 };
+
+export interface ValidateFunnelPayload {
+	start_time: number;
+	end_time: number;
+}
+
+export interface ValidateFunnelResponse {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: {
+			trace_id: string;
+		};
+	}> | null;
+}
+
+export const validateFunnelSteps = async (
+	funnelId: string,
+	payload: ValidateFunnelPayload,
+): Promise<SuccessResponse<ValidateFunnelResponse> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/validate`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};

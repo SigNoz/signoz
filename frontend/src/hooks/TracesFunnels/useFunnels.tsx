@@ -7,6 +7,9 @@ import {
 	renameFunnel,
 	updateFunnelSteps,
 	UpdateFunnelStepsPayload,
+	ValidateFunnelPayload,
+	ValidateFunnelResponse,
+	validateFunnelSteps,
 } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -97,4 +100,16 @@ export const useUpdateFunnelSteps = (
 				description: error.message,
 			});
 		},
+	});
+
+export const useValidateFunnelSteps = (
+	funnelId: string,
+): UseMutationResult<
+	SuccessResponse<ValidateFunnelResponse> | ErrorResponse,
+	Error,
+	ValidateFunnelPayload
+> =>
+	useMutation({
+		mutationFn: (payload) => validateFunnelSteps(funnelId, payload),
+		mutationKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId],
 	});
