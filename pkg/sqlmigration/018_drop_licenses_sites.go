@@ -45,7 +45,7 @@ func (migration *dropLicensesSites) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	_, err = migration.store.Dialect().RenameColumn(ctx, db, "saved_views", "uuid", "id")
+	_, err = migration.store.Dialect().RenameColumn(ctx, tx, "saved_views", "uuid", "id")
 	if err != nil {
 		return err
 	}
