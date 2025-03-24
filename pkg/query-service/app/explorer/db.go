@@ -47,7 +47,7 @@ func GetViews(ctx context.Context, orgID string) ([]*v3.SavedView, error) {
 			return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
 		}
 		savedViews = append(savedViews, &v3.SavedView{
-			UUID:           view.UUID,
+			ID:             view.ID,
 			Name:           view.Name,
 			Category:       view.Category,
 			CreatedAt:      view.CreatedAt,
@@ -83,7 +83,7 @@ func GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, na
 			return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
 		}
 		savedViews = append(savedViews, &v3.SavedView{
-			UUID:           view.UUID,
+			ID:             view.ID,
 			Name:           view.Name,
 			CreatedAt:      view.CreatedAt,
 			CreatedBy:      view.CreatedBy,
@@ -104,9 +104,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UU
 		return valuer.UUID{}, fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
 	}
 
-	// generate the UUID for the newly created view. do not rely on client for the UUID
 	uuid := valuer.GenerateUUID()
-
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
@@ -128,7 +126,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UU
 			UpdatedBy: updatedBy,
 		},
 		OrgID:      orgID,
-		UUID:       uuid,
+		ID:         uuid,
 		Name:       view.Name,
 		Category:   view.Category,
 		SourcePage: view.SourcePage,
@@ -157,7 +155,7 @@ func GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*v3.SavedView
 		return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
 	}
 	return &v3.SavedView{
-		UUID:           view.UUID,
+		ID:             view.ID,
 		Name:           view.Name,
 		Category:       view.Category,
 		CreatedAt:      view.CreatedAt,
@@ -189,7 +187,7 @@ func UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.Sav
 		Model(&types.SavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
 			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
-		Where("uuid = ?", uuid.StringValue()).
+		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
@@ -201,7 +199,7 @@ func UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.Sav
 func DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
 	_, err := store.BunDB().NewDelete().
 		Model(&types.SavedView{}).
-		Where("uuid = ?", uuid.StringValue()).
+		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {

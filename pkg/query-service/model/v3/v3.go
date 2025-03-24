@@ -1412,7 +1412,7 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 // The source page name is used to identify the page that initiated the query
 // The source page could be "traces", "logs", "metrics".
 type SavedView struct {
-	UUID           valuer.UUID     `json:"uuid,omitempty"`
+	ID             valuer.UUID     `json:"id,omitempty"`
 	Name           string          `json:"name"`
 	Category       string          `json:"category"`
 	CreatedAt      time.Time       `json:"createdAt"`
