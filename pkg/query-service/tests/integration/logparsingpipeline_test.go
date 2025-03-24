@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
-	opampModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -121,7 +120,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		"pipelines config history should not be empty after 1st configuration",
 	)
 	require.Equal(
-		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
+		types.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"pipelines deployment should be in progress after 1st configuration",
 	)
 
@@ -133,7 +132,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, getPipelinesResp,
 	)
 	require.Equal(
-		agentConf.Deployed,
+		types.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"pipeline deployment should be complete after acknowledgment from opamp client",
 	)
@@ -153,7 +152,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		"there should be 2 history entries after posting pipelines config for the 2nd time",
 	)
 	require.Equal(
-		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
+		types.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"deployment should be in progress for latest pipeline config",
 	)
 
@@ -165,7 +164,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, getPipelinesResp,
 	)
 	require.Equal(
-		agentConf.Deployed,
+		types.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"deployment for latest pipeline config should be complete after acknowledgment from opamp client",
 	)
@@ -219,7 +218,7 @@ func TestLogPipelinesHistory(t *testing.T) {
 	testbed.PostPipelinesToQS(postablePipelines)
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(1, len(getPipelinesResp.History))
-	require.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(types.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
 
 	postablePipelines.Pipelines[0].Config = append(
 		postablePipelines.Pipelines[0].Config,
@@ -238,8 +237,8 @@ func TestLogPipelinesHistory(t *testing.T) {
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 
 	require.Equal(2, len(getPipelinesResp.History))
-	require.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
-	require.Equal(agentConf.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
+	require.Equal(types.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(types.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
 }
 
 func TestLogPipelinesValidation(t *testing.T) {
@@ -485,11 +484,11 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	}
 
 	// Mock an available opamp agent
-	testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
+	// testDB, err := opampModel.InitDB(sqlStore.SQLxDB())
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB: testDB,
+		DB: sqlStore.BunDB(), // todo(nitya): fix this
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})
