@@ -83,11 +83,11 @@
       "customValue": "",
       "description": "AWS Region",
       "id": "c69e90bd-adaa-4f75-9108-1c6e91a00fbc",
-      "modificationUUID": "bf7e6391-9aa1-44c4-8832-29e4f442d334",
+      "modificationUUID": "07f23d13-c94e-452c-b917-04124f910942",
       "multiSelect": false,
       "name": "Region",
       "order": 0,
-      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud_region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_Kafka_KafkaDataLogsDiskUsed_max' GROUP BY region\n",
+      "queryValue": "SELECT DISTINCT JSONExtractString(labels, 'cloud_region') AS region\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'aws_Kafka_KafkaDataLogsDiskUsed_max' AND JSONExtractString(labels, 'cloud_account_id') IN {{.Account}} GROUP BY region\n",
       "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
@@ -669,20 +669,20 @@
             {
               "aggregateAttribute": {
                 "dataType": "float64",
-                "id": "aws_Kafka_NetworkTxPackets_max--float64--Gauge--true",
+                "id": "aws_Kafka_NetworkTxPackets_sum--float64--Gauge--true",
                 "isColumn": true,
                 "isJSON": false,
-                "key": "aws_Kafka_NetworkTxPackets_max",
+                "key": "aws_Kafka_NetworkTxPackets_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "9de7c223",
+                    "id": "df3f9941",
                     "key": {
                       "dataType": "string",
                       "id": "Broker_ID--string--tag--false",
@@ -695,7 +695,7 @@
                     "value": ""
                   },
                   {
-                    "id": "de9fa3b6",
+                    "id": "2233f9a5",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -708,7 +708,7 @@
                     "value": "$Region"
                   },
                   {
-                    "id": "5fc77958",
+                    "id": "52bd69d4",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -748,9 +748,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -763,7 +763,7 @@
             "query": ""
           }
         ],
-        "id": "1527076d-8a46-4df0-84e5-72bb2f373013",
+        "id": "47d4e8b7-2ca3-412c-a48a-bfbd592b0709",
         "promql": [
           {
             "disabled": false,
@@ -834,7 +834,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": " Network TX packets by (Cluster, Broker)",
-      "yAxisUnit": "cpm"
+      "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
@@ -854,20 +854,20 @@
             {
               "aggregateAttribute": {
                 "dataType": "float64",
-                "id": "aws_Kafka_NetworkRxPackets_max--float64--Gauge--true",
+                "id": "aws_Kafka_NetworkRxPackets_sum--float64--Gauge--true",
                 "isColumn": true,
                 "isJSON": false,
-                "key": "aws_Kafka_NetworkRxPackets_max",
+                "key": "aws_Kafka_NetworkRxPackets_sum",
                 "type": "Gauge"
               },
-              "aggregateOperator": "max",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
                 "items": [
                   {
-                    "id": "e3878380",
+                    "id": "a00425be",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_region--string--tag--false",
@@ -880,7 +880,7 @@
                     "value": "$Region"
                   },
                   {
-                    "id": "0e353b35",
+                    "id": "726d60d7",
                     "key": {
                       "dataType": "string",
                       "id": "Broker_ID--string--tag--false",
@@ -893,7 +893,7 @@
                     "value": ""
                   },
                   {
-                    "id": "3a194c07",
+                    "id": "02adea69",
                     "key": {
                       "dataType": "string",
                       "id": "cloud_account_id--string--tag--false",
@@ -933,9 +933,9 @@
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
-              "spaceAggregation": "max",
+              "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "max"
+              "timeAggregation": "sum"
             }
           ],
           "queryFormulas": []
@@ -948,7 +948,7 @@
             "query": ""
           }
         ],
-        "id": "29a183d3-98d0-497f-abf4-88acc119a132",
+        "id": "1c6ec479-a7d2-4f8f-bb31-1bf2a6b6fc25",
         "promql": [
           {
             "disabled": false,
@@ -1019,7 +1019,7 @@
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
       "title": "Network RX packets by (Cluster, Broker)",
-      "yAxisUnit": "cpm"
+      "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
