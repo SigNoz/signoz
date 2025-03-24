@@ -1,10 +1,10 @@
-package logparsingpipeline
+package pipelinetypes
 
 import (
 	"testing"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	. "github.com/smartystreets/goconvey/convey"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestIsValidPostablePipeline(t *testing.T) {
@@ -42,7 +42,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 		{
 			Name: "Invalid orderId",
 			Pipeline: PostablePipeline{
-				OrderId: 0,
+				OrderID: 0,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -54,7 +54,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 		{
 			Name: "Valid orderId",
 			Pipeline: PostablePipeline{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -66,7 +66,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 		{
 			Name: "Invalid filter",
 			Pipeline: PostablePipeline{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -90,7 +90,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 		{
 			Name: "Valid filter",
 			Pipeline: PostablePipeline{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,

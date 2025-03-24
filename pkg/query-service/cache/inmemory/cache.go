@@ -3,8 +3,8 @@ package inmemory
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/cache/status"
 	go_cache "github.com/patrickmn/go-cache"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
 )
 
 // cache implements the Cache interface

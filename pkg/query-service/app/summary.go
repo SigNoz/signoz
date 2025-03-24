@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/query-service/model"
 
-	explorer "go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
+	explorer "github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"go.uber.org/zap"
 )
 

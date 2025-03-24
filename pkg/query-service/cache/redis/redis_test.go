@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/cache/status"
 	"github.com/go-redis/redismock/v8"
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
 )
 
 func TestStore(t *testing.T) {

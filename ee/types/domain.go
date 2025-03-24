@@ -6,13 +6,13 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/SigNoz/signoz/ee/query-service/sso"
+	"github.com/SigNoz/signoz/ee/query-service/sso/saml"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/ee/query-service/sso"
-	"go.signoz.io/signoz/ee/query-service/sso/saml"
-	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 

@@ -6,9 +6,9 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 type provider struct {
@@ -64,7 +64,9 @@ func (h *provider) clickHouseSettings(ctx context.Context, query string, args ..
 	}
 
 	if ctx.Value("clickhouse_max_threads") != nil {
-		if maxThreads, ok := ctx.Value("clickhouse_max_threads").(int); ok { settings["max_threads"] = maxThreads }
+		if maxThreads, ok := ctx.Value("clickhouse_max_threads").(int); ok {
+			settings["max_threads"] = maxThreads
+		}
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
