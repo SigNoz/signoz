@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type License struct {

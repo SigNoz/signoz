@@ -7,7 +7,7 @@ import { MetricType } from './getMetricsList';
 export interface UpdateMetricMetadataProps {
 	description: string;
 	metricType: MetricType;
-	temporality: Temporality;
+	temporality?: Temporality;
 	isMonotonic?: boolean;
 }
 

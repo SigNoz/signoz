@@ -6,16 +6,16 @@ import (
 	"strings"
 	"sync"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
-	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
+	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"go.uber.org/zap"
 )
 
@@ -231,9 +231,12 @@ func (q *querier) runBuilderQuery(
 
 	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
 		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
-		if apiError == nil && metadata != nil {
-			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(metadata.MetricType)
-			builderQuery.Temporality = metadata.Temporality
+		if apiError != nil {
+			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
+		}
+		if updatedMetadata, exist := metadata[builderQuery.AggregateAttribute.Key]; exist {
+			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(updatedMetadata.MetricType)
+			builderQuery.Temporality = updatedMetadata.Temporality
 		}
 	}
 

@@ -32,7 +32,7 @@ SIGNOZ_DOCKER_IMAGE ?= signoz
 SIGNOZ_COMMUNITY_DOCKER_IMAGE ?= signoz-community
 
 # Build-time Go variables
-PACKAGE?=go.signoz.io/signoz
+PACKAGE?=github.com/SigNoz/signoz
 buildVersion=${PACKAGE}/pkg/query-service/version.buildVersion
 buildHash=${PACKAGE}/pkg/query-service/version.buildHash
 buildTime=${PACKAGE}/pkg/query-service/version.buildTime

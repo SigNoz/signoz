@@ -325,7 +325,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({
-			url: window.location.href,
+			url: window.location.origin,
 		});
 	}, [manageCreditCard]);
 
@@ -359,6 +359,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isInfraMonitoring = (): boolean =>
 		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
 		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
+	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -664,7 +665,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() ? { margin: 0 } : {}),
+										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}

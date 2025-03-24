@@ -4,8 +4,8 @@ import (
 	"net/url"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 type Config struct {

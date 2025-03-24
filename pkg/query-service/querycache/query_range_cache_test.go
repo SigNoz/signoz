@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
 )
 
 func TestFindMissingTimeRanges(t *testing.T) {

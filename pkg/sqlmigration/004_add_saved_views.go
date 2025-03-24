@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 type addSavedViews struct{}

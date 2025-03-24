@@ -56,6 +56,8 @@ const ROUTES = {
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
+	TRACES_FUNNELS: '/traces/funnels',
+	TRACES_FUNNELS_DETAIL: '/traces/funnels/:funnelId',
 	WORKSPACE_LOCKED: '/workspace-locked',
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/shortcuts',
@@ -70,6 +72,7 @@ const ROUTES = {
 	METRICS_EXPLORER_EXPLORER: '/metrics-explorer/explorer',
 	METRICS_EXPLORER_VIEWS: '/metrics-explorer/views',
 	API_MONITORING: '/api-monitoring/explorer',
+	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
 	HOME_PAGE: '/',
 } as const;

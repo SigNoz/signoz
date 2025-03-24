@@ -1,9 +1,8 @@
 import './Explorer.styles.scss';
 
 import * as Sentry from '@sentry/react';
-import { Button, Switch, Typography } from 'antd';
+import { Switch } from 'antd';
 import axios from 'axios';
-import classNames from 'classnames';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
@@ -43,9 +42,7 @@ function Explorer(): JSX.Element {
 	});
 
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(false);
-	const [selectedTab, setSelectedTab] = useState<ExplorerTabs>(
-		ExplorerTabs.TIME_SERIES,
-	);
+	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 
 	const handleToggleShowOneChartPerQuery = (): void =>
 		toggleShowOneChartPerQuery(!showOneChartPerQuery);
@@ -139,7 +136,8 @@ function Explorer(): JSX.Element {
 					</div>
 				</div>
 				<QuerySection />
-				<Button.Group className="explore-tabs">
+				{/* TODO: Enable once we have resolved all related metrics issues */}
+				{/* <Button.Group className="explore-tabs">
 					<Button
 						value={ExplorerTabs.TIME_SERIES}
 						className={classNames('tab', {
@@ -149,8 +147,7 @@ function Explorer(): JSX.Element {
 					>
 						<Typography.Text>Time series</Typography.Text>
 					</Button>
-					{/* TODO: Enable once we have resolved all related metrics issues */}
-					{/* <Button
+					<Button
 						value={ExplorerTabs.RELATED_METRICS}
 						className={classNames('tab', {
 							'selected-view': selectedTab === ExplorerTabs.RELATED_METRICS,
@@ -158,8 +155,8 @@ function Explorer(): JSX.Element {
 						onClick={(): void => setSelectedTab(ExplorerTabs.RELATED_METRICS)}
 					>
 						<Typography.Text>Related</Typography.Text>
-					</Button> */}
-				</Button.Group>
+					</Button>
+				</Button.Group> */}
 				<div className="explore-content">
 					{selectedTab === ExplorerTabs.TIME_SERIES && (
 						<TimeSeries showOneChartPerQuery={showOneChartPerQuery} />

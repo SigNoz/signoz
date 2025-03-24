@@ -42,6 +42,17 @@ export const TracesSaveViews = Loadable(
 		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
+export const TracesFunnels = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
+);
+export const TracesFunnelDetails = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesFunnelDetails'
+		),
+);
+
 export const TraceFilter = Loadable(
 	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
 );

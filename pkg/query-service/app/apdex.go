@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 func (aH *APIHandler) setApdexSettings(w http.ResponseWriter, r *http.Request) {
