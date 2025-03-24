@@ -9,10 +9,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
-	"github.com/uptrace/bun"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"go.uber.org/zap"
 )
@@ -20,14 +20,14 @@ import (
 // Repo is license repo. stores license keys in a secured DB
 type Repo struct {
 	db    *sqlx.DB
-	bundb *bun.DB
+	store sqlstore.SQLStore
 }
 
 // NewLicenseRepo initiates a new license repo
-func NewLicenseRepo(db *sqlx.DB, bundb *bun.DB) Repo {
+func NewLicenseRepo(db *sqlx.DB, store sqlstore.SQLStore) Repo {
 	return Repo{
 		db:    db,
-		bundb: bundb,
+		store: store,
 	}
 }
 
@@ -171,7 +171,7 @@ func (r *Repo) UpdateLicenseV3(ctx context.Context, l *model.LicenseV3) error {
 
 func (r *Repo) CreateFeature(req *types.FeatureStatus) *basemodel.ApiError {
 
-	_, err := r.bundb.NewInsert().
+	_, err := r.store.BunDB().NewInsert().
 		Model(req).
 		Exec(context.Background())
 	if err != nil {
@@ -183,7 +183,7 @@ func (r *Repo) CreateFeature(req *types.FeatureStatus) *basemodel.ApiError {
 func (r *Repo) GetFeature(featureName string) (types.FeatureStatus, error) {
 	var feature types.FeatureStatus
 
-	err := r.bundb.NewSelect().
+	err := r.store.BunDB().NewSelect().
 		Model(&feature).
 		Where("name = ?", featureName).
 		Scan(context.Background())
@@ -212,7 +212,7 @@ func (r *Repo) GetAllFeatures() ([]basemodel.Feature, error) {
 
 func (r *Repo) UpdateFeature(req types.FeatureStatus) error {
 
-	_, err := r.bundb.NewUpdate().
+	_, err := r.store.BunDB().NewUpdate().
 		Model(&req).
 		Where("name = ?", req.Name).
 		Exec(context.Background())

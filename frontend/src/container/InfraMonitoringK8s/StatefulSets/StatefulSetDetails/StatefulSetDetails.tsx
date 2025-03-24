@@ -582,6 +582,7 @@ function StatefulSetDetails({
 							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="statefulsetTraces"
+							category={InfraMonitoringEvents.StatefulSet}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_STATEFUL_SET_NAME,
 								QUERY_KEYS.K8S_NAMESPACE_NAME,

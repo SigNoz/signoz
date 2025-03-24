@@ -337,6 +337,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS_PIPELINES' ||
 		routeKey === 'LOGS_SAVE_VIEWS';
 
+	const isApiMonitoringView = (): boolean => routeKey === 'API_MONITORING';
+
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
@@ -357,6 +359,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isInfraMonitoring = (): boolean =>
 		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
 		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
+	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -657,11 +660,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 											isAlertOverview() ||
 											isMessagingQueues() ||
 											isCloudIntegrationPage() ||
-											isInfraMonitoring()
+											isInfraMonitoring() ||
+											isApiMonitoringView()
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() ? { margin: 0 } : {}),
+										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}
