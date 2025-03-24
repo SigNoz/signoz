@@ -211,7 +211,6 @@ function EntityTraces({
 						columns={traceListColumns}
 						onRow={(): Record<string, unknown> => ({
 							onClick: (): void => handleRowClick(),
-							style: { cursor: 'pointer' },
 						})}
 					/>
 				</div>
