@@ -98,22 +98,22 @@ telemetrystore:
   max_open_conns: 100
   # Maximum time to wait for a connection to be established.
   dial_timeout: 5s
-  prometheus:
-    remote_read:
-      # The URL to use for remote read. It must be a clickhouse dsn pointing to the database where metrics is stored.
-      url: tcp://localhost:9000/signoz_metrics
-    active_query_tracker:
-      # Whether to enable the active query tracker.
-      enabled: true
-      # The path to use for the active query tracker.
-      path: ""
-      # The maximum number of concurrent queries.
-      max_concurrent: 20
   # Specifies the telemetrystore provider to use.
   provider: clickhouse
   clickhouse:
     # The DSN to use for clickhouse.
     dsn: tcp://localhost:9000
+    prometheus:
+      remote_read:
+        # The URL to use for remote read. It must be a clickhouse dsn pointing to the database where metrics is stored.
+        url: tcp://localhost:9000/signoz_metrics
+      active_query_tracker:
+        # Whether to enable the active query tracker.
+        enabled: true
+        # The path to use for the active query tracker.
+        path: ""
+        # The maximum number of concurrent queries.
+        max_concurrent: 20
 
 ##################### Alertmanager #####################
 alertmanager:
