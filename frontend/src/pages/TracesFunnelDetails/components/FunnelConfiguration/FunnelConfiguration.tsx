@@ -11,10 +11,14 @@ import StepsHeader from './StepsHeader';
 
 interface FunnelConfigurationProps {
 	funnel: FunnelData;
+	validTracesCount: number;
+	setValidTracesCount: (count: number) => void;
 }
 
 function FunnelConfiguration({
 	funnel,
+	validTracesCount,
+	setValidTracesCount,
 }: FunnelConfigurationProps): JSX.Element {
 	const {
 		isPopoverOpen,
@@ -23,9 +27,8 @@ function FunnelConfiguration({
 		handleAddStep,
 		handleStepChange,
 		handleStepRemoval,
-		validTracesCount,
 		isValidateStepsMutationLoading,
-	} = useFunnelConfiguration({ funnel });
+	} = useFunnelConfiguration({ funnel, setValidTracesCount });
 
 	return (
 		<div className="funnel-configuration">

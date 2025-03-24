@@ -20,7 +20,6 @@ interface UseFunnelConfiguration {
 	handleAddStep: () => void;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
 	handleStepRemoval: (index: number) => void;
-	validTracesCount: number;
 	isValidateStepsMutationLoading: boolean;
 }
 
@@ -29,8 +28,10 @@ const convertToNanoseconds = (time: string): number => parseInt(time, 10) * 1e9;
 
 export default function useFunnelConfiguration({
 	funnel,
+	setValidTracesCount,
 }: {
 	funnel: FunnelData;
+	setValidTracesCount: (count: number) => void;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
@@ -39,7 +40,6 @@ export default function useFunnelConfiguration({
 
 	// State management
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-	const [validTracesCount, setValidTracesCount] = useState(0);
 
 	const initialSteps = funnel.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
@@ -102,7 +102,7 @@ export default function useFunnelConfiguration({
 			const traces = response?.payload?.data || [];
 			setValidTracesCount(traces.length);
 		},
-		[],
+		[setValidTracesCount],
 	);
 
 	const validateCurrentSteps = useCallback(() => {
@@ -173,7 +173,6 @@ export default function useFunnelConfiguration({
 		handleAddStep: addNewStep,
 		handleStepChange: handleStepUpdate,
 		handleStepRemoval,
-		validTracesCount,
 		isValidateStepsMutationLoading: validateStepsMutation.isLoading,
 	};
 }
