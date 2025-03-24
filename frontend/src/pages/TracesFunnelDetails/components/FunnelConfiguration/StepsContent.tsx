@@ -14,12 +14,14 @@ interface StepsContentProps {
 	steps: FunnelStepData[];
 	handleAddStep: () => void;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
+	handleStepRemoval: (index: number) => void;
 }
 
 function StepsContent({
 	steps,
 	handleAddStep,
 	handleStepChange,
+	handleStepRemoval,
 }: StepsContentProps): JSX.Element {
 	return (
 		<div className="steps-content">
@@ -35,6 +37,8 @@ function StepsContent({
 										stepData={step}
 										index={index}
 										onStepChange={handleStepChange}
+										onStepRemove={handleStepRemoval}
+										stepsCount={steps.length}
 									/>
 									{/* Display InterStepConfig only between steps */}
 									{index < steps.length - 1 && (

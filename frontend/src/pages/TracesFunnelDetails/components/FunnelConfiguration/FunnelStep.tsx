@@ -18,14 +18,18 @@ interface FunnelStepProps {
 	funnelId: string;
 	stepData: FunnelStepData;
 	index: number;
+	stepsCount: number;
 	onStepChange: (index: number, newValues: Partial<FunnelStepData>) => void;
+	onStepRemove: (index: number) => void;
 }
 
 function FunnelStep({
 	funnelId,
 	stepData,
 	index,
+	stepsCount,
 	onStepChange,
+	onStepRemove,
 }: FunnelStepProps): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
@@ -66,32 +70,28 @@ function FunnelStep({
 
 	return (
 		<div className="funnel-step">
-			{!!stepData.title || stepData.description ? (
-				<div className="funnel-step__header">
-					<div className="funnel-step-details">
+			<div className="funnel-step__header">
+				<div className="funnel-step-details">
+					{!!stepData.title && (
 						<div className="funnel-step-details__title">{stepData.title}</div>
+					)}
+					{!!stepData.description && (
 						<div className="funnel-step-details__description">
 							{stepData.description}
 						</div>
-					</div>
-					<div className="funnel-step-actions">
-						<FunnelStepPopover
-							isPopoverOpen={isPopoverOpen}
-							setIsPopoverOpen={setIsPopoverOpen}
-							funnelId={funnelId}
-							stepId={stepData.id}
-						/>
-					</div>
+					)}
 				</div>
-			) : (
-				<FunnelStepPopover
-					isPopoverOpen={isPopoverOpen}
-					setIsPopoverOpen={setIsPopoverOpen}
-					funnelId={funnelId}
-					stepId={stepData.id}
-					className="step-popover"
-				/>
-			)}
+				<div className="funnel-step-actions">
+					<FunnelStepPopover
+						isPopoverOpen={isPopoverOpen}
+						setIsPopoverOpen={setIsPopoverOpen}
+						funnelId={funnelId}
+						stepId={stepData.id}
+						onStepRemove={(): void => onStepRemove(index)}
+						stepsCount={stepsCount}
+					/>
+				</div>
+			</div>
 			<div className="funnel-step__content">
 				<div className="drag-icon">
 					<GripVertical size={14} color="var(--bg-slate-200)" />

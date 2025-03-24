@@ -22,6 +22,7 @@ function FunnelConfiguration({
 		steps,
 		handleAddStep,
 		handleStepChange,
+		handleStepRemoval,
 		validTracesCount,
 		isValidateStepsMutationLoading,
 	} = useFunnelConfiguration({ funnel });
@@ -43,6 +44,7 @@ function FunnelConfiguration({
 						steps={steps}
 						handleStepChange={handleStepChange}
 						handleAddStep={handleAddStep}
+						handleStepRemoval={handleStepRemoval}
 					/>
 				</div>
 				<StepsFooter

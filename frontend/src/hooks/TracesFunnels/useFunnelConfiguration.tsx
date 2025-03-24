@@ -19,6 +19,7 @@ interface UseFunnelConfiguration {
 	steps: FunnelStepData[];
 	handleAddStep: () => void;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
+	handleStepRemoval: (index: number) => void;
 	validTracesCount: number;
 	isValidateStepsMutationLoading: boolean;
 }
@@ -132,6 +133,19 @@ export default function useFunnelConfiguration({
 		]);
 	}, []);
 
+	const handleStepRemoval = useCallback((index: number) => {
+		setSteps((prev) =>
+			prev
+				// remove the step in the index
+				.filter((_, i) => i !== index)
+				// reset the step_order for the remaining steps
+				.map((step, newIndex) => ({
+					...step,
+					step_order: newIndex + 1,
+				})),
+		);
+	}, []);
+
 	// Side Effects
 	useEffect(() => {
 		validateCurrentSteps();
@@ -158,6 +172,7 @@ export default function useFunnelConfiguration({
 		steps,
 		handleAddStep: addNewStep,
 		handleStepChange: handleStepUpdate,
+		handleStepRemoval,
 		validTracesCount,
 		isValidateStepsMutationLoading: validateStepsMutation.isLoading,
 	};
