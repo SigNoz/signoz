@@ -45,12 +45,12 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(db *sqlx.DB, sqlStore sqlstore.SQLStore, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, store sqlstore.SQLStore, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
 
-	repo := NewLicenseRepo(db, sqlStore)
+	repo := NewLicenseRepo(db, store)
 	m := &Manager{
 		repo: &repo,
 	}
