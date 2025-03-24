@@ -3,11 +3,11 @@ package sqlmigration
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 type updatePipelines struct {
