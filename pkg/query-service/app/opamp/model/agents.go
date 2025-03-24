@@ -6,15 +6,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	signozTypes "github.com/SigNoz/signoz/pkg/types"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
-	signozTypes "go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
-var db *bun.DB
+var store sqlstore.SQLStore
 
 var AllAgents = Agents{
 	agentsById:  map[string]*Agent{},
@@ -32,15 +32,14 @@ func (a *Agents) Count() int {
 }
 
 // Initialize the database and create schema if needed
-func InitDB(qsDB *bun.DB) (*bun.DB, error) {
-	db = qsDB
+func InitDB(sqlStore sqlstore.SQLStore) {
+	store = sqlStore
 
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),
 		connections: make(map[types.Connection]map[string]bool),
 		mux:         sync.RWMutex{},
 	}
-	return db, nil
 }
 
 // RemoveConnection removes the connection all Agent instances associated with the
@@ -68,7 +67,7 @@ func (agents *Agents) FindAgent(agentID string) *Agent {
 
 func (agents *Agents) getDefaultOrgID() (string, error) {
 	var orgID []string
-	err := db.NewSelect().Model((*signozTypes.Organization)(nil)).Column("id").Scan(context.Background(), &orgID)
+	err := store.BunDB().NewSelect().Model((*signozTypes.Organization)(nil)).Column("id").Scan(context.Background(), &orgID)
 	if err != nil {
 		return "", err
 	}

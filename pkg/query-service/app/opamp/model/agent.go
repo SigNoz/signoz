@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -44,7 +44,7 @@ func (agent *Agent) Upsert() error {
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 
-	_, err := db.NewInsert().
+	_, err := store.BunDB().NewInsert().
 		Model(&agent.StorableAgent).
 		On("CONFLICT (org_id, agent_id) DO UPDATE").
 		Set("started_at = EXCLUDED.started_at").

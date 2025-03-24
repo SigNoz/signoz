@@ -1,6 +1,6 @@
 package agentConf
 
-import "go.signoz.io/signoz/pkg/types"
+import "github.com/SigNoz/signoz/pkg/types"
 
 type ConfigElements struct {
 	VersionID   string

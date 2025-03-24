@@ -6,24 +6,24 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
-	db *bun.DB
+	store sqlstore.SQLStore
 }
 
 func (r *Repo) GetConfigHistory(
 	ctx context.Context, typ types.ElementTypeDef, limit int,
 ) ([]types.AgentConfigVersion, *model.ApiError) {
 	var c []types.AgentConfigVersion
-	err := r.db.NewSelect().
+	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("version, id, element_type, COALESCE(created_by, -1) as created_by, created_at").
 		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
@@ -53,7 +53,7 @@ func (r *Repo) GetConfigVersion(
 	ctx context.Context, typ types.ElementTypeDef, v int,
 ) (*types.AgentConfigVersion, *model.ApiError) {
 	var c types.AgentConfigVersion
-	err := r.db.NewSelect().
+	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type").
 		ColumnExpr("COALESCE(created_by, -1) as created_by").
@@ -81,7 +81,7 @@ func (r *Repo) GetLatestVersion(
 	ctx context.Context, typ types.ElementTypeDef,
 ) (*types.AgentConfigVersion, *model.ApiError) {
 	var c types.AgentConfigVersion
-	err := r.db.NewSelect().
+	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type").
 		ColumnExpr("COALESCE(created_by, -1) as created_by").
@@ -145,13 +145,13 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.db.NewDelete().Model((*types.AgentConfigVersion)(nil)).Where("id = ?", c.ID).Exec(ctx)
-			r.db.NewDelete().Model((*types.AgentConfigElement)(nil)).Where("version_id = ?", c.ID).Exec(ctx)
+			r.store.BunDB().NewDelete().Model((*types.AgentConfigVersion)(nil)).Where("id = ?", c.ID).Exec(ctx)
+			r.store.BunDB().NewDelete().Model((*types.AgentConfigElement)(nil)).Where("version_id = ?", c.ID).Exec(ctx)
 		}
 	}()
 
 	// insert config
-	_, dbErr := r.db.NewInsert().
+	_, dbErr := r.store.BunDB().NewInsert().
 		Model(&types.AgentConfigVersion{
 			ID:      c.ID,
 			Version: c.Version,
@@ -179,7 +179,7 @@ func (r *Repo) insertConfig(
 			ElementType: string(c.ElementType),
 			ElementID:   e,
 		}
-		_, dbErr = r.db.NewInsert().Model(agentConfigElement).Exec(ctx)
+		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
 		if dbErr != nil {
 			return model.InternalError(dbErr)
 		}
@@ -196,7 +196,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	lastHash string,
 	lastconf string) *model.ApiError {
 
-	_, err := r.db.NewUpdate().
+	_, err := r.store.BunDB().NewUpdate().
 		Model((*types.AgentConfigVersion)(nil)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
@@ -217,7 +217,7 @@ func (r *Repo) updateDeployStatusByHash(
 	ctx context.Context, confighash string, status string, result string,
 ) *model.ApiError {
 
-	_, err := r.db.NewUpdate().
+	_, err := r.store.BunDB().NewUpdate().
 		Model((*types.AgentConfigVersion)(nil)).
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).

@@ -12,10 +12,10 @@ import (
 	filterprocessor "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -40,7 +40,7 @@ type Manager struct {
 }
 
 type ManagerOptions struct {
-	DB *bun.DB
+	Store sqlstore.SQLStore
 
 	// When acting as opamp.AgentConfigProvider, agent conf recommendations are
 	// applied to the base conf in the order the features have been specified here.
@@ -61,7 +61,7 @@ func Initiate(options *ManagerOptions) (*Manager, error) {
 	}
 
 	m = &Manager{
-		Repo:              Repo{options.DB},
+		Repo:              Repo{options.Store},
 		agentFeatures:     options.AgentFeatures,
 		configSubscribers: map[string]func(){},
 	}
