@@ -12,9 +12,6 @@ interface DependentServicesProps {
 	dependentServicesQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }
 
-// need to add a loading state
-
-// discuss slice vs index based rendering
 function DependentServices({
 	dependentServicesQuery,
 }: DependentServicesProps): JSX.Element {

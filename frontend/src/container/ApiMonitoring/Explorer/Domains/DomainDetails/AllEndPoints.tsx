@@ -185,7 +185,6 @@ function AllEndPoints({
 					allowClear
 					maxTagCount="responsive"
 					placeholder="Search for attribute"
-					style={{ width: '100%' }}
 					options={groupByOptions}
 					onChange={handleGroupByChange}
 				/>{' '}
