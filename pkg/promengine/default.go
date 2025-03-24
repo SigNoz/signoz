@@ -14,14 +14,14 @@ import (
 	"github.com/prometheus/prometheus/storage/remote"
 )
 
-var _ PromEngine = (*ExtEngine)(nil)
+var _ PromEngine = (*defaultEngine)(nil)
 
-type ExtEngine struct {
+type defaultEngine struct {
 	engine        *promql.Engine
 	fanoutStorage storage.Storage
 }
 
-func New(logger *slog.Logger, cfg Config) (*ExtEngine, error) {
+func New(logger *slog.Logger, cfg Config) (*defaultEngine, error) {
 	if logger == nil {
 		return nil, fmt.Errorf("logger is required")
 	}
@@ -56,32 +56,34 @@ func New(logger *slog.Logger, cfg Config) (*ExtEngine, error) {
 	)
 	fanoutStorage := storage.NewFanout(gokitLogger, remoteStorage)
 
-	config := &config.Config{
+	// For some reason, prometheusConfig.UnmarshalYAML(func(i interface{}) error { return nil })
+	// is not working, so we need to load the config from a string
+	prometheusConfig, err := config.Load((&config.Config{
 		RemoteReadConfigs: []*config.RemoteReadConfig{
 			{
 				URL: &commoncfg.URL{URL: cfg.RemoteReadConfig.URL},
 			},
 		},
-	}
+	}).String(), false, gokitLogger)
 
-	if err := config.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
-	if err := remoteStorage.ApplyConfig(config); err != nil {
+	if err := remoteStorage.ApplyConfig(prometheusConfig); err != nil {
 		return nil, err
 	}
 
-	return &ExtEngine{
+	return &defaultEngine{
 		engine:        engine,
 		fanoutStorage: fanoutStorage,
 	}, nil
 }
 
-func (engine *ExtEngine) Engine() *promql.Engine {
+func (engine *defaultEngine) Engine() *promql.Engine {
 	return engine.engine
 }
 
-func (engine *ExtEngine) Storage() storage.Storage {
+func (engine *defaultEngine) Storage() storage.Storage {
 	return engine.fanoutStorage
 }
