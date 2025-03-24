@@ -11,16 +11,16 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
 // This time the global variable is unexported.
-var db *bun.DB
+var sqlStore sqlstore.SQLStore
 
 // User for mapping job,instance from grafana
 var (
@@ -33,8 +33,8 @@ var (
 )
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(inputDB *bun.DB) error {
-	db = inputDB
+func InitDB(sqlStore sqlstore.SQLStore) error {
+	sqlStore = sqlStore
 	telemetry.GetInstance().SetDashboardsInfoCallback(GetDashboardsInfo)
 
 	return nil
@@ -57,7 +57,7 @@ func CreateDashboard(ctx context.Context, orgID string, email string, data map[s
 		dash.UUID = data["uuid"].(string)
 	}
 
-	err := db.NewInsert().Model(dash).Returning("id").Scan(ctx, &dash.ID)
+	err := sqlStore.BunDB().NewInsert().Model(dash).Returning("id").Scan(ctx, &dash.ID)
 	if err != nil {
 		zap.L().Error("Error in inserting dashboard data: ", zap.Any("dashboard", dash), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -69,7 +69,7 @@ func CreateDashboard(ctx context.Context, orgID string, email string, data map[s
 func GetDashboards(ctx context.Context, orgID string) ([]types.Dashboard, *model.ApiError) {
 	dashboards := []types.Dashboard{}
 
-	err := db.NewSelect().Model(&dashboards).Where("org_id = ?", orgID).Scan(ctx)
+	err := sqlStore.BunDB().NewSelect().Model(&dashboards).Where("org_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -89,7 +89,7 @@ func DeleteDashboard(ctx context.Context, orgID, uuid string, fm interfaces.Feat
 		return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
 	}
 
-	result, err := db.NewDelete().Model(&types.Dashboard{}).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
+	result, err := sqlStore.BunDB().NewDelete().Model(&types.Dashboard{}).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -108,7 +108,7 @@ func DeleteDashboard(ctx context.Context, orgID, uuid string, fm interfaces.Feat
 func GetDashboard(ctx context.Context, orgID, uuid string) (*types.Dashboard, *model.ApiError) {
 
 	dashboard := types.Dashboard{}
-	err := db.NewSelect().Model(&dashboard).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Scan(ctx)
+	err := sqlStore.BunDB().NewSelect().Model(&dashboard).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
@@ -148,7 +148,7 @@ func UpdateDashboard(ctx context.Context, orgID, userEmail, uuid string, data ma
 	dashboard.UpdatedBy = userEmail
 	dashboard.Data = data
 
-	_, err = db.NewUpdate().Model(dashboard).Set("updated_at = ?", dashboard.UpdatedAt).Set("updated_by = ?", userEmail).Set("data = ?", mapData).Where("uuid = ?", dashboard.UUID).Exec(ctx)
+	_, err = sqlStore.BunDB().NewUpdate().Model(dashboard).Set("updated_at = ?", dashboard.UpdatedAt).Set("updated_by = ?", userEmail).Set("data = ?", mapData).Where("uuid = ?", dashboard.UUID).Exec(ctx)
 
 	if err != nil {
 		zap.L().Error("Error in inserting dashboard data", zap.Any("data", data), zap.Error(err))
@@ -170,7 +170,7 @@ func LockUnlockDashboard(ctx context.Context, orgID, uuid string, lock bool) *mo
 		lockValue = 0
 	}
 
-	_, err := db.NewUpdate().Model(dashboard).Set("locked = ?", lockValue).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
+	_, err := sqlStore.BunDB().NewUpdate().Model(dashboard).Set("locked = ?", lockValue).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
 	if err != nil {
 		zap.L().Error("Error in updating dashboard", zap.String("uuid", uuid), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -242,7 +242,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	dashboardsInfo := model.DashboardsInfo{}
 	// fetch dashboards from dashboard db
 	dashboards := []types.Dashboard{}
-	err := db.NewSelect().Model(&dashboards).Scan(ctx)
+	err := sqlStore.BunDB().NewSelect().Model(&dashboards).Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return &dashboardsInfo, err
@@ -451,7 +451,7 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 
 func GetDashboardsWithMetricNames(ctx context.Context, orgID string, metricNames []string) (map[string][]map[string]string, *model.ApiError) {
 	dashboards := []types.Dashboard{}
-	err := db.NewSelect().Model(&dashboards).Where("org_id = ?", orgID).Scan(ctx)
+	err := sqlStore.BunDB().NewSelect().Model(&dashboards).Where("org_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in getting dashboards", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
