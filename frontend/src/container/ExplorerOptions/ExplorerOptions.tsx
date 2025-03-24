@@ -223,7 +223,7 @@ function ExplorerOptions({
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
+	const extraData = viewsData?.data?.data?.find((view) => view.id === viewKey)
 		?.extraData;
 
 	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
@@ -357,17 +357,12 @@ function ExplorerOptions({
 				viewsData?.data?.data,
 			);
 			if (!currentViewDetails) return;
-			const {
-				query,
-				name,
-				uuid,
-				panelType: currentPanelType,
-			} = currentViewDetails;
+			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			handleExplorerTabChange(currentPanelType, {
 				query,
 				name,
-				uuid,
+				id,
 			});
 		},
 		[viewsData, handleExplorerTabChange],
@@ -694,7 +689,7 @@ function ExplorerOptions({
 									bgColor = extraData.color;
 								}
 								return (
-									<Select.Option key={view.uuid} value={view.name}>
+									<Select.Option key={view.id} value={view.name}>
 										<div className="render-options">
 											<span
 												className="dot"

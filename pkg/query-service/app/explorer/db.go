@@ -125,8 +125,10 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UU
 			CreatedBy: createBy,
 			UpdatedBy: updatedBy,
 		},
-		OrgID:      orgID,
-		ID:         uuid,
+		OrgID: orgID,
+		Identifiable: types.Identifiable{
+			ID: uuid,
+		},
 		Name:       view.Name,
 		Category:   view.Category,
 		SourcePage: view.SourcePage,
@@ -144,7 +146,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UU
 
 func GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*v3.SavedView, error) {
 	var view types.SavedView
-	err := store.BunDB().NewSelect().Model(&view).Where("org_id = ? AND uuid = ?", orgID, uuid.StringValue()).Scan(ctx)
+	err := store.BunDB().NewSelect().Model(&view).Where("org_id = ? AND id = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
 	}
