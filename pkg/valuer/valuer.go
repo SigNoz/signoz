@@ -11,9 +11,9 @@ type Valuer interface {
 	IsZero() bool
 	// StringValue returns the string representation of the value
 	StringValue() string
-	// Convert to json marshalled value from the struct
+	// MarshalJSON returns the JSON encoding of the value.
 	json.Marshaler
-	// Unmarshal into struct from underlying json marshalled value
+	// UnmarshalJSON returns the JSON decoding of the value.
 	json.Unmarshaler
 	// Scan into underlying struct from a database driver's value
 	sql.Scanner
