@@ -48,5 +48,9 @@ func (migration *schemaCleanup) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
