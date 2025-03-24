@@ -26,6 +26,7 @@ export interface FunnelData {
 	creation_timestamp: number;
 	updated_timestamp: number;
 	user: string;
+	description?: string;
 	steps?: FunnelStepData[];
 }
 

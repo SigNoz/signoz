@@ -191,3 +191,24 @@ export const updateFunnelStepDetails = async ({
 		payload: response.data,
 	};
 };
+
+interface UpdateFunnelDescriptionPayload {
+	funnel_id: string;
+	description: string;
+}
+
+export const saveFunnelDescription = async (
+	payload: UpdateFunnelDescriptionPayload,
+): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.post(
+		`${FUNNELS_BASE_PATH}/save`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: 'Funnel description updated successfully',
+		payload: response.data,
+	};
+};

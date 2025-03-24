@@ -5,6 +5,7 @@ import {
 	getFunnelById,
 	getFunnelsList,
 	renameFunnel,
+	saveFunnelDescription,
 	updateFunnelStepDetails,
 	UpdateFunnelStepDetailsPayload,
 	updateFunnelSteps,
@@ -128,4 +129,18 @@ export const useUpdateFunnelStepDetails = ({
 	useMutation({
 		mutationFn: (payload) => updateFunnelStepDetails({ payload, stepOrder }),
 		mutationKey: [REACT_QUERY_KEY.UPDATE_FUNNEL_STEP_DETAILS, stepOrder],
+	});
+
+interface SaveFunnelDescriptionPayload {
+	funnel_id: string;
+	description: string;
+}
+
+export const useSaveFunnelDescription = (): UseMutationResult<
+	SuccessResponse<FunnelData> | ErrorResponse,
+	Error,
+	SaveFunnelDescriptionPayload
+> =>
+	useMutation({
+		mutationFn: saveFunnelDescription,
 	});

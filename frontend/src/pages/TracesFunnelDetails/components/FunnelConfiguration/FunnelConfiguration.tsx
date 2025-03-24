@@ -40,6 +40,9 @@ function FunnelConfiguration({
 					funnel={funnel}
 				/>
 			</div>
+			<div className="funnel-configuration__description">
+				{funnel?.description}
+			</div>
 			<div className="funnel-configuration__steps-wrapper">
 				<div className="funnel-configuration__steps">
 					<StepsHeader />
@@ -52,8 +55,10 @@ function FunnelConfiguration({
 					/>
 				</div>
 				<StepsFooter
+					funnelId={funnel.id}
 					stepsCount={steps.length}
 					validTracesCount={validTracesCount}
+					funnelDescription={funnel?.description || ''}
 					isLoading={isValidateStepsMutationLoading}
 				/>
 			</div>
