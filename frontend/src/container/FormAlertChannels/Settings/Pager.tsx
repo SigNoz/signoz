@@ -1,4 +1,5 @@
 import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -15,13 +16,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 				label={t('field_pager_routing_key')}
 				tooltip={{
 					title: (
-						<div
-							dangerouslySetInnerHTML={{
-								__html: t('tooltip_pager_routing_key').replace(
-									/\[([^\]]+)\]\(([^)]+)\)/g,
-									'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-								),
-							}}
+						<MarkdownRenderer
+							markdownContent={t('tooltip_pager_routing_key')}
+							variables={{}}
 						/>
 					),
 					overlayInnerStyle: { maxWidth: 400 },

@@ -1,4 +1,5 @@
 import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,13 +17,9 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 				label={t('field_webhook_url')}
 				tooltip={{
 					title: (
-						<div
-							dangerouslySetInnerHTML={{
-								__html: t('tooltip_slack_url').replace(
-									/\[([^\]]+)\]\(([^)]+)\)/g,
-									'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-								),
-							}}
+						<MarkdownRenderer
+							markdownContent={t('tooltip_slack_url')}
+							variables={{}}
 						/>
 					),
 					overlayInnerStyle: { maxWidth: 400 },
