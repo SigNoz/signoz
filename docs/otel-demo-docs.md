@@ -5,8 +5,7 @@
 This guide provides a step-by-step walkthrough for setting up the **OpenTelemetry Demo App** with **SigNoz** as backend for observability. It outlines steps to export telemetry data to **SigNoz self-hosted with Docker**, **SigNoz self-hosted with Kubernetes** and **SigNoz cloud**. 
 <br/>
 
-
- ##### *Table of Contents*
+<u>Table of Contents</u>
 
 - [Send data to SigNoz Self-hosted with Docker](#send-data-to-signoz-self-hosted-with-docker)
   - [Prerequisites](#prerequisites)
