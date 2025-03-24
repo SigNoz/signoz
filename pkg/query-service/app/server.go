@@ -101,11 +101,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
-	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
+	if err := explorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 

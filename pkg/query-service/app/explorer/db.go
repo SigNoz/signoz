@@ -18,23 +18,23 @@ import (
 	"go.uber.org/zap"
 )
 
-var sqlStore sqlstore.SQLStore
+var store sqlstore.SQLStore
 
 // InitWithDSN sets up setting up the connection pool global variable.
 func InitWithDSN(sqlStore sqlstore.SQLStore) error {
-	sqlStore = sqlStore
+	store = sqlStore
 	telemetry.GetInstance().SetSavedViewsInfoCallback(GetSavedViewsInfo)
 
 	return nil
 }
 
 func InitWithDB(sqlStore sqlstore.SQLStore) {
-	sqlStore = sqlStore
+	store = sqlStore
 }
 
 func GetViews(ctx context.Context, orgID string) ([]*v3.SavedView, error) {
 	var views []types.SavedView
-	err := sqlStore.BunDB().NewSelect().Model(&views).Where("org_id = ?", orgID).Scan(ctx)
+	err := store.BunDB().NewSelect().Model(&views).Where("org_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
 	}
@@ -67,9 +67,9 @@ func GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, na
 	var views []types.SavedView
 	var err error
 	if len(category) == 0 {
-		err = sqlStore.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
+		err = store.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
 	} else {
-		err = sqlStore.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND category LIKE ? AND name LIKE ?", orgID, sourcePage, "%"+category+"%", "%"+name+"%").Scan(ctx)
+		err = store.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND category LIKE ? AND name LIKE ?", orgID, sourcePage, "%"+category+"%", "%"+name+"%").Scan(ctx)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
@@ -139,7 +139,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (string, e
 		ExtraData:  view.ExtraData,
 	}
 
-	_, err = sqlStore.BunDB().NewInsert().Model(&dbView).Exec(ctx)
+	_, err = store.BunDB().NewInsert().Model(&dbView).Exec(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error in creating saved view: %s", err.Error())
 	}
@@ -148,7 +148,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (string, e
 
 func GetView(ctx context.Context, orgID string, uuid_ string) (*v3.SavedView, error) {
 	var view types.SavedView
-	err := sqlStore.BunDB().NewSelect().Model(&view).Where("org_id = ? AND uuid = ?", orgID, uuid_).Scan(ctx)
+	err := store.BunDB().NewSelect().Model(&view).Where("org_id = ? AND uuid = ?", orgID, uuid_).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
 	}
@@ -187,7 +187,7 @@ func UpdateView(ctx context.Context, orgID string, uuid_ string, view v3.SavedVi
 	updatedAt := time.Now()
 	updatedBy := claims.Email
 
-	_, err = sqlStore.BunDB().NewUpdate().
+	_, err = store.BunDB().NewUpdate().
 		Model(&types.SavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
 			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
@@ -201,7 +201,7 @@ func UpdateView(ctx context.Context, orgID string, uuid_ string, view v3.SavedVi
 }
 
 func DeleteView(ctx context.Context, orgID string, uuid_ string) error {
-	_, err := sqlStore.BunDB().NewDelete().
+	_, err := store.BunDB().NewDelete().
 		Model(&types.SavedView{}).
 		Where("uuid = ?", uuid_).
 		Where("org_id = ?", orgID).
@@ -216,7 +216,7 @@ func GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
 	savedViewsInfo := model.SavedViewsInfo{}
 	// get single org ID from db
 	var orgIDs []string
-	err := sqlStore.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs)
+	err := store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting org IDs: %s", err.Error())
 	}
