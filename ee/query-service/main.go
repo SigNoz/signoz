@@ -18,8 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 
-	prommodel "github.com/prometheus/common/model"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -30,10 +28,6 @@ func initZapLog() *zap.Logger {
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	return logger
-}
-
-func init() {
-	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
 
 func main() {
