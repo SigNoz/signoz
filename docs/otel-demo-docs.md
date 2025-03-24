@@ -3,6 +3,24 @@
 [The OpenTelemetry Astronomy Shop](https://github.com/open-telemetry/opentelemetry-demo) is an e-commerce web application, with **15 core microservices** in a **distributed system** which communicate over gRPC. Designed as a **polyglot** environment, it leverages a diverse set of programming languages, including Go, Python, .NET, Java, and others, showcasing cross-language instrumentation with OpenTelemetry. The intention is to get a quickstart application to send data and experience SigNoz firsthand.
 
 This guide provides a step-by-step walkthrough for setting up the **OpenTelemetry Demo App** with **SigNoz** as backend for observability. It outlines steps to export telemetry data to **SigNoz self-hosted with Docker**, **SigNoz self-hosted with Kubernetes** and **SigNoz cloud**. 
+<br/>
+
+
+ ##### *Table of Contents*
+
+- [Send data to SigNoz Self-hosted with Docker](#send-data-to-signoz-self-hosted-with-docker)
+  - [Prerequisites](#prerequisites)
+  - [Clone the OpenTelemetry Demo App Repository](#clone-the-opentelemetry-demo-app-repository)
+  - [Modify OpenTelemetry Collector Config](#modify-opentelemetry-collector-config)
+  - [Start the OpenTelemetry Demo App](#start-the-opentelemetry-demo-app)
+  - [Monitor with SigNoz (Docker)](#monitor-with-signoz-docker)
+- [Send data to SigNoz Self-hosted with Kubernetes](#send-data-to-signoz-self-hosted-with-kubernetes)
+  - [Prerequisites](#prerequisites-1)
+  - [Install Helm Repo and Charts](#install-helm-repo-and-charts)
+  - [Start the OpenTelemetry Demo App](#start-the-opentelemetry-demo-app-1)
+  - [Moniitor with SigNoz (Kubernetes)](#monitor-with-signoz-kubernetes)
+- [What's next](#whats-next)
+
 
 # Send data to SigNoz Self-hosted with Docker
 
@@ -223,7 +241,7 @@ This verifies that your OTel demo app is successfully sending telemetry data to 
 
 # What's next?
 
-If you’re eager to deepen your expertise in OpenTelemetry, explore this [blog]() for a comprehensive analysis of its advanced features such as error tracking, exception handling, and manual instrumentation explored using the OTel Demo app.
+
 
 Don't forget to check our OpenTelemetry [track](https://signoz.io/resource-center/opentelemetry/), guaranteed to take you from a newbie to sensei in no time!
 
