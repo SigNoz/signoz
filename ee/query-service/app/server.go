@@ -112,7 +112,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
+	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -130,7 +130,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore.BunDB())
+	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	r := baseapp.NewRouter()
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore.BunDB(), []string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -365,7 +365,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore.BunDB(), []string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,

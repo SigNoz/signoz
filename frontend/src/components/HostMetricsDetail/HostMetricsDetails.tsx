@@ -149,6 +149,10 @@ function HostMetricsDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.HostEntity,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
