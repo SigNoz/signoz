@@ -181,15 +181,15 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 	}
 
 	if deprecatedFlags.Config != "" {
-		fmt.Println("[Deprecated] flag --config is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_PROMETHEUS_REMOTE__READ_URL instead.")
+		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROMETHEUS_REMOTE__READ_URL instead. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 		cfg, err := promconfig.LoadFile(deprecatedFlags.Config, false, false, log.NewNopLogger())
 		if err != nil {
-			fmt.Println("Error parsing config, using value set in SIGNOZ_TELEMETRYSTORE_PROMETHEUS_REMOTE__READ_URL")
+			fmt.Println("Error parsing config, using value set in SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROMETHEUS_REMOTE__READ_URL")
 		} else {
 			if len(cfg.RemoteReadConfigs) != 1 {
-				fmt.Println("Error finding remote read config, using value set in SIGNOZ_TELEMETRYSTORE_PROMETHEUS_REMOTE__READ_URL")
+				fmt.Println("Error finding remote read config, using value set in SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROMETHEUS_REMOTE__READ_URL")
 			} else {
-				config.TelemetryStore.Prometheus.RemoteReadConfig.URL = cfg.RemoteReadConfigs[0].URL.URL
+				config.TelemetryStore.Clickhouse.Prometheus.RemoteReadConfig.URL = cfg.RemoteReadConfigs[0].URL.URL
 			}
 		}
 	}
