@@ -20,7 +20,7 @@
 		}
 	}
 	&__time-range {
-		width: 192px;
+		min-width: 192px;
 		height: 32px;
 		flex-shrink: 0;
 		.timeSelection-input {
