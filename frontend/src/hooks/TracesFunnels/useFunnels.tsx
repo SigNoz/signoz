@@ -1,9 +1,12 @@
+import { NotificationInstance } from 'antd/es/notification/interface';
 import {
 	createFunnel,
 	deleteFunnel,
 	getFunnelById,
 	getFunnelsList,
 	renameFunnel,
+	updateFunnelSteps,
+	UpdateFunnelStepsPayload,
 } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -74,4 +77,24 @@ export const useDeleteFunnel = (): UseMutationResult<
 > =>
 	useMutation({
 		mutationFn: deleteFunnel,
+	});
+
+export const useUpdateFunnelSteps = (
+	funnelId: string,
+	notification: NotificationInstance,
+): UseMutationResult<
+	SuccessResponse<FunnelData> | ErrorResponse,
+	Error,
+	UpdateFunnelStepsPayload
+> =>
+	useMutation({
+		mutationFn: updateFunnelSteps,
+		mutationKey: [REACT_QUERY_KEY.UPDATE_FUNNEL_STEPS, funnelId],
+
+		onError: (error) => {
+			notification.error({
+				message: 'Failed to update funnel steps',
+				description: error.message,
+			});
+		},
 	});

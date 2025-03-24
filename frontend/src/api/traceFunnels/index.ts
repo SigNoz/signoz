@@ -5,6 +5,7 @@ import {
 	CreateFunnelPayload,
 	CreateFunnelResponse,
 	FunnelData,
+	FunnelStepData,
 } from 'types/api/traceFunnels';
 
 const FUNNELS_BASE_PATH = '/trace-funnels';
@@ -57,7 +58,7 @@ export const getFunnelById = async (
 	funnelId: string,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.get(
-		`${FUNNELS_BASE_PATH}/get/${funnelId}`,
+		`/trace-funnels/get/${funnelId}`,
 	);
 
 	return {
@@ -104,6 +105,28 @@ export const deleteFunnel = async (
 		statusCode: 200,
 		error: null,
 		message: 'Funnel deleted successfully',
+		payload: response.data,
+	};
+};
+
+export interface UpdateFunnelStepsPayload {
+	funnel_id: string;
+	steps: FunnelStepData[];
+	updated_timestamp: number;
+}
+
+export const updateFunnelSteps = async (
+	payload: UpdateFunnelStepsPayload,
+): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.put(
+		`${FUNNELS_BASE_PATH}/steps/update`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: 'Funnel steps updated successfully',
 		payload: response.data,
 	};
 };

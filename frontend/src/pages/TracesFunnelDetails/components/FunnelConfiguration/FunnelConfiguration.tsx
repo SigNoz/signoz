@@ -1,9 +1,11 @@
 import './FunnelConfiguration.styles.scss';
 
+import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import useDebounce from 'hooks/useDebounce';
+import { useNotifications } from 'hooks/useNotifications';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 import { v4 } from 'uuid';
 
@@ -28,6 +30,26 @@ function FunnelConfiguration({
 	// Add debounced steps
 	const debouncedSteps = useDebounce(steps, 1000);
 
+	const { notifications } = useNotifications();
+
+	const updateStepsMutation = useUpdateFunnelSteps(funnel.id, notifications);
+
+	// Extract comparison logic
+	const areStepsChanged = useCallback(
+		() => JSON.stringify(debouncedSteps) !== JSON.stringify(initialSteps),
+		[debouncedSteps, initialSteps],
+	);
+
+	// Extract mutation payload preparation
+	const prepareUpdatePayload = useCallback(
+		() => ({
+			funnel_id: funnel.id,
+			steps: debouncedSteps,
+			updated_timestamp: Date.now(),
+		}),
+		[funnel.id, debouncedSteps],
+	);
+
 	const handleStepChange = (
 		index: number,
 		newStep: Partial<FunnelStepData>,
@@ -44,14 +66,12 @@ function FunnelConfiguration({
 		]);
 	};
 
-	// Replace the useEffect with this one
 	useEffect(() => {
-		if (debouncedSteps !== initialSteps) {
-			// Debounced API call for auto-save
-			// saveStepsToAPI(debouncedSteps);
-			console.log('steps debounced', debouncedSteps);
+		if (areStepsChanged()) {
+			updateStepsMutation.mutate(prepareUpdatePayload());
 		}
-	}, [debouncedSteps, initialSteps]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [debouncedSteps, areStepsChanged, prepareUpdatePayload]);
 
 	return (
 		<div className="funnel-configuration">
