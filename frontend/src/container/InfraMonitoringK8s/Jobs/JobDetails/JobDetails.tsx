@@ -575,6 +575,7 @@ function JobDetails({
 							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="jobTraces"
+							category={InfraMonitoringEvents.Job}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_JOB_NAME,
 								QUERY_KEYS.K8S_NAMESPACE_NAME,

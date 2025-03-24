@@ -1,7 +1,9 @@
 import './HostMetricTraces.styles.scss';
 
+import logEvent from 'api/common/logEvent';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -19,7 +21,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -137,6 +139,13 @@ function HostMetricTraces({
 	const totalCount =
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
 
+	const handleRowClick = useCallback(() => {
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.HostEntity,
+			view: InfraMonitoringEvents.TracesView,
+		});
+	}, []);
+
 	return (
 		<div className="host-metric-traces">
 			<div className="host-metric-traces-header">
@@ -189,6 +198,9 @@ function HostMetricTraces({
 						loading={isFetching}
 						dataSource={traces}
 						columns={traceListColumns}
+						onRow={(): Record<string, unknown> => ({
+							onClick: (): void => handleRowClick(),
+						})}
 					/>
 				</div>
 			)}

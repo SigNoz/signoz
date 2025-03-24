@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 )
 
 type Controller struct {
@@ -124,7 +124,7 @@ func (c *Controller) Uninstall(
 
 func (c *Controller) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
 }
 

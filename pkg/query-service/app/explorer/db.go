@@ -11,30 +11,30 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-var db *bun.DB
+var store sqlstore.SQLStore
 
 // InitWithDSN sets up setting up the connection pool global variable.
-func InitWithDSN(inputDB *bun.DB) error {
-	db = inputDB
+func InitWithDSN(sqlStore sqlstore.SQLStore) error {
+	store = sqlStore
 	telemetry.GetInstance().SetSavedViewsInfoCallback(GetSavedViewsInfo)
 
 	return nil
 }
 
-func InitWithDB(bunDB *bun.DB) {
-	db = bunDB
+func InitWithDB(sqlStore sqlstore.SQLStore) {
+	store = sqlStore
 }
 
 func GetViews(ctx context.Context, orgID string) ([]*v3.SavedView, error) {
 	var views []types.SavedView
-	err := db.NewSelect().Model(&views).Where("org_id = ?", orgID).Scan(ctx)
+	err := store.BunDB().NewSelect().Model(&views).Where("org_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
 	}
@@ -67,9 +67,9 @@ func GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, na
 	var views []types.SavedView
 	var err error
 	if len(category) == 0 {
-		err = db.NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
+		err = store.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
 	} else {
-		err = db.NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND category LIKE ? AND name LIKE ?", orgID, sourcePage, "%"+category+"%", "%"+name+"%").Scan(ctx)
+		err = store.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND category LIKE ? AND name LIKE ?", orgID, sourcePage, "%"+category+"%", "%"+name+"%").Scan(ctx)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
@@ -137,7 +137,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UU
 		ExtraData:  view.ExtraData,
 	}
 
-	_, err = db.NewInsert().Model(&dbView).Exec(ctx)
+	_, err = store.BunDB().NewInsert().Model(&dbView).Exec(ctx)
 	if err != nil {
 		return valuer.UUID{}, fmt.Errorf("error in creating saved view: %s", err.Error())
 	}
@@ -146,7 +146,7 @@ func CreateView(ctx context.Context, orgID string, view v3.SavedView) (valuer.UU
 
 func GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*v3.SavedView, error) {
 	var view types.SavedView
-	err := db.NewSelect().Model(&view).Where("org_id = ? AND uuid = ?", orgID, uuid.StringValue()).Scan(ctx)
+	err := store.BunDB().NewSelect().Model(&view).Where("org_id = ? AND uuid = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
 	}
@@ -185,7 +185,7 @@ func UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.Sav
 	updatedAt := time.Now()
 	updatedBy := claims.Email
 
-	_, err = db.NewUpdate().
+	_, err = store.BunDB().NewUpdate().
 		Model(&types.SavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
 			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
@@ -199,7 +199,7 @@ func UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view v3.Sav
 }
 
 func DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
-	_, err := db.NewDelete().
+	_, err := store.BunDB().NewDelete().
 		Model(&types.SavedView{}).
 		Where("uuid = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
@@ -214,7 +214,7 @@ func GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
 	savedViewsInfo := model.SavedViewsInfo{}
 	// get single org ID from db
 	var orgIDs []string
-	err := db.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs)
+	err := store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs)
 	if err != nil {
 		return nil, fmt.Errorf("error in getting org IDs: %s", err.Error())
 	}

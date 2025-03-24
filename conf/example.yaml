@@ -3,6 +3,12 @@
 # Do not modify this file
 #
 
+##################### Version #####################
+version:
+  banner:
+    # Whether to enable the version banner on startup.
+    enabled: true
+
 ##################### Instrumentation #####################
 instrumentation:
   logs:
