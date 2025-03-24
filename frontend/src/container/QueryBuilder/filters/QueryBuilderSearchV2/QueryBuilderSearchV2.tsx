@@ -87,6 +87,7 @@ interface QueryBuilderSearchV2Props {
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
+	hardcodedAttributeKeys?: BaseAutocompleteData[];
 }
 
 export interface Option {
@@ -119,6 +120,7 @@ function QueryBuilderSearchV2(
 		className,
 		suffixIcon,
 		whereClauseConfig,
+		hardcodedAttributeKeys,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -233,7 +235,7 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsDataSource,
+			enabled: isQueryEnabled && !isLogsDataSource && !hardcodedAttributeKeys,
 		},
 	);
 
@@ -674,6 +676,18 @@ function QueryBuilderSearchV2(
 						value: key,
 					})) || []),
 				]);
+			} else if (hardcodedAttributeKeys) {
+				const filteredKeys = hardcodedAttributeKeys.filter((key) =>
+					key.key
+						.toLowerCase()
+						.includes((searchValue?.split(' ')[0] || '').toLowerCase()),
+				);
+				setDropdownOptions(
+					filteredKeys.map((key) => ({
+						label: key.key,
+						value: key,
+					})),
+				);
 			} else {
 				setDropdownOptions(
 					data?.payload?.attributeKeys?.map((key) => ({
@@ -752,6 +766,7 @@ function QueryBuilderSearchV2(
 			);
 		}
 	}, [
+		hardcodedAttributeKeys,
 		attributeValues?.payload,
 		currentFilterItem?.key?.dataType,
 		currentState,
@@ -984,6 +999,7 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hardcodedAttributeKeys: undefined,
 };
 
 export default QueryBuilderSearchV2;

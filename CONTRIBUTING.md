@@ -77,3 +77,4 @@ Need assistance? Join our Slack community:
 ## Where do I go from here?
 
 - Set up your [development environment](docs/contributing/development.md)
+- Deploy and observe [SigNoz in action with OpenTelemetry Demo Application](docs/otel-demo/otel-demo-docs.md)

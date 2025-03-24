@@ -24,7 +24,6 @@ import (
 
 func initZapLog() *zap.Logger {
 	config := zap.NewProductionConfig()
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
