@@ -120,7 +120,21 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 }
 
 func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
-	_, err := bun.
+	oldColumnExists, err := dialect.ColumnExists(ctx, bun, table, oldColumnName)
+	if err != nil {
+		return false, err
+	}
+
+	newColumnExists, err := dialect.ColumnExists(ctx, bun, table, newColumnName)
+	if err != nil {
+		return false, err
+	}
+
+	if !oldColumnExists && newColumnExists {
+		return true, nil
+	}
+
+	_, err = bun.
 		ExecContext(ctx, "ALTER TABLE "+table+" RENAME COLUMN "+oldColumnName+" TO "+newColumnName)
 	if err != nil {
 		return false, err
