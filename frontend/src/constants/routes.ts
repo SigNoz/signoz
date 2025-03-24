@@ -56,6 +56,8 @@ const ROUTES = {
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
+	TRACES_FUNNELS: '/traces/funnels',
+	TRACES_FUNNELS_DETAIL: '/traces/funnels/:funnelId',
 	WORKSPACE_LOCKED: '/workspace-locked',
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/shortcuts',
