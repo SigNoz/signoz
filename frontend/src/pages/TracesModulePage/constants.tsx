@@ -1,7 +1,6 @@
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { Compass, Cone, TowerControl } from 'lucide-react';
-import { Compass, Cone, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
 import TracesFunnelDetails from 'pages/TracesFunnelDetails';

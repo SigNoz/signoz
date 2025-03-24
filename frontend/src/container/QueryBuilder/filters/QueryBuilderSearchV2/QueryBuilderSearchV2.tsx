@@ -87,6 +87,7 @@ interface QueryBuilderSearchV2Props {
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
+	hardcodedAttributeKeys?: BaseAutocompleteData[];
 	hasPopupContainer?: boolean;
 	rootClassName?: string;
 }
@@ -121,6 +122,7 @@ function QueryBuilderSearchV2(
 		className,
 		suffixIcon,
 		whereClauseConfig,
+		hardcodedAttributeKeys,
 		hasPopupContainer,
 		rootClassName,
 	} = props;
@@ -1004,6 +1006,7 @@ QueryBuilderSearchV2.defaultProps = {
 	whereClauseConfig: {},
 	hasPopupContainer: true,
 	rootClassName: '',
+	hardcodedAttributeKeys: undefined,
 };
 
 export default QueryBuilderSearchV2;

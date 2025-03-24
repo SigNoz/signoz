@@ -7,6 +7,9 @@ import { useFunnelDetails } from 'hooks/TracesFunnels/useFunnels';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import FunnelConfiguration from './components/FunnelConfiguration/FunnelConfiguration';
+import FunnelResults from './components/FunnelResults/FunnelResults';
+
 function TracesFunnelDetails(): JSX.Element {
 	const [validTracesCount, setValidTracesCount] = useState(0);
 	const { funnelId } = useParams<{ funnelId: string }>();
