@@ -598,6 +598,7 @@ function DeploymentDetails({
 							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="deploymentTraces"
+							category={InfraMonitoringEvents.Deployment}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 								QUERY_KEYS.K8S_NAMESPACE_NAME,
