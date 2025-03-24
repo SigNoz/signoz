@@ -2,19 +2,21 @@ package inframetrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -413,6 +415,10 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
+	if step <= 0 {
+		zap.L().Error("step is less than or equal to 0", zap.Int64("step", step))
+		return resp, errors.New("step is less than or equal to 0")
+	}
 
 	query := HostsTableListQuery.Clone()
 

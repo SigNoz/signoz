@@ -7,13 +7,13 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/multierr"
 
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
-	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 

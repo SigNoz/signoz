@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 type Config struct {

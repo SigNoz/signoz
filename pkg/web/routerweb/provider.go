@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	"go.signoz.io/signoz/pkg/web"
 )
 
 const (
@@ -52,7 +51,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 }
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
-	cache := middleware.NewCache(7 * 24 * time.Hour)
+	cache := middleware.NewCache(0)
 	err := router.PathPrefix(provider.config.Prefix).
 		Handler(
 			http.StripPrefix(

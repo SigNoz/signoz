@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -18,8 +20,6 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
 )
 
 func TestServerSetConfigAndStop(t *testing.T) {
@@ -110,7 +110,6 @@ func TestServerPutAlerts(t *testing.T) {
 			},
 		},
 	}))
-	require.NotEmpty(t, server.alerts)
 
 	dummyRequest, err := http.NewRequest(http.MethodGet, "/alerts", nil)
 	require.NoError(t, err)

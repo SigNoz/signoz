@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -43,9 +44,11 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pat := model.PAT{
-		Name:      req.Name,
-		Role:      req.Role,
-		ExpiresAt: req.ExpiresInDays,
+		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
+			Name:      req.Name,
+			Role:      req.Role,
+			ExpiresAt: req.ExpiresInDays,
+		},
 	}
 	err = validatePATRequest(pat)
 	if err != nil {
@@ -55,8 +58,8 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 
 	// All the PATs are associated with the user creating the PAT.
 	pat.UserID = user.ID
-	pat.CreatedAt = time.Now().Unix()
-	pat.UpdatedAt = time.Now().Unix()
+	pat.CreatedAt = time.Now()
+	pat.UpdatedAt = time.Now()
 	pat.LastUsed = 0
 	pat.Token = generatePATToken()
 
@@ -67,7 +70,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 
 	zap.L().Info("Got Create PAT request", zap.Any("pat", pat))
 	var apierr basemodel.BaseApiError
-	if pat, apierr = ah.AppDao().CreatePAT(ctx, pat); apierr != nil {
+	if pat, apierr = ah.AppDao().CreatePAT(ctx, user.OrgID, pat); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
@@ -114,10 +117,10 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 	req.UpdatedByUserID = user.ID
 	id := mux.Vars(r)["id"]
-	req.UpdatedAt = time.Now().Unix()
+	req.UpdatedAt = time.Now()
 	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
-	if apierr = ah.AppDao().UpdatePAT(ctx, req, id); apierr != nil {
+	if apierr = ah.AppDao().UpdatePAT(ctx, user.OrgID, req, id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
@@ -136,7 +139,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	zap.L().Info("Get PATs for user", zap.String("user_id", user.ID))
-	pats, apierr := ah.AppDao().ListPATs(ctx)
+	pats, apierr := ah.AppDao().ListPATs(ctx, user.OrgID)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -157,7 +160,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	zap.L().Info("Revoke PAT with id", zap.String("id", id))
-	if apierr := ah.AppDao().RevokePAT(ctx, id, user.ID); apierr != nil {
+	if apierr := ah.AppDao().RevokePAT(ctx, user.OrgID, id, user.ID); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}

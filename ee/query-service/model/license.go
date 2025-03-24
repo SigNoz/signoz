@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type License struct {
@@ -235,4 +235,12 @@ func ConvertLicenseV3ToLicenseV2(l *LicenseV3) *License {
 			Status:     l.Status},
 	}
 
+}
+
+type CheckoutRequest struct {
+	SuccessURL string `json:"url"`
+}
+
+type PortalRequest struct {
+	SuccessURL string `json:"url"`
 }

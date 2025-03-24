@@ -1,0 +1,73 @@
+services:
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.1.2-alpine
+    container_name: clickhouse
+    volumes:
+      - ${PWD}/fs/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
+      - ${PWD}/fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
+      - ${PWD}/fs/tmp/var/lib/clickhouse/:/var/lib/clickhouse/
+      - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
+    ports:
+      - '127.0.0.1:8123:8123'
+      - '127.0.0.1:9000:9000'
+    tty: true
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --spider
+        - -q
+        - 0.0.0.0:8123/ping
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: bitnami/zookeeper:3.7.1
+    container_name: zookeeper
+    volumes:
+      - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
+    ports:
+      - '127.0.0.1:2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -s -m 2 http://localhost:8080/commands/ruok | grep error | grep null
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  schema-migrator-sync:
+    image: signoz/signoz-schema-migrator:0.111.29
+    container_name: schema-migrator-sync
+    command:
+      - sync
+      - --cluster-name=cluster
+      - --dsn=tcp://clickhouse:9000
+      - --replication=true
+      - --up=
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+  schema-migrator-async:
+    image: signoz/signoz-schema-migrator:0.111.29
+    container_name: schema-migrator-async
+    command:
+      - async
+      - --cluster-name=cluster
+      - --dsn=tcp://clickhouse:9000
+      - --replication=true
+      - --up=
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      schema-migrator-sync:
+        condition: service_completed_successfully
+    restart: on-failure

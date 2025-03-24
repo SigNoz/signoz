@@ -21,15 +21,15 @@ function ServiceTraceTable({
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
-	const { licenses, isFetchingLicenses } = useAppContext();
+	const { isFetchingActiveLicenseV3, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses?.onTrial &&
-			!licenses?.trialConvertedToSubscription &&
+			!isFetchingActiveLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -42,9 +42,9 @@ function ServiceTraceTable({
 	}, [
 		services,
 		isCloudUserVal,
-		isFetchingLicenses,
-		licenses?.onTrial,
-		licenses?.trialConvertedToSubscription,
+		isFetchingActiveLicenseV3,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
 	]);
 
 	const paginationConfig = {
@@ -71,6 +71,7 @@ function ServiceTraceTable({
 				loading={loading}
 				dataSource={services}
 				rowKey="serviceName"
+				className="service-traces-table"
 			/>
 		</>
 	);

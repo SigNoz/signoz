@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"regexp"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 	"go.uber.org/zap"
 )
 
@@ -82,7 +82,7 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 			}
 			r.Body.Close() //  must close
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &postData)
+			_ = json.Unmarshal(bodyBytes, &postData)
 
 		} else {
 			return nil, false

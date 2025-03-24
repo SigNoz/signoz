@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 type state struct {

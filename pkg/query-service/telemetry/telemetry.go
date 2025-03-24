@@ -15,12 +15,12 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 const (
@@ -425,7 +425,7 @@ func createTelemetry() {
 						"total_metrics_based_panels":  dashboardsInfo.MetricBasedPanels,
 						"total_logs_based_panels":     dashboardsInfo.LogsBasedPanels,
 						"total_traces_based_panels":   dashboardsInfo.TracesBasedPanels,
-					})
+					}, "")
 					telemetry.SendGroupEvent(map[string]interface{}{
 						"total_logs":                  totalLogs,
 						"total_traces":                totalSpans,
@@ -442,7 +442,7 @@ func createTelemetry() {
 						"total_metrics_based_panels":  dashboardsInfo.MetricBasedPanels,
 						"total_logs_based_panels":     dashboardsInfo.LogsBasedPanels,
 						"total_traces_based_panels":   dashboardsInfo.TracesBasedPanels,
-					})
+					}, "")
 				}
 			}
 		}
@@ -451,16 +451,16 @@ func createTelemetry() {
 		}
 
 		if totalLogs > 0 {
-			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_logs": true})
-			telemetry.SendGroupEvent(map[string]interface{}{"sent_logs": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_logs": true}, "")
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_logs": true}, "")
 		}
 		if totalSpans > 0 {
-			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_traces": true})
-			telemetry.SendGroupEvent(map[string]interface{}{"sent_traces": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_traces": true}, "")
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_traces": true}, "")
 		}
 		if totalSamples > 0 {
-			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_metrics": true})
-			telemetry.SendGroupEvent(map[string]interface{}{"sent_metrics": true})
+			telemetry.SendIdentifyEvent(map[string]interface{}{"sent_metrics": true}, "")
+			telemetry.SendGroupEvent(map[string]interface{}{"sent_metrics": true}, "")
 		}
 
 		getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(ctx)
@@ -515,8 +515,8 @@ func createTelemetry() {
 		nextHeartbeat := calculateNextRun(HEART_BEAT_DURATION, SCHEDULE_START_TIME)
 		nextActiveUser := calculateNextRun(ACTIVE_USER_DURATION, SCHEDULE_START_TIME)
 
-		s.Every(HEART_BEAT_DURATION).StartAt(nextHeartbeat).Do(heartbeatFunc)
-		s.Every(ACTIVE_USER_DURATION).StartAt(nextActiveUser).Do(activeUserFunc)
+		_, _ = s.Every(HEART_BEAT_DURATION).StartAt(nextHeartbeat).Do(heartbeatFunc)
+		_, _ = s.Every(ACTIVE_USER_DURATION).StartAt(nextActiveUser).Do(activeUserFunc)
 	}
 
 	// Schedule immediate execution and subsequent runs
@@ -559,18 +559,18 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 
 	if a.saasOperator != nil {
 		if role != "" {
-			a.saasOperator.Enqueue(analytics.Identify{
+			_ = a.saasOperator.Enqueue(analytics.Identify{
 				UserId: a.userEmail,
 				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", role),
 			})
 		} else {
-			a.saasOperator.Enqueue(analytics.Identify{
+			_ = a.saasOperator.Enqueue(analytics.Identify{
 				UserId: a.userEmail,
 				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
 			})
 		}
 
-		a.saasOperator.Enqueue(analytics.Group{
+		_ = a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,
 			GroupId: a.getCompanyDomain(),
 			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
@@ -578,12 +578,12 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	}
 
 	if a.ossOperator != nil {
-		a.ossOperator.Enqueue(analytics.Identify{
+		_ = a.ossOperator.Enqueue(analytics.Identify{
 			UserId: a.ipAddress,
 			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
 		})
 		// Updating a groups properties
-		a.ossOperator.Enqueue(analytics.Group{
+		_ = a.ossOperator.Enqueue(analytics.Group{
 			UserId:  a.ipAddress,
 			GroupId: a.getCompanyDomain(),
 			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
@@ -591,10 +591,19 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	}
 }
 
-func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}) {
+func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}, userEmail string) {
 
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
+	}
+	// ignore telemetry for default user
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+		return
+	}
+
+	if userEmail != "" {
+		a.SetUserEmail(userEmail)
+		a.SetCompanyDomain(userEmail)
 	}
 	traits := analytics.NewTraits()
 
@@ -602,23 +611,32 @@ func (a *Telemetry) SendIdentifyEvent(data map[string]interface{}) {
 		traits.Set(k, v)
 	}
 	if a.saasOperator != nil {
-		a.saasOperator.Enqueue(analytics.Identify{
+		_ = a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.GetUserEmail(),
 			Traits: traits,
 		})
 	}
 	if a.ossOperator != nil {
-		a.ossOperator.Enqueue(analytics.Identify{
+		_ = a.ossOperator.Enqueue(analytics.Identify{
 			UserId: a.ipAddress,
 			Traits: traits,
 		})
 	}
 }
 
-func (a *Telemetry) SendGroupEvent(data map[string]interface{}) {
+func (a *Telemetry) SendGroupEvent(data map[string]interface{}, userEmail string) {
 
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
+	}
+	// ignore telemetry for default user
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
+		return
+	}
+
+	if userEmail != "" {
+		a.SetUserEmail(userEmail)
+		a.SetCompanyDomain(userEmail)
 	}
 	traits := analytics.NewTraits()
 
@@ -626,14 +644,14 @@ func (a *Telemetry) SendGroupEvent(data map[string]interface{}) {
 		traits.Set(k, v)
 	}
 	if a.saasOperator != nil {
-		a.saasOperator.Enqueue(analytics.Group{
+		_ = a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.GetUserEmail(),
 			GroupId: a.getCompanyDomain(),
 			Traits:  traits,
 		})
 	}
 	if a.ossOperator != nil {
-		a.ossOperator.Enqueue(analytics.Group{
+		_ = a.ossOperator.Enqueue(analytics.Group{
 			UserId:  a.ipAddress,
 			GroupId: a.getCompanyDomain(),
 			Traits:  traits,
@@ -722,7 +740,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	// zap.L().Info(data)
 	properties := analytics.NewProperties()
-	properties.Set("version", version.GetVersion())
+	properties.Set("version", version.Info.Version)
 	properties.Set("deploymentType", getDeploymentType())
 	properties.Set("companyDomain", a.getCompanyDomain())
 
@@ -739,7 +757,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
 
 	if a.saasOperator != nil && a.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
-		a.saasOperator.Enqueue(analytics.Track{
+		_ = a.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     a.GetUserEmail(),
 			Properties: properties,
@@ -754,7 +772,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	_, isOSSEvent := OSS_EVENTS_LIST[event]
 
 	if a.ossOperator != nil && isOSSEvent {
-		a.ossOperator.Enqueue(analytics.Track{
+		_ = a.ossOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     userId,
 			Properties: properties,

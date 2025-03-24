@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/http/render"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type API struct {
@@ -95,6 +95,11 @@ func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		render.Error(rw, err)
 		return
+	}
+
+	// This ensures that the UI receives an empty array instead of null
+	if len(channels) == 0 {
+		channels = make([]*alertmanagertypes.Channel, 0)
 	}
 
 	render.Success(rw, http.StatusOK, channels)

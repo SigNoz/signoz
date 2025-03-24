@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
+	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/require"
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
-	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {

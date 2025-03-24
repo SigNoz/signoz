@@ -4,6 +4,23 @@
 	gap: 16px;
 	padding: 16px 0;
 
+	.metrics-table-title,
+	.metrics-treemap-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 16px;
+
+		.ant-typography {
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+
+		.lucide-info {
+			cursor: pointer;
+		}
+	}
+
 	.metrics-search-container {
 		display: flex;
 		flex-direction: column;
@@ -13,13 +30,27 @@
 			display: flex;
 			justify-content: space-between;
 		}
+
+		.qb-search-container {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.lucide-info {
+				cursor: pointer;
+			}
+
+			.query-builder-search-container {
+				width: 100%;
+			}
+		}
 	}
 
 	.metrics-table-container {
-		margin-left: -16px;
-		margin-right: -16px;
-
 		.ant-table {
+			margin-left: -16px;
+			margin-right: -16px;
+
 			max-height: 500px;
 			overflow-y: auto;
 			.ant-table-thead > tr > th {
@@ -49,6 +80,22 @@
 				background: var(--bg-ink-400);
 			}
 
+			.metric-name-column-header,
+			.metric-type-column-header {
+				display: flex;
+				justify-content: space-between;
+
+				.metric-name-column-header-text,
+				.metric-type-column-header-text {
+					line-height: 32px;
+				}
+
+				.ant-btn {
+					margin-left: 4px;
+					padding: 0;
+				}
+			}
+
 			.ant-table-cell {
 				padding: 12px;
 				font-size: 13px;
@@ -59,6 +106,12 @@
 
 			.ant-table-cell:has(.metric-name-column-value) {
 				background: var(--bg-ink-400);
+			}
+
+			.metric-description-column-value {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 
 			.metric-name-column-value {
@@ -150,6 +203,11 @@
 		}
 	}
 
+	.metrics-treemap {
+		margin-left: -12px;
+		margin-right: -12px;
+	}
+
 	.no-metrics-message-container {
 		display: flex;
 		flex-direction: column;
@@ -158,20 +216,6 @@
 		min-height: 400px;
 		gap: 16px;
 		padding-top: 32px;
-	}
-
-	.metric-type-renderer {
-		border-radius: 50px;
-		height: 24px;
-		width: fit-content;
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		gap: 4px;
-		text-transform: uppercase;
-		font-size: 12px;
-		padding: 5px 10px;
-		align-self: flex-end;
 	}
 }
 
@@ -218,6 +262,43 @@
 					}
 				}
 			}
+		}
+	}
+}
+
+.metric-type-renderer {
+	border-radius: 50px;
+	max-height: 24px;
+	width: fit-content;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 4px;
+	text-transform: uppercase;
+	font-size: 12px;
+	padding: 5px 10px;
+	align-self: flex-end;
+}
+
+.ant-popover-inner {
+	padding: 0 !important;
+}
+
+.metric-name-search-popover {
+	.metric-name-search-popover-menu {
+		height: 200px;
+		width: 300px;
+		overflow-y: scroll;
+	}
+
+	.ant-menu {
+		.ant-spin,
+		.ant-empty {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			margin-top: 16px;
 		}
 	}
 }

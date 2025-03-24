@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 // skipKey is an optional parameter to skip processing of a specific key
@@ -150,4 +150,11 @@ func WhichSampleTableToUse(start, end int64) (string, string) {
 	} else {
 		return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME, "sum(count)"
 	}
+}
+
+func WhichAttributesTableToUse(start, end int64) (int64, int64, string, string) {
+	if end-start < sixHoursInMilliseconds {
+		start = start - (start % (time.Hour.Milliseconds() * 6))
+	}
+	return start, end, constants.SIGNOZ_ATTRIBUTES_METADATA_TABLENAME, constants.SIGNOZ_ATTRIBUTES_METADATA_LOCAL_TABLENAME
 }

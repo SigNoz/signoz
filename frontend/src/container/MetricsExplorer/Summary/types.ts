@@ -7,12 +7,14 @@ import {
 
 export interface MetricsTableProps {
 	isLoading: boolean;
+	isError: boolean;
 	data: MetricsListItemRowData[];
 	pageSize: number;
 	currentPage: number;
 	onPaginationChange: (page: number, pageSize: number) => void;
 	setOrderBy: Dispatch<SetStateAction<OrderByPayload>>;
 	totalCount: number;
+	openMetricDetails: (metricName: string) => void;
 }
 
 export interface MetricsSearchProps {
@@ -22,10 +24,12 @@ export interface MetricsSearchProps {
 	setHeatmapView: (value: TreemapViewType) => void;
 }
 
-export interface TreemapProps {
+export interface MetricsTreemapProps {
 	data: MetricsTreeMapResponse | null | undefined;
 	isLoading: boolean;
+	isError: boolean;
 	viewType: TreemapViewType;
+	openMetricDetails: (metricName: string) => void;
 }
 
 export interface OrderByPayload {
@@ -44,8 +48,8 @@ export interface MetricsListItemRowData {
 }
 
 export enum TreemapViewType {
-	CARDINALITY = 'timeseries',
-	DATAPOINTS = 'samples',
+	TIMESERIES = 'timeseries',
+	SAMPLES = 'samples',
 }
 
 export interface TreemapTile {

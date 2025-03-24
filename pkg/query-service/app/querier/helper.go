@@ -6,16 +6,16 @@ import (
 	"strings"
 	"sync"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	logsV4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
-	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
+	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
+	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"go.uber.org/zap"
 )
 
@@ -122,6 +122,7 @@ func (q *querier) runBuilderQuery(
 		misses := q.queryCache.FindMissingTimeRanges(start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		zap.L().Info("cache misses for logs query", zap.Any("misses", misses))
 		missedSeries := make([]querycache.CachedSeriesData, 0)
+		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
 		for _, miss := range misses {
 			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params, preferRPM)
 			if err != nil {
@@ -138,15 +139,32 @@ func (q *querier) runBuilderQuery(
 				}
 				return
 			}
+			filteredSeries, startTime, endTime := common.FilterSeriesPoints(series, miss.Start, miss.End, builderQuery.StepInterval)
+
+			// making sure that empty range doesn't doesn't enter the cache
+			// empty results from filteredSeries means data was filtered out, but empty series means actual empty data
+			if len(filteredSeries) > 0 || len(series) == 0 {
+				filteredMissedSeries = append(filteredMissedSeries, querycache.CachedSeriesData{
+					Data:  filteredSeries,
+					Start: startTime,
+					End:   endTime,
+				})
+			}
+
+			// for the actual response
 			missedSeries = append(missedSeries, querycache.CachedSeriesData{
+				Data:  series,
 				Start: miss.Start,
 				End:   miss.End,
-				Data:  series,
 			})
 		}
-		mergedSeries := q.queryCache.MergeWithCachedSeriesData(cacheKeys[queryName], missedSeries)
 
-		resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(cacheKeys[queryName], filteredMergedSeries)
+
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(cacheKeys[queryName], missedSeries)
+
+		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
 		ch <- channelResult{
 			Err:    nil,
@@ -208,6 +226,17 @@ func (q *querier) runBuilderQuery(
 		series, err := q.execClickHouseQuery(ctx, query)
 		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 		return
+	}
+
+	if builderQuery.DataSource == v3.DataSourceMetrics && !q.testingMode {
+		metadata, apiError := q.reader.GetUpdatedMetricsMetadata(ctx, builderQuery.AggregateAttribute.Key)
+		if apiError != nil {
+			zap.L().Error("Error in getting metrics cached metadata", zap.Error(apiError))
+		}
+		if updatedMetadata, exist := metadata[builderQuery.AggregateAttribute.Key]; exist {
+			builderQuery.AggregateAttribute.Type = v3.AttributeKeyType(updatedMetadata.MetricType)
+			builderQuery.Temporality = updatedMetadata.Temporality
+		}
 	}
 
 	// What is happening here?

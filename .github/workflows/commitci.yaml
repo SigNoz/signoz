@@ -1,0 +1,27 @@
+name: commitci
+
+on:
+  pull_request:
+    branches:
+      - main
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  refcheck:
+    if: |
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: check
+        run: |
+          if grep -R --include="*.go" '.*/ee/.*' pkg/; then
+            echo "Error: Found references to 'ee' packages in 'pkg' directory"
+            exit 1
+          else
+            echo "No references to 'ee' packages found in 'pkg' directory"
+          fi

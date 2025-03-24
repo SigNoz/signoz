@@ -8,22 +8,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -177,10 +176,10 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// After saving a user created pipeline, pipelines response should include
 	// both user created pipelines and pipelines for installed integrations.
-	postablePipelines := logparsingpipeline.PostablePipelines{
-		Pipelines: []logparsingpipeline.PostablePipeline{
+	postablePipelines := pipelinetypes.PostablePipelines{
+		Pipelines: []pipelinetypes.PostablePipeline{
 			{
-				OrderId: 1,
+				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -198,7 +197,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 						},
 					},
 				},
-				Config: []logparsingpipeline.PipelineOperator{
+				Config: []pipelinetypes.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -224,7 +223,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)
 	slices.Reverse(postable.Pipelines)
 	for i := range postable.Pipelines {
-		postable.Pipelines[i].OrderId = i + 1
+		postable.Pipelines[i].OrderID = i + 1
 	}
 
 	pipelinesTB.PostPipelinesToQS(postable)
@@ -257,7 +256,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
-	postable.Pipelines[0].Config = []logparsingpipeline.PipelineOperator{}
+	postable.Pipelines[0].Config = []pipelinetypes.PipelineOperator{}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -271,7 +270,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Greater(len(firstPipeline.Config), 0)
 
 	// should not be able to delete integrations pipeline
-	postable.Pipelines = []logparsingpipeline.PostablePipeline{postable.Pipelines[1]}
+	postable.Pipelines = []pipelinetypes.PostablePipeline{postable.Pipelines[1]}
 	pipelinesTB.PostPipelinesToQS(postable)
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
@@ -350,7 +349,7 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 	require.GreaterOrEqual(dashboards[0].UpdatedAt.Unix(), tsBeforeInstallation)
 
 	// Should be able to get installed integrations dashboard by id
-	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].Uuid)
+	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].UUID)
 	require.GreaterOrEqual(dd.CreatedAt.Unix(), tsBeforeInstallation)
 	require.GreaterOrEqual(dd.UpdatedAt.Unix(), tsBeforeInstallation)
 	require.Equal(*dd, dashboards[0])
@@ -464,7 +463,7 @@ func (tb *IntegrationsTestBed) RequestQSToUninstallIntegration(
 	tb.RequestQS("/api/v1/integrations/uninstall", request)
 }
 
-func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
+func (tb *IntegrationsTestBed) GetDashboardsFromQS() []types.Dashboard {
 	result := tb.RequestQS("/api/v1/dashboards", nil)
 
 	dataJson, err := json.Marshal(result.Data)
@@ -472,7 +471,7 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	dashboards := []dashboards.Dashboard{}
+	dashboards := []types.Dashboard{}
 	err = json.Unmarshal(dataJson, &dashboards)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
@@ -481,7 +480,7 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
 	return dashboards
 }
 
-func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *dashboards.Dashboard {
+func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *types.Dashboard {
 	result := tb.RequestQS(fmt.Sprintf("/api/v1/dashboards/%s", dashboardUuid), nil)
 
 	dataJson, err := json.Marshal(result.Data)
@@ -489,7 +488,7 @@ func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *das
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
 
-	dashboard := dashboards.Dashboard{}
+	dashboard := types.Dashboard{}
 	err = json.Unmarshal(dataJson, &dashboard)
 	if err != nil {
 		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
@@ -597,21 +596,21 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 }
 
-func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
-	result := logparsingpipeline.PostablePipelines{}
+func postableFromPipelines(gettablePipelines []pipelinetypes.GettablePipeline) pipelinetypes.PostablePipelines {
+	result := pipelinetypes.PostablePipelines{}
 
-	for _, p := range pipelines {
-		postable := logparsingpipeline.PostablePipeline{
-			Id:      p.Id,
-			OrderId: p.OrderId,
+	for _, p := range gettablePipelines {
+		postable := pipelinetypes.PostablePipeline{
+			ID:      p.ID,
+			OrderID: p.OrderID,
 			Name:    p.Name,
 			Alias:   p.Alias,
 			Enabled: p.Enabled,
 			Config:  p.Config,
 		}
 
-		if p.Description != nil {
-			postable.Description = *p.Description
+		if p.Description != "" {
+			postable.Description = p.Description
 		}
 
 		if p.Filter != nil {

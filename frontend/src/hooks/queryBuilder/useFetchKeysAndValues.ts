@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { getMetricsListFilterValues } from 'api/metricsExplorer/getMetricsListFilterValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	K8sCategory,
@@ -16,6 +17,7 @@ import useDebounceValue from 'hooks/useDebounce';
 import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
+import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -127,7 +129,7 @@ export const useFetchKeysAndValues = (
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !shouldUseSuggestions,
+			enabled: isMetricsExplorer ? false : isQueryEnabled && !shouldUseSuggestions,
 		},
 		isInfraMonitoring, // isInfraMonitoring
 		entity, // infraMonitoringEntity
@@ -153,9 +155,37 @@ export const useFetchKeysAndValues = (
 		data: metricsListFilterKeysData,
 		isFetching: isFetchingMetricsListFilterKeys,
 		status: fetchingMetricsListFilterKeysStatus,
-	} = useGetMetricsListFilterKeys({
-		enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
-	});
+	} = useGetMetricsListFilterKeys(
+		{
+			searchText: searchKey,
+		},
+		{
+			enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
+			queryKey: [searchKey],
+		},
+	);
+
+	function isAttributeValuesResponse(
+		payload: any,
+	): payload is IAttributeValuesResponse {
+		return (
+			payload &&
+			(Array.isArray(payload.stringAttributeValues) ||
+				payload.stringAttributeValues === null ||
+				Array.isArray(payload.numberAttributeValues) ||
+				payload.numberAttributeValues === null ||
+				Array.isArray(payload.boolAttributeValues) ||
+				payload.boolAttributeValues === null)
+		);
+	}
+
+	function isMetricsListFilterValuesData(
+		payload: any,
+	): payload is { filterValues: string[] } {
+		return (
+			payload && 'filterValues' in payload && Array.isArray(payload.filterValues)
+		);
+	}
 
 	/**
 	 * Fetches the options to be displayed based on the selected value
@@ -226,8 +256,17 @@ export const useFetchKeysAndValues = (
 			}
 
 			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
-				setResults(values);
+				if (isAttributeValuesResponse(payload)) {
+					const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
+					const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+					setResults(key ? payload[key] || [] : []);
+					return;
+				}
+
+				if (isMetricsExplorer && isMetricsListFilterValuesData(payload)) {
+					setResults(payload.filterValues || []);
+					return;
+				}
 			}
 		} catch (e) {
 			console.error(e);

@@ -1,8 +1,9 @@
 package agentConf
 
 import (
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types"
+
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 // Interface for features implemented via agent config.

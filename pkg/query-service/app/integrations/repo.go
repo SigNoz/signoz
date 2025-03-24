@@ -5,8 +5,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 // For serializing from db

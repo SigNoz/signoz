@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func TestNewLicenseV3(t *testing.T) {
@@ -97,8 +97,8 @@ func TestNewLicenseV3(t *testing.T) {
 			},
 		},
 		{
-			name: "Fallback to basic plan if license status is inactive",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"INACTIVE","plan":{"name":"TEAMS"},"valid_from": 1730899309,"valid_until": -1}`),
+			name: "Fallback to basic plan if license status is invalid",
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"INVALID","plan":{"name":"TEAMS"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
 			expected: &LicenseV3{
 				ID:  "does-not-matter",
@@ -108,14 +108,14 @@ func TestNewLicenseV3(t *testing.T) {
 						"name": "TEAMS",
 					},
 					"category":    "FREE",
-					"status":      "INACTIVE",
+					"status":      "INVALID",
 					"valid_from":  float64(1730899309),
 					"valid_until": float64(-1),
 				},
 				PlanName:   PlanNameBasic,
 				ValidFrom:  1730899309,
 				ValidUntil: -1,
-				Status:     "INACTIVE",
+				Status:     "INVALID",
 				IsCurrent:  false,
 				Features:   model.FeatureSet{},
 			},

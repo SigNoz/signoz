@@ -1,5 +1,9 @@
 import Loadable from 'components/Loadable';
 
+export const Home = Loadable(
+	() => import(/* webpackChunkName: "Home" */ 'pages/HomePage/HomePage'),
+);
+
 export const ServicesTablePage = Loadable(
 	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
@@ -36,6 +40,17 @@ export const TracesExplorer = Loadable(
 export const TracesSaveViews = Loadable(
 	() =>
 		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
+);
+
+export const TracesFunnels = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Funnels" */ 'pages/TracesModulePage'),
+);
+export const TracesFunnelDetails = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesFunnelDetails'
+		),
 );
 
 export const TraceFilter = Loadable(
@@ -222,6 +237,13 @@ export const WorkspaceSuspended = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "WorkspaceSuspended" */ 'pages/WorkspaceSuspended/WorkspaceSuspended'
+		),
+);
+
+export const WorkspaceAccessRestricted = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "WorkspaceAccessRestricted" */ 'pages/WorkspaceAccessRestricted'
 		),
 );
 

@@ -7,15 +7,15 @@ import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { isNaN } from 'lodash-es';
 import { useRef, useState } from 'react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
-import { getLabel, lightenColor, tooltipStyles } from './utils';
+import { lightenColor, tooltipStyles } from './utils';
 
-// refernce: https://www.youtube.com/watch?v=bL3P9CqQkKw
+// reference: https://www.youtube.com/watch?v=bL3P9CqQkKw
 function PiePanelWrapper({
 	queryResponse,
 	widget,
@@ -40,8 +40,7 @@ function PiePanelWrapper({
 		detectBounds: true,
 	});
 
-	const panelData =
-		queryResponse.data?.payload?.data?.newResult?.data?.result || [];
+	const panelData = queryResponse.data?.payload?.data?.result || [];
 
 	const isDarkMode = useIsDarkMode();
 
@@ -51,23 +50,17 @@ function PiePanelWrapper({
 		color: string;
 	}[] = [].concat(
 		...(panelData
-			.map((d) =>
-				d.series?.map((s) => ({
-					label:
-						d.series?.length === 1
-							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
-							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
-					value: s.values[0].value,
-					color: generateColor(
-						d.series?.length === 1
-							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
-							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
-						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-					),
-				})),
-			)
+			.map((d) => ({
+				label: getLabelName(d.metric, d.queryName || '', d.legend || ''),
+				value: d.values?.[0]?.[1],
+				color: generateColor(
+					getLabelName(d.metric, d.queryName || '', d.legend || ''),
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				),
+			}))
 			.filter((d) => d !== undefined) as never[]),
 	);
+
 	pieChartData = pieChartData.filter(
 		(arc) =>
 			arc.value && !isNaN(parseFloat(arc.value)) && parseFloat(arc.value) > 0,
@@ -84,18 +77,68 @@ function PiePanelWrapper({
 		width = offsetWidth;
 		height = offsetHeight;
 	}
-	const half = size / 2;
+
+	// Adjust the size to leave room for external labels
+	const radius = size * 0.35;
+	// Add inner radius for donut chart
+	const innerRadius = radius * 0.6;
+
+	// Calculate total value for center display
+	const totalValue = pieChartData.reduce(
+		(sum, data) => sum + parseFloat(data.value || '0'),
+		0,
+	);
+
+	// Format total for display with the same unit as segments
+	const formattedTotal = getYAxisFormattedValue(
+		totalValue.toString(),
+		widget?.yAxisUnit || 'none',
+	);
+
+	// Extract numeric part and unit separately for styling
+	const matches = formattedTotal.match(/([\d.]+[KMB]?)(.*)$/);
+	const numericTotal = matches?.[1] || formattedTotal;
+	const unitTotal = matches?.[2]?.trim() || '';
+
+	// Dynamically calculate font size based on text length to prevent overflow
+	const getScaledFontSize = ({
+		text,
+		baseSize,
+		innerRadius,
+	}: {
+		text: string;
+		baseSize: number;
+		innerRadius: number;
+	}): number => {
+		if (!text) return baseSize;
+
+		const { length } = text;
+		// More aggressive scaling for very long numbers
+		const scaleFactor = Math.max(0.3, 1 - (length - 3) * 0.09);
+
+		// Ensure text fits in the inner circle (roughly)
+		const maxSize = innerRadius * 0.9; // Don't use more than 90% of inner radius
+
+		return Math.min(baseSize * scaleFactor, maxSize);
+	};
+
+	const numericFontSize = getScaledFontSize({
+		text: numericTotal,
+		baseSize: radius * 0.3,
+		innerRadius,
+	});
+	const unitFontSize = numericFontSize * 0.5; // Unit size is half of numeric size
 
 	const getFillColor = (color: string): string => {
 		if (active === null) {
 			return color;
 		}
-		const lightenedColor = lightenColor(color, 0.4); // Adjust the opacity value (0.7 in this case)
+		const lightenedColor = lightenColor(color, 0.4); // Adjust the opacity value (0.4 in this case)
 		return active.color === color ? color : lightenedColor;
 	};
 
 	return (
-		<>
+		<div className="piechart-wrapper">
 			{!pieChartData.length && <div className="piechart-no-data">No data</div>}
 			{pieChartData.length > 0 && (
 				<>
@@ -109,10 +152,8 @@ function PiePanelWrapper({
 										value: string;
 										color: string;
 									}): number => parseFloat(data.value)}
-									outerRadius={({ data }): number => {
-										if (!active) return half - 3;
-										return data.label === active.label ? half : half - 3;
-									}}
+									outerRadius={radius}
+									innerRadius={innerRadius}
 									padAngle={0.01}
 									cornerRadius={3}
 									width={size}
@@ -121,26 +162,53 @@ function PiePanelWrapper({
 									{
 										// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 										(pie) =>
-											pie.arcs.map((arc, index) => {
+											pie.arcs.map((arc) => {
 												const { label } = arc.data;
 												const [centroidX, centroidY] = pie.path.centroid(arc);
-												const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.6;
 												const arcPath = pie.path(arc);
 												const arcFill = arc.data.color;
+
+												// Calculate angle bisector for the arc (midpoint of the arc)
+												const angle = (arc.startAngle + arc.endAngle) / 2;
+
+												// Calculate outer point for the label
+												const labelRadius = radius * 1.3; // Label position
+												const labelX = Math.sin(angle) * labelRadius;
+												const labelY = -Math.cos(angle) * labelRadius;
+
+												// Calculate endpoint for the connecting line
+												const lineEndRadius = radius * 1.1;
+												const lineEndX = Math.sin(angle) * lineEndRadius;
+												const lineEndY = -Math.cos(angle) * lineEndRadius;
+
+												// Format the value for display
+												const displayValue = getYAxisFormattedValue(
+													arc.data.value,
+													widget?.yAxisUnit || 'none',
+												);
+
+												// Determine text anchor based on position in the circle
+												const textAnchor = Math.sin(angle) > 0 ? 'start' : 'end';
+
+												// Shorten label if too long
+												const shortenedLabel =
+													label.length > 15 ? `${label.substring(0, 12)}...` : label;
+
+												const shouldShowLabel =
+													parseFloat(arc.data.value) /
+														pieChartData.reduce((sum, d) => sum + parseFloat(d.value), 0) >
+													0.03;
+
 												return (
 													<g
-														// eslint-disable-next-line react/no-array-index-key
-														key={`arc-${label}-${index}`}
+														key={`arc-${label}-${arc.data.value}-${arc.startAngle.toFixed(
+															6,
+														)}`}
 														onMouseEnter={(): void => {
 															showTooltip({
 																tooltipData: {
 																	label,
-																	// do not update the unit in the data as the arc allotment is based on value
-																	// and treats 4K smaller than 40
-																	value: getYAxisFormattedValue(
-																		arc.data.value,
-																		widget?.yAxisUnit || 'none',
-																	),
+																	value: displayValue,
 																	color: arc.data.color,
 																	key: label,
 																},
@@ -155,24 +223,78 @@ function PiePanelWrapper({
 														}}
 													>
 														<path d={arcPath || ''} fill={getFillColor(arcFill)} />
-														{hasSpaceForLabel && (
-															<text
-																x={centroidX}
-																y={centroidY}
-																dy=".33em"
-																fill="#000"
-																fontSize={10}
-																textAnchor="middle"
-																pointerEvents="none"
-															>
-																{arc.data.label}
-															</text>
+
+														{shouldShowLabel && (
+															<>
+																{/* Connecting line */}
+																<line
+																	x1={centroidX}
+																	y1={centroidY}
+																	x2={lineEndX}
+																	y2={lineEndY}
+																	stroke={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	strokeWidth={1}
+																/>
+
+																{/* Line from arc edge to label */}
+																<line
+																	x1={lineEndX}
+																	y1={lineEndY}
+																	x2={labelX}
+																	y2={labelY}
+																	stroke={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	strokeWidth={1}
+																/>
+
+																{/* Label text */}
+																<text
+																	x={labelX}
+																	y={labelY - 8}
+																	dy=".33em"
+																	fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	fontSize={10}
+																	textAnchor={textAnchor}
+																	pointerEvents="none"
+																>
+																	{shortenedLabel}
+																</text>
+
+																{/* Value text */}
+																<text
+																	x={labelX}
+																	y={labelY + 8}
+																	dy=".33em"
+																	fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+																	fontSize={10}
+																	fontWeight="bold"
+																	textAnchor={textAnchor}
+																	pointerEvents="none"
+																>
+																	{displayValue}
+																</text>
+															</>
 														)}
 													</g>
 												);
 											})
 									}
 								</Pie>
+
+								{/* Add total value in the center */}
+								<text
+									textAnchor="middle"
+									dominantBaseline="central"
+									fill={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400}
+								>
+									<tspan fontSize={numericFontSize} fontWeight="bold">
+										{numericTotal}
+									</tspan>
+									{unitTotal && (
+										<tspan fontSize={unitFontSize} opacity={0.9} dx={2}>
+											{unitTotal}
+										</tspan>
+									)}
+								</text>
 							</Group>
 						</svg>
 						{tooltipOpen && tooltipData && (
@@ -198,31 +320,30 @@ function PiePanelWrapper({
 						)}
 					</div>
 					<div className="piechart-legend">
-						{pieChartData.length > 0 &&
-							pieChartData.map((data) => (
+						{pieChartData.map((data) => (
+							<div
+								key={data.label}
+								className="piechart-legend-item"
+								onMouseEnter={(): void => {
+									setActive(data);
+								}}
+								onMouseLeave={(): void => {
+									setActive(null);
+								}}
+							>
 								<div
-									key={data.label}
-									className="piechart-legend-item"
-									onMouseEnter={(): void => {
-										setActive(data);
+									style={{
+										backgroundColor: getFillColor(data.color),
 									}}
-									onMouseLeave={(): void => {
-										setActive(null);
-									}}
-								>
-									<div
-										style={{
-											backgroundColor: getFillColor(data.color),
-										}}
-										className="piechart-legend-label"
-									/>
-									{data.label}
-								</div>
-							))}
+									className="piechart-legend-label"
+								/>
+								{data.label}
+							</div>
+						))}
 					</div>
 				</>
 			)}
-		</>
+		</div>
 	);
 }
 

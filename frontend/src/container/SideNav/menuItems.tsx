@@ -8,6 +8,8 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	HardDrive,
+	Home,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
@@ -34,6 +36,12 @@ export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
 	icon: <RocketOutlined rotate={45} />,
+};
+
+export const homeMenuItem = {
+	key: ROUTES.HOME,
+	label: 'Home',
+	icon: <Home size={16} />,
 };
 
 export const inviteMemberMenuItem = {
@@ -74,9 +82,14 @@ export const trySignozCloudMenuItem: SidebarItem = {
 
 const menuItems: SidebarItem[] = [
 	{
+		key: ROUTES.HOME,
+		label: 'Home',
+		icon: <Home size={16} />,
+	},
+	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChart2 size={16} />,
+		icon: <HardDrive size={16} />,
 	},
 	{
 		key: ROUTES.TRACES_EXPLORER,
@@ -88,13 +101,12 @@ const menuItems: SidebarItem[] = [
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
 	},
-	// TODO - Enable this when the metrics explorer feature is read for release
-	// {
-	// 	key: ROUTES.METRICS_EXPLORER,
-	// 	label: 'Metrics',
-	// 	icon: <BarChart2 size={16} />,
-	// 	isNew: true,
-	// },
+	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics',
+		icon: <BarChart2 size={16} />,
+		isNew: true,
+	},
 	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',
@@ -149,6 +161,7 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACE]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
+	[ROUTES.METRICS_EXPLORER_BASE]: ROUTES.METRICS_EXPLORER,
 };
 
 export default menuItems;

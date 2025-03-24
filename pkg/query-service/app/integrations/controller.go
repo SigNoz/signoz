@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 )
 
 type Controller struct {
@@ -124,18 +124,18 @@ func (c *Controller) Uninstall(
 
 func (c *Controller) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
 }
 
 func (c *Controller) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
-) ([]dashboards.Dashboard, *model.ApiError) {
+) ([]types.Dashboard, *model.ApiError) {
 	return c.mgr.GetDashboardsForInstalledIntegrations(ctx)
 }
 
 func (c *Controller) GetInstalledIntegrationDashboardById(
 	ctx context.Context, dashboardUuid string,
-) (*dashboards.Dashboard, *model.ApiError) {
+) (*types.Dashboard, *model.ApiError) {
 	return c.mgr.GetInstalledIntegrationDashboardById(ctx, dashboardUuid)
 }

@@ -3,11 +3,11 @@ package sqlmigration
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 type updateDashboardAndSavedViews struct {
@@ -15,7 +15,7 @@ type updateDashboardAndSavedViews struct {
 }
 
 func NewUpdateDashboardAndSavedViewsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("update_dashboards_savedviews"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+	return factory.NewProviderFactory(factory.MustNewName("update_group"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return newUpdateDashboardAndSavedViews(ctx, ps, c, sqlstore)
 	})
 }
@@ -41,7 +41,7 @@ func (migration *updateDashboardAndSavedViews) Up(ctx context.Context, db *bun.D
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	// get all org ids
 	var orgIDs []string

@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 type updateOrganization struct {
@@ -42,7 +42,7 @@ func (migration *updateOrganization) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint:errcheck
 
 	// update apdex settings table
 	if err := updateApdexSettings(ctx, tx); err != nil {

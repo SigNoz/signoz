@@ -68,7 +68,7 @@ describe('BillingContainer', () => {
 	test('OnTrail', async () => {
 		act(() => {
 			render(<BillingContainer />, undefined, undefined, {
-				licenses: licensesSuccessResponse.data,
+				trialInfo: licensesSuccessResponse.data,
 			});
 		});
 
@@ -102,7 +102,7 @@ describe('BillingContainer', () => {
 	test('OnTrail but trialConvertedToSubscription', async () => {
 		act(() => {
 			render(<BillingContainer />, undefined, undefined, {
-				licenses: trialConvertedToSubscriptionResponse.data,
+				trialInfo: trialConvertedToSubscriptionResponse.data,
 			});
 		});
 
@@ -135,7 +135,7 @@ describe('BillingContainer', () => {
 
 	test('Not on ontrail', async () => {
 		const { findByText } = render(<BillingContainer />, undefined, undefined, {
-			licenses: notOfTrailResponse.data,
+			trialInfo: notOfTrailResponse.data,
 		});
 
 		const billingPeriodText = `Your current billing period is from ${getFormattedDate(

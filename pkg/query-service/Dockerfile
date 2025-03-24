@@ -1,31 +1,21 @@
-# use a minimal alpine image
 FROM alpine:3.20.3
-
-# Add Maintainer Info
 LABEL maintainer="signoz"
-
-# define arguments that can be passed during build time
-ARG TARGETOS TARGETARCH
-
-# add ca-certificates in case you need them
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
-
-# set working directory
 WORKDIR /root
 
-# copy the query-service binary
-COPY pkg/query-service/bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-service
+ARG OS="linux"
+ARG TARGETARCH
 
-# copy prometheus YAML config
-COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
-COPY pkg/query-service/templates /root/templates
+RUN apk update && \
+	apk add ca-certificates && \
+	rm -rf /var/cache/apk/*
 
-# Make query-service executable for non-root users
-RUN chmod 755 /root /root/query-service
 
-# run the binary
-ENTRYPOINT ["./query-service"]
+COPY ./target/${OS}-${TARGETARCH}/signoz-community /root/signoz
+COPY ./conf/prometheus.yml /root/config/prometheus.yml
+COPY ./templates/email /root/templates
+COPY frontend/build/ /etc/signoz/web/
 
+RUN chmod 755 /root /root/signoz
+
+ENTRYPOINT ["./signoz"]
 CMD ["-config", "/root/config/prometheus.yml"]
-
-EXPOSE 8080

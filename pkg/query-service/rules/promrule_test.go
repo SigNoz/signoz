@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	pql "github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
