@@ -72,7 +72,7 @@ func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	if err != nil {
 		t.Fatalf("could not initialize dao: %v", err)
 	}
-	_ = dashboards.InitDB(sqlStore.BunDB())
+	_ = dashboards.InitDB(sqlStore)
 
 	return sqlStore
 }
