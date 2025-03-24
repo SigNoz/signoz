@@ -9,7 +9,7 @@ export enum LatencyOptions {
 export type LatencyOptionsType = 'p99' | 'p95' | 'p90';
 export interface FunnelStepData {
 	id: string;
-	funnel_order: number;
+	step_order: number;
 	service_name: string;
 	span_name: string;
 	filters: TagFilter;

@@ -3,6 +3,7 @@ import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import AddFunnelStepDetailsModal from './AddFunnelStepDetailsModal';
 import DeleteFunnelStep from './DeleteFunnelStep';
 
 interface FunnelStepPopoverProps {
@@ -11,6 +12,7 @@ interface FunnelStepPopoverProps {
 	className?: string;
 	funnelId: string;
 	stepId: string;
+	stepOrder: number;
 	stepsCount: number;
 	onStepRemove: () => void;
 }
@@ -67,6 +69,7 @@ function FunnelStepPopover({
 	setIsPopoverOpen,
 	funnelId,
 	stepId,
+	stepOrder,
 	className,
 	onStepRemove,
 	stepsCount,
@@ -116,6 +119,13 @@ function FunnelStepPopover({
 				isOpen={isDeleteModalOpen}
 				onClose={(): void => setIsDeleteModalOpen(false)}
 				onStepRemove={onStepRemove}
+			/>
+
+			<AddFunnelStepDetailsModal
+				isOpen={isAddDetailsModalOpen}
+				onClose={(): void => setIsAddDetailsModalOpen(false)}
+				funnelId={funnelId}
+				stepOrder={stepOrder}
 			/>
 		</div>
 	);

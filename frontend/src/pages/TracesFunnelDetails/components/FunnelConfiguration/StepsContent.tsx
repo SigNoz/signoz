@@ -11,6 +11,7 @@ import InterStepConfig from './InterStepConfig';
 const { Step } = Steps;
 
 interface StepsContentProps {
+	funnelId: string;
 	steps: FunnelStepData[];
 	handleAddStep: () => void;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
@@ -18,6 +19,7 @@ interface StepsContentProps {
 }
 
 function StepsContent({
+	funnelId,
 	steps,
 	handleAddStep,
 	handleStepChange,
@@ -33,7 +35,7 @@ function StepsContent({
 							description={
 								<div className="steps-content__description">
 									<FunnelStep
-										funnelId="1"
+										funnelId={funnelId}
 										stepData={step}
 										index={index}
 										onStepChange={handleStepChange}

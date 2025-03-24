@@ -41,6 +41,7 @@ function FunnelConfiguration({
 				<div className="funnel-configuration__steps">
 					<StepsHeader />
 					<StepsContent
+						funnelId={funnel.id}
 						steps={steps}
 						handleStepChange={handleStepChange}
 						handleAddStep={handleAddStep}

@@ -4,7 +4,7 @@ import { v4 } from 'uuid';
 export const initialStepsData: FunnelStepData[] = [
 	{
 		id: v4(),
-		funnel_order: 1,
+		step_order: 1,
 		service_name: '',
 		span_name: '',
 		filters: {
@@ -19,7 +19,7 @@ export const initialStepsData: FunnelStepData[] = [
 	},
 	{
 		id: v4(),
-		funnel_order: 2,
+		step_order: 2,
 		service_name: '',
 		span_name: '',
 		filters: {

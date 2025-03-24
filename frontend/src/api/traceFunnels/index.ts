@@ -162,3 +162,32 @@ export const validateFunnelSteps = async (
 		payload: response.data,
 	};
 };
+
+export interface UpdateFunnelStepDetailsPayload {
+	funnel_id: string;
+	steps: Array<{
+		step_name: string;
+		description: string;
+	}>;
+	updated_timestamp: number;
+}
+
+export const updateFunnelStepDetails = async ({
+	stepOrder,
+	payload,
+}: {
+	stepOrder: number;
+	payload: UpdateFunnelStepDetailsPayload;
+}): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.put(
+		`${FUNNELS_BASE_PATH}/steps/${stepOrder}/update`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: 'Funnel step details updated successfully',
+		payload: response.data,
+	};
+};

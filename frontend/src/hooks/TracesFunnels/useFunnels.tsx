@@ -5,6 +5,8 @@ import {
 	getFunnelById,
 	getFunnelsList,
 	renameFunnel,
+	updateFunnelStepDetails,
+	UpdateFunnelStepDetailsPayload,
 	updateFunnelSteps,
 	UpdateFunnelStepsPayload,
 	ValidateFunnelPayload,
@@ -112,4 +114,18 @@ export const useValidateFunnelSteps = (
 	useMutation({
 		mutationFn: (payload) => validateFunnelSteps(funnelId, payload),
 		mutationKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId],
+	});
+
+export const useUpdateFunnelStepDetails = ({
+	stepOrder,
+}: {
+	stepOrder: number;
+}): UseMutationResult<
+	SuccessResponse<FunnelData> | ErrorResponse,
+	Error,
+	UpdateFunnelStepDetailsPayload
+> =>
+	useMutation({
+		mutationFn: (payload) => updateFunnelStepDetails({ payload, stepOrder }),
+		mutationKey: [REACT_QUERY_KEY.UPDATE_FUNNEL_STEP_DETAILS, stepOrder],
 	});
