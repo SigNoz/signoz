@@ -23,6 +23,33 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 	}));
 }
 
+const sampleData = [
+	{
+		traceId: 'redis',
+		p99Latency: 34.98,
+		errorRate: 0,
+		percentageOfTotal: 18.52,
+		opsPerSec: 0,
+		duration: 12.44,
+	},
+	{
+		traceId: 'redis',
+		p99Latency: 34.98,
+		errorRate: 0,
+		percentageOfTotal: 18.52,
+		opsPerSec: 0,
+		duration: 12.44,
+	},
+	{
+		traceId: 'redis',
+		p99Latency: 34.98,
+		errorRate: 0,
+		percentageOfTotal: 18.52,
+		opsPerSec: 0,
+		duration: 12.44,
+	},
+];
+
 function StepsTransitionResults({
 	stepsCount,
 }: StepsTransitionResultsProps): JSX.Element {
@@ -45,8 +72,8 @@ function StepsTransitionResults({
 					selectedTransition={selectedTransition}
 					transitions={stepTransitions}
 				/>
-				<TopSlowestTraces />
-				<TopTracesWithErrors />
+				<TopSlowestTraces loading={false} data={sampleData} />
+				<TopTracesWithErrors loading={false} data={sampleData} />
 			</div>
 		</div>
 	);
