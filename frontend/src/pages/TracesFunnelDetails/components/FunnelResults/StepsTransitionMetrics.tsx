@@ -1,4 +1,4 @@
-import './StepsTransitionMetrics.styles.scss';
+import FunnelMetricsTable from './FunnelMetricsTable';
 
 interface StepTransition {
 	value: string;
@@ -18,8 +18,37 @@ function StepsTransitionMetrics({
 		(transition) => transition.value === selectedTransition,
 	);
 
+	const currentTransitionMetricsData = [
+		{
+			title: 'Avg. Rate',
+			value: 486.76,
+			unit: 'req/s',
+		},
+		{
+			title: 'Errors',
+			value: 43,
+			unit: '',
+		},
+		{
+			title: 'Avg. Duration',
+			value: 34.77,
+			unit: 'ms',
+		},
+	];
+
+	if (!currentTransition) {
+		return <div>No transition selected</div>;
+	}
+
 	return (
-		<div className="steps-transition-metrics">{currentTransition?.label}</div>
+		<FunnelMetricsTable
+			title={currentTransition.label}
+			subtitle={{
+				label: 'Conversion rate',
+				value: '46%',
+			}}
+			data={currentTransitionMetricsData}
+		/>
 	);
 }
 
