@@ -42,6 +42,7 @@ const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] =>
 		},
 	}));
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({
 	funnel,
 	setValidTracesCount,
@@ -173,7 +174,9 @@ export default function useFunnelConfiguration({
 	useEffect(() => {
 		if (hasStepsChanged()) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
-				onSuccess: () => {
+				onSuccess: (data) => {
+					if (data?.payload?.steps) lastSavedStateRef.current = debouncedSteps;
+
 					// Only validate if service_name or span_name changed
 					if (hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)) {
 						validateCurrentSteps();
@@ -183,7 +186,7 @@ export default function useFunnelConfiguration({
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSteps, hasStepsChanged, getUpdatePayload, validateCurrentSteps]);
+	}, [debouncedSteps, steps]);
 
 	return {
 		isPopoverOpen,
