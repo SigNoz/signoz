@@ -4496,7 +4496,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 ) {
 	// get lateset agent config
 	latestVersion := -1
-	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
+	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, logPipelines)
 	if err != nil && err.Type() != model.ErrorNotFound {
 		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
@@ -4505,14 +4505,14 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 		latestVersion = lastestConfig.Version
 	}
 
-	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
-	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	history, err := agentConf.GetConfigHistory(ctx, orgID, logPipelines, limit)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get config history")
 	}
@@ -4524,14 +4524,14 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID string, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
-	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, orgID, version)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines by version")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
-	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	history, err := agentConf.GetConfigHistory(ctx, orgID, logPipelines, limit)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
 	}

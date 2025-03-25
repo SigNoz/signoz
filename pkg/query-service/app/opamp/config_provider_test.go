@@ -36,12 +36,23 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
 	agent1Id := "testAgent1"
+	// get orgId from the db
 	tb.opampServer.OnMessage(
 		agent1Conn,
 		&protobufs.AgentToServer{
 			InstanceUid: agent1Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: initialAgentConf(),
+			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: "testOrg1"},
+						},
+					},
+				},
 			},
 		},
 	)

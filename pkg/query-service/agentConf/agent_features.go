@@ -14,6 +14,7 @@ type AgentFeature interface {
 	// Recommend config for an agent based on its `currentConfYaml` and
 	// `configVersion` for the feature's settings
 	RecommendAgentConfig(
+		orgId string,
 		currentConfYaml []byte,
 		configVersion *types.AgentConfigVersion,
 	) (

@@ -120,11 +120,11 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			// todo: need to address multiple agent scenario here
 			// for now, the first response will be sent back to the UI
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED {
-				onConfigSuccess(agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
+				onConfigSuccess(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
 			}
 
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED {
-				onConfigFailure(agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
+				onConfigFailure(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
 			}
 		}
 	}
@@ -262,7 +262,7 @@ func (agent *Agent) processStatusUpdate(
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
-	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
+	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.EffectiveConfig))
 	if err != nil {
 		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.AgentID), zap.Error(err))
 		return false

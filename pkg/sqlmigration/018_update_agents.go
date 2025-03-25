@@ -68,6 +68,11 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
+	// add unique constraint to agents table of org_id and agent_id
+	if _, err := tx.NewCreateIndex().Table("agents").Index("idx_agents_org_id_agent_id").Column("org_id", "agent_id").Unique().Exec(ctx); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return err
 	}

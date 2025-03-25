@@ -91,7 +91,7 @@ func (m *Manager) notifyConfigUpdateSubscribers() {
 }
 
 // Implements opamp.AgentConfigProvider
-func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
+func (m *Manager) RecommendAgentConfig(orgId string, currentConfYaml []byte) (
 	recommendedConfYaml []byte,
 	// Opaque id of the recommended config, used for reporting deployment status updates
 	configId string,
@@ -102,12 +102,12 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 	for _, feature := range m.agentFeatures {
 		featureType := types.ElementTypeDef(feature.AgentFeatureType())
-		latestConfig, apiErr := GetLatestVersion(context.Background(), featureType)
+		latestConfig, apiErr := GetLatestVersion(context.Background(), orgId, featureType)
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
 		}
 
-		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(recommendation, latestConfig)
+		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(orgId, recommendation, latestConfig)
 		if apiErr != nil {
 			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
 				"failed to generate agent config recommendation for %s", featureType,
@@ -130,6 +130,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 		_ = m.updateDeployStatus(
 			context.Background(),
+			orgId,
 			featureType,
 			configVersion,
 			string(types.DeployInitiated),
@@ -155,6 +156,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 // Implements opamp.AgentConfigProvider
 func (m *Manager) ReportConfigDeploymentStatus(
+	orgId string,
 	agentId string,
 	configId string,
 	err error,
@@ -168,39 +170,39 @@ func (m *Manager) ReportConfigDeploymentStatus(
 			message = fmt.Sprintf("%s: %s", agentId, err.Error())
 		}
 		_ = m.updateDeployStatusByHash(
-			context.Background(), featureConfId, newStatus, message,
+			context.Background(), orgId, featureConfId, newStatus, message,
 		)
 	}
 }
 
 func GetLatestVersion(
-	ctx context.Context, elementType types.ElementTypeDef,
+	ctx context.Context, orgId string, elementType types.ElementTypeDef,
 ) (*types.AgentConfigVersion, *model.ApiError) {
-	return m.GetLatestVersion(ctx, elementType)
+	return m.GetLatestVersion(ctx, orgId, elementType)
 }
 
 func GetConfigVersion(
-	ctx context.Context, elementType types.ElementTypeDef, version int,
+	ctx context.Context, orgId string, elementType types.ElementTypeDef, version int,
 ) (*types.AgentConfigVersion, *model.ApiError) {
-	return m.GetConfigVersion(ctx, elementType, version)
+	return m.GetConfigVersion(ctx, orgId, elementType, version)
 }
 
 func GetConfigHistory(
-	ctx context.Context, typ types.ElementTypeDef, limit int,
+	ctx context.Context, orgId string, typ types.ElementTypeDef, limit int,
 ) ([]types.AgentConfigVersion, *model.ApiError) {
-	return m.GetConfigHistory(ctx, typ, limit)
+	return m.GetConfigHistory(ctx, orgId, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
-	ctx context.Context, userId string, eleType types.ElementTypeDef, elementIds []string,
+	ctx context.Context, orgId string, userId string, eleType types.ElementTypeDef, elementIds []string,
 ) (*types.AgentConfigVersion, *model.ApiError) {
 
 	// create a new version
 	cfg := types.NewAgentConfigVersion(eleType)
 
 	// insert new config and elements into database
-	err := m.insertConfig(ctx, userId, cfg, elementIds)
+	err := m.insertConfig(ctx, orgId, userId, cfg, elementIds)
 	if err != nil {
 		return nil, err
 	}
@@ -214,9 +216,9 @@ func NotifyConfigUpdate(ctx context.Context) {
 	m.notifyConfigUpdateSubscribers()
 }
 
-func Redeploy(ctx context.Context, typ types.ElementTypeDef, version int) *model.ApiError {
+func Redeploy(ctx context.Context, orgId string, typ types.ElementTypeDef, version int) *model.ApiError {
 
-	configVersion, err := GetConfigVersion(ctx, typ, version)
+	configVersion, err := GetConfigVersion(ctx, orgId, typ, version)
 	if err != nil {
 		zap.L().Error("failed to fetch config version during redeploy", zap.Error(err))
 		return model.WrapApiError(err, "failed to fetch details of the config version")
@@ -246,7 +248,7 @@ func Redeploy(ctx context.Context, typ types.ElementTypeDef, version int) *model
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
-		m.updateDeployStatus(ctx, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, configVersion.LastConfig)
+		m.updateDeployStatus(ctx, orgId, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, configVersion.LastConfig)
 	case types.ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConfig), &filterConfig); err != nil {
@@ -264,14 +266,14 @@ func Redeploy(ctx context.Context, typ types.ElementTypeDef, version int) *model
 			return err
 		}
 
-		m.updateDeployStatus(ctx, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, configVersion.LastConfig)
+		m.updateDeployStatus(ctx, orgId, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, configVersion.LastConfig)
 	}
 
 	return nil
 }
 
 // UpsertFilterProcessor updates the agent config with new filter processor params
-func UpsertFilterProcessor(ctx context.Context, version int, config *filterprocessor.Config) error {
+func UpsertFilterProcessor(ctx context.Context, orgId string, version int, config *filterprocessor.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
@@ -295,7 +297,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, types.ElementTypeDropRules, version, string(types.DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	m.updateDeployStatus(ctx, orgId, types.ElementTypeDropRules, version, string(types.DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
 
@@ -304,7 +306,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 // successful deployment if no error is received.
 // this method is currently expected to be called only once in the lifecycle
 // but can be improved in future to accept continuous request status updates from opamp
-func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
+func (m *Manager) OnConfigUpdate(orgId string, agentId string, hash string, err error) {
 
 	status := string(types.Deployed)
 
@@ -319,11 +321,11 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 		message = fmt.Sprintf("%s: %s", agentId, err.Error())
 	}
 
-	_ = m.updateDeployStatusByHash(context.Background(), hash, status, message)
+	_ = m.updateDeployStatusByHash(context.Background(), orgId, hash, status, message)
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
-func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Config) error {
+func UpsertSamplingProcessor(ctx context.Context, orgId string, version int, config *tsp.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
@@ -346,6 +348,6 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	m.updateDeployStatus(ctx, orgId, types.ElementTypeSamplingRules, version, string(types.DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }

@@ -87,12 +87,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, claims.UserID, types.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, claims.OrgID, claims.UserID, types.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, err
 	}
 
-	return ic.GetPipelinesByVersion(ctx, cfg.Version)
+	return ic.GetPipelinesByVersion(ctx, claims.OrgID, cfg.Version)
 }
 
 func (ic *LogParsingPipelineController) ValidatePipelines(
@@ -204,7 +204,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 
 // GetPipelinesByVersion responds with version info and associated pipelines
 func (ic *LogParsingPipelineController) GetPipelinesByVersion(
-	ctx context.Context, version int,
+	ctx context.Context, orgId string, version int,
 ) (*PipelinesResponse, *model.ApiError) {
 
 	pipelines, errors := ic.getEffectivePipelinesByVersion(ctx, version)
@@ -215,7 +215,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 
 	var configVersion *types.AgentConfigVersion
 	if version >= 0 {
-		cv, err := agentConf.GetConfigVersion(ctx, types.ElementTypeLogPipelines, version)
+		cv, err := agentConf.GetConfigVersion(ctx, orgId, types.ElementTypeLogPipelines, version)
 		if err != nil {
 			zap.L().Error("failed to get config for version", zap.Int("version", version), zap.Error(err))
 			return nil, model.WrapApiError(err, "failed to get config for given version")
@@ -264,6 +264,7 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
+	orgId string,
 	currentConfYaml []byte,
 	configVersion *types.AgentConfigVersion,
 ) (
@@ -277,7 +278,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	}
 
 	pipelinesResp, apiErr := pc.GetPipelinesByVersion(
-		context.Background(), pipelinesVersion,
+		context.Background(), orgId, pipelinesVersion,
 	)
 	if apiErr != nil {
 		return nil, "", apiErr

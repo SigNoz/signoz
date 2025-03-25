@@ -1,7 +1,6 @@
 package model
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -65,51 +64,34 @@ func (agents *Agents) FindAgent(agentID string) *Agent {
 	return agents.agentsById[agentID]
 }
 
-func (agents *Agents) getDefaultOrgID() (string, error) {
-	var orgID []string
-	err := store.BunDB().NewSelect().Model((*signozTypes.Organization)(nil)).Column("id").Scan(context.Background(), &orgID)
-	if err != nil {
-		return "", err
-	}
-
-	if len(orgID) == 0 {
-		return "", nil
-	}
-
-	if len(orgID) != 1 {
-		return "", fmt.Errorf("expected exactly one organization, but found %d", len(orgID))
-	}
-
-	return orgID[0], nil
-}
-
 // FindOrCreateAgent returns the Agent instance associated with the given agentID.
 // If the Agent instance does not exist, it is created and added to the list of
 // Agent instances.
-func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (*Agent, bool, error) {
+func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, orgId string) (*Agent, bool, error) {
 	agents.mux.Lock()
 	defer agents.mux.Unlock()
-	var created bool
 	agent, ok := agents.agentsById[agentID]
-	if !ok || agent == nil {
-		orgID, err := agents.getDefaultOrgID()
-		if err != nil {
-			return nil, created, err
-		}
-		agent = New(orgID, agentID, conn)
-		err = agent.Upsert()
-		if err != nil {
-			return nil, created, err
-		}
-		agents.agentsById[agentID] = agent
 
-		if agents.connections[conn] == nil {
-			agents.connections[conn] = map[string]bool{}
-		}
-		agents.connections[conn][agentID] = true
-		created = true
+	if ok && agent != nil {
+		return agent, false, nil
 	}
-	return agent, created, nil
+
+	if !ok && orgId == "" {
+		return nil, false, errors.New("cannot create agent without orgId")
+	}
+
+	agent = New(orgId, agentID, conn)
+	err := agent.Upsert()
+	if err != nil {
+		return nil, false, err
+	}
+	agents.agentsById[agentID] = agent
+
+	if agents.connections[conn] == nil {
+		agents.connections[conn] = map[string]bool{}
+	}
+	agents.connections[conn][agentID] = true
+	return agent, true, nil
 }
 
 func (agents *Agents) GetAllAgents() []*Agent {
@@ -130,6 +112,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 ) error {
 	for _, agent := range agents.GetAllAgents() {
 		newConfig, confId, err := provider.RecommendAgentConfig(
+			agent.OrgID,
 			[]byte(agent.EffectiveConfig),
 		)
 		if err != nil {

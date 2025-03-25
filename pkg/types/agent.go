@@ -47,18 +47,18 @@ const (
 )
 
 type AgentConfigVersion struct {
-	bun.BaseModel `bun:"table:agent_config_versions"`
+	bun.BaseModel `bun:"table:agent_config_versions,alias:acv"`
 
 	TimeAuditable
 	UserAuditable
 
-	CreatedByName string `json:"createdByName" db:"created_by_name"`
+	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"`
 
 	OrgID          string         `json:"orgId" bun:"org_id,type:text"`
 	ID             string         `json:"id" bun:"id,pk,type:text"`
 	Version        int            `json:"version" bun:"version,default:1,unique:element_version_idx"`
 	Active         bool           `json:"active" bun:"active"`
-	IsValid        bool           `json:"isValid" bun:"is_valid"`
+	IsValid        bool           `json:"is_valid" bun:"is_valid"`
 	Disabled       bool           `json:"disabled" bun:"disabled"`
 	ElementType    ElementTypeDef `json:"elementType" bun:"element_type,notnull,type:varchar(120),unique:element_version_idx"`
 	DeployStatus   DeployStatus   `json:"deployStatus" bun:"deploy_status,notnull,type:varchar(80),default:'DIRTY'"`

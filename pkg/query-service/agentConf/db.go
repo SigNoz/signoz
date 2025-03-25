@@ -20,18 +20,18 @@ type Repo struct {
 }
 
 func (r *Repo) GetConfigHistory(
-	ctx context.Context, typ types.ElementTypeDef, limit int,
+	ctx context.Context, orgId string, typ types.ElementTypeDef, limit int,
 ) ([]types.AgentConfigVersion, *model.ApiError) {
 	var c []types.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("version, id, element_type, COALESCE(created_by, -1) as created_by, created_at").
-		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
-		ColumnExpr("active, is_valid, disabled, deploy_status, deploy_result").
-		ColumnExpr("coalesce(last_hash, '') as last_hash, coalesce(last_config, '{}') as last_config").
-		TableExpr("agent_config_versions AS v").
-		Where("element_type = ?", typ).
-		OrderExpr("created_at DESC, version DESC").
+		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
+		ColumnExpr("COALESCE(created_by, -1) as created_by").
+		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("COALESCE(last_hash, '') as last_hash, COALESCE(last_config, '{}') as last_config").
+		Where("acv.element_type = ?", typ).
+		Where("acv.org_id = ?", orgId).
+		OrderExpr("acv.created_at DESC, acv.version DESC").
 		Limit(limit).
 		Scan(ctx)
 
@@ -50,21 +50,18 @@ func (r *Repo) GetConfigHistory(
 }
 
 func (r *Repo) GetConfigVersion(
-	ctx context.Context, typ types.ElementTypeDef, v int,
+	ctx context.Context, orgId string, typ types.ElementTypeDef, v int,
 ) (*types.AgentConfigVersion, *model.ApiError) {
 	var c types.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type").
+		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, -1) as created_by").
-		ColumnExpr("created_at").
-		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
-		ColumnExpr("active, is_valid, disabled, deploy_status, deploy_result").
-		ColumnExpr("coalesce(last_hash, '') as last_hash").
-		ColumnExpr("coalesce(last_config, '{}') as last_config").
-		TableExpr("agent_config_versions AS v").
-		Where("element_type = ?", typ).
-		Where("version = ?", v).
+		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("COALESCE(last_hash, '') as last_hash, COALESCE(last_config, '{}') as last_config").
+		Where("acv.element_type = ?", typ).
+		Where("acv.version = ?", v).
+		Where("acv.org_id = ?", orgId).
 		Scan(ctx)
 
 	if err != nil {
@@ -78,19 +75,17 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, typ types.ElementTypeDef,
+	ctx context.Context, orgId string, typ types.ElementTypeDef,
 ) (*types.AgentConfigVersion, *model.ApiError) {
 	var c types.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type").
+		ColumnExpr("id, version, element_type, active, is_valid, disabled, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, -1) as created_by").
-		ColumnExpr("created_at").
-		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE id = v.created_by), 'unknown') as created_by_name`).
-		ColumnExpr("active, is_valid, disabled, deploy_status, deploy_result").
-		TableExpr("agent_config_versions AS v").
-		Where("element_type = ?", typ).
-		Where("version = (SELECT MAX(version) FROM agent_config_versions WHERE element_type = ?)", typ).
+		ColumnExpr(`COALESCE((SELECT NAME FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		Where("acv.element_type = ?", typ).
+		Where("acv.org_id = ?", orgId).
+		Where("version = (SELECT MAX(version) FROM agent_config_versions WHERE acv.element_type = ?)", typ).
 		Scan(ctx)
 
 	if err != nil {
@@ -104,7 +99,7 @@ func (r *Repo) GetLatestVersion(
 }
 
 func (r *Repo) insertConfig(
-	ctx context.Context, userId string, c *types.AgentConfigVersion, elements []string,
+	ctx context.Context, orgId string, userId string, c *types.AgentConfigVersion, elements []string,
 ) (fnerr *model.ApiError) {
 
 	if string(c.ElementType) == "" {
@@ -129,7 +124,7 @@ func (r *Repo) insertConfig(
 		))
 	}
 
-	configVersion, err := r.GetLatestVersion(ctx, c.ElementType)
+	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)
 	if err != nil && err.Type() != model.ErrorNotFound {
 		zap.L().Error("failed to fetch latest config version", zap.Error(err))
 		return model.InternalError(fmt.Errorf("failed to fetch latest config version"))
@@ -145,14 +140,15 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.store.BunDB().NewDelete().Model((*types.AgentConfigVersion)(nil)).Where("id = ?", c.ID).Exec(ctx)
-			r.store.BunDB().NewDelete().Model((*types.AgentConfigElement)(nil)).Where("version_id = ?", c.ID).Exec(ctx)
+			r.store.BunDB().NewDelete().Model((*types.AgentConfigVersion)(nil)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
+			r.store.BunDB().NewDelete().Model((*types.AgentConfigElement)(nil)).Where("version_id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
 		}
 	}()
 
 	// insert config
 	_, dbErr := r.store.BunDB().NewInsert().
 		Model(&types.AgentConfigVersion{
+			OrgID:   orgId,
 			ID:      c.ID,
 			Version: c.Version,
 			UserAuditable: types.UserAuditable{
@@ -174,6 +170,7 @@ func (r *Repo) insertConfig(
 
 	for _, e := range elements {
 		agentConfigElement := &types.AgentConfigElement{
+			OrgID:       orgId,
 			ID:          uuid.NewString(),
 			VersionID:   c.ID,
 			ElementType: string(c.ElementType),
@@ -189,6 +186,7 @@ func (r *Repo) insertConfig(
 }
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
+	orgId string,
 	elementType types.ElementTypeDef,
 	version int,
 	status string,
@@ -204,6 +202,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 		Set("last_config = ?", lastconf).
 		Where("version = ?", version).
 		Where("element_type = ?", elementType).
+		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {
 		zap.L().Error("failed to update deploy status", zap.Error(err))
@@ -214,7 +213,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 }
 
 func (r *Repo) updateDeployStatusByHash(
-	ctx context.Context, confighash string, status string, result string,
+	ctx context.Context, orgId string, confighash string, status string, result string,
 ) *model.ApiError {
 
 	_, err := r.store.BunDB().NewUpdate().
@@ -222,6 +221,7 @@ func (r *Repo) updateDeployStatusByHash(
 		Set("deploy_status = ?", status).
 		Set("deploy_result = ?", result).
 		Where("last_hash = ?", confighash).
+		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {
 		zap.L().Error("failed to update deploy status", zap.Error(err))

@@ -488,7 +488,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB: sqlStore.BunDB(), // todo(nitya): fix this
+		Store: sqlStore,
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})
