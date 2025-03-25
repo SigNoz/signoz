@@ -30,7 +30,7 @@ type existingInvite struct {
 }
 
 type newInvite struct {
-	bun.BaseModel `bun:"table:invites_new"`
+	bun.BaseModel `bun:"table:user_invite"`
 
 	types.Identifiable
 	types.TimeAuditable
@@ -69,57 +69,43 @@ func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
 	if err != nil {
 		return err
 	}
+
 	defer tx.Rollback()
 
-	_, err = tx.
-		NewCreateTable().
-		IfNotExists().
-		Model(new(newInvite)).
-		Exec(ctx)
+	err = migration.
+		store.
+		Dialect().
+		RenameTableAndModifyModel(ctx, tx, new(existingInvite), new(newInvite), func(ctx context.Context) error {
+			existingInvites := make([]*existingInvite, 0)
+			err = tx.
+				NewSelect().
+				Model(&existingInvites).
+				Scan(ctx)
+			if err != nil {
+				if err != sql.ErrNoRows {
+					return err
+				}
+			}
 
+			if err == nil {
+				newInvites := migration.
+					CopyOldInvitesToNewInvites(existingInvites)
+				_, err = tx.
+					NewInsert().
+					Model(&newInvites).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
 	if err != nil {
 		return err
 	}
 
-	existingInvites := make([]*existingInvite, 0)
-	err = tx.
-		NewSelect().
-		Model(&existingInvites).
-		Scan(ctx)
+	err = tx.Commit()
 	if err != nil {
-		if err != sql.ErrNoRows {
-			return err
-		}
-	}
-
-	if err == nil {
-		newInvites := migration.
-			CopyOldInvitesToNewInvites(existingInvites)
-		_, err = tx.
-			NewInsert().
-			Model(&newInvites).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-	}
-
-	_, err = tx.
-		NewDropTable().
-		IfExists().
-		Table("invites").
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.
-		ExecContext(ctx, `ALTER TABLE invites_new RENAME TO invites`)
-	if err != nil {
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
 		return err
 	}
 

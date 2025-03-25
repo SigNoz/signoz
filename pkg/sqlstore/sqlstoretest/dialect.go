@@ -28,3 +28,7 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
 	return true, nil
 }
+
+func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
+	return nil
+}
