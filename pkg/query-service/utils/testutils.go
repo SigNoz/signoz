@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -76,4 +78,29 @@ func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	_ = dashboards.InitDB(sqlStore)
 
 	return sqlStore
+}
+
+func CreateTestOrg(t *testing.T, store sqlstore.SQLStore) error {
+	org := &types.Organization{
+		ID:   uuid.NewString(),
+		Name: "testOrg",
+	}
+	_, err := store.BunDB().NewInsert().Model(org).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetTestOrgId(t *testing.T, store sqlstore.SQLStore) (string, error) {
+	var orgID string
+	err := store.BunDB().NewSelect().
+		Model(&types.Organization{}).
+		Column("id").
+		Limit(1).
+		Scan(context.Background(), &orgID)
+	if err != nil {
+		return "", err
+	}
+	return orgID, nil
 }

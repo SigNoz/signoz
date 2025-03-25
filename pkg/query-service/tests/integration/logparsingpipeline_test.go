@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -33,8 +34,12 @@ import (
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testbed := NewLogPipelinesTestBed(t, nil)
+	testDB := utils.NewQueryServiceDBForTests(t)
+	testbed := NewLogPipelinesTestBed(t, testDB)
 	require := require.New(t)
+
+	orgID, err := utils.GetTestOrgId(t, testbed.sqlStore)
+	require.Nil(err)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(
@@ -106,7 +111,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, createPipelinesResp,
 	)
 	testbed.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
-	testbed.assertNewAgentGetsPipelinesOnConnection(createPipelinesResp.Pipelines)
+	testbed.assertNewAgentGetsPipelinesOnConnection(orgID, createPipelinesResp.Pipelines)
 
 	// Should be able to get the configured pipelines.
 	getPipelinesResp = testbed.GetPipelinesFromQS()
@@ -144,7 +149,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, updatePipelinesResp,
 	)
 	testbed.assertPipelinesSentToOpampClient(updatePipelinesResp.Pipelines)
-	testbed.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResp.Pipelines)
+	testbed.assertNewAgentGetsPipelinesOnConnection(orgID, updatePipelinesResp.Pipelines)
 
 	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(
@@ -446,6 +451,7 @@ type LogPipelinesTestBed struct {
 	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
 	opampClientConn *opamp.MockOpAmpConnection
+	sqlStore        sqlstore.SQLStore
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
@@ -455,7 +461,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	}
 
 	// create test org
-	// utils.CreateTestOrg(t, sqlStore)
+	utils.CreateTestOrg(t, sqlStore)
 
 	ic, err := integrations.NewController(sqlStore)
 	if err != nil {
@@ -505,8 +511,13 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
+	orgID, err := utils.GetTestOrgId(t, testDB)
+	require.Nil(t, err)
+
+	model.InitDB(testDB)
+
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
-	err := opampServer.Start(opamp.GetAvailableLocalAddress())
+	err = opampServer.Start(opamp.GetAvailableLocalAddress())
 	require.Nil(t, err, "failed to start opamp server")
 
 	t.Cleanup(func() {
@@ -521,11 +532,22 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipeline
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
 			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
+						},
+					},
+				},
+			},
 		},
 	)
 
 	testbed.opampServer = opampServer
 	testbed.opampClientConn = opampClientConnection
+	testbed.sqlStore = testDB
 
 	return testbed
 
@@ -727,6 +749,7 @@ func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig
 }
 
 func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
+	orgID string,
 	pipelines []pipelinetypes.GettablePipeline,
 ) {
 	newAgentConn := &opamp.MockOpAmpConnection{}
@@ -736,6 +759,16 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 			InstanceUid: uuid.NewString(),
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: newInitialAgentConfigMap(),
+			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
+						},
+					},
+				},
 			},
 		},
 	)
