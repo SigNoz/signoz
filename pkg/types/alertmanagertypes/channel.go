@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
 )
@@ -29,13 +31,12 @@ type GettableChannels = []*Channel
 type Channel struct {
 	bun.BaseModel `bun:"table:notification_channels"`
 
-	ID        int       `json:"id" bun:"id,pk,autoincrement"`
-	Name      string    `json:"name" bun:"name"`
-	Type      string    `json:"type" bun:"type"`
-	Data      string    `json:"data" bun:"data"`
-	CreatedAt time.Time `json:"created_at" bun:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
-	OrgID     string    `json:"org_id" bun:"org_id"`
+	types.Identifiable
+	types.TimeAuditable
+	Name  string `json:"name" bun:"name"`
+	Type  string `json:"type" bun:"type"`
+	Data  string `json:"data" bun:"data"`
+	OrgID string `json:"org_id" bun:"org_id"`
 }
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
@@ -47,10 +48,15 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) *Channel {
 
 	// Initialize channel with common fields
 	channel := Channel{
-		Name:      receiver.Name,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		OrgID:     orgID,
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:  receiver.Name,
+		OrgID: orgID,
 	}
 
 	// Use reflection to examine receiver struct fields
@@ -120,14 +126,14 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
-func GetChannelByID(channels Channels, id int) (int, *Channel, error) {
+func GetChannelByID(channels Channels, id valuer.UUID) (int, *Channel, error) {
 	for i, channel := range channels {
 		if channel.ID == id {
 			return i, channel, nil
 		}
 	}
 
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", id.StringValue())
 }
 
 func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
@@ -143,7 +149,7 @@ func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
 func (c *Channel) Update(receiver Receiver) error {
 	channel := NewChannelFromReceiver(receiver, c.OrgID)
 	if channel == nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", c.ID)
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", c.ID.StringValue())
 	}
 
 	if c.Name != channel.Name {

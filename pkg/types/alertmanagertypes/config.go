@@ -10,6 +10,8 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -41,12 +43,11 @@ type RouteConfig struct {
 type StoreableConfig struct {
 	bun.BaseModel `bun:"table:alertmanager_config"`
 
-	ID        uint64    `bun:"id,pk,autoincrement"`
-	Config    string    `bun:"config"`
-	Hash      string    `bun:"hash"`
-	CreatedAt time.Time `bun:"created_at"`
-	UpdatedAt time.Time `bun:"updated_at"`
-	OrgID     string    `bun:"org_id"`
+	types.Identifiable
+	types.TimeAuditable
+	Config string `bun:"config"`
+	Hash   string `bun:"hash"`
+	OrgID  string `bun:"org_id"`
 }
 
 // Config is the type for the entire alertmanager configuration
@@ -63,11 +64,16 @@ func NewConfig(c *config.Config, orgID string) *Config {
 	return &Config{
 		alertmanagerConfig: c,
 		storeableConfig: &StoreableConfig{
-			Config:    raw,
-			Hash:      fmt.Sprintf("%x", newConfigHash(raw)),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			OrgID:     orgID,
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			Config: raw,
+			Hash:   fmt.Sprintf("%x", newConfigHash(raw)),
+			OrgID:  orgID,
 		},
 	}
 }
