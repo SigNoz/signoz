@@ -5,7 +5,7 @@ import (
 )
 
 type Invite struct {
-	bun.BaseModel `bun:"table:invites"`
+	bun.BaseModel `bun:"table:user_invite"`
 
 	Identifiable
 	TimeAuditable
