@@ -2,8 +2,9 @@ import { ValidateFunnelResponse } from 'api/traceFunnels';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { isEqual } from 'lodash-es';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -25,6 +26,21 @@ interface UseFunnelConfiguration {
 
 // Time conversion helper for consistent nanoseconds handling
 const convertToNanoseconds = (time: string): number => parseInt(time, 10) * 1e9;
+
+// Add this helper function
+const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] =>
+	steps.map((step) => ({
+		...step,
+		filters: {
+			...step.filters,
+			items: step.filters.items.map((item) => ({
+				id: '',
+				key: item.key,
+				value: item.value,
+				op: item.op,
+			})),
+		},
+	}));
 
 export default function useFunnelConfiguration({
 	funnel,
@@ -54,10 +70,13 @@ export default function useFunnelConfiguration({
 	const validateStepsMutation = useValidateFunnelSteps(funnel.id);
 
 	// Derived state
-	const hasStepsChanged = useCallback(
-		() => JSON.stringify(debouncedSteps) !== JSON.stringify(initialSteps),
-		[debouncedSteps, initialSteps],
-	);
+	const lastSavedStateRef = useRef<FunnelStepData[]>(steps);
+
+	const hasStepsChanged = useCallback(() => {
+		const normalizedLastSavedSteps = normalizeSteps(lastSavedStateRef.current);
+		const normalizedDebouncedSteps = normalizeSteps(debouncedSteps);
+		return !isEqual(normalizedDebouncedSteps, normalizedLastSavedSteps);
+	}, [debouncedSteps]);
 
 	const hasStepServiceOrSpanNameChanged = useCallback(
 		(prevSteps: FunnelStepData[], nextSteps: FunnelStepData[]): boolean => {
