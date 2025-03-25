@@ -2,6 +2,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
+	extractPortAndEndpoint,
 	getEndPointDetailsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
@@ -121,14 +122,31 @@ function EndPointDetails({
 		[endPointDetailsDataQueries],
 	);
 
+	const { endpoint, port } = useMemo(
+		() => extractPortAndEndpoint(endPointName),
+		[endPointName],
+	);
+
 	return (
 		<div className="endpoint-details-container">
+			<div className="endpoint-meta-data">
+				<div className="endpoint-meta-data-col">
+					<div className="endpoint-meta-data-label">Endpoint:</div>
+					<div className="endpoint-meta-data-value">{endpoint || '-'}</div>
+				</div>
+				<div className="endpoint-meta-data-col">
+					<div className="endpoint-meta-data-label">Port:</div>
+					<div className="endpoint-meta-data-value">{port || '-'}</div>
+				</div>
+			</div>
 			<div className="endpoint-details-filters-container">
 				<div className="endpoint-details-filters-container-dropdown">
 					<EndPointsDropDown
 						selectedEndPointName={endPointName}
 						setSelectedEndPointName={setSelectedEndPointName}
 						endPointDropDownDataQuery={endPointDropDownDataQuery}
+						parentContainerDiv=".endpoint-details-filters-container"
+						dropdownStyle={{ width: 'calc(100% - 36px)' }}
 					/>
 				</div>
 				<div className="endpoint-details-filters-container-search">
