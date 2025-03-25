@@ -6,21 +6,25 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type TestDialect struct {
+type dialect struct {
 }
 
-func (dialect *TestDialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	return nil
 }
 
-func (dialect *TestDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
 	return nil
 }
 
-func (dialect *TestDialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
+func (dialect *dialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
 	return "", nil
 }
 
-func (dialect *TestDialect) ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error) {
+func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error) {
 	return false, nil
+}
+
+func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
+	return true, nil
 }

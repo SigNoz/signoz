@@ -6,10 +6,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type PGDialect struct {
+type dialect struct {
 }
 
-func (dialect *PGDialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -21,16 +21,22 @@ func (dialect *PGDialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB
 	}
 
 	// if the columns is integer then do this
-	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
+	if _, err := bun.
+		ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
 		return err
 	}
 
 	// add new timestamp column
-	if _, err := bun.NewAddColumn().Table(table).ColumnExpr(column + " TIMESTAMP").Exec(ctx); err != nil {
+	if _, err := bun.
+		NewAddColumn().
+		Table(table).
+		ColumnExpr(column + " TIMESTAMP").
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := bun.NewUpdate().
+	if _, err := bun.
+		NewUpdate().
 		Table(table).
 		Set(column + " = to_timestamp(cast(" + column + "_old as INTEGER))").
 		Where("1=1").
@@ -39,14 +45,18 @@ func (dialect *PGDialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB
 	}
 
 	// drop old column
-	if _, err := bun.NewDropColumn().Table(table).Column(column + "_old").Exec(ctx); err != nil {
+	if _, err := bun.
+		NewDropColumn().
+		Table(table).
+		Column(column + "_old").
+		Exec(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (dialect *PGDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -56,12 +66,17 @@ func (dialect *PGDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, 
 		return nil
 	}
 
-	if _, err := bun.ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
+	if _, err := bun.
+		ExecContext(ctx, `ALTER TABLE `+table+` RENAME COLUMN `+column+` TO `+column+`_old`); err != nil {
 		return err
 	}
 
 	// add new boolean column
-	if _, err := bun.NewAddColumn().Table(table).ColumnExpr(column + " BOOLEAN").Exec(ctx); err != nil {
+	if _, err := bun.
+		NewAddColumn().
+		Table(table).
+		ColumnExpr(column + " BOOLEAN").
+		Exec(ctx); err != nil {
 		return err
 	}
 
@@ -82,7 +97,7 @@ func (dialect *PGDialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, 
 	return nil
 }
 
-func (dialect *PGDialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
+func (dialect *dialect) GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
 	var columnType string
 
 	err := bun.NewSelect().
@@ -98,7 +113,7 @@ func (dialect *PGDialect) GetColumnType(ctx context.Context, bun bun.IDB, table 
 	return columnType, nil
 }
 
-func (dialect *PGDialect) ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error) {
+func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table string, column string) (bool, error) {
 	var count int
 	err := bun.NewSelect().
 		ColumnExpr("COUNT(*)").
@@ -112,4 +127,27 @@ func (dialect *PGDialect) ColumnExists(ctx context.Context, bun bun.IDB, table s
 	}
 
 	return count > 0, nil
+}
+
+func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
+	oldColumnExists, err := dialect.ColumnExists(ctx, bun, table, oldColumnName)
+	if err != nil {
+		return false, err
+	}
+
+	newColumnExists, err := dialect.ColumnExists(ctx, bun, table, newColumnName)
+	if err != nil {
+		return false, err
+	}
+
+	if !oldColumnExists && newColumnExists {
+		return true, nil
+	}
+
+	_, err = bun.
+		ExecContext(ctx, "ALTER TABLE "+table+" RENAME COLUMN "+oldColumnName+" TO "+newColumnName)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
