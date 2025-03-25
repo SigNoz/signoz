@@ -87,7 +87,7 @@ func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
 				}
 			}
 
-			if err == nil {
+			if err == nil && len(existingInvites) > 0 {
 				newInvites := migration.
 					CopyOldInvitesToNewInvites(existingInvites)
 				_, err = tx.

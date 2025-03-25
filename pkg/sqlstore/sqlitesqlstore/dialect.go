@@ -178,6 +178,7 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 		NewCreateTable().
 		IfNotExists().
 		Model(newModel).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
 		Exec(ctx)
 
 	if err != nil {
