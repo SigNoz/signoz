@@ -8,16 +8,22 @@ interface EndPointsDropDownProps {
 	selectedEndPointName?: string;
 	setSelectedEndPointName: (value: string) => void;
 	endPointDropDownDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
+	parentContainerDiv?: string;
+	dropdownStyle?: React.CSSProperties;
 }
 
 const defaultProps = {
 	selectedEndPointName: '',
+	parentContainerDiv: '',
+	dropdownStyle: {},
 };
 
 function EndPointsDropDown({
 	selectedEndPointName,
 	setSelectedEndPointName,
 	endPointDropDownDataQuery,
+	parentContainerDiv,
+	dropdownStyle,
 }: EndPointsDropDownProps): JSX.Element {
 	const { data, isLoading, isFetching } = endPointDropDownDataQuery;
 
@@ -39,6 +45,13 @@ function EndPointsDropDown({
 			style={{ width: '100%' }}
 			onChange={handleChange}
 			options={formattedData}
+			getPopupContainer={
+				parentContainerDiv
+					? (): HTMLElement =>
+							document.querySelector(parentContainerDiv) as HTMLElement
+					: (triggerNode): HTMLElement => triggerNode.parentNode as HTMLElement
+			}
+			dropdownStyle={dropdownStyle}
 		/>
 	);
 }
