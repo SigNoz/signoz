@@ -1,52 +1,76 @@
 import './StepsContent.styles.scss';
 
 import { Button, Steps } from 'antd';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PlusIcon } from 'lucide-react';
-import { useState } from 'react';
+import { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
 
 const { Step } = Steps;
 
-function StepsContent(): JSX.Element {
-	const [steps, setSteps] = useState([{}, {}]);
+interface StepsContentProps {
+	funnelId: string;
+	steps: FunnelStepData[];
+	handleAddStep: () => void;
+	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
+	handleStepRemoval: (index: number) => void;
+}
 
-	const handleAddStep = (): void => {
-		setSteps((prev) => [...prev, {}]);
-	};
-
+function StepsContent({
+	funnelId,
+	steps,
+	handleAddStep,
+	handleStepChange,
+	handleStepRemoval,
+}: StepsContentProps): JSX.Element {
 	return (
 		<div className="steps-content">
-			<Steps direction="vertical">
-				{steps.map((_, index) => (
-					<Step
-						key={`step-${index + 1}`}
-						description={
-							<div className="steps-content__description">
-								<FunnelStep />
-								{/* Display InterStepConfig only between steps */}
-								{index < steps.length - 1 && <InterStepConfig />}
-							</div>
-						}
-					/>
-				))}
-				{steps.length < 3 && (
-					<Step
-						className="steps-content__add-step"
-						description={
-							<Button
-								type="default"
-								className="steps-content__add-btn"
-								onClick={handleAddStep}
-								icon={<PlusIcon size={14} />}
-							>
-								Add Funnel Step
-							</Button>
-						}
-					/>
-				)}
-			</Steps>
+			<OverlayScrollbar>
+				<Steps direction="vertical">
+					{steps.map((step, index) => (
+						<Step
+							key={`step-${index + 1}`}
+							description={
+								<div className="steps-content__description">
+									<FunnelStep
+										funnelId={funnelId}
+										stepData={step}
+										index={index}
+										onStepChange={handleStepChange}
+										onStepRemove={handleStepRemoval}
+										stepsCount={steps.length}
+									/>
+									{/* Display InterStepConfig only between steps */}
+									{index < steps.length - 1 && (
+										<InterStepConfig
+											index={index}
+											onStepChange={handleStepChange}
+											step={step}
+										/>
+									)}
+								</div>
+							}
+						/>
+					))}
+					{steps.length < 3 && (
+						<Step
+							className="steps-content__add-step"
+							description={
+								<Button
+									type="default"
+									className="steps-content__add-btn"
+									onClick={handleAddStep}
+									icon={<PlusIcon size={14} />}
+								>
+									Add Funnel Step
+								</Button>
+							}
+						/>
+					)}
+				</Steps>
+			</OverlayScrollbar>
 		</div>
 	);
 }

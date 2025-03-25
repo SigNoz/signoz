@@ -88,6 +88,8 @@ interface QueryBuilderSearchV2Props {
 	className?: string;
 	suffixIcon?: React.ReactNode;
 	hardcodedAttributeKeys?: BaseAutocompleteData[];
+	hasPopupContainer?: boolean;
+	rootClassName?: string;
 }
 
 export interface Option {
@@ -121,6 +123,8 @@ function QueryBuilderSearchV2(
 		suffixIcon,
 		whereClauseConfig,
 		hardcodedAttributeKeys,
+		hasPopupContainer,
+		rootClassName,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -911,7 +915,8 @@ function QueryBuilderSearchV2(
 		<div className="query-builder-search-v2">
 			<Select
 				ref={selectRef}
-				getPopupContainer={popupContainer}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
@@ -943,7 +948,7 @@ function QueryBuilderSearchV2(
 						: '',
 					className,
 				)}
-				rootClassName="query-builder-search"
+				rootClassName={cx('query-builder-search', rootClassName)}
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
 				onSearch={handleSearch}
@@ -999,6 +1004,8 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hasPopupContainer: true,
+	rootClassName: '',
 	hardcodedAttributeKeys: undefined,
 };
 

@@ -1,33 +1,76 @@
 import './StepsFooter.styles.scss';
 
-import { Button } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
+import { Button, Skeleton } from 'antd';
+import cx from 'classnames';
 import { Check, Cone, Play } from 'lucide-react';
+import { useState } from 'react';
 
-function StepsFooter(): JSX.Element {
+import AddFunnelDescriptionModal from './AddFunnelDescriptionModal';
+
+interface StepsFooterProps {
+	stepsCount: number;
+	validTracesCount: number;
+	isLoading: boolean;
+	funnelId: string;
+	funnelDescription: string;
+}
+
+function StepsFooter({
+	stepsCount,
+	validTracesCount,
+	isLoading,
+	funnelId,
+	funnelDescription,
+}: StepsFooterProps): JSX.Element {
+	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
+
 	return (
 		<div className="steps-footer">
 			<div className="steps-footer__left">
 				<Cone className="funnel-icon" size={14} />
-				<span>2 steps</span>
+				<span>{stepsCount} steps</span>
 				<span>·</span>
-				<span>5 valid traces</span>
+				{isLoading ? (
+					<Skeleton.Button size="small" />
+				) : (
+					<span
+						className={cx('steps-footer__valid-traces', {
+							'steps-footer__valid-traces--none': validTracesCount === 0,
+						})}
+					>
+						{validTracesCount} valid traces
+					</span>
+				)}
 			</div>
 			<div className="steps-footer__right">
-				<Button
-					type="default"
-					className="steps-footer__button steps-footer__button--save"
-					icon={<Check size={16} />}
-				>
-					Save funnel
-				</Button>
-				<Button
-					type="primary"
-					className="steps-footer__button steps-footer__button--run"
-					icon={<Play size={16} />}
-				>
-					Run funnel
-				</Button>
+				{funnelDescription ? (
+					<Button type="primary" icon={<SyncOutlined />} />
+				) : (
+					<>
+						<Button
+							type="default"
+							className="steps-footer__button steps-footer__button--save"
+							icon={<Check size={16} />}
+							onClick={(): void => setIsDescriptionModalOpen(true)}
+						>
+							Save funnel
+						</Button>
+						<Button
+							type="primary"
+							className="steps-footer__button steps-footer__button--run"
+							icon={<Play size={16} />}
+						>
+							Run funnel
+						</Button>
+					</>
+				)}
 			</div>
+			<AddFunnelDescriptionModal
+				isOpen={isDescriptionModalOpen}
+				onClose={(): void => setIsDescriptionModalOpen(false)}
+				funnelId={funnelId}
+			/>
 		</div>
 	);
 }

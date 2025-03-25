@@ -14,6 +14,14 @@
 		border-bottom: 1px solid var(--bg-slate-400);
 	}
 
+	&__description {
+		padding: 16px 16px 0 16px;
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		line-height: 18px; /* 150% */
+		letter-spacing: -0.06px;
+	}
+
 	.funnel-item__action-icon {
 		opacity: 1;
 	}

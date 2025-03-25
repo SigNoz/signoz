@@ -1,6 +1,6 @@
 import './StepsTransitionResults.styles.scss';
 
-import { Radio } from 'antd';
+import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useState } from 'react';
 
 import StepsTransitionMetrics from './StepsTransitionMetrics';
@@ -34,24 +34,11 @@ function StepsTransitionResults({
 	return (
 		<div className="steps-transition-results">
 			<div className="steps-transition-results__steps-selector">
-				<Radio.Group
+				<SignozRadioGroup
 					value={selectedTransition}
-					buttonStyle="solid"
-					className="views-tabs"
+					options={stepTransitions}
 					onChange={(e): void => setSelectedTransition(e.target.value)}
-				>
-					{stepTransitions.map((transition) => (
-						<Radio.Button
-							key={transition.value}
-							value={transition.value}
-							className={
-								selectedTransition === transition.value ? 'selected_view tab' : 'tab'
-							}
-						>
-							{transition.label}
-						</Radio.Button>
-					))}
-				</Radio.Group>
+				/>
 			</div>
 			<div className="steps-transition-results__results">
 				<StepsTransitionMetrics
