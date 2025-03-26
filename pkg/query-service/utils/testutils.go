@@ -50,6 +50,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
 			sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlStore),
 			sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlStore),
+			sqlmigration.NewUpdatePipelines(sqlStore),
 		),
 	)
 	if err != nil {
@@ -71,7 +72,7 @@ func NewQueryServiceDBForTests(t *testing.T) sqlstore.SQLStore {
 	if err != nil {
 		t.Fatalf("could not initialize dao: %v", err)
 	}
-	_ = dashboards.InitDB(sqlStore.BunDB())
+	_ = dashboards.InitDB(sqlStore)
 
 	return sqlStore
 }

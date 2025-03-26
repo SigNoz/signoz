@@ -20,6 +20,16 @@ export interface QueryData {
 	values: [number, string][];
 	quantity?: number[];
 	unit?: string;
+	table?: {
+		rows: {
+			data: {
+				[key: string]: any;
+			};
+		}[];
+		columns: {
+			[key: string]: string;
+		}[];
+	};
 }
 
 export interface SeriesItem {

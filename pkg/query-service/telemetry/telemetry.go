@@ -19,8 +19,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/version"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 const (
@@ -740,7 +740,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	// zap.L().Info(data)
 	properties := analytics.NewProperties()
-	properties.Set("version", version.GetVersion())
+	properties.Set("version", version.Info.Version)
 	properties.Set("deploymentType", getDeploymentType())
 	properties.Set("companyDomain", a.getCompanyDomain())
 
