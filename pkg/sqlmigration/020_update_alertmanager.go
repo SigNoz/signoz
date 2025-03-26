@@ -57,7 +57,7 @@ type newAlertmanagerConfig struct {
 	OrgID  string `bun:"org_id,notnull,unique"`
 }
 
-type existingAlertManagerState struct {
+type existingAlertmanagerState struct {
 	bun.BaseModel `bun:"table:alertmanager_state"`
 	ID            uint64    `bun:"id,pk,autoincrement"`
 	Silences      string    `bun:"silences,nullzero,type:text"`
@@ -67,7 +67,7 @@ type existingAlertManagerState struct {
 	OrgID         string    `bun:"org_id,notnull,unique"`
 }
 
-type newAlertManagerState struct {
+type newAlertmanagerState struct {
 	bun.BaseModel `bun:"table:alertmanager_state_new"`
 	types.Identifiable
 	types.TimeAuditable
@@ -174,8 +174,8 @@ func (migration *updateAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		UpdatePrimaryKey(ctx, tx, new(existingAlertManagerState), new(newAlertManagerState), func(ctx context.Context) error {
-			existingAlertmanagerStates := make([]*existingAlertManagerState, 0)
+		UpdatePrimaryKey(ctx, tx, new(existingAlertmanagerState), new(newAlertmanagerState), func(ctx context.Context) error {
+			existingAlertmanagerStates := make([]*existingAlertmanagerState, 0)
 			err = tx.
 				NewSelect().
 				Model(&existingAlertmanagerStates).
@@ -256,10 +256,10 @@ func (migration *updateAlertmanager) CopyOldConfigToNewConfig(existingAlertmanag
 	return newAlertmanagerConfigs
 }
 
-func (migration *updateAlertmanager) CopyOldStateToNewState(existingAlertmanagerStates []*existingAlertManagerState) []*newAlertManagerState {
-	newAlertmanagerStates := make([]*newAlertManagerState, 0)
+func (migration *updateAlertmanager) CopyOldStateToNewState(existingAlertmanagerStates []*existingAlertmanagerState) []*newAlertmanagerState {
+	newAlertmanagerStates := make([]*newAlertmanagerState, 0)
 	for _, state := range existingAlertmanagerStates {
-		newAlertmanagerStates = append(newAlertmanagerStates, &newAlertManagerState{
+		newAlertmanagerStates = append(newAlertmanagerStates, &newAlertmanagerState{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},

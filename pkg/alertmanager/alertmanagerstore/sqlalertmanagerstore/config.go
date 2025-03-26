@@ -113,7 +113,7 @@ func (store *config) GetChannelByID(ctx context.Context, orgID string, id valuer
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id.StringValue())
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", id.StringValue())
 		}
 		return nil, err
 	}
