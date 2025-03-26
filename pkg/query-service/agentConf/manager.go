@@ -199,7 +199,7 @@ func StartNewVersion(
 ) (*types.AgentConfigVersion, *model.ApiError) {
 
 	// create a new version
-	cfg := types.NewAgentConfigVersion(eleType)
+	cfg := types.NewAgentConfigVersion(orgId, eleType)
 
 	// insert new config and elements into database
 	err := m.insertConfig(ctx, orgId, userId, cfg, elementIds)

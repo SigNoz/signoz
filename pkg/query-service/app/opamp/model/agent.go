@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -29,14 +30,15 @@ type Agent struct {
 	conn      opampTypes.Connection
 	connMutex sync.Mutex
 	mux       sync.RWMutex
+	store     sqlstore.SQLStore
 }
 
 // set in agent description when agent is capable of supporting
 // lb exporter configuration. values: 1 (true) or 0 (false)
 const lbExporterFlag = "capabilities.lbexporter"
 
-func New(orgID string, ID string, conn opampTypes.Connection) *Agent {
-	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, AgentID: ID, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn}
+func New(store sqlstore.SQLStore, orgID string, ID string, conn opampTypes.Connection) *Agent {
+	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, AgentID: ID, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
 }
 
 // Upsert inserts or updates the agent in the database.
@@ -44,7 +46,7 @@ func (agent *Agent) Upsert() error {
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 
-	_, err := store.BunDB().NewInsert().
+	_, err := agent.store.BunDB().NewInsert().
 		Model(&agent.StorableAgent).
 		On("CONFLICT (org_id, agent_id) DO UPDATE").
 		Set("started_at = EXCLUDED.started_at").

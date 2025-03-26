@@ -120,7 +120,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	testDB := utils.NewQueryServiceDBForTests(t)
 	utils.CreateTestOrg(t, testDB)
 
-	orgID, err := utils.GetTestOrgId(t, testDB)
+	orgID, err := utils.GetTestOrgId(testDB)
 	require.Nil(err)
 
 	integrationsTB := NewIntegrationsTestBed(t, testDB)

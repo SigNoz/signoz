@@ -13,8 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var store sqlstore.SQLStore
-
 var AllAgents = Agents{
 	agentsById:  map[string]*Agent{},
 	connections: map[types.Connection]map[string]bool{},
@@ -24,6 +22,7 @@ type Agents struct {
 	mux         sync.RWMutex
 	agentsById  map[string]*Agent
 	connections map[types.Connection]map[string]bool
+	store       sqlstore.SQLStore
 }
 
 func (a *Agents) Count() int {
@@ -32,12 +31,12 @@ func (a *Agents) Count() int {
 
 // Initialize the database and create schema if needed
 func InitDB(sqlStore sqlstore.SQLStore) {
-	store = sqlStore
 
 	AllAgents = Agents{
 		agentsById:  make(map[string]*Agent),
 		connections: make(map[types.Connection]map[string]bool),
 		mux:         sync.RWMutex{},
+		store:       sqlStore,
 	}
 }
 
@@ -80,7 +79,7 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, o
 		return nil, false, errors.New("cannot create agent without orgId")
 	}
 
-	agent = New(orgId, agentID, conn)
+	agent = New(agents.store, orgId, agentID, conn)
 	err := agent.Upsert()
 	if err != nil {
 		return nil, false, err

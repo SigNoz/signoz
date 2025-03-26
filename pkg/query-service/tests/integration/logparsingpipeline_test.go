@@ -37,7 +37,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed := NewLogPipelinesTestBed(t, nil)
 	require := require.New(t)
 
-	orgID, err := utils.GetTestOrgId(t, testbed.sqlStore)
+	orgID, err := utils.GetTestOrgId(testbed.sqlStore)
 	require.Nil(err)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
@@ -454,18 +454,18 @@ type LogPipelinesTestBed struct {
 }
 
 // testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipelinesTestBed {
-	if sqlStore == nil {
-		sqlStore = utils.NewQueryServiceDBForTests(t)
+func NewTestbedWithoutOpamp(t *testing.T, store sqlstore.SQLStore) *LogPipelinesTestBed {
+	if store == nil {
+		store = utils.NewQueryServiceDBForTests(t)
 	}
 
-	ic, err := integrations.NewController(sqlStore)
+	ic, err := integrations.NewController(store)
 	if err != nil {
 		t.Fatalf("could not create integrations controller: %v", err)
 	}
 
 	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
-		sqlStore, ic.GetPipelinesForInstalledIntegrations,
+		store, ic.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
@@ -490,7 +490,7 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		Store: sqlStore,
+		Store: store,
 		AgentFeatures: []agentConf.AgentFeature{
 			apiHandler.LogsParsingPipelineController,
 		}})
@@ -501,14 +501,14 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		testUser:     user,
 		apiHandler:   apiHandler,
 		agentConfMgr: agentConfMgr,
-		sqlStore:     sqlStore,
+		sqlStore:     store,
 	}
 }
 
 func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
-	orgID, err := utils.GetTestOrgId(t, testbed.sqlStore)
+	orgID, err := utils.GetTestOrgId(testbed.sqlStore)
 	require.Nil(t, err)
 
 	model.InitDB(testbed.sqlStore)

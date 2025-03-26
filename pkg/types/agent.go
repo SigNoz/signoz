@@ -68,8 +68,9 @@ type AgentConfigVersion struct {
 	LastConfig     string         `json:"lastConfig" bun:"last_config,type:text"`
 }
 
-func NewAgentConfigVersion(typeDef ElementTypeDef) *AgentConfigVersion {
+func NewAgentConfigVersion(orgId string, typeDef ElementTypeDef) *AgentConfigVersion {
 	return &AgentConfigVersion{
+		OrgID:        orgId,
 		ID:           uuid.NewString(),
 		ElementType:  typeDef,
 		Active:       false,

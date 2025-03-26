@@ -3814,9 +3814,14 @@ func (aH *APIHandler) InstallIntegration(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		RespondError(w, model.UnauthorizedError(errors.New("unauthorized")), nil)
+		return
+	}
 
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), &req,
+		r.Context(), claims.OrgID, &req,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3836,8 +3841,13 @@ func (aH *APIHandler) UninstallIntegration(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		RespondError(w, model.UnauthorizedError(errors.New("unauthorized")), nil)
+		return
+	}
 
-	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), claims.OrgID, &req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return

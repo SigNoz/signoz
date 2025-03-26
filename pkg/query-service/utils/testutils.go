@@ -51,9 +51,9 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewModifyOrgDomainFactory(),
 			sqlmigration.NewUpdateOrganizationFactory(sqlStore),
 			sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlStore),
-			sqlmigration.NewUpdateAgentsFactory(sqlStore),
 			sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlStore),
 			sqlmigration.NewUpdatePipelines(sqlStore),
+			sqlmigration.NewUpdateAgentsFactory(sqlStore),
 		),
 	)
 	if err != nil {
@@ -92,7 +92,7 @@ func CreateTestOrg(t *testing.T, store sqlstore.SQLStore) error {
 	return nil
 }
 
-func GetTestOrgId(t *testing.T, store sqlstore.SQLStore) (string, error) {
+func GetTestOrgId(store sqlstore.SQLStore) (string, error) {
 	var orgID string
 	err := store.BunDB().NewSelect().
 		Model(&types.Organization{}).

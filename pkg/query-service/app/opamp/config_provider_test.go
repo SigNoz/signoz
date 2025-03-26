@@ -22,7 +22,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	tb := newTestbed(t)
 
-	orgID, err := utils.GetTestOrgId(t, tb.sqlStore)
+	orgID, err := utils.GetTestOrgId(tb.sqlStore)
 	require.Nil(err)
 
 	require.Equal(
