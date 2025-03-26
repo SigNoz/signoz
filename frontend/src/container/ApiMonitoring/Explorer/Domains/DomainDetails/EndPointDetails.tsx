@@ -129,16 +129,6 @@ function EndPointDetails({
 
 	return (
 		<div className="endpoint-details-container">
-			<div className="endpoint-meta-data">
-				<div className="endpoint-meta-data-col">
-					<div className="endpoint-meta-data-label">Endpoint:</div>
-					<div className="endpoint-meta-data-value">{endpoint || '-'}</div>
-				</div>
-				<div className="endpoint-meta-data-col">
-					<div className="endpoint-meta-data-label">Port:</div>
-					<div className="endpoint-meta-data-value">{port || '-'}</div>
-				</div>
-			</div>
 			<div className="endpoint-details-filters-container">
 				<div className="endpoint-details-filters-container-dropdown">
 					<EndPointsDropDown
@@ -157,6 +147,16 @@ function EndPointDetails({
 						}}
 						placeholder="Search for filters..."
 					/>
+				</div>
+			</div>
+			<div className="endpoint-meta-data">
+				<div className="endpoint-meta-data-pill">
+					<div className="endpoint-meta-data-label">Endpoint</div>
+					<div className="endpoint-meta-data-value">{endpoint || '-'}</div>
+				</div>
+				<div className="endpoint-meta-data-pill">
+					<div className="endpoint-meta-data-label">Port</div>
+					<div className="endpoint-meta-data-value">{port || '-'}</div>
 				</div>
 			</div>
 			<EndPointMetrics endPointMetricsDataQuery={endPointMetricsDataQuery} />
