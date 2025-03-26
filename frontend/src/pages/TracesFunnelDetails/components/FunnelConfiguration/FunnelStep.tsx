@@ -31,6 +31,7 @@ function FunnelStep({
 	onStepChange,
 	onStepRemove,
 }: FunnelStepProps): JSX.Element {
+	const [form] = Form.useForm();
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
 	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
@@ -70,113 +71,117 @@ function FunnelStep({
 
 	return (
 		<div className="funnel-step">
-			<div className="funnel-step__header">
-				<div className="funnel-step-details">
-					{!!stepData.title && (
-						<div className="funnel-step-details__title">{stepData.title}</div>
-					)}
-					{!!stepData.description && (
-						<div className="funnel-step-details__description">
-							{stepData.description}
+			<Form form={form}>
+				<div className="funnel-step__header">
+					<div className="funnel-step-details">
+						{!!stepData.title && (
+							<div className="funnel-step-details__title">{stepData.title}</div>
+						)}
+						{!!stepData.description && (
+							<div className="funnel-step-details__description">
+								{stepData.description}
+							</div>
+						)}
+					</div>
+					<div className="funnel-step-actions">
+						<FunnelStepPopover
+							isPopoverOpen={isPopoverOpen}
+							setIsPopoverOpen={setIsPopoverOpen}
+							funnelId={funnelId}
+							stepOrder={stepData.step_order}
+							onStepRemove={(): void => onStepRemove(index)}
+							stepsCount={stepsCount}
+						/>
+					</div>
+				</div>
+				<div className="funnel-step__content">
+					<div className="drag-icon">
+						<GripVertical size={14} color="var(--bg-slate-200)" />
+					</div>
+					<div className="filters">
+						<div className="filters__service-and-span">
+							<div className="service">
+								<Form.Item name={['steps', stepData.id, 'service_name']}>
+									<FilterSelect
+										placeholder="Select Service"
+										queryParam={QueryParams.service}
+										filterType="serviceName"
+										shouldSetQueryParams={false}
+										values={stepData.service_name}
+										isMultiple={false}
+										onChange={(v): void =>
+											onStepChange(index, { service_name: v as string })
+										}
+									/>
+								</Form.Item>
+							</div>
+							<div className="span">
+								<Form.Item name={['steps', stepData.id, 'span_name']}>
+									<FilterSelect
+										placeholder="Select Span name"
+										queryParam={QueryParams.spanName}
+										filterType="name"
+										shouldSetQueryParams={false}
+										values={stepData.span_name}
+										isMultiple={false}
+										onChange={(v): void =>
+											onStepChange(index, { span_name: v as string })
+										}
+									/>
+								</Form.Item>
+							</div>
 						</div>
-					)}
-				</div>
-				<div className="funnel-step-actions">
-					<FunnelStepPopover
-						isPopoverOpen={isPopoverOpen}
-						setIsPopoverOpen={setIsPopoverOpen}
-						funnelId={funnelId}
-						stepOrder={stepData.step_order}
-						onStepRemove={(): void => onStepRemove(index)}
-						stepsCount={stepsCount}
-					/>
-				</div>
-			</div>
-			<div className="funnel-step__content">
-				<div className="drag-icon">
-					<GripVertical size={14} color="var(--bg-slate-200)" />
-				</div>
-				<div className="filters">
-					<div className="filters__service-and-span">
-						<div className="service">
-							<Form.Item name={['steps', stepData.id, 'service_name']}>
-								<FilterSelect
-									placeholder="Select Service"
-									queryParam={QueryParams.service}
-									filterType="serviceName"
-									shouldSetQueryParams={false}
-									values={stepData.service_name}
-									isMultiple={false}
-									onChange={(v): void =>
-										onStepChange(index, { service_name: v as string })
-									}
-								/>
-							</Form.Item>
-						</div>
-						<div className="span">
-							<Form.Item name={['steps', stepData.id, 'span_name']}>
-								<FilterSelect
-									placeholder="Select Span name"
-									queryParam={QueryParams.spanName}
-									filterType="name"
-									shouldSetQueryParams={false}
-									values={stepData.span_name}
-									isMultiple={false}
-									onChange={(v): void => onStepChange(index, { span_name: v as string })}
+						<div className="filters__where-filter">
+							<div className="label">Where</div>
+							<Form.Item name={['steps', stepData.id, 'filters']}>
+								<QueryBuilderSearchV2
+									query={query}
+									onChange={(query): void => onStepChange(index, { filters: query })}
+									hasPopupContainer={false}
+									placeholder="Search for filters..."
+									suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
+									rootClassName="traces-funnel-where-filter"
 								/>
 							</Form.Item>
 						</div>
 					</div>
-					<div className="filters__where-filter">
-						<div className="label">Where</div>
-						<Form.Item name={['steps', stepData.id, 'filters']}>
-							<QueryBuilderSearchV2
-								query={query}
-								onChange={(query): void => onStepChange(index, { filters: query })}
-								hasPopupContainer={false}
-								placeholder="Search for filters..."
-								suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
-								rootClassName="traces-funnel-where-filter"
-							/>
-						</Form.Item>
-					</div>
 				</div>
-			</div>
-			<div className="funnel-step__footer">
-				<div className="error">
-					<div className="error__label">Errors</div>
-					<Switch
-						className="error__switch"
-						size="small"
-						checked={stepData.has_errors}
-						onChange={(): void =>
-							onStepChange(index, { has_errors: !stepData.has_errors })
-						}
-					/>
-				</div>
-				<div className="latency-pointer">
-					<div className="latency-pointer__label">Latency pointer</div>
-					<Dropdown
-						menu={{
-							items: latencyPointerItems,
-							onClick: ({ key }): void =>
-								onStepChange(index, {
-									latency_pointer: key as FunnelStepData['latency_pointer'],
-								}),
-						}}
-						trigger={['click']}
-					>
-						<Space>
-							{
-								LatencyPointers.find(
-									(option) => option.value === stepData.latency_pointer,
-								)?.key
+				<div className="funnel-step__footer">
+					<div className="error">
+						<div className="error__label">Errors</div>
+						<Switch
+							className="error__switch"
+							size="small"
+							checked={stepData.has_errors}
+							onChange={(): void =>
+								onStepChange(index, { has_errors: !stepData.has_errors })
 							}
-							<ChevronDown size={14} color="var(--bg-vanilla-400)" />
-						</Space>
-					</Dropdown>
+						/>
+					</div>
+					<div className="latency-pointer">
+						<div className="latency-pointer__label">Latency pointer</div>
+						<Dropdown
+							menu={{
+								items: latencyPointerItems,
+								onClick: ({ key }): void =>
+									onStepChange(index, {
+										latency_pointer: key as FunnelStepData['latency_pointer'],
+									}),
+							}}
+							trigger={['click']}
+						>
+							<Space>
+								{
+									LatencyPointers.find(
+										(option) => option.value === stepData.latency_pointer,
+									)?.key
+								}
+								<ChevronDown size={14} color="var(--bg-vanilla-400)" />
+							</Space>
+						</Dropdown>
+					</div>
 				</div>
-			</div>
+			</Form>
 		</div>
 	);
 }
