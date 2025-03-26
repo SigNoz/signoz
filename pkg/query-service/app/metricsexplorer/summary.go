@@ -225,21 +225,21 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 	var response metrics_explorer.TreeMap
 	switch params.Treemap {
 	case metrics_explorer.TimeSeriesTeeMap:
-		cardinality, apiError := receiver.reader.GetMetricsTimeSeriesPercentage(ctx, params)
+		ts, apiError := receiver.reader.GetMetricsTimeSeriesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		if cardinality != nil {
-			response.TimeSeries = *cardinality
+		if ts != nil {
+			response.TimeSeries = *ts
 		}
 		return &response, nil
 	case metrics_explorer.SamplesTreeMap:
-		dataPoints, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
+		samples, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		if dataPoints != nil {
-			response.Samples = *dataPoints
+		if samples != nil {
+			response.Samples = *samples
 		}
 		return &response, nil
 	default:
