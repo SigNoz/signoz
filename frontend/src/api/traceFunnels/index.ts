@@ -216,6 +216,8 @@ export const saveFunnelDescription = async (
 export interface FunnelOverviewPayload {
 	start_time: number;
 	end_time: number;
+	step_start?: number;
+	step_end?: number;
 }
 
 export interface FunnelOverviewResponse {

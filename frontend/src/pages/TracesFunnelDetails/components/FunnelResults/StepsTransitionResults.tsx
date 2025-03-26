@@ -7,7 +7,7 @@ import StepsTransitionMetrics from './StepsTransitionMetrics';
 import TopSlowestTraces from './TopSlowestTraces';
 import TopTracesWithErrors from './TopTracesWithErrors';
 
-interface StepTransition {
+export interface StepTransition {
 	value: string;
 	label: string;
 }
@@ -55,6 +55,8 @@ function StepsTransitionResults({
 				<StepsTransitionMetrics
 					selectedTransition={selectedTransition}
 					transitions={stepTransitions}
+					startStep={stepAOrder}
+					endStep={stepBOrder}
 				/>
 				<TopSlowestTraces
 					funnelId={funnelId}
