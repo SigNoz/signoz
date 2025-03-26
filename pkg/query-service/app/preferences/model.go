@@ -3,11 +3,14 @@ package preferences
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/jmoiron/sqlx"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Range struct {
@@ -201,10 +204,10 @@ type UpdatePreference struct {
 	PreferenceValue interface{} `json:"preference_value"`
 }
 
-var db *sqlx.DB
+var store sqlstore.SQLStore
 
-func InitDB(inputDB *sqlx.DB) error {
-	db = inputDB
+func InitDB(store sqlstore.SQLStore) error {
+	store = store
 	return nil
 }
 
@@ -223,9 +226,14 @@ func GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*
 	}
 
 	// fetch the value from the database
-	var orgPreference PreferenceKV
-	query := `SELECT preference_id , preference_value FROM org_preference WHERE preference_id=$1 AND org_id=$2;`
-	err := db.Get(&orgPreference, query, preferenceId, orgId)
+	orgPreference := new(types.OrgPreference)
+	err := store.
+		BunDB().
+		NewSelect().
+		Model(orgPreference).
+		Where("preference_id = ?", preferenceId).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
 
 	// if the value doesn't exist in db then return the default value
 	if err != nil {
@@ -264,13 +272,37 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 		return nil, err
 	}
 
-	// update the values in the org_preference table and return the key and the value
-	query := `INSERT INTO org_preference(preference_id,preference_value,org_id) VALUES($1,$2,$3)
-	ON CONFLICT(preference_id,org_id) DO
-	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND org_id=$3;`
+	storablePreferenceValue, encodeErr := json.Marshal(preferenceValue)
+	if encodeErr != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error in encoding the preference value: %s", encodeErr.Error())}
+	}
 
-	_, dberr := db.Exec(query, preferenceId, preferenceValue, orgId)
+	orgPreference := new(types.OrgPreference)
+	dberr := store.
+		BunDB().
+		NewSelect().
+		Model(orgPreference).
+		Where("preference_id = ?", preferenceId).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
+	if dberr != nil && dberr != sql.ErrNoRows {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
+	}
 
+	if dberr != nil {
+		orgPreference.ID = valuer.GenerateUUID()
+		orgPreference.PreferenceID = preferenceId
+		orgPreference.PreferenceValue = string(storablePreferenceValue)
+		orgPreference.OrgID = orgId
+	} else {
+		orgPreference.PreferenceValue = string(storablePreferenceValue)
+	}
+
+	dberr = store.
+		BunDB().
+		NewInsert().
+		Model(orgPreference).
+		Scan(ctx)
 	if dberr != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
 	}
@@ -286,10 +318,13 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 	allOrgPreferences := []AllPreferences{}
 
 	// fetch all the org preference values stored in org_preference table
-	orgPreferenceValues := []PreferenceKV{}
-
-	query := `SELECT preference_id,preference_value FROM org_preference WHERE org_id=$1;`
-	err := db.Select(&orgPreferenceValues, query, orgId)
+	orgPreferences := make([]*types.OrgPreference, 0)
+	err := store.
+		BunDB().
+		NewSelect().
+		Model(&orgPreferences).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preference values: %s", err)}
@@ -298,8 +333,8 @@ func GetAllOrgPreferences(ctx context.Context, orgId string) (*[]AllPreferences,
 	// create a map of key vs values from the above response
 	preferenceValueMap := map[string]interface{}{}
 
-	for _, preferenceValue := range orgPreferenceValues {
-		preferenceValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	for _, preferenceValue := range orgPreferences {
+		preferenceValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
 	}
 
 	// update in the above filtered list wherver value present in the map
@@ -353,11 +388,14 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string, u
 	isPreferenceEnabledAtOrgScope := preference.IsEnabledForScope(OrgAllowedScope)
 	// get the value from the org scope if enabled at org scope
 	if isPreferenceEnabledAtOrgScope {
-		orgPreference := PreferenceKV{}
-
-		query := `SELECT preference_id , preference_value FROM org_preference WHERE preference_id=$1 AND org_id=$2;`
-
-		err := db.Get(&orgPreference, query, preferenceId, orgId)
+		orgPreference := new(types.OrgPreference)
+		err := store.
+			BunDB().
+			NewSelect().
+			Model(orgPreference).
+			Where("preference_id = ?", preferenceId).
+			Where("org_id = ?", orgId).
+			Scan(ctx)
 
 		// if there is error in getting values and its not an empty rows error return from here
 		if err != nil && err != sql.ErrNoRows {
@@ -371,10 +409,14 @@ func GetUserPreference(ctx context.Context, preferenceId string, orgId string, u
 	}
 
 	// get the value from the user_preference table, if exists return this value else the one calculated in the above step
-	userPreference := PreferenceKV{}
-
-	query := `SELECT preference_id, preference_value FROM user_preference WHERE preference_id=$1 AND user_id=$2;`
-	err := db.Get(&userPreference, query, preferenceId, userId)
+	userPreference := new(types.UserPreference)
+	err := store.
+		BunDB().
+		NewSelect().
+		Model(userPreference).
+		Where("preference_id = ?", preferenceId).
+		Where("user_id = ?", userId).
+		Scan(ctx)
 
 	if err != nil && err != sql.ErrNoRows {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting user preference values: %s", err.Error())}
@@ -407,15 +449,40 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 	if err != nil {
 		return nil, err
 	}
-	// update the user preference values
-	query := `INSERT INTO user_preference(preference_id,preference_value,user_id) VALUES($1,$2,$3)
-	ON CONFLICT(preference_id,user_id) DO
-	UPDATE SET preference_value= $2 WHERE preference_id=$1 AND user_id=$3;`
 
-	_, dberrr := db.Exec(query, preferenceId, preferenceValue, userId)
+	storablePreferenceValue, encodeErr := json.Marshal(preferenceValue)
+	if encodeErr != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error in encoding the preference value: %s", encodeErr.Error())}
+	}
 
-	if dberrr != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberrr.Error())}
+	userPreference := new(types.UserPreference)
+	dberr := store.
+		BunDB().
+		NewSelect().
+		Model(userPreference).
+		Where("preference_id = ?", preferenceId).
+		Where("user_id = ?", userId).
+		Scan(ctx)
+	if dberr != nil && dberr != sql.ErrNoRows {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
+	}
+
+	if dberr != nil {
+		userPreference.ID = valuer.GenerateUUID()
+		userPreference.PreferenceID = preferenceId
+		userPreference.PreferenceValue = string(storablePreferenceValue)
+		userPreference.UserID = userId
+	} else {
+		userPreference.PreferenceValue = string(storablePreferenceValue)
+	}
+
+	dberr = store.
+		BunDB().
+		NewInsert().
+		Model(userPreference).
+		Scan(ctx)
+	if dberr != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
 	}
 
 	return &PreferenceKV{
@@ -428,11 +495,14 @@ func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[
 	allUserPreferences := []AllPreferences{}
 
 	// fetch all the org preference values stored in org_preference table
-	orgPreferenceValues := []PreferenceKV{}
-
-	query := `SELECT preference_id,preference_value FROM org_preference WHERE org_id=$1;`
-	err := db.Select(&orgPreferenceValues, query, orgId)
-
+	// fetch all the org preference values stored in org_preference table
+	orgPreferences := make([]*types.OrgPreference, 0)
+	err := store.
+		BunDB().
+		NewSelect().
+		Model(&orgPreferences).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all org preference values: %s", err)}
 	}
@@ -440,16 +510,19 @@ func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[
 	// create a map of key vs values from the above response
 	preferenceOrgValueMap := map[string]interface{}{}
 
-	for _, preferenceValue := range orgPreferenceValues {
-		preferenceOrgValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	for _, preferenceValue := range orgPreferences {
+		preferenceOrgValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
 	}
 
 	// fetch all the user preference values stored in user_preference table
-	userPreferenceValues := []PreferenceKV{}
-
-	query = `SELECT preference_id,preference_value FROM user_preference WHERE user_id=$1;`
-	err = db.Select(&userPreferenceValues, query, userId)
-
+	// fetch all the org preference values stored in org_preference table
+	userPreferences := make([]*types.UserPreference, 0)
+	err = store.
+		BunDB().
+		NewSelect().
+		Model(&userPreferences).
+		Where("user_id = ?", userId).
+		Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in getting all user preference values: %s", err)}
 	}
@@ -457,8 +530,8 @@ func GetAllUserPreferences(ctx context.Context, orgId string, userId string) (*[
 	// create a map of key vs values from the above response
 	preferenceUserValueMap := map[string]interface{}{}
 
-	for _, preferenceValue := range userPreferenceValues {
-		preferenceUserValueMap[preferenceValue.PreferenceId] = preferenceValue.PreferenceValue
+	for _, preferenceValue := range userPreferences {
+		preferenceUserValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
 	}
 
 	// update in the above filtered list wherver value present in the map

@@ -65,6 +65,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewDropLicensesSitesFactory(sqlstore),
 		sqlmigration.NewUpdateInvitesFactory(sqlstore),
 		sqlmigration.NewUpdateAlertmanagerFactory(sqlstore),
+		sqlmigration.NewUpdatePreferencesFactory(sqlstore),
 	)
 }
 

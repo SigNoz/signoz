@@ -97,7 +97,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := preferences.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := preferences.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
