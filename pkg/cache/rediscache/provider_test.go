@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	_cache "github.com/SigNoz/signoz/pkg/cache"
 	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
-	_cache "go.signoz.io/signoz/pkg/cache"
 )
 
 type CacheableEntity struct {

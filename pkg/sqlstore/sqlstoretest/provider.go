@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/jmoiron/sqlx"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 var _ sqlstore.SQLStore = (*Provider)(nil)
@@ -19,7 +19,7 @@ type Provider struct {
 	mock    sqlmock.Sqlmock
 	bunDB   *bun.DB
 	sqlxDB  *sqlx.DB
-	dialect *TestDialect
+	dialect *dialect
 }
 
 func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
@@ -43,7 +43,7 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 		mock:    mock,
 		bunDB:   bunDB,
 		sqlxDB:  sqlxDB,
-		dialect: &TestDialect{},
+		dialect: new(dialect),
 	}
 }
 

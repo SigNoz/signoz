@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/google/uuid"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 

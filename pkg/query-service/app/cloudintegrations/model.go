@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
 // Represents a cloud provider account for cloud integrations

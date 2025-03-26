@@ -63,17 +63,17 @@ export default function SavedViews({
 
 	const handleRedirectQuery = (view: ViewProps): void => {
 		logEvent('Homepage: Saved view clicked', {
-			viewId: view.uuid,
+			viewId: view.id,
 			viewName: view.name,
 			entity: selectedEntity,
 		});
 
 		const currentViewDetails = getViewDetailsUsingViewKey(
-			view.uuid,
+			view.id,
 			selectedEntity === 'logs' ? logsViews : tracesViews,
 		);
 		if (!currentViewDetails) return;
-		const { query, name, uuid, panelType: currentPanelType } = currentViewDetails;
+		const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 		if (selectedEntity) {
 			handleExplorerTabChange(
@@ -81,7 +81,7 @@ export default function SavedViews({
 				{
 					query,
 					name,
-					uuid,
+					id,
 				},
 				SOURCEPAGE_VS_ROUTES[selectedEntity],
 			);

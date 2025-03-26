@@ -137,6 +137,7 @@ function UplotPanelWrapper({
 					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 				timezone: timezone.value,
 				customSeries,
+				isLogScale: widget?.isLogScale,
 			}),
 		[
 			widget?.id,
@@ -161,6 +162,7 @@ function UplotPanelWrapper({
 			customTooltipElement,
 			timezone.value,
 			customSeries,
+			widget?.isLogScale,
 		],
 	);
 

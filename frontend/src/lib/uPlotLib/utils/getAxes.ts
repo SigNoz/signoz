@@ -17,16 +17,19 @@ const getAxes = ({
 	isDarkMode,
 	yAxisUnit,
 	panelType,
+	isLogScale,
 }: {
 	isDarkMode: boolean;
 	yAxisUnit?: string;
 	panelType?: PANEL_TYPES;
+	isLogScale?: boolean;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 }): any => [
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
-			width: 0.2, // Width of the grid lines,
+			width: isLogScale ? 0.1 : 0.2, // Width of the grid lines,
 			show: true,
 		},
 		ticks: {
@@ -45,17 +48,20 @@ const getAxes = ({
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
-			width: 0.2, // Width of the grid lines
+			width: isLogScale ? 0.1 : 0.2, // Width of the grid lines
 		},
 		ticks: {
 			// stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
 			width: 0.3, // Width of the tick lines
 			show: true,
 		},
+		...(isLogScale ? { space: 20 } : {}),
 		values: (_, t): string[] =>
 			t.map((v) => {
+				if (v === null || v === undefined || Number.isNaN(v)) {
+					return '';
+				}
 				const value = getToolTipValue(v.toString(), yAxisUnit);
-
 				return `${value}`;
 			}),
 		gap: 5,

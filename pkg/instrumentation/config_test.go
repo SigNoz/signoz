@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/config/envprovider"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/config/envprovider"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 func TestNewWithEnvProvider(t *testing.T) {

@@ -11,15 +11,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	smtpservice "go.signoz.io/signoz/pkg/query-service/utils/smtpService"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	smtpservice "github.com/SigNoz/signoz/pkg/query-service/utils/smtpService"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -87,12 +88,18 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	}
 
 	inv := &types.Invite{
-		Name:      req.Name,
-		Email:     req.Email,
-		Token:     token,
-		CreatedAt: time.Now(),
-		Role:      req.Role,
-		OrgID:     au.OrgID,
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:  req.Name,
+		Email: req.Email,
+		Token: token,
+		Role:  req.Role,
+		OrgID: au.OrgID,
 	}
 
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
@@ -188,12 +195,18 @@ func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.Gettabl
 	}
 
 	inv := &types.Invite{
-		Name:      req.Name,
-		Email:     req.Email,
-		Token:     token,
-		CreatedAt: time.Now(),
-		Role:      req.Role,
-		OrgID:     au.OrgID,
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:  req.Name,
+		Email: req.Email,
+		Token: token,
+		Role:  req.Role,
+		OrgID: au.OrgID,
 	}
 
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {

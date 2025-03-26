@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/http/render"
 )
 
 type DayWiseBreakdown struct {

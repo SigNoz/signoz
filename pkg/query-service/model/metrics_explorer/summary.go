@@ -1,7 +1,7 @@
 package metrics_explorer
 
 import (
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 type SummaryListMetricsRequest struct {
@@ -9,7 +9,7 @@ type SummaryListMetricsRequest struct {
 	Limit   int          `json:"limit"`
 	OrderBy v3.OrderBy   `json:"orderBy"`
 	Start   int64        `json:"start"`
-	EndD    int64        `json:"end"`
+	End     int64        `json:"end"`
 	Filters v3.FilterSet `json:"filters"`
 }
 
@@ -24,7 +24,7 @@ type TreeMapMetricsRequest struct {
 	Limit   int          `json:"limit"`
 	Treemap TreeMapType  `json:"treemap"`
 	Start   int64        `json:"start"`
-	EndD    int64        `json:"end"`
+	End     int64        `json:"end"`
 	Filters v3.FilterSet `json:"filters"`
 }
 
@@ -65,6 +65,8 @@ type Metadata struct {
 	MetricType  string `json:"metric_type"`
 	Description string `json:"description"`
 	Unit        string `json:"unit"`
+	Temporality string `json:"temporality"`
+	Monotonic   bool   `json:"monotonic"`
 }
 
 // Alert represents individual alerts associated with the metric.

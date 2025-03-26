@@ -53,17 +53,12 @@ function MenuItemGenerator({
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(key, viewData);
 			if (!currentViewDetails) return;
-			const {
-				query,
-				name,
-				uuid,
-				panelType: currentPanelType,
-			} = currentViewDetails;
+			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			handleExplorerTabChange(currentPanelType, {
 				query,
 				name,
-				uuid,
+				id,
 			});
 		},
 		[viewData, handleExplorerTabChange],

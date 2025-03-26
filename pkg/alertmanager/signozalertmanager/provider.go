@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 type provider struct {
@@ -28,7 +28,7 @@ func NewFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[alertmanager
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore) (*provider, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/alertmanager/signozalertmanager")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
