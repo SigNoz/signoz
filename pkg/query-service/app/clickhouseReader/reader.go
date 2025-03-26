@@ -5982,10 +5982,10 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 
 	firstQueryLimit := req.Limit
-	dataPointsOrder := false
+	samplesOrder := false
 	var orderByClauseFirstQuery string
 	if req.OrderBy.ColumnName == "samples" {
-		dataPointsOrder = true
+		samplesOrder = true
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY timeseries %s", req.OrderBy.Order)
 		if req.Limit < 50 {
 			firstQueryLimit = 50
@@ -5995,30 +5995,33 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	}
 
 	// Determine which tables to use
-	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
-	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
+	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
 	metricsQuery := fmt.Sprintf(
 		`SELECT 
-		    t.metric_name AS metric_name,
-		    ANY_VALUE(t.description) AS description,
-		    ANY_VALUE(t.type) AS metric_type,
-		    ANY_VALUE(t.unit) AS metric_unit,
-		    uniq(t.fingerprint) AS timeseries,
+		    metric_name,
+		    ANY_VALUE(description) AS description,
+		    ANY_VALUE(type) AS metric_type,
+		    ANY_VALUE(unit) AS metric_unit,
+		    uniq(fingerprint) AS timeseries,
 			uniq(metric_name) OVER() AS total
-		FROM %s.%s AS t
+		FROM %s.%s
 		WHERE unix_milli BETWEEN ? AND ?
-		AND NOT startsWith(metric_name, 'signoz_')
-		AND __normalized = true
-		%s
-		GROUP BY t.metric_name
+			AND NOT startsWith(metric_name, 'signoz_')
+			AND __normalized = true
+			%s
+		GROUP BY metric_name
 		%s
 		LIMIT %d OFFSET %d;`,
 		signozMetricDBName, tsTable, whereClause, orderByClauseFirstQuery, firstQueryLimit, req.Offset)
 
 	args = append(args, start, end)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	begin := time.Now()
 	rows, err := r.db.Query(valueCtx, metricsQuery, args...)
+	duration := time.Since(begin)
+	zap.L().Info("Time taken to execute metrics query to fetch metrics with high time series", zap.String("query", metricsQuery), zap.Any("args", args), zap.Duration("duration", duration))
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
 		return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -6049,12 +6052,14 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	// Build a comma-separated list of quoted metric names.
 	metricsList := "'" + strings.Join(metricNames, "', '") + "'"
 	// If samples are being sorted by datapoints, update the ORDER clause.
-	if dataPointsOrder {
+	if samplesOrder {
 		orderByClauseFirstQuery = fmt.Sprintf("ORDER BY s.samples %s", req.OrderBy.Order)
 	} else {
 		orderByClauseFirstQuery = ""
 	}
 
+	// reset the args for main query
+	args = make([]interface{}, 0)
 	var sampleQuery string
 	var sb strings.Builder
 
@@ -6062,20 +6067,19 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		sb.WriteString(fmt.Sprintf(
 			`SELECT 
 				s.samples,
-				s.metric_name,
-				s.lastReceived
+				s.metric_name
 			FROM (
-				SELECT 
+				SELECT
 					dm.metric_name,
-					%s AS samples,
-					MAX(dm.unix_milli) AS lastReceived
+					%s AS samples
 				FROM %s.%s AS dm
 				WHERE dm.metric_name IN (%s)
 				AND dm.fingerprint IN (
 					SELECT fingerprint
 					FROM %s.%s
 					WHERE metric_name IN (%s)
-					AND __normalized = true
+						AND __normalized = true
+						AND unix_milli BETWEEN ? AND ?
 					%s
 					GROUP BY fingerprint
 				)
@@ -6089,26 +6093,27 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 			metricsList,
 			whereClause,
 		))
+		args = append(args, start, end)
+		args = append(args, req.Start, req.End)
 	} else {
 		// If no filters, it is a simpler query.
 		sb.WriteString(fmt.Sprintf(
 			`SELECT 
-        s.samples,
-        s.metric_name,
-        s.lastReceived
-    FROM (
-        SELECT 
-            metric_name,
-            %s AS samples,
-            MAX(unix_milli) AS lastReceived
-        FROM %s.%s
-        WHERE metric_name IN (%s)
-        AND unix_milli BETWEEN ? AND ?
-        GROUP BY metric_name
-    ) AS s `,
+				s.samples,
+				s.metric_name
+			FROM (
+				SELECT
+					metric_name,
+					%s AS samples
+				FROM %s.%s
+				WHERE metric_name IN (%s)
+					AND unix_milli BETWEEN ? AND ?
+				GROUP BY metric_name
+			) AS s `,
 			countExp,
 			signozMetricDBName, sampleTable,
 			metricsList))
+		args = append(args, req.Start, req.End)
 	}
 
 	// Append ORDER BY clause if provided.
@@ -6120,9 +6125,10 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	sb.WriteString(fmt.Sprintf("LIMIT %d;", req.Limit))
 	sampleQuery = sb.String()
 
-	// Append the time boundaries for sampleQuery.
-	args = append(args, start, end)
+	begin = time.Now()
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
+	duration = time.Since(begin)
+	zap.L().Info("Time taken to execute samples query", zap.String("query", sampleQuery), zap.Any("args", args), zap.Duration("duration", duration))
 	if err != nil {
 		zap.L().Error("Error executing samples query", zap.Error(err))
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -6130,18 +6136,15 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 	defer rows.Close()
 
 	samplesMap := make(map[string]uint64)
-	lastReceivedMap := make(map[string]int64)
 
 	for rows.Next() {
 		var samples uint64
 		var metricName string
-		var lastReceived int64
-		if err := rows.Scan(&samples, &metricName, &lastReceived); err != nil {
+		if err := rows.Scan(&samples, &metricName); err != nil {
 			zap.L().Error("Error scanning sample row", zap.Error(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		samplesMap[metricName] = samples
-		lastReceivedMap[metricName] = lastReceived
 	}
 	if err := rows.Err(); err != nil {
 		zap.L().Error("Error iterating over sample rows", zap.Error(err))
@@ -6167,16 +6170,13 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, req *metrics_
 		}
 		if samples, exists := samplesMap[response.Metrics[i].MetricName]; exists {
 			response.Metrics[i].Samples = samples
-			if lastReceived, exists := lastReceivedMap[response.Metrics[i].MetricName]; exists {
-				response.Metrics[i].LastReceived = lastReceived
-			}
 			filteredMetrics = append(filteredMetrics, response.Metrics[i])
 		}
 	}
 	response.Metrics = filteredMetrics
 
 	// If ordering by samples, sort in-memory.
-	if dataPointsOrder {
+	if samplesOrder {
 		sort.Slice(response.Metrics, func(i, j int) bool {
 			return response.Metrics[i].Samples > response.Metrics[j].Samples
 		})
@@ -6194,7 +6194,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	if len(conditions) > 0 {
 		whereClause = "AND " + strings.Join(conditions, " AND ")
 	}
-	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.EndD)
+	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
 	// Construct the query without backticks
 	query := fmt.Sprintf(`
@@ -6204,17 +6204,17 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 			(total_value * 100.0 / total_time_series) AS percentage
 		FROM (
 			SELECT 
-					metric_name,
-					uniq(fingerprint) AS total_value,
-					(SELECT uniq(fingerprint) 
-					 FROM %s.%s 
-					 WHERE unix_milli BETWEEN ? AND ? AND __normalized = true) AS total_time_series
-				FROM %s.%s
-				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') AND __normalized = true %s
-				GROUP BY metric_name
-			)
-			ORDER BY percentage DESC
-			LIMIT %d;`,
+				metric_name,
+				uniq(fingerprint) AS total_value,
+				(SELECT uniq(fingerprint)
+					FROM %s.%s
+					WHERE unix_milli BETWEEN ? AND ? AND __normalized = true) AS total_time_series
+			FROM %s.%s
+			WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz_') AND __normalized = true %s
+			GROUP BY metric_name
+		)
+		ORDER BY percentage DESC
+		LIMIT %d;`,
 		signozMetricDBName,
 		tsTable,
 		signozMetricDBName,
@@ -6224,26 +6224,29 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	)
 
 	args = append(args,
-		start, end, // For total_cardinality subquery
+		start, end, // For total_time_series subquery
 		start, end, // For main query
 	)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	begin := time.Now()
 	rows, err := r.db.Query(valueCtx, query, args...)
+	duration := time.Since(begin)
+	zap.L().Info("Time taken to execute time series percentage query", zap.String("query", query), zap.Any("args", args), zap.Duration("duration", duration))
 	if err != nil {
-		zap.L().Error("Error executing cardinality query", zap.Error(err), zap.String("query", query))
+		zap.L().Error("Error executing time series percentage query", zap.Error(err), zap.String("query", query))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
 
-	var heatmap []metrics_explorer.TreeMapResponseItem
+	var treeMap []metrics_explorer.TreeMapResponseItem
 	for rows.Next() {
 		var item metrics_explorer.TreeMapResponseItem
 		if err := rows.Scan(&item.MetricName, &item.TotalValue, &item.Percentage); err != nil {
 			zap.L().Error("Error scanning row", zap.Error(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
-		heatmap = append(heatmap, item)
+		treeMap = append(treeMap, item)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -6251,7 +6254,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
-	return &heatmap, nil
+	return &treeMap, nil
 }
 
 func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
@@ -6264,27 +6267,30 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	}
 
 	// Determine time range and tables to use
-	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.EndD)
-	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.EndD)
+	start, end, tsTable, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
+	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
 	queryLimit := 50 + req.Limit
-	metricsQuery := fmt.Sprintf(
-		`SELECT 
-		    ts.metric_name AS metric_name,
-		    uniq(ts.fingerprint) AS timeSeries
-		FROM %s.%s AS ts
-		WHERE NOT startsWith(ts.metric_name, 'signoz_')
-		AND __normalized = true
-		AND unix_milli BETWEEN ? AND ?
-		%s
-		GROUP BY ts.metric_name
+	metricsQuery := fmt.Sprintf(`
+		SELECT
+		    metric_name,
+			uniq(fingerprint) AS timeSeries
+		FROM %s.%s
+		WHERE NOT startsWith(metric_name, 'signoz_')
+			AND __normalized = true
+			AND unix_milli BETWEEN ? AND ?
+			%s
+		GROUP BY metric_name
 		ORDER BY timeSeries DESC
 		LIMIT %d;`,
 		signozMetricDBName, tsTable, whereClause, queryLimit,
 	)
 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
+	begin := time.Now()
 	rows, err := r.db.Query(valueCtx, metricsQuery, start, end)
+	duration := time.Since(begin)
+	zap.L().Info("Time taken to execute metrics query to reduce search space", zap.String("query", metricsQuery), zap.Any("start", start), zap.Any("end", end), zap.Duration("duration", duration))
 	if err != nil {
 		zap.L().Error("Error executing metrics query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
@@ -6345,12 +6351,13 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	if whereClause != "" {
 		sb.WriteString(fmt.Sprintf(
 			` AND dm.fingerprint IN (
-				SELECT ts.fingerprint 
-				FROM %s.%s AS ts
-				WHERE ts.metric_name IN (%s)
-				AND __normalized = true
-				%s
-				GROUP BY ts.fingerprint
+				SELECT fingerprint
+				FROM %s.%s
+				WHERE metric_name IN (%s)
+					AND unix_milli BETWEEN ? AND ?
+					AND __normalized = true
+					%s
+				GROUP BY fingerprint
 			)`,
 			signozMetricDBName, localTsTable, metricsList, whereClause,
 		))
@@ -6370,10 +6377,18 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	sampleQuery := sb.String()
 
 	// Add start and end time to args (only for sample table)
-	args = append(args, start, end, start, end, req.Limit)
+	args = append(args,
+		req.Start, req.End, // For total_samples subquery
+		req.Start, req.End, // For main query
+		start, end, // For where clause time series fingerprint query
+		req.Limit,
+	)
 
+	begin = time.Now()
 	// Execute the sample percentage query
 	rows, err = r.db.Query(valueCtx, sampleQuery, args...)
+	duration = time.Since(begin)
+	zap.L().Info("Time taken to execute samples percentage query", zap.String("query", sampleQuery), zap.Any("args", args), zap.Duration("duration", duration))
 	if err != nil {
 		zap.L().Error("Error executing samples query", zap.Error(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
