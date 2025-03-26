@@ -12,9 +12,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/version"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	prommodel "github.com/prometheus/common/model"
 
 	"go.uber.org/zap"
@@ -23,7 +23,6 @@ import (
 
 func initZapLog() *zap.Logger {
 	config := zap.NewProductionConfig()
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
@@ -75,7 +74,6 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	version.PrintVersion()
 
 	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
 		Uris: []string{"env:"},
@@ -91,6 +89,8 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
+
+	version.Info.PrettyPrint(config.Version)
 
 	signoz, err := signoz.New(
 		context.Background(),

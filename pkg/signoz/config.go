@@ -18,11 +18,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 )
 
 // Config defines the entire input configuration of signoz.
 type Config struct {
+	// Version config
+	Version version.Config `mapstructure:"version"`
+
 	// Instrumentation config
 	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
 
@@ -61,6 +65,7 @@ type DeprecatedFlags struct {
 
 func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
 	configFactories := []factory.ConfigFactory{
+		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
 		web.NewConfigFactory(),
 		cache.NewConfigFactory(),
