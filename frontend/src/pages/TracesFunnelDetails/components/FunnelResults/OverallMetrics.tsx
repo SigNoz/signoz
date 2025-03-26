@@ -69,7 +69,6 @@ function OverallMetrics(): JSX.Element {
 				value: `${conversionRate.toFixed(2)}%`,
 			}}
 			isLoading={isLoading}
-			emptyState={<div>No data available</div>}
 			data={metricsData}
 		/>
 	);

@@ -21,9 +21,7 @@ interface FunnelMetricsTableProps {
 function FunnelMetricsContentRenderer({
 	data,
 	isLoading,
-	emptyState = (
-		<div className="funnel-metrics--empty-state">No data available</div>
-	),
+	emptyState,
 }: {
 	data: MetricItem[];
 	isLoading?: boolean;
@@ -35,7 +33,7 @@ function FunnelMetricsContentRenderer({
 				<Spinner size="small" height="100%" />
 			</div>
 		);
-	if (data.length === 0) {
+	if (data.length === 0 && emptyState) {
 		return emptyState;
 	}
 	return (
@@ -51,7 +49,9 @@ function FunnelMetricsContentRenderer({
 }
 FunnelMetricsContentRenderer.defaultProps = {
 	isLoading: false,
-	emptyState: null,
+	emptyState: (
+		<div className="funnel-metrics--empty-state">No data available</div>
+	),
 };
 
 function FunnelMetricsTable({
@@ -85,7 +85,9 @@ function FunnelMetricsTable({
 FunnelMetricsTable.defaultProps = {
 	subtitle: undefined,
 	isLoading: false,
-	emptyState: null,
+	emptyState: (
+		<div className="funnel-metrics--empty-state">No data available</div>
+	),
 };
 
 export default FunnelMetricsTable;
