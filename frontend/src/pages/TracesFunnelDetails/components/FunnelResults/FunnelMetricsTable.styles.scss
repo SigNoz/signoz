@@ -3,6 +3,13 @@
 	border-radius: 6px;
 	box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
 	border: 1px solid var(--bg-slate-500);
+	&--loading-state,
+	&--empty-state {
+		padding: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
 	&__header {
 		display: flex;
