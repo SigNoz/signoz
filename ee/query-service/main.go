@@ -97,7 +97,9 @@ func main() {
 	version.Info.PrettyPrint(config.Version)
 
 	sqlStoreFactories := signoz.NewSQLStoreProviderFactories()
-	sqlStoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory()))
+	if err := sqlStoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory())); err != nil {
+		zap.L().Fatal("Failed to add postgressqlstore factory", zap.Error(err))
+	}
 
 	signoz, err := signoz.New(
 		context.Background(),
