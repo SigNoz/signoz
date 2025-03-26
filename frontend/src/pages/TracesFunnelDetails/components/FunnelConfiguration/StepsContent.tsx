@@ -3,6 +3,7 @@ import './StepsContent.styles.scss';
 import { Button, Steps } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PlusIcon } from 'lucide-react';
+import { memo } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelStep from './FunnelStep';
@@ -11,7 +12,6 @@ import InterStepConfig from './InterStepConfig';
 const { Step } = Steps;
 
 interface StepsContentProps {
-	funnelId: string;
 	steps: FunnelStepData[];
 	handleAddStep: () => void;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
@@ -19,7 +19,6 @@ interface StepsContentProps {
 }
 
 function StepsContent({
-	funnelId,
 	steps,
 	handleAddStep,
 	handleStepChange,
@@ -35,7 +34,6 @@ function StepsContent({
 							description={
 								<div className="steps-content__description">
 									<FunnelStep
-										funnelId={funnelId}
 										stepData={step}
 										index={index}
 										onStepChange={handleStepChange}
@@ -75,4 +73,4 @@ function StepsContent({
 	);
 }
 
-export default StepsContent;
+export default memo(StepsContent);

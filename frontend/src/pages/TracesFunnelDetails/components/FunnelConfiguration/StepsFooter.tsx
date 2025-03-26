@@ -4,13 +4,13 @@ import { SyncOutlined } from '@ant-design/icons';
 import { Button, Skeleton } from 'antd';
 import cx from 'classnames';
 import { Check, Cone, Play } from 'lucide-react';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useState } from 'react';
 
 import AddFunnelDescriptionModal from './AddFunnelDescriptionModal';
 
 interface StepsFooterProps {
 	stepsCount: number;
-	validTracesCount: number;
 	isLoading: boolean;
 	funnelId: string;
 	funnelDescription: string;
@@ -18,11 +18,11 @@ interface StepsFooterProps {
 
 function StepsFooter({
 	stepsCount,
-	validTracesCount,
 	isLoading,
 	funnelId,
 	funnelDescription,
 }: StepsFooterProps): JSX.Element {
+	const { validTracesCount } = useFunnelContext();
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
 
 	return (

@@ -10,7 +10,6 @@ interface FunnelStepPopoverProps {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isOpen: boolean) => void;
 	className?: string;
-	funnelId: string;
 	stepOrder: number;
 	stepsCount: number;
 	onStepRemove: () => void;
@@ -66,7 +65,6 @@ function FunnelStepActions({
 function FunnelStepPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
-	funnelId,
 	stepOrder,
 	className,
 	onStepRemove,
@@ -118,7 +116,6 @@ function FunnelStepPopover({
 			<AddFunnelStepDetailsModal
 				isOpen={isAddDetailsModalOpen}
 				onClose={(): void => setIsAddDetailsModalOpen(false)}
-				funnelId={funnelId}
 				stepOrder={stepOrder}
 			/>
 		</div>

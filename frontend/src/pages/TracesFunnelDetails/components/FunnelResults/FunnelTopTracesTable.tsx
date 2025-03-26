@@ -1,7 +1,8 @@
 import { ErrorTraceData, SlowTraceData } from 'api/traceFunnels';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import { useEffect, useMemo } from 'react';
-import { UseMutationResult } from 'react-query';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Link } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
@@ -9,39 +10,44 @@ import FunnelTable from './FunnelTable';
 
 interface FunnelTopTracesTableProps {
 	funnelId: string;
-	startTime: string;
-	endTime: string;
 	stepAOrder: number;
 	stepBOrder: number;
 	title: string;
 	tooltip: string;
-	useMutation: (
+	useQueryHook: (
 		funnelId: string,
-	) => UseMutationResult<
-		SuccessResponse<SlowTraceData | ErrorTraceData> | ErrorResponse,
-		Error,
-		{
+		payload: {
 			start_time: number;
 			end_time: number;
 			step_a_order: number;
 			step_b_order: number;
-		}
+		},
+	) => UseQueryResult<
+		SuccessResponse<SlowTraceData | ErrorTraceData> | ErrorResponse,
+		Error
 	>;
 }
 
 function FunnelTopTracesTable({
 	funnelId,
-	startTime,
-	endTime,
 	stepAOrder,
 	stepBOrder,
 	title,
 	tooltip,
-	useMutation,
+	useQueryHook,
 }: FunnelTopTracesTableProps): JSX.Element {
-	const { mutate: fetchTraces, isLoading, data: response } = useMutation(
-		funnelId,
+	const { startTime, endTime } = useFunnelContext();
+	const payload = useMemo(
+		() => ({
+			start_time: startTime,
+			end_time: endTime,
+			step_a_order: stepAOrder,
+			step_b_order: stepBOrder,
+		}),
+		[startTime, endTime, stepAOrder, stepBOrder],
 	);
+
+	const { data: response, isLoading } = useQueryHook(funnelId, payload);
 
 	const data = useMemo(() => {
 		if (!response?.payload?.data) return [];
@@ -51,15 +57,6 @@ function FunnelTopTracesTable({
 			span_count: item.data.span_count,
 		}));
 	}, [response]);
-
-	useEffect(() => {
-		fetchTraces({
-			start_time: parseInt(startTime, 10) * 1e9,
-			end_time: parseInt(endTime, 10) * 1e9,
-			step_a_order: stepAOrder,
-			step_b_order: stepBOrder,
-		});
-	}, [fetchTraces, startTime, endTime, stepAOrder, stepBOrder]);
 
 	const columns = useMemo(
 		() => [

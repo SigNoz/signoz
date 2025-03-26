@@ -2,6 +2,7 @@ import './FunnelConfiguration.styles.scss';
 
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
+import { memo } from 'react';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelBreadcrumb from './FunnelBreadcrumb';
@@ -11,14 +12,10 @@ import StepsHeader from './StepsHeader';
 
 interface FunnelConfigurationProps {
 	funnel: FunnelData;
-	validTracesCount: number;
-	setValidTracesCount: (count: number) => void;
 }
 
 function FunnelConfiguration({
 	funnel,
-	validTracesCount,
-	setValidTracesCount,
 }: FunnelConfigurationProps): JSX.Element {
 	const {
 		isPopoverOpen,
@@ -28,7 +25,7 @@ function FunnelConfiguration({
 		handleStepChange,
 		handleStepRemoval,
 		isValidateStepsMutationLoading,
-	} = useFunnelConfiguration({ funnel, setValidTracesCount });
+	} = useFunnelConfiguration({ funnel });
 
 	return (
 		<div className="funnel-configuration">
@@ -47,7 +44,6 @@ function FunnelConfiguration({
 				<div className="funnel-configuration__steps">
 					<StepsHeader />
 					<StepsContent
-						funnelId={funnel.id}
 						steps={steps}
 						handleStepChange={handleStepChange}
 						handleAddStep={handleAddStep}
@@ -57,7 +53,6 @@ function FunnelConfiguration({
 				<StepsFooter
 					funnelId={funnel.id}
 					stepsCount={steps.length}
-					validTracesCount={validTracesCount}
 					funnelDescription={funnel?.description || ''}
 					isLoading={isValidateStepsMutationLoading}
 				/>
@@ -66,4 +61,4 @@ function FunnelConfiguration({
 	);
 }
 
-export default FunnelConfiguration;
+export default memo(FunnelConfiguration);

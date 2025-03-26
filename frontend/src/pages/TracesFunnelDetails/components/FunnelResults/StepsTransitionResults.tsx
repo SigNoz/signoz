@@ -15,8 +15,6 @@ export interface StepTransition {
 interface StepsTransitionResultsProps {
 	funnelId: string;
 	stepsCount: number;
-	startTime: string;
-	endTime: string;
 }
 
 function generateStepTransitions(stepsCount: number): StepTransition[] {
@@ -29,8 +27,6 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 function StepsTransitionResults({
 	funnelId,
 	stepsCount,
-	startTime,
-	endTime,
 }: StepsTransitionResultsProps): JSX.Element {
 	const stepTransitions = generateStepTransitions(stepsCount);
 	const [selectedTransition, setSelectedTransition] = useState<string>(
@@ -60,15 +56,11 @@ function StepsTransitionResults({
 				/>
 				<TopSlowestTraces
 					funnelId={funnelId}
-					startTime={startTime}
-					endTime={endTime}
 					stepAOrder={stepAOrder}
 					stepBOrder={stepBOrder}
 				/>
 				<TopTracesWithErrors
 					funnelId={funnelId}
-					startTime={startTime}
-					endTime={endTime}
 					stepAOrder={stepAOrder}
 					stepBOrder={stepBOrder}
 				/>

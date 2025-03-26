@@ -9,15 +9,9 @@ import StepsTransitionResults from './StepsTransitionResults';
 
 interface FunnelResultsProps {
 	funnel: FunnelData;
-	startTime: string;
-	endTime: string;
 }
 
-function FunnelResults({
-	funnel,
-	startTime,
-	endTime,
-}: FunnelResultsProps): JSX.Element {
+function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
 	if (!funnel?.steps?.length) return <EmptyFunnelResults />;
 	return (
 		<div className="funnel-results">
@@ -26,8 +20,6 @@ function FunnelResults({
 			<StepsTransitionResults
 				funnelId={funnel.id}
 				stepsCount={funnel.steps.length}
-				startTime={startTime}
-				endTime={endTime}
 			/>
 		</div>
 	);

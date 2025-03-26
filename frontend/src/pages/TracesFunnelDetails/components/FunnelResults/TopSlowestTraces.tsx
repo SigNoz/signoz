@@ -4,8 +4,6 @@ import FunnelTopTracesTable from './FunnelTopTracesTable';
 
 interface TopSlowestTracesProps {
 	funnelId: string;
-	startTime: string;
-	endTime: string;
 	stepAOrder: number;
 	stepBOrder: number;
 }
@@ -17,7 +15,7 @@ function TopSlowestTraces(props: TopSlowestTracesProps): JSX.Element {
 			{...props}
 			title="Slowest 5 traces"
 			tooltip="A list of the slowest traces in the funnel"
-			useMutation={useFunnelSlowTraces}
+			useQueryHook={useFunnelSlowTraces}
 		/>
 	);
 }

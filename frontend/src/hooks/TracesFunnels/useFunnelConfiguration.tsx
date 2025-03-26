@@ -1,15 +1,14 @@
 import { ValidateFunnelResponse } from 'api/traceFunnels';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { isEqual } from 'lodash-es';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import { useQueryClient } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
 import { useUpdateFunnelSteps, useValidateFunnelSteps } from './useFunnels';
@@ -23,9 +22,6 @@ interface UseFunnelConfiguration {
 	handleStepRemoval: (index: number) => void;
 	isValidateStepsMutationLoading: boolean;
 }
-
-// Time conversion helper for consistent nanoseconds handling
-const convertToNanoseconds = (time: string): number => parseInt(time, 10) * 1e9;
 
 // Add this helper function
 const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
@@ -48,15 +44,11 @@ const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({
 	funnel,
-	setValidTracesCount,
 }: {
 	funnel: FunnelData;
-	setValidTracesCount: (count: number) => void;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { setValidTracesCount } = useFunnelContext();
 
 	// State management
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -71,7 +63,10 @@ export default function useFunnelConfiguration({
 
 	// Mutation hooks
 	const updateStepsMutation = useUpdateFunnelSteps(funnel.id, notifications);
-	const validateStepsMutation = useValidateFunnelSteps(funnel.id);
+	const {
+		data: validationResponse,
+		isLoading: isValidationLoading,
+	} = useValidateFunnelSteps();
 
 	// Derived state
 	const lastSavedStateRef = useRef<FunnelStepData[]>(steps);
@@ -106,19 +101,6 @@ export default function useFunnelConfiguration({
 		[funnel.id, debouncedSteps],
 	);
 
-	// Time range calculation
-	const getValidationTimeRange = useCallback(() => {
-		const { start, end } = getStartEndRangeTime({
-			type: 'GLOBAL_TIME',
-			interval: selectedTime,
-		});
-
-		return {
-			start_time: convertToNanoseconds(start),
-			end_time: convertToNanoseconds(end),
-		};
-	}, [selectedTime]);
-
 	// Steps validation handlers
 	const handleValidationResult = useCallback(
 		(response: SuccessResponse<ValidateFunnelResponse> | ErrorResponse) => {
@@ -127,13 +109,6 @@ export default function useFunnelConfiguration({
 		},
 		[setValidTracesCount],
 	);
-
-	const validateCurrentSteps = useCallback(() => {
-		validateStepsMutation.mutate(getValidationTimeRange(), {
-			onSuccess: (response) => handleValidationResult(response),
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [getValidationTimeRange, handleValidationResult]);
 
 	// Step modifications
 	const handleStepUpdate = useCallback(
@@ -171,9 +146,13 @@ export default function useFunnelConfiguration({
 
 	// Side Effects
 	useEffect(() => {
-		validateCurrentSteps();
-	}, [validateCurrentSteps, selectedTime]);
+		if (validationResponse) {
+			handleValidationResult(validationResponse);
+		}
+	}, [validationResponse, handleValidationResult]);
 
+	const queryClient = useQueryClient();
+	const { selectedTime } = useFunnelContext();
 	useEffect(() => {
 		if (hasStepsChanged()) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
@@ -182,7 +161,11 @@ export default function useFunnelConfiguration({
 
 					// Only validate if service_name or span_name changed
 					if (hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)) {
-						validateCurrentSteps();
+						queryClient.refetchQueries([
+							REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+							funnel.id,
+							selectedTime,
+						]);
 						setLastValidatedSteps(debouncedSteps);
 					}
 				},
@@ -198,6 +181,6 @@ export default function useFunnelConfiguration({
 		handleAddStep: addNewStep,
 		handleStepChange: handleStepUpdate,
 		handleStepRemoval,
-		isValidateStepsMutationLoading: validateStepsMutation.isLoading,
+		isValidateStepsMutationLoading: isValidationLoading || false,
 	};
 }

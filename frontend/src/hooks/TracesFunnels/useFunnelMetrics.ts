@@ -1,10 +1,7 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { MetricItem } from 'pages/TracesFunnelDetails/components/FunnelResults/FunnelMetricsTable';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useMemo } from 'react';
 
 import { useFunnelOverview } from './useFunnels';
 
@@ -23,35 +20,15 @@ export function useFunnelMetrics({
 	metricsData: MetricItem[];
 	conversionRate: number;
 } {
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { startTime, endTime } = useFunnelContext();
+	const payload = {
+		start_time: startTime,
+		end_time: endTime,
+		...(stepStart !== undefined && { step_start: stepStart }),
+		...(stepEnd !== undefined && { step_end: stepEnd }),
+	};
 
-	const {
-		mutate: getFunnelOverview,
-		data: overviewData,
-		isLoading,
-	} = useFunnelOverview(funnelId);
-
-	const fetchFunnelData = useCallback(() => {
-		if (!funnelId) return;
-
-		const { start, end } = getStartEndRangeTime({
-			type: 'GLOBAL_TIME',
-			interval: selectedTime,
-		});
-
-		const payload = {
-			start_time: Math.floor(Number(start) * 1e9),
-			end_time: Math.floor(Number(end) * 1e9),
-			...(stepStart !== undefined && { step_start: stepStart }),
-			...(stepEnd !== undefined && { step_end: stepEnd }),
-		};
-
-		getFunnelOverview(payload);
-	}, [funnelId, selectedTime, getFunnelOverview, stepStart, stepEnd]);
-
-	useEffect(fetchFunnelData, [fetchFunnelData]);
+	const { data: overviewData, isLoading } = useFunnelOverview(funnelId, payload);
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;

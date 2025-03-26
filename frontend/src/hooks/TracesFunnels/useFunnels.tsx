@@ -19,11 +19,11 @@ import {
 	UpdateFunnelStepDetailsPayload,
 	updateFunnelSteps,
 	UpdateFunnelStepsPayload,
-	ValidateFunnelPayload,
 	ValidateFunnelResponse,
 	validateFunnelSteps,
 } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import {
 	useMutation,
 	UseMutationResult,
@@ -114,17 +114,21 @@ export const useUpdateFunnelSteps = (
 		},
 	});
 
-export const useValidateFunnelSteps = (
-	funnelId: string,
-): UseMutationResult<
+export const useValidateFunnelSteps = (): UseQueryResult<
 	SuccessResponse<ValidateFunnelResponse> | ErrorResponse,
-	Error,
-	ValidateFunnelPayload
-> =>
-	useMutation({
-		mutationFn: (payload) => validateFunnelSteps(funnelId, payload),
-		mutationKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId],
+	Error
+> => {
+	const { selectedTime, funnelId, startTime, endTime } = useFunnelContext();
+	return useQuery({
+		queryFn: ({ signal }) =>
+			validateFunnelSteps(
+				funnelId,
+				{ start_time: startTime, end_time: endTime },
+				signal,
+			),
+		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
 	});
+};
 
 export const useUpdateFunnelStepDetails = ({
 	stepOrder,
@@ -156,36 +160,42 @@ export const useSaveFunnelDescription = (): UseMutationResult<
 
 export const useFunnelOverview = (
 	funnelId: string,
-): UseMutationResult<
+	payload: FunnelOverviewPayload,
+): UseQueryResult<
 	SuccessResponse<FunnelOverviewResponse> | ErrorResponse,
-	Error,
-	FunnelOverviewPayload
-> =>
-	useMutation({
-		mutationFn: (payload) => getFunnelOverview(funnelId, payload),
-		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW, funnelId],
+	Error
+> => {
+	const { selectedTime } = useFunnelContext();
+	return useQuery({
+		queryFn: ({ signal }) => getFunnelOverview(funnelId, payload, signal),
+		queryKey: [
+			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
+			funnelId,
+			payload.step_start ?? '',
+			payload.step_end ?? '',
+			selectedTime,
+		],
 	});
+};
 
 export const useFunnelSlowTraces = (
 	funnelId: string,
-): UseMutationResult<
-	SuccessResponse<SlowTraceData> | ErrorResponse,
-	Error,
-	SlowTracesPayload
-> =>
-	useMutation({
-		mutationFn: (payload) => getFunnelSlowTraces(funnelId, payload),
-		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES, funnelId],
+	payload: SlowTracesPayload,
+): UseQueryResult<SuccessResponse<SlowTraceData> | ErrorResponse, Error> => {
+	const { selectedTime } = useFunnelContext();
+	return useQuery<SuccessResponse<SlowTraceData> | ErrorResponse, Error>({
+		queryFn: ({ signal }) => getFunnelSlowTraces(funnelId, payload, signal),
+		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES, funnelId, selectedTime],
 	});
+};
 
 export const useFunnelErrorTraces = (
 	funnelId: string,
-): UseMutationResult<
-	SuccessResponse<ErrorTraceData> | ErrorResponse,
-	Error,
-	ErrorTracesPayload
-> =>
-	useMutation({
-		mutationFn: (payload) => getFunnelErrorTraces(funnelId, payload),
-		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES, funnelId],
+	payload: ErrorTracesPayload,
+): UseQueryResult<SuccessResponse<ErrorTraceData> | ErrorResponse, Error> => {
+	const { selectedTime } = useFunnelContext();
+	return useQuery({
+		queryFn: ({ signal }) => getFunnelErrorTraces(funnelId, payload, signal),
+		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES, funnelId, selectedTime],
 	});
+};

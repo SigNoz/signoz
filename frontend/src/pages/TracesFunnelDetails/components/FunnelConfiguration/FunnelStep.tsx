@@ -15,7 +15,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import FunnelStepPopover from './FunnelStepPopover';
 
 interface FunnelStepProps {
-	funnelId: string;
 	stepData: FunnelStepData;
 	index: number;
 	stepsCount: number;
@@ -24,7 +23,6 @@ interface FunnelStepProps {
 }
 
 function FunnelStep({
-	funnelId,
 	stepData,
 	index,
 	stepsCount,
@@ -87,7 +85,6 @@ function FunnelStep({
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
-							funnelId={funnelId}
 							stepOrder={stepData.step_order}
 							onStepRemove={(): void => onStepRemove(index)}
 							stepsCount={stepsCount}
