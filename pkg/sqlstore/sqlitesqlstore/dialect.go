@@ -2,6 +2,7 @@ package sqlitesqlstore
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/uptrace/bun"
 )
@@ -140,4 +141,63 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 		return false, err
 	}
 	return true, nil
+}
+
+func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error) {
+
+	count := 0
+	err := bun.
+		NewSelect().
+		ColumnExpr("count(*)").
+		Table("sqlite_master").
+		Where("type = ?", "table").
+		Where("name = ?", bun.Dialect().Tables().Get(reflect.TypeOf(table)).Name).
+		Scan(ctx, &count)
+
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
+	exists, err := dialect.TableExists(ctx, bun, newModel)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	_, err = bun.
+		NewCreateTable().
+		IfNotExists().
+		Model(newModel).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		Exec(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	err = cb(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = bun.
+		NewDropTable().
+		IfExists().
+		Model(oldModel).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
