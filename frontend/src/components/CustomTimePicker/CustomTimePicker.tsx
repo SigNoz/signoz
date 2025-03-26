@@ -350,6 +350,10 @@ function CustomTimePicker({
 				}}
 			>
 				<Input
+					autoComplete="off"
+					data-1p-ignore
+					data-lpignore="true"
+					data-bwignore
 					className="timeSelection-input"
 					type="text"
 					status={inputValue && inputStatus === 'error' ? 'error' : ''}
