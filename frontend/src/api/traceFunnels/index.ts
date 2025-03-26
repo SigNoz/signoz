@@ -248,3 +248,75 @@ export const getFunnelOverview = async (
 		payload: response.data,
 	};
 };
+
+export interface SlowTracesPayload {
+	start_time: number;
+	end_time: number;
+	step_a_order: number;
+	step_b_order: number;
+}
+
+export interface SlowTraceData {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: {
+			duration_ms: string;
+			span_count: number;
+			trace_id: string;
+		};
+	}>;
+}
+
+export const getFunnelSlowTraces = async (
+	funnelId: string,
+	payload: SlowTracesPayload,
+): Promise<SuccessResponse<SlowTraceData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/slow-traces`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};
+
+export interface ErrorTracesPayload {
+	start_time: number;
+	end_time: number;
+	step_a_order: number;
+	step_b_order: number;
+}
+
+export interface ErrorTraceData {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: {
+			duration_ms: string;
+			span_count: number;
+			trace_id: string;
+		};
+	}>;
+}
+
+export const getFunnelErrorTraces = async (
+	funnelId: string,
+	payload: ErrorTracesPayload,
+): Promise<SuccessResponse<ErrorTraceData> | ErrorResponse> => {
+	const response: AxiosResponse = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/error-traces`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};

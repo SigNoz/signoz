@@ -2,13 +2,19 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import {
 	createFunnel,
 	deleteFunnel,
+	ErrorTraceData,
+	ErrorTracesPayload,
 	FunnelOverviewPayload,
 	FunnelOverviewResponse,
 	getFunnelById,
+	getFunnelErrorTraces,
 	getFunnelOverview,
 	getFunnelsList,
+	getFunnelSlowTraces,
 	renameFunnel,
 	saveFunnelDescription,
+	SlowTraceData,
+	SlowTracesPayload,
 	updateFunnelStepDetails,
 	UpdateFunnelStepDetailsPayload,
 	updateFunnelSteps,
@@ -158,4 +164,28 @@ export const useFunnelOverview = (
 	useMutation({
 		mutationFn: (payload) => getFunnelOverview(funnelId, payload),
 		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW, funnelId],
+	});
+
+export const useFunnelSlowTraces = (
+	funnelId: string,
+): UseMutationResult<
+	SuccessResponse<SlowTraceData> | ErrorResponse,
+	Error,
+	SlowTracesPayload
+> =>
+	useMutation({
+		mutationFn: (payload) => getFunnelSlowTraces(funnelId, payload),
+		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES, funnelId],
+	});
+
+export const useFunnelErrorTraces = (
+	funnelId: string,
+): UseMutationResult<
+	SuccessResponse<ErrorTraceData> | ErrorResponse,
+	Error,
+	ErrorTracesPayload
+> =>
+	useMutation({
+		mutationFn: (payload) => getFunnelErrorTraces(funnelId, payload),
+		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES, funnelId],
 	});

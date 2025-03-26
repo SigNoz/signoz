@@ -1,7 +1,7 @@
 import './StepsTransitionResults.styles.scss';
 
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import StepsTransitionMetrics from './StepsTransitionMetrics';
 import TopSlowestTraces from './TopSlowestTraces';
@@ -13,7 +13,10 @@ interface StepTransition {
 }
 
 interface StepsTransitionResultsProps {
+	funnelId: string;
 	stepsCount: number;
+	startTime: string;
+	endTime: string;
 }
 
 function generateStepTransitions(stepsCount: number): StepTransition[] {
@@ -23,40 +26,21 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 	}));
 }
 
-const sampleData = [
-	{
-		traceId: 'redis',
-		p99Latency: 34.98,
-		errorRate: 0,
-		percentageOfTotal: 18.52,
-		opsPerSec: 0,
-		duration: 12.44,
-	},
-	{
-		traceId: 'redis',
-		p99Latency: 34.98,
-		errorRate: 0,
-		percentageOfTotal: 18.52,
-		opsPerSec: 0,
-		duration: 12.44,
-	},
-	{
-		traceId: 'redis',
-		p99Latency: 34.98,
-		errorRate: 0,
-		percentageOfTotal: 18.52,
-		opsPerSec: 0,
-		duration: 12.44,
-	},
-];
-
 function StepsTransitionResults({
+	funnelId,
 	stepsCount,
+	startTime,
+	endTime,
 }: StepsTransitionResultsProps): JSX.Element {
 	const stepTransitions = generateStepTransitions(stepsCount);
 	const [selectedTransition, setSelectedTransition] = useState<string>(
 		stepTransitions[0]?.value || '',
 	);
+
+	const [stepAOrder, stepBOrder] = useMemo(() => {
+		const [a, b] = selectedTransition.split('_to_');
+		return [parseInt(a, 10), parseInt(b, 10)];
+	}, [selectedTransition]);
 
 	return (
 		<div className="steps-transition-results">
@@ -72,8 +56,20 @@ function StepsTransitionResults({
 					selectedTransition={selectedTransition}
 					transitions={stepTransitions}
 				/>
-				<TopSlowestTraces loading={false} data={sampleData} />
-				<TopTracesWithErrors loading={false} data={sampleData} />
+				<TopSlowestTraces
+					funnelId={funnelId}
+					startTime={startTime}
+					endTime={endTime}
+					stepAOrder={stepAOrder}
+					stepBOrder={stepBOrder}
+				/>
+				<TopTracesWithErrors
+					funnelId={funnelId}
+					startTime={startTime}
+					endTime={endTime}
+					stepAOrder={stepAOrder}
+					stepBOrder={stepBOrder}
+				/>
 			</div>
 		</div>
 	);
