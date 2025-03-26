@@ -2,6 +2,7 @@ import { ErrorTraceData, SlowTraceData } from 'api/traceFunnels';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useEffect, useMemo } from 'react';
 import { UseMutationResult } from 'react-query';
+import { Link } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import FunnelTable from './FunnelTable';
@@ -66,8 +67,10 @@ function FunnelTopTracesTable({
 				title: 'TRACE ID',
 				dataIndex: 'trace_id',
 				key: 'trace_id',
-				render: (text: string): JSX.Element => (
-					<span className="trace-id-cell">{text}</span>
+				render: (traceId: string): JSX.Element => (
+					<Link to={`/trace/${traceId}`} className="trace-id-cell">
+						{traceId}
+					</Link>
 				),
 			},
 			{
