@@ -14,6 +14,9 @@
 		align-items: center;
 		gap: 8px;
 	}
+	.funnel-icon {
+		transform: rotate(180deg);
+	}
 }
 
 .lightMode {

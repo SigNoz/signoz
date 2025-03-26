@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import {
 	BarChart2,
 	BellDot,
+	Binoculars,
 	Boxes,
 	BugIcon,
 	Cloudy,
@@ -122,6 +123,11 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
+	},
+	{
+		key: ROUTES.API_MONITORING,
+		label: 'API Monitoring',
+		icon: <Binoculars size={16} />,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
