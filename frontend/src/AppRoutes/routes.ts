@@ -15,6 +15,7 @@ import {
 	CustomDomainSettings,
 	DashboardPage,
 	DashboardWidget,
+	DynamicVariableTest,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
@@ -503,6 +504,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: ApiMonitoring,
 		key: 'API_MONITORING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.DYNAMIC_VARIABLE_TEST,
+		exact: true,
+		component: DynamicVariableTest,
+		key: 'DYNAMIC_VARIABLE_TEST',
 		isPrivate: true,
 	},
 ];

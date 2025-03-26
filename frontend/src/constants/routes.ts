@@ -75,6 +75,7 @@ const ROUTES = {
 	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
 	HOME_PAGE: '/',
+	DYNAMIC_VARIABLE_TEST: '/dynamic-variable-test',
 } as const;
 
 export default ROUTES;
