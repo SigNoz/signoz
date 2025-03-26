@@ -10,16 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func minTimestamp(series []*v3.Series) int64 {

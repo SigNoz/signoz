@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
-	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 

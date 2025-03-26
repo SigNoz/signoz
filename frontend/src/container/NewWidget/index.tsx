@@ -170,6 +170,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [isFillSpans, setIsFillSpans] = useState<boolean>(
 		selectedWidget?.fillSpans || false,
 	);
+	const [isLogScale, setIsLogScale] = useState<boolean>(
+		selectedWidget?.isLogScale || false,
+	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
@@ -234,6 +237,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
+				isLogScale,
 			};
 		});
 	}, [
@@ -255,6 +259,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		bucketCount,
 		combineHistogram,
 		stackedBarChart,
+		isLogScale,
 	]);
 
 	const closeModal = (): void => {
@@ -369,6 +374,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
+				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
@@ -379,6 +385,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stagedQuery,
 		selectedTime,
 		selectedWidget.fillSpans,
+		selectedWidget.isLogScale,
 		globalSelectedInterval,
 	]);
 
@@ -442,6 +449,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
@@ -468,6 +476,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
@@ -730,6 +739,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							selectedWidget={selectedWidget}
 							isFillSpans={isFillSpans}
 							setIsFillSpans={setIsFillSpans}
+							isLogScale={isLogScale}
+							setIsLogScale={setIsLogScale}
 							softMin={softMin}
 							setSoftMin={setSoftMin}
 							softMax={softMax}

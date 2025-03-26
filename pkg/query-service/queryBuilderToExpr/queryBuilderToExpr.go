@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	expr "github.com/antonmedv/expr"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 

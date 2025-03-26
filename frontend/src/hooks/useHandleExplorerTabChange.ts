@@ -70,7 +70,7 @@ export const useHandleExplorerTabChange = (): {
 					{
 						[QueryParams.panelTypes]: newPanelType,
 						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
 					},
 					redirectToUrl,
 				);
@@ -78,7 +78,7 @@ export const useHandleExplorerTabChange = (): {
 				redirectWithQueryBuilderData(query, {
 					[QueryParams.panelTypes]: newPanelType,
 					[QueryParams.viewName]: currentQueryData?.name || viewName,
-					[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+					[QueryParams.viewKey]: currentQueryData?.id || viewKey,
 				});
 			}
 		},
@@ -90,6 +90,6 @@ export const useHandleExplorerTabChange = (): {
 
 interface ICurrentQueryData {
 	name: string;
-	uuid: string;
+	id: string;
 	query: Query;
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/SigNoz/signoz/ee/query-service/sso"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"go.signoz.io/signoz/ee/query-service/sso"
 	"golang.org/x/oauth2"
 )
 

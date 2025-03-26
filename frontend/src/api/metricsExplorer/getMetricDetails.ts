@@ -20,7 +20,7 @@ export interface MetricDetails {
 		metric_type: MetricType;
 		description: string;
 		unit: string;
-		temporality: Temporality;
+		temporality?: Temporality;
 	};
 	alerts: MetricDetailsAlert[] | null;
 	dashboards: MetricDetailsDashboard[] | null;

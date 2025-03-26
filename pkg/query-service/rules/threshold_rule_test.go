@@ -3,19 +3,19 @@ package rules
 import (
 	"context"
 	"fmt"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/cache/memorycache"
-	"go.signoz.io/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/featureManager"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )

@@ -56,6 +56,7 @@ export const DATE_TIME_FORMATS = {
 
 	// Formats with dash separator
 	DASH_DATETIME: 'MMM D, YYYY ⎯ HH:mm:ss',
+	FUNNELS_LIST_DATE: 'MMM D ⎯ HH:mm:ss',
 	DASH_DATETIME_UTC: 'MMM D, YYYY ⎯ HH:mm:ss (UTC Z)',
 	DASH_TIME_DATE: 'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
 } as const;

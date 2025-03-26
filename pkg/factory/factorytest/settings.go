@@ -1,8 +1,8 @@
 package factorytest
 
 import (
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 )
 
 func NewSettings() factory.ProviderSettings {

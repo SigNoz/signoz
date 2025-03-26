@@ -99,12 +99,6 @@ github.com/SigNoz/prometheus v1.13.0 h1:hsUql1zd83ifXtswO9Qk1rpCgVjE/ItQvgdNocBS
 github.com/SigNoz/prometheus v1.13.0/go.mod h1:4PC0dxmx6y3kNI2d9oOTvEFTPkH6QnxDxERyqeL1hvI=
 github.com/SigNoz/signoz-otel-collector v0.111.16 h1:535uKH5Oux+35EsI+L3C6pnAP/Ye0PTCbVizXoL+VqE=
 github.com/SigNoz/signoz-otel-collector v0.111.16/go.mod h1:HJ4m0LY1MPsuZmuRF7Ixb+bY8rxgRzI0VXzOedESsjg=
-github.com/SigNoz/zap_otlp v0.1.0 h1:T7rRcFN87GavY8lDGZj0Z3Xv6OhJA6Pj3I9dNPmqvRc=
-github.com/SigNoz/zap_otlp v0.1.0/go.mod h1:lcHvbDbRgvDnPxo9lDlaL1JK2PyOyouP/C3ynnYIvyo=
-github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974 h1:PKVgdf83Yw+lZJbFtNGBgqXiXNf3+kOXW2qZ7Ms7OaY=
-github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974/go.mod h1:fpiHtiboLJpIE5TtkQfiWx6xtnlA+uWmv+N9opETqKY=
-github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974 h1:G2JzCrqdeOTtAn4tDFZEg5gCAEYVRXcddG3ZlrFMumo=
-github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974/go.mod h1:YtDal1xBRQfPRNo7iSU3W37RGT0jMW7Rnzk6EON3a4M=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

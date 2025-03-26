@@ -5,24 +5,24 @@ import (
 	"net/http/httputil"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/interfaces"
+	"github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/usage"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
-	"go.signoz.io/signoz/ee/query-service/interfaces"
-	"go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/usage"
-	"go.signoz.io/signoz/pkg/alertmanager"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	rules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type APIHandlerOptions struct {
@@ -200,9 +200,8 @@ func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *ba
 }
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := basemodel.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: ah.SetupCompleted,
 	}

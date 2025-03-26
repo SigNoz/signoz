@@ -1,6 +1,6 @@
 package model
 
-import "go.signoz.io/signoz/pkg/types"
+import "github.com/SigNoz/signoz/pkg/types"
 
 type User struct {
 	Id                string `json:"id" db:"id"`

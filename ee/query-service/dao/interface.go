@@ -4,15 +4,15 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types"
+	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	ossTypes "github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/ee/types"
-	basedao "go.signoz.io/signoz/pkg/query-service/dao"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	ossTypes "go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
 )
 
 type ModelDao interface {

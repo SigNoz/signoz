@@ -6,9 +6,9 @@ import (
 	"sort"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 

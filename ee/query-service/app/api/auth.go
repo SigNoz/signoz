@@ -12,10 +12,10 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 func parseRequest(r *http.Request, req interface{}) error {

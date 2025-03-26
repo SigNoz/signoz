@@ -36,6 +36,7 @@ function MetricTypeSearch(): JSX.Element {
 			if (selectedMetricType !== 'all') {
 				handleChangeQueryData('filters', {
 					items: [
+						...currentQuery.builder.queryData[0].filters.items,
 						{
 							id: 'metric_type',
 							op: '=',

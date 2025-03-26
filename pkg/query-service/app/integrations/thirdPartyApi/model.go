@@ -1,6 +1,6 @@
 package thirdPartyApi
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 
 type ThirdPartyApis struct {
 	Start    int64             `json:"start"`
