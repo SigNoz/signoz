@@ -28,8 +28,10 @@ interface UseFunnelConfiguration {
 const convertToNanoseconds = (time: string): number => parseInt(time, 10) * 1e9;
 
 // Add this helper function
-const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] =>
-	steps.map((step) => ({
+const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] => {
+	if (steps.some((step) => !step.filters)) return steps;
+
+	return steps.map((step) => ({
 		...step,
 		filters: {
 			...step.filters,
@@ -41,6 +43,7 @@ const normalizeSteps = (steps: FunnelStepData[]): FunnelStepData[] =>
 			})),
 		},
 	}));
+};
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function useFunnelConfiguration({

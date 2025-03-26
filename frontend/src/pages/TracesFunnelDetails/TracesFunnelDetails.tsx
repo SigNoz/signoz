@@ -37,7 +37,7 @@ function TracesFunnelDetails(): JSX.Element {
 				/>
 			</div>
 			<div className="traces-funnel-details__steps-results">
-				<FunnelResults funnel={data.payload} validTracesCount={validTracesCount} />
+				<FunnelResults funnel={data.payload} />
 			</div>
 		</div>
 	);

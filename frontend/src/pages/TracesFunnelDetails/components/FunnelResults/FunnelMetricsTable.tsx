@@ -14,18 +14,20 @@ interface FunnelMetricsTableProps {
 		value: string | number;
 	};
 	data: MetricItem[];
-	isLoading: boolean;
-	emptyState: JSX.Element;
+	isLoading?: boolean;
+	emptyState?: JSX.Element;
 }
 
 function FunnelMetricsContentRenderer({
 	data,
 	isLoading,
-	emptyState,
+	emptyState = (
+		<div className="funnel-metrics--empty-state">No data available</div>
+	),
 }: {
 	data: MetricItem[];
-	isLoading: boolean;
-	emptyState: JSX.Element;
+	isLoading?: boolean;
+	emptyState?: JSX.Element;
 }): JSX.Element {
 	if (isLoading)
 		return (
@@ -34,9 +36,7 @@ function FunnelMetricsContentRenderer({
 			</div>
 		);
 	if (data.length === 0) {
-		if (emptyState)
-			return <div className="funnel-metrics--empty-state">{emptyState}</div>;
-		return <div className="funnel-metrics--empty-state">No data available</div>;
+		return emptyState;
 	}
 	return (
 		<div className="funnel-metrics__grid">
@@ -49,6 +49,10 @@ function FunnelMetricsContentRenderer({
 		</div>
 	);
 }
+FunnelMetricsContentRenderer.defaultProps = {
+	isLoading: false,
+	emptyState: null,
+};
 
 function FunnelMetricsTable({
 	title,
@@ -80,6 +84,8 @@ function FunnelMetricsTable({
 
 FunnelMetricsTable.defaultProps = {
 	subtitle: undefined,
+	isLoading: false,
+	emptyState: null,
 };
 
 export default FunnelMetricsTable;

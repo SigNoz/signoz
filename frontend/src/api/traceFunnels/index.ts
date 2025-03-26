@@ -212,3 +212,39 @@ export const saveFunnelDescription = async (
 		payload: response.data,
 	};
 };
+
+export interface FunnelOverviewPayload {
+	start_time: number;
+	end_time: number;
+}
+
+export interface FunnelOverviewResponse {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: {
+			avg_duration: number;
+			avg_rate: number;
+			conversion_rate: number | null;
+			errors: number;
+			p99_latency: number;
+		};
+	}>;
+}
+
+export const getFunnelOverview = async (
+	funnelId: string,
+	payload: FunnelOverviewPayload,
+): Promise<SuccessResponse<FunnelOverviewResponse> | ErrorResponse> => {
+	const response = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/overview`,
+		payload,
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};

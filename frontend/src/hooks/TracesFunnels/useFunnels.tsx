@@ -2,7 +2,10 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import {
 	createFunnel,
 	deleteFunnel,
+	FunnelOverviewPayload,
+	FunnelOverviewResponse,
 	getFunnelById,
+	getFunnelOverview,
 	getFunnelsList,
 	renameFunnel,
 	saveFunnelDescription,
@@ -143,4 +146,16 @@ export const useSaveFunnelDescription = (): UseMutationResult<
 > =>
 	useMutation({
 		mutationFn: saveFunnelDescription,
+	});
+
+export const useFunnelOverview = (
+	funnelId: string,
+): UseMutationResult<
+	SuccessResponse<FunnelOverviewResponse> | ErrorResponse,
+	Error,
+	FunnelOverviewPayload
+> =>
+	useMutation({
+		mutationFn: (payload) => getFunnelOverview(funnelId, payload),
+		mutationKey: [REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW, funnelId],
 	});

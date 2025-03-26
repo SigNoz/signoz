@@ -21,18 +21,15 @@ function StepsTransitionMetrics({
 	const currentTransitionMetricsData = [
 		{
 			title: 'Avg. Rate',
-			value: 486.76,
-			unit: 'req/s',
+			value: '486.76 req/s',
 		},
 		{
 			title: 'Errors',
-			value: 43,
-			unit: '',
+			value: '43',
 		},
 		{
 			title: 'Avg. Duration',
-			value: 34.77,
-			unit: 'ms',
+			value: '34.77 ms',
 		},
 	];
 
