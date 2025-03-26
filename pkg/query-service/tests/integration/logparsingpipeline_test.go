@@ -34,8 +34,7 @@ import (
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testDB := utils.NewQueryServiceDBForTests(t)
-	testbed := NewLogPipelinesTestBed(t, testDB)
+	testbed := NewLogPipelinesTestBed(t, nil)
 	require := require.New(t)
 
 	orgID, err := utils.GetTestOrgId(t, testbed.sqlStore)
@@ -460,9 +459,6 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		sqlStore = utils.NewQueryServiceDBForTests(t)
 	}
 
-	// create test org
-	utils.CreateTestOrg(t, sqlStore)
-
 	ic, err := integrations.NewController(sqlStore)
 	if err != nil {
 		t.Fatalf("could not create integrations controller: %v", err)
@@ -505,16 +501,17 @@ func NewTestbedWithoutOpamp(t *testing.T, sqlStore sqlstore.SQLStore) *LogPipeli
 		testUser:     user,
 		apiHandler:   apiHandler,
 		agentConfMgr: agentConfMgr,
+		sqlStore:     sqlStore,
 	}
 }
 
 func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipelinesTestBed {
 	testbed := NewTestbedWithoutOpamp(t, testDB)
 
-	orgID, err := utils.GetTestOrgId(t, testDB)
+	orgID, err := utils.GetTestOrgId(t, testbed.sqlStore)
 	require.Nil(t, err)
 
-	model.InitDB(testDB)
+	model.InitDB(testbed.sqlStore)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err = opampServer.Start(opamp.GetAvailableLocalAddress())
@@ -547,7 +544,6 @@ func NewLogPipelinesTestBed(t *testing.T, testDB sqlstore.SQLStore) *LogPipeline
 
 	testbed.opampServer = opampServer
 	testbed.opampClientConn = opampClientConnection
-	testbed.sqlStore = testDB
 
 	return testbed
 
