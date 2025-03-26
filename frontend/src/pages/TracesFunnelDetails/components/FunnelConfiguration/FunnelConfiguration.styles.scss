@@ -32,3 +32,11 @@
 		padding: 16px;
 	}
 }
+
+.lightMode {
+	.funnel-configuration {
+		&__header {
+			border-color: var(--bg-vanilla-300);
+		}
+	}
+}

@@ -113,6 +113,7 @@
 
 .lightMode {
 	.funnel-table {
+		border-color: var(--bg-vanilla-300);
 		.ant-table {
 			.ant-table-thead > tr > th {
 				background: var(--bg-vanilla-100);
@@ -137,6 +138,11 @@
 				background: none;
 				color: var(--bg-ink-500);
 			}
+		}
+
+		&__header {
+			background: var(--bg-vanilla-100);
+			color: var(--text-ink-300);
 		}
 	}
 }
