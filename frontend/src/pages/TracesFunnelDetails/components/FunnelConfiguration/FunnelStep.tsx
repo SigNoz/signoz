@@ -8,6 +8,7 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { ChevronDown, GripVertical, HardHat } from 'lucide-react';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo, useState } from 'react';
 import { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
@@ -18,17 +19,17 @@ interface FunnelStepProps {
 	stepData: FunnelStepData;
 	index: number;
 	stepsCount: number;
-	onStepChange: (index: number, newValues: Partial<FunnelStepData>) => void;
-	onStepRemove: (index: number) => void;
 }
 
 function FunnelStep({
 	stepData,
 	index,
 	stepsCount,
-	onStepChange,
-	onStepRemove,
 }: FunnelStepProps): JSX.Element {
+	const {
+		handleStepChange: onStepChange,
+		handleStepRemoval: onStepRemove,
+	} = useFunnelContext();
 	const [form] = Form.useForm();
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 

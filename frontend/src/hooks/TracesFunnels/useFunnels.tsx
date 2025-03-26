@@ -165,7 +165,7 @@ export const useFunnelOverview = (
 	SuccessResponse<FunnelOverviewResponse> | ErrorResponse,
 	Error
 > => {
-	const { selectedTime } = useFunnelContext();
+	const { selectedTime, validTracesCount } = useFunnelContext();
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelOverview(funnelId, payload, signal),
 		queryKey: [
@@ -175,6 +175,7 @@ export const useFunnelOverview = (
 			payload.step_end ?? '',
 			selectedTime,
 		],
+		enabled: !!funnelId && validTracesCount > 0,
 	});
 };
 
@@ -182,10 +183,11 @@ export const useFunnelSlowTraces = (
 	funnelId: string,
 	payload: SlowTracesPayload,
 ): UseQueryResult<SuccessResponse<SlowTraceData> | ErrorResponse, Error> => {
-	const { selectedTime } = useFunnelContext();
+	const { selectedTime, validTracesCount } = useFunnelContext();
 	return useQuery<SuccessResponse<SlowTraceData> | ErrorResponse, Error>({
 		queryFn: ({ signal }) => getFunnelSlowTraces(funnelId, payload, signal),
 		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES, funnelId, selectedTime],
+		enabled: !!funnelId && validTracesCount > 0,
 	});
 };
 
@@ -193,9 +195,10 @@ export const useFunnelErrorTraces = (
 	funnelId: string,
 	payload: ErrorTracesPayload,
 ): UseQueryResult<SuccessResponse<ErrorTraceData> | ErrorResponse, Error> => {
-	const { selectedTime } = useFunnelContext();
+	const { selectedTime, validTracesCount } = useFunnelContext();
 	return useQuery({
 		queryFn: ({ signal }) => getFunnelErrorTraces(funnelId, payload, signal),
 		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES, funnelId, selectedTime],
+		enabled: !!funnelId && validTracesCount > 0,
 	});
 };

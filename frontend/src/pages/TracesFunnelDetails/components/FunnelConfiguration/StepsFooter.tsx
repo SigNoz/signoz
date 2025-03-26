@@ -57,6 +57,7 @@ function StepsFooter({
 							Save funnel
 						</Button>
 						<Button
+							disabled={validTracesCount === 0}
 							type="primary"
 							className="steps-footer__button steps-footer__button--run"
 							icon={<Play size={16} />}

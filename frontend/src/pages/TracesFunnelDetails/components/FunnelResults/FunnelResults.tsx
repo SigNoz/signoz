@@ -1,5 +1,6 @@
 import './FunnelResults.styles.scss';
 
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import EmptyFunnelResults from './EmptyFunnelResults';
@@ -12,15 +13,14 @@ interface FunnelResultsProps {
 }
 
 function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
-	if (!funnel?.steps?.length) return <EmptyFunnelResults />;
+	const { steps } = useFunnelContext();
+	if (steps.some((step) => step.service_name === '' || step.span_name === ''))
+		return <EmptyFunnelResults />;
 	return (
 		<div className="funnel-results">
 			<OverallMetrics />
 			<FunnelGraph />
-			<StepsTransitionResults
-				funnelId={funnel.id}
-				stepsCount={funnel.steps.length}
-			/>
+			<StepsTransitionResults funnelId={funnel.id} />
 		</div>
 	);
 }

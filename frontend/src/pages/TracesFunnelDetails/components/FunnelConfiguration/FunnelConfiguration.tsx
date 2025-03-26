@@ -21,9 +21,6 @@ function FunnelConfiguration({
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
-		handleAddStep,
-		handleStepChange,
-		handleStepRemoval,
 		isValidateStepsMutationLoading,
 	} = useFunnelConfiguration({ funnel });
 
@@ -43,12 +40,7 @@ function FunnelConfiguration({
 			<div className="funnel-configuration__steps-wrapper">
 				<div className="funnel-configuration__steps">
 					<StepsHeader />
-					<StepsContent
-						steps={steps}
-						handleStepChange={handleStepChange}
-						handleAddStep={handleAddStep}
-						handleStepRemoval={handleStepRemoval}
-					/>
+					<StepsContent />
 				</div>
 				<StepsFooter
 					funnelId={funnel.id}

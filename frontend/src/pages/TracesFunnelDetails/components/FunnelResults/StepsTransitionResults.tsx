@@ -1,6 +1,7 @@
 import './StepsTransitionResults.styles.scss';
 
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo, useState } from 'react';
 
 import StepsTransitionMetrics from './StepsTransitionMetrics';
@@ -14,7 +15,6 @@ export interface StepTransition {
 
 interface StepsTransitionResultsProps {
 	funnelId: string;
-	stepsCount: number;
 }
 
 function generateStepTransitions(stepsCount: number): StepTransition[] {
@@ -26,9 +26,9 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 
 function StepsTransitionResults({
 	funnelId,
-	stepsCount,
 }: StepsTransitionResultsProps): JSX.Element {
-	const stepTransitions = generateStepTransitions(stepsCount);
+	const { steps } = useFunnelContext();
+	const stepTransitions = generateStepTransitions(steps.length);
 	const [selectedTransition, setSelectedTransition] = useState<string>(
 		stepTransitions[0]?.value || '',
 	);

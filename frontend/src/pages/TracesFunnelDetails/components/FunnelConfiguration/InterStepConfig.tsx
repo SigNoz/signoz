@@ -2,17 +2,17 @@ import './InterStepConfig.styles.scss';
 
 import { Divider } from 'antd';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
 
 function InterStepConfig({
 	index,
-	onStepChange,
 	step,
 }: {
 	index: number;
-	onStepChange: (index: number, step: FunnelStepData) => void;
 	step: FunnelStepData;
 }): JSX.Element {
+	const { handleStepChange: onStepChange } = useFunnelContext();
 	const options = Object.entries(LatencyOptions).map(([key, value]) => ({
 		label: key,
 		value,

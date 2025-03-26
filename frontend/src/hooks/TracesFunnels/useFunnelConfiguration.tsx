@@ -3,13 +3,11 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
-import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
-import { v4 } from 'uuid';
 
 import { useUpdateFunnelSteps, useValidateFunnelSteps } from './useFunnels';
 
@@ -17,9 +15,6 @@ interface UseFunnelConfiguration {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isPopoverOpen: boolean) => void;
 	steps: FunnelStepData[];
-	handleAddStep: () => void;
-	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
-	handleStepRemoval: (index: number) => void;
 	isValidateStepsMutationLoading: boolean;
 }
 
@@ -48,13 +43,11 @@ export default function useFunnelConfiguration({
 	funnel: FunnelData;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
-	const { setValidTracesCount } = useFunnelContext();
+	const { setValidTracesCount, steps, initialSteps } = useFunnelContext();
 
 	// State management
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-	const initialSteps = funnel.steps?.length ? funnel.steps : initialStepsData;
-	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
 	const debouncedSteps = useDebounce(steps, 200);
 
 	const [lastValidatedSteps, setLastValidatedSteps] = useState<FunnelStepData[]>(
@@ -110,40 +103,6 @@ export default function useFunnelConfiguration({
 		[setValidTracesCount],
 	);
 
-	// Step modifications
-	const handleStepUpdate = useCallback(
-		(index: number, newStep: Partial<FunnelStepData>) => {
-			setSteps((prev) =>
-				prev.map((step, i) => (i === index ? { ...step, ...newStep } : step)),
-			);
-		},
-		[],
-	);
-
-	const addNewStep = useCallback(() => {
-		setSteps((prev) => [
-			...prev,
-			{
-				...initialStepsData[0],
-				id: v4(),
-				step_order: prev.length + 1,
-			},
-		]);
-	}, []);
-
-	const handleStepRemoval = useCallback((index: number) => {
-		setSteps((prev) =>
-			prev
-				// remove the step in the index
-				.filter((_, i) => i !== index)
-				// reset the step_order for the remaining steps
-				.map((step, newIndex) => ({
-					...step,
-					step_order: newIndex + 1,
-				})),
-		);
-	}, []);
-
 	// Side Effects
 	useEffect(() => {
 		if (validationResponse) {
@@ -158,6 +117,12 @@ export default function useFunnelConfiguration({
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
 					if (data?.payload?.steps) lastSavedStateRef.current = debouncedSteps;
+
+					queryClient.invalidateQueries([
+						REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
+						funnel.id,
+						selectedTime,
+					]);
 
 					// Only validate if service_name or span_name changed
 					if (hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)) {
@@ -178,9 +143,6 @@ export default function useFunnelConfiguration({
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
-		handleAddStep: addNewStep,
-		handleStepChange: handleStepUpdate,
-		handleStepRemoval,
 		isValidateStepsMutationLoading: isValidationLoading || false,
 	};
 }
