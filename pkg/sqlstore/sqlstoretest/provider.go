@@ -19,7 +19,7 @@ type Provider struct {
 	mock    sqlmock.Sqlmock
 	bunDB   *bun.DB
 	sqlxDB  *sqlx.DB
-	dialect *TestDialect
+	dialect *dialect
 }
 
 func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
@@ -43,7 +43,7 @@ func New(config sqlstore.Config, matcher sqlmock.QueryMatcher) *Provider {
 		mock:    mock,
 		bunDB:   bunDB,
 		sqlxDB:  sqlxDB,
-		dialect: &TestDialect{},
+		dialect: new(dialect),
 	}
 }
 

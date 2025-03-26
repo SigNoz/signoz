@@ -9,7 +9,7 @@ type SummaryListMetricsRequest struct {
 	Limit   int          `json:"limit"`
 	OrderBy v3.OrderBy   `json:"orderBy"`
 	Start   int64        `json:"start"`
-	EndD    int64        `json:"end"`
+	End     int64        `json:"end"`
 	Filters v3.FilterSet `json:"filters"`
 }
 
@@ -24,7 +24,7 @@ type TreeMapMetricsRequest struct {
 	Limit   int          `json:"limit"`
 	Treemap TreeMapType  `json:"treemap"`
 	Start   int64        `json:"start"`
-	EndD    int64        `json:"end"`
+	End     int64        `json:"end"`
 	Filters v3.FilterSet `json:"filters"`
 }
 

@@ -1,21 +1,19 @@
 package types
 
 import (
-	"time"
-
 	"github.com/uptrace/bun"
 )
 
 type Invite struct {
-	bun.BaseModel `bun:"table:invites"`
+	bun.BaseModel `bun:"table:user_invite"`
 
-	OrgID     string    `bun:"org_id,type:text,notnull" json:"orgId"`
-	ID        int       `bun:"id,pk,autoincrement" json:"id"`
-	Name      string    `bun:"name,type:text,notnull" json:"name"`
-	Email     string    `bun:"email,type:text,notnull,unique" json:"email"`
-	Token     string    `bun:"token,type:text,notnull" json:"token"`
-	CreatedAt time.Time `bun:"created_at,notnull" json:"createdAt"`
-	Role      string    `bun:"role,type:text,notnull" json:"role"`
+	Identifiable
+	TimeAuditable
+	OrgID string `bun:"org_id,type:text,notnull" json:"orgId"`
+	Name  string `bun:"name,type:text,notnull" json:"name"`
+	Email string `bun:"email,type:text,notnull,unique" json:"email"`
+	Token string `bun:"token,type:text,notnull" json:"token"`
+	Role  string `bun:"role,type:text,notnull" json:"role"`
 }
 
 type Group struct {
