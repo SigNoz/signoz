@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 )
@@ -99,7 +100,7 @@ func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertyp
 	}, opts...)
 }
 
-func (store *config) GetChannelByID(ctx context.Context, orgID string, id int) (*alertmanagertypes.Channel, error) {
+func (store *config) GetChannelByID(ctx context.Context, orgID string, id valuer.UUID) (*alertmanagertypes.Channel, error) {
 	channel := new(alertmanagertypes.Channel)
 
 	err := store.
@@ -108,11 +109,11 @@ func (store *config) GetChannelByID(ctx context.Context, orgID string, id int) (
 		NewSelect().
 		Model(channel).
 		Where("org_id = ?", orgID).
-		Where("id = ?", id).
+		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id)
+			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %d", id.StringValue())
 		}
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func (store *config) UpdateChannel(ctx context.Context, orgID string, channel *a
 	}, opts...)
 }
 
-func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id int, opts ...alertmanagertypes.StoreOption) error {
+func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id valuer.UUID, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
 		channel := new(alertmanagertypes.Channel)
 
@@ -146,7 +147,7 @@ func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id int
 			NewDelete().
 			Model(channel).
 			Where("org_id = ?", orgID).
-			Where("id = ?", id).
+			Where("id = ?", id.StringValue()).
 			Exec(ctx); err != nil {
 			return err
 		}

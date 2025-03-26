@@ -29,7 +29,7 @@ type GettableChannels = []*Channel
 
 // Channel represents a single receiver of the alertmanager config.
 type Channel struct {
-	bun.BaseModel `bun:"table:notification_channels"`
+	bun.BaseModel `bun:"table:notification_channel"`
 
 	types.Identifiable
 	types.TimeAuditable

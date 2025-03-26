@@ -19,19 +19,17 @@ type updateAlertmanager struct {
 
 type existingChannel struct {
 	bun.BaseModel `bun:"table:notification_channels"`
-
-	ID        int       `json:"id" bun:"id,pk,autoincrement"`
-	Name      string    `json:"name" bun:"name"`
-	Type      string    `json:"type" bun:"type"`
-	Data      string    `json:"data" bun:"data"`
-	CreatedAt time.Time `json:"created_at" bun:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bun:"updated_at"`
-	OrgID     string    `json:"org_id" bun:"org_id"`
+	ID            int       `json:"id" bun:"id,pk,autoincrement"`
+	Name          string    `json:"name" bun:"name"`
+	Type          string    `json:"type" bun:"type"`
+	Data          string    `json:"data" bun:"data"`
+	CreatedAt     time.Time `json:"created_at" bun:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" bun:"updated_at"`
+	OrgID         string    `json:"org_id" bun:"org_id"`
 }
 
 type newChannel struct {
-	bun.BaseModel `bun:"table:notfication_channel"`
-
+	bun.BaseModel `bun:"table:notification_channel"`
 	types.Identifiable
 	types.TimeAuditable
 	Name  string `json:"name" bun:"name"`
@@ -42,45 +40,40 @@ type newChannel struct {
 
 type existingAlertmanagerConfig struct {
 	bun.BaseModel `bun:"table:alertmanager_config"`
-
-	ID        uint64    `bun:"id,pk,autoincrement"`
-	Config    string    `bun:"config"`
-	Hash      string    `bun:"hash"`
-	CreatedAt time.Time `bun:"created_at"`
-	UpdatedAt time.Time `bun:"updated_at"`
-	OrgID     string    `bun:"org_id"`
+	ID            uint64    `bun:"id,pk,autoincrement"`
+	Config        string    `bun:"config,notnull,type:text"`
+	Hash          string    `bun:"hash,notnull,type:text"`
+	CreatedAt     time.Time `bun:"created_at,notnull"`
+	UpdatedAt     time.Time `bun:"updated_at,notnull"`
+	OrgID         string    `bun:"org_id,notnull,unique"`
 }
 
-// check the name update here !
 type newAlertmanagerConfig struct {
 	bun.BaseModel `bun:"table:alertmanager_config_new"`
-
 	types.Identifiable
 	types.TimeAuditable
-	Config string `bun:"config"`
-	Hash   string `bun:"hash"`
-	OrgID  string `bun:"org_id"`
+	Config string `bun:"config,notnull,type:text"`
+	Hash   string `bun:"hash,notnull,type:text"`
+	OrgID  string `bun:"org_id,notnull,unique"`
 }
 
 type existingAlertManagerState struct {
 	bun.BaseModel `bun:"table:alertmanager_state"`
-
-	ID        uint64    `bun:"id,pk,autoincrement"`
-	Silences  string    `bun:"silences,nullzero"`
-	NFLog     string    `bun:"nflog,nullzero"`
-	CreatedAt time.Time `bun:"created_at"`
-	UpdatedAt time.Time `bun:"updated_at"`
-	OrgID     string    `bun:"org_id"`
+	ID            uint64    `bun:"id,pk,autoincrement"`
+	Silences      string    `bun:"silences,nullzero,type:text"`
+	NFLog         string    `bun:"nflog,nullzero,type:text"`
+	CreatedAt     time.Time `bun:"created_at,notnull"`
+	UpdatedAt     time.Time `bun:"updated_at,notnull"`
+	OrgID         string    `bun:"org_id,notnull,unique"`
 }
 
 type newAlertManagerState struct {
 	bun.BaseModel `bun:"table:alertmanager_state_new"`
-
 	types.Identifiable
 	types.TimeAuditable
-	Silences string `bun:"silences,nullzero"`
-	NFLog    string `bun:"nflog,nullzero"`
-	OrgID    string `bun:"org_id"`
+	Silences string `bun:"silences,nullzero,type:text"`
+	NFLog    string `bun:"nflog,nullzero,type:text"`
+	OrgID    string `bun:"org_id,notnull,unique"`
 }
 
 func NewUpdateAlertmanagerFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
@@ -245,7 +238,7 @@ func (migration *updateAlertmanager) CopyOldChannelToNewChannel(existingChannels
 
 func (migration *updateAlertmanager) CopyOldConfigToNewConfig(existingAlertmanagerConfigs []*existingAlertmanagerConfig) []*newAlertmanagerConfig {
 	newAlertmanagerConfigs := make([]*newAlertmanagerConfig, 0)
-	for _, config := range newAlertmanagerConfigs {
+	for _, config := range existingAlertmanagerConfigs {
 		newAlertmanagerConfigs = append(newAlertmanagerConfigs, &newAlertmanagerConfig{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -263,9 +256,9 @@ func (migration *updateAlertmanager) CopyOldConfigToNewConfig(existingAlertmanag
 	return newAlertmanagerConfigs
 }
 
-func (migration *updateAlertmanager) CopyOldStateToNewState(existingAlertmanagerConfigs []*existingAlertManagerState) []*newAlertManagerState {
+func (migration *updateAlertmanager) CopyOldStateToNewState(existingAlertmanagerStates []*existingAlertManagerState) []*newAlertManagerState {
 	newAlertmanagerStates := make([]*newAlertManagerState, 0)
-	for _, state := range newAlertmanagerStates {
+	for _, state := range existingAlertmanagerStates {
 		newAlertmanagerStates = append(newAlertmanagerStates, &newAlertManagerState{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),

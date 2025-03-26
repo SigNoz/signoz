@@ -376,13 +376,13 @@ type ConfigStore interface {
 	CreateChannel(context.Context, *Channel, ...StoreOption) error
 
 	// GetChannelByID returns the channel for the given id.
-	GetChannelByID(context.Context, string, int) (*Channel, error)
+	GetChannelByID(context.Context, string, valuer.UUID) (*Channel, error)
 
 	// UpdateChannel updates a channel.
 	UpdateChannel(context.Context, string, *Channel, ...StoreOption) error
 
 	// DeleteChannelByID deletes a channel.
-	DeleteChannelByID(context.Context, string, int, ...StoreOption) error
+	DeleteChannelByID(context.Context, string, valuer.UUID, ...StoreOption) error
 
 	// ListChannels returns the list of channels.
 	ListChannels(context.Context, string) ([]*Channel, error)
