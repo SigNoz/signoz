@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -39,7 +38,6 @@ func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sql
 	hook := sqlstorehook.NewLoggingFactory()
 	return factory.MustNewNamedMap(
 		sqlitesqlstore.NewFactory(hook),
-		postgressqlstore.NewFactory(hook),
 	)
 }
 

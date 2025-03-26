@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/app"
+	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/config/fileprovider"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 
@@ -94,12 +96,15 @@ func main() {
 
 	version.Info.PrettyPrint(config.Version)
 
+	sqlStoreFactories := signoz.NewSQLStoreProviderFactories()
+	sqlStoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory()))
+
 	signoz, err := signoz.New(
 		context.Background(),
 		config,
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(),
-		signoz.NewSQLStoreProviderFactories(),
+		sqlStoreFactories,
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
 	if err != nil {
