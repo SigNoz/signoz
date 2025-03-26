@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -33,16 +34,16 @@ type Alertmanager interface {
 	ListAllChannels(context.Context) ([]*alertmanagertypes.Channel, error)
 
 	// GetChannelByID gets a channel for the organization.
-	GetChannelByID(context.Context, string, int) (*alertmanagertypes.Channel, error)
+	GetChannelByID(context.Context, string, valuer.UUID) (*alertmanagertypes.Channel, error)
 
 	// UpdateChannel updates a channel for the organization.
-	UpdateChannelByReceiverAndID(context.Context, string, alertmanagertypes.Receiver, int) error
+	UpdateChannelByReceiverAndID(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error
 
 	// CreateChannel creates a channel for the organization.
 	CreateChannel(context.Context, string, alertmanagertypes.Receiver) error
 
 	// DeleteChannelByID deletes a channel for the organization.
-	DeleteChannelByID(context.Context, string, int) error
+	DeleteChannelByID(context.Context, string, valuer.UUID) error
 
 	// SetConfig sets the config for the organization.
 	SetConfig(context.Context, *alertmanagertypes.Config) error

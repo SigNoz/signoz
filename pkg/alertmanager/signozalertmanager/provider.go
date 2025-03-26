@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type provider struct {
@@ -99,11 +100,11 @@ func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagert
 	return nil, errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported, "not supported by provider signoz")
 }
 
-func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
+func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) (*alertmanagertypes.Channel, error) {
 	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -127,7 +128,7 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 	}))
 }
 
-func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
+func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err
