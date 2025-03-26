@@ -180,7 +180,7 @@ func (p *Preference) IsEnabledForScope(scope string) bool {
 func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 	switch p.ValueType {
 	case PreferenceValueTypeBoolean:
-		if preferenceValue == "1" || preferenceValue == true {
+		if preferenceValue == "1" || preferenceValue == true || preferenceValue == "true" {
 			return true
 		} else {
 			return false
@@ -206,8 +206,8 @@ type UpdatePreference struct {
 
 var store sqlstore.SQLStore
 
-func InitDB(store sqlstore.SQLStore) error {
-	store = store
+func InitDB(sqlstore sqlstore.SQLStore) error {
+	store = sqlstore
 	return nil
 }
 
@@ -298,11 +298,12 @@ func UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceVal
 		orgPreference.PreferenceValue = string(storablePreferenceValue)
 	}
 
-	dberr = store.
+	_, dberr = store.
 		BunDB().
 		NewInsert().
 		Model(orgPreference).
-		Scan(ctx)
+		On("CONFLICT (id) DO UPDATE").
+		Exec(ctx)
 	if dberr != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
 	}
@@ -476,11 +477,12 @@ func UpdateUserPreference(ctx context.Context, preferenceId string, preferenceVa
 		userPreference.PreferenceValue = string(storablePreferenceValue)
 	}
 
-	dberr = store.
+	_, dberr = store.
 		BunDB().
 		NewInsert().
 		Model(userPreference).
-		Scan(ctx)
+		On("CONFLICT (id) DO UPDATE").
+		Exec(ctx)
 	if dberr != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in setting the preference value: %s", dberr.Error())}
 	}
