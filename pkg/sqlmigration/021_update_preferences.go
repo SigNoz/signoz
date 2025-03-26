@@ -45,7 +45,7 @@ type newUserPreference struct {
 	types.Identifiable
 	PreferenceID    string `bun:"preference_id,type:text,notnull"`
 	PreferenceValue string `bun:"preference_value,type:text,notnull"`
-	UserID          string `bun:"user_id,type:text"`
+	UserID          string `bun:"user_id,type:text,notnull"`
 }
 
 func NewUpdatePreferencesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
