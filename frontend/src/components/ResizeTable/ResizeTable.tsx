@@ -36,7 +36,7 @@ function ResizeTable({
 	const { setColumnWidths, selectedDashboard } = useDashboard();
 
 	const columnWidths = shouldPersistColumnWidths
-		? (selectedDashboard?.data.widgets?.find(
+		? (selectedDashboard?.data?.widgets?.find(
 				(widget) => widget.id === widgetId,
 		  ) as Widgets)?.columnWidths
 		: undefined;
