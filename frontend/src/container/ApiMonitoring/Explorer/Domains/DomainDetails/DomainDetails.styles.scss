@@ -394,29 +394,33 @@
 
 	.endpoint-meta-data {
 		display: flex;
-		flex-direction: row;
-		gap: 20px;
-		padding: 6px 12px;
-
-		font-size: 14px;
-		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
-
-		.endpoint-meta-data-col {
-			flex: 1;
+		gap: 8px;
+		.endpoint-meta-data-pill {
 			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: 8px;
-
+			align-items: flex-start;
+			border-radius: 4px;
+			border: 1px solid var(--bg-slate-300);
+			width: fit-content;
 			.endpoint-meta-data-label {
-				min-width: fit-content;
-				color: var(--text-vanilla-400);
+				display: flex;
+				padding: 6px 8px;
+				align-items: center;
+				gap: 4px;
+				border-right: 1px solid var(--bg-slate-300);
+				color: var(--text-vanilla-100);
+				background: var(--bg-slate-500);
+				height: calc(100% - 12px);
 			}
 
 			.endpoint-meta-data-value {
-				color: var(--text-vanilla-100);
+				display: flex;
+				padding: 6px 8px;
+				justify-content: center;
+				align-items: center;
+				gap: 10px;
+				color: var(--text-vanilla-400);
+				background: var(--bg-slate-400);
+				height: calc(100% - 12px);
 			}
 		}
 	}
@@ -961,16 +965,15 @@
 	}
 
 	.endpoint-meta-data {
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-vanilla-100);
-
-		.endpoint-meta-data-col {
+		.endpoint-meta-data-pill {
 			.endpoint-meta-data-label {
-				color: var(--text-ink-400);
+				color: var(--text-ink-300);
+				background: var(--bg-vanilla-100);
 			}
 
 			.endpoint-meta-data-value {
-				color: var(--text-ink-100);
+				color: var(--text-ink-300);
+				background: var(--bg-vanilla-100);
 			}
 		}
 	}
