@@ -47,7 +47,10 @@ function FunnelTopTracesTable({
 		[startTime, endTime, stepAOrder, stepBOrder],
 	);
 
-	const { data: response, isLoading } = useQueryHook(funnelId, payload);
+	const { data: response, isLoading, isFetching } = useQueryHook(
+		funnelId,
+		payload,
+	);
 
 	const data = useMemo(() => {
 		if (!response?.payload?.data) return [];
@@ -92,7 +95,7 @@ function FunnelTopTracesTable({
 			tooltip={tooltip}
 			columns={columns}
 			data={data}
-			loading={isLoading}
+			loading={isLoading || isFetching}
 		/>
 	);
 }

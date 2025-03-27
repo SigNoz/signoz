@@ -28,7 +28,10 @@ export function useFunnelMetrics({
 		...(stepEnd !== undefined && { step_end: stepEnd }),
 	};
 
-	const { data: overviewData, isLoading } = useFunnelOverview(funnelId, payload);
+	const { data: overviewData, isLoading, isFetching } = useFunnelOverview(
+		funnelId,
+		payload,
+	);
 
 	const metricsData = useMemo(() => {
 		const sourceData = overviewData?.payload?.data?.[0]?.data;
@@ -55,7 +58,7 @@ export function useFunnelMetrics({
 		overviewData?.payload?.data?.[0]?.data?.conversion_rate ?? 0;
 
 	return {
-		isLoading,
+		isLoading: isLoading || isFetching,
 		metricsData,
 		conversionRate,
 	};
