@@ -12,7 +12,7 @@ function ChangePercentagePill({
 	percentage,
 	direction,
 }: ChangePercentagePillProps): JSX.Element | null {
-	if (direction === 0) {
+	if (direction === 0 || percentage === 0) {
 		return null;
 	}
 	const isPositive = direction > 0;
