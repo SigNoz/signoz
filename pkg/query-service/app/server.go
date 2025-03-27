@@ -14,8 +14,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
-	preferencestore "github.com/SigNoz/signoz/pkg/modules/preference/store"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -148,7 +148,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
-	preference := preferencecore.NewPreferenceCore(preferencestore.NewStore(serverOptions.SigNoz.SQLStore))
+	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore)))
 
 	<-readerReady
 	rm, err := makeRulesManager(

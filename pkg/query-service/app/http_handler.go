@@ -143,7 +143,7 @@ type APIHandler struct {
 
 	Signoz *signoz.SigNoz
 
-	Preference preference.Preference
+	Preference preference.API
 }
 
 type APIHandlerOpts struct {
@@ -190,7 +190,7 @@ type APIHandlerOpts struct {
 
 	Signoz *signoz.SigNoz
 
-	Preference preference.Preference
+	Preference preference.API
 }
 
 // NewAPIHandler returns an APIHandler
@@ -3413,132 +3413,37 @@ func (aH *APIHandler) getProducerConsumerEval(
 func (aH *APIHandler) getUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	preference, err := aH.Preference.GetUserPreference(
-		r.Context(), preferenceId, claims.OrgID, claims.UserID,
-	)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetUserPreference(w, r)
 }
 
 func (aH *APIHandler) updateUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	req := types.UpdatePreference{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-	preference, err := aH.Preference.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, claims.UserID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.UpdateUserPreference(w, r)
 }
 
 func (aH *APIHandler) getAllUserPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, err := aH.Preference.GetAllUserPreferences(
-		r.Context(), claims.OrgID, claims.UserID,
-	)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetAllUserPreferences(w, r)
 }
 
 func (aH *APIHandler) getOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, err := aH.Preference.GetOrgPreference(
-		r.Context(), preferenceId, claims.OrgID,
-	)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetOrgPreference(w, r)
 }
 
 func (aH *APIHandler) updateOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	req := types.UpdatePreference{}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-	preference, err := aH.Preference.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.UpdateOrgPreference(w, r)
 }
 
 func (aH *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, err := aH.Preference.GetAllOrgPreferences(
-		r.Context(), claims.OrgID,
-	)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetAllOrgPreferences(w, r)
 }
 
 // RegisterIntegrationRoutes Registers all Integrations

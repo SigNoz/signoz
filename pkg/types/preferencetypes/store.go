@@ -1,8 +1,6 @@
-package store
+package preferencetypes
 
-import "github.com/SigNoz/signoz/pkg/types"
-
-var PreferenceMap = map[string]types.Preference{
+var PreferenceMap = map[string]Preference{
 	"ORG_ONBOARDING": {
 		Key:              "ORG_ONBOARDING",
 		Name:             "Organisation Onboarding",

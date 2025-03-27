@@ -1,31 +1,23 @@
-package types
+package preferencetypes
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/uptrace/bun"
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-// on_delete:CASCADE,on_update:CASCADE not working
-type StorableOrgPreference struct {
-	bun.BaseModel `bun:"table:org_preference"`
-	Identifiable
-	PreferenceID    string `bun:"preference_id,type:text,notnull"`
-	PreferenceValue string `bun:"preference_value,type:text,notnull"`
-	OrgID           string `bun:"org_id,type:text,notnull"`
-}
+const (
+	PreferenceValueTypeInteger string = "integer"
+	PreferenceValueTypeFloat   string = "float"
+	PreferenceValueTypeString  string = "string"
+	PreferenceValueTypeBoolean string = "boolean"
+)
 
-// on_delete:CASCADE,on_update:CASCADE not working
-type StorableUserPreference struct {
-	bun.BaseModel `bun:"table:user_preference"`
-	Identifiable
-	PreferenceID    string `bun:"preference_id,type:text,notnull"`
-	PreferenceValue string `bun:"preference_value,type:text,notnull"`
-	UserID          string `bun:"user_id,type:text,notnull"`
-}
+const (
+	OrgAllowedScope  string = "org"
+	UserAllowedScope string = "user"
+)
 
 type Range struct {
 	Min int64 `json:"min"`
@@ -44,23 +36,25 @@ type Preference struct {
 	AllowedScopes    []string      `json:"allowedScopes"`
 }
 
-func (p *Preference) ErrorValueTypeMismatch() *model.ApiError {
-	return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not of expected type: %s", p.ValueType)}
+type PreferenceWithValue struct {
+	Preference
+	Value interface{} `json:"value"`
 }
 
-const (
-	PreferenceValueTypeInteger string = "integer"
-	PreferenceValueTypeFloat   string = "float"
-	PreferenceValueTypeString  string = "string"
-	PreferenceValueTypeBoolean string = "boolean"
-)
+type GettablePreference struct {
+	PreferenceId    string      `json:"preference_id" db:"preference_id"`
+	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
+}
 
-const (
-	OrgAllowedScope  string = "org"
-	UserAllowedScope string = "user"
-)
+type UpdatablePreference struct {
+	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
+}
 
-func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) (bool, *model.ApiError) {
+func (p *Preference) ErrorValueTypeMismatch() error {
+	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not of expected type: %s", p.ValueType))
+}
+
+func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) (bool, error) {
 
 	switch p.ValueType {
 	case PreferenceValueTypeInteger:
@@ -128,7 +122,7 @@ func (p *Preference) checkIfInAllowedValues(preferenceValue interface{}) (bool, 
 	return isInAllowedValues, nil
 }
 
-func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
+func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 	typeSafeValue := preferenceValue
 	switch p.ValueType {
 	case PreferenceValueTypeInteger:
@@ -143,7 +137,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 		}
 		if !p.IsDiscreteValues {
 			if val < p.Range.Min || val > p.Range.Max {
-				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max)}
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max))
 			}
 		}
 	case PreferenceValueTypeString:
@@ -172,7 +166,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) *model.ApiError {
 				return valueMisMatchErr
 			}
 			if !isInAllowedValues {
-				return &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("the preference value is not in the list of allowedValues: %v", p.AllowedValues)}
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not in the list of allowedValues: %v", p.AllowedValues))
 			}
 		}
 	}
@@ -202,27 +196,4 @@ func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 	default:
 		return preferenceValue
 	}
-}
-
-type AllPreferences struct {
-	Preference
-	Value interface{} `json:"value"`
-}
-
-type PreferenceKV struct {
-	PreferenceId    string      `json:"preference_id" db:"preference_id"`
-	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
-}
-
-type UpdatePreference struct {
-	PreferenceValue interface{} `json:"preference_value"`
-}
-
-type PreferenceStore interface {
-	GetOrgPreference(context.Context, string, string) (*StorableOrgPreference, error)
-	GetAllOrgPreferences(context.Context, string) ([]*StorableOrgPreference, error)
-	UpsertOrgPreference(context.Context, *StorableOrgPreference) error
-	GetUserPreference(context.Context, string, string) (*StorableUserPreference, error)
-	GetAllUserPreferences(context.Context, string) ([]*StorableUserPreference, error)
-	UpsertUserPreference(context.Context, *StorableUserPreference) error
 }
