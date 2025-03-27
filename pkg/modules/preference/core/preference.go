@@ -13,15 +13,16 @@ import (
 )
 
 type usecase struct {
-	store preferencetypes.PreferenceStore
+	store      preferencetypes.PreferenceStore
+	defaultMap map[string]preferencetypes.Preference
 }
 
-func NewPreference(store preferencetypes.PreferenceStore) preference.Usecase {
-	return &usecase{store: store}
+func NewPreference(store preferencetypes.PreferenceStore, defaultMap map[string]preferencetypes.Preference) preference.Usecase {
+	return &usecase{store: store, defaultMap: defaultMap}
 }
 
 func (usecase *usecase) GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*preferencetypes.GettablePreference, error) {
-	preference, seen := preferencetypes.PreferenceMap[preferenceId]
+	preference, seen := usecase.defaultMap[preferenceId]
 	if !seen {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
 	}
@@ -49,7 +50,7 @@ func (usecase *usecase) GetOrgPreference(ctx context.Context, preferenceId strin
 }
 
 func (usecase *usecase) UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, orgId string) error {
-	preference, seen := preferencetypes.PreferenceMap[preferenceId]
+	preference, seen := usecase.defaultMap[preferenceId]
 	if !seen {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
 	}
@@ -103,7 +104,7 @@ func (usecase *usecase) GetAllOrgPreferences(ctx context.Context, orgId string) 
 		preferenceValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
 	}
 
-	for _, preference := range preferencetypes.PreferenceMap {
+	for _, preference := range usecase.defaultMap {
 		isEnabledForOrgScope := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
 		if isEnabledForOrgScope {
 			preferenceWithValue := &preferencetypes.PreferenceWithValue{}
@@ -132,7 +133,7 @@ func (usecase *usecase) GetAllOrgPreferences(ctx context.Context, orgId string) 
 }
 
 func (usecase *usecase) GetUserPreference(ctx context.Context, preferenceId string, orgId string, userId string) (*preferencetypes.GettablePreference, error) {
-	preference, seen := preferencetypes.PreferenceMap[preferenceId]
+	preference, seen := usecase.defaultMap[preferenceId]
 	if !seen {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
 	}
@@ -174,7 +175,7 @@ func (usecase *usecase) GetUserPreference(ctx context.Context, preferenceId stri
 }
 
 func (usecase *usecase) UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, userId string) error {
-	preference, seen := preferencetypes.PreferenceMap[preferenceId]
+	preference, seen := usecase.defaultMap[preferenceId]
 	if !seen {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
 	}
@@ -239,7 +240,7 @@ func (usecase *usecase) GetAllUserPreferences(ctx context.Context, orgId string,
 		preferenceUserValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
 	}
 
-	for _, preference := range preferencetypes.PreferenceMap {
+	for _, preference := range usecase.defaultMap {
 		isEnabledForUserScope := preference.IsEnabledForScope(preferencetypes.UserAllowedScope)
 
 		if isEnabledForUserScope {
