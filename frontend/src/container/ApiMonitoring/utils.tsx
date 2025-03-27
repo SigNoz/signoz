@@ -128,7 +128,10 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		sorter: false,
 		align: 'right',
 		className: `column`,
-		render: (lastUsed: number): string => getLastUsedRelativeTime(lastUsed),
+		render: (lastUsed: number | string): string =>
+			lastUsed === 'n/a' || lastUsed === '-'
+				? '-'
+				: getLastUsedRelativeTime(lastUsed as number),
 	},
 	{
 		title: (
@@ -217,9 +220,9 @@ interface APIMonitoringResponseRow {
 	data: {
 		endpoints: number;
 		error_rate: number;
-		lastseen: number;
+		lastseen: number | string;
 		[domainNameKey]: string;
-		p99: number;
+		p99: number | string;
 		rps: number;
 	};
 }
@@ -232,12 +235,12 @@ interface EndPointsResponseRow {
 
 export interface APIDomainsRowData {
 	key: string;
-	domainName: React.ReactNode;
-	endpointCount: React.ReactNode;
-	rate: React.ReactNode;
-	errorRate: React.ReactNode;
-	latency: React.ReactNode;
-	lastUsed: React.ReactNode;
+	domainName: string;
+	endpointCount: number | string;
+	rate: number | string;
+	errorRate: number | string;
+	latency: number | string;
+	lastUsed: string;
 }
 
 // Rename this to a proper name
@@ -250,8 +253,16 @@ export const formatDataForTable = (
 		endpointCount: domain.data.endpoints,
 		rate: domain.data.rps,
 		errorRate: domain.data.error_rate,
-		latency: Math.round(domain.data.p99 / 1000000), // Convert from nanoseconds to milliseconds
-		lastUsed: new Date(Math.floor(domain.data.lastseen / 1000000)).toISOString(), // Convert from nanoseconds to milliseconds
+		latency:
+			domain.data.p99 === 'n/a'
+				? '-'
+				: Math.round(Number(domain.data.p99) / 1000000), // Convert from nanoseconds to milliseconds
+		lastUsed:
+			domain.data.lastseen === 'n/a'
+				? '-'
+				: new Date(
+						Math.floor(Number(domain.data.lastseen) / 1000000),
+				  ).toISOString(), // Convert from nanoseconds to milliseconds
 	}));
 
 // Rename this to a proper name
