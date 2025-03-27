@@ -740,7 +740,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	// zap.L().Info(data)
 	properties := analytics.NewProperties()
-	properties.Set("version", version.Info.Version)
+	properties.Set("version", version.Info.Version())
 	properties.Set("deploymentType", getDeploymentType())
 	properties.Set("companyDomain", a.getCompanyDomain())
 
