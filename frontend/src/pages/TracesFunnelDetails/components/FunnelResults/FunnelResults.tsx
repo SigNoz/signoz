@@ -17,20 +17,29 @@ function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
 	const {
 		validTracesCount,
 		isValidateStepsLoading,
-		hasIncompleteSteps,
+		hasIncompleteStepFields,
+		hasAllEmptyStepFields,
 	} = useFunnelContext();
 
 	if (isValidateStepsLoading) {
 		return <Spinner size="large" />;
 	}
 
-	if (hasIncompleteSteps) return <EmptyFunnelResults />;
+	if (hasAllEmptyStepFields) return <EmptyFunnelResults />;
+
+	if (hasIncompleteStepFields)
+		return (
+			<EmptyFunnelResults
+				title="Missing service / span names"
+				description="Fill in the service and span names for all the steps"
+			/>
+		);
 
 	if (validTracesCount === 0) {
 		return (
 			<EmptyFunnelResults
 				title="There are no traces that match the funnel steps."
-				description="Add spans to the funnel steps to start seeing analytics here."
+				description="Check the service / span names in the funnel steps and try again to start seeing analytics here"
 			/>
 		);
 	}

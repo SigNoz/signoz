@@ -119,13 +119,11 @@ export const useValidateFunnelSteps = ({
 	selectedTime,
 	startTime,
 	endTime,
-	hasIncompleteSteps,
 }: {
 	funnelId: string;
 	selectedTime: string;
 	startTime: number;
 	endTime: number;
-	hasIncompleteSteps: boolean;
 }): UseQueryResult<
 	SuccessResponse<ValidateFunnelResponse> | ErrorResponse,
 	Error
@@ -138,12 +136,7 @@ export const useValidateFunnelSteps = ({
 				signal,
 			),
 		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
-		enabled:
-			!hasIncompleteSteps &&
-			!!funnelId &&
-			!!selectedTime &&
-			!!startTime &&
-			!!endTime,
+		enabled: !!funnelId && !!selectedTime && !!startTime && !!endTime,
 	});
 
 export const useUpdateFunnelStepDetails = ({

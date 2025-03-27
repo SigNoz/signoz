@@ -107,9 +107,9 @@ function FunnelStep({
 										shouldSetQueryParams={false}
 										values={stepData.service_name}
 										isMultiple={false}
-										onChange={(v): void =>
-											onStepChange(index, { service_name: v as string })
-										}
+										onChange={(v): void => {
+											onStepChange(index, { service_name: (v ?? '') as string });
+										}}
 									/>
 								</Form.Item>
 							</div>
@@ -123,7 +123,7 @@ function FunnelStep({
 										values={stepData.span_name}
 										isMultiple={false}
 										onChange={(v): void =>
-											onStepChange(index, { span_name: v as string })
+											onStepChange(index, { span_name: (v ?? '') as string })
 										}
 									/>
 								</Form.Item>

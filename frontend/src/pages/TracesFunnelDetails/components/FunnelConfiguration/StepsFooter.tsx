@@ -15,16 +15,48 @@ interface StepsFooterProps {
 	funnelDescription: string;
 }
 
+function ValidTracesCount(): JSX.Element {
+	const {
+		hasAllEmptyStepFields,
+		isValidateStepsLoading,
+		hasIncompleteStepFields,
+		validTracesCount,
+	} = useFunnelContext();
+	if (isValidateStepsLoading) {
+		return <Skeleton.Button size="small" />;
+	}
+
+	if (hasAllEmptyStepFields) {
+		return (
+			<span className="steps-footer__valid-traces">No service / span names</span>
+		);
+	}
+
+	if (hasIncompleteStepFields) {
+		return (
+			<span className="steps-footer__valid-traces">
+				Missing service / span names
+			</span>
+		);
+	}
+
+	return (
+		<span
+			className={cx('steps-footer__valid-traces', {
+				'steps-footer__valid-traces--none': validTracesCount === 0,
+			})}
+		>
+			{validTracesCount} valid traces
+		</span>
+	);
+}
+
 function StepsFooter({
 	stepsCount,
 	funnelId,
 	funnelDescription,
 }: StepsFooterProps): JSX.Element {
-	const {
-		validTracesCount,
-		handleRunFunnel,
-		isValidateStepsLoading,
-	} = useFunnelContext();
+	const { validTracesCount, handleRunFunnel } = useFunnelContext();
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
 
 	return (
@@ -33,17 +65,7 @@ function StepsFooter({
 				<Cone className="funnel-icon" size={14} />
 				<span>{stepsCount} steps</span>
 				<span>·</span>
-				{isValidateStepsLoading ? (
-					<Skeleton.Button size="small" />
-				) : (
-					<span
-						className={cx('steps-footer__valid-traces', {
-							'steps-footer__valid-traces--none': validTracesCount === 0,
-						})}
-					>
-						{validTracesCount} valid traces
-					</span>
-				)}
+				<ValidTracesCount />
 			</div>
 			<div className="steps-footer__right">
 				{funnelDescription ? (

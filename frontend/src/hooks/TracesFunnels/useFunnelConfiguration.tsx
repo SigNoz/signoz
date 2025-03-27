@@ -40,7 +40,12 @@ export default function useFunnelConfiguration({
 	funnel: FunnelData;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
-	const { steps, initialSteps, hasIncompleteSteps } = useFunnelContext();
+	const {
+		steps,
+		initialSteps,
+		setHasIncompleteStepFields,
+		setHasAllEmptyStepFields,
+	} = useFunnelContext();
 
 	// State management
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -100,12 +105,26 @@ export default function useFunnelConfiguration({
 		if (hasStepsChanged()) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
-					if (data?.payload?.steps)
-						lastSavedStepsStateRef.current = data?.payload?.steps;
+					const updatedFunnelSteps = data?.payload?.steps;
+
+					if (!updatedFunnelSteps) return;
+
+					lastSavedStepsStateRef.current = updatedFunnelSteps;
+
+					const hasIncompleteStepFields = updatedFunnelSteps.some(
+						(step) => step.service_name === '' || step.span_name === '',
+					);
+
+					const hasAllEmptyStepsData = updatedFunnelSteps.every(
+						(step) => step.service_name === '' && step.span_name === '',
+					);
+
+					setHasIncompleteStepFields(hasIncompleteStepFields);
+					setHasAllEmptyStepFields(hasAllEmptyStepsData);
 
 					// Only validate if service_name or span_name changed
 					if (
-						!hasIncompleteSteps &&
+						!hasIncompleteStepFields &&
 						hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)
 					) {
 						queryClient.refetchQueries(validateStepsQueryKey);
