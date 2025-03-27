@@ -146,6 +146,7 @@ export function EventSourceProvider({
 
 			setIsConnectionLoading(true);
 			setIsConnectionError(false);
+			setReconnectDueToError(false);
 
 			eventSourceRef.current.addEventListener('error', handleErrorConnection);
 			eventSourceRef.current.addEventListener('open', handleOpenConnection);
