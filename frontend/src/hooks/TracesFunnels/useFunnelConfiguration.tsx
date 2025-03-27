@@ -109,6 +109,17 @@ export default function useFunnelConfiguration({
 
 					if (!updatedFunnelSteps) return;
 
+					queryClient.setQueryData(
+						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.id],
+						(oldData: any) => ({
+							...oldData,
+							payload: {
+								...oldData.payload,
+								steps: updatedFunnelSteps,
+							},
+						}),
+					);
+
 					lastSavedStepsStateRef.current = updatedFunnelSteps;
 
 					const hasIncompleteStepFields = updatedFunnelSteps.some(
