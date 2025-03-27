@@ -1,4 +1,3 @@
-import { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
@@ -6,16 +5,14 @@ import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
-import { useUpdateFunnelSteps, useValidateFunnelSteps } from './useFunnels';
+import { useUpdateFunnelSteps } from './useFunnels';
 
 interface UseFunnelConfiguration {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isPopoverOpen: boolean) => void;
 	steps: FunnelStepData[];
-	isValidateStepsLoading: boolean;
 }
 
 // Add this helper function
@@ -43,7 +40,7 @@ export default function useFunnelConfiguration({
 	funnel: FunnelData;
 }): UseFunnelConfiguration {
 	const { notifications } = useNotifications();
-	const { setValidTracesCount, steps, initialSteps } = useFunnelContext();
+	const { steps, initialSteps } = useFunnelContext();
 
 	// State management
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -56,11 +53,6 @@ export default function useFunnelConfiguration({
 
 	// Mutation hooks
 	const updateStepsMutation = useUpdateFunnelSteps(funnel.id, notifications);
-	const {
-		data: validationResponse,
-		isLoading: isValidationLoading,
-		isFetching: isValidationFetching,
-	} = useValidateFunnelSteps();
 
 	// Derived state
 	const lastSavedStateRef = useRef<FunnelStepData[]>(steps);
@@ -95,22 +87,6 @@ export default function useFunnelConfiguration({
 		[funnel.id, debouncedSteps],
 	);
 
-	// Steps validation handlers
-	const handleValidationResult = useCallback(
-		(response: SuccessResponse<ValidateFunnelResponse> | ErrorResponse) => {
-			const traces = response?.payload?.data || [];
-			setValidTracesCount(traces.length);
-		},
-		[setValidTracesCount],
-	);
-
-	// Side Effects
-	useEffect(() => {
-		if (validationResponse) {
-			handleValidationResult(validationResponse);
-		}
-	}, [validationResponse, handleValidationResult]);
-
 	const queryClient = useQueryClient();
 	const { selectedTime } = useFunnelContext();
 	useEffect(() => {
@@ -144,6 +120,5 @@ export default function useFunnelConfiguration({
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
-		isValidateStepsLoading: isValidationLoading || isValidationFetching,
 	};
 }

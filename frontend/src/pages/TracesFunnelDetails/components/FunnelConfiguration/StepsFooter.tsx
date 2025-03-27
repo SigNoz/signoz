@@ -11,18 +11,20 @@ import AddFunnelDescriptionModal from './AddFunnelDescriptionModal';
 
 interface StepsFooterProps {
 	stepsCount: number;
-	isLoading: boolean;
 	funnelId: string;
 	funnelDescription: string;
 }
 
 function StepsFooter({
 	stepsCount,
-	isLoading,
 	funnelId,
 	funnelDescription,
 }: StepsFooterProps): JSX.Element {
-	const { validTracesCount, handleRunFunnel } = useFunnelContext();
+	const {
+		validTracesCount,
+		handleRunFunnel,
+		isValidateStepsLoading,
+	} = useFunnelContext();
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
 
 	return (
@@ -31,7 +33,7 @@ function StepsFooter({
 				<Cone className="funnel-icon" size={14} />
 				<span>{stepsCount} steps</span>
 				<span>·</span>
-				{isLoading ? (
+				{isValidateStepsLoading ? (
 					<Skeleton.Button size="small" />
 				) : (
 					<span

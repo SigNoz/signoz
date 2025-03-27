@@ -114,12 +114,21 @@ export const useUpdateFunnelSteps = (
 		},
 	});
 
-export const useValidateFunnelSteps = (): UseQueryResult<
+export const useValidateFunnelSteps = ({
+	funnelId,
+	selectedTime,
+	startTime,
+	endTime,
+}: {
+	funnelId: string;
+	selectedTime: string;
+	startTime: number;
+	endTime: number;
+}): UseQueryResult<
 	SuccessResponse<ValidateFunnelResponse> | ErrorResponse,
 	Error
-> => {
-	const { selectedTime, funnelId, startTime, endTime } = useFunnelContext();
-	return useQuery({
+> =>
+	useQuery({
 		queryFn: ({ signal }) =>
 			validateFunnelSteps(
 				funnelId,
@@ -128,7 +137,6 @@ export const useValidateFunnelSteps = (): UseQueryResult<
 			),
 		queryKey: [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnelId, selectedTime],
 	});
-};
 
 export const useUpdateFunnelStepDetails = ({
 	stepOrder,

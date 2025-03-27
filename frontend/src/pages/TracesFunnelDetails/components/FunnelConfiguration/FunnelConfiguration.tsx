@@ -17,12 +17,9 @@ interface FunnelConfigurationProps {
 function FunnelConfiguration({
 	funnel,
 }: FunnelConfigurationProps): JSX.Element {
-	const {
-		isPopoverOpen,
-		setIsPopoverOpen,
-		steps,
-		isValidateStepsLoading,
-	} = useFunnelConfiguration({ funnel });
+	const { isPopoverOpen, setIsPopoverOpen, steps } = useFunnelConfiguration({
+		funnel,
+	});
 
 	return (
 		<div className="funnel-configuration">
@@ -46,7 +43,6 @@ function FunnelConfiguration({
 					funnelId={funnel.id}
 					stepsCount={steps.length}
 					funnelDescription={funnel?.description || ''}
-					isLoading={isValidateStepsLoading}
 				/>
 			</div>
 		</div>

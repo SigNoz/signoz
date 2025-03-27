@@ -1,9 +1,11 @@
+import { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	CustomTimeType,
 	Time as TimeV2,
 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { useValidateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { initialStepsData } from 'pages/TracesFunnelDetails/constants';
 import {
@@ -18,6 +20,7 @@ import {
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
@@ -27,7 +30,6 @@ interface FunnelContextType {
 	endTime: number;
 	selectedTime: CustomTimeType | Time | TimeV2;
 	validTracesCount: number;
-	setValidTracesCount: (count: number) => void;
 	funnelId: string;
 	steps: FunnelStepData[];
 	setSteps: Dispatch<SetStateAction<FunnelStepData[]>>;
@@ -36,6 +38,11 @@ interface FunnelContextType {
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
 	handleStepRemoval: (index: number) => void;
 	handleRunFunnel: () => void;
+	validationResponse:
+		| SuccessResponse<ValidateFunnelResponse>
+		| ErrorResponse
+		| undefined;
+	isValidateStepsLoading: boolean;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -47,7 +54,17 @@ export function FunnelProvider({
 	children: React.ReactNode;
 	funnelId: string;
 }): JSX.Element {
-	const [validTracesCount, setValidTracesCount] = useState(0);
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const { start, end } = getStartEndRangeTime({
+		type: 'GLOBAL_TIME',
+		interval: selectedTime,
+	});
+
+	const startTime = Math.floor(Number(start) * 1e9);
+	const endTime = Math.floor(Number(end) * 1e9);
+
 	const queryClient = useQueryClient();
 	const data = queryClient.getQueryData<{ payload: FunnelData }>([
 		REACT_QUERY_KEY.GET_FUNNEL_DETAILS,
@@ -56,6 +73,22 @@ export function FunnelProvider({
 	const funnel = data?.payload;
 	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
+
+	const {
+		data: validationResponse,
+		isLoading: isValidationLoading,
+		isFetching: isValidationFetching,
+	} = useValidateFunnelSteps({
+		funnelId,
+		selectedTime,
+		startTime,
+		endTime,
+	});
+
+	const validTracesCount = useMemo(
+		() => validationResponse?.payload?.data?.length || 0,
+		[validationResponse],
+	);
 
 	// Step modifications
 	const handleStepUpdate = useCallback(
@@ -95,14 +128,6 @@ export function FunnelProvider({
 		throw new Error('Funnel ID is required');
 	}
 
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-	const { start: startTime, end: endTime } = getStartEndRangeTime({
-		type: 'GLOBAL_TIME',
-		interval: selectedTime,
-	});
-
 	const handleRunFunnel = useCallback(async (): Promise<void> => {
 		if (validTracesCount === 0) return;
 		queryClient.refetchQueries([
@@ -125,11 +150,10 @@ export function FunnelProvider({
 	const value = useMemo<FunnelContextType>(
 		() => ({
 			funnelId,
-			startTime: Math.floor(Number(startTime) * 1e9),
-			endTime: Math.floor(Number(endTime) * 1e9),
+			startTime,
+			endTime,
 			validTracesCount,
 			selectedTime,
-			setValidTracesCount,
 			steps,
 			setSteps,
 			initialSteps,
@@ -137,6 +161,8 @@ export function FunnelProvider({
 			handleAddStep: addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
+			validationResponse,
+			isValidateStepsLoading: isValidationLoading || isValidationFetching,
 		}),
 		[
 			funnelId,
@@ -150,6 +176,9 @@ export function FunnelProvider({
 			addNewStep,
 			handleStepRemoval,
 			handleRunFunnel,
+			validationResponse,
+			isValidationLoading,
+			isValidationFetching,
 		],
 	);
 
