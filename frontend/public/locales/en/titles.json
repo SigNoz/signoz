@@ -65,5 +65,6 @@
 	"INFRASTRUCTURE_MONITORING_KUBERNETES": "SigNoz | Infra Monitoring",
 	"METRICS_EXPLORER": "SigNoz | Metrics Explorer",
 	"METRICS_EXPLORER_EXPLORER": "SigNoz | Metrics Explorer",
-	"METRICS_EXPLORER_VIEWS": "SigNoz | Metrics Explorer"
+	"METRICS_EXPLORER_VIEWS": "SigNoz | Metrics Explorer",
+	"API_MONITORING": "SigNoz | API Monitoring"
 }
