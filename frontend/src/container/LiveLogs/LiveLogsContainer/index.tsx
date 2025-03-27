@@ -50,6 +50,8 @@ function LiveLogsContainer(): JSX.Element {
 		handleCloseConnection,
 		initialLoading,
 		isConnectionLoading,
+		isConnectionError,
+		reconnectDueToError,
 	} = useEventSource();
 
 	const compositeQuery = useGetCompositeQueryParam();
@@ -150,6 +152,24 @@ function LiveLogsContainer(): JSX.Element {
 		stagedQuery,
 		isConnectionLoading,
 		openConnection,
+		handleStartNewConnection,
+	]);
+
+	useEffect((): (() => void) | undefined => {
+		if (isConnectionError && reconnectDueToError && compositeQuery) {
+			console.log('uncaught refetch try from component', reconnectDueToError);
+			// Small delay to prevent immediate reconnection attempts
+			const reconnectTimer = setTimeout(() => {
+				handleStartNewConnection(compositeQuery);
+			}, 1000);
+
+			return (): void => clearTimeout(reconnectTimer);
+		}
+		return undefined;
+	}, [
+		isConnectionError,
+		reconnectDueToError,
+		compositeQuery,
 		handleStartNewConnection,
 	]);
 

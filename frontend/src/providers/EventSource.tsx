@@ -1,6 +1,11 @@
 import { apiV3 } from 'api/apiV1';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import loginApi from 'api/user/login';
+import { Logout } from 'api/utils';
+import afterLogin from 'AppRoutes/utils';
 import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
 import {
 	createContext,
@@ -13,14 +18,13 @@ import {
 	useState,
 } from 'react';
 
-import { useAppContext } from './App/App';
-
 interface IEventSourceContext {
 	eventSourceInstance: EventSourcePolyfill | null;
 	isConnectionOpen: boolean;
 	isConnectionLoading: boolean;
 	isConnectionError: boolean;
 	initialLoading: boolean;
+	reconnectDueToError: boolean;
 	handleStartOpenConnection: (urlProps: {
 		url?: string;
 		queryString: string;
@@ -35,6 +39,7 @@ const EventSourceContext = createContext<IEventSourceContext>({
 	isConnectionLoading: false,
 	initialLoading: true,
 	isConnectionError: false,
+	reconnectDueToError: false,
 	handleStartOpenConnection: () => {},
 	handleCloseConnection: () => {},
 	handleSetInitialLoading: () => {},
@@ -47,9 +52,9 @@ export function EventSourceProvider({
 	const [isConnectionLoading, setIsConnectionLoading] = useState<boolean>(false);
 	const [isConnectionError, setIsConnectionError] = useState<boolean>(false);
 
-	const [initialLoading, setInitialLoading] = useState<boolean>(true);
+	const [reconnectDueToError, setReconnectDueToError] = useState<boolean>(false);
 
-	const { user } = useAppContext();
+	const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
 
@@ -63,15 +68,49 @@ export function EventSourceProvider({
 		setInitialLoading(false);
 	}, []);
 
-	const handleErrorConnection: EventListener = useCallback(() => {
+	const handleErrorConnection: EventListener = useCallback(async () => {
 		setIsConnectionOpen(false);
-		setIsConnectionLoading(false);
-		setIsConnectionError(true);
+		setIsConnectionLoading(true);
 		setInitialLoading(false);
 
-		if (!eventSourceRef.current) return;
+		try {
+			const response = await loginApi({
+				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
+			});
 
-		eventSourceRef.current.close();
+			console.log('uncaught token refresh started', { response });
+
+			if (response.statusCode === 200) {
+				// Update tokens in local storage
+				afterLogin(
+					response.payload.userId,
+					response.payload.accessJwt,
+					response.payload.refreshJwt,
+					true,
+				);
+
+				// If token refresh was successful, we'll let the component
+				// handle reconnection through the reconnectDueToError state
+				setReconnectDueToError(true);
+				setIsConnectionError(true);
+				return;
+			}
+
+			// If token refresh failed, logout the user
+
+			if (!eventSourceRef.current) return;
+			eventSourceRef.current.close();
+			setIsConnectionError(true);
+			Logout();
+		} catch (error) {
+			// If there was an error during token refresh, we'll just
+			// let the component handle the error state
+			console.error('Error refreshing token:', error);
+			setIsConnectionError(true);
+			if (!eventSourceRef.current) return;
+			eventSourceRef.current.close();
+			Logout();
+		}
 	}, []);
 
 	const destroyEventSourceSession = useCallback(() => {
@@ -100,7 +139,7 @@ export function EventSourceProvider({
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {
-					Authorization: `Bearer ${user?.accessJwt}`,
+					Authorization: `Bearer ${getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN)}`,
 				},
 				heartbeatTimeout: LIVE_TAIL_HEARTBEAT_TIMEOUT,
 			});
@@ -111,7 +150,7 @@ export function EventSourceProvider({
 			eventSourceRef.current.addEventListener('error', handleErrorConnection);
 			eventSourceRef.current.addEventListener('open', handleOpenConnection);
 		},
-		[user, handleErrorConnection, handleOpenConnection],
+		[handleErrorConnection, handleOpenConnection],
 	);
 
 	useEffect(
@@ -128,6 +167,7 @@ export function EventSourceProvider({
 			isConnectionLoading,
 			isConnectionOpen,
 			initialLoading,
+			reconnectDueToError,
 			handleStartOpenConnection,
 			handleCloseConnection,
 			handleSetInitialLoading,
@@ -137,6 +177,7 @@ export function EventSourceProvider({
 			isConnectionLoading,
 			isConnectionOpen,
 			initialLoading,
+			reconnectDueToError,
 			handleStartOpenConnection,
 			handleCloseConnection,
 			handleSetInitialLoading,
