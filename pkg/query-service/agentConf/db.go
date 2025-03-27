@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
@@ -148,9 +148,9 @@ func (r *Repo) insertConfig(
 	// insert config
 	_, dbErr := r.store.BunDB().NewInsert().
 		Model(&types.AgentConfigVersion{
-			OrgID:   orgId,
-			ID:      c.ID,
-			Version: c.Version,
+			OrgID:        orgId,
+			Identifiable: types.Identifiable{ID: c.ID},
+			Version:      c.Version,
 			UserAuditable: types.UserAuditable{
 				CreatedBy: userId,
 			},
@@ -170,11 +170,11 @@ func (r *Repo) insertConfig(
 
 	for _, e := range elements {
 		agentConfigElement := &types.AgentConfigElement{
-			OrgID:       orgId,
-			ID:          uuid.NewString(),
-			VersionID:   c.ID,
-			ElementType: string(c.ElementType),
-			ElementID:   e,
+			OrgID:        orgId,
+			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+			VersionID:    c.ID.StringValue(),
+			ElementType:  string(c.ElementType),
+			ElementID:    e,
 		}
 		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
 		if dbErr != nil {

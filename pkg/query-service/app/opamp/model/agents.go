@@ -116,14 +116,14 @@ func (agents *Agents) RecommendLatestConfigToAll(
 		)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf(
-				"could not generate conf recommendation for %v", agent.AgentID,
+				"could not generate conf recommendation for %v", agent.ID.StringValue(),
 			))
 		}
 
 		// Recommendation is same as current config
 		if string(newConfig) == agent.EffectiveConfig {
 			zap.L().Info(
-				"Recommended config same as current effective config for agent", zap.String("agentID", agent.AgentID),
+				"Recommended config same as current effective config for agent", zap.String("agentID", agent.ID.StringValue()),
 			)
 			return nil
 		}
@@ -148,7 +148,7 @@ func (agents *Agents) RecommendLatestConfigToAll(
 			RemoteConfig: newRemoteConfig,
 		})
 
-		ListenToConfigUpdate(agent.AgentID, confId, provider.ReportConfigDeploymentStatus)
+		ListenToConfigUpdate(agent.ID.StringValue(), confId, provider.ReportConfigDeploymentStatus)
 	}
 	return nil
 }

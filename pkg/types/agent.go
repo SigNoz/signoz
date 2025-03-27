@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
@@ -18,8 +18,8 @@ const (
 type StorableAgent struct {
 	bun.BaseModel `bun:"table:agents"`
 
+	Identifiable
 	OrgID           string      `json:"orgId" yaml:"orgId" bun:"org_id,type:text"`
-	AgentID         string      `json:"agentId" yaml:"agentId" bun:"agent_id,pk,type:text"`
 	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" bun:"started_at,type:datetime,notnull"`
 	TerminatedAt    time.Time   `json:"terminatedAt" yaml:"terminatedAt" bun:"terminated_at,type:datetime"`
 	CurrentStatus   AgentStatus `json:"currentStatus" yaml:"currentStatus" bun:"current_status,type:text,notnull"`
@@ -54,8 +54,8 @@ type AgentConfigVersion struct {
 
 	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"`
 
+	Identifiable
 	OrgID          string         `json:"orgId" bun:"org_id,type:text"`
-	ID             string         `json:"id" bun:"id,pk,type:text"`
 	Version        int            `json:"version" bun:"version,default:1,unique:element_version_idx"`
 	Active         bool           `json:"active" bun:"active"`
 	IsValid        bool           `json:"is_valid" bun:"is_valid"`
@@ -71,7 +71,7 @@ type AgentConfigVersion struct {
 func NewAgentConfigVersion(orgId string, typeDef ElementTypeDef) *AgentConfigVersion {
 	return &AgentConfigVersion{
 		OrgID:        orgId,
-		ID:           uuid.NewString(),
+		Identifiable: Identifiable{ID: valuer.GenerateUUID()},
 		ElementType:  typeDef,
 		Active:       false,
 		IsValid:      false,
@@ -89,8 +89,8 @@ func UpdateVersion(v int) int {
 type AgentConfigElement struct {
 	bun.BaseModel `bun:"table:agent_config_elements"`
 
+	Identifiable
 	OrgID       string    `bun:"org_id,type:text"`
-	ID          string    `bun:"id,pk,type:text"`
 	CreatedBy   string    `bun:"created_by,type:text"`
 	CreatedAt   time.Time `bun:"created_at,default:CURRENT_TIMESTAMP"`
 	UpdatedBy   string    `bun:"updated_by,type:text"`

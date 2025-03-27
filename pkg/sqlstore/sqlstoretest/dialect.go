@@ -32,3 +32,7 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
 	return nil
 }
+
+func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
+	return false, nil
+}

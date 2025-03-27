@@ -77,6 +77,12 @@ func (migration *updateAgents) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
+	// rename agent_id to id
+	_, err = migration.store.Dialect().RenameColumn(ctx, tx, "agents", "agent_id", "id")
+	if err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return err
 	}

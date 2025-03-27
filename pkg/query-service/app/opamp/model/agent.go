@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -38,7 +39,7 @@ type Agent struct {
 const lbExporterFlag = "capabilities.lbexporter"
 
 func New(store sqlstore.SQLStore, orgID string, ID string, conn opampTypes.Connection) *Agent {
-	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, AgentID: ID, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
+	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
 }
 
 // Upsert inserts or updates the agent in the database.
@@ -48,7 +49,7 @@ func (agent *Agent) Upsert() error {
 
 	_, err := agent.store.BunDB().NewInsert().
 		Model(&agent.StorableAgent).
-		On("CONFLICT (org_id, agent_id) DO UPDATE").
+		On("CONFLICT (org_id, id) DO UPDATE").
 		Set("started_at = EXCLUDED.started_at").
 		Set("effective_config = EXCLUDED.effective_config").
 		Set("current_status = EXCLUDED.current_status").
@@ -122,11 +123,11 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			// todo: need to address multiple agent scenario here
 			// for now, the first response will be sent back to the UI
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED {
-				onConfigSuccess(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
+				onConfigSuccess(agent.OrgID, agent.ID.StringValue(), string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
 			}
 
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED {
-				onConfigFailure(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
+				onConfigFailure(agent.OrgID, agent.ID.StringValue(), string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
 			}
 		}
 	}
@@ -256,7 +257,7 @@ func (agent *Agent) processStatusUpdate(
 		agent.SendToAgent(response)
 
 		ListenToConfigUpdate(
-			agent.AgentID,
+			agent.ID.StringValue(),
 			string(response.RemoteConfig.ConfigHash),
 			configProvider.ReportConfigDeploymentStatus,
 		)
@@ -266,7 +267,7 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.EffectiveConfig))
 	if err != nil {
-		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.AgentID), zap.Error(err))
+		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.ID.StringValue()), zap.Error(err))
 		return false
 	}
 
