@@ -3,10 +3,12 @@ import './DeleteFunnel.styles.scss';
 
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import ROUTES from 'constants/routes';
 import { useDeleteFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Trash2, X } from 'lucide-react';
 import { useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 
 interface DeleteFunnelProps {
 	isOpen: boolean;
@@ -23,6 +25,8 @@ function DeleteFunnel({
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
 
+	const history = useHistory();
+	const { pathname } = history.location;
 	const handleDelete = (): void => {
 		deleteFunnelMutation.mutate(
 			{
@@ -34,6 +38,10 @@ function DeleteFunnel({
 						message: 'Funnel deleted successfully',
 					});
 					onClose();
+					if (pathname !== ROUTES.TRACES_FUNNELS) {
+						history.push(ROUTES.TRACES_FUNNELS);
+						return;
+					}
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
 				},
 				onError: () => {
