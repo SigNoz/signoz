@@ -21,43 +21,43 @@ func NewPreference(store preferencetypes.PreferenceStore, defaultMap map[string]
 	return &usecase{store: store, defaultMap: defaultMap}
 }
 
-func (usecase *usecase) GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*preferencetypes.GettablePreference, error) {
-	preference, seen := usecase.defaultMap[preferenceId]
+func (usecase *usecase) GetOrgPreference(ctx context.Context, preferenceID string, orgID string) (*preferencetypes.GettablePreference, error) {
+	preference, seen := usecase.defaultMap[preferenceID]
 	if !seen {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceID exists: %s", preferenceID))
 	}
 
 	isPreferenceEnabled := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
 	if !isPreferenceEnabled {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at org scope: %s", preferenceId))
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at org scope: %s", preferenceID))
 	}
 
-	orgPreference, err := usecase.store.GetOrgPreference(ctx, orgId, preferenceId)
+	orgPreference, err := usecase.store.GetOrgPreference(ctx, orgID, preferenceID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &preferencetypes.GettablePreference{
-				PreferenceId:    preferenceId,
+				PreferenceID:    preferenceID,
 				PreferenceValue: preference.DefaultValue,
 			}, nil
 		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error in fetching the org preference: %s", preferenceId))
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error in fetching the org preference: %s", preferenceID))
 	}
 
 	return &preferencetypes.GettablePreference{
-		PreferenceId:    preferenceId,
+		PreferenceID:    preferenceID,
 		PreferenceValue: preference.SanitizeValue(orgPreference.PreferenceValue),
 	}, nil
 }
 
-func (usecase *usecase) UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, orgId string) error {
-	preference, seen := usecase.defaultMap[preferenceId]
+func (usecase *usecase) UpdateOrgPreference(ctx context.Context, preferenceID string, preferenceValue interface{}, orgId string) error {
+	preference, seen := usecase.defaultMap[preferenceID]
 	if !seen {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceID exists: %s", preferenceID))
 	}
 
 	isPreferenceEnabled := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
 	if !isPreferenceEnabled {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at org scope: %s", preferenceId))
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at org scope: %s", preferenceID))
 	}
 
 	err := preference.IsValidValue(preferenceValue)
@@ -70,14 +70,14 @@ func (usecase *usecase) UpdateOrgPreference(ctx context.Context, preferenceId st
 		return errors.Wrapf(encodeErr, errors.TypeInvalidInput, errors.CodeInvalidInput, "error in encoding the preference value")
 	}
 
-	orgPreference, dberr := usecase.store.GetOrgPreference(ctx, orgId, preferenceId)
+	orgPreference, dberr := usecase.store.GetOrgPreference(ctx, orgId, preferenceID)
 	if dberr != nil && dberr != sql.ErrNoRows {
 		return errors.Wrapf(dberr, errors.TypeInternal, errors.CodeInternal, "error in getting the preference value")
 	}
 
 	if dberr != nil {
 		orgPreference.ID = valuer.GenerateUUID()
-		orgPreference.PreferenceID = preferenceId
+		orgPreference.PreferenceID = preferenceID
 		orgPreference.PreferenceValue = string(storablePreferenceValue)
 		orgPreference.OrgID = orgId
 	} else {
@@ -92,9 +92,9 @@ func (usecase *usecase) UpdateOrgPreference(ctx context.Context, preferenceId st
 	return nil
 }
 
-func (usecase *usecase) GetAllOrgPreferences(ctx context.Context, orgId string) ([]*preferencetypes.PreferenceWithValue, error) {
+func (usecase *usecase) GetAllOrgPreferences(ctx context.Context, orgID string) ([]*preferencetypes.PreferenceWithValue, error) {
 	allOrgPreferences := []*preferencetypes.PreferenceWithValue{}
-	orgPreferences, err := usecase.store.GetAllOrgPreferences(ctx, orgId)
+	orgPreferences, err := usecase.store.GetAllOrgPreferences(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in setting all org preference values")
 	}
@@ -132,36 +132,36 @@ func (usecase *usecase) GetAllOrgPreferences(ctx context.Context, orgId string) 
 	return allOrgPreferences, nil
 }
 
-func (usecase *usecase) GetUserPreference(ctx context.Context, preferenceId string, orgId string, userId string) (*preferencetypes.GettablePreference, error) {
-	preference, seen := usecase.defaultMap[preferenceId]
+func (usecase *usecase) GetUserPreference(ctx context.Context, preferenceID string, orgId string, userId string) (*preferencetypes.GettablePreference, error) {
+	preference, seen := usecase.defaultMap[preferenceID]
 	if !seen {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceID exists: %s", preferenceID))
 	}
 
 	preferenceValue := preferencetypes.GettablePreference{
-		PreferenceId:    preferenceId,
+		PreferenceID:    preferenceID,
 		PreferenceValue: preference.DefaultValue,
 	}
 
 	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(preferencetypes.UserAllowedScope)
 	if !isPreferenceEnabledAtUserScope {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at user scope: %s", preferenceId))
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at user scope: %s", preferenceID))
 	}
 
 	isPreferenceEnabledAtOrgScope := preference.IsEnabledForScope(preferencetypes.OrgAllowedScope)
 	if isPreferenceEnabledAtOrgScope {
-		orgPreference, err := usecase.store.GetOrgPreference(ctx, orgId, preferenceId)
+		orgPreference, err := usecase.store.GetOrgPreference(ctx, orgId, preferenceID)
 		if err != nil && err != sql.ErrNoRows {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error in fetching the org preference: %s", preferenceId))
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error in fetching the org preference: %s", preferenceID))
 		}
 		if err == nil {
 			preferenceValue.PreferenceValue = orgPreference.PreferenceValue
 		}
 	}
 
-	userPreference, err := usecase.store.GetUserPreference(ctx, userId, preferenceId)
+	userPreference, err := usecase.store.GetUserPreference(ctx, userId, preferenceID)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error in fetching the user preference: %s", preferenceId))
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error in fetching the user preference: %s", preferenceID))
 	}
 
 	if err == nil {
@@ -169,20 +169,20 @@ func (usecase *usecase) GetUserPreference(ctx context.Context, preferenceId stri
 	}
 
 	return &preferencetypes.GettablePreference{
-		PreferenceId:    preferenceValue.PreferenceId,
+		PreferenceID:    preferenceValue.PreferenceID,
 		PreferenceValue: preference.SanitizeValue(preferenceValue.PreferenceValue),
 	}, nil
 }
 
-func (usecase *usecase) UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, userId string) error {
-	preference, seen := usecase.defaultMap[preferenceId]
+func (usecase *usecase) UpdateUserPreference(ctx context.Context, preferenceID string, preferenceValue interface{}, userId string) error {
+	preference, seen := usecase.defaultMap[preferenceID]
 	if !seen {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceId exists: %s", preferenceId))
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("no such preferenceID exists: %s", preferenceID))
 	}
 
 	isPreferenceEnabledAtUserScope := preference.IsEnabledForScope(preferencetypes.UserAllowedScope)
 	if !isPreferenceEnabledAtUserScope {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at user scope: %s", preferenceId))
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("preference is not enabled at user scope: %s", preferenceID))
 	}
 
 	err := preference.IsValidValue(preferenceValue)
@@ -195,14 +195,14 @@ func (usecase *usecase) UpdateUserPreference(ctx context.Context, preferenceId s
 		return errors.Wrapf(encodeErr, errors.TypeInvalidInput, errors.CodeInvalidInput, "error in encoding the preference value")
 	}
 
-	userPreference, dberr := usecase.store.GetUserPreference(ctx, userId, preferenceId)
+	userPreference, dberr := usecase.store.GetUserPreference(ctx, userId, preferenceID)
 	if dberr != nil && dberr != sql.ErrNoRows {
 		return errors.Wrapf(dberr, errors.TypeInternal, errors.CodeInternal, "error in getting the preference value")
 	}
 
 	if dberr != nil {
 		userPreference.ID = valuer.GenerateUUID()
-		userPreference.PreferenceID = preferenceId
+		userPreference.PreferenceID = preferenceID
 		userPreference.PreferenceValue = string(storablePreferenceValue)
 		userPreference.UserID = userId
 	} else {
@@ -217,10 +217,10 @@ func (usecase *usecase) UpdateUserPreference(ctx context.Context, preferenceId s
 	return nil
 }
 
-func (usecase *usecase) GetAllUserPreferences(ctx context.Context, orgId string, userId string) ([]*preferencetypes.PreferenceWithValue, error) {
+func (usecase *usecase) GetAllUserPreferences(ctx context.Context, orgID string, userID string) ([]*preferencetypes.PreferenceWithValue, error) {
 	allUserPreferences := []*preferencetypes.PreferenceWithValue{}
 
-	orgPreferences, err := usecase.store.GetAllOrgPreferences(ctx, orgId)
+	orgPreferences, err := usecase.store.GetAllOrgPreferences(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in setting all org preference values")
 	}
@@ -230,7 +230,7 @@ func (usecase *usecase) GetAllUserPreferences(ctx context.Context, orgId string,
 		preferenceOrgValueMap[preferenceValue.PreferenceID] = preferenceValue.PreferenceValue
 	}
 
-	userPreferences, err := usecase.store.GetAllUserPreferences(ctx, userId)
+	userPreferences, err := usecase.store.GetAllUserPreferences(ctx, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error in setting all user preference values")
 	}

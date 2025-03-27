@@ -11,7 +11,7 @@ import (
 )
 
 type GettablePreference struct {
-	PreferenceId    string      `json:"preference_id" db:"preference_id"`
+	PreferenceID    string      `json:"preference_id" db:"preference_id"`
 	PreferenceValue interface{} `json:"preference_value" db:"preference_value"`
 }
 
