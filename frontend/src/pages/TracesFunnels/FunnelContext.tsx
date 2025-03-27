@@ -145,6 +145,11 @@ export function FunnelProvider({
 			selectedTime,
 		]);
 		queryClient.refetchQueries([
+			REACT_QUERY_KEY.GET_FUNNEL_STEPS_GRAPH_DATA,
+			funnelId,
+			selectedTime,
+		]);
+		queryClient.refetchQueries([
 			REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES,
 			funnelId,
 			selectedTime,
