@@ -142,7 +142,7 @@ func (migration *updateAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		UpdatePrimaryKey(ctx, tx, new(existingAlertmanagerConfig), new(newAlertmanagerConfig), func(ctx context.Context) error {
+		UpdatePrimaryKey(ctx, tx, new(existingAlertmanagerConfig), new(newAlertmanagerConfig), OrgReference, func(ctx context.Context) error {
 			existingAlertmanagerConfigs := make([]*existingAlertmanagerConfig, 0)
 			err = tx.
 				NewSelect().
@@ -174,7 +174,7 @@ func (migration *updateAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		UpdatePrimaryKey(ctx, tx, new(existingAlertmanagerState), new(newAlertmanagerState), func(ctx context.Context) error {
+		UpdatePrimaryKey(ctx, tx, new(existingAlertmanagerState), new(newAlertmanagerState), OrgReference, func(ctx context.Context) error {
 			existingAlertmanagerStates := make([]*existingAlertmanagerState, 0)
 			err = tx.
 				NewSelect().

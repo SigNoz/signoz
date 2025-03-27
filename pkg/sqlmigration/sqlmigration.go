@@ -25,6 +25,11 @@ var (
 	ErrNoExecute = errors.New("no execute")
 )
 
+var (
+	OrgReference  = "org"
+	UserReference = "user"
+)
+
 func New(
 	ctx context.Context,
 	settings factory.ProviderSettings,
