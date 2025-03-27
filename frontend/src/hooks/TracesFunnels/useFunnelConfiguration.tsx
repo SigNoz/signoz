@@ -55,10 +55,12 @@ export default function useFunnelConfiguration({
 	const updateStepsMutation = useUpdateFunnelSteps(funnel.id, notifications);
 
 	// Derived state
-	const lastSavedStateRef = useRef<FunnelStepData[]>(steps);
+	const lastSavedStepsStateRef = useRef<FunnelStepData[]>(steps);
 
 	const hasStepsChanged = useCallback(() => {
-		const normalizedLastSavedSteps = normalizeSteps(lastSavedStateRef.current);
+		const normalizedLastSavedSteps = normalizeSteps(
+			lastSavedStepsStateRef.current,
+		);
 		const normalizedDebouncedSteps = normalizeSteps(debouncedSteps);
 		return !isEqual(normalizedDebouncedSteps, normalizedLastSavedSteps);
 	}, [debouncedSteps]);
@@ -93,13 +95,8 @@ export default function useFunnelConfiguration({
 		if (hasStepsChanged()) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
 				onSuccess: (data) => {
-					if (data?.payload?.steps) lastSavedStateRef.current = debouncedSteps;
-
-					queryClient.invalidateQueries([
-						REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
-						funnel.id,
-						selectedTime,
-					]);
+					if (data?.payload?.steps)
+						lastSavedStepsStateRef.current = data?.payload?.steps;
 
 					// Only validate if service_name or span_name changed
 					if (hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)) {
