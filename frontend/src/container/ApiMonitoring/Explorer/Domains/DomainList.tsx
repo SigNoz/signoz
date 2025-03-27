@@ -3,6 +3,7 @@ import '../Explorer.styles.scss';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table, Typography } from 'antd';
 import axios from 'api';
+import logEvent from 'api/common/logEvent';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
@@ -130,6 +131,7 @@ function DomainList({
 								(item) => item.key === record.key,
 							);
 							setSelectedDomainIndex(dataIndex);
+							logEvent('API Monitoring: Domain name row clicked', {});
 						}
 					},
 					className: 'expanded-clickable-row',

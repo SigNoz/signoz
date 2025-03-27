@@ -3,13 +3,14 @@ import './Explorer.styles.scss';
 import { FilterOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Switch, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -20,6 +21,11 @@ function Explorer(): JSX.Element {
 	const [showIP, setShowIP] = useState<boolean>(true);
 
 	const { currentQuery } = useQueryBuilder();
+
+	useEffect(() => {
+		// logEvent('API Monitoring: Landing page visited', {});
+		console.log('uncaught API Monitoring: Landing page visited');
+	}, []);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -64,7 +70,12 @@ function Explorer(): JSX.Element {
 							style={{ marginLeft: 'auto' }}
 							checked={showIP}
 							onClick={(): void => {
-								setShowIP((showIP) => !showIP);
+								setShowIP((showIP): boolean => {
+									logEvent('API Monitoring: Show IP addresses clicked', {
+										showIP: !showIP,
+									});
+									return !showIP;
+								});
 							}}
 						/>
 					</div>
