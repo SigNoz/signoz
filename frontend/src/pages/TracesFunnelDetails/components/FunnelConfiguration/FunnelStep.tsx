@@ -139,6 +139,7 @@ function FunnelStep({
 									placeholder="Search for filters..."
 									suffixIcon={<HardHat size={12} color="var(--bg-vanilla-400)" />}
 									rootClassName="traces-funnel-where-filter"
+									maxTagCount="responsive"
 								/>
 							</Form.Item>
 						</div>
