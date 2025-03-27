@@ -58,7 +58,7 @@ function FunnelGraph(): JSX.Element {
 
 	if (isError) {
 		return (
-			<Empty description="Error fetching metrics. If the problem persists, please contact support." />
+			<Empty description="Error fetching data. If the problem persists, please contact support." />
 		);
 	}
 

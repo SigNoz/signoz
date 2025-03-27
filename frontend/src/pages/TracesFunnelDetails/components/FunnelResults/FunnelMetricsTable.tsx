@@ -1,5 +1,6 @@
 import './FunnelMetricsTable.styles.scss';
 
+import { Empty } from 'antd';
 import Spinner from 'components/Spinner';
 
 export interface MetricItem {
@@ -15,16 +16,19 @@ interface FunnelMetricsTableProps {
 	};
 	data: MetricItem[];
 	isLoading?: boolean;
+	isError?: boolean;
 	emptyState?: JSX.Element;
 }
 
 function FunnelMetricsContentRenderer({
 	data,
 	isLoading,
+	isError,
 	emptyState,
 }: {
 	data: MetricItem[];
 	isLoading?: boolean;
+	isError?: boolean;
 	emptyState?: JSX.Element;
 }): JSX.Element {
 	if (isLoading)
@@ -36,6 +40,13 @@ function FunnelMetricsContentRenderer({
 	if (data.length === 0 && emptyState) {
 		return emptyState;
 	}
+
+	if (isError) {
+		return (
+			<Empty description="Error fetching data. If the problem persists, please contact support." />
+		);
+	}
+
 	return (
 		<div className="funnel-metrics__grid">
 			{data.map((metric) => (
@@ -49,9 +60,8 @@ function FunnelMetricsContentRenderer({
 }
 FunnelMetricsContentRenderer.defaultProps = {
 	isLoading: false,
-	emptyState: (
-		<div className="funnel-metrics--empty-state">No data available</div>
-	),
+	isError: false,
+	emptyState: <Empty className="funnel-metrics--empty-state" />,
 };
 
 function FunnelMetricsTable({
@@ -59,6 +69,7 @@ function FunnelMetricsTable({
 	subtitle,
 	data,
 	isLoading,
+	isError,
 	emptyState,
 }: FunnelMetricsTableProps): JSX.Element {
 	return (
@@ -77,6 +88,7 @@ function FunnelMetricsTable({
 				data={data}
 				isLoading={isLoading}
 				emptyState={emptyState}
+				isError={isError}
 			/>
 		</div>
 	);
@@ -85,9 +97,8 @@ function FunnelMetricsTable({
 FunnelMetricsTable.defaultProps = {
 	subtitle: undefined,
 	isLoading: false,
-	emptyState: (
-		<div className="funnel-metrics--empty-state">No data available</div>
-	),
+	emptyState: <Empty className="funnel-metrics--empty-state" />,
+	isError: false,
 };
 
 export default FunnelMetricsTable;

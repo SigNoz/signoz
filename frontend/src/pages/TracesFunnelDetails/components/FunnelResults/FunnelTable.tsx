@@ -1,6 +1,6 @@
 import './FunnelTable.styles.scss';
 
-import { Table, Tooltip } from 'antd';
+import { Empty, Table, Tooltip } from 'antd';
 import { ColumnProps } from 'antd/es/table';
 
 interface FunnelTableProps {
@@ -34,9 +34,7 @@ function FunnelTable({
 				loading={loading}
 				pagination={false}
 				locale={{
-					emptyText: loading ? null : (
-						<div className="funnel-table__no-data-text">No data</div>
-					),
+					emptyText: loading ? null : <Empty />,
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"
