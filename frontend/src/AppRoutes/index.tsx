@@ -56,10 +56,7 @@ function App(): JSX.Element {
 
 	const { hostname, pathname } = window.location;
 
-	const {
-		isCloudUser: isCloudUserVal,
-		isEECloudUser: isEECloudUserVal,
-	} = useGetTenantLicense();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -169,7 +166,7 @@ function App(): JSX.Element {
 
 			let updatedRoutes = defaultRoutes;
 			// if the user is a cloud user
-			if (isCloudUserVal || isEECloudUserVal) {
+			if (isCloudUser || isEnterpriseSelfHostedUser) {
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
@@ -191,10 +188,10 @@ function App(): JSX.Element {
 		isLoggedInState,
 		user,
 		licenses,
-		isCloudUserVal,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
 		isFetchingLicenses,
 		isFetchingUser,
-		isEECloudUserVal,
 	]);
 
 	useEffect(() => {
@@ -256,10 +253,10 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (!isFetchingUser && isCloudUserVal && user && user.email) {
+		if (!isFetchingUser && isCloudUser && user && user.email) {
 			enableAnalytics(user);
 		}
-	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
+	}, [user, isFetchingUser, isCloudUser, enableAnalytics]);
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
