@@ -3,7 +3,7 @@ import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
@@ -91,6 +91,11 @@ export default function useFunnelConfiguration({
 
 	const queryClient = useQueryClient();
 	const { selectedTime } = useFunnelContext();
+
+	const validateStepsQueryKey = useMemo(
+		() => [REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS, funnel.id, selectedTime],
+		[funnel.id, selectedTime],
+	);
 	useEffect(() => {
 		if (hasStepsChanged()) {
 			updateStepsMutation.mutate(getUpdatePayload(), {
@@ -100,18 +105,22 @@ export default function useFunnelConfiguration({
 
 					// Only validate if service_name or span_name changed
 					if (hasStepServiceOrSpanNameChanged(lastValidatedSteps, debouncedSteps)) {
-						queryClient.refetchQueries([
-							REACT_QUERY_KEY.VALIDATE_FUNNEL_STEPS,
-							funnel.id,
-							selectedTime,
-						]);
+						queryClient.refetchQueries(validateStepsQueryKey);
 						setLastValidatedSteps(debouncedSteps);
 					}
 				},
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSteps, steps]);
+	}, [
+		debouncedSteps,
+		getUpdatePayload,
+		hasStepServiceOrSpanNameChanged,
+		hasStepsChanged,
+		lastValidatedSteps,
+		queryClient,
+		validateStepsQueryKey,
+	]);
 
 	return {
 		isPopoverOpen,
