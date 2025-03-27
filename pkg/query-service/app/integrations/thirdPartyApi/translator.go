@@ -70,7 +70,18 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "endpoints",
 		GroupBy: getGroupBy([]v3.AttributeKey{
@@ -95,7 +106,18 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "lastseen",
 		GroupBy: getGroupBy([]v3.AttributeKey{
@@ -120,7 +142,18 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "rps",
 		GroupBy: getGroupBy([]v3.AttributeKey{
@@ -155,6 +188,16 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 					Operator: "=",
 					Value:    "true",
 				},
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
 			}, thirdPartyApis.Filters),
 		},
 		Expression: "error_rate",
@@ -182,7 +225,18 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "p99",
 		GroupBy: getGroupBy([]v3.AttributeKey{
@@ -234,7 +288,18 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "endpoints",
 		Disabled:   false,
@@ -263,7 +328,18 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "p99",
 		Disabled:   false,
@@ -285,7 +361,18 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "error_rate",
 		Disabled:   false,
@@ -306,7 +393,18 @@ func BuildDomainInfo(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
-			Items:    getFilterSet([]v3.FilterItem{}, thirdPartyApis.Filters),
+			Items: getFilterSet([]v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.url",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: false,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: v3.FilterOperatorExists,
+					Value:    "",
+				},
+			}, thirdPartyApis.Filters),
 		},
 		Expression: "lastseen",
 		Disabled:   false,

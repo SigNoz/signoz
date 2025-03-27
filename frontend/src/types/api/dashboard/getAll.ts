@@ -108,6 +108,7 @@ export interface IBaseWidget {
 	columnUnits?: ColumnUnit;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
+	isLogScale?: boolean;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
