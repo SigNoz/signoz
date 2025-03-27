@@ -44,7 +44,6 @@ import (
 	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
