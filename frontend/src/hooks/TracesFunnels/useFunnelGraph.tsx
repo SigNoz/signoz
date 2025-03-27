@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { FunnelStepGraphMetrics } from 'api/traceFunnels';
 import { Chart, ChartConfiguration } from 'chart.js';
 import ChangePercentagePill from 'components/ChangePercentagePill/ChangePercentagePill';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 const CHART_CONFIG: Partial<ChartConfiguration> = {
 	type: 'bar',
@@ -65,7 +65,6 @@ interface UseFunnelGraph {
 function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
-	const [columnWidth, setColumnWidth] = useState<number>(0);
 
 	const getPercentageChange = useCallback(
 		(current: number, previous: number): number => {
@@ -147,24 +146,7 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 					},
 				],
 			},
-			options: {
-				...CHART_CONFIG.options,
-				animation: {
-					onComplete: () => {
-						if (!chartRef.current) return;
-
-						// Get the bar widths from the first dataset
-						const meta = chartRef.current.getDatasetMeta(0);
-						const widths = meta.data.map((bar) => {
-							const { width } = bar.getProps(['width']);
-							return width;
-						});
-						if (widths?.length) {
-							setColumnWidth(widths[0] as number);
-						}
-					},
-				},
-			},
+			options: CHART_CONFIG.options,
 		} as ChartConfiguration);
 	}, [data, getStepGraphData]);
 
@@ -180,13 +162,7 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 			const totalSpans = successSpans + errorSpans;
 
 			return (
-				<div
-					key={step}
-					className="funnel-graph__legend-column"
-					style={{
-						width: columnWidth + 50,
-					}}
-				>
+				<div key={step} className="funnel-graph__legend-column">
 					<div className="legend-item">
 						<div className="legend-item__left">
 							<span className="legend-item__dot legend-item--total" />
@@ -214,7 +190,7 @@ function useFunnelGraph({ data }: UseFunnelGraphProps): UseFunnelGraph {
 				</div>
 			);
 		},
-		[columnWidth, getPercentageChange],
+		[getPercentageChange],
 	);
 
 	const { successSteps, errorSteps, totalSteps } = getStepGraphData();

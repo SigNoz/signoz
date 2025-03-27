@@ -10,8 +10,8 @@ import {
 	LinearScale,
 	Title,
 } from 'chart.js';
+import cx from 'classnames';
 import Spinner from 'components/Spinner';
-import { NotFoundContainer } from 'container/GridCardLayout/GridCard/FullView/styles';
 import useFunnelGraph from 'hooks/TracesFunnels/useFunnelGraph';
 import { useFunnelStepsGraphData } from 'hooks/TracesFunnels/useFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
@@ -53,17 +53,23 @@ function FunnelGraph(): JSX.Element {
 		);
 
 	if (!data) {
-		return <NotFoundContainer>No data available</NotFoundContainer>;
+		return (
+			<div className="funnel-graph">
+				<Empty description="No data" />
+			</div>
+		);
 	}
 
 	if (isError) {
 		return (
-			<Empty description="Error fetching data. If the problem persists, please contact support." />
+			<div className="funnel-graph">
+				<Empty description="Error fetching data. If the problem persists, please contact support." />
+			</div>
 		);
 	}
 
 	return (
-		<div className="funnel-graph">
+		<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
 			<div className="funnel-graph__chart-container">
 				<canvas ref={canvasRef} />
 			</div>
