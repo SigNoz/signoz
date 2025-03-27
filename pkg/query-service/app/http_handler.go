@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -141,6 +142,8 @@ type APIHandler struct {
 	AlertmanagerAPI *alertmanager.API
 
 	Signoz *signoz.SigNoz
+
+	Preference preference.Preference
 }
 
 type APIHandlerOpts struct {
@@ -186,6 +189,8 @@ type APIHandlerOpts struct {
 	AlertmanagerAPI *alertmanager.API
 
 	Signoz *signoz.SigNoz
+
+	Preference preference.Preference
 }
 
 // NewAPIHandler returns an APIHandler
@@ -256,6 +261,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
+		Preference:                    opts.Preference,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -3414,11 +3420,11 @@ func (aH *APIHandler) getUserPreference(
 		return
 	}
 
-	preference, apiErr := preferences.GetUserPreference(
+	preference, err := aH.Preference.GetUserPreference(
 		r.Context(), preferenceId, claims.OrgID, claims.UserID,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3434,7 +3440,7 @@ func (aH *APIHandler) updateUserPreference(
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	req := preferences.UpdatePreference{}
+	req := types.UpdatePreference{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 
@@ -3442,9 +3448,9 @@ func (aH *APIHandler) updateUserPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, claims.UserID)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	preference, err := aH.Preference.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, claims.UserID)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3459,11 +3465,11 @@ func (aH *APIHandler) getAllUserPreferences(
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	preference, apiErr := preferences.GetAllUserPreferences(
+	preference, err := aH.Preference.GetAllUserPreferences(
 		r.Context(), claims.OrgID, claims.UserID,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3479,11 +3485,11 @@ func (aH *APIHandler) getOrgPreference(
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	preference, apiErr := preferences.GetOrgPreference(
+	preference, err := aH.Preference.GetOrgPreference(
 		r.Context(), preferenceId, claims.OrgID,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3494,7 +3500,7 @@ func (aH *APIHandler) updateOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	preferenceId := mux.Vars(r)["preferenceId"]
-	req := preferences.UpdatePreference{}
+	req := types.UpdatePreference{}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
@@ -3507,9 +3513,9 @@ func (aH *APIHandler) updateOrgPreference(
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	preference, err := aH.Preference.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 
@@ -3524,11 +3530,11 @@ func (aH *APIHandler) getAllOrgPreferences(
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	preference, apiErr := preferences.GetAllOrgPreferences(
+	preference, err := aH.Preference.GetAllOrgPreferences(
 		r.Context(), claims.OrgID,
 	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 

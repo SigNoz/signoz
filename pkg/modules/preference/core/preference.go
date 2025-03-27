@@ -21,11 +21,8 @@ func NewPreferenceCore(store types.PreferenceStore) preference.Preference {
 	return &core{store: store}
 }
 
-// org preference functions
-func (core *core) GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*types.PreferenceKV, *model.ApiError) {
-	// check if the preference key exists or not
+func (core *core) GetOrgPreference(ctx context.Context, preferenceId string, orgId string) (*types.PreferenceKV, error) {
 	preference, seen := store.PreferenceMap[preferenceId]
-
 	if !seen {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no such preferenceId exists: %s", preferenceId)}
 	}
@@ -58,7 +55,7 @@ func (core *core) GetOrgPreference(ctx context.Context, preferenceId string, org
 	}, nil
 }
 
-func (core *core) UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, orgId string) (*types.PreferenceKV, *model.ApiError) {
+func (core *core) UpdateOrgPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, orgId string) (*types.PreferenceKV, error) {
 	// check if the preference key exists or not
 	preference, seen := store.PreferenceMap[preferenceId]
 	if !seen {
@@ -106,7 +103,7 @@ func (core *core) UpdateOrgPreference(ctx context.Context, preferenceId string, 
 	}, nil
 }
 
-func (core *core) GetAllOrgPreferences(ctx context.Context, orgId string) ([]*types.AllPreferences, *model.ApiError) {
+func (core *core) GetAllOrgPreferences(ctx context.Context, orgId string) ([]*types.AllPreferences, error) {
 	// filter out all the org enabled preferences from the preference variable
 	allOrgPreferences := []*types.AllPreferences{}
 
@@ -152,7 +149,7 @@ func (core *core) GetAllOrgPreferences(ctx context.Context, orgId string) ([]*ty
 }
 
 // user preference functions
-func (core *core) GetUserPreference(ctx context.Context, preferenceId string, orgId string, userId string) (*types.PreferenceKV, *model.ApiError) {
+func (core *core) GetUserPreference(ctx context.Context, preferenceId string, orgId string, userId string) (*types.PreferenceKV, error) {
 	// check if the preference key exists
 	preference, seen := store.PreferenceMap[preferenceId]
 	if !seen {
@@ -201,7 +198,7 @@ func (core *core) GetUserPreference(ctx context.Context, preferenceId string, or
 	}, nil
 }
 
-func (core *core) UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, userId string) (*types.PreferenceKV, *model.ApiError) {
+func (core *core) UpdateUserPreference(ctx context.Context, preferenceId string, preferenceValue interface{}, userId string) (*types.PreferenceKV, error) {
 	// check if the preference id is valid
 	preference, seen := store.PreferenceMap[preferenceId]
 	if !seen {
@@ -249,7 +246,7 @@ func (core *core) UpdateUserPreference(ctx context.Context, preferenceId string,
 	}, nil
 }
 
-func (core *core) GetAllUserPreferences(ctx context.Context, orgId string, userId string) ([]*types.AllPreferences, *model.ApiError) {
+func (core *core) GetAllUserPreferences(ctx context.Context, orgId string, userId string) ([]*types.AllPreferences, error) {
 	allUserPreferences := []*types.AllPreferences{}
 
 	orgPreferences, err := core.store.GetAllOrgPreferences(ctx, orgId)

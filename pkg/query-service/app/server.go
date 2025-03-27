@@ -14,6 +14,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
+	preferencestore "github.com/SigNoz/signoz/pkg/modules/preference/store"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -22,7 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -97,10 +98,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := preferences.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
-		return nil, err
-	}
-
 	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
@@ -150,6 +147,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		}
 		c = cache.NewCache(cacheOpts)
 	}
+
+	preference := preferencecore.NewPreferenceCore(preferencestore.NewStore(serverOptions.SigNoz.SQLStore))
 
 	<-readerReady
 	rm, err := makeRulesManager(
@@ -207,6 +206,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		Signoz:                        serverOptions.SigNoz,
+		Preference:                    preference,
 	})
 	if err != nil {
 		return nil, err
