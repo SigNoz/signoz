@@ -2,18 +2,13 @@ import './FunnelResults.styles.scss';
 
 import Spinner from 'components/Spinner';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { FunnelData } from 'types/api/traceFunnels';
 
 import EmptyFunnelResults from './EmptyFunnelResults';
 import FunnelGraph from './FunnelGraph';
 import OverallMetrics from './OverallMetrics';
 import StepsTransitionResults from './StepsTransitionResults';
 
-interface FunnelResultsProps {
-	funnel: FunnelData;
-}
-
-function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
+function FunnelResults(): JSX.Element {
 	const {
 		validTracesCount,
 		isValidateStepsLoading,
@@ -48,7 +43,7 @@ function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
 		<div className="funnel-results">
 			<OverallMetrics />
 			<FunnelGraph />
-			<StepsTransitionResults funnelId={funnel.id} />
+			<StepsTransitionResults />
 		</div>
 	);
 }

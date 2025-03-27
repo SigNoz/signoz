@@ -13,10 +13,6 @@ export interface StepTransition {
 	label: string;
 }
 
-interface StepsTransitionResultsProps {
-	funnelId: string;
-}
-
 function generateStepTransitions(stepsCount: number): StepTransition[] {
 	return Array.from({ length: stepsCount - 1 }, (_, index) => ({
 		value: `${index + 1}_to_${index + 2}`,
@@ -24,10 +20,8 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 	}));
 }
 
-function StepsTransitionResults({
-	funnelId,
-}: StepsTransitionResultsProps): JSX.Element {
-	const { steps } = useFunnelContext();
+function StepsTransitionResults(): JSX.Element {
+	const { steps, funnelId } = useFunnelContext();
 	const stepTransitions = generateStepTransitions(steps.length);
 	const [selectedTransition, setSelectedTransition] = useState<string>(
 		stepTransitions[0]?.value || '',

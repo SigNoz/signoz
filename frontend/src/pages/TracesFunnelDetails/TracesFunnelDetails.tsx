@@ -33,7 +33,7 @@ function TracesFunnelDetails(): JSX.Element {
 					<FunnelConfiguration funnel={data.payload} />
 				</div>
 				<div className="traces-funnel-details__steps-results">
-					<FunnelResults funnel={data.payload} />
+					<FunnelResults />
 				</div>
 			</div>
 		</FunnelProvider>
