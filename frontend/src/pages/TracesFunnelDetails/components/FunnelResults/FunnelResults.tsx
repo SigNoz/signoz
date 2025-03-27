@@ -1,5 +1,6 @@
 import './FunnelResults.styles.scss';
 
+import Spinner from 'components/Spinner';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { FunnelData } from 'types/api/traceFunnels';
 
@@ -13,7 +14,11 @@ interface FunnelResultsProps {
 }
 
 function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
-	const { steps, validTracesCount } = useFunnelContext();
+	const { steps, validTracesCount, isValidateStepsLoading } = useFunnelContext();
+
+	if (isValidateStepsLoading) {
+		return <Spinner size="large" />;
+	}
 
 	if (steps.some((step) => step.service_name === '' || step.span_name === ''))
 		return <EmptyFunnelResults />;
