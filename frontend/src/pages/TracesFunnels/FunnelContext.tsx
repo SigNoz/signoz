@@ -35,6 +35,7 @@ interface FunnelContextType {
 	handleAddStep: () => void;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
 	handleStepRemoval: (index: number) => void;
+	handleRunFunnel: () => void;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -102,6 +103,25 @@ export function FunnelProvider({
 		interval: selectedTime,
 	});
 
+	const handleRunFunnel = useCallback(async (): Promise<void> => {
+		if (validTracesCount === 0) return;
+		queryClient.refetchQueries([
+			REACT_QUERY_KEY.GET_FUNNEL_OVERVIEW,
+			funnelId,
+			selectedTime,
+		]);
+		queryClient.refetchQueries([
+			REACT_QUERY_KEY.GET_FUNNEL_ERROR_TRACES,
+			funnelId,
+			selectedTime,
+		]);
+		queryClient.refetchQueries([
+			REACT_QUERY_KEY.GET_FUNNEL_SLOW_TRACES,
+			funnelId,
+			selectedTime,
+		]);
+	}, [funnelId, queryClient, selectedTime, validTracesCount]);
+
 	const value = useMemo<FunnelContextType>(
 		() => ({
 			funnelId,
@@ -116,18 +136,20 @@ export function FunnelProvider({
 			handleStepChange: handleStepUpdate,
 			handleAddStep: addNewStep,
 			handleStepRemoval,
+			handleRunFunnel,
 		}),
 		[
-			addNewStep,
-			endTime,
 			funnelId,
-			handleStepRemoval,
-			handleStepUpdate,
-			initialSteps,
-			selectedTime,
 			startTime,
-			steps,
+			endTime,
 			validTracesCount,
+			selectedTime,
+			steps,
+			initialSteps,
+			handleStepUpdate,
+			addNewStep,
+			handleStepRemoval,
+			handleRunFunnel,
 		],
 	);
 

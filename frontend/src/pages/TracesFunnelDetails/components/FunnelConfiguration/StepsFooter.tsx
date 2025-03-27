@@ -22,7 +22,7 @@ function StepsFooter({
 	funnelId,
 	funnelDescription,
 }: StepsFooterProps): JSX.Element {
-	const { validTracesCount } = useFunnelContext();
+	const { validTracesCount, handleRunFunnel } = useFunnelContext();
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
 
 	return (
@@ -45,7 +45,12 @@ function StepsFooter({
 			</div>
 			<div className="steps-footer__right">
 				{funnelDescription ? (
-					<Button type="primary" icon={<SyncOutlined />} />
+					<Button
+						type="primary"
+						disabled={validTracesCount === 0}
+						onClick={handleRunFunnel}
+						icon={<SyncOutlined />}
+					/>
 				) : (
 					<>
 						<Button
@@ -58,6 +63,7 @@ function StepsFooter({
 						</Button>
 						<Button
 							disabled={validTracesCount === 0}
+							onClick={handleRunFunnel}
 							type="primary"
 							className="steps-footer__button steps-footer__button--run"
 							icon={<Play size={16} />}
