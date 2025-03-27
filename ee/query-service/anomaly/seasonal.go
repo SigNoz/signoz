@@ -313,6 +313,9 @@ func (p *BaseSeasonalProvider) getScore(
 	series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, value float64, idx int,
 ) float64 {
 	expectedValue := p.getExpectedValue(series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries, idx)
+	if expectedValue < 0 {
+		expectedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
+	}
 	return (value - expectedValue) / p.getStdDev(weekSeries)
 }
 
