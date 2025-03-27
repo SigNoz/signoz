@@ -1,6 +1,7 @@
 import './FunnelGraph.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
+import { Empty } from 'antd';
 import {
 	BarController,
 	BarElement,
@@ -12,6 +13,8 @@ import {
 	Title,
 } from 'chart.js';
 import ChangePercentagePill from 'components/ChangePercentagePill/ChangePercentagePill';
+import Spinner from 'components/Spinner';
+import { NotFoundContainer } from 'container/GridCardLayout/GridCard/FullView/styles';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Register required components
@@ -28,6 +31,9 @@ interface FunnelGraphProps {
 	data: {
 		[key: string]: number;
 	};
+	isLoading?: boolean;
+	isEmpty?: boolean;
+	isError?: boolean;
 }
 
 interface StepData {
@@ -77,7 +83,12 @@ const CHART_CONFIG: Partial<ChartConfiguration> = {
 	},
 };
 
-function FunnelGraph({ data }: FunnelGraphProps): JSX.Element {
+function FunnelGraph({
+	data,
+	isLoading,
+	isEmpty,
+	isError,
+}: FunnelGraphProps): JSX.Element {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
 	const [columnWidth, setColumnWidth] = useState<number>(0);
@@ -227,6 +238,23 @@ function FunnelGraph({ data }: FunnelGraphProps): JSX.Element {
 
 	const { successSteps, errorSteps, totalSteps } = getStepData();
 
+	if (isLoading)
+		return (
+			<div className="funnel-graph">
+				<Spinner size="default" />
+			</div>
+		);
+
+	if (isEmpty) {
+		return <NotFoundContainer>No data available</NotFoundContainer>;
+	}
+
+	if (isError) {
+		return (
+			<Empty description="Error fetching metrics. If the problem persists, please contact support." />
+		);
+	}
+
 	return (
 		<div className="funnel-graph">
 			<div className="funnel-graph__chart-container">
@@ -250,5 +278,11 @@ function FunnelGraph({ data }: FunnelGraphProps): JSX.Element {
 		</div>
 	);
 }
+
+FunnelGraph.defaultProps = {
+	isLoading: false,
+	isEmpty: false,
+	isError: false,
+};
 
 export default FunnelGraph;
