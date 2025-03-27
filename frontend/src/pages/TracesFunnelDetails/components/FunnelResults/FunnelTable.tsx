@@ -33,6 +33,11 @@ function FunnelTable({
 				dataSource={data}
 				loading={loading}
 				pagination={false}
+				locale={{
+					emptyText: loading ? null : (
+						<div className="funnel-table__no-data-text">No data</div>
+					),
+				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"
 				rowClassName={(_, index): string =>

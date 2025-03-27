@@ -13,9 +13,20 @@ interface FunnelResultsProps {
 }
 
 function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
-	const { steps } = useFunnelContext();
+	const { steps, validTracesCount } = useFunnelContext();
+
 	if (steps.some((step) => step.service_name === '' || step.span_name === ''))
 		return <EmptyFunnelResults />;
+
+	if (validTracesCount === 0) {
+		return (
+			<EmptyFunnelResults
+				title="There are no traces that match the funnel steps."
+				description="Add spans to the funnel steps to start seeing analytics here."
+			/>
+		);
+	}
+
 	return (
 		<div className="funnel-results">
 			<OverallMetrics />
