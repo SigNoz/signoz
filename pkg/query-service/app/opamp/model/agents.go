@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -73,6 +74,18 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection, o
 
 	if ok && agent != nil {
 		return agent, false, nil
+	}
+
+	// This is for single org mode
+	if orgId == "SIGNOZ##DEFAULT##ORG##ID" {
+		err := agents.store.BunDB().NewSelect().
+			Model((*signozTypes.Organization)(nil)).
+			ColumnExpr("id").
+			Limit(1).
+			Scan(context.Background(), &orgId)
+		if err != nil {
+			return nil, false, err
+		}
 	}
 
 	if !ok && orgId == "" {
