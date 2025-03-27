@@ -21,7 +21,7 @@ function FunnelConfiguration({
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
-		isValidateStepsMutationLoading,
+		isValidateStepsLoading,
 	} = useFunnelConfiguration({ funnel });
 
 	return (
@@ -46,7 +46,7 @@ function FunnelConfiguration({
 					funnelId={funnel.id}
 					stepsCount={steps.length}
 					funnelDescription={funnel?.description || ''}
-					isLoading={isValidateStepsMutationLoading}
+					isLoading={isValidateStepsLoading}
 				/>
 			</div>
 		</div>

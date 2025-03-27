@@ -15,7 +15,7 @@ interface UseFunnelConfiguration {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isPopoverOpen: boolean) => void;
 	steps: FunnelStepData[];
-	isValidateStepsMutationLoading: boolean;
+	isValidateStepsLoading: boolean;
 }
 
 // Add this helper function
@@ -59,6 +59,7 @@ export default function useFunnelConfiguration({
 	const {
 		data: validationResponse,
 		isLoading: isValidationLoading,
+		isFetching: isValidationFetching,
 	} = useValidateFunnelSteps();
 
 	// Derived state
@@ -143,6 +144,6 @@ export default function useFunnelConfiguration({
 		isPopoverOpen,
 		setIsPopoverOpen,
 		steps,
-		isValidateStepsMutationLoading: isValidationLoading || false,
+		isValidateStepsLoading: isValidationLoading || isValidationFetching,
 	};
 }
