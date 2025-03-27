@@ -14,14 +14,17 @@ interface FunnelResultsProps {
 }
 
 function FunnelResults({ funnel }: FunnelResultsProps): JSX.Element {
-	const { steps, validTracesCount, isValidateStepsLoading } = useFunnelContext();
+	const {
+		validTracesCount,
+		isValidateStepsLoading,
+		hasIncompleteSteps,
+	} = useFunnelContext();
 
 	if (isValidateStepsLoading) {
 		return <Spinner size="large" />;
 	}
 
-	if (steps.some((step) => step.service_name === '' || step.span_name === ''))
-		return <EmptyFunnelResults />;
+	if (hasIncompleteSteps) return <EmptyFunnelResults />;
 
 	if (validTracesCount === 0) {
 		return (

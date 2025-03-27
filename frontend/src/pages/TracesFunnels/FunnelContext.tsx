@@ -43,6 +43,7 @@ interface FunnelContextType {
 		| ErrorResponse
 		| undefined;
 	isValidateStepsLoading: boolean;
+	hasIncompleteSteps: boolean;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -74,6 +75,11 @@ export function FunnelProvider({
 	const initialSteps = funnel?.steps?.length ? funnel.steps : initialStepsData;
 	const [steps, setSteps] = useState<FunnelStepData[]>(initialSteps);
 
+	// Check if any of the steps do not have service_name or span_name
+	const hasIncompleteSteps = steps.some(
+		(step) => step.service_name === '' || step.span_name === '',
+	);
+
 	const {
 		data: validationResponse,
 		isLoading: isValidationLoading,
@@ -83,6 +89,7 @@ export function FunnelProvider({
 		selectedTime,
 		startTime,
 		endTime,
+		hasIncompleteSteps,
 	});
 
 	const validTracesCount = useMemo(
@@ -163,6 +170,7 @@ export function FunnelProvider({
 			handleRunFunnel,
 			validationResponse,
 			isValidateStepsLoading: isValidationLoading || isValidationFetching,
+			hasIncompleteSteps,
 		}),
 		[
 			funnelId,
@@ -179,6 +187,7 @@ export function FunnelProvider({
 			validationResponse,
 			isValidationLoading,
 			isValidationFetching,
+			hasIncompleteSteps,
 		],
 	);
 
