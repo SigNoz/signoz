@@ -310,6 +310,7 @@ function App(): JSX.Element {
 																/>
 															))}
 
+															<Route exact path="/" render={(): React.ReactNode => null} />
 															<Route path="*" component={NotFound} />
 														</Switch>
 													</Suspense>
