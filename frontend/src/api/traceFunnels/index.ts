@@ -335,3 +335,40 @@ export const getFunnelErrorTraces = async (
 		payload: response.data,
 	};
 };
+
+export interface FunnelStepsPayload {
+	start_time: number;
+	end_time: number;
+}
+
+export interface FunnelStepGraphMetrics {
+	[key: `total_s${number}_spans`]: number;
+	[key: `total_s${number}_errored_spans`]: number;
+}
+
+export interface FunnelStepsResponse {
+	status: string;
+	data: Array<{
+		timestamp: string;
+		data: FunnelStepGraphMetrics;
+	}>;
+}
+
+export const getFunnelSteps = async (
+	funnelId: string,
+	payload: FunnelStepsPayload,
+	signal?: AbortSignal,
+): Promise<SuccessResponse<FunnelStepsResponse> | ErrorResponse> => {
+	const response = await axios.post(
+		`${FUNNELS_BASE_PATH}/${funnelId}/analytics/steps`,
+		payload,
+		{ signal },
+	);
+
+	return {
+		statusCode: 200,
+		error: null,
+		message: '',
+		payload: response.data,
+	};
+};
