@@ -174,7 +174,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 			from %s.%s
 			where tag_key = $%d and (
 				string_value != '' or number_value is not null
-			)
+			) and tag_type != 'logfield'
 			limit %d
 		)`, r.logsDB, r.logsTagAttributeTableV2, idx+1, limit))
 
