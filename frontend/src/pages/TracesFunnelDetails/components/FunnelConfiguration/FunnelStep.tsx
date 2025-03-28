@@ -147,7 +147,6 @@ function FunnelStep({
 				</div>
 				<div className="funnel-step__footer">
 					<div className="error">
-						<div className="error__label">Errors</div>
 						<Switch
 							className="error__switch"
 							size="small"
@@ -156,6 +155,7 @@ function FunnelStep({
 								onStepChange(index, { has_errors: !stepData.has_errors })
 							}
 						/>
+						<div className="error__label">Errors</div>
 					</div>
 					<div className="latency-pointer">
 						<div className="latency-pointer__label">Latency pointer</div>

@@ -105,14 +105,16 @@
 	&__footer {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		border-top: 1px solid var(--bg-slate-500);
 
 		.error {
 			display: flex;
 			align-items: center;
 			padding: 10.5px 12px 10.5px 16px;
-			gap: 50px;
+			gap: 20px;
 			border-right: 1px solid var(--bg-slate-500);
+			width: 50%;
 		}
 		.error__label,
 		.latency-pointer__label {
@@ -123,7 +125,7 @@
 		}
 		.latency-pointer {
 			padding: 10.5px 16px 10.5px 12px;
-			width: 100%;
+			width: 55%;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
