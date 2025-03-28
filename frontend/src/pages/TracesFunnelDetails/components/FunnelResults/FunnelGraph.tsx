@@ -1,6 +1,7 @@
 import './FunnelGraph.styles.scss';
 
-import { Empty } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Empty, Spin } from 'antd';
 import {
 	BarController,
 	BarElement,
@@ -29,9 +30,12 @@ Chart.register(
 
 function FunnelGraph(): JSX.Element {
 	const { funnelId } = useFunnelContext();
-	const { data: stepsData, isLoading, isError } = useFunnelStepsGraphData(
-		funnelId,
-	);
+	const {
+		data: stepsData,
+		isLoading,
+		isFetching,
+		isError,
+	} = useFunnelStepsGraphData(funnelId);
 
 	const data = useMemo(() => stepsData?.payload?.data?.[0]?.data, [
 		stepsData?.payload?.data,
@@ -45,12 +49,13 @@ function FunnelGraph(): JSX.Element {
 		renderLegendItem,
 	} = useFunnelGraph({ data });
 
-	if (isLoading)
+	if (isLoading) {
 		return (
 			<div className="funnel-graph">
 				<Spinner size="default" />
 			</div>
 		);
+	}
 
 	if (!data) {
 		return (
@@ -69,26 +74,27 @@ function FunnelGraph(): JSX.Element {
 	}
 
 	return (
-		<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
-			<div className="funnel-graph__chart-container">
-				<canvas ref={canvasRef} />
+		<Spin spinning={isFetching} indicator={<LoadingOutlined spin />}>
+			<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
+				<div className="funnel-graph__chart-container">
+					<canvas ref={canvasRef} />
+				</div>
+				<div className="funnel-graph__legends">
+					{Array.from({ length: totalSteps }, (_, index) => {
+						const prevTotalSpans =
+							index > 0
+								? successSteps[index - 1] + errorSteps[index - 1]
+								: successSteps[0] + errorSteps[0];
+						return renderLegendItem(
+							index + 1,
+							successSteps[index],
+							errorSteps[index],
+							prevTotalSpans,
+						);
+					})}
+				</div>
 			</div>
-			<div className="funnel-graph__legends">
-				{Array.from({ length: totalSteps }, (_, index) => {
-					const prevTotalSpans =
-						index > 0
-							? successSteps[index - 1] + errorSteps[index - 1]
-							: successSteps[0] + errorSteps[0];
-
-					return renderLegendItem(
-						index + 1,
-						successSteps[index],
-						errorSteps[index],
-						prevTotalSpans,
-					);
-				})}
-			</div>
-		</div>
+		</Spin>
 	);
 }
 
