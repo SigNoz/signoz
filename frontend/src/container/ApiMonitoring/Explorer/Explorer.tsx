@@ -23,8 +23,7 @@ function Explorer(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
 	useEffect(() => {
-		// logEvent('API Monitoring: Landing page visited', {});
-		console.log('uncaught API Monitoring: Landing page visited');
+		logEvent('API Monitoring: Landing page visited', {});
 	}, []);
 
 	const { handleChangeQueryData } = useQueryOperations({
