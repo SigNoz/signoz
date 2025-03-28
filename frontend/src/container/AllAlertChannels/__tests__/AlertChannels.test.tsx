@@ -1,3 +1,4 @@
+import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
 import { allAlertChannels } from 'mocks-server/__mockdata__/alerts';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
@@ -18,6 +19,13 @@ jest.mock('hooks/useNotifications', () => ({
 			error: jest.fn(),
 		},
 	})),
+}));
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
+	}),
 }));
 
 describe('Alert Channels Settings List page', () => {
