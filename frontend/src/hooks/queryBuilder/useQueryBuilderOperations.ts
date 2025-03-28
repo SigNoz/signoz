@@ -9,8 +9,6 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import {
-	metricAggregateOperatorOptions,
-	metricsEmptySpaceAggregateOperatorOptions,
 	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
@@ -23,7 +21,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
-import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -148,14 +145,12 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleMetricAggregateAtributeTypes = useCallback(
 		(aggregateAttribute: BaseAutocompleteData): any => {
-			const newOperators = !isEmpty(aggregateAttribute.type)
-				? getMetricsOperatorsByAttributeType({
-						dataSource: DataSource.METRICS,
-						panelType: panelType || PANEL_TYPES.TIME_SERIES,
-						aggregateAttributeType:
-							(aggregateAttribute.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
-				  })
-				: metricAggregateOperatorOptions;
+			const newOperators = getMetricsOperatorsByAttributeType({
+				dataSource: DataSource.METRICS,
+				panelType: panelType || PANEL_TYPES.TIME_SERIES,
+				aggregateAttributeType:
+					(aggregateAttribute.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
+			});
 
 			switch (aggregateAttribute.type) {
 				case ATTRIBUTE_TYPES.SUM:
@@ -173,7 +168,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
 					break;
 				default:
-					setSpaceAggregationOptions(metricsEmptySpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
 					break;
 			}
 
@@ -199,12 +194,14 @@ export const useQueryOperations: UseQueryOperations = ({
 				if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.SUM) {
 					newQuery.aggregateOperator = MetricAggregateOperator.RATE;
 					newQuery.timeAggregation = MetricAggregateOperator.RATE;
-					newQuery.spaceAggregation = MetricAggregateOperator.SUM;
-				} else {
+				} else if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.GAUGE) {
 					newQuery.aggregateOperator = MetricAggregateOperator.AVG;
 					newQuery.timeAggregation = MetricAggregateOperator.AVG;
-					newQuery.spaceAggregation = MetricAggregateOperator.AVG;
+				} else {
+					newQuery.timeAggregation = '';
 				}
+
+				newQuery.spaceAggregation = '';
 			}
 
 			handleSetQueryData(index, newQuery);
