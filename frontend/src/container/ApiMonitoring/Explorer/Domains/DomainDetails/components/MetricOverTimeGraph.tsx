@@ -7,7 +7,12 @@ function MetricOverTimeGraph({ widget }: { widget: Widgets }): JSX.Element {
 		<div>
 			<Card bordered className="endpoint-details-card">
 				<div className="graph-container">
-					<GridCard widget={widget} isQueryEnabled onDragSelect={(): void => {}} />
+					<GridCard
+						widget={widget}
+						isQueryEnabled
+						onDragSelect={(): void => {}}
+						customOnDragSelect={(): void => {}}
+					/>
 				</div>
 			</Card>
 		</div>
