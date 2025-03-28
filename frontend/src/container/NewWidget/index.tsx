@@ -74,6 +74,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 		selectedRowWidgetId,
 		setSelectedRowWidgetId,
+		columnWidths,
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
@@ -238,8 +239,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				selectedLogFields,
 				selectedTracesFields,
 				isLogScale,
+				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		columnUnits,
 		currentQuery,
@@ -260,6 +263,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		combineHistogram,
 		stackedBarChart,
 		isLogScale,
+		columnWidths,
 	]);
 
 	const closeModal = (): void => {
