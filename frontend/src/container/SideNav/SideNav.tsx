@@ -3,7 +3,7 @@
 import './SideNav.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -75,7 +75,7 @@ function SideNav(): JSX.Element {
 
 	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
 		UserManagementMenuItems[]
-	>([manageLicenseMenuItem]);
+	>([]);
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -88,8 +88,10 @@ function SideNav(): JSX.Element {
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const {
-		isCloudUser: isCloudUserVal,
-		isEECloudUser: isEECloudUserVal,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser,
+		isCommunityEnterpriseUser,
 	} = useGetTenantLicense();
 
 	const { t } = useTranslation('');
@@ -102,11 +104,6 @@ function SideNav(): JSX.Element {
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
-
-	const isEnterprise = licenses?.licenses?.some(
-		(license: License) =>
-			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.ENTERPRISE_PLAN,
-	);
 
 	const onClickSignozCloud = (): void => {
 		window.open(
@@ -201,14 +198,21 @@ function SideNav(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (isCloudUserVal) {
+		if (isCloudUser) {
 			setLicenseTag('Cloud');
-		} else if (isEnterprise) {
+		} else if (isEnterpriseSelfHostedUser) {
 			setLicenseTag('Enterprise');
-		} else {
-			setLicenseTag('Free');
+		} else if (isCommunityEnterpriseUser) {
+			setLicenseTag('Enterprise');
+		} else if (isCommunityUser) {
+			setLicenseTag('Community');
 		}
-	}, [isCloudUserVal, isEnterprise]);
+	}, [
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+		isCommunityUser,
+	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
@@ -279,7 +283,7 @@ function SideNav(): JSX.Element {
 		let updatedUserManagementItems: UserManagementMenuItems[] = [
 			manageLicenseMenuItem,
 		];
-		if (isCloudUserVal || isEECloudUserVal) {
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
 					?.active || false;
@@ -321,20 +325,21 @@ function SideNav(): JSX.Element {
 				onClick: onClickVersionHandler,
 			};
 
-			updatedUserManagementItems = [
-				versionMenuItem,
-				slackSupportMenuItem,
-				manageLicenseMenuItem,
-			];
+			updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
+
+			if (isCommunityEnterpriseUser) {
+				updatedUserManagementItems.push(manageLicenseMenuItem);
+			}
 		}
 		setMenuItems(updatedMenuItems);
 		setUserManagementMenuItems(updatedUserManagementItems);
 	}, [
+		isCommunityEnterpriseUser,
 		currentVersion,
 		featureFlags,
-		isCloudUserVal,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
 		isCurrentVersionError,
-		isEECloudUserVal,
 		isLatestVersion,
 		licenses?.licenses,
 		onClickVersionHandler,
@@ -361,12 +366,31 @@ function SideNav(): JSX.Element {
 						</div>
 
 						{licenseTag && (
-							<div className="license tag nav-item-label">{licenseTag}</div>
+							<Tooltip
+								title={
+									// eslint-disable-next-line no-nested-ternary
+									isCommunityUser
+										? 'You are running the community version of SigNoz. You have to install the Enterprise edition in order enable Enterprise features.'
+										: isCommunityEnterpriseUser
+										? 'You do not have an active license present. Add an active license to enable Enterprise features.'
+										: ''
+								}
+								placement="bottomRight"
+							>
+								<div
+									className={cx(
+										'license tag nav-item-label',
+										isCommunityEnterpriseUser && 'community-enterprise-user',
+									)}
+								>
+									{licenseTag}
+								</div>
+							</Tooltip>
 						)}
 					</div>
 				</div>
 
-				{isCloudUserVal && user?.role !== USER_ROLES.VIEWER && (
+				{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"
@@ -385,7 +409,7 @@ function SideNav(): JSX.Element {
 					</div>
 				)}
 
-				<div className={cx(`nav-wrapper`, isCloudUserVal && 'nav-wrapper-cloud')}>
+				<div className={cx(`nav-wrapper`, isCloudUser && 'nav-wrapper-cloud')}>
 					<div className="primary-nav-items">
 						{menuItems.map((item, index) => (
 							<NavItem

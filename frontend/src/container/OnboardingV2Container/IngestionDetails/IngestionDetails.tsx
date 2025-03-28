@@ -63,7 +63,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		isLoading: isLoadingDeploymentsData,
 		isFetching: isFetchingDeploymentsData,
 		isError: isDeploymentsDataError,
-	} = useGetDeploymentsData();
+	} = useGetDeploymentsData(true);
 
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
