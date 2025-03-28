@@ -20,6 +20,10 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
+jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+}));
+
 describe('Should check if the edit alert channel is properly displayed ', () => {
 	beforeEach(() => {
 		render(<EditAlertChannels initialValue={editAlertChannelInitialValue} />);

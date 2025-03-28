@@ -1,4 +1,5 @@
 import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +12,20 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="api_url" label={t('field_webhook_url')}>
+			<Form.Item
+				name="api_url"
+				label={t('field_webhook_url')}
+				tooltip={{
+					title: (
+						<MarkdownRenderer
+							markdownContent={t('tooltip_slack_url')}
+							variables={{}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+			>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
