@@ -44,7 +44,10 @@ import { EditMenuAction, ViewMenuAction } from './config';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
-import { removeUndefinedValuesFromLayout } from './utils';
+import {
+	hasColumnWidthsChanged,
+	removeUndefinedValuesFromLayout,
+} from './utils';
 import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
@@ -68,6 +71,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setDashboardQueryRangeCalled,
 		setSelectedRowWidgetId,
 		isDashboardFetching,
+		columnWidths,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -162,6 +166,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			logEventCalledRef.current = true;
 		}
 	}, [data]);
+
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
@@ -171,6 +176,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				...selectedDashboard.data,
 				panelMap: { ...currentPanelMap },
 				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				widgets: selectedDashboard?.data?.widgets?.map((widget) => {
+					if (columnWidths?.[widget.id]) {
+						return {
+							...widget,
+							columnWidths: columnWidths[widget.id],
+						};
+					}
+					return widget;
+				}),
 			},
 			uuid: selectedDashboard.uuid,
 		};
@@ -227,20 +241,31 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
+			isDashboardLocked ||
+			!saveLayoutPermission ||
+			updateDashboardMutation.isLoading ||
+			isDashboardFetching
+		) {
+			return;
+		}
+
+		const shouldSaveLayout =
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
-			!isEqual(layouts, dashboardLayout) &&
-			!isDashboardLocked &&
-			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading &&
-			!isDashboardFetching
-		) {
+			!isEqual(layouts, dashboardLayout);
+
+		const shouldSaveColumnWidths =
+			dashboardLayout &&
+			Array.isArray(dashboardLayout) &&
+			dashboardLayout.length > 0 &&
+			hasColumnWidthsChanged(columnWidths, selectedDashboard);
+
+		if (shouldSaveLayout || shouldSaveColumnWidths) {
 			onSaveHandler();
 		}
-
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dashboardLayout]);
+	}, [dashboardLayout, columnWidths]);
 
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');
