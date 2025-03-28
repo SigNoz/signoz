@@ -18,6 +18,10 @@ import { render, screen } from 'tests/test-utils';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
+jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+}));
+
 describe('Create Alert Channel (Normal User)', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
