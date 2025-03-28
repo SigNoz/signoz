@@ -33,6 +33,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 					overlayInnerStyle: { maxWidth: 400 },
 					placement: 'right',
 				}}
+				required
 			>
 				<Input
 					onChange={handleInputChange('api_key')}
