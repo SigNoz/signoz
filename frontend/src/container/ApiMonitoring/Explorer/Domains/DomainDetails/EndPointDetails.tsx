@@ -4,6 +4,8 @@ import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
 	getEndPointDetailsQueryPayload,
+	getLatencyOverTimeWidgetData,
+	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -28,10 +30,12 @@ function EndPointDetails({
 	domainName,
 	endPointName,
 	setSelectedEndPointName,
+	domainListFilters,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
+	domainListFilters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -102,8 +106,6 @@ function EndPointDetails({
 	const [
 		endPointMetricsDataQuery,
 		endPointStatusCodeDataQuery,
-		endPointRateOverTimeDataQuery,
-		endPointLatencyOverTimeDataQuery,
 		endPointDropDownDataQuery,
 		endPointDependentServicesDataQuery,
 		endPointStatusCodeBarChartsDataQuery,
@@ -116,8 +118,6 @@ function EndPointDetails({
 			endPointDetailsDataQueries[3],
 			endPointDetailsDataQueries[4],
 			endPointDetailsDataQueries[5],
-			endPointDetailsDataQueries[6],
-			endPointDetailsDataQueries[7],
 		],
 		[endPointDetailsDataQueries],
 	);
@@ -125,6 +125,20 @@ function EndPointDetails({
 	const { endpoint, port } = useMemo(
 		() => extractPortAndEndpoint(endPointName),
 		[endPointName],
+	);
+
+	const [rateOverTimeWidget, latencyOverTimeWidget] = useMemo(
+		() => [
+			getRateOverTimeWidgetData(domainName, endPointName, {
+				items: [...domainListFilters.items, ...filters.items],
+				op: filters.op,
+			}),
+			getLatencyOverTimeWidgetData(domainName, endPointName, {
+				items: [...domainListFilters.items, ...filters.items],
+				op: filters.op,
+			}),
+		],
+		[domainName, endPointName, filters, domainListFilters],
 	);
 
 	return (
@@ -170,18 +184,14 @@ function EndPointDetails({
 				endPointStatusCodeLatencyBarChartsDataQuery={
 					endPointStatusCodeLatencyBarChartsDataQuery
 				}
+				domainName={domainName}
+				endPointName={endPointName}
+				domainListFilters={domainListFilters}
+				filters={filters}
 			/>
 			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
-			<MetricOverTimeGraph
-				metricOverTimeDataQuery={endPointRateOverTimeDataQuery}
-				widgetInfoIndex={0}
-				endPointName={endPointName}
-			/>
-			<MetricOverTimeGraph
-				metricOverTimeDataQuery={endPointLatencyOverTimeDataQuery}
-				widgetInfoIndex={1}
-				endPointName={endPointName}
-			/>
+			<MetricOverTimeGraph widget={rateOverTimeWidget} />
+			<MetricOverTimeGraph widget={latencyOverTimeWidget} />
 		</div>
 	);
 }

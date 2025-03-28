@@ -12,7 +12,7 @@ import { v4 } from 'uuid';
 
 import { extractQueryNamesFromExpression } from './utils';
 
-type GraphClickMetaData = {
+export type GraphClickMetaData = {
 	[key: string]: string | boolean;
 	queryName: string;
 	inFocusOrNot: boolean;
@@ -66,6 +66,10 @@ const buildQueryFilters = (
 export const buildFilters = (
 	query: Query,
 	requestData?: GraphClickMetaData,
+	createGroupByFiltersUtil?: (
+		groupBy: BaseAutocompleteData[],
+		requestData: GraphClickMetaData,
+	) => TagFilterItem[],
 ): {
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 } => {
@@ -77,7 +81,9 @@ export const buildFilters = (
 
 		// Direct query match
 		if (queryData) {
-			const groupByFilters = createGroupByFilters(queryData.groupBy, requestData);
+			const groupByFilters = createGroupByFiltersUtil
+				? createGroupByFiltersUtil(queryData.groupBy, requestData)
+				: createGroupByFilters(queryData.groupBy, requestData);
 			return {
 				[requestData.queryName]: buildQueryFilters(queryData, groupByFilters),
 			};
@@ -100,7 +106,9 @@ export const buildFilters = (
 		} = {};
 
 		filteredQueryData.forEach((q) => {
-			const groupByFilters = createGroupByFilters(q.groupBy, requestData);
+			const groupByFilters = createGroupByFiltersUtil
+				? createGroupByFiltersUtil(q.groupBy, requestData)
+				: createGroupByFilters(q.groupBy, requestData);
 			returnObject[q.queryName] = buildQueryFilters(q, groupByFilters);
 		});
 
@@ -114,13 +122,19 @@ export const buildFilters = (
  * Custom hook for handling navigation to explorer pages with query data
  * @returns A function to handle navigation with query processing
  */
-function useNavigateToExplorerPages(): (
+function useNavigateToExplorerPages(props?: {
+	createGroupByFiltersUtil?: (
+		groupBy: BaseAutocompleteData[],
+		requestData: GraphClickMetaData,
+	) => TagFilterItem[];
+}): (
 	props: NavigateToExplorerPagesProps,
 ) => Promise<{
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 }> {
 	const { selectedDashboard } = useDashboard();
 	const { notifications } = useNotifications();
+	const { createGroupByFiltersUtil } = props ?? {};
 
 	return useCallback(
 		async ({ widget, requestData }: NavigateToExplorerPagesProps) => {
@@ -129,6 +143,7 @@ function useNavigateToExplorerPages(): (
 				return buildFilters(
 					widget.query,
 					requestData ?? { queryName: '', inFocusOrNot: false },
+					createGroupByFiltersUtil,
 				);
 			} catch (error) {
 				notifications.error({
