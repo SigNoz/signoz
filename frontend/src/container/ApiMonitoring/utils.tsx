@@ -143,7 +143,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 	{
 		title: (
 			<div>
-				Rate <span className="round-metric-tag">/s</span>
+				Rate <span className="round-metric-tag">ops/s</span>
 			</div>
 		),
 		dataIndex: 'rate',
