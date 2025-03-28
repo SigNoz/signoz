@@ -145,10 +145,11 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	// todo(nitya): remove this once we fix agents in multitenancy
 	defaultOrgID, err := ic.GetDefaultOrgID(ctx)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get default org ID")
+		// we don't want to fail the request if we can't get the default org ID
+		// we will just return an empty list of pipelines
+		zap.L().Warn("failed to get default org ID", zap.Error(err))
+		return result, nil
 	}
-
-	fmt.Println("defaultOrgID", defaultOrgID)
 
 	if version >= 0 {
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, defaultOrgID, version)
