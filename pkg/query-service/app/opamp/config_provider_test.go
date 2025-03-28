@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/rawbytes"
@@ -20,6 +21,9 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	require := require.New(t)
 
 	tb := newTestbed(t)
+
+	orgID, err := utils.GetTestOrgId(tb.sqlStore)
+	require.Nil(err)
 
 	require.Equal(
 		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
@@ -36,12 +40,23 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
 	agent1Id := "testAgent1"
+	// get orgId from the db
 	tb.opampServer.OnMessage(
 		agent1Conn,
 		&protobufs.AgentToServer{
 			InstanceUid: agent1Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: initialAgentConf(),
+			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
+						},
+					},
+				},
 			},
 		},
 	)
@@ -65,6 +80,16 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			InstanceUid: agent2Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: initialAgentConf(),
+			},
+			AgentDescription: &protobufs.AgentDescription{
+				IdentifyingAttributes: []*protobufs.KeyValue{
+					{
+						Key: "orgId",
+						Value: &protobufs.AnyValue{
+							Value: &protobufs.AnyValue_StringValue{StringValue: orgID},
+						},
+					},
+				},
 			},
 		},
 	)
@@ -162,22 +187,26 @@ type testbed struct {
 	testConfigProvider *MockAgentConfigProvider
 	opampServer        *Server
 	t                  *testing.T
+	sqlStore           sqlstore.SQLStore
 }
 
 func newTestbed(t *testing.T) *testbed {
 	testDB := utils.NewQueryServiceDBForTests(t)
-	_, err := model.InitDB(testDB.SQLxDB())
-	if err != nil {
-		t.Fatalf("could not init opamp model: %v", err)
-	}
-
+	model.InitDB(testDB)
 	testConfigProvider := NewMockAgentConfigProvider()
 	opampServer := InitializeServer(nil, testConfigProvider)
+
+	// create a test org
+	err := utils.CreateTestOrg(t, testDB)
+	if err != nil {
+		t.Fatalf("could not create test org: %v", err)
+	}
 
 	return &testbed{
 		testConfigProvider: testConfigProvider,
 		opampServer:        opampServer,
 		t:                  t,
+		sqlStore:           testDB,
 	}
 }
 

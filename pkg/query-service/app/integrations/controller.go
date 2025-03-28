@@ -87,7 +87,7 @@ type InstallIntegrationRequest struct {
 }
 
 func (c *Controller) Install(
-	ctx context.Context, req *InstallIntegrationRequest,
+	ctx context.Context, orgId string, req *InstallIntegrationRequest,
 ) (*IntegrationsListItem, *model.ApiError) {
 	res, apiErr := c.mgr.InstallIntegration(
 		ctx, req.IntegrationId, req.Config,
@@ -104,7 +104,7 @@ type UninstallIntegrationRequest struct {
 }
 
 func (c *Controller) Uninstall(
-	ctx context.Context, req *UninstallIntegrationRequest,
+	ctx context.Context, orgId string, req *UninstallIntegrationRequest,
 ) *model.ApiError {
 	if len(req.IntegrationId) < 1 {
 		return model.BadRequest(fmt.Errorf(

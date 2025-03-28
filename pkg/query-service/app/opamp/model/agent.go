@@ -7,33 +7,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
-	"github.com/open-telemetry/opamp-go/server/types"
+	opampTypes "github.com/open-telemetry/opamp-go/server/types"
 )
-
-type AgentStatus int
-
-const (
-	AgentStatusUnknown AgentStatus = iota
-	AgentStatusConnected
-	AgentStatusDisconnected
-)
-
-// set in agent description when agent is capable of supporting
-// lb exporter configuration. values: 1 (true) or 0 (false)
-const lbExporterFlag = "capabilities.lbexporter"
 
 type Agent struct {
-	ID              string      `json:"agentId" yaml:"agentId" db:"agent_id"`
-	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" db:"started_at"`
-	TerminatedAt    time.Time   `json:"terminatedAt" yaml:"terminatedAt" db:"terminated_at"`
-	EffectiveConfig string      `json:"effectiveConfig" yaml:"effectiveConfig" db:"effective_config"`
-	CurrentStatus   AgentStatus `json:"currentStatus" yaml:"currentStatus" db:"current_status"`
-	remoteConfig    *protobufs.AgentRemoteConfig
-	Status          *protobufs.AgentToServer
+	types.StorableAgent
+	remoteConfig *protobufs.AgentRemoteConfig
+	Status       *protobufs.AgentToServer
 
 	// can this agent be load balancer
 	CanLB bool
@@ -41,13 +28,18 @@ type Agent struct {
 	// is this agent setup as load balancer
 	IsLb bool
 
-	conn      types.Connection
+	conn      opampTypes.Connection
 	connMutex sync.Mutex
 	mux       sync.RWMutex
+	store     sqlstore.SQLStore
 }
 
-func New(ID string, conn types.Connection) *Agent {
-	return &Agent{ID: ID, StartedAt: time.Now(), CurrentStatus: AgentStatusConnected, conn: conn}
+// set in agent description when agent is capable of supporting
+// lb exporter configuration. values: 1 (true) or 0 (false)
+const lbExporterFlag = "capabilities.lbexporter"
+
+func New(store sqlstore.SQLStore, orgID string, ID string, conn opampTypes.Connection) *Agent {
+	return &Agent{StorableAgent: types.StorableAgent{OrgID: orgID, Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}, StartedAt: time.Now(), CurrentStatus: types.AgentStatusConnected}, conn: conn, store: store}
 }
 
 // Upsert inserts or updates the agent in the database.
@@ -55,17 +47,13 @@ func (agent *Agent) Upsert() error {
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 
-	_, err := db.NamedExec(`INSERT OR REPLACE INTO agents (
-		agent_id,
-		started_at,
-		effective_config,
-		current_status
-	) VALUES (
-		:agent_id,
-		:started_at,
-		:effective_config,
-		:current_status
-	)`, agent)
+	_, err := agent.store.BunDB().NewInsert().
+		Model(&agent.StorableAgent).
+		On("CONFLICT (org_id, id) DO UPDATE").
+		Set("started_at = EXCLUDED.started_at").
+		Set("effective_config = EXCLUDED.effective_config").
+		Set("current_status = EXCLUDED.current_status").
+		Exec(context.Background())
 	if err != nil {
 		return err
 	}
@@ -135,11 +123,11 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			// todo: need to address multiple agent scenario here
 			// for now, the first response will be sent back to the UI
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED {
-				onConfigSuccess(agent.ID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
+				onConfigSuccess(agent.OrgID, agent.ID.StringValue(), string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
 			}
 
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED {
-				onConfigFailure(agent.ID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
+				onConfigFailure(agent.OrgID, agent.ID.StringValue(), string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
 			}
 		}
 	}
@@ -269,7 +257,7 @@ func (agent *Agent) processStatusUpdate(
 		agent.SendToAgent(response)
 
 		ListenToConfigUpdate(
-			agent.ID,
+			agent.ID.StringValue(),
 			string(response.RemoteConfig.ConfigHash),
 			configProvider.ReportConfigDeploymentStatus,
 		)
@@ -277,9 +265,9 @@ func (agent *Agent) processStatusUpdate(
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
-	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
+	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.EffectiveConfig))
 	if err != nil {
-		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.ID), zap.Error(err))
+		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.ID.StringValue()), zap.Error(err))
 		return false
 	}
 
