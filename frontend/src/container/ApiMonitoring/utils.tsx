@@ -165,21 +165,26 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		sorter: false,
 		align: 'right',
 		className: `column`,
-		render: (errorRate: number): React.ReactNode => (
-			<Progress
-				status="active"
-				percent={Number((errorRate * 100).toFixed(1))}
-				strokeLinecap="butt"
-				size="small"
-				strokeColor={((): string => {
-					const errorRatePercent = Number((errorRate * 100).toFixed(1));
-					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar error-rate"
-			/>
-		),
+		render: (errorRate: number | string): React.ReactNode => {
+			if (errorRate === 'n/a' || errorRate === '-') {
+				return '-';
+			}
+			return (
+				<Progress
+					status="active"
+					percent={Number(((errorRate as number) * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): string => {
+						const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
+						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar error-rate"
+				/>
+			);
+		},
 	},
 	{
 		title: (
@@ -256,10 +261,10 @@ export const formatDataForTable = (
 ): APIDomainsRowData[] =>
 	data?.map((domain) => ({
 		key: v4(),
-		domainName: domain.data[domainNameKey] || '',
-		endpointCount: domain.data.endpoints,
-		rate: domain.data.rps,
-		errorRate: domain.data.error_rate,
+		domainName: domain?.data[domainNameKey] || '-',
+		endpointCount: domain?.data?.endpoints || '-',
+		rate: domain.data.rps || '-',
+		errorRate: domain.data.error_rate || '-',
 		latency:
 			domain.data.p99 === 'n/a'
 				? '-'
@@ -486,7 +491,6 @@ export const extractPortAndEndpoint = (
 	}
 };
 
-// Add icons in the below column headers
 export const getEndPointsColumnsConfig = (
 	isGroupedByAttribute: boolean,
 	expandedRowKeys: React.Key[],
@@ -594,7 +598,7 @@ export const formatEndPointsDataForTable = (
 			);
 			return {
 				key: v4(),
-				endpointName: (endpoint.data['http.url'] as string) || '',
+				endpointName: (endpoint.data['http.url'] as string) || '-',
 				port,
 				callCount: endpoint.data.A || '-',
 				latency:
@@ -656,7 +660,7 @@ export const createFiltersForSelectedRowData = (
 				type: null,
 			},
 			op: '=',
-			value: groupedByMeta[key],
+			value: groupedByMeta[key] || '',
 			id: key,
 		})),
 	);
@@ -1617,7 +1621,7 @@ interface EndPointMetricsData {
 interface EndPointStatusCodeData {
 	key: string;
 	statusCode: string;
-	count: number;
+	count: number | string;
 	p99Latency: number | string;
 }
 
@@ -1640,8 +1644,8 @@ export const getFormattedEndPointStatusCodeData = (
 ): EndPointStatusCodeData[] =>
 	data?.map((row) => ({
 		key: v4(),
-		statusCode: row.data.response_status_code,
-		count: row.data.A,
+		statusCode: row.data.response_status_code || '-',
+		count: row.data.A || '-',
 		p99Latency:
 			row.data.B === 'n/a' ? '-' : Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
 	}));
@@ -1696,8 +1700,8 @@ export const getFormattedEndPointDropDownData = (
 ): EndPointDropDownData[] =>
 	data?.map((row) => ({
 		key: v4(),
-		label: row.data['http.url'],
-		value: row.data['http.url'],
+		label: row.data['http.url'] || '-',
+		value: row.data['http.url'] || '-',
 	}));
 
 interface DependentServicesResponseRow {
@@ -1714,6 +1718,7 @@ interface DependentServicesData {
 	percentage: number;
 }
 
+// Discuss once about type safety of this function
 export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
 ): DependentServicesData[] => {
