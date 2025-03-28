@@ -50,6 +50,7 @@ function WidgetGraphComponent({
 	setRequestData,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	openTracesButton,
 	onOpenTraceBtnClick,
@@ -327,6 +328,7 @@ function WidgetGraphComponent({
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
 					onClickHandler={onClickHandler ?? graphClickHandler}
+					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 				/>
 			</Modal>
