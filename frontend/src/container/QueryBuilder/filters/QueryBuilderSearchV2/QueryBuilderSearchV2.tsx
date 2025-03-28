@@ -90,6 +90,7 @@ interface QueryBuilderSearchV2Props {
 	hardcodedAttributeKeys?: BaseAutocompleteData[];
 	hasPopupContainer?: boolean;
 	rootClassName?: string;
+	maxTagCount?: number | 'responsive';
 }
 
 export interface Option {
@@ -125,6 +126,7 @@ function QueryBuilderSearchV2(
 		hardcodedAttributeKeys,
 		hasPopupContainer,
 		rootClassName,
+		maxTagCount,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -917,6 +919,8 @@ function QueryBuilderSearchV2(
 				ref={selectRef}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
 				showSearch
@@ -1007,6 +1011,7 @@ QueryBuilderSearchV2.defaultProps = {
 	hasPopupContainer: true,
 	rootClassName: '',
 	hardcodedAttributeKeys: undefined,
+	maxTagCount: undefined,
 };
 
 export default QueryBuilderSearchV2;
