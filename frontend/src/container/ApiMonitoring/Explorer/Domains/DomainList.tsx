@@ -149,6 +149,7 @@ function DomainList({
 					handleClose={(): void => {
 						setSelectedDomainIndex(-1);
 					}}
+					domainListFilters={query?.filters}
 				/>
 			)}
 		</section>
