@@ -1,0 +1,118 @@
+linters:
+  enable:
+    - decorder
+    - depguard
+    - errcheck
+    - errorlint
+    - exportloopref
+    - exhaustive
+    - gci
+    - gocritic
+    - gofmt
+    - goimports
+    - gosec
+    - govet
+    - misspell
+    - predeclared
+    - reassign
+    - revive
+    - staticcheck
+    - tenv
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+
+run:
+  concurrency: 4
+  timeout: 20m
+  issues-exit-code: 1
+  tests: true
+  exclude-dirs:
+    - third_party
+    - local
+    - cmd/otelcontribcol
+    - cmd/oteltestbedcol
+  exclude-dirs-use-default: false
+  skip-files:
+  modules-download-mode: readonly
+
+output:
+  formats: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/open-telemetry/opentelemetry-collector-contrib)
+
+  govet:
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    enable-all: true
+    disable:
+      - fieldalignment
+      - loopclosure
+
+  revive:
+    min-confidence: 0.8
+
+  gofmt:
+    simplify: true
+    rewrite-rules:
+    - pattern: interface{}
+      replacement: any
+
+  goimports:
+    local-prefixes: github.com/open-telemetry/opentelemetry-collector-contrib
+
+  misspell:
+    locale: US
+    ignore-words:
+      - cancelled
+      - metre
+      - meter
+      - metres
+      - kilometre
+      - kilometres
+
+  depguard:
+    rules:
+      denied-deps:
+        deny:
+          - pkg: go.uber.org/atomic
+            desc: "Use 'sync/atomic' instead of go.uber.org/atomic"
+          - pkg: github.com/pkg/errors
+            desc: "Use 'errors' or 'fmt' instead of github.com/pkg/errors"
+          - pkg: github.com/hashicorp/go-multierror
+            desc: "Use go.uber.org/multierr instead of github.com/hashicorp/go-multierror"
+      ignore-in-test:
+        deny:
+          - pkg: go.opentelemetry.io/proto
+            desc: "Use go.opentelemetry.io/collector/pdata instead"
+        files:
+          - "!**/*_test.go"
+
+  exhaustive:
+    explicit-exhaustive-switch: true
+    ignore-enum-members: "pmetric.MetricTypeEmpty"
+
+  predeclared:
+    ignore: copy
+
+issues:
+  exclude-rules:
+    - text: "G404:"
+      linters:
+        - gosec
+    - text: "G402:"
+      linters:
+        - gosec
