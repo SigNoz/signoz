@@ -49,7 +49,7 @@
 			}
 
 			.steps-content {
-				height: 490px;
+				height: 500px;
 			}
 		}
 	}
@@ -109,8 +109,17 @@
 		line-height: 24px;
 	}
 	.funnel-item {
-		&__actions-popover {
-			visibility: hidden;
+		padding: 8px 16px 12px;
+		&,
+		&:first-child {
+			border-radius: 6px;
+		}
+
+		&__header {
+			line-height: 20px;
+		}
+		&__details {
+			line-height: 18px;
 		}
 	}
 
