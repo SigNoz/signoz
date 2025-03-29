@@ -129,20 +129,6 @@ func (r *Repo) getPipelinesByVersion(
 	return gettablePipelines, errors
 }
 
-func (r *Repo) GetDefaultOrgID(ctx context.Context) (string, *model.ApiError) {
-	var orgs []types.Organization
-	err := r.sqlStore.BunDB().NewSelect().
-		Model(&orgs).
-		Scan(ctx)
-	if err != nil {
-		return "", model.InternalError(errors.Wrap(err, "failed to get default org ID"))
-	}
-	if len(orgs) == 0 {
-		return "", model.InternalError(errors.New("no orgs found"))
-	}
-	return orgs[0].ID, nil
-}
-
 // GetPipelines returns pipeline and errors (if any)
 func (r *Repo) GetPipeline(
 	ctx context.Context, orgID string, id string,

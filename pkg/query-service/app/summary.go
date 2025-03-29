@@ -89,13 +89,13 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params, apiError := explorer.ParseTreeMapMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing heatmap metric params", zap.Error(apiError.Err))
+		zap.L().Error("error parsing tree map metric params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
 	result, apiError := aH.SummaryService.GetMetricsTreemap(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting heatmap data", zap.Error(apiError.Err))
+		zap.L().Error("error getting tree map data", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}

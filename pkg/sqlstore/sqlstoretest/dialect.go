@@ -40,3 +40,7 @@ func (dialect *dialect) UpdatePrimaryKey(ctx context.Context, bun bun.IDB, oldMo
 func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, reference string, cb func(context.Context) error) error {
 	return nil
 }
+
+func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
+	return false, nil
+}

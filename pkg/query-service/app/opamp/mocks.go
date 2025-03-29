@@ -67,7 +67,7 @@ func (ta *MockAgentConfigProvider) HasRecommendations() bool {
 }
 
 // AgentConfigProvider interface
-func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
+func (ta *MockAgentConfigProvider) RecommendAgentConfig(orgId string, baseConfYaml []byte) (
 	[]byte, string, error,
 ) {
 	if len(ta.ZPagesEndpoint) < 1 {
@@ -92,6 +92,7 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
 
 // AgentConfigProvider interface
 func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
+	orgId string,
 	agentId string,
 	configId string,
 	err error,
