@@ -207,7 +207,7 @@ export const PasswordReset = Loadable(
 export const SomethingWentWrong = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ErrorBoundaryFallback" */ 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback'
+			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
 		),
 );
 
@@ -298,4 +298,11 @@ export const MetricsExplorer = Loadable(
 
 export const ApiMonitoring = Loadable(
 	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
+);
+
+export const DynamicVariableTest = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "DynamicVariableTest" */ 'pages/DynamicVariableTest'
+		),
 );
