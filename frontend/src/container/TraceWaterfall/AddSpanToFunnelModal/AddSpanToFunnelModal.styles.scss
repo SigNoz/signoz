@@ -108,6 +108,11 @@
 		font-weight: 500;
 		line-height: 24px;
 	}
+	.funnel-item {
+		&__actions-popover {
+			visibility: hidden;
+		}
+	}
 
 	// List section
 	&__list {
@@ -122,10 +127,6 @@
 
 				&__details {
 					margin-top: 8px;
-				}
-
-				&__actions-popover {
-					visibility: hidden;
 				}
 			}
 		}
