@@ -17,13 +17,15 @@ interface TracesFunnelsContentRendererProps {
 	isLoading: boolean;
 	isError: boolean;
 	data: FunnelData[];
-	onCreateFunnel: () => void;
+	onCreateFunnel?: () => void;
+	onFunnelClick?: (funnel: FunnelData) => void;
 }
-function TracesFunnelsContentRenderer({
+export function TracesFunnelsContentRenderer({
 	isLoading,
 	isError,
 	data,
 	onCreateFunnel,
+	onFunnelClick,
 }: TracesFunnelsContentRendererProps): JSX.Element {
 	if (isLoading) {
 		return (
@@ -49,12 +51,17 @@ function TracesFunnelsContentRenderer({
 		return <div>Something went wrong</div>;
 	}
 
-	if (data.length === 0) {
+	if (data.length === 0 && onCreateFunnel) {
 		return <FunnelsEmptyState onCreateFunnel={onCreateFunnel} />;
 	}
 
-	return <FunnelsList data={data} />;
+	return <FunnelsList data={data} onFunnelClick={onFunnelClick} />;
 }
+
+TracesFunnelsContentRenderer.defaultProps = {
+	onCreateFunnel: undefined,
+	onFunnelClick: undefined,
+};
 
 function TracesFunnels(): JSX.Element {
 	const { searchQuery, handleSearch } = useHandleTraceFunnelsSearch();

@@ -40,9 +40,9 @@ import {
 } from 'types/api/traceFunnels';
 
 export const useFunnelsList = ({
-	searchQuery,
+	searchQuery = '',
 }: {
-	searchQuery: string;
+	searchQuery?: string;
 }): UseQueryResult<SuccessResponse<FunnelData[]> | ErrorResponse, unknown> =>
 	useQuery({
 		queryKey: [REACT_QUERY_KEY.GET_FUNNELS_LIST, searchQuery],
@@ -52,7 +52,7 @@ export const useFunnelsList = ({
 export const useFunnelDetails = ({
 	funnelId,
 }: {
-	funnelId: string;
+	funnelId?: string;
 }): UseQueryResult<SuccessResponse<FunnelData> | ErrorResponse, unknown> =>
 	useQuery({
 		queryKey: [REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnelId],

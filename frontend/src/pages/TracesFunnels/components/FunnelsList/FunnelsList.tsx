@@ -12,16 +12,20 @@ import FunnelItemPopover from './FunnelItemPopover';
 
 interface FunnelListItemProps {
 	funnel: FunnelData;
+	onFunnelClick?: (funnel: FunnelData) => void;
 }
 
-function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
+export function FunnelListItem({
+	funnel,
+	onFunnelClick,
+}: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
 		funnelId: funnel.id,
 	});
 
-	return (
-		<Link to={funnelDetailsLink} className="funnel-item">
+	const content = (
+		<>
 			<div className="funnel-item__header">
 				<div className="funnel-item__title">
 					<div>{funnel.funnel_name}</div>
@@ -52,22 +56,49 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 					<div>{funnel.user}</div>
 				</div>
 			</div>
+		</>
+	);
+
+	return onFunnelClick ? (
+		<button
+			type="button"
+			className="funnel-item"
+			onClick={(): void => onFunnelClick(funnel)}
+		>
+			{content}
+		</button>
+	) : (
+		<Link to={funnelDetailsLink} className="funnel-item">
+			{content}
 		</Link>
 	);
 }
 
+FunnelListItem.defaultProps = {
+	onFunnelClick: undefined,
+};
+
 interface FunnelsListProps {
 	data: FunnelData[];
+	onFunnelClick?: (funnel: FunnelData) => void;
 }
 
-function FunnelsList({ data }: FunnelsListProps): JSX.Element {
+function FunnelsList({ data, onFunnelClick }: FunnelsListProps): JSX.Element {
 	return (
 		<div className="funnels-list">
 			{data.map((funnel) => (
-				<FunnelListItem key={funnel.id} funnel={funnel} />
+				<FunnelListItem
+					key={funnel.id}
+					funnel={funnel}
+					onFunnelClick={onFunnelClick}
+				/>
 			))}
 		</div>
 	);
 }
+
+FunnelsList.defaultProps = {
+	onFunnelClick: undefined,
+};
 
 export default FunnelsList;
