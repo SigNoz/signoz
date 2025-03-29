@@ -55,7 +55,7 @@ export const getFunnelsList = async ({
 };
 
 export const getFunnelById = async (
-	funnelId: string,
+	funnelId?: string,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.get(
 		`${FUNNELS_BASE_PATH}/get/${funnelId}`,

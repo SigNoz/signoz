@@ -34,7 +34,7 @@ interface FunnelContextType {
 	steps: FunnelStepData[];
 	setSteps: Dispatch<SetStateAction<FunnelStepData[]>>;
 	initialSteps: FunnelStepData[];
-	handleAddStep: () => void;
+	handleAddStep: () => boolean;
 	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
 	handleStepRemoval: (index: number) => void;
 	handleRunFunnel: () => void;
@@ -47,6 +47,11 @@ interface FunnelContextType {
 	setHasIncompleteStepFields: Dispatch<SetStateAction<boolean>>;
 	hasAllEmptyStepFields: boolean;
 	setHasAllEmptyStepFields: Dispatch<SetStateAction<boolean>>;
+	handleReplaceStep: (
+		index: number,
+		serviceName: string,
+		spanName: string,
+	) => void;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -110,6 +115,8 @@ export function FunnelProvider({
 	);
 
 	const addNewStep = useCallback(() => {
+		if (steps.length >= 3) return false;
+
 		setSteps((prev) => [
 			...prev,
 			{
@@ -118,7 +125,8 @@ export function FunnelProvider({
 				step_order: prev.length + 1,
 			},
 		]);
-	}, []);
+		return true;
+	}, [steps.length]);
 
 	const handleStepRemoval = useCallback((index: number) => {
 		setSteps((prev) =>
@@ -133,6 +141,15 @@ export function FunnelProvider({
 		);
 	}, []);
 
+	const handleReplaceStep = useCallback(
+		(index: number, serviceName: string, spanName: string) => {
+			handleStepUpdate(index, {
+				service_name: serviceName,
+				span_name: spanName,
+			});
+		},
+		[handleStepUpdate],
+	);
 	if (!funnelId) {
 		throw new Error('Funnel ID is required');
 	}
@@ -181,6 +198,7 @@ export function FunnelProvider({
 			setHasIncompleteStepFields,
 			hasAllEmptyStepFields,
 			setHasAllEmptyStepFields,
+			handleReplaceStep,
 		}),
 		[
 			funnelId,
@@ -201,6 +219,7 @@ export function FunnelProvider({
 			setHasIncompleteStepFields,
 			hasAllEmptyStepFields,
 			setHasAllEmptyStepFields,
+			handleReplaceStep,
 		],
 	);
 
