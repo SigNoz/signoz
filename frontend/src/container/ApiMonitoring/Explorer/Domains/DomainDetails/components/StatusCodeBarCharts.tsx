@@ -6,7 +6,7 @@ import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplor
 import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
-	createGroupByFiltersForBarChart,
+	getCustomFiltersForBarChart,
 	getFormattedEndPointStatusCodeChartData,
 	getStatusCodeBarChartWidgetData,
 	statusCodeWidgetInfo,
@@ -112,9 +112,7 @@ function StatusCodeBarCharts({
 
 	const navigateToExplorer = useNavigateToExplorer();
 
-	const navigateToExplorerPages = useNavigateToExplorerPages({
-		createGroupByFiltersUtil: createGroupByFiltersForBarChart,
-	});
+	const navigateToExplorerPages = useNavigateToExplorerPages();
 	const { notifications } = useNotifications();
 
 	const { getCustomSeries } = useGetGraphCustomSeries({
@@ -125,6 +123,7 @@ function StatusCodeBarCharts({
 			'300-399': Color.BG_AMBER_400,
 			'400-499': Color.BG_CHERRY_500,
 			'500-599': Color.BG_ROBIN_500,
+			Other: Color.BG_SIENNA_500,
 		},
 	});
 
@@ -146,6 +145,7 @@ function StatusCodeBarCharts({
 			metric?: { [key: string]: string },
 			queryData?: { queryName: string; inFocusOrNot: boolean },
 		): void => {
+			const customFilters = getCustomFiltersForBarChart(metric);
 			handleGraphClick({
 				xValue,
 				yValue,
@@ -158,6 +158,7 @@ function StatusCodeBarCharts({
 				navigateToExplorer,
 				notifications,
 				graphClick,
+				customFilters,
 			});
 		},
 		[
