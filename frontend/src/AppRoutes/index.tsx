@@ -52,6 +52,7 @@ function App(): JSX.Element {
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const [canShowNotFound, setCanShowNotFound] = useState(false);
 
 	const { hostname, pathname } = window.location;
 
@@ -185,6 +186,7 @@ function App(): JSX.Element {
 				updatedRoutes = [...updatedRoutes, LIST_LICENSES];
 			}
 			setRoutes(updatedRoutes);
+			setCanShowNotFound(true);
 		}
 	}, [
 		isLoggedInState,
@@ -310,7 +312,7 @@ function App(): JSX.Element {
 																/>
 															))}
 
-															<Route path="*" component={NotFound} />
+															{canShowNotFound && <Route path="*" component={NotFound} />}
 														</Switch>
 													</Suspense>
 												</AppLayout>
