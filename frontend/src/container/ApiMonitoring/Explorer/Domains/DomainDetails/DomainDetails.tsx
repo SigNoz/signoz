@@ -19,12 +19,14 @@ function DomainDetails({
 	selectedDomainIndex,
 	setSelectedDomainIndex,
 	domainListLength,
+	domainListFilters,
 }: {
 	domainData: any;
 	handleClose: () => void;
 	selectedDomainIndex: number;
 	setSelectedDomainIndex: (index: number) => void;
 	domainListLength: number;
+	domainListFilters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEWS.ALL_ENDPOINTS);
 	const [selectedEndPointName, setSelectedEndPointName] = useState<string>('');
@@ -132,6 +134,7 @@ function DomainDetails({
 							domainName={domainData.domainName}
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={setSelectedEndPointName}
+							domainListFilters={domainListFilters}
 						/>
 					)}
 				</>

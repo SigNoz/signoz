@@ -33,6 +33,7 @@ export interface WidgetGraphComponentProps {
 	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
+	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
@@ -49,6 +50,7 @@ export interface GridCardGraphProps {
 	variables?: Dashboard['data']['variables'];
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
+	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
 	dataAvailable?: (isDataAvailable: boolean) => void;
 	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;

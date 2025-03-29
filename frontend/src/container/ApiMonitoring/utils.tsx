@@ -8,16 +8,23 @@ import {
 } from 'components/QuickFilters/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplorerPages';
+import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
+import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -128,12 +135,15 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		sorter: false,
 		align: 'right',
 		className: `column`,
-		render: (lastUsed: number): string => getLastUsedRelativeTime(lastUsed),
+		render: (lastUsed: number | string): string =>
+			lastUsed === 'n/a' || lastUsed === '-'
+				? '-'
+				: getLastUsedRelativeTime(lastUsed as number),
 	},
 	{
 		title: (
 			<div>
-				Rate <span className="round-metric-tag">/s</span>
+				Rate <span className="round-metric-tag">ops/s</span>
 			</div>
 		),
 		dataIndex: 'rate',
@@ -155,21 +165,26 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		sorter: false,
 		align: 'right',
 		className: `column`,
-		render: (errorRate: number): React.ReactNode => (
-			<Progress
-				status="active"
-				percent={Number((errorRate * 100).toFixed(1))}
-				strokeLinecap="butt"
-				size="small"
-				strokeColor={((): string => {
-					const errorRatePercent = Number((errorRate * 100).toFixed(1));
-					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar error-rate"
-			/>
-		),
+		render: (errorRate: number | string): React.ReactNode => {
+			if (errorRate === 'n/a' || errorRate === '-') {
+				return '-';
+			}
+			return (
+				<Progress
+					status="active"
+					percent={Number(((errorRate as number) * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): string => {
+						const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
+						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar error-rate"
+				/>
+			);
+		},
 	},
 	{
 		title: (
@@ -217,9 +232,9 @@ interface APIMonitoringResponseRow {
 	data: {
 		endpoints: number;
 		error_rate: number;
-		lastseen: number;
+		lastseen: number | string;
 		[domainNameKey]: string;
-		p99: number;
+		p99: number | string;
 		rps: number;
 	};
 }
@@ -232,12 +247,12 @@ interface EndPointsResponseRow {
 
 export interface APIDomainsRowData {
 	key: string;
-	domainName: React.ReactNode;
-	endpointCount: React.ReactNode;
-	rate: React.ReactNode;
-	errorRate: React.ReactNode;
-	latency: React.ReactNode;
-	lastUsed: React.ReactNode;
+	domainName: string;
+	endpointCount: number | string;
+	rate: number | string;
+	errorRate: number | string;
+	latency: number | string;
+	lastUsed: string;
 }
 
 // Rename this to a proper name
@@ -246,12 +261,20 @@ export const formatDataForTable = (
 ): APIDomainsRowData[] =>
 	data?.map((domain) => ({
 		key: v4(),
-		domainName: domain.data[domainNameKey] || '',
-		endpointCount: domain.data.endpoints,
-		rate: domain.data.rps,
-		errorRate: domain.data.error_rate,
-		latency: Math.round(domain.data.p99 / 1000000), // Convert from nanoseconds to milliseconds
-		lastUsed: new Date(Math.floor(domain.data.lastseen / 1000000)).toISOString(), // Convert from nanoseconds to milliseconds
+		domainName: domain?.data[domainNameKey] || '-',
+		endpointCount: domain?.data?.endpoints || '-',
+		rate: domain.data.rps || '-',
+		errorRate: domain.data.error_rate || '-',
+		latency:
+			domain.data.p99 === 'n/a'
+				? '-'
+				: Math.round(Number(domain.data.p99) / 1000000), // Convert from nanoseconds to milliseconds
+		lastUsed:
+			domain.data.lastseen === 'n/a'
+				? '-'
+				: new Date(
+						Math.floor(Number(domain.data.lastseen) / 1000000),
+				  ).toISOString(), // Convert from nanoseconds to milliseconds
 	}));
 
 // Rename this to a proper name
@@ -468,7 +491,6 @@ export const extractPortAndEndpoint = (
 	}
 };
 
-// Add icons in the below column headers
 export const getEndPointsColumnsConfig = (
 	isGroupedByAttribute: boolean,
 	expandedRowKeys: React.Key[],
@@ -576,7 +598,7 @@ export const formatEndPointsDataForTable = (
 			);
 			return {
 				key: v4(),
-				endpointName: (endpoint.data['http.url'] as string) || '',
+				endpointName: (endpoint.data['http.url'] as string) || '-',
 				port,
 				callCount: endpoint.data.A || '-',
 				latency:
@@ -593,7 +615,6 @@ export const formatEndPointsDataForTable = (
 
 	const groupedByAttributeData = groupBy.map((attribute) => attribute.key);
 
-	// TODO: Use tags to show the concatenated attribute values
 	return data?.map((endpoint) => {
 		const newEndpointName = groupedByAttributeData
 			.map((attribute) => endpoint.data[attribute])
@@ -639,7 +660,7 @@ export const createFiltersForSelectedRowData = (
 				type: null,
 			},
 			op: '=',
-			value: groupedByMeta[key],
+			value: groupedByMeta[key] || '',
 			id: key,
 		})),
 	);
@@ -649,12 +670,10 @@ export const createFiltersForSelectedRowData = (
 
 // First query payload for endpoint metrics
 // Second query payload for endpoint status code
-// Third query payload for endpoint rate over time graph
-// Fourth query payload for endpoint latency over time graph
-// Fifth query payload for endpoint dropdown selection
-// Sixth query payload for endpoint dependant services
-// Seventh query payload for endpoint response status count bar chart
-// Eighth query payload for endpoint response status code latency bar chart
+// Third query payload for endpoint dropdown selection
+// Fourth query payload for endpoint dependant services
+// Fifth query payload for endpoint response status count bar chart
+// Sixth query payload for endpoint response status code latency bar chart
 export const getEndPointDetailsQueryPayload = (
 	domainName: string,
 	endPointName: string,
@@ -1097,205 +1116,6 @@ export const getEndPointDetailsQueryPayload = (
 		},
 		variables: {},
 		formatForWeb: true,
-		start,
-		end,
-		step: 60,
-	},
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TIME_SERIES,
-		query: {
-			builder: {
-				queryData: [
-					{
-						aggregateAttribute: {
-							dataType: DataTypes.String,
-							id: '------false',
-							isColumn: false,
-							key: '',
-							type: '',
-						},
-						aggregateOperator: 'rate',
-						dataSource: DataSource.TRACES,
-						disabled: false,
-						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: '3c76fe0b',
-									key: {
-										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'net.peer.name',
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '30710f04',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								...filters.items,
-							],
-							op: 'AND',
-						},
-						functions: [],
-						groupBy: [
-							{
-								dataType: DataTypes.String,
-								id: 'http.url--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'http.url',
-								type: 'tag',
-							},
-						],
-						having: [],
-						legend: '',
-						limit: null,
-						orderBy: [],
-						queryName: 'B',
-						reduceTo: 'avg',
-						spaceAggregation: 'sum',
-						stepInterval: 60,
-						timeAggregation: 'rate',
-					},
-				],
-				queryFormulas: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
-		formatForWeb: false,
-		start,
-		end,
-		step: 60,
-	},
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TIME_SERIES,
-		query: {
-			builder: {
-				queryData: [
-					{
-						aggregateAttribute: {
-							dataType: DataTypes.Float64,
-							id: 'duration_nano--float64----true',
-							isColumn: true,
-							isJSON: false,
-							key: 'duration_nano',
-							type: '',
-						},
-						aggregateOperator: 'p99',
-						dataSource: DataSource.TRACES,
-						disabled: false,
-						expression: 'B',
-						filters: {
-							items: [
-								{
-									id: '63adb3ff',
-									key: {
-										dataType: DataTypes.String,
-										id: 'net.peer.name--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'net.peer.name',
-										type: 'tag',
-									},
-									op: '=',
-									value: domainName,
-								},
-								{
-									id: '50142500',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								...filters.items,
-							],
-							op: 'AND',
-						},
-						functions: [],
-						groupBy: [
-							{
-								dataType: DataTypes.String,
-								id: 'http.url--string--tag--false',
-								isColumn: false,
-								isJSON: false,
-								key: 'http.url',
-								type: 'tag',
-							},
-						],
-						having: [],
-						legend: '',
-						limit: null,
-						orderBy: [],
-						queryName: 'B',
-						reduceTo: 'avg',
-						spaceAggregation: 'sum',
-						stepInterval: 60,
-						timeAggregation: 'p99',
-					},
-				],
-				queryFormulas: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
-		formatForWeb: false,
 		start,
 		end,
 		step: 60,
@@ -1801,7 +1621,7 @@ interface EndPointMetricsData {
 interface EndPointStatusCodeData {
 	key: string;
 	statusCode: string;
-	count: number;
+	count: number | string;
 	p99Latency: number | string;
 }
 
@@ -1824,8 +1644,8 @@ export const getFormattedEndPointStatusCodeData = (
 ): EndPointStatusCodeData[] =>
 	data?.map((row) => ({
 		key: v4(),
-		statusCode: row.data.response_status_code,
-		count: row.data.A,
+		statusCode: row.data.response_status_code || '-',
+		count: row.data.A || '-',
 		p99Latency:
 			row.data.B === 'n/a' ? '-' : Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
 	}));
@@ -1857,11 +1677,6 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 	},
 ];
 
-export const apiWidgetInfo = [
-	{ title: 'Rate over time', yAxisUnit: 'ops/s' },
-	{ title: 'Latency over time', yAxisUnit: 'ns' },
-];
-
 export const statusCodeWidgetInfo = [
 	{ yAxisUnit: 'calls' },
 	{ yAxisUnit: 'ns' },
@@ -1885,8 +1700,8 @@ export const getFormattedEndPointDropDownData = (
 ): EndPointDropDownData[] =>
 	data?.map((row) => ({
 		key: v4(),
-		label: row.data['http.url'],
-		value: row.data['http.url'],
+		label: row.data['http.url'] || '-',
+		value: row.data['http.url'] || '-',
 	}));
 
 interface DependentServicesResponseRow {
@@ -1903,6 +1718,7 @@ interface DependentServicesData {
 	percentage: number;
 }
 
+// Discuss once about type safety of this function
 export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
 ): DependentServicesData[] => {
@@ -1983,7 +1799,7 @@ export const groupStatusCodes = (
 
 		// Track all timestamps
 		series.values.forEach((value) => {
-			allTimestamps.add(value[0]);
+			allTimestamps.add(Number(value[0]));
 		});
 
 		// Initialize or update the grouped series
@@ -2049,8 +1865,114 @@ export const groupStatusCodes = (
 		});
 	});
 
-	return Object.values(groupedSeries);
+	// Define the order of status code ranges
+	const statusCodeOrder = ['200-299', '300-399', '400-499', '500-599', 'Other'];
+
+	// Return the grouped series in the specified order
+	return statusCodeOrder
+		.filter((code) => groupedSeries[code]) // Only include codes that exist in the data
+		.map((code) => groupedSeries[code]);
 };
+
+export const getStatusCodeBarChartWidgetData = (
+	domainName: string,
+	endPointName: string,
+	filters: IBuilderQuery['filters'],
+): Widgets => ({
+	query: {
+		builder: {
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: '------false',
+						isColumn: false,
+						key: '',
+						type: '',
+					},
+					aggregateOperator: 'count',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: 'c6724407',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '8b1be6f0',
+								key: {
+									dataType: DataTypes.String,
+									id: 'http.url--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'http.url',
+									type: 'tag',
+								},
+								op: '=',
+								value: endPointName,
+							},
+							...filters.items,
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [],
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'rate',
+				},
+			],
+			queryFormulas: [],
+		},
+		clickhouse_sql: [
+			{
+				disabled: false,
+				legend: '',
+				name: 'A',
+				query: '',
+			},
+		],
+		id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
+		promql: [
+			{
+				disabled: false,
+				legend: '',
+				name: 'A',
+				query: '',
+			},
+		],
+		queryType: EQueryType.QUERY_BUILDER,
+	},
+	description: '',
+	id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
+	isStacked: false,
+	panelTypes: PANEL_TYPES.BAR,
+	title: '',
+	opacity: '',
+	nullZeroValues: '',
+	timePreferance: 'GLOBAL_TIME',
+	softMin: null,
+	softMax: null,
+	selectedLogFields: null,
+	selectedTracesFields: null,
+});
 interface EndPointStatusCodePayloadData {
 	data: {
 		result: QueryData[];
@@ -2085,3 +2007,277 @@ export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,
 ];
+
+export const getRateOverTimeWidgetData = (
+	domainName: string,
+	endPointName: string,
+	filters: IBuilderQuery['filters'],
+): Widgets => {
+	const { endpoint, port } = extractPortAndEndpoint(endPointName);
+	const legend = `${
+		port !== '-' && port !== 'n/a' ? `${port}:` : ''
+	}${endpoint}`;
+	return getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Rate Over Time',
+			description: 'Rate over time.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.String,
+						id: '------false',
+						isColumn: false,
+						key: '',
+						type: '',
+					},
+					aggregateOperator: 'rate',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: '3c76fe0b',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '30710f04',
+								key: {
+									dataType: DataTypes.String,
+									id: 'http.url--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'http.url',
+									type: 'tag',
+								},
+								op: '=',
+								value: endPointName,
+							},
+							...filters.items,
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'http.url--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'http.url',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend,
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'rate',
+				},
+			],
+			yAxisUnit: 'ops/s',
+		}),
+	);
+};
+
+export const getLatencyOverTimeWidgetData = (
+	domainName: string,
+	endPointName: string,
+	filters: IBuilderQuery['filters'],
+): Widgets => {
+	const { endpoint, port } = extractPortAndEndpoint(endPointName);
+	const legend = `${port}:${endpoint}`;
+	return getWidgetQueryBuilder(
+		getWidgetQuery({
+			title: 'Latency Over Time',
+			description: 'Latency over time.',
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						id: 'duration_nano--float64----true',
+						isColumn: true,
+						isJSON: false,
+						key: 'duration_nano',
+						type: '',
+					},
+					aggregateOperator: 'p99',
+					dataSource: DataSource.TRACES,
+					disabled: false,
+					expression: 'A',
+					filters: {
+						items: [
+							{
+								id: '63adb3ff',
+								key: {
+									dataType: DataTypes.String,
+									id: 'net.peer.name--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'net.peer.name',
+									type: 'tag',
+								},
+								op: '=',
+								value: domainName,
+							},
+							{
+								id: '50142500',
+								key: {
+									dataType: DataTypes.String,
+									id: 'http.url--string--tag--false',
+									isColumn: false,
+									isJSON: false,
+									key: 'http.url',
+									type: 'tag',
+								},
+								op: '=',
+								value: endPointName,
+							},
+							...filters.items,
+						],
+						op: 'AND',
+					},
+					functions: [],
+					groupBy: [
+						{
+							dataType: DataTypes.String,
+							id: 'http.url--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'http.url',
+							type: 'tag',
+						},
+					],
+					having: [],
+					legend,
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: 'avg',
+					spaceAggregation: 'sum',
+					stepInterval: 60,
+					timeAggregation: 'p99',
+				},
+			],
+			yAxisUnit: 'ns',
+		}),
+	);
+};
+
+/**
+ * Helper function to get the start and end status codes from a status code range string
+ * @param value Status code range string (e.g. '200-299') or boolean
+ * @returns Tuple of [startStatusCode, endStatusCode] as strings
+ */
+const getStartAndEndStatusCode = (
+	value: string | boolean,
+): [string, string] => {
+	if (!value) {
+		return ['', ''];
+	}
+
+	switch (value) {
+		case '100-199':
+			return ['100', '199'];
+		case '200-299':
+			return ['200', '299'];
+		case '300-399':
+			return ['300', '399'];
+		case '400-499':
+			return ['400', '499'];
+		case '500-599':
+			return ['500', '599'];
+		default:
+			return ['', ''];
+	}
+};
+
+/**
+ * Creates filter items for bar chart based on group by fields and request data
+ * Used specifically for filtering status code ranges in bar charts
+ * @param groupBy Array of group by fields to create filters for
+ * @param requestData Data from graph click containing values to filter on
+ * @returns Array of TagFilterItems with >= and < operators for status code ranges
+ */
+export const createGroupByFiltersForBarChart = (
+	groupBy: BaseAutocompleteData[],
+	requestData: GraphClickMetaData,
+): TagFilterItem[] =>
+	groupBy
+		.map((gb) => {
+			const value = requestData[gb.key];
+			const [startStatusCode, endStatusCode] = getStartAndEndStatusCode(value);
+			return value
+				? [
+						{
+							id: v4(),
+							key: gb,
+							op: '>=',
+							value: startStatusCode,
+						},
+						{
+							id: v4(),
+							key: gb,
+							op: '<=',
+							value: endStatusCode,
+						},
+				  ]
+				: [];
+		})
+		.flat();
+
+export const getCustomFiltersForBarChart = (
+	metric:
+		| {
+				[key: string]: string;
+		  }
+		| undefined,
+): TagFilterItem[] => {
+	if (!metric?.response_status_code) {
+		return [];
+	}
+	const [startStatusCode, endStatusCode] = getStartAndEndStatusCode(
+		metric.response_status_code,
+	);
+	return [
+		{
+			id: v4(),
+			key: {
+				dataType: DataTypes.String,
+				id: 'response_status_code--string--tag--false',
+				isColumn: false,
+				isJSON: false,
+				key: 'response_status_code',
+				type: 'tag',
+			},
+			op: '>=',
+			value: startStatusCode,
+		},
+		{
+			id: v4(),
+			key: {
+				dataType: DataTypes.String,
+				id: 'response_status_code--string--tag--false',
+				isColumn: false,
+				isJSON: false,
+				key: 'response_status_code',
+				type: 'tag',
+			},
+			op: '<=',
+			value: endStatusCode,
+		},
+	];
+};

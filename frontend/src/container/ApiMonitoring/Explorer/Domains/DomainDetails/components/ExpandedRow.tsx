@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table } from 'antd';
 import { ColumnType } from 'antd/lib/table';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -114,6 +115,7 @@ function ExpandedRow({
 							onClick: (): void => {
 								setSelectedEndPointName(record.endpointName);
 								setSelectedView(VIEW_TYPES.ENDPOINT_DETAILS);
+								logEvent('API Monitoring: Endpoint name row clicked', {});
 							},
 							className: 'expanded-clickable-row',
 						})}

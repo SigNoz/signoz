@@ -279,6 +279,17 @@ function SideNav(): JSX.Element {
 		let updatedUserManagementItems: UserManagementMenuItems[] = [
 			manageLicenseMenuItem,
 		];
+
+		const isApiMonitoringEnabled = featureFlags?.find(
+			(flag) => flag.name === FeatureKeys.THIRD_PARTY_API,
+		)?.active;
+
+		if (!isApiMonitoringEnabled) {
+			updatedMenuItems = updatedMenuItems.filter(
+				(item) => item.key !== ROUTES.API_MONITORING,
+			);
+		}
+
 		if (isCloudUserVal || isEECloudUserVal) {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)

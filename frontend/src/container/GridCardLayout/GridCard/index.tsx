@@ -36,6 +36,7 @@ function GridCardGraph({
 	version,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	dataAvailable,
 	getGraphData,
@@ -272,6 +273,7 @@ function GridCardGraph({
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}
+					customOnDragSelect={customOnDragSelect}
 					customTooltipElement={customTooltipElement}
 					openTracesButton={openTracesButton}
 					onOpenTraceBtnClick={onOpenTraceBtnClick}

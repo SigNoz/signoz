@@ -1,5 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Select, Spin, Table, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -151,6 +152,7 @@ function AllEndPoints({
 		if (groupBy.length === 0) {
 			setSelectedEndPointName(record.endpointName); // this will open up the endpoint details tab
 			setSelectedView(VIEW_TYPES.ENDPOINT_DETAILS);
+			logEvent('API Monitoring: Endpoint name row clicked', {});
 		} else {
 			handleGroupByRowClick(record); // this will prepare the nested query payload
 		}
