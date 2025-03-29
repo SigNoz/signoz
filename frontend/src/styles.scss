@@ -2,8 +2,9 @@
 @import 'overlayscrollbars/overlayscrollbars.css';
 
 @import './periscope.scss';
-@import 'tailwindcss';
-@import './TailwindOverride.scss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 #root,
 html,
