@@ -66,7 +66,7 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 		}
 	}
 
-	if err := updateOrgId(ctx, tx, "org_domains"); err != nil {
+	if err := updateOrgId(ctx, tx); err != nil {
 		return err
 	}
 
@@ -96,7 +96,7 @@ func (migration *updatePatAndOrgDomains) Down(ctx context.Context, db *bun.DB) e
 	return nil
 }
 
-func updateOrgId(ctx context.Context, tx bun.Tx, table string) error {
+func updateOrgId(ctx context.Context, tx bun.Tx) error {
 	if _, err := tx.NewCreateTable().
 		Model(&struct {
 			bun.BaseModel `bun:"table:org_domains_new"`
