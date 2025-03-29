@@ -24,6 +24,7 @@ const AlertChannelOpsgenie = "ALERT_CHANNEL_OPSGENIE"
 const AlertChannelEmail = "ALERT_CHANNEL_EMAIL"
 const AnomalyDetection = "ANOMALY_DETECTION"
 const HostsInfraMonitoring = "HOSTS_INFRA_MONITORING"
+const TraceFunnels = "TRACE_FUNNELS"
 
 var BasicPlan = FeatureSet{
 	Feature{
@@ -119,6 +120,13 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       AnomalyDetection,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
+		Name:       TraceFunnels,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
