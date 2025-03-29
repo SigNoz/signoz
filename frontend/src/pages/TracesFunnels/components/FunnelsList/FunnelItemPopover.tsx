@@ -71,7 +71,12 @@ function FunnelItemPopover({
 
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
-		<div onClick={preventDefault} role="button" tabIndex={0}>
+		<div
+			onClick={preventDefault}
+			role="button"
+			tabIndex={0}
+			className="funnel-item__actions-popover"
+		>
 			<Popover
 				trigger="click"
 				rootClassName="funnel-item__actions"
