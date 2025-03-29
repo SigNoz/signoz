@@ -8,6 +8,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var (
+	Identity = "id"
+	Integer  = "INTEGER"
+	Text     = "TEXT"
+)
+
 type dialect struct {
 }
 
@@ -217,6 +223,52 @@ func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, bun bun.I
 	}
 
 	if _, err := bun.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s_new TO %s", table, column, column)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dialect *dialect) UpdatePrimaryKey(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
+	oldTableName := bun.Dialect().Tables().Get(reflect.TypeOf(oldModel)).Name
+	newTableName := bun.Dialect().Tables().Get(reflect.TypeOf(newModel)).Name
+
+	columnType, err := dialect.GetColumnType(ctx, bun, oldTableName, Identity)
+	if err != nil {
+		return err
+	}
+	if columnType == Text {
+		return nil
+	}
+
+	_, err = bun.
+		NewCreateTable().
+		IfNotExists().
+		Model(newModel).
+		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		Exec(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	err = cb(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = bun.
+		NewDropTable().
+		IfExists().
+		Model(oldModel).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = bun.
+		ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, oldTableName))
+	if err != nil {
 		return err
 	}
 
