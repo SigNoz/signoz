@@ -5,21 +5,20 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/SigNoz/signoz/pkg/cache"
 	basechr "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
 type ClickhouseReader struct {
 	conn  clickhouse.Conn
-	appdb *sqlx.DB
+	appdb sqlstore.SQLStore
 	*basechr.ClickHouseReader
 }
 
 func NewDataConnector(
-	localDB *sqlx.DB,
+	sqlDB sqlstore.SQLStore,
 	ch clickhouse.Conn,
 	promConfigPath string,
 	lm interfaces.FeatureLookup,
@@ -29,10 +28,10 @@ func NewDataConnector(
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickhouseReader {
-	chReader := basechr.NewReader(localDB, ch, promConfigPath, lm, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	chReader := basechr.NewReader(sqlDB, ch, promConfigPath, lm, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 	return &ClickhouseReader{
 		conn:             ch,
-		appdb:            localDB,
+		appdb:            sqlDB,
 		ClickHouseReader: chReader,
 	}
 }

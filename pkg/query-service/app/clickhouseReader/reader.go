@@ -17,6 +17,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -36,7 +39,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
@@ -120,7 +122,7 @@ var (
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
 	db                      clickhouse.Conn
-	localDB                 *sqlx.DB
+	sqlDB                   sqlstore.SQLStore
 	TraceDB                 string
 	operationsTable         string
 	durationTable           string
@@ -174,7 +176,7 @@ type ClickHouseReader struct {
 
 // NewTraceReader returns a TraceReader for the database
 func NewReader(
-	localDB *sqlx.DB,
+	sqlDB sqlstore.SQLStore,
 	db driver.Conn,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
@@ -185,13 +187,13 @@ func NewReader(
 	cache cache.Cache,
 ) *ClickHouseReader {
 	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	return NewReaderFromClickhouseConnection(db, options, sqlDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
 func NewReaderFromClickhouseConnection(
 	db driver.Conn,
 	options *Options,
-	localDB *sqlx.DB,
+	sqlDB sqlstore.SQLStore,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
@@ -216,7 +218,7 @@ func NewReaderFromClickhouseConnection(
 
 	return &ClickHouseReader{
 		db:                      db,
-		localDB:                 localDB,
+		sqlDB:                   sqlDB,
 		TraceDB:                 options.primary.TraceDB,
 		operationsTable:         options.primary.OperationsTable,
 		indexTable:              options.primary.IndexTable,
@@ -1897,7 +1899,26 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, params *model.TTLPa
 			// we will change ttl for only the new parts and not the old ones
 			query += " SETTINGS materialize_ttl_after_modify=0"
 
-			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+			ttl := types.TTLStatus{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				TransactionID:  uuid,
+				TableName:      tableName,
+				TTL:            int(params.DelDuration),
+				Status:         constants.StatusPending,
+				ColdStorageTTL: coldStorageDuration,
+			}
+			_, dbErr := r.
+				sqlDB.
+				BunDB().
+				NewInsert().
+				Model(&ttl).
+				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 				return
@@ -1908,7 +1929,15 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, params *model.TTLPa
 				zap.L().Error("error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
-					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					_, dbErr := r.
+						sqlDB.
+						BunDB().
+						NewUpdate().
+						Model(new(types.TTLStatus)).
+						Set("updated_at = ?", time.Now()).
+						Set("status = ?", constants.StatusFailed).
+						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
@@ -1920,14 +1949,30 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, params *model.TTLPa
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, query); err != nil {
 				zap.L().Error("error while setting ttl", zap.Error(err))
-				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				_, dbErr := r.
+					sqlDB.
+					BunDB().
+					NewUpdate().
+					Model(new(types.TTLStatus)).
+					Set("updated_at = ?", time.Now()).
+					Set("status = ?", constants.StatusFailed).
+					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
 			}
-			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+			_, dbErr = r.
+				sqlDB.
+				BunDB().
+				NewUpdate().
+				Model(new(types.TTLStatus)).
+				Set("updated_at = ?", time.Now()).
+				Set("status = ?", constants.StatusSuccess).
+				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
@@ -1985,11 +2030,31 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 				timestamp = "end"
 			}
 
-			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+			ttl := types.TTLStatus{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				TransactionID:  uuid,
+				TableName:      tableName,
+				TTL:            int(params.DelDuration),
+				Status:         constants.StatusPending,
+				ColdStorageTTL: coldStorageDuration,
+			}
+			_, dbErr := r.
+				sqlDB.
+				BunDB().
+				NewInsert().
+				Model(&ttl).
+				Exec(ctx)
 			if dbErr != nil {
-				zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
+				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 				return
 			}
+
 			req := fmt.Sprintf(ttlV2, tableName, r.cluster, timestamp, params.DelDuration)
 			if strings.HasSuffix(distributedTableName, r.traceResourceTableV3) {
 				req = fmt.Sprintf(ttlV2Resource, tableName, r.cluster, params.DelDuration)
@@ -2007,7 +2072,15 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 				zap.L().Error("Error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
-					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					_, dbErr := r.
+						sqlDB.
+						BunDB().
+						NewUpdate().
+						Model(new(types.TTLStatus)).
+						Set("updated_at = ?", time.Now()).
+						Set("status = ?", constants.StatusFailed).
+						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
@@ -2020,14 +2093,30 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, params *model.TTL
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
 				zap.L().Error("Error in executing set TTL query", zap.Error(err))
-				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				_, dbErr := r.
+					sqlDB.
+					BunDB().
+					NewUpdate().
+					Model(new(types.TTLStatus)).
+					Set("updated_at = ?", time.Now()).
+					Set("status = ?", constants.StatusFailed).
+					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
 			}
-			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+			_, dbErr = r.
+				sqlDB.
+				BunDB().
+				NewUpdate().
+				Model(new(types.TTLStatus)).
+				Set("updated_at = ?", time.Now()).
+				Set("status = ?", constants.StatusSuccess).
+				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
@@ -2081,9 +2170,28 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			tableName := getLocalTableName(tableName)
 			// TODO: DB queries should be implemented with transactional statements but currently clickhouse doesn't support them. Issue: https://github.com/ClickHouse/ClickHouse/issues/22086
 			go func(tableName string) {
-				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+				ttl := types.TTLStatus{
+					Identifiable: types.Identifiable{
+						ID: valuer.GenerateUUID(),
+					},
+					TimeAuditable: types.TimeAuditable{
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					},
+					TransactionID:  uuid,
+					TableName:      tableName,
+					TTL:            int(params.DelDuration),
+					Status:         constants.StatusPending,
+					ColdStorageTTL: coldStorageDuration,
+				}
+				_, dbErr := r.
+					sqlDB.
+					BunDB().
+					NewInsert().
+					Model(&ttl).
+					Exec(ctx)
 				if dbErr != nil {
-					zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
+					zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 					return
 				}
 				req := fmt.Sprintf(
@@ -2098,7 +2206,15 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					zap.L().Error("Error in setting cold storage", zap.Error(err))
 					statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 					if err == nil {
-						_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+						_, dbErr := r.
+							sqlDB.
+							BunDB().
+							NewUpdate().
+							Model(new(types.TTLStatus)).
+							Set("updated_at = ?", time.Now()).
+							Set("status = ?", constants.StatusFailed).
+							Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+							Exec(ctx)
 						if dbErr != nil {
 							zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 							return
@@ -2111,14 +2227,30 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
 					zap.L().Error("Error in executing set TTL query", zap.Error(err))
-					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					_, dbErr := r.
+						sqlDB.
+						BunDB().
+						NewUpdate().
+						Model(new(types.TTLStatus)).
+						Set("updated_at = ?", time.Now()).
+						Set("status = ?", constants.StatusFailed).
+						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
 					}
 					return
 				}
-				_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+				_, dbErr = r.
+					sqlDB.
+					BunDB().
+					NewUpdate().
+					Model(new(types.TTLStatus)).
+					Set("updated_at = ?", time.Now()).
+					Set("status = ?", constants.StatusSuccess).
+					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
@@ -2147,9 +2279,28 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 		}
 		metricTTL := func(tableName string) {
-			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+			ttl := types.TTLStatus{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				TransactionID:  uuid,
+				TableName:      tableName,
+				TTL:            int(params.DelDuration),
+				Status:         constants.StatusPending,
+				ColdStorageTTL: coldStorageDuration,
+			}
+			_, dbErr := r.
+				sqlDB.
+				BunDB().
+				NewInsert().
+				Model(&ttl).
+				Exec(ctx)
 			if dbErr != nil {
-				zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
+				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 				return
 			}
 			timeColumn := "timestamp_ms"
@@ -2170,7 +2321,15 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.L().Error("Error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
-					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					_, dbErr := r.
+						sqlDB.
+						BunDB().
+						NewUpdate().
+						Model(new(types.TTLStatus)).
+						Set("updated_at = ?", time.Now()).
+						Set("status = ?", constants.StatusFailed).
+						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
@@ -2183,14 +2342,30 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
 				zap.L().Error("error while setting ttl.", zap.Error(err))
-				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				_, dbErr := r.
+					sqlDB.
+					BunDB().
+					NewUpdate().
+					Model(new(types.TTLStatus)).
+					Set("updated_at = ?", time.Now()).
+					Set("status = ?", constants.StatusFailed).
+					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
 			}
-			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+			_, dbErr = r.
+				sqlDB.
+				BunDB().
+				NewUpdate().
+				Model(new(types.TTLStatus)).
+				Set("updated_at = ?", time.Now()).
+				Set("status = ?", constants.StatusSuccess).
+				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
@@ -2213,7 +2388,26 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 		go func(tableName string) {
-			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+			ttl := types.TTLStatus{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				TransactionID:  uuid,
+				TableName:      tableName,
+				TTL:            int(params.DelDuration),
+				Status:         constants.StatusPending,
+				ColdStorageTTL: coldStorageDuration,
+			}
+			_, dbErr := r.
+				sqlDB.
+				BunDB().
+				NewInsert().
+				Model(&ttl).
+				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 				return
@@ -2231,7 +2425,15 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.L().Error("error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
-					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					_, dbErr := r.
+						sqlDB.
+						BunDB().
+						NewUpdate().
+						Model(new(types.TTLStatus)).
+						Set("updated_at = ?", time.Now()).
+						Set("status = ?", constants.StatusFailed).
+						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
@@ -2244,14 +2446,30 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
 				zap.L().Error("error while setting ttl", zap.Error(err))
-				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				_, dbErr := r.
+					sqlDB.
+					BunDB().
+					NewUpdate().
+					Model(new(types.TTLStatus)).
+					Set("updated_at = ?", time.Now()).
+					Set("status = ?", constants.StatusFailed).
+					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
 			}
-			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+			_, dbErr = r.
+				sqlDB.
+				BunDB().
+				NewUpdate().
+				Model(new(types.TTLStatus)).
+				Set("updated_at = ?", time.Now()).
+				Set("status = ?", constants.StatusSuccess).
+				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
@@ -2266,38 +2484,53 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) deleteTtlTransactions(_ context.Context, numberOfTransactionsStore int) {
-	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
+func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+	limitTransactions := []string{}
+	err := r.
+		sqlDB.
+		BunDB().
+		NewSelect().
+		DistinctOn("id").
+		Model(new(types.TTLStatus)).
+		OrderExpr("created_at DESC").
+		Limit(numberOfTransactionsStore).
+		Scan(ctx, &limitTransactions)
+
+	if err != nil {
+		zap.L().Error("Error in processing ttl_status delete sql query", zap.Error(err))
+	}
+
+	_, err = r.
+		sqlDB.
+		BunDB().
+		NewDelete().
+		Model(new(types.TTLStatus)).
+		Where("transaction_id NOT IN ?", limitTransactions).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing ttl_status delete sql query", zap.Error(err))
 	}
 }
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
-func (r *ClickHouseReader) checkTTLStatusItem(_ context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
-	statusItem := []model.TTLStatusItem{}
+func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (*types.TTLStatus, *model.ApiError) {
 
-	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
+	ttl := new(types.TTLStatus)
+	err := r.
+		sqlDB.BunDB().
+		NewSelect().
+		Model(ttl).
+		Where("table_name = ?", tableName).
+		OrderExpr("created_at DESC").
+		Limit(1).
+		Scan(ctx)
 
-	zap.L().Info("checkTTLStatusItem query", zap.String("query", query), zap.String("tableName", tableName))
-
-	stmt, err := r.localDB.Preparex(query)
-
-	if err != nil {
-		zap.L().Error("Error preparing query for checkTTLStatusItem", zap.Error(err))
-		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	err = stmt.Select(&statusItem, tableName)
-
-	if len(statusItem) == 0 {
-		return model.TTLStatusItem{}, nil
-	}
+	zap.L().Info("checkTTLStatusItem query", zap.String("tableName", tableName))
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
+		return ttl, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 	}
-	return statusItem[0], nil
+	return ttl, nil
 }
 
 // setTTLQueryStatus fetches ttl_status table status from DB
@@ -2306,7 +2539,7 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray
 	status := constants.StatusSuccess
 	for _, tableName := range tableNameArray {
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
-		emptyStatusStruct := model.TTLStatusItem{}
+		emptyStatusStruct := new(types.TTLStatus)
 		if statusItem == emptyStatusStruct {
 			return "", nil
 		}
@@ -2470,12 +2703,12 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, err
 		}
 		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
-		if ttlQuery.ColdStorageTtl != -1 {
-			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
+		if ttlQuery.ColdStorageTTL != -1 {
+			ttlQuery.ColdStorageTTL = ttlQuery.ColdStorageTTL / 3600 // convert to hours
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	case constants.MetricsTTL:
 		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
@@ -2493,12 +2726,12 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, err
 		}
 		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
-		if ttlQuery.ColdStorageTtl != -1 {
-			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
+		if ttlQuery.ColdStorageTTL != -1 {
+			ttlQuery.ColdStorageTTL = ttlQuery.ColdStorageTTL / 3600 // convert to hours
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	case constants.LogsTTL:
 		tableNameArray := []string{r.logsDB + "." + r.logsTable}
@@ -2516,12 +2749,12 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, err
 		}
 		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
-		if ttlQuery.ColdStorageTtl != -1 {
-			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
+		if ttlQuery.ColdStorageTTL != -1 {
+			ttlQuery.ColdStorageTTL = ttlQuery.ColdStorageTTL / 3600 // convert to hours
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{LogsTime: delTTL, LogsMoveTime: moveTTL, ExpectedLogsTime: ttlQuery.TTL, ExpectedLogsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+		return &model.GetTTLResponseItem{LogsTime: delTTL, LogsMoveTime: moveTTL, ExpectedLogsTime: ttlQuery.TTL, ExpectedLogsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be metrics|traces, got %v",

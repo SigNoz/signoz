@@ -20,10 +20,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -33,7 +33,7 @@ import (
 var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
 
 func NewMockClickhouseReader(
-	t *testing.T, testDB *sqlx.DB, featureFlags interfaces.FeatureLookup,
+	t *testing.T, testDB sqlstore.SQLStore, featureFlags interfaces.FeatureLookup,
 ) (
 	*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon,
 ) {

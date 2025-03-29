@@ -96,13 +96,12 @@ type PlannedMaintenance struct {
 
 type TTLStatus struct {
 	bun.BaseModel `bun:"table:ttl_status"`
-
-	ID             int       `bun:"id,pk,autoincrement"`
-	TransactionID  string    `bun:"transaction_id,type:text,notnull"`
-	CreatedAt      time.Time `bun:"created_at,type:datetime,notnull"`
-	UpdatedAt      time.Time `bun:"updated_at,type:datetime,notnull"`
-	TableName      string    `bun:"table_name,type:text,notnull"`
-	TTL            int       `bun:"ttl,notnull,default:0"`
-	ColdStorageTTL int       `bun:"cold_storage_ttl,notnull,default:0"`
-	Status         string    `bun:"status,type:text,notnull"`
+	Identifiable
+	TimeAuditable
+	TransactionID  string `bun:"transaction_id,type:text,notnull"`
+	TableName      string `bun:"table_name,type:text,notnull"`
+	TTL            int    `bun:"ttl,notnull,default:0"`
+	ColdStorageTTL int    `bun:"cold_storage_ttl,notnull,default:0"`
+	Status         string `bun:"status,type:text,notnull"`
+	OrgID          string `json:"-" bun:"org_id,notnull"`
 }
