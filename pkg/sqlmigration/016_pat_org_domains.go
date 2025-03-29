@@ -115,7 +115,7 @@ func updateOrgId(ctx context.Context, tx bun.Tx, table string) error {
 	}
 
 	// copy data from org_domains to org_domains_new
-	if _, err := tx.ExecContext(ctx, `INSERT INTO org_domains_new (id, org_id, name, created_at, updated_at, data) SELECT id, org_id, name, created_at, updated_at, data FROM org_domains`); err != nil {
+	if _, err := tx.ExecContext(ctx, `INSERT INTO org_domains_new (id, org_id, name, data) SELECT id, org_id, name, data FROM org_domains`); err != nil {
 		return err
 	}
 	// delete old table

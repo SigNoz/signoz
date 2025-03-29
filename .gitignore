@@ -54,6 +54,7 @@ ee/query-service/tests/test-deploy/data/
 bin/
 .local/
 */query-service/queries.active
+ee/query-service/db
 
 # e2e
 

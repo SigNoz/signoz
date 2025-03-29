@@ -60,13 +60,13 @@ func UpsertControlProcessors(
 
 		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
 		if err != nil {
-			zap.L().Error("failed to push ingestion rules config to agent", zap.String("agentID", agent.ID), zap.Error(err))
+			zap.L().Error("failed to push ingestion rules config to agent", zap.String("agentID", agent.ID.StringValue()), zap.Error(err))
 			continue
 		}
 
 		if agenthash != "" {
 			// subscribe callback
-			model.ListenToConfigUpdate(agent.ID, agenthash, callback)
+			model.ListenToConfigUpdate(agent.ID.StringValue(), agenthash, callback)
 		}
 
 		hash = agenthash
@@ -89,7 +89,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 	// add ingestion control spec
 	err = makeIngestionControlSpec(agentConf, Signal(signal), processors)
 	if err != nil {
-		zap.L().Error("failed to prepare ingestion control processors for agent", zap.String("agentID", agent.ID), zap.Error(err))
+		zap.L().Error("failed to prepare ingestion control processors for agent", zap.String("agentID", agent.ID.StringValue()), zap.Error(err))
 		return confHash, err
 	}
 

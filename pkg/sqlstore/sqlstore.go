@@ -44,4 +44,5 @@ type SQLDialect interface {
 	RenameColumn(context.Context, bun.IDB, string, string, string) (bool, error)
 	RenameTableAndModifyModel(context.Context, bun.IDB, interface{}, interface{}, func(context.Context) error) error
 	UpdatePrimaryKey(context.Context, bun.IDB, interface{}, interface{}, func(context.Context) error) error
+	IndexExists(context.Context, bun.IDB, string, string) (bool, error)
 }
