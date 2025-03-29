@@ -33,7 +33,10 @@ function FunnelDetailsView({
 }): JSX.Element {
 	return (
 		<div className="add-span-to-funnel-modal__details">
-			<FunnelListItem funnel={funnel} />
+			<FunnelListItem
+				funnel={funnel}
+				shouldRedirectToTracesListOnDeleteSuccess={false}
+			/>
 			<FunnelConfiguration funnel={funnel} isTraceDetailsPage span={span} />
 		</div>
 	);
@@ -60,7 +63,9 @@ function AddSpanToFunnelModal({
 		setSearchQuery(e.target.value);
 	};
 
-	const { data, isLoading, isError, isFetching } = useFunnelsList({});
+	const { data, isLoading, isError, isFetching } = useFunnelsList({
+		searchQuery: '',
+	});
 
 	const filteredData = useMemo(
 		() =>
@@ -100,22 +105,26 @@ function AddSpanToFunnelModal({
 
 	const renderListView = (): JSX.Element => (
 		<div className="add-span-to-funnel-modal">
-			<div className="add-span-to-funnel-modal__search">
-				<Input
-					className="add-span-to-funnel-modal__search-input"
-					placeholder="Search by name, description, or tags..."
-					prefix={<Search size={12} />}
-					value={searchQuery}
-					onChange={handleSearch}
-				/>
-			</div>
+			{!!filteredData?.length && (
+				<div className="add-span-to-funnel-modal__search">
+					<Input
+						className="add-span-to-funnel-modal__search-input"
+						placeholder="Search by name, description, or tags..."
+						prefix={<Search size={12} />}
+						value={searchQuery}
+						onChange={handleSearch}
+					/>
+				</div>
+			)}
 			<div className="add-span-to-funnel-modal__list">
 				<OverlayScrollbar>
 					<TracesFunnelsContentRenderer
 						isError={isError}
 						isLoading={isLoading || isFetching}
 						data={filteredData || []}
+						onCreateFunnel={handleCreateNewClick}
 						onFunnelClick={(funnel: FunnelData): void => handleFunnelClick(funnel)}
+						shouldRedirectToTracesListOnDeleteSuccess={false}
 					/>
 				</OverlayScrollbar>
 			</div>
@@ -173,7 +182,7 @@ function AddSpanToFunnelModal({
 			})}
 			okText="Save Funnel"
 			footer={
-				activeView === ModalView.LIST ? (
+				activeView === ModalView.LIST && !!filteredData?.length ? (
 					<Button
 						type="default"
 						className="add-span-to-funnel-modal__create-button"

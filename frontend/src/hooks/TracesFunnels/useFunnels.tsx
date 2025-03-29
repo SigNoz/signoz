@@ -47,6 +47,7 @@ export const useFunnelsList = ({
 	useQuery({
 		queryKey: [REACT_QUERY_KEY.GET_FUNNELS_LIST, searchQuery],
 		queryFn: () => getFunnelsList({ search: searchQuery }),
+		refetchOnWindowFocus: true,
 	});
 
 export const useFunnelDetails = ({

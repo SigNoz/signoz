@@ -125,8 +125,13 @@
 
 	// List section
 	&__list {
-		height: 400px;
+		max-height: 400px;
 		overflow-y: scroll;
+		.funnels-empty {
+			&__content {
+				padding: 0;
+			}
+		}
 
 		.funnels-list {
 			gap: 8px;
@@ -177,6 +182,9 @@
 			.inter-step-config {
 				width: calc(100% - 104px);
 			}
+		}
+		.funnel-item__actions-popover {
+			display: none;
 		}
 	}
 }

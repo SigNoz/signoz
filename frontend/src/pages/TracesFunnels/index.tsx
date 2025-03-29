@@ -19,6 +19,7 @@ interface TracesFunnelsContentRendererProps {
 	data: FunnelData[];
 	onCreateFunnel?: () => void;
 	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 export function TracesFunnelsContentRenderer({
 	isLoading,
@@ -26,11 +27,12 @@ export function TracesFunnelsContentRenderer({
 	data,
 	onCreateFunnel,
 	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
 }: TracesFunnelsContentRendererProps): JSX.Element {
 	if (isLoading) {
 		return (
 			<div className="traces-funnels__loading">
-				{Array(6)
+				{Array(2)
 					.fill(0)
 					.map((item, index) => (
 						<Skeleton.Button
@@ -55,12 +57,21 @@ export function TracesFunnelsContentRenderer({
 		return <FunnelsEmptyState onCreateFunnel={onCreateFunnel} />;
 	}
 
-	return <FunnelsList data={data} onFunnelClick={onFunnelClick} />;
+	return (
+		<FunnelsList
+			data={data}
+			onFunnelClick={onFunnelClick}
+			shouldRedirectToTracesListOnDeleteSuccess={
+				shouldRedirectToTracesListOnDeleteSuccess
+			}
+		/>
+	);
 }
 
 TracesFunnelsContentRenderer.defaultProps = {
 	onCreateFunnel: undefined,
 	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
 };
 
 function TracesFunnels(): JSX.Element {

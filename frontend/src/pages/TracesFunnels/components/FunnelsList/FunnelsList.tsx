@@ -13,11 +13,13 @@ import FunnelItemPopover from './FunnelItemPopover';
 interface FunnelListItemProps {
 	funnel: FunnelData;
 	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
 export function FunnelListItem({
 	funnel,
 	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
 }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
@@ -34,6 +36,9 @@ export function FunnelListItem({
 					isPopoverOpen={isPopoverOpen}
 					setIsPopoverOpen={setIsPopoverOpen}
 					funnel={funnel}
+					shouldRedirectToTracesListOnDeleteSuccess={
+						shouldRedirectToTracesListOnDeleteSuccess
+					}
 				/>
 			</div>
 
@@ -76,14 +81,20 @@ export function FunnelListItem({
 
 FunnelListItem.defaultProps = {
 	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
 };
 
 interface FunnelsListProps {
 	data: FunnelData[];
 	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
-function FunnelsList({ data, onFunnelClick }: FunnelsListProps): JSX.Element {
+function FunnelsList({
+	data,
+	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
+}: FunnelsListProps): JSX.Element {
 	return (
 		<div className="funnels-list">
 			{data.map((funnel) => (
@@ -91,6 +102,9 @@ function FunnelsList({ data, onFunnelClick }: FunnelsListProps): JSX.Element {
 					key={funnel.id}
 					funnel={funnel}
 					onFunnelClick={onFunnelClick}
+					shouldRedirectToTracesListOnDeleteSuccess={
+						shouldRedirectToTracesListOnDeleteSuccess
+					}
 				/>
 			))}
 		</div>
@@ -99,6 +113,7 @@ function FunnelsList({ data, onFunnelClick }: FunnelsListProps): JSX.Element {
 
 FunnelsList.defaultProps = {
 	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
 };
 
 export default FunnelsList;
