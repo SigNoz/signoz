@@ -9,7 +9,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="api_url" label={t('field_webhook_url')}>
+			<Form.Item required name="api_url" label={t('field_webhook_url')}>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
