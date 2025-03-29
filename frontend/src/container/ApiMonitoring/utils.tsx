@@ -1865,7 +1865,13 @@ export const groupStatusCodes = (
 		});
 	});
 
-	return Object.values(groupedSeries);
+	// Define the order of status code ranges
+	const statusCodeOrder = ['200-299', '300-399', '400-499', '500-599', 'Other'];
+
+	// Return the grouped series in the specified order
+	return statusCodeOrder
+		.filter((code) => groupedSeries[code]) // Only include codes that exist in the data
+		.map((code) => groupedSeries[code]);
 };
 
 export const getStatusCodeBarChartWidgetData = (
@@ -1921,16 +1927,7 @@ export const getStatusCodeBarChartWidgetData = (
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'response_status_code--string----true',
-							isColumn: true,
-							isJSON: false,
-							key: 'response_status_code',
-							type: '',
-						},
-					],
+					groupBy: [],
 					having: [],
 					legend: '',
 					limit: null,
@@ -2241,3 +2238,46 @@ export const createGroupByFiltersForBarChart = (
 				: [];
 		})
 		.flat();
+
+export const getCustomFiltersForBarChart = (
+	metric:
+		| {
+				[key: string]: string;
+		  }
+		| undefined,
+): TagFilterItem[] => {
+	if (!metric?.response_status_code) {
+		return [];
+	}
+	const [startStatusCode, endStatusCode] = getStartAndEndStatusCode(
+		metric.response_status_code,
+	);
+	return [
+		{
+			id: v4(),
+			key: {
+				dataType: DataTypes.String,
+				id: 'response_status_code--string--tag--false',
+				isColumn: false,
+				isJSON: false,
+				key: 'response_status_code',
+				type: 'tag',
+			},
+			op: '>=',
+			value: startStatusCode,
+		},
+		{
+			id: v4(),
+			key: {
+				dataType: DataTypes.String,
+				id: 'response_status_code--string--tag--false',
+				isColumn: false,
+				isJSON: false,
+				key: 'response_status_code',
+				type: 'tag',
+			},
+			op: '<=',
+			value: endStatusCode,
+		},
+	];
+};
