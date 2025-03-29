@@ -470,6 +470,37 @@
 							}
 						]
 					}
+				},
+				{
+					"key": "reactjs",
+					"label": "ReactJS",
+					"imgUrl": "/Logos/reactjs.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/",
+					"question": {
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							}
+						]
+					}
 				}
 			]
 		}
