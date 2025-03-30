@@ -6,12 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/pkg/errors"
-	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
@@ -34,98 +30,60 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 		var hasJob bool
 		var queryString string
 		for _, m := range query.Matchers {
-			if prometheus.MatchType(m.Type) == prometheus.MatchEqual && m.Name == "job" && m.Value == "rawsql" {
+			if m.Type == prompb.LabelMatcher_EQ && m.Name == "job" && m.Value == "rawsql" {
 				hasJob = true
 			}
-			if prometheus.MatchType(m.Type) == prometheus.MatchEqual && m.Name == "query" {
+			if m.Type == prompb.LabelMatcher_EQ && m.Name == "query" {
 				queryString = m.Value
 			}
 		}
+
 		if hasJob && queryString != "" {
 			res, err := client.queryRaw(ctx, queryString, int64(query.EndTimestampMs))
 			if err != nil {
 				return nil, err
 			}
+
 			return remote.FromQueryResult(sortSeries, res), nil
 		}
 	}
 
-	q := client.PromQueryToQuery(ctx, query)
-
 	var metricName string
-	for _, matcher := range q.Matchers {
+	for _, matcher := range query.Matchers {
 		if matcher.Name == "__name__" {
 			metricName = matcher.Value
 		}
 	}
 
-	clickhouseQuery, args, err := client.QueryToClickhouseQuery(ctx, query, metricName, false)
+	clickhouseQuery, args, err := client.queryToClickhouseQuery(ctx, query, metricName, false)
 	if err != nil {
 		return nil, err
 	}
 
-	fingerprints, err := client.FingerprintsFromClickhouseQuery(ctx, clickhouseQuery, args)
+	fingerprints, err := client.getFingerprintsFromClickhouseQuery(ctx, clickhouseQuery, args)
 	if err != nil {
 		return nil, err
 	}
+	if len(fingerprints) == 0 {
+		return remote.FromQueryResult(sortSeries, new(prompb.QueryResult)), nil
+	}
 
-	clickhouseSubQuery, args, err := client.QueryToClickhouseQuery(ctx, query, metricName, true)
+	clickhouseSubQuery, args, err := client.queryToClickhouseQuery(ctx, query, metricName, true)
 	if err != nil {
 		return nil, err
 	}
 
 	res := new(prompb.QueryResult)
-	if len(fingerprints) == 0 {
-		return remote.FromQueryResult(sortSeries, res), nil
-	}
-
 	timeseries, err := client.querySamples(ctx, int64(query.StartTimestampMs), int64(query.EndTimestampMs), fingerprints, metricName, clickhouseSubQuery, args)
 	if err != nil {
 		return nil, err
 	}
-
 	res.Timeseries = timeseries
 
 	return remote.FromQueryResult(sortSeries, res), nil
 }
 
-func (client *client) PromQueryToQuery(ctx context.Context, query *prompb.Query) prometheus.Query {
-	q := prometheus.Query{
-		Start:    model.Time(query.StartTimestampMs),
-		End:      model.Time(query.EndTimestampMs),
-		Matchers: make([]prometheus.Matcher, len(query.Matchers)),
-	}
-
-	for j, m := range query.Matchers {
-		var t prometheus.MatchType
-		switch m.Type {
-		case prompb.LabelMatcher_EQ:
-			t = prometheus.MatchEqual
-		case prompb.LabelMatcher_NEQ:
-			t = prometheus.MatchNotEqual
-		case prompb.LabelMatcher_RE:
-			t = prometheus.MatchRegexp
-		case prompb.LabelMatcher_NRE:
-			t = prometheus.MatchNotRegexp
-		default:
-			client.settings.Logger().ErrorContext(ctx, "unexpected matcher found in query", "matcher", m.Type)
-		}
-
-		q.Matchers[j] = prometheus.Matcher{
-			Type:  t,
-			Name:  m.Name,
-			Value: m.Value,
-		}
-	}
-
-	if query.Hints != nil {
-		client.settings.Logger().WarnContext(ctx, "ignoring hints for query", "hints", *query.Hints)
-	}
-
-	return q
-}
-
-func (client *client) QueryToClickhouseQuery(ctx context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
+func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
 	var clickHouseQuery string
 	var conditions []string
 	var argCount int = 0
@@ -135,7 +93,7 @@ func (client *client) QueryToClickhouseQuery(ctx context.Context, query *prompb.
 		selectString = "fingerprint"
 	}
 
-	start, end, tableName := GetStartEndAndTableName(query.StartTimestampMs, query.EndTimestampMs)
+	start, end, tableName := getStartAndEndAndTableName(query.StartTimestampMs, query.EndTimestampMs)
 
 	var args []any
 	conditions = append(conditions, fmt.Sprintf("metric_name = $%d", argCount+1))
@@ -155,7 +113,7 @@ func (client *client) QueryToClickhouseQuery(ctx context.Context, query *prompb.
 		case prompb.LabelMatcher_NRE:
 			conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, $%d), $%d)", argCount+2, argCount+3))
 		default:
-			return "", nil, fmt.Errorf("prepareClickHouseQuery: unexpected matcher %d", m.Type)
+			return "", nil, fmt.Errorf("unexpected matcher found in query: %s", m.Type.String())
 		}
 		args = append(args, m.Name, m.Value)
 		argCount += 2
@@ -168,7 +126,7 @@ func (client *client) QueryToClickhouseQuery(ctx context.Context, query *prompb.
 	return clickHouseQuery, args, nil
 }
 
-func (client *client) FingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, error) {
+func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, error) {
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -199,17 +157,34 @@ func (client *client) FingerprintsFromClickhouseQuery(ctx context.Context, query
 	return fingerprints, nil
 }
 
-func (client *client) scanSamples(_ context.Context, rows driver.Rows, fingerprints map[uint64][]prompb.Label) ([]*prompb.TimeSeries, error) {
+func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
+	argCount := len(args)
+
+	query := fmt.Sprintf(`
+		SELECT metric_name, fingerprint, unix_milli, value
+			FROM %s.%s
+			WHERE metric_name = $1 AND fingerprint GLOBAL IN (%s) AND unix_milli >= $%s AND unix_milli <= $%s ORDER BY fingerprint, unix_milli;`,
+		databaseName, distributedSamplesV4, subQuery, strconv.Itoa(argCount+2), strconv.Itoa(argCount+3))
+	query = strings.TrimSpace(query)
+
+	allArgs := append([]any{metricName}, args...)
+	allArgs = append(allArgs, start, end)
+
+	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, allArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
 	var res []*prompb.TimeSeries
 	var ts *prompb.TimeSeries
 	var fingerprint, prevFingerprint uint64
 	var timestampMs int64
 	var value float64
-	var metricName string
 
 	for rows.Next() {
 		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value); err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 
 		// collect samples in time series
@@ -239,32 +214,10 @@ func (client *client) scanSamples(_ context.Context, rows driver.Rows, fingerpri
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	return res, nil
-}
-
-func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []interface{}) ([]*prompb.TimeSeries, error) {
-	argCount := len(args)
-
-	query := fmt.Sprintf(`
-		SELECT metric_name, fingerprint, unix_milli, value
-			FROM %s.%s
-			WHERE metric_name = $1 AND fingerprint GLOBAL IN (%s) AND unix_milli >= $%s AND unix_milli <= $%s ORDER BY fingerprint, unix_milli;`,
-		databaseName, distributedSamplesV4, subQuery, strconv.Itoa(argCount+2), strconv.Itoa(argCount+3))
-	query = strings.TrimSpace(query)
-
-	allArgs := append([]interface{}{metricName}, args...)
-	allArgs = append(allArgs, start, end)
-
-	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, allArgs...)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	defer rows.Close()
-
-	return client.scanSamples(ctx, rows, fingerprints)
 }
 
 func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*prompb.QueryResult, error) {
@@ -276,7 +229,7 @@ func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*pr
 
 	columns := rows.Columns()
 	var res prompb.QueryResult
-	targets := make([]interface{}, len(columns))
+	targets := make([]any, len(columns))
 	for i := range targets {
 		targets[i] = new(scanner)
 	}

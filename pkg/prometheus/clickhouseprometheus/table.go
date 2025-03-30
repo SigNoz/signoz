@@ -4,7 +4,6 @@ import "time"
 
 const (
 	databaseName                string = "signoz_metrics"
-	subsystem                   string = "clickhouse"
 	distributedTimeSeriesV4     string = "distributed_time_series_v4"
 	distributedTimeSeriesV46hrs string = "distributed_time_series_v4_6hrs"
 	distributedTimeSeriesV41day string = "distributed_time_series_v4_1day"
@@ -16,12 +15,14 @@ var (
 	oneDayInMilliseconds   = time.Hour.Milliseconds() * 24
 )
 
-// start and end are in milliseconds
-func GetStartEndAndTableName(start, end int64) (int64, int64, string) {
-	// If time range is less than 6 hours, we need to use the `time_series_v4` table
-	// else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
-	// else we need to use the `time_series_v4_1day` table
+// Returns the start time, end time and the table name to use for the query.
+//
+//	If time range is less than 6 hours, we need to use the `time_series_v4` table
+//	else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
+//	else we need to use the `time_series_v4_1day` table
+func getStartAndEndAndTableName(start, end int64) (int64, int64, string) {
 	var tableName string
+
 	if end-start <= sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
 		start = start - (start % (time.Hour.Milliseconds() * 1))

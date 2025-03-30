@@ -70,44 +70,74 @@ func (p *provider) Stats() driver.Stats {
 }
 
 func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
-	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
+	event := telemetrystore.NewQueryEvent(query, args)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	rows, err := p.clickHouseConn.Query(ctx, query, args...)
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, rows, err)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
 	return rows, err
 }
 
 func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
-	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
+	event := telemetrystore.NewQueryEvent(query, args)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	row := p.clickHouseConn.QueryRow(ctx, query, args...)
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, nil)
+
+	event.Err = row.Err()
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
 	return row
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
+	event := telemetrystore.NewQueryEvent(query, args)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	err := p.clickHouseConn.Select(ctx, dest, query, args...)
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
 	return err
 }
 
 func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
-	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
+	event := telemetrystore.NewQueryEvent(query, args)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	err := p.clickHouseConn.Exec(ctx, query, args...)
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
 	return err
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
-	ctx, query, args = telemetrystore.WrapBeforeQuery(p.hooks, ctx, query, args...)
+	event := telemetrystore.NewQueryEvent(query, args)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...)
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
 	return err
 }
 
 func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
-	ctx, query, args := telemetrystore.WrapBeforeQuery(p.hooks, ctx, query)
+	event := telemetrystore.NewQueryEvent(query, nil)
+
+	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	batch, err := p.clickHouseConn.PrepareBatch(ctx, query, opts...)
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, query, args, nil, err)
+
+	event.Err = err
+	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+
 	return batch, err
 }
 

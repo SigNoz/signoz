@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -25,7 +24,7 @@ func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings,
 	}, nil
 }
 
-func (h *provider) BeforeQuery(ctx context.Context, query string, args ...interface{}) (context.Context, string, []interface{}) {
+func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
 	settings := clickhouse.Settings{}
 
 	// Apply default settings
@@ -61,10 +60,10 @@ func (h *provider) BeforeQuery(ctx context.Context, query string, args ...interf
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
-	return ctx, query, args
+	return ctx
 }
 
-func (h *provider) AfterQuery(ctx context.Context, query string, args []interface{}, rows driver.Rows, err error) {
+func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
 }
 
 func (h *provider) getLogComment(ctx context.Context) string {
