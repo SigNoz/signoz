@@ -95,7 +95,7 @@ type PlannedMaintenance struct {
 }
 
 type TTLStatus struct {
-	bun.BaseModel `bun:"table:ttl_status"`
+	bun.BaseModel `bun:"table:ttl_setting"`
 	Identifiable
 	TimeAuditable
 	TransactionID  string `bun:"transaction_id,type:text,notnull"`
