@@ -108,7 +108,7 @@ func (client *client) PromQueryToQuery(ctx context.Context, query *prompb.Query)
 		case prompb.LabelMatcher_NRE:
 			t = prometheus.MatchNotRegexp
 		default:
-			client.settings.Logger().ErrorContext(ctx, "unexpected matcher %d found in query", m.Type)
+			client.settings.Logger().ErrorContext(ctx, "unexpected matcher found in query", "matcher", m.Type)
 		}
 
 		q.Matchers[j] = prometheus.Matcher{
@@ -119,7 +119,7 @@ func (client *client) PromQueryToQuery(ctx context.Context, query *prompb.Query)
 	}
 
 	if query.Hints != nil {
-		client.settings.Logger().WarnContext(ctx, "ignoring hint %+v for query %v", *query.Hints, q)
+		client.settings.Logger().WarnContext(ctx, "ignoring hints for query", "hints", *query.Hints)
 	}
 
 	return q
@@ -199,16 +199,13 @@ func (client *client) FingerprintsFromClickhouseQuery(ctx context.Context, query
 	return fingerprints, nil
 }
 
-func (client *client) scanSamples(ctx context.Context, rows driver.Rows, fingerprints map[uint64][]prompb.Label) ([]*prompb.TimeSeries, error) {
+func (client *client) scanSamples(_ context.Context, rows driver.Rows, fingerprints map[uint64][]prompb.Label) ([]*prompb.TimeSeries, error) {
 	var res []*prompb.TimeSeries
 	var ts *prompb.TimeSeries
 	var fingerprint, prevFingerprint uint64
 	var timestampMs int64
 	var value float64
 	var metricName string
-
-	totalFingerprintCount := len(fingerprints)
-	usedFingerprintCount := 0
 
 	for rows.Next() {
 		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value); err != nil {
@@ -227,7 +224,6 @@ func (client *client) scanSamples(ctx context.Context, rows driver.Rows, fingerp
 			ts = &prompb.TimeSeries{
 				Labels: labels,
 			}
-			usedFingerprintCount += 1
 		}
 
 		// add samples to current time series
@@ -241,8 +237,6 @@ func (client *client) scanSamples(ctx context.Context, rows driver.Rows, fingerp
 	if ts != nil {
 		res = append(res, ts)
 	}
-
-	client.settings.Logger().InfoContext(ctx, "used %d time series from %d time series returned by query", usedFingerprintCount, totalFingerprintCount)
 
 	if err := rows.Err(); err != nil {
 		return nil, errors.WithStack(err)
