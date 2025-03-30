@@ -136,7 +136,6 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 	fingerprints := make(map[uint64][]prompb.Label)
 
 	var fingerprint uint64
-	// Earlier we were using []byte for labels, but this was causing the error: [ScanRow]: (any(labels)) converting String to *[]uint8
 	var labelString string
 	for rows.Next() {
 		if err = rows.Scan(&fingerprint, &labelString); err != nil {
