@@ -141,7 +141,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	var reader interfaces.DataConnector
 	qb := db.NewDataConnector(
-		serverOptions.SigNoz.SQLStore.SQLxDB(),
+		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
 		serverOptions.PromConfigPath,
 		lm,
