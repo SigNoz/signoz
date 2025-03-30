@@ -4,25 +4,22 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
 )
 
 func NewEngine(logger *slog.Logger, cfg Config) *Engine {
-	gokitLogger := instrumentation.NewGoKitLoggerFromSlogHandler(logger.Handler(), "msg")
-
 	var activeQueryTracker promql.QueryTracker
 	if cfg.ActiveQueryTrackerConfig.Enabled {
 		activeQueryTracker = promql.NewActiveQueryTracker(
 			cfg.ActiveQueryTrackerConfig.Path,
 			cfg.ActiveQueryTrackerConfig.MaxConcurrent,
-			gokitLogger,
+			logger,
 		)
 	}
 
 	return promql.NewEngine(promql.EngineOpts{
-		Logger:             gokitLogger,
+		Logger:             logger,
 		Reg:                nil,
 		MaxSamples:         50000000,
 		Timeout:            time.Duration(2 * time.Minute),

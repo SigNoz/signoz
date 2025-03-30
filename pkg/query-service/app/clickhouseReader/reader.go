@@ -18,13 +18,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"honnef.co/go/tools/config"
 
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
-	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/promql"
 
+	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"

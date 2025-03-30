@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/prometheus/prometheus/promql"
-	pql "github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -307,7 +306,7 @@ func (r *PromRule) String() string {
 	return string(byt)
 }
 
-func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (pql.Matrix, error) {
+func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (promql.Matrix, error) {
 	q, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, qs, start, end, interval)
 	if err != nil {
 		return nil, err
@@ -320,25 +319,25 @@ func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time
 	}
 
 	switch typ := res.Value.(type) {
-	case pql.Vector:
-		series := make([]pql.Series, 0, len(typ))
-		value := res.Value.(pql.Vector)
+	case promql.Vector:
+		series := make([]promql.Series, 0, len(typ))
+		value := res.Value.(promql.Vector)
 		for _, smpl := range value {
-			series = append(series, pql.Series{
+			series = append(series, promql.Series{
 				Metric: smpl.Metric,
-				Floats: []pql.FPoint{{T: smpl.T, F: smpl.F}},
+				Floats: []promql.FPoint{{T: smpl.T, F: smpl.F}},
 			})
 		}
 		return series, nil
-	case pql.Scalar:
-		value := res.Value.(pql.Scalar)
-		series := make([]pql.Series, 0, 1)
-		series = append(series, pql.Series{
-			Floats: []pql.FPoint{{T: value.T, F: value.V}},
+	case promql.Scalar:
+		value := res.Value.(promql.Scalar)
+		series := make([]promql.Series, 0, 1)
+		series = append(series, promql.Series{
+			Floats: []promql.FPoint{{T: value.T, F: value.V}},
 		})
 		return series, nil
-	case pql.Matrix:
-		return res.Value.(pql.Matrix), nil
+	case promql.Matrix:
+		return res.Value.(promql.Matrix), nil
 	default:
 		return nil, fmt.Errorf("rule result is not a vector or scalar")
 	}

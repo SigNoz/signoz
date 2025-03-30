@@ -1,4 +1,4 @@
-package clickhouse
+package clickhouseprometheus
 
 import (
 	"database/sql"

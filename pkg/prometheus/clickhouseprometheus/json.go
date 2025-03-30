@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/prometheus/prometheus/prompb"
-	"github.com/prometheus/prometheus/storage/utils/gofuzz"
 )
 
 // marshalLabels marshals Prometheus labels into JSON, appending it to b.
@@ -46,7 +45,7 @@ func marshalLabels(labels []*prompb.Label, b []byte) []byte {
 	}
 	b[len(b)-1] = '}' // replace last comma
 
-	gofuzz.AddToCorpus("json", b)
+	addToCorpus("json", b)
 	return b
 }
 
@@ -69,3 +68,5 @@ func unmarshalLabels(b []byte) ([]prompb.Label, string, error) {
 	}
 	return res, metricName, nil
 }
+
+func addToCorpus(name string, data []byte) {}
