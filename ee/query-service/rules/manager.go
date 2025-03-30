@@ -48,7 +48,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.TelemetryStore.PrometheusEngine(),
+			opts.ManagerOpts.Prometheus,
 			baserules.WithSQLStore(opts.SQLStore),
 		)
 
@@ -145,7 +145,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.TelemetryStore.PrometheusEngine(),
+			opts.ManagerOpts.Prometheus,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),

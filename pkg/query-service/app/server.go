@@ -122,6 +122,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	reader := clickhouseReader.NewReader(
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 		fm,
 		serverOptions.Cluster,
 		serverOptions.UseLogsNewSchema,

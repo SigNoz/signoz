@@ -6,15 +6,13 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/promengine"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 type provider struct {
-	settings         factory.ScopedProviderSettings
-	clickHouseConn   clickhouse.Conn
-	prometheusEngine promengine.PromEngine
-	hooks            []telemetrystore.TelemetryStoreHook
+	settings       factory.ScopedProviderSettings
+	clickHouseConn clickhouse.Conn
+	hooks          []telemetrystore.TelemetryStoreHook
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
@@ -48,25 +46,15 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	engine, err := promengine.New(settings.Logger(), config.Clickhouse.Prometheus)
-	if err != nil {
-		return nil, err
-	}
-
 	return &provider{
-		settings:         settings,
-		clickHouseConn:   chConn,
-		hooks:            hooks,
-		prometheusEngine: engine,
+		settings:       settings,
+		clickHouseConn: chConn,
+		hooks:          hooks,
 	}, nil
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
-}
-
-func (p *provider) PrometheusEngine() promengine.PromEngine {
-	return p.prometheusEngine
 }
 
 func (p *provider) Close() error {

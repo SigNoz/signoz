@@ -14,14 +14,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
-	"github.com/go-kit/log"
-	promconfig "github.com/prometheus/prometheus/config"
 )
 
 // Config defines the entire input configuration of signoz.
@@ -51,7 +50,10 @@ type Config struct {
 	APIServer apiserver.Config `mapstructure:"apiserver"`
 
 	// TelemetryStore config
-	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore" yaml:"telemetrystore"`
+	TelemetryStore telemetrystore.Config `mapstructure:"telemetrystore"`
+
+	// Prometheus config
+	Prometheus prometheus.Config `mapstructure:"prometheus"`
 
 	// Alertmanager config
 	Alertmanager alertmanager.Config `mapstructure:"alertmanager" yaml:"alertmanager"`
@@ -76,6 +78,7 @@ func NewConfig(ctx context.Context, resolverConfig config.ResolverConfig, deprec
 		sqlmigrator.NewConfigFactory(),
 		apiserver.NewConfigFactory(),
 		telemetrystore.NewConfigFactory(),
+		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
 	}
 
@@ -181,16 +184,6 @@ func mergeAndEnsureBackwardCompatibility(config *Config, deprecatedFlags Depreca
 	}
 
 	if deprecatedFlags.Config != "" {
-		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROMETHEUS_REMOTE__READ_URL instead. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
-		cfg, err := promconfig.LoadFile(deprecatedFlags.Config, false, false, log.NewNopLogger())
-		if err != nil {
-			fmt.Println("Error parsing config, using value set in SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROMETHEUS_REMOTE__READ_URL")
-		} else {
-			if len(cfg.RemoteReadConfigs) != 1 {
-				fmt.Println("Error finding remote read config, using value set in SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROMETHEUS_REMOTE__READ_URL")
-			} else {
-				config.TelemetryStore.Clickhouse.Prometheus.RemoteReadConfig.URL = cfg.RemoteReadConfigs[0].URL.URL
-			}
-		}
+		fmt.Println("[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 	}
 }

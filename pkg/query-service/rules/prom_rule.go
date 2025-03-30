@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/pkg/promengine"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -23,7 +23,7 @@ import (
 
 type PromRule struct {
 	*BaseRule
-	pqlEngine promengine.PromEngine
+	prometheus prometheus.Prometheus
 }
 
 func NewPromRule(
@@ -31,7 +31,7 @@ func NewPromRule(
 	postableRule *PostableRule,
 	logger *zap.Logger,
 	reader interfaces.Reader,
-	pqlEngine promengine.PromEngine,
+	prometheus prometheus.Prometheus,
 	opts ...RuleOption,
 ) (*PromRule, error) {
 
@@ -41,8 +41,8 @@ func NewPromRule(
 	}
 
 	p := PromRule{
-		BaseRule:  baseRule,
-		pqlEngine: pqlEngine,
+		BaseRule:   baseRule,
+		prometheus: prometheus,
 	}
 	p.logger = logger
 
@@ -308,7 +308,7 @@ func (r *PromRule) String() string {
 }
 
 func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (pql.Matrix, error) {
-	q, err := r.pqlEngine.Engine().NewRangeQuery(ctx, r.pqlEngine.Storage(), nil, qs, start, end, interval)
+	q, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, qs, start, end, interval)
 	if err != nil {
 		return nil, err
 	}

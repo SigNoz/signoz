@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
@@ -18,6 +21,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -1399,8 +1403,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup mock
-			telemetryStore, err := telemetrystoretest.New(sqlmock.QueryMatcherRegexp)
-			require.NoError(t, err)
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 
 			// Configure mock responses
 			for _, response := range tc.queryResponses {
@@ -1420,6 +1423,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 				options,
 				nil,
 				telemetryStore,
+				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 				featureManager.StartManager(),
 				"",
 				true,

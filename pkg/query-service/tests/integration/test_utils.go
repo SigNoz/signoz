@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
@@ -20,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -40,14 +44,12 @@ func NewMockClickhouseReader(
 ) {
 	require.NotNil(t, testDB)
 
-	telemetryStore, err := telemetrystoretest.New(sqlmock.QueryMatcherRegexp)
-	require.NoError(t, err)
-
-	require.Nil(t, err, "could not init mock clickhouse")
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
 		clickhouseReader.NewOptions("", ""),
 		testDB,
 		telemetryStore,
+		prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 		featureFlags,
 		"",
 		true,

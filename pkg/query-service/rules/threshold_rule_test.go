@@ -10,6 +10,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
@@ -1155,8 +1159,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		},
 	}
 	fm := featureManager.StartManager()
-	telemetryStore, err := telemetrystoretest.New(&queryMatcherAny{})
-	require.NoError(t, err)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	cols := make([]cmock.ColumnType, 0)
 	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
@@ -1248,7 +1251,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, fm, "", true, true, time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -1307,8 +1310,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		},
 	}
 	fm := featureManager.StartManager()
-	telemetryStore, err := telemetrystoretest.New(&queryMatcherAny{})
-	require.NoError(t, err)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	cols := make([]cmock.ColumnType, 0)
 	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
@@ -1346,7 +1348,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		}
 		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, fm, "", true, true, time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), readerCache)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1410,8 +1412,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		},
 	}
 	fm := featureManager.StartManager()
-	telemetryStore, err := telemetrystoretest.New(&queryMatcherAny{})
-	require.NoError(t, err)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	metaCols := make([]cmock.ColumnType, 0)
 	metaCols = append(metaCols, cmock.ColumnType{Name: "DISTINCT(tagKey)", Type: "String"})
@@ -1452,7 +1453,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, fm, "", true, true, time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1521,8 +1522,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		},
 	}
 	fm := featureManager.StartManager()
-	telemetryStore, err := telemetrystoretest.New(&queryMatcherAny{})
-	require.NoError(t, err)
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 	attrMetaCols := make([]cmock.ColumnType, 0)
 	attrMetaCols = append(attrMetaCols, cmock.ColumnType{Name: "name", Type: "String"})
@@ -1575,7 +1575,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, fm, "", true, true, time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{

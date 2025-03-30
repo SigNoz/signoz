@@ -1,12 +1,9 @@
 package telemetrystore
 
 import (
-	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/promengine"
 )
 
 type Config struct {
@@ -45,9 +42,6 @@ type ClickhouseConfig struct {
 
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
-
-	// Prometheus is the prometheus configuration
-	Prometheus promengine.Config `mapstructure:"prometheus"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -64,38 +58,11 @@ func newConfig() factory.Config {
 		},
 		Clickhouse: ClickhouseConfig{
 			DSN: "tcp://localhost:9000",
-			Prometheus: promengine.Config{
-				RemoteReadConfig: promengine.RemoteReadConfig{
-					URL: &url.URL{
-						Scheme: "tcp",
-						Host:   "localhost:9000",
-						Path:   "/signoz_metrics",
-					},
-				},
-				ActiveQueryTrackerConfig: promengine.ActiveQueryTrackerConfig{
-					Enabled:       true,
-					Path:          "",
-					MaxConcurrent: 20,
-				},
-			},
 		},
 	}
 
 }
 
 func (c Config) Validate() error {
-	dsn, err := url.Parse(c.Clickhouse.DSN)
-	if err != nil {
-		return err
-	}
-
-	if c.Clickhouse.Prometheus.RemoteReadConfig.URL.Host != dsn.Host {
-		return fmt.Errorf("mismatch between host in prometheus.remote_read.url %q and clickhouse.dsn %q", c.Clickhouse.Prometheus.RemoteReadConfig.URL.Host, dsn.Host)
-	}
-
-	if c.Clickhouse.Prometheus.RemoteReadConfig.URL.Scheme != dsn.Scheme {
-		return fmt.Errorf("mismatch between scheme in prometheus.remote_read.url %q and clickhouse.dsn %q", c.Clickhouse.Prometheus.RemoteReadConfig.URL.Scheme, dsn.Scheme)
-	}
-
 	return nil
 }
