@@ -1870,8 +1870,15 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
 	// Context is not used here as TTL is long duration DB operation
-	result, apiErr := aH.reader.SetTTL(context.Background(), ttlParams)
+	result, apiErr := aH.reader.SetTTL(context.Background(), claims.OrgID, ttlParams)
 	if apiErr != nil {
 		if apiErr.Typ == model.ErrorConflict {
 			aH.HandleError(w, apiErr.Err, http.StatusConflict)
@@ -1891,7 +1898,14 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetTTL(r.Context(), ttlParams)
+	ctx := r.Context()
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	result, apiErr := aH.reader.GetTTL(r.Context(), claims.OrgID, ttlParams)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

@@ -139,7 +139,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	reader := db.NewDataConnector(
-		serverOptions.SigNoz.SQLStore.SQLxDB(),
+		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
 		lm,
