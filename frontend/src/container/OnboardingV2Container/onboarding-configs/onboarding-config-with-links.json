@@ -6,6 +6,7 @@
 		"id": "java",
 		"imgUrl": "/Logos/java.svg",
 		"tags": ["apm"],
+		"relatedSearchKeywords": ["apm", "java"],
 		"module": "apm",
 		"question": {
 			"desc": "Which Java framework do you use?",
@@ -111,29 +112,29 @@
 					"imgUrl": "/Logos/quarkus.svg",
 					"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/",
 					"question": {
-					  "desc": "What is your Environment?",
-					  "type": "select",
-					  "entityID": "environment",
-					  "options": [
-						{
-						  "key": "vm",
-						  "label": "VM",
-						  "imgUrl": "/Logos/vm.svg",
-						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
-						},
-						{
-						  "key": "k8s",
-						  "label": "Kubernetes",
-						  "imgUrl": "/Logos/kubernetes.svg",
-						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
-						},
-						{
-						  "key": "windows",
-						  "label": "Windows",
-						  "imgUrl": "/Logos/windows.svg",
-						  "link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
-						}
-					  ]
+						"desc": "What is your Environment?",
+						"type": "select",
+						"entityID": "environment",
+						"options": [
+							{
+								"key": "vm",
+								"label": "VM",
+								"imgUrl": "/Logos/vm.svg",
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+							},
+							{
+								"key": "k8s",
+								"label": "Kubernetes",
+								"imgUrl": "/Logos/kubernetes.svg",
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+							},
+							{
+								"key": "windows",
+								"label": "Windows",
+								"imgUrl": "/Logos/windows.svg",
+								"link": "https://signoz.io/docs/instrumentation/opentelemetry-quarkus/"
+							}
+						]
 					}
 				},
 				{
@@ -309,6 +310,28 @@
 		"label": "JavaScript",
 		"tags": ["apm"],
 		"module": "apm",
+		"relatedSearchKeywords": [
+			"apm",
+			"javascript",
+			"nodejs",
+			"express",
+			"nestjs",
+			"angular",
+			"nextjs",
+			"react",
+			"vue",
+			"svelte",
+			"solid",
+			"qwik",
+			"astro",
+			"svelte",
+			"js",
+			"typescript",
+			"ts",
+			"reactjs",
+			"react native",
+			"react native js"
+		],
 		"id": "javascript",
 		"imgUrl": "/Logos/javascript.svg",
 		"question": {
