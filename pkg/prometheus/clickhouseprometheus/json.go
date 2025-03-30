@@ -7,10 +7,10 @@ import (
 )
 
 // Unmarshals JSON into Prometheus labels. It does not preserve order.
-func unmarshalLabels(b []byte) ([]prompb.Label, string, error) {
+func unmarshalLabels(s string) ([]prompb.Label, string, error) {
 	var metricName string
 	m := make(map[string]string)
-	if err := json.Unmarshal(b, &m); err != nil {
+	if err := json.Unmarshal([]byte(s), &m); err != nil {
 		return nil, metricName, err
 	}
 	res := make([]prompb.Label, 0, len(m))
