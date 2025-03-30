@@ -94,7 +94,7 @@ type PlannedMaintenance struct {
 	UpdatedBy   string    `bun:"updated_by,type:text,notnull"`
 }
 
-type TTLStatus struct {
+type TTLSetting struct {
 	bun.BaseModel `bun:"table:ttl_setting"`
 	Identifiable
 	TimeAuditable
