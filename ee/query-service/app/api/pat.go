@@ -14,7 +14,6 @@ import (
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -46,9 +45,6 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	}
 	pat := model.PAT{
 		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
 			Name:      req.Name,
 			Role:      req.Role,
 			ExpiresAt: req.ExpiresInDays,

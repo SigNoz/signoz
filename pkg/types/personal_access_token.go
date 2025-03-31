@@ -5,9 +5,11 @@ import (
 )
 
 type StorablePersonalAccessToken struct {
-	bun.BaseModel `bun:"table:personal_access_token"`
-	Identifiable
+	bun.BaseModel `bun:"table:personal_access_tokens"`
+
 	TimeAuditable
+	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
+	ID              int    `json:"id" bun:"id,pk,autoincrement"`
 	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
 	UserID          string `json:"userId" bun:"user_id,type:text,notnull"`
 	Token           string `json:"token" bun:"token,type:text,notnull,unique"`

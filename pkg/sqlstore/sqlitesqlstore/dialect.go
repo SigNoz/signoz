@@ -21,7 +21,7 @@ var (
 )
 
 var (
-	OrgReference  = `("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	OrgReference  = `("org_id") REFERENCES "organizations" ("id")`
 	UserReference = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
 )
 

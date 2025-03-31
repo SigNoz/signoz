@@ -8,11 +8,11 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p model.PAT) (model.PAT, basemodel.BaseApiError) {
+	p.StorablePersonalAccessToken.OrgID = orgID
 	_, err := m.DB().NewInsert().
 		Model(&p.StorablePersonalAccessToken).
 		Returning("id").
@@ -40,11 +40,11 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p model.PAT) (mo
 	return p, nil
 }
 
-func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p model.PAT, id valuer.UUID) basemodel.BaseApiError {
+func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p model.PAT, id string) basemodel.BaseApiError {
 	_, err := m.DB().NewUpdate().
 		Model(&p.StorablePersonalAccessToken).
 		Column("role", "name", "updated_at", "updated_by_user_id").
-		Where("id = ?", id.StringValue()).
+		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Where("revoked = false").
 		Exec(ctx)

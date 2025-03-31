@@ -22,7 +22,7 @@ var (
 
 var (
 	OrgReference  = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference = `("user_id") REFERENCES "users" ("id")`
+	UserReference = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
 )
 
 type dialect struct {
