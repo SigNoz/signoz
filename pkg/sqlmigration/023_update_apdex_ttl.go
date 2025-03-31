@@ -128,7 +128,7 @@ func (migration *updateApdexTtl) Up(ctx context.Context, db *bun.DB) error {
 			return nil
 		})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = migration.
@@ -175,7 +175,7 @@ func (migration *updateApdexTtl) Up(ctx context.Context, db *bun.DB) error {
 			return nil
 		})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = tx.Commit()

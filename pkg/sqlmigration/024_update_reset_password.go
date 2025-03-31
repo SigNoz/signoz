@@ -88,7 +88,7 @@ func (migration *updateResetPassword) Up(ctx context.Context, db *bun.DB) error 
 	})
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = tx.Commit()
