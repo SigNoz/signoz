@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -271,8 +271,10 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 				// since versioning while saving pipelines requires a new id for each version
 				// to avoid altering history when pipelines are edited/reordered etc
 				StoreablePipeline: pipelinetypes.StoreablePipeline{
-					Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
-					ID:          uuid.NewString(),
+					Alias: AliasForIntegrationPipeline(ii.Id, p.Alias),
+					Identifiable: types.Identifiable{
+						ID: valuer.GenerateUUID(),
+					},
 					OrderID:     p.OrderID,
 					Enabled:     p.Enabled,
 					Name:        p.Name,
