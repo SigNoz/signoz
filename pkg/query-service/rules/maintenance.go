@@ -211,7 +211,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 }
 
 func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
-
+	// Check if the alert ID is in the maintenance window
 	found := false
 	if m.AlertIds != nil {
 		for _, alertID := range *m.AlertIds {
@@ -227,94 +227,254 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 		found = true
 	}
 
-	if found {
+	if !found {
+		return false
+	}
 
-		zap.L().Info("alert found in maintenance", zap.String("alert", ruleID), zap.Any("maintenance", m.Name))
+	zap.L().Debug("alert found in maintenance", zap.String("alert", ruleID), zap.String("maintenance", m.Name))
 
-		// If alert is found, we check if it should be skipped based on the schedule
-		// If it should be skipped, we return true
-		// If it should not be skipped, we return false
+	// If alert is found, we check if it should be skipped based on the schedule
+	loc, err := time.LoadLocation(m.Schedule.Timezone)
+	if err != nil {
+		zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
+		return false
+	}
 
-		// fixed schedule
-		if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-			// if the current time in the timezone is between the start and end time
-			loc, err := time.LoadLocation(m.Schedule.Timezone)
-			if err != nil {
-				zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
+	currentTime := now.In(loc)
+
+	// fixed schedule
+	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
+		zap.L().Debug("checking fixed schedule",
+			zap.String("rule", ruleID),
+			zap.String("maintenance", m.Name),
+			zap.Time("currentTime", currentTime),
+			zap.Time("startTime", m.Schedule.StartTime),
+			zap.Time("endTime", m.Schedule.EndTime))
+
+		if currentTime.Equal(m.Schedule.StartTime) ||
+			currentTime.Equal(m.Schedule.EndTime) ||
+			(currentTime.After(m.Schedule.StartTime) && currentTime.Before(m.Schedule.EndTime)) {
+			return true
+		}
+	}
+
+	// recurring schedule
+	if m.Schedule.Recurrence != nil {
+		start := m.Schedule.Recurrence.StartTime
+		duration := time.Duration(m.Schedule.Recurrence.Duration)
+		end := start.Add(duration)
+
+		zap.L().Debug("checking recurring schedule base info",
+			zap.String("rule", ruleID),
+			zap.String("maintenance", m.Name),
+			zap.Time("startTime", start),
+			zap.Duration("duration", duration))
+
+		// Make sure the recurrence has started
+		if currentTime.Before(start.In(loc)) {
+			zap.L().Debug("current time is before recurrence start time",
+				zap.String("rule", ruleID),
+				zap.String("maintenance", m.Name))
+			return false
+		}
+
+		// Check if recurrence has expired
+		if m.Schedule.Recurrence.EndTime != nil {
+			endTime := *m.Schedule.Recurrence.EndTime
+			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
+				zap.L().Debug("current time is after recurrence end time",
+					zap.String("rule", ruleID),
+					zap.String("maintenance", m.Name))
 				return false
-			}
-
-			currentTime := now.In(loc)
-			zap.L().Info("checking fixed schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", m.Schedule.StartTime), zap.Time("endTime", m.Schedule.EndTime))
-			if currentTime.After(m.Schedule.StartTime) && currentTime.Before(m.Schedule.EndTime) {
-				return true
 			}
 		}
 
-		// recurring schedule
-		if m.Schedule.Recurrence != nil {
-			zap.L().Info("evaluating recurrence schedule")
-			start := m.Schedule.Recurrence.StartTime
-			end := m.Schedule.Recurrence.StartTime.Add(time.Duration(m.Schedule.Recurrence.Duration))
-			// if the current time in the timezone is between the start and end time
-			loc, err := time.LoadLocation(m.Schedule.Timezone)
-			if err != nil {
-				zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
-				return false
-			}
-			currentTime := now.In(loc)
+		switch m.Schedule.Recurrence.RepeatType {
+		case RepeatTypeDaily:
+			// Create start time for current day
+			startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
+				start.Hour(), start.Minute(), 0, 0, loc)
 
-			zap.L().Info("checking recurring schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start), zap.Time("endTime", end))
-
-			// make sure the start time is not after the current time
-			if currentTime.Before(start.In(loc)) {
-				zap.L().Info("current time is before start time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start.In(loc)))
-				return false
-			}
-
+			// Create end time, handling cases that cross midnight
+			endHour, endMinute := end.Hour(), end.Minute()
 			var endTime time.Time
-			if m.Schedule.Recurrence.EndTime != nil {
-				endTime = *m.Schedule.Recurrence.EndTime
-			}
-			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
-				zap.L().Info("current time is after end time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("endTime", end.In(loc)))
-				return false
+
+			// If duration is 24 hours or more, or if end time hour is earlier than start time hour,
+			// we're crossing midnight
+			crossesMidnight := duration >= 24*time.Hour || (end.Hour() < start.Hour() ||
+				(end.Hour() == start.Hour() && end.Minute() < start.Minute()))
+
+			if crossesMidnight {
+				// Set end time to the next day
+				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day()+1,
+					endHour, endMinute, 0, 0, loc)
+			} else {
+				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
+					endHour, endMinute, 0, 0, loc)
 			}
 
-			switch m.Schedule.Recurrence.RepeatType {
-			case RepeatTypeDaily:
-				// take the hours and minutes from the start time and add them to the current time
-				startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-				endTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), end.Hour(), end.Minute(), 0, 0, loc)
-				zap.L().Info("checking daily schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
+			zap.L().Debug("checking daily schedule",
+				zap.String("rule", ruleID),
+				zap.String("maintenance", m.Name),
+				zap.Time("currentTime", currentTime),
+				zap.Time("startTime", startTime),
+				zap.Time("endTime", endTime),
+				zap.Bool("crossesMidnight", crossesMidnight))
 
-				if currentTime.After(startTime) && currentTime.Before(endTime) {
+			if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
+				(currentTime.After(startTime) && currentTime.Before(endTime)) {
+				return true
+			}
+
+			// Check previous day if we crossed midnight and current time is before the end time today
+			if crossesMidnight && currentTime.Hour() < endHour ||
+				(currentTime.Hour() == endHour && currentTime.Minute() < endMinute) {
+
+				yesterdayStart := startTime.AddDate(0, 0, -1)
+				zap.L().Debug("checking previous day for daily schedule",
+					zap.Time("yesterdayStart", yesterdayStart))
+
+				if currentTime.After(yesterdayStart) {
 					return true
 				}
-			case RepeatTypeWeekly:
-				// if the current time in the timezone is between the start and end time on the RepeatOn day
-				startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-				endTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), end.Hour(), end.Minute(), 0, 0, loc)
-				zap.L().Info("checking weekly schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
-				if currentTime.After(startTime) && currentTime.Before(endTime) {
-					if len(m.Schedule.Recurrence.RepeatOn) == 0 {
-						return true
-					} else if slices.Contains(m.Schedule.Recurrence.RepeatOn, RepeatOn(strings.ToLower(currentTime.Weekday().String()))) {
+			}
+
+		case RepeatTypeWeekly:
+			// Get weekday as string for comparison
+			currentWeekday := RepeatOn(strings.ToLower(currentTime.Weekday().String()))
+
+			// Create today's start time
+			startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
+				start.Hour(), start.Minute(), 0, 0, loc)
+
+			// Create end time, handling cases that cross midnight
+			endHour, endMinute := end.Hour(), end.Minute()
+			var endTime time.Time
+
+			// Check if window crosses midnight
+			crossesMidnight := duration >= 24*time.Hour || (end.Hour() < start.Hour() ||
+				(end.Hour() == start.Hour() && end.Minute() < start.Minute()))
+
+			if crossesMidnight {
+				// Set end time to the next day
+				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day()+1,
+					endHour, endMinute, 0, 0, loc)
+			} else {
+				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
+					endHour, endMinute, 0, 0, loc)
+			}
+
+			zap.L().Debug("checking weekly schedule",
+				zap.String("rule", ruleID),
+				zap.String("maintenance", m.Name),
+				zap.Time("currentTime", currentTime),
+				zap.Time("startTime", startTime),
+				zap.Time("endTime", endTime),
+				zap.String("currentWeekday", string(currentWeekday)),
+				zap.Bool("crossesMidnight", crossesMidnight))
+
+			// Check if today is a maintenance day
+			todayMaintenance := len(m.Schedule.Recurrence.RepeatOn) == 0 ||
+				slices.Contains(m.Schedule.Recurrence.RepeatOn, currentWeekday)
+
+			if todayMaintenance {
+				if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
+					(currentTime.After(startTime) && currentTime.Before(endTime)) {
+					return true
+				}
+			}
+
+			// If crosses midnight, check if yesterday was a maintenance day
+			if crossesMidnight && (currentTime.Hour() < endHour ||
+				(currentTime.Hour() == endHour && currentTime.Minute() < endMinute)) {
+
+				yesterdayTime := currentTime.AddDate(0, 0, -1)
+				yesterdayWeekday := RepeatOn(strings.ToLower(yesterdayTime.Weekday().String()))
+				yesterdayMaintenance := len(m.Schedule.Recurrence.RepeatOn) == 0 ||
+					slices.Contains(m.Schedule.Recurrence.RepeatOn, yesterdayWeekday)
+
+				if yesterdayMaintenance {
+					yesterdayStart := time.Date(yesterdayTime.Year(), yesterdayTime.Month(),
+						yesterdayTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
+
+					zap.L().Debug("checking previous day for weekly schedule",
+						zap.Time("yesterdayStart", yesterdayStart),
+						zap.String("yesterdayWeekday", string(yesterdayWeekday)))
+
+					if currentTime.After(yesterdayStart) {
 						return true
 					}
 				}
-			case RepeatTypeMonthly:
-				// if the current time in the timezone is between the start and end time on the day of the current month
-				startTime := time.Date(currentTime.Year(), currentTime.Month(), start.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-				endTime := time.Date(currentTime.Year(), currentTime.Month(), end.Day(), end.Hour(), end.Minute(), 0, 0, loc)
-				zap.L().Info("checking monthly schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
-				if currentTime.After(startTime) && currentTime.Before(endTime) && currentTime.Day() == start.Day() {
-					return true
+			}
+
+		case RepeatTypeMonthly:
+			// Create this month's start time on the specified day
+			monthStartDay := start.Day()
+
+			// Adjust for month length if needed
+			// Get number of days in current month
+			currentYear, currentMonth, _ := currentTime.Date()
+			lastDay := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, loc).Day()
+
+			if monthStartDay > lastDay {
+				monthStartDay = lastDay
+			}
+
+			startTime := time.Date(currentTime.Year(), currentTime.Month(), monthStartDay,
+				start.Hour(), start.Minute(), 0, 0, loc)
+
+			// Check if window crosses to next day/month
+			durationDays := int(duration.Hours() / 24)
+			remainingHours := duration.Hours() - float64(durationDays*24)
+
+			endTime := startTime.AddDate(0, 0, durationDays)
+			endTime = endTime.Add(time.Duration(remainingHours * float64(time.Hour)))
+
+			zap.L().Debug("checking monthly schedule",
+				zap.String("rule", ruleID),
+				zap.String("maintenance", m.Name),
+				zap.Time("currentTime", currentTime),
+				zap.Time("startTime", startTime),
+				zap.Time("endTime", endTime),
+				zap.Int("durationDays", durationDays))
+
+			if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
+				(currentTime.After(startTime) && currentTime.Before(endTime)) {
+				return true
+			}
+
+			// If crosses to previous month, check previous month's window
+			if durationDays > 0 {
+				// Check if we're in the early days of the month and might be in previous month's window
+				if currentTime.Day() <= durationDays {
+					prevMonth := currentTime.AddDate(0, -1, 0)
+					prevYear, prevMonthVal, _ := prevMonth.Date()
+
+					// Get last day of previous month
+					lastDayPrevMonth := time.Date(prevYear, prevMonthVal+1, 0, 0, 0, 0, 0, loc).Day()
+					prevMonthStartDay := start.Day()
+
+					if prevMonthStartDay > lastDayPrevMonth {
+						prevMonthStartDay = lastDayPrevMonth
+					}
+
+					prevMonthStart := time.Date(prevYear, prevMonthVal, prevMonthStartDay,
+						start.Hour(), start.Minute(), 0, 0, loc)
+					prevMonthEnd := prevMonthStart.AddDate(0, 0, durationDays)
+					prevMonthEnd = prevMonthEnd.Add(time.Duration(remainingHours * float64(time.Hour)))
+
+					zap.L().Debug("checking previous month for monthly schedule",
+						zap.Time("prevMonthStart", prevMonthStart),
+						zap.Time("prevMonthEnd", prevMonthEnd))
+
+					if currentTime.After(prevMonthStart) && currentTime.Before(prevMonthEnd) {
+						return true
+					}
 				}
 			}
 		}
 	}
-	// If alert is not found, we return false
+
 	return false
 }
 
