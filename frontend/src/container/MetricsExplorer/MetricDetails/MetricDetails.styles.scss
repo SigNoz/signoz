@@ -20,6 +20,12 @@
 			gap: 4px;
 			background-color: var(--bg-slate-300);
 		}
+
+		.inspect-metric-button {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
 	}
 
 	.metric-details-content {
