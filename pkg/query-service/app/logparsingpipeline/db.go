@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -60,8 +60,10 @@ func (r *Repo) insertPipeline(
 
 	insertRow := &pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			OrgID:        orgID,
-			ID:           uuid.New().String(),
+			OrgID: orgID,
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID:      postable.OrderID,
 			Enabled:      postable.Enabled,
 			Name:         postable.Name,
