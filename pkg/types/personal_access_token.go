@@ -24,6 +24,10 @@ type StorablePersonalAccessToken struct {
 
 func NewStorablePersonalAccessToken(token, name, role, userID string, expiresAt int64) StorablePersonalAccessToken {
 	now := time.Now()
+	if expiresAt != 0 {
+		// convert expiresAt to unix timestamp from days
+		expiresAt = time.Now().Unix() + (expiresAt * 24 * 60 * 60)
+	}
 	return StorablePersonalAccessToken{
 		Token:           token,
 		Name:            name,

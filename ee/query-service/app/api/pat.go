@@ -58,11 +58,6 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pat.ExpiresAt != 0 {
-		// convert expiresAt to unix timestamp from days
-		pat.ExpiresAt = time.Now().Unix() + (pat.ExpiresAt * 24 * 60 * 60)
-	}
-
 	zap.L().Info("Got Create PAT request", zap.Any("pat", pat))
 	var apierr basemodel.BaseApiError
 	if pat, apierr = ah.AppDao().CreatePAT(ctx, user.OrgID, pat); apierr != nil {
