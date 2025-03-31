@@ -1,3 +1,19 @@
+.query-builder-search {
+	.content {
+		.suggested-filters {
+			color: var(--bg-slate-50);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 600;
+			line-height: 18px;
+			letter-spacing: 0.88px;
+			text-transform: uppercase;
+			padding: 12px 0px 8px 14px;
+		}
+	}
+}
+
 .query-builder-search-v2 {
 	display: flex;
 	gap: 4px;

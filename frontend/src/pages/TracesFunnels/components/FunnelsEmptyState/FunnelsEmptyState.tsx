@@ -5,7 +5,7 @@ import LearnMore from 'components/LearnMore/LearnMore';
 import { Plus } from 'lucide-react';
 
 interface FunnelsEmptyStateProps {
-	onCreateFunnel: () => void;
+	onCreateFunnel?: () => void;
 }
 
 function FunnelsEmptyState({
@@ -43,5 +43,9 @@ function FunnelsEmptyState({
 		</div>
 	);
 }
+
+FunnelsEmptyState.defaultProps = {
+	onCreateFunnel: undefined,
+};
 
 export default FunnelsEmptyState;

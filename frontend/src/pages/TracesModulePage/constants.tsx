@@ -5,7 +5,7 @@ import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
 import TracesFunnelDetails from 'pages/TracesFunnelDetails';
 import TracesFunnels from 'pages/TracesFunnels';
-import { matchPath, useLocation } from 'react-router-dom';
+import { matchPath } from 'react-router-dom';
 
 export const tracesExplorer: TabRoutes = {
 	Component: TracesExplorer,
@@ -18,9 +18,8 @@ export const tracesExplorer: TabRoutes = {
 	key: ROUTES.TRACES_EXPLORER,
 };
 
-export const tracesFunnel: TabRoutes = {
+export const tracesFunnel = (pathname: string): TabRoutes => ({
 	Component: (): JSX.Element => {
-		const { pathname } = useLocation();
 		const isFunnelDetails = matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
 
 		return isFunnelDetails ? <TracesFunnelDetails /> : <TracesFunnels />;
@@ -32,7 +31,7 @@ export const tracesFunnel: TabRoutes = {
 	),
 	route: ROUTES.TRACES_FUNNELS,
 	key: ROUTES.TRACES_FUNNELS,
-};
+});
 
 export const tracesSaveView: TabRoutes = {
 	Component: SaveView,

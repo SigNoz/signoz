@@ -11,16 +11,24 @@ import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useHistory, useLocation } from 'react-router-dom';
 
-interface SelectOptionConfig {
+export interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
 	filterType: string | string[];
+	shouldSetQueryParams?: boolean;
+	onChange?: (value: string | string[]) => void;
+	values?: string | string[];
+	isMultiple?: boolean;
 }
 
-function FilterSelect({
+export function FilterSelect({
 	placeholder,
 	queryParam,
 	filterType,
+	values,
+	shouldSetQueryParams,
+	onChange,
+	isMultiple,
 }: SelectOptionConfig): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		filterType,
@@ -35,7 +43,8 @@ function FilterSelect({
 			key={filterType.toString()}
 			placeholder={placeholder}
 			showSearch
-			mode="multiple"
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...(isMultiple ? { mode: 'multiple' } : {})}
 			options={options}
 			loading={isFetching}
 			className="config-select-option"
@@ -43,7 +52,11 @@ function FilterSelect({
 			maxTagCount={4}
 			allowClear
 			maxTagPlaceholder={SelectMaxTagPlaceholder}
-			value={getValuesFromQueryParams(queryParam, urlQuery) || []}
+			value={
+				!shouldSetQueryParams && !!values?.length
+					? values
+					: getValuesFromQueryParams(queryParam, urlQuery) || []
+			}
 			notFoundContent={
 				isFetching ? (
 					<span>
@@ -55,11 +68,27 @@ function FilterSelect({
 			}
 			onChange={(value): void => {
 				handleSearch('');
-				setQueryParamsFromOptions(value, urlQuery, history, location, queryParam);
+				if (shouldSetQueryParams) {
+					setQueryParamsFromOptions(
+						value as string[],
+						urlQuery,
+						history,
+						location,
+						queryParam,
+					);
+				}
+				onChange?.(value);
 			}}
 		/>
 	);
 }
+
+FilterSelect.defaultProps = {
+	shouldSetQueryParams: true,
+	onChange: (): void => {},
+	values: [],
+	isMultiple: true,
+};
 
 function CeleryOverviewConfigOptions(): JSX.Element {
 	const selectConfigs: SelectOptionConfig[] = [

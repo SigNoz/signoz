@@ -18,3 +18,11 @@
 		}
 	}
 }
+
+.lightMode {
+	.traces-funnel-details {
+		&__steps-config {
+			border-color: var(--bg-vanilla-300);
+		}
+	}
+}

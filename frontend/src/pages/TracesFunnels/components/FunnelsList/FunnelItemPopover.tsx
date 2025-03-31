@@ -11,6 +11,7 @@ interface FunnelItemPopoverProps {
 	isPopoverOpen: boolean;
 	setIsPopoverOpen: (isOpen: boolean) => void;
 	funnel: FunnelData;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
 interface FunnelItemActionsProps {
@@ -56,6 +57,7 @@ function FunnelItemPopover({
 	isPopoverOpen,
 	setIsPopoverOpen,
 	funnel,
+	shouldRedirectToTracesListOnDeleteSuccess,
 }: FunnelItemPopoverProps): JSX.Element {
 	const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
@@ -71,7 +73,12 @@ function FunnelItemPopover({
 
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
-		<div onClick={preventDefault} role="button" tabIndex={0}>
+		<div
+			onClick={preventDefault}
+			role="button"
+			tabIndex={0}
+			className="funnel-item__actions-popover"
+		>
 			<Popover
 				trigger="click"
 				rootClassName="funnel-item__actions"
@@ -96,6 +103,9 @@ function FunnelItemPopover({
 			</Popover>
 
 			<DeleteFunnel
+				shouldRedirectToTracesListOnDeleteSuccess={
+					shouldRedirectToTracesListOnDeleteSuccess
+				}
 				isOpen={isDeleteModalOpen}
 				onClose={(): void => setIsDeleteModalOpen(false)}
 				funnelId={funnel.id}
@@ -111,4 +121,7 @@ function FunnelItemPopover({
 	);
 }
 
+FunnelItemPopover.defaultProps = {
+	shouldRedirectToTracesListOnDeleteSuccess: true,
+};
 export default FunnelItemPopover;
