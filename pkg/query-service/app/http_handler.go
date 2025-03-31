@@ -18,6 +18,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/traceFunnels"
+	"github.com/google/uuid"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -142,6 +145,8 @@ type APIHandler struct {
 	AlertmanagerAPI *alertmanager.API
 
 	Signoz *signoz.SigNoz
+
+	TraceFunnels *traceFunnels.SQLClient
 }
 
 type APIHandlerOpts struct {
@@ -227,6 +232,11 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
 
+	traceFunnelsClient, err := traceFunnels.NewSQLClient(opts.Signoz.SQLStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create trace funnels client: %v", err)
+	}
+
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
@@ -257,6 +267,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
+		TraceFunnels:                  traceFunnelsClient,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -1338,6 +1349,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ToDo: (shivanshu26) should be a struct
 	response := map[string]interface{}{
 		"alertCount": alertCount,
 		"message":    "notification sent",
@@ -5596,4 +5608,532 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	aH.Respond(w, resp)
+}
+
+// RegisterTraceFunnelsRoutes adds trace funnels routes
+func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *AuthMiddleware) {
+
+	// Main messaging queues router
+	traceFunnelsRouter := router.PathPrefix("/api/v1/trace-funnels").Subrouter()
+
+	// API endpoints
+	traceFunnelsRouter.HandleFunc("/new-funnel", aH.handleNewFunnel).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/steps/update", aH.handleUpdateFunnelStep).Methods("PUT")
+	traceFunnelsRouter.HandleFunc("/list", aH.handleListFunnels).Methods("GET")
+	// Standard RESTful endpoints for funnel resource
+	traceFunnelsRouter.HandleFunc("/get/{funnel_id}", aH.handleGetFunnel).Methods("GET")
+	traceFunnelsRouter.HandleFunc("/delete/{funnel_id}", aH.handleDeleteFunnel).Methods("DELETE")
+	traceFunnelsRouter.HandleFunc("/save", aH.handleSaveFunnel).Methods("POST")
+
+	//// Analytics endpoints
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", func(w http.ResponseWriter, r *http.Request) {
+		aH.handleSlowTraces(w, r, false)
+	}).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", func(w http.ResponseWriter, r *http.Request) {
+		aH.handleSlowTraces(w, r, true)
+	}).Methods("POST")
+
+}
+
+// handleNewFunnel creates a new funnel without steps
+// Steps should be added separately using the update endpoint
+func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
+	var req traceFunnels.NewFunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	userID := claims.UserID
+	orgID := claims.OrgID
+
+	// Validate timestamp is provided and in milliseconds format
+	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "creation_timestamp"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Check for name collision in the SQLite database
+	exists, err := aH.TraceFunnels.CheckFunnelNameCollision(req.Name, userID)
+	if err != nil {
+		zap.L().Error("Error checking for funnel name collision: %v", zap.Error(err))
+		http.Error(w, fmt.Sprintf("failed to check funnel name collision: %v", err), http.StatusInternalServerError)
+		return
+	} else if exists {
+		http.Error(w, fmt.Sprintf("funnel with name '%s' already exists for user '%s' in the database", req.Name, userID), http.StatusBadRequest)
+		return
+	}
+
+	funnel := &traceFunnels.Funnel{
+		ID:        uuid.New().String(),
+		Name:      req.Name,
+		CreatedAt: req.Timestamp * 1000000, // Convert milliseconds to nanoseconds for internal storage
+		CreatedBy: userID,
+		OrgID:     orgID,
+		Steps:     make([]traceFunnels.FunnelStep, 0),
+	}
+
+	// Create new funnel in database
+	err = aH.TraceFunnels.CreateFunnel(funnel, userID, orgID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to save funnel to database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := traceFunnels.NewFunnelResponse{
+		ID:        funnel.ID,
+		Name:      funnel.Name,
+		CreatedAt: funnel.CreatedAt / 1000000,
+		CreatedBy: funnel.CreatedBy,
+		OrgID:     orgID,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleUpdateFunnelStep adds or updates steps for an existing funnel
+// Steps are identified by their step_order, which must be unique within a funnel
+func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Request) {
+	var req traceFunnels.FunnelStepRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+	userID := claims.UserID
+
+	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "updated_timestamp"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	aH.Signoz.SQLStore.SQLxDB()
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+
+	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	// Process each step in the request
+	for i := range req.Steps {
+		if req.Steps[i].StepOrder < 1 {
+			req.Steps[i].StepOrder = int64(i + 1) // Default to sequential ordering if not specified
+		}
+	}
+
+	if err := traceFunnels.ValidateFunnelSteps(req.Steps); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Normalize step orders
+	req.Steps = traceFunnels.NormalizeFunnelSteps(req.Steps)
+
+	// Update the funnel with new steps
+	funnel.Steps = req.Steps
+	funnel.UpdatedAt = req.Timestamp * 1000000
+	funnel.UpdatedBy = userID
+
+	// Update funnel in database
+	err = aH.TraceFunnels.UpdateFunnel(funnel, userID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to update funnel in database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// ToDo: (shivanshu26) should be a struct
+	response := map[string]interface{}{
+		"id":                 funnel.ID,
+		"funnel_name":        funnel.Name,
+		"creation_timestamp": funnel.CreatedAt / 1000000,
+		"user_id":            funnel.CreatedBy,
+		"org_id":             funnel.OrgID,
+		"updated_timestamp":  req.Timestamp,
+		"updated_by":         userID,
+		"steps":              funnel.Steps,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
+	orgID := r.URL.Query().Get("org_id")
+
+	var dbFunnels []*traceFunnels.Funnel
+	var err error
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+
+	if orgID != "" {
+		dbFunnels, err = dbClient.ListFunnelsFromDB(orgID)
+	} else {
+		dbFunnels, err = dbClient.ListAllFunnelsFromDB()
+	}
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error fetching funnels from database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to response format with additional metadata
+	response := make([]map[string]interface{}, 0, len(dbFunnels))
+	for _, f := range dbFunnels {
+		// ToDo: (shivanshu26) should be a struct for all request and responses
+		funnelInfo := map[string]interface{}{
+			"id":                 f.ID,
+			"funnel_name":        f.Name,
+			"creation_timestamp": f.CreatedAt / 1000000,
+			"user_id":            f.CreatedBy,
+			"org_id":             f.OrgID,
+		}
+
+		if f.UpdatedAt > 0 {
+			funnelInfo["updated_timestamp"] = f.UpdatedAt / 1000000
+		}
+		if f.UpdatedBy != "" {
+			funnelInfo["updated_by"] = f.UpdatedBy
+		}
+
+		// Get funnel extra data and tags
+		extraData, tags, err := aH.TraceFunnels.GetFunnelExtraDataAndTags(f.ID)
+		if err == nil && tags != "" {
+			funnelInfo["tags"] = tags
+		}
+
+		if err == nil && extraData != "" {
+			var extraDataMap map[string]interface{}
+			if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
+				if description, ok := extraDataMap["description"].(string); ok {
+					funnelInfo["description"] = description
+				}
+			}
+		}
+
+		response = append(response, funnelInfo)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	// Get funnel extra data and tags
+	extraData, tags, err := aH.TraceFunnels.GetFunnelExtraData(funnelID)
+	if err != nil {
+		// Log error but continue with response since we already have the main funnel data
+		zap.L().Error("Failed to get funnel extra data", zap.Error(err))
+	}
+
+	// ToDo: (shivanshu26) should be a struct
+	response := map[string]interface{}{
+		"id":                 funnel.ID,
+		"funnel_name":        funnel.Name,
+		"creation_timestamp": funnel.CreatedAt / 1000000,
+		"user_id":            funnel.CreatedBy,
+		"org_id":             funnel.OrgID,
+		"steps":              funnel.Steps,
+	}
+
+	if funnel.UpdatedAt > 0 {
+		response["updated_timestamp"] = funnel.UpdatedAt / 1000000
+	}
+	if funnel.UpdatedBy != "" {
+		response["updated_by"] = funnel.UpdatedBy
+	}
+
+	if err == nil && tags != "" {
+		response["tags"] = tags
+	}
+
+	if err == nil && extraData != "" {
+		var extraDataMap map[string]interface{}
+		if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
+			if description, ok := extraDataMap["description"].(string); ok {
+				response["description"] = description
+			}
+		}
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	err := dbClient.DeleteFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to delete funnel: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+// handleSaveFunnel saves a funnel to the SQLite database
+// Only requires funnel_id and optional description
+func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
+	var req traceFunnels.SaveFunnelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	updateTimestamp := req.Timestamp
+	if updateTimestamp == 0 {
+		updateTimestamp = time.Now().UnixMilli()
+	} else {
+		if !traceFunnels.ValidateTimestampIsMilliseconds(updateTimestamp) {
+			http.Error(w, "timestamp must be in milliseconds format (13 digits)", http.StatusBadRequest)
+			return
+		}
+	}
+
+	funnel.UpdatedAt = updateTimestamp * 1000000 // Convert ms to ns
+
+	if req.UserID != "" {
+		funnel.UpdatedBy = req.UserID
+	}
+	extraData := ""
+	if req.Description != "" {
+		descriptionJSON, err := json.Marshal(map[string]string{"description": req.Description})
+		if err != nil {
+			http.Error(w, "failed to marshal description: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		extraData = string(descriptionJSON)
+	}
+
+	orgID := req.OrgID
+	if orgID == "" {
+		orgID = funnel.OrgID
+	}
+
+	if err := dbClient.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get funnel metadata from database
+	createdAt, updatedAt, tags, extraDataFromDB, err := aH.TraceFunnels.GetFunnelMetadata(funnel.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "success",
+			"id":     funnel.ID,
+			"name":   funnel.Name,
+		})
+		return
+	}
+
+	response := map[string]string{
+		"status":     "success",
+		"id":         funnel.ID,
+		"name":       funnel.Name,
+		"created_at": createdAt,
+		"updated_at": updatedAt,
+		"created_by": funnel.CreatedBy,
+		"updated_by": funnel.UpdatedBy,
+		"org_id":     funnel.OrgID,
+	}
+
+	if tags != "" {
+		response["tags"] = tags
+	}
+
+	if extraDataFromDB != "" {
+		var extraDataMap map[string]interface{}
+		if err := json.Unmarshal([]byte(extraDataFromDB), &extraDataMap); err == nil {
+			if description, ok := extraDataMap["description"].(string); ok {
+				response["description"] = description
+			}
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(funnel.Steps) < 2 {
+		http.Error(w, "funnel must have at least 2 steps", http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.ValidateTraces(funnel, timeRange)
+
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+// Analytics handlers
+func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.ValidateTracesWithLatency(funnel, timeRange)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	// Get funnel directly from SQLite database
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var timeRange traceFunnels.TimeRange
+	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.GetStepAnalytics(funnel, timeRange)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
+		return
+	}
+	aH.Respond(w, results)
+}
+
+func (aH *APIHandler) handleSlowTraces(w http.ResponseWriter, r *http.Request, withErrors bool) {
+	vars := mux.Vars(r)
+	funnelID := vars["funnel_id"]
+
+	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
+	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		return
+	}
+
+	var req traceFunnels.StepTransitionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	stepAExists, stepBExists := false, false
+	for _, step := range funnel.Steps {
+		if step.StepOrder == req.StepAOrder {
+			stepAExists = true
+		}
+		if step.StepOrder == req.StepBOrder {
+			stepBExists = true
+		}
+	}
+
+	if !stepAExists || !stepBExists {
+		http.Error(w, fmt.Sprintf("One or both steps not found. Step A Order: %d, Step B Order: %d", req.StepAOrder, req.StepBOrder), http.StatusBadRequest)
+		return
+	}
+
+	chq, err := traceFunnels.GetSlowestTraces(funnel, req.StepAOrder, req.StepBOrder, req.TimeRange, withErrors)
+	if err != nil {
+		zap.L().Error(err.Error())
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
+		return
+	}
+
+	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
+	aH.Respond(w, results)
 }
