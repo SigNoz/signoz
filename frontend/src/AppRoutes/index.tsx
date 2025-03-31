@@ -26,6 +26,7 @@ import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { extractDomain } from 'utils/app';
 
+import { Home } from './pageComponents';
 import PrivateRoute from './Private';
 import defaultRoutes, {
 	AppRoutes,
@@ -310,6 +311,7 @@ function App(): JSX.Element {
 																/>
 															))}
 
+															<Route exact path="/" component={Home} />
 															<Route path="*" component={NotFound} />
 														</Switch>
 													</Suspense>

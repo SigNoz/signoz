@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -4625,12 +4626,18 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
+	viewUUID, err := valuer.NewUUID(viewID)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
+
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	view, err := explorer.GetView(r.Context(), claims.OrgID, viewID)
+	view, err := explorer.GetView(r.Context(), claims.OrgID, viewUUID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4641,8 +4648,13 @@ func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
+	viewUUID, err := valuer.NewUUID(viewID)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
 	var view v3.SavedView
-	err := json.NewDecoder(r.Body).Decode(&view)
+	err = json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -4658,7 +4670,7 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	err = explorer.UpdateView(r.Context(), claims.OrgID, viewID, view)
+	err = explorer.UpdateView(r.Context(), claims.OrgID, viewUUID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4670,12 +4682,17 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
 	viewID := mux.Vars(r)["viewId"]
+	viewUUID, err := valuer.NewUUID(viewID)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	err := explorer.DeleteView(r.Context(), claims.OrgID, viewID)
+	err = explorer.DeleteView(r.Context(), claims.OrgID, viewUUID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return

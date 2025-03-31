@@ -49,6 +49,7 @@ function FullView({
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
 	onClickHandler,
+	customOnDragSelect,
 	setCurrentGraphRef,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
@@ -252,7 +253,7 @@ function FullView({
 						onToggleModelHandler={onToggleModelHandler}
 						setGraphVisibility={setGraphsVisibilityStates}
 						graphVisibility={graphsVisibilityStates}
-						onDragSelect={onDragSelect}
+						onDragSelect={customOnDragSelect ?? onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						searchTerm={searchTerm}
 						onClickHandler={onClickHandler}

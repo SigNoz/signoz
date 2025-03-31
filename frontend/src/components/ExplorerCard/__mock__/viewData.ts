@@ -4,7 +4,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export const viewMockData: ViewProps[] = [
 	{
-		uuid: 'view1',
+		id: 'view1',
 		name: 'View 1',
 		createdBy: 'User 1',
 		category: 'category 1',
@@ -17,7 +17,7 @@ export const viewMockData: ViewProps[] = [
 		updatedBy: 'User 1',
 	},
 	{
-		uuid: 'view2',
+		id: 'view2',
 		name: 'View 2',
 		createdBy: 'User 2',
 		category: 'category 2',

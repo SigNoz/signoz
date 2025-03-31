@@ -27,6 +27,11 @@
 			.rc-virtual-list-holder {
 				height: 115px;
 			}
+			&.non-logs-data-source {
+				.rc-virtual-list-holder {
+					height: 256px;
+				}
+			}
 		}
 	}
 
