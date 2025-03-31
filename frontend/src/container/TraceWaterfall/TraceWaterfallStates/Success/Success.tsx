@@ -9,6 +9,7 @@ import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import AddSpanToFunnelModal from 'container/TraceWaterfall/AddSpanToFunnelModal/AddSpanToFunnelModal';
 import SpanLineActionButtons from 'container/TraceWaterfall/SpanLineActionButtons';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -61,6 +62,7 @@ function SpanOverview({
 	isSpanCollapsed,
 	handleCollapseUncollapse,
 	setSelectedSpan,
+	handleAddSpanToFunnel,
 	selectedSpan,
 }: {
 	span: Span;
@@ -68,6 +70,7 @@ function SpanOverview({
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleAddSpanToFunnel: (span: Span) => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 
@@ -145,6 +148,28 @@ function SpanOverview({
 					<Typography.Text className="service-name">
 						{span.serviceName}
 					</Typography.Text>
+					{!!span.serviceName && !!span.name && (
+						<div className="add-funnel-button">
+							<span className="add-funnel-button__separator">·</span>
+							<Button
+								type="text"
+								size="small"
+								className="add-funnel-button__button"
+								onClick={(e): void => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleAddSpanToFunnel(span);
+								}}
+								icon={
+									<img
+										className="add-funnel-button__icon"
+										src="/Icons/funnel-add.svg"
+										alt="funnel-icon"
+									/>
+								}
+							/>
+						</div>
+					)}
 				</section>
 			</div>
 		</div>
@@ -235,12 +260,14 @@ function getWaterfallColumns({
 	traceMetadata,
 	selectedSpan,
 	setSelectedSpan,
+	handleAddSpanToFunnel,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
+	handleAddSpanToFunnel: (span: Span) => void;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
 		columnDefHelper.display({
@@ -253,6 +280,7 @@ function getWaterfallColumns({
 					isSpanCollapsed={!uncollapsedNodes.includes(props.row.original.spanId)}
 					selectedSpan={selectedSpan}
 					setSelectedSpan={setSelectedSpan}
+					handleAddSpanToFunnel={handleAddSpanToFunnel}
 				/>
 			),
 			size: 450,
@@ -319,6 +347,17 @@ function Success(props: ISuccessProps): JSX.Element {
 		}
 	};
 
+	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] = useState(
+		false,
+	);
+	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
+		Span | undefined
+	>(undefined);
+	const handleAddSpanToFunnel = useCallback((span: Span): void => {
+		setIsAddSpanToFunnelModalOpen(true);
+		setSelectedSpanToAddToFunnel(span);
+	}, []);
+
 	const columns = useMemo(
 		() =>
 			getWaterfallColumns({
@@ -327,6 +366,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				traceMetadata,
 				selectedSpan,
 				setSelectedSpan,
+				handleAddSpanToFunnel,
 			}),
 		[
 			handleCollapseUncollapse,
@@ -334,6 +374,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			traceMetadata,
 			selectedSpan,
 			setSelectedSpan,
+			handleAddSpanToFunnel,
 		],
 	);
 
@@ -405,6 +446,13 @@ function Success(props: ISuccessProps): JSX.Element {
 				virtualiserRef={virtualizerRef}
 				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
+			{selectedSpanToAddToFunnel && (
+				<AddSpanToFunnelModal
+					span={selectedSpanToAddToFunnel}
+					isOpen={isAddSpanToFunnelModalOpen}
+					onClose={(): void => setIsAddSpanToFunnelModalOpen(false)}
+				/>
+			)}
 		</div>
 	);
 }
