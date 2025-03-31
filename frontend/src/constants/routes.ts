@@ -75,6 +75,7 @@ const ROUTES = {
 	METRICS_EXPLORER_BASE: '/metrics-explorer',
 	WORKSPACE_ACCESS_RESTRICTED: '/workspace-access-restricted',
 	HOME_PAGE: '/',
+	NEW_SELECT: '/new-select',
 } as const;
 
 export default ROUTES;

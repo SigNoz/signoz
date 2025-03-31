@@ -33,6 +33,7 @@ import {
 	MetricsExplorer,
 	MySettings,
 	NewDashboardPage,
+	NewSelectDemo,
 	OldLogsExplorer,
 	Onboarding,
 	OnboardingV2,
@@ -504,6 +505,13 @@ const routes: AppRoutes[] = [
 		component: ApiMonitoring,
 		key: 'API_MONITORING',
 		isPrivate: true,
+	},
+	{
+		path: ROUTES.NEW_SELECT,
+		exact: true,
+		component: NewSelectDemo,
+		isPrivate: true,
+		key: 'NEW_SELECT',
 	},
 ];
 

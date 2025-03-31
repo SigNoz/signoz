@@ -248,7 +248,7 @@ export const WorkspaceAccessRestricted = Loadable(
 );
 
 export const ShortcutsPage = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+	() => import(/* webpackChunkName: "Shortcuts" */ 'pages/Shortcuts'),
 );
 
 export const InstalledIntegrations = Loadable(
@@ -298,4 +298,8 @@ export const MetricsExplorer = Loadable(
 
 export const ApiMonitoring = Loadable(
 	() => import(/* webpackChunkName: "ApiMonitoring" */ 'pages/ApiMonitoring'),
+);
+
+export const NewSelectDemo = Loadable(
+	() => import(/* webpackChunkName: "NewSelectDemo" */ 'pages/NewSelectDemo'),
 );
