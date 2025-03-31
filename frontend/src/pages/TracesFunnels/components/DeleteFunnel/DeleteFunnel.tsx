@@ -14,12 +14,14 @@ interface DeleteFunnelProps {
 	isOpen: boolean;
 	onClose: () => void;
 	funnelId: string;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
 function DeleteFunnel({
 	isOpen,
 	onClose,
 	funnelId,
+	shouldRedirectToTracesListOnDeleteSuccess,
 }: DeleteFunnelProps): JSX.Element {
 	const deleteFunnelMutation = useDeleteFunnel();
 	const { notifications } = useNotifications();
@@ -38,7 +40,11 @@ function DeleteFunnel({
 						message: 'Funnel deleted successfully',
 					});
 					onClose();
-					if (pathname !== ROUTES.TRACES_FUNNELS) {
+
+					if (
+						pathname !== ROUTES.TRACES_FUNNELS &&
+						shouldRedirectToTracesListOnDeleteSuccess
+					) {
 						history.push(ROUTES.TRACES_FUNNELS);
 						return;
 					}
@@ -88,5 +94,9 @@ function DeleteFunnel({
 		</SignozModal>
 	);
 }
+
+DeleteFunnel.defaultProps = {
+	shouldRedirectToTracesListOnDeleteSuccess: true,
+};
 
 export default DeleteFunnel;
