@@ -601,7 +601,7 @@ func postableFromPipelines(gettablePipelines []pipelinetypes.GettablePipeline) p
 
 	for _, p := range gettablePipelines {
 		postable := pipelinetypes.PostablePipeline{
-			ID:      p.ID,
+			ID:      p.ID.StringValue(),
 			OrderID: p.OrderID,
 			Name:    p.Name,
 			Alias:   p.Alias,
