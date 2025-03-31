@@ -44,27 +44,19 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pat := model.PAT{
-		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
-			Name:            req.Name,
-			Role:            req.Role,
-			ExpiresAt:       req.ExpiresInDays,
-			LastUsed:        0,
-			Revoked:         false,
-			UpdatedByUserID: "",
-		},
+		StorablePersonalAccessToken: types.NewStorablePersonalAccessToken(
+			generatePATToken(),
+			req.Name,
+			req.Role,
+			user.ID,
+			req.ExpiresInDays,
+		),
 	}
 	err = validatePATRequest(pat)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-
-	// All the PATs are associated with the user creating the PAT.
-	pat.UserID = user.ID
-	pat.CreatedAt = time.Now()
-	pat.UpdatedAt = time.Now()
-	pat.LastUsed = 0
-	pat.Token = generatePATToken()
 
 	if pat.ExpiresAt != 0 {
 		// convert expiresAt to unix timestamp from days

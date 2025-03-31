@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"github.com/uptrace/bun"
 )
 
@@ -18,4 +20,22 @@ type StorablePersonalAccessToken struct {
 	LastUsed        int64  `json:"lastUsed" bun:"last_used,notnull,default:0"`
 	Revoked         bool   `json:"revoked" bun:"revoked,notnull,default:false"`
 	UpdatedByUserID string `json:"updatedByUserId" bun:"updated_by_user_id,type:text,notnull,default:''"`
+}
+
+func NewStorablePersonalAccessToken(token, name, role, userID string, expiresAt int64) StorablePersonalAccessToken {
+	now := time.Now()
+	return StorablePersonalAccessToken{
+		Token:           token,
+		Name:            name,
+		Role:            role,
+		UserID:          userID,
+		ExpiresAt:       expiresAt,
+		LastUsed:        0,
+		Revoked:         false,
+		UpdatedByUserID: "",
+		TimeAuditable: TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+	}
 }
