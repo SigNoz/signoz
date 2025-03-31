@@ -60,7 +60,7 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	}
 
 	if ctx.Value("max_result_rows") != nil && ctx.Value("result_overflow_mode") != nil {
-		settings["max_result_rows"] = ctx.Value("max_result_rows").(int)
+		if maxResultRows, ok := ctx.Value("max_result_rows").(int); ok { settings["max_result_rows"] = maxResultRows }
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
