@@ -2,6 +2,7 @@ package sqlitesqlstore
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/uptrace/bun"
@@ -196,6 +197,26 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 		Model(oldModel).
 		Exec(ctx)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, tx bun.Tx, table string, column, columnType, defaultValue string) error {
+	if _, err := tx.NewAddColumn().Table(table).ColumnExpr(fmt.Sprintf("%s_new %s NOT NULL DEFAULT %s ", column, columnType, defaultValue)).Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewUpdate().Table(table).Set(fmt.Sprintf("%s_new = %s", column, column)).Where("1=1").Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewDropColumn().Table(table).ColumnExpr(column).Exec(ctx); err != nil {
+		return err
+	}
+
+	if _, err := tx.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s_new TO %s", table, column, column)); err != nil {
 		return err
 	}
 

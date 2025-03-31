@@ -45,9 +45,12 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	}
 	pat := model.PAT{
 		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
-			Name:      req.Name,
-			Role:      req.Role,
-			ExpiresAt: req.ExpiresInDays,
+			Name:            req.Name,
+			Role:            req.Role,
+			ExpiresAt:       req.ExpiresInDays,
+			LastUsed:        0,
+			Revoked:         false,
+			UpdatedByUserID: "",
 		},
 	}
 	err = validatePATRequest(pat)

@@ -15,7 +15,6 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p model.PAT) (mo
 	p.StorablePersonalAccessToken.OrgID = orgID
 	_, err := m.DB().NewInsert().
 		Model(&p.StorablePersonalAccessToken).
-		Returning("id").
 		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Failed to insert PAT in db, err: %v", zap.Error(err))

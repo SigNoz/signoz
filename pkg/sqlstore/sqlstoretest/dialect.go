@@ -32,3 +32,7 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
 	return nil
 }
+
+func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, tx bun.Tx, table string, column, columnType, defaultValue string) error {
+	return nil
+}

@@ -137,11 +137,14 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	newPAT := model.PAT{
 		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
-			Token:     generatePATToken(),
-			UserID:    integrationUser.ID,
-			Name:      integrationPATName,
-			Role:      baseconstants.ViewerGroup,
-			ExpiresAt: 0,
+			Token:           generatePATToken(),
+			UserID:          integrationUser.ID,
+			Name:            integrationPATName,
+			Role:            baseconstants.ViewerGroup,
+			ExpiresAt:       0,
+			LastUsed:        0,
+			Revoked:         false,
+			UpdatedByUserID: "",
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),

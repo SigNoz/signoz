@@ -2,7 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -44,16 +43,16 @@ func (migration *updatePat) Up(ctx context.Context, db *bun.DB) error {
 	defer tx.Rollback()
 
 	for _, column := range []string{"last_used", "expires_at"} {
-		if err := migration.addNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", column, "INTEGER", "0"); err != nil {
+		if err := migration.store.Dialect().AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", column, "INTEGER", "0"); err != nil {
 			return err
 		}
 	}
 
-	if err := migration.addNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "revoked", "BOOLEAN", "false"); err != nil {
+	if err := migration.store.Dialect().AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "revoked", "BOOLEAN", "false"); err != nil {
 		return err
 	}
 
-	if err := migration.addNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "updated_by_user_id", "TEXT", "''"); err != nil {
+	if err := migration.store.Dialect().AddNotNullDefaultToColumn(ctx, tx, "personal_access_tokens", "updated_by_user_id", "TEXT", "''"); err != nil {
 		return err
 	}
 
@@ -65,25 +64,5 @@ func (migration *updatePat) Up(ctx context.Context, db *bun.DB) error {
 }
 
 func (migration *updatePat) Down(ctx context.Context, db *bun.DB) error {
-	return nil
-}
-
-func (migration *updatePat) addNotNullDefaultToColumn(ctx context.Context, tx bun.Tx, table string, column, columnType, defaultValue string) error {
-	if _, err := tx.NewAddColumn().Table(table).ColumnExpr(fmt.Sprintf("%s_new %s NOT NULL DEFAULT %s ", column, columnType, defaultValue)).Exec(ctx); err != nil {
-		return err
-	}
-
-	if _, err := tx.NewUpdate().Table(table).Set(fmt.Sprintf("%s_new = %s", column, column)).Where("1=1").Exec(ctx); err != nil {
-		return err
-	}
-
-	if _, err := tx.NewDropColumn().Table(table).ColumnExpr(column).Exec(ctx); err != nil {
-		return err
-	}
-
-	if _, err := tx.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s_new TO %s", table, column, column)); err != nil {
-		return err
-	}
-
 	return nil
 }
