@@ -14,6 +14,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -25,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -40,7 +42,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -119,10 +120,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	clickhouseReader := clickhouseReader.NewReader(
+	reader := clickhouseReader.NewReader(
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
-		serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
-		serverOptions.PromConfigPath,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 		fm,
 		serverOptions.Cluster,
 		serverOptions.UseLogsNewSchema,
@@ -130,8 +131,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		fluxIntervalForTraceDetail,
 		serverOptions.SigNoz.Cache,
 	)
-	go clickhouseReader.Start(readerReady)
-	reader := clickhouseReader
 
 	skipConfig := &model.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
@@ -162,6 +161,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,
 		serverOptions.SigNoz.SQLStore,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 	)
 	if err != nil {
 		return nil, err
@@ -490,17 +491,13 @@ func makeRulesManager(
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
 	sqlstore sqlstore.SQLStore,
+	telemetryStore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
 ) (*rules.Manager, error) {
-
-	// create engine
-	pqle, err := pqle.FromReader(ch)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pql engine : %v", err)
-	}
-
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		PqlEngine:         pqle,
+		TelemetryStore:    telemetryStore,
+		Prometheus:        prometheus,
 		RepoURL:           ruleRepoURL,
 		DBConn:            db,
 		Context:           context.Background(),

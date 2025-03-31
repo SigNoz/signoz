@@ -24,12 +24,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/prometheus/promql"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/prometheus/prometheus/promql"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
