@@ -329,6 +329,9 @@ func CreateResetPasswordToken(ctx context.Context, userId string) (*types.ResetP
 	}
 
 	req := &types.ResetPasswordRequest{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
 		UserID: userId,
 		Token:  token,
 	}

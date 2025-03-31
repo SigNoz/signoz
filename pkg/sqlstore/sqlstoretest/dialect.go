@@ -29,7 +29,7 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 	return true, nil
 }
 
-func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
+func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, reference string, cb func(context.Context) error) error {
 	return nil
 }
 
