@@ -1,0 +1,16 @@
+.inspect-metrics-modal {
+	.inspect-metrics-title {
+		display: flex;
+		align-items: center;
+		justify-content: start;
+		gap: 6px;
+
+		.inspect-metric-button {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: default;
+			color: var(--text-vanilla-500);
+		}
+	}
+}

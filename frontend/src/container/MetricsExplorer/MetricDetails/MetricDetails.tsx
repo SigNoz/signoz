@@ -2,12 +2,21 @@ import './MetricDetails.styles.scss';
 import '../Summary/Summary.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Divider, Drawer, Empty, Skeleton, Tooltip, Typography } from 'antd';
+import {
+	Button,
+	Divider,
+	Drawer,
+	Empty,
+	Skeleton,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from 'lucide-react';
+import { Compass, X } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { isInspectEnabled } from '../Inspect/utils';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
@@ -22,6 +31,7 @@ function MetricDetails({
 	onClose,
 	isOpen,
 	metricName,
+	openInspectModal,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	// const { safeNavigate } = useSafeNavigate();
@@ -42,6 +52,8 @@ function MetricDetails({
 		if (!metric) return null;
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
+
+	const showInspectFeature = useMemo(() => isInspectEnabled(), []);
 
 	const isMetricDetailsLoading = isLoading || isFetching;
 
@@ -92,6 +104,18 @@ function MetricDetails({
 					>
 						Open in Explorer
 					</Button> */}
+					{/* Show the based on the feature flag. Will remove before releasing the feature */}
+					{showInspectFeature && (
+						<Button
+							className="inspect-metric-button"
+							icon={<Compass size={18} />}
+							onClick={(): void => {
+								if (metric?.name) {
+									openInspectModal(metric.name);
+								}
+							}}
+						/>
+					)}
 				</div>
 			}
 			placement="right"
