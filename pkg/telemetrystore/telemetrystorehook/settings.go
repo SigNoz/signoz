@@ -59,6 +59,16 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		}
 	}
 
+	if ctx.Value("max_result_rows") != nil && ctx.Value("result_overflow_mode") != nil {
+		settings["max_result_rows"] = ctx.Value("max_result_rows").(int)
+		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
+	}
+
+	if ctx.Value("max_rows_to_group_by") != nil && ctx.Value("result_overflow_mode") != nil {
+		settings["max_rows_to_group_by"] = ctx.Value("max_rows_to_group_by").(int)
+		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
+	}
+
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }
