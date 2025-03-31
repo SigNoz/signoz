@@ -1,19 +1,16 @@
 import './StepsTransitionResults.styles.scss';
 
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
-import { useState } from 'react';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useMemo, useState } from 'react';
 
 import StepsTransitionMetrics from './StepsTransitionMetrics';
 import TopSlowestTraces from './TopSlowestTraces';
 import TopTracesWithErrors from './TopTracesWithErrors';
 
-interface StepTransition {
+export interface StepTransition {
 	value: string;
 	label: string;
-}
-
-interface StepsTransitionResultsProps {
-	stepsCount: number;
 }
 
 function generateStepTransitions(stepsCount: number): StepTransition[] {
@@ -23,13 +20,17 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 	}));
 }
 
-function StepsTransitionResults({
-	stepsCount,
-}: StepsTransitionResultsProps): JSX.Element {
-	const stepTransitions = generateStepTransitions(stepsCount);
+function StepsTransitionResults(): JSX.Element {
+	const { steps, funnelId } = useFunnelContext();
+	const stepTransitions = generateStepTransitions(steps.length);
 	const [selectedTransition, setSelectedTransition] = useState<string>(
 		stepTransitions[0]?.value || '',
 	);
+
+	const [stepAOrder, stepBOrder] = useMemo(() => {
+		const [a, b] = selectedTransition.split('_to_');
+		return [parseInt(a, 10), parseInt(b, 10)];
+	}, [selectedTransition]);
 
 	return (
 		<div className="steps-transition-results">
@@ -44,9 +45,19 @@ function StepsTransitionResults({
 				<StepsTransitionMetrics
 					selectedTransition={selectedTransition}
 					transitions={stepTransitions}
+					startStep={stepAOrder}
+					endStep={stepBOrder}
 				/>
-				<TopSlowestTraces />
-				<TopTracesWithErrors />
+				<TopSlowestTraces
+					funnelId={funnelId}
+					stepAOrder={stepAOrder}
+					stepBOrder={stepBOrder}
+				/>
+				<TopTracesWithErrors
+					funnelId={funnelId}
+					stepAOrder={stepAOrder}
+					stepBOrder={stepBOrder}
+				/>
 			</div>
 		</div>
 	);

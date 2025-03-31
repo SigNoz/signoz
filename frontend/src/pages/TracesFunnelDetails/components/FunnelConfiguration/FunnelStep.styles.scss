@@ -105,14 +105,16 @@
 	&__footer {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		border-top: 1px solid var(--bg-slate-500);
 
 		.error {
 			display: flex;
 			align-items: center;
 			padding: 10.5px 12px 10.5px 16px;
-			gap: 50px;
+			gap: 20px;
 			border-right: 1px solid var(--bg-slate-500);
+			width: 50%;
 		}
 		.error__label,
 		.latency-pointer__label {
@@ -123,7 +125,7 @@
 		}
 		.latency-pointer {
 			padding: 10.5px 16px 10.5px 12px;
-			width: 100%;
+			width: 55%;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
@@ -148,15 +150,16 @@
 
 .lightMode {
 	.funnel-step {
-		background: var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
 		color: var(--bg-ink-400);
-		border-color: var(--bg-vanilla-400);
+		border-color: var(--bg-vanilla-300);
 
 		.step-popover {
 			background: var(--bg-vanilla-100);
 		}
 
 		&__header {
+			border-color: var(--bg-vanilla-300);
 			.funnel-step-details {
 				&__title {
 					color: var(--bg-ink-400);
@@ -170,8 +173,8 @@
 		&__content {
 			.filters {
 				.ant-select-selector {
-					background: var(--bg-vanilla-300);
-					border-color: var(--bg-vanilla-400);
+					background: var(--bg-vanilla-100);
+					border-color: var(--bg-vanilla-300);
 				}
 				&__service-and-span {
 					.ant-select-selection-placeholder {
@@ -189,7 +192,7 @@
 		&__footer {
 			&,
 			.error {
-				border-color: var(--bg-vanilla-400);
+				border-color: var(--bg-vanilla-300);
 			}
 			.error__label,
 			.latency-pointer__label {

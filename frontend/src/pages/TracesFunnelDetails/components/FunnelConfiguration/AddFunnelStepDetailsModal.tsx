@@ -6,22 +6,22 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useUpdateFunnelStepDetails } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from 'lucide-react';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
 
 interface AddFunnelStepDetailsModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	funnelId: string;
 	stepOrder: number;
 }
 
 function AddFunnelStepDetailsModal({
 	isOpen,
 	onClose,
-	funnelId,
 	stepOrder,
 }: AddFunnelStepDetailsModalProps): JSX.Element {
+	const { funnelId } = useFunnelContext();
 	const [stepName, setStepName] = useState<string>('');
 	const [description, setDescription] = useState<string>('');
 	const { notifications } = useNotifications();

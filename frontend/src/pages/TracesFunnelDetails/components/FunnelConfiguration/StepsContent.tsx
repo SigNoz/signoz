@@ -2,29 +2,34 @@ import './StepsContent.styles.scss';
 
 import { Button, Steps } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { PlusIcon } from 'lucide-react';
-import { FunnelStepData } from 'types/api/traceFunnels';
+import { PlusIcon, Undo2 } from 'lucide-react';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { memo, useCallback } from 'react';
+import { Span } from 'types/api/trace/getTraceV2';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
 
 const { Step } = Steps;
 
-interface StepsContentProps {
-	funnelId: string;
-	steps: FunnelStepData[];
-	handleAddStep: () => void;
-	handleStepChange: (index: number, newStep: Partial<FunnelStepData>) => void;
-	handleStepRemoval: (index: number) => void;
-}
-
 function StepsContent({
-	funnelId,
-	steps,
-	handleAddStep,
-	handleStepChange,
-	handleStepRemoval,
-}: StepsContentProps): JSX.Element {
+	isTraceDetailsPage,
+	span,
+}: {
+	isTraceDetailsPage?: boolean;
+	span?: Span;
+}): JSX.Element {
+	const { steps, handleAddStep, handleReplaceStep } = useFunnelContext();
+
+	const handleAddForNewStep = useCallback(() => {
+		if (!span) return;
+
+		const stepWasAdded = handleAddStep();
+		if (stepWasAdded) {
+			handleReplaceStep(steps.length, span.serviceName, span.name);
+		}
+	}, [span, handleAddStep, handleReplaceStep, steps.length]);
+
 	return (
 		<div className="steps-content">
 			<OverlayScrollbar>
@@ -34,21 +39,28 @@ function StepsContent({
 							key={`step-${index + 1}`}
 							description={
 								<div className="steps-content__description">
-									<FunnelStep
-										funnelId={funnelId}
-										stepData={step}
-										index={index}
-										onStepChange={handleStepChange}
-										onStepRemove={handleStepRemoval}
-										stepsCount={steps.length}
-									/>
+									<div className="funnel-step-wrapper">
+										<FunnelStep stepData={step} index={index} stepsCount={steps.length} />
+										{isTraceDetailsPage && span && (
+											<Button
+												type="default"
+												className="funnel-step-wrapper__replace-button"
+												icon={<Undo2 size={12} />}
+												disabled={
+													step.service_name === span.serviceName &&
+													step.span_name === span.name
+												}
+												onClick={(): void =>
+													handleReplaceStep(index, span.serviceName, span.name)
+												}
+											>
+												Replace
+											</Button>
+										)}
+									</div>
 									{/* Display InterStepConfig only between steps */}
 									{index < steps.length - 1 && (
-										<InterStepConfig
-											index={index}
-											onStepChange={handleStepChange}
-											step={step}
-										/>
+										<InterStepConfig index={index} step={step} />
 									)}
 								</div>
 							}
@@ -58,14 +70,25 @@ function StepsContent({
 						<Step
 							className="steps-content__add-step"
 							description={
-								<Button
-									type="default"
-									className="steps-content__add-btn"
-									onClick={handleAddStep}
-									icon={<PlusIcon size={14} />}
-								>
-									Add Funnel Step
-								</Button>
+								!isTraceDetailsPage ? (
+									<Button
+										type="default"
+										className="steps-content__add-btn"
+										onClick={handleAddStep}
+										icon={<PlusIcon size={14} />}
+									>
+										Add Funnel Step
+									</Button>
+								) : (
+									<Button
+										type="default"
+										className="steps-content__add-btn"
+										onClick={handleAddForNewStep}
+										icon={<PlusIcon size={14} />}
+									>
+										Add for new Step
+									</Button>
+								)
 							}
 						/>
 					)}
@@ -75,4 +98,9 @@ function StepsContent({
 	);
 }
 
-export default StepsContent;
+StepsContent.defaultProps = {
+	isTraceDetailsPage: false,
+	span: undefined,
+};
+
+export default memo(StepsContent);

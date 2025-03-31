@@ -1,6 +1,7 @@
 .inter-step-config {
 	display: flex;
 	align-items: center;
+	gap: 6px;
 	.ant-form-item {
 		margin-bottom: 0;
 	}
@@ -12,7 +13,7 @@
 		transform: translateY(-50%);
 		width: 12px;
 		height: 12px;
-		background-color: var(--bg-ink-400);
+		background-color: var(--bg-slate-400);
 		border-radius: 50%;
 		z-index: 1;
 	}
