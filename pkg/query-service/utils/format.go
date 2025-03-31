@@ -303,7 +303,7 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -319,7 +319,7 @@ func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
