@@ -17,6 +17,7 @@ export type GridTableComponentProps = {
 	searchTerm?: string;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
+	widgetId?: string;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

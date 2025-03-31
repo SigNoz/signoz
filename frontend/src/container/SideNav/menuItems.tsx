@@ -128,6 +128,7 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.API_MONITORING,
 		label: 'API Monitoring',
 		icon: <Binoculars size={16} />,
+		isNew: true,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
