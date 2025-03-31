@@ -50,6 +50,7 @@ export interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: OnClickPluginOpts['onClick'];
+	customOnDragSelect?: (start: number, end: number) => void;
 	name: string;
 	tableProcessedDataRef: MutableRefObject<RowData[]>;
 	version?: string;

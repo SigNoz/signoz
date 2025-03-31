@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import EndPointDetailsZeroState from './components/EndPointDetailsZeroState';
@@ -17,10 +18,12 @@ function EndPointDetailsWrapper({
 	domainName,
 	endPointName,
 	setSelectedEndPointName,
+	domainListFilters,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
+	domainListFilters: IBuilderQuery['filters'];
 }): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -69,6 +72,7 @@ function EndPointDetailsWrapper({
 			domainName={domainName}
 			endPointName={endPointName}
 			setSelectedEndPointName={setSelectedEndPointName}
+			domainListFilters={domainListFilters}
 		/>
 	);
 }
