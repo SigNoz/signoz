@@ -45,12 +45,22 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	popupMatchSelectWidth?: boolean;
 }
 
+/**
+ * CustomSelect Component
+ *
+ * A comprehensive select component that enhances Ant Design's Select with:
+ * - Section-based option grouping
+ * - Keyboard navigation with auto-scrolling
+ * - Custom value creation
+ * - Search highlighting
+ * - Accessible design
+ */
 const CustomSelect: React.FC<CustomSelectProps> = ({
 	placeholder = 'Search...',
 	className,
 	loading = false,
 	onSearch,
-	options,
+	options = [],
 	value,
 	onChange,
 	defaultActiveFirstOption = true,
@@ -64,153 +74,74 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	popupClassName,
 	...rest
 }) => {
+	// ===== State & Refs =====
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchText, setSearchText] = useState('');
-	const selectRef = useRef<any>(null);
+	const [activeOptionIndex, setActiveOptionIndex] = useState<number>(-1);
 
-	// Handle search input
-	const handleSearch = useCallback(
-		(value: string): void => {
-			setSearchText(value.trim());
-			// Ensure dropdown stays open when typing
-			if (!isOpen) {
-				setIsOpen(true);
-			}
-			if (onSearch) onSearch(value.trim());
-		},
-		[onSearch, isOpen],
+	// Refs for element access and scroll behavior
+	const selectRef = useRef<any>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+	// ===== Option Filtering & Processing Utilities =====
+
+	/**
+	 * Checks if a label exists in the provided options
+	 */
+	const isLabelPresent = useCallback(
+		(options: OptionData[], label: string): boolean =>
+			options.some((option) => {
+				const lowerLabel = label.toLowerCase();
+
+				// Check in nested options if they exist
+				if ('options' in option && Array.isArray(option.options)) {
+					return option.options.some(
+						(subOption) => subOption.label.toLowerCase() === lowerLabel,
+					);
+				}
+
+				// Check top-level option
+				return option.label.toLowerCase() === lowerLabel;
+			}),
+		[],
 	);
 
-	console.log(rest.title, value);
-	// Clear search when dropdown closes
-	useEffect(() => {
-		if (!isOpen) {
-			setSearchText('');
-		}
-	}, [isOpen]);
+	/**
+	 * Filters options based on search text
+	 */
+	const filterOptionsBySearch = useCallback(
+		(options: OptionData[], searchText: string): OptionData[] => {
+			if (!searchText.trim()) return options;
 
-	// Handle dropdown clicks to prevent closing when selecting
-	const handleDropdownClick = useCallback((e: React.MouseEvent): void => {
-		e.stopPropagation();
-	}, []);
+			const lowerSearchText = searchText.toLowerCase();
 
-	// Handle keyboard events for better accessibility
-	const handleKeyDown = useCallback(
-		(e: React.KeyboardEvent, callback?: () => void): void => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				if (callback) callback();
-			}
+			return options
+				.map((option) => {
+					if ('options' in option && Array.isArray(option.options)) {
+						// Filter nested options
+						const filteredSubOptions = option.options.filter((subOption) =>
+							subOption.label.toLowerCase().includes(lowerSearchText),
+						);
+
+						return filteredSubOptions.length > 0
+							? { ...option, options: filteredSubOptions }
+							: undefined;
+					}
+
+					// Filter top-level options
+					return option.label.toLowerCase().includes(lowerSearchText)
+						? option
+						: undefined;
+				})
+				.filter(Boolean) as OptionData[];
 		},
 		[],
 	);
 
-	// Highlight matching text in options
-	const highlightMatchedText = useCallback(
-		(text: string, searchQuery: string): React.ReactNode => {
-			if (!searchQuery || !highlightSearch) return text;
-
-			const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
-			return (
-				<>
-					{parts.map((part, i) => {
-						// Create a deterministic but more unique key
-						const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
-
-						return part.toLowerCase() === searchQuery.toLowerCase() ? (
-							<span key={uniqueKey} className="highlight-text">
-								{part}
-							</span>
-						) : (
-							part
-						);
-					})}
-				</>
-			);
-		},
-		[highlightSearch],
-	);
-
-	// Generate option display element
-	const renderOptionItem = useCallback(
-		(option: OptionData, isSelected: boolean): React.ReactElement => {
-			// Create a handler function to reuse in both click and keyboard events
-			const handleSelection = (): void => {
-				if (onChange) {
-					onChange(option.value, option);
-					setIsOpen(false);
-				}
-			};
-
-			return (
-				<div
-					key={option.value}
-					className={cx('option-item', { selected: isSelected })}
-					onClick={(e): void => {
-						e.stopPropagation();
-						handleSelection();
-					}}
-					onKeyDown={(e): void => handleKeyDown(e, handleSelection)}
-					role="option"
-					aria-selected={isSelected}
-					tabIndex={0}
-				>
-					{/* {highlightMatchedText(String(option.label || ''), searchText)} */}
-					<div className="option-content">
-						<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
-						{option.type === 'custom' && (
-							<div className="option-badge">{capitalize(option.type)}</div>
-						)}
-					</div>
-				</div>
-			);
-		},
-		[highlightMatchedText, searchText, onChange, handleKeyDown],
-	);
-
-	// Is Preset or not
-	const isLabelPresent = (options: OptionData[], label: string): boolean =>
-		options.some((option) => {
-			if ('options' in option && Array.isArray(option.options)) {
-				// Check inside nested options
-				return option.options.some(
-					(subOption) => subOption.label.toLowerCase() === label.toLowerCase(),
-				);
-			}
-			// Check top-level options
-			return option.label.toLowerCase() === label.toLowerCase();
-		});
-
-	const filterOptionsBySearch = (
-		options: OptionData[],
-		searchText: string,
-	): OptionData[] => {
-		if (!searchText.trim()) return options;
-
-		const lowerSearchText = searchText.toLowerCase();
-
-		return options
-			.map((option) => {
-				if ('options' in option && Array.isArray(option.options)) {
-					// Filter nested options
-					const filteredSubOptions = option.options.filter((subOption) =>
-						subOption.label.toLowerCase().includes(lowerSearchText),
-					);
-
-					return filteredSubOptions.length > 0
-						? { ...option, options: filteredSubOptions }
-						: undefined;
-				}
-
-				// Filter top-level options
-				return option.label.toLowerCase().includes(lowerSearchText)
-					? option
-					: undefined;
-			})
-			.filter(Boolean) as OptionData[];
-	};
-
-	// Move splitOptions into useCallback
+	/**
+	 * Separates section and non-section options
+	 */
 	const splitOptions = useCallback((options: OptionData[]): {
 		sectionOptions: OptionData[];
 		nonSectionOptions: OptionData[];
@@ -229,25 +160,314 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		return { sectionOptions, nonSectionOptions };
 	}, []);
 
+	/**
+	 * Apply search filtering to options
+	 */
 	const filteredOptions = useMemo(
-		(): OptionData[] => filterOptionsBySearch(options ?? [], searchText),
-		[options, searchText],
+		(): OptionData[] => filterOptionsBySearch(options, searchText),
+		[options, searchText, filterOptionsBySearch],
 	);
 
-	// Custom dropdown render with related values and all values
+	// ===== UI & Rendering Functions =====
+
+	/**
+	 * Highlights matched text in search results
+	 */
+	const highlightMatchedText = useCallback(
+		(text: string, searchQuery: string): React.ReactNode => {
+			if (!searchQuery || !highlightSearch) return text;
+
+			const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+			return (
+				<>
+					{parts.map((part, i) => {
+						// Create a deterministic but unique key
+						const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
+
+						return part.toLowerCase() === searchQuery.toLowerCase() ? (
+							<span key={uniqueKey} className="highlight-text">
+								{part}
+							</span>
+						) : (
+							part
+						);
+					})}
+				</>
+			);
+		},
+		[highlightSearch],
+	);
+
+	/**
+	 * Renders an individual option with proper keyboard navigation support
+	 */
+	const renderOptionItem = useCallback(
+		(
+			option: OptionData,
+			isSelected: boolean,
+			index?: number,
+		): React.ReactElement => {
+			const handleSelection = (): void => {
+				if (onChange) {
+					onChange(option.value, option);
+					setIsOpen(false);
+				}
+			};
+
+			const isActive = index === activeOptionIndex;
+			const optionId = `option-${index}`;
+
+			return (
+				<div
+					key={option.value}
+					id={optionId}
+					ref={(el): void => {
+						if (index !== undefined) {
+							optionRefs.current[index] = el;
+						}
+					}}
+					className={cx('option-item', {
+						selected: isSelected,
+						active: isActive,
+					})}
+					onClick={(e): void => {
+						e.stopPropagation();
+						handleSelection();
+					}}
+					onKeyDown={(e): void => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							handleSelection();
+						}
+					}}
+					onMouseEnter={(): void => setActiveOptionIndex(index || -1)}
+					role="option"
+					aria-selected={isSelected}
+					aria-disabled={option.disabled}
+					tabIndex={isActive ? 0 : -1}
+				>
+					<div className="option-content">
+						<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
+						{option.type === 'custom' && (
+							<div className="option-badge">{capitalize(option.type)}</div>
+						)}
+					</div>
+				</div>
+			);
+		},
+		[highlightMatchedText, searchText, onChange, activeOptionIndex],
+	);
+
+	/**
+	 * Helper function to render option with index tracking
+	 */
+	const renderOptionWithIndex = useCallback(
+		(option: OptionData, isSelected: boolean, idx: number) =>
+			renderOptionItem(option, isSelected, idx),
+		[renderOptionItem],
+	);
+
+	/**
+	 * Custom clear button renderer
+	 */
+	const clearIcon = useCallback(
+		() => (
+			<CloseOutlined
+				onClick={(e): void => {
+					e.stopPropagation();
+					if (onChange) onChange(undefined, []);
+					if (onClear) onClear();
+				}}
+			/>
+		),
+		[onChange, onClear],
+	);
+
+	// ===== Event Handlers =====
+
+	/**
+	 * Handles search input changes
+	 */
+	const handleSearch = useCallback(
+		(value: string): void => {
+			const trimmedValue = value.trim();
+			setSearchText(trimmedValue);
+
+			// Ensure dropdown opens when typing
+			if (!isOpen) {
+				setIsOpen(true);
+			}
+
+			if (onSearch) onSearch(trimmedValue);
+		},
+		[onSearch, isOpen],
+	);
+
+	/**
+	 * Prevents event propagation for dropdown clicks
+	 */
+	const handleDropdownClick = useCallback((e: React.MouseEvent): void => {
+		e.stopPropagation();
+	}, []);
+
+	/**
+	 * Comprehensive keyboard navigation handler
+	 */
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent): void => {
+			// Handle keyboard navigation when dropdown is open
+			if (isOpen) {
+				// Get flattened list of all selectable options
+				const getFlatOptions = (): OptionData[] => {
+					if (!filteredOptions) return [];
+
+					const flatList: OptionData[] = [];
+
+					// Process options
+					const { sectionOptions, nonSectionOptions } = splitOptions(
+						isEmpty(value)
+							? filteredOptions
+							: prioritizeOrAddOption(filteredOptions, value),
+					);
+
+					// Add custom option if needed
+					if (!isEmpty(searchText) && !isLabelPresent(filteredOptions, searchText)) {
+						flatList.push({
+							label: searchText,
+							value: searchText,
+							type: 'custom',
+						});
+					}
+
+					// Add all options to flat list
+					flatList.push(...nonSectionOptions);
+					sectionOptions.forEach((section) => {
+						if (section.options) {
+							flatList.push(...section.options);
+						}
+					});
+
+					return flatList;
+				};
+
+				const options = getFlatOptions();
+
+				switch (e.key) {
+					case 'ArrowDown':
+						e.preventDefault();
+						setActiveOptionIndex((prev) =>
+							prev < options.length - 1 ? prev + 1 : 0,
+						);
+						break;
+
+					case 'ArrowUp':
+						e.preventDefault();
+						setActiveOptionIndex((prev) =>
+							prev > 0 ? prev - 1 : options.length - 1,
+						);
+						break;
+
+					case 'Tab':
+						// Tab navigation with Shift key support
+						if (e.shiftKey) {
+							e.preventDefault();
+							setActiveOptionIndex((prev) =>
+								prev > 0 ? prev - 1 : options.length - 1,
+							);
+						} else {
+							e.preventDefault();
+							setActiveOptionIndex((prev) =>
+								prev < options.length - 1 ? prev + 1 : 0,
+							);
+						}
+						break;
+
+					case 'Enter':
+						e.preventDefault();
+						if (activeOptionIndex >= 0 && activeOptionIndex < options.length) {
+							// Select the focused option
+							const selectedOption = options[activeOptionIndex];
+							if (onChange) {
+								onChange(selectedOption.value, selectedOption);
+								setIsOpen(false);
+								setActiveOptionIndex(-1);
+							}
+						} else if (!isEmpty(searchText)) {
+							// Add custom value when no option is focused
+							const customOption = {
+								label: searchText,
+								value: searchText,
+								type: 'custom',
+							};
+							if (onChange) {
+								onChange(customOption.value, customOption);
+								setIsOpen(false);
+								setActiveOptionIndex(-1);
+							}
+						}
+						break;
+
+					case 'Escape':
+						e.preventDefault();
+						setIsOpen(false);
+						setActiveOptionIndex(-1);
+						break;
+
+					case ' ': // Space key
+						if (activeOptionIndex >= 0 && activeOptionIndex < options.length) {
+							e.preventDefault();
+							const selectedOption = options[activeOptionIndex];
+							if (onChange) {
+								onChange(selectedOption.value, selectedOption);
+								setIsOpen(false);
+								setActiveOptionIndex(-1);
+							}
+						}
+						break;
+					default:
+						break;
+				}
+			} else if (e.key === 'ArrowDown' || e.key === 'Tab') {
+				// Open dropdown when Down or Tab is pressed while closed
+				e.preventDefault();
+				setIsOpen(true);
+				setActiveOptionIndex(0);
+			}
+		},
+		[
+			isOpen,
+			activeOptionIndex,
+			filteredOptions,
+			searchText,
+			onChange,
+			splitOptions,
+			value,
+			isLabelPresent,
+		],
+	);
+
+	// ===== Dropdown Rendering =====
+
+	/**
+	 * Renders the custom dropdown with sections and keyboard navigation
+	 */
 	const customDropdownRender = useCallback((): React.ReactElement => {
 		const hasOptions = filteredOptions && filteredOptions.length > 0;
 
-		// processed options
+		// Process options based on current value
 		const processedOptions = isEmpty(value)
 			? filteredOptions
 			: prioritizeOrAddOption(filteredOptions, value);
 
 		const { sectionOptions, nonSectionOptions } = splitOptions(processedOptions);
 
+		// Check if we need to add a custom option based on search text
 		const isSearchTextNotPresent =
 			!isEmpty(searchText) && !isLabelPresent(processedOptions, searchText);
 
+		let optionIndex = 0;
+
+		// Add custom option if needed
 		if (isSearchTextNotPresent) {
 			nonSectionOptions.unshift({
 				label: searchText,
@@ -256,22 +476,36 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			});
 		}
 
+		// Helper function to map options with index tracking
+		const mapOptions = (options: OptionData[]): React.ReactNode =>
+			options.map((option) => {
+				const result = renderOptionWithIndex(
+					option,
+					option.value === value,
+					optionIndex,
+				);
+				optionIndex += 1;
+				return result;
+			});
+
 		const customMenu = (
 			<div
+				ref={dropdownRef}
 				className="custom-select-dropdown"
 				onClick={handleDropdownClick}
-				onKeyDown={(e): void => handleKeyDown(e)}
+				onKeyDown={handleKeyDown}
 				role="listbox"
 				tabIndex={-1}
+				aria-activedescendant={
+					activeOptionIndex >= 0 ? `option-${activeOptionIndex}` : undefined
+				}
 			>
+				{/* Non-section options */}
 				<div className="no-section-options">
-					{/* Show non-section options */}
-					{nonSectionOptions.length > 0 &&
-						nonSectionOptions.map((option) =>
-							renderOptionItem(option, option.value === value),
-						)}
+					{nonSectionOptions.length > 0 && mapOptions(nonSectionOptions)}
 				</div>
 
+				{/* Section options */}
 				{sectionOptions.length > 0 &&
 					sectionOptions.map((section) =>
 						!isEmpty(section.options) ? (
@@ -284,23 +518,20 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 									role="group"
 									aria-label={`${section.label} options`}
 								>
-									{section.options?.map((option) =>
-										renderOptionItem(option, option.value === value),
-									)}
+									{section.options && mapOptions(section.options)}
 								</div>
 							</div>
 						) : null,
 					)}
 
-				{/* Rest of the existing content */}
-				{/* {hasNoData && <div className="empty-message">{noDataMessage}</div>} */}
-
+				{/* Loading state */}
 				{!hasOptions && loading && (
 					<div className="loading-container">
 						<Spin size="small" />
 					</div>
 				)}
-				{/* Navigation footer */}
+
+				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
 					<div className="navigation-icons">
 						<ChevronUp size={16} />
@@ -316,32 +547,46 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		filteredOptions,
 		splitOptions,
 		searchText,
+		isLabelPresent,
 		handleDropdownClick,
 		loading,
 		dropdownRender,
-		handleKeyDown,
-		renderOptionItem,
+		renderOptionWithIndex,
 		value,
+		handleKeyDown,
+		activeOptionIndex,
 	]);
 
-	// Custom clear button
-	const clearIcon = useCallback(
-		() => (
-			<CloseOutlined
-				onClick={(e): void => {
-					e.stopPropagation();
-					if (onChange) onChange(undefined, []);
-					if (onClear) onClear();
-				}}
-			/>
-		),
-		[onChange, onClear],
-	);
+	// ===== Side Effects =====
 
+	// Clear search text when dropdown closes
+	useEffect(() => {
+		if (!isOpen) {
+			setSearchText('');
+			setActiveOptionIndex(-1);
+		}
+	}, [isOpen]);
+
+	// Auto-scroll to active option for keyboard navigation
+	useEffect(() => {
+		if (
+			isOpen &&
+			activeOptionIndex >= 0 &&
+			optionRefs.current[activeOptionIndex]
+		) {
+			optionRefs.current[activeOptionIndex]?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest',
+			});
+		}
+	}, [isOpen, activeOptionIndex]);
+
+	// ===== Final Processing =====
+
+	// Apply highlight to matched text in options
 	const optionsWithHighlight = useMemo(
 		() =>
 			options
-				// eslint-disable-next-line sonarjs/no-identical-functions
 				?.filter((option) =>
 					String(option.label || '')
 						.toLowerCase()
@@ -354,6 +599,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		[options, searchText, highlightMatchedText],
 	);
 
+	// ===== Component Rendering =====
 	return (
 		<Select
 			ref={selectRef}
@@ -379,11 +625,13 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			placement={placement}
 			optionFilterProp="label"
 			notFoundContent={<div className="empty-message">{noDataMessage}</div>}
+			onKeyDown={handleKeyDown}
 			{...rest}
 		/>
 	);
 };
 
+// ===== Default Props =====
 CustomSelect.defaultProps = {
 	placeholder: 'Search...',
 	className: '',
