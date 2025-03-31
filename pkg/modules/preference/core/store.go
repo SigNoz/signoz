@@ -27,7 +27,7 @@ func (store *store) GetOrgPreference(ctx context.Context, orgID string, preferen
 		Scan(ctx)
 
 	if err != nil {
-		return nil, err
+		return orgPreference, err
 	}
 
 	return orgPreference, nil
@@ -44,7 +44,7 @@ func (store *store) GetAllOrgPreferences(ctx context.Context, orgID string) ([]*
 		Scan(ctx)
 
 	if err != nil {
-		return nil, err
+		return orgPreferences, err
 	}
 
 	return orgPreferences, nil
@@ -77,7 +77,7 @@ func (store *store) GetUserPreference(ctx context.Context, userID string, prefer
 		Scan(ctx)
 
 	if err != nil {
-		return nil, err
+		return userPreference, err
 	}
 
 	return userPreference, nil
@@ -94,7 +94,7 @@ func (store *store) GetAllUserPreferences(ctx context.Context, userID string) ([
 		Scan(ctx)
 
 	if err != nil {
-		return nil, err
+		return userPreferences, err
 	}
 
 	return userPreferences, nil

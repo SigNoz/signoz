@@ -95,7 +95,7 @@ func (migration *updateApdexTtl) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingApdexSettings), new(newApdexSettings), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingApdexSettings), new(newApdexSettings), OrgReference, func(ctx context.Context) error {
 			existingApdexSettings := make([]*existingApdexSettings, 0)
 			err = tx.
 				NewSelect().
@@ -134,7 +134,7 @@ func (migration *updateApdexTtl) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingTTLStatus), new(newTTLStatus), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingTTLStatus), new(newTTLStatus), OrgReference, func(ctx context.Context) error {
 			existingTTLStatus := make([]*existingTTLStatus, 0)
 			err = tx.
 				NewSelect().

@@ -22,7 +22,7 @@ var (
 
 var (
 	OrgReference  = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference = `("user_id") REFERENCES "users" ("id")`
+	UserReference = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
 )
 
 type dialect struct {
@@ -199,7 +199,10 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 	return true, nil
 }
 
-func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
+func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, reference string, cb func(context.Context) error) error {
+	if reference == "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
+	}
 	exists, err := dialect.TableExists(ctx, bun, newModel)
 	if err != nil {
 		return err
@@ -208,11 +211,18 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 		return nil
 	}
 
+	fkReference := ""
+	if reference == Org {
+		fkReference = OrgReference
+	} else if reference == User {
+		fkReference = UserReference
+	}
+
 	_, err = bun.
 		NewCreateTable().
 		IfNotExists().
 		Model(newModel).
-		ForeignKey(`("org_id") REFERENCES "organizations" ("id")`).
+		ForeignKey(fkReference).
 		Exec(ctx)
 
 	if err != nil {
