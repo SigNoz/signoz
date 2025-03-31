@@ -112,7 +112,6 @@ const menuItems: SidebarItem[] = [
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',
 		icon: <Boxes size={16} />,
-		isNew: true,
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
