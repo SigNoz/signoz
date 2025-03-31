@@ -1,5 +1,6 @@
 .steps-footer {
 	border-top: 1px solid var(--bg-slate-500);
+	background: var(--bg-ink-500);
 	padding: 16px;
 	position: absolute;
 	left: 0;
@@ -14,6 +15,14 @@
 		display: flex;
 		gap: 6px;
 		align-items: center;
+		font-size: 14px;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+	}
+	&__valid-traces {
+		&--none {
+			color: var(--text-amber-500);
+		}
 	}
 	&__right {
 		display: flex;
@@ -41,8 +50,25 @@
 .lightMode {
 	.steps-footer {
 		border-top: 1px solid var(--bg-vanilla-300);
-		&__button--save {
-			background: var(--bg-vanilla-400);
+		background: var(--bg-vanilla-200);
+
+		&__left {
+			color: var(--bg-ink-400);
+		}
+
+		&__valid-traces {
+			&--none {
+				color: var(--text-amber-600);
+			}
+		}
+
+		&__button {
+			&--save {
+				background: var(--bg-vanilla-300);
+			}
+			&--run {
+				background-color: var(--bg-robin-400);
+			}
 		}
 	}
 }
