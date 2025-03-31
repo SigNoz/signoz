@@ -97,7 +97,7 @@ function FunnelsList({
 }: FunnelsListProps): JSX.Element {
 	return (
 		<div className="funnels-list">
-			{data.map((funnel) => (
+			{data?.map((funnel) => (
 				<FunnelListItem
 					key={funnel.id}
 					funnel={funnel}
