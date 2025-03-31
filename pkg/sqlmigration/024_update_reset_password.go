@@ -12,7 +12,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type updateUserTables struct {
+type updateResetPassword struct {
 	store sqlstore.SQLStore
 }
 
@@ -30,20 +30,20 @@ type newResetPasswordRequest struct {
 	UserID string `bun:"user_id,type:text,notnull" json:"userId"`
 }
 
-func NewUpdateUserTablesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewUpdateResetPasswordFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.
 		NewProviderFactory(
-			factory.MustNewName("update_user_tables"),
+			factory.MustNewName("update_reset_password"),
 			func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-				return newUpdateUserTables(ctx, ps, c, sqlstore)
+				return newUpdateResetPassword(ctx, ps, c, sqlstore)
 			})
 }
 
-func newUpdateUserTables(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
-	return &updateUserTables{store: store}, nil
+func newUpdateResetPassword(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
+	return &updateResetPassword{store: store}, nil
 }
 
-func (migration *updateUserTables) Register(migrations *migrate.Migrations) error {
+func (migration *updateResetPassword) Register(migrations *migrate.Migrations) error {
 	if err := migrations.
 		Register(migration.Up, migration.Down); err != nil {
 		return err
@@ -52,7 +52,7 @@ func (migration *updateUserTables) Register(migrations *migrate.Migrations) erro
 	return nil
 }
 
-func (migration *updateUserTables) Up(ctx context.Context, db *bun.DB) error {
+func (migration *updateResetPassword) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.
 		BeginTx(ctx, nil)
 	if err != nil {
@@ -99,11 +99,11 @@ func (migration *updateUserTables) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (migration *updateUserTables) Down(context.Context, *bun.DB) error {
+func (migration *updateResetPassword) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
-func (migration *updateUserTables) CopyExistingResetPasswordRequestsToNewResetPasswordRequests(existingPasswordRequests []*existingResetPasswordRequest) []*newResetPasswordRequest {
+func (migration *updateResetPassword) CopyExistingResetPasswordRequestsToNewResetPasswordRequests(existingPasswordRequests []*existingResetPasswordRequest) []*newResetPasswordRequest {
 	newResetPasswordRequests := make([]*newResetPasswordRequest, 0)
 	for _, request := range existingPasswordRequests {
 		newResetPasswordRequests = append(newResetPasswordRequests, &newResetPasswordRequest{
