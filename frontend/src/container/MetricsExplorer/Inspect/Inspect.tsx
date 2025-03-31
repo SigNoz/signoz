@@ -20,7 +20,7 @@ function Inspect({ metricName, isOpen, onClose }: InspectProps): JSX.Element {
 					<div className="inspect-metrics-title">
 						<Typography.Text>Metrics Explorer —</Typography.Text>
 						<Button
-							className="inspect-metric-button"
+							className="inspect-metrics-button"
 							size="small"
 							icon={<Compass size={14} />}
 							disabled

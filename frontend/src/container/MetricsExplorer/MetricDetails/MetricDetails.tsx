@@ -107,7 +107,8 @@ function MetricDetails({
 					{/* Show the based on the feature flag. Will remove before releasing the feature */}
 					{showInspectFeature && (
 						<Button
-							className="inspect-metric-button"
+							className="inspect-metrics-button"
+							aria-label="Inspect Metric"
 							icon={<Compass size={18} />}
 							onClick={(): void => {
 								if (metric?.name) {
