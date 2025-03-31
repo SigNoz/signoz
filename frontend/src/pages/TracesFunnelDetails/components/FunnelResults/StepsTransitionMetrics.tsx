@@ -1,26 +1,53 @@
-import './StepsTransitionMetrics.styles.scss';
+import { useFunnelMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
+import { useParams } from 'react-router-dom';
 
-interface StepTransition {
-	value: string;
-	label: string;
-}
+import FunnelMetricsTable from './FunnelMetricsTable';
+import { StepTransition } from './StepsTransitionResults';
 
 interface StepsTransitionMetricsProps {
 	selectedTransition: string;
 	transitions: StepTransition[];
+	startStep?: number;
+	endStep?: number;
 }
 
 function StepsTransitionMetrics({
 	selectedTransition,
 	transitions,
+	startStep,
+	endStep,
 }: StepsTransitionMetricsProps): JSX.Element {
+	const { funnelId } = useParams<{ funnelId: string }>();
 	const currentTransition = transitions.find(
 		(transition) => transition.value === selectedTransition,
 	);
 
+	const { isLoading, metricsData, conversionRate } = useFunnelMetrics({
+		funnelId: funnelId || '',
+		stepStart: startStep,
+		stepEnd: endStep,
+	});
+
+	if (!currentTransition) {
+		return <div>No transition selected</div>;
+	}
+
 	return (
-		<div className="steps-transition-metrics">{currentTransition?.label}</div>
+		<FunnelMetricsTable
+			title={currentTransition.label}
+			subtitle={{
+				label: 'Conversion rate',
+				value: `${conversionRate.toFixed(2)}%`,
+			}}
+			isLoading={isLoading}
+			data={metricsData}
+		/>
 	);
 }
+
+StepsTransitionMetrics.defaultProps = {
+	startStep: undefined,
+	endStep: undefined,
+};
 
 export default StepsTransitionMetrics;

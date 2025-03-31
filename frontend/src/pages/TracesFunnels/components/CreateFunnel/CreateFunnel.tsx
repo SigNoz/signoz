@@ -1,6 +1,7 @@
 import '../RenameFunnel/RenameFunnel.styles.scss';
 
 import { Input } from 'antd';
+import { AxiosError } from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -14,10 +15,15 @@ import { generatePath } from 'react-router-dom';
 
 interface CreateFunnelProps {
 	isOpen: boolean;
-	onClose: () => void;
+	onClose: (funnelId?: string) => void;
+	redirectToDetails?: boolean;
 }
 
-function CreateFunnel({ isOpen, onClose }: CreateFunnelProps): JSX.Element {
+function CreateFunnel({
+	isOpen,
+	onClose,
+	redirectToDetails,
+}: CreateFunnelProps): JSX.Element {
 	const [funnelName, setFunnelName] = useState<string>('');
 	const createFunnelMutation = useCreateFunnel();
 	const { notifications } = useNotifications();
@@ -37,8 +43,8 @@ function CreateFunnel({ isOpen, onClose }: CreateFunnelProps): JSX.Element {
 					});
 					setFunnelName('');
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
-					onClose();
-					if (data?.payload?.funnel_id) {
+					onClose(data?.payload?.funnel_id);
+					if (data?.payload?.funnel_id && redirectToDetails) {
 						safeNavigate(
 							generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
 								funnelId: data.payload.funnel_id,
@@ -46,9 +52,11 @@ function CreateFunnel({ isOpen, onClose }: CreateFunnelProps): JSX.Element {
 						);
 					}
 				},
-				onError: () => {
+				onError: (error) => {
 					notifications.error({
-						message: 'Failed to create funnel',
+						message:
+							((error as AxiosError)?.response?.data as string) ||
+							'Failed to create funnel',
 					});
 				},
 			},
@@ -100,4 +108,7 @@ function CreateFunnel({ isOpen, onClose }: CreateFunnelProps): JSX.Element {
 	);
 }
 
+CreateFunnel.defaultProps = {
+	redirectToDetails: true,
+};
 export default CreateFunnel;

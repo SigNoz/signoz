@@ -1,19 +1,16 @@
 import './StepsTransitionResults.styles.scss';
 
-import { Radio } from 'antd';
-import { useState } from 'react';
+import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
+import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
+import { useMemo, useState } from 'react';
 
 import StepsTransitionMetrics from './StepsTransitionMetrics';
 import TopSlowestTraces from './TopSlowestTraces';
 import TopTracesWithErrors from './TopTracesWithErrors';
 
-interface StepTransition {
+export interface StepTransition {
 	value: string;
 	label: string;
-}
-
-interface StepsTransitionResultsProps {
-	stepsCount: number;
 }
 
 function generateStepTransitions(stepsCount: number): StepTransition[] {
@@ -23,43 +20,44 @@ function generateStepTransitions(stepsCount: number): StepTransition[] {
 	}));
 }
 
-function StepsTransitionResults({
-	stepsCount,
-}: StepsTransitionResultsProps): JSX.Element {
-	const stepTransitions = generateStepTransitions(stepsCount);
+function StepsTransitionResults(): JSX.Element {
+	const { steps, funnelId } = useFunnelContext();
+	const stepTransitions = generateStepTransitions(steps.length);
 	const [selectedTransition, setSelectedTransition] = useState<string>(
 		stepTransitions[0]?.value || '',
 	);
 
+	const [stepAOrder, stepBOrder] = useMemo(() => {
+		const [a, b] = selectedTransition.split('_to_');
+		return [parseInt(a, 10), parseInt(b, 10)];
+	}, [selectedTransition]);
+
 	return (
 		<div className="steps-transition-results">
 			<div className="steps-transition-results__steps-selector">
-				<Radio.Group
+				<SignozRadioGroup
 					value={selectedTransition}
-					buttonStyle="solid"
-					className="views-tabs"
+					options={stepTransitions}
 					onChange={(e): void => setSelectedTransition(e.target.value)}
-				>
-					{stepTransitions.map((transition) => (
-						<Radio.Button
-							key={transition.value}
-							value={transition.value}
-							className={
-								selectedTransition === transition.value ? 'selected_view tab' : 'tab'
-							}
-						>
-							{transition.label}
-						</Radio.Button>
-					))}
-				</Radio.Group>
+				/>
 			</div>
 			<div className="steps-transition-results__results">
 				<StepsTransitionMetrics
 					selectedTransition={selectedTransition}
 					transitions={stepTransitions}
+					startStep={stepAOrder}
+					endStep={stepBOrder}
 				/>
-				<TopSlowestTraces />
-				<TopTracesWithErrors />
+				<TopSlowestTraces
+					funnelId={funnelId}
+					stepAOrder={stepAOrder}
+					stepBOrder={stepBOrder}
+				/>
+				<TopTracesWithErrors
+					funnelId={funnelId}
+					stepAOrder={stepAOrder}
+					stepBOrder={stepBOrder}
+				/>
 			</div>
 		</div>
 	);
