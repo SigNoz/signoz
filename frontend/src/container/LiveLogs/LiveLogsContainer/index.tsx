@@ -10,7 +10,6 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useEventSourceEvent } from 'hooks/useEventSourceEvent';
-import { useNotifications } from 'hooks/useNotifications';
 import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import { useEventSource } from 'providers/EventSource';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -37,8 +36,6 @@ function LiveLogsContainer(): JSX.Element {
 	const queryLocationState = location.state as QueryHistoryState;
 
 	const batchedEventsRef = useRef<ILog[]>([]);
-
-	const { notifications } = useNotifications();
 
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -88,8 +85,8 @@ function LiveLogsContainer(): JSX.Element {
 	);
 
 	const handleError = useCallback(() => {
-		notifications.error({ message: 'Sorry, something went wrong' });
-	}, [notifications]);
+		console.error('Sorry, something went wrong');
+	}, []);
 
 	useEventSourceEvent('message', handleGetLiveLogs);
 	useEventSourceEvent('error', handleError);
@@ -157,7 +154,6 @@ function LiveLogsContainer(): JSX.Element {
 
 	useEffect((): (() => void) | undefined => {
 		if (isConnectionError && reconnectDueToError && compositeQuery) {
-			console.log('uncaught refetch try from component', reconnectDueToError);
 			// Small delay to prevent immediate reconnection attempts
 			const reconnectTimer = setTimeout(() => {
 				handleStartNewConnection(compositeQuery);

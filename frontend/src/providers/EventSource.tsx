@@ -7,6 +7,7 @@ import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
+import { useNotifications } from 'hooks/useNotifications';
 import {
 	createContext,
 	PropsWithChildren,
@@ -58,6 +59,8 @@ export function EventSourceProvider({
 
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
 
+	const { notifications } = useNotifications();
+
 	const handleSetInitialLoading = useCallback((value: boolean) => {
 		setInitialLoading(value);
 	}, []);
@@ -78,8 +81,6 @@ export function EventSourceProvider({
 				refreshToken: getLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN) || '',
 			});
 
-			console.log('uncaught token refresh started', { response });
-
 			if (response.statusCode === 200) {
 				// Update tokens in local storage
 				afterLogin(
@@ -96,8 +97,8 @@ export function EventSourceProvider({
 				return;
 			}
 
+			notifications.error({ message: 'Sorry, something went wrong' });
 			// If token refresh failed, logout the user
-
 			if (!eventSourceRef.current) return;
 			eventSourceRef.current.close();
 			setIsConnectionError(true);
@@ -105,13 +106,14 @@ export function EventSourceProvider({
 		} catch (error) {
 			// If there was an error during token refresh, we'll just
 			// let the component handle the error state
+			notifications.error({ message: 'Sorry, something went wrong' });
 			console.error('Error refreshing token:', error);
 			setIsConnectionError(true);
 			if (!eventSourceRef.current) return;
 			eventSourceRef.current.close();
 			Logout();
 		}
-	}, []);
+	}, [notifications]);
 
 	const destroyEventSourceSession = useCallback(() => {
 		if (!eventSourceRef.current) return;
