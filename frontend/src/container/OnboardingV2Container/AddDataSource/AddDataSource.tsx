@@ -15,11 +15,12 @@ import {
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import ROUTES from 'constants/routes';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
@@ -100,7 +101,7 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	GET_EXPERT_ASSISTANCE_BUTTON_CLICKED: 'Get expert assistance clicked',
 	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Invite team member clicked',
 	CLOSE_ONBOARDING_CLICKED: 'Close onboarding clicked',
-	DATA_SOURCE_REQUESTED: 'Datasource Requested',
+	DATA_SOURCE_REQUESTED: 'Datasource requested',
 	DATA_SOURCE_SEARCHED: 'Searched',
 };
 
@@ -114,6 +115,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
 
+	const [searchQuery, setSearchQuery] = useState<string>('');
+
 	const question2Ref = useRef<HTMLDivElement | null>(null);
 	const question3Ref = useRef<HTMLDivElement | null>(null);
 	const configureProdRef = useRef<HTMLDivElement | null>(null);
@@ -123,8 +126,6 @@ function OnboardingAddDataSource(): JSX.Element {
 	);
 
 	const [currentStep, setCurrentStep] = useState(1);
-
-	const [searchQuery, setSearchQuery] = useState<string>('');
 
 	const [dataSourceRequest, setDataSourceRequest] = useState<string>('');
 
@@ -304,10 +305,9 @@ function OnboardingAddDataSource(): JSX.Element {
 		setGroupedDataSources(groupedDataSources);
 	}, []);
 
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		const query = e.target.value.toLowerCase();
+	const debouncedUpdate = useDebouncedFn((query) => {
+		setSearchQuery(query as string);
 
-		setSearchQuery(query);
 		setDataSourceRequestSubmitted(false);
 
 		if (query === '') {
@@ -319,18 +319,35 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		const filteredDataSources = onboardingConfigWithLinks.filter(
 			(dataSource) =>
-				dataSource.label.toLowerCase().includes(query) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+				dataSource.label.toLowerCase().includes(query as string) ||
+				dataSource.tags.some((tag) =>
+					tag.toLowerCase().includes(query as string),
+				) ||
 				dataSource.relatedSearchKeywords?.some((keyword) =>
-					keyword?.toLowerCase().includes(query),
+					keyword?.toLowerCase().includes(query as string),
 				),
 		);
 
 		setGroupedDataSources(
 			groupDataSourcesByTags(filteredDataSources as Entity[]),
 		);
-	};
 
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SEARCHED}`,
+			{
+				searchedDataSource: query,
+			},
+		);
+	}, 300);
+
+	const handleSearch = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>): void => {
+			const query = e.target.value.trim().toLowerCase();
+
+			debouncedUpdate(query || '');
+		},
+		[debouncedUpdate],
+	);
 	const handleFilterByCategory = (category: string): void => {
 		setSelectedDataSource(null);
 		setSelectedFramework(null);
@@ -450,9 +467,9 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const handleRaiseRequest = (): void => {
 		logEvent(
-			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SEARCHED}`,
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
 			{
-				searchedDataSource: searchQuery,
+				requestedDataSource: searchQuery,
 			},
 		);
 
