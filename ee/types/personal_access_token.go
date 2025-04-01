@@ -1,6 +1,8 @@
 package types
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types"
@@ -19,9 +21,9 @@ type PatUser struct {
 	NotFound bool `json:"notFound"`
 }
 
-func NewGettablePAT(token, name, role, userID string, expiresAt int64) GettablePAT {
+func NewGettablePAT(name, role, userID string, expiresAt int64) GettablePAT {
 	return GettablePAT{
-		StorablePersonalAccessToken: NewStorablePersonalAccessToken(token, name, role, userID, expiresAt),
+		StorablePersonalAccessToken: NewStorablePersonalAccessToken(name, role, userID, expiresAt),
 	}
 }
 
@@ -41,14 +43,21 @@ type StorablePersonalAccessToken struct {
 	UpdatedByUserID string `json:"updatedByUserId" bun:"updated_by_user_id,type:text,notnull,default:''"`
 }
 
-func NewStorablePersonalAccessToken(token, name, role, userID string, expiresAt int64) StorablePersonalAccessToken {
+func NewStorablePersonalAccessToken(name, role, userID string, expiresAt int64) StorablePersonalAccessToken {
 	now := time.Now()
 	if expiresAt != 0 {
 		// convert expiresAt to unix timestamp from days
 		expiresAt = now.Unix() + (expiresAt * 24 * 60 * 60)
 	}
+
+	// Generate a 32-byte random token.
+	token := make([]byte, 32)
+	rand.Read(token)
+	// Encode the token in base64.
+	encodedToken := base64.StdEncoding.EncodeToString(token)
+
 	return StorablePersonalAccessToken{
-		Token:           token,
+		Token:           encodedToken,
 		Name:            name,
 		Role:            role,
 		UserID:          userID,

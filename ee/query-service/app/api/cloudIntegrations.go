@@ -136,7 +136,6 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 	)
 
 	newPAT := eeTypes.NewGettablePAT(
-		generatePATToken(),
 		integrationPATName,
 		baseconstants.ViewerGroup,
 		integrationUser.ID,

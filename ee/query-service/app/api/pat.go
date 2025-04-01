@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,15 +16,6 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
-
-func generatePATToken() string {
-	// Generate a 32-byte random token.
-	token := make([]byte, 32)
-	rand.Read(token)
-	// Encode the token in base64.
-	encodedToken := base64.StdEncoding.EncodeToString(token)
-	return encodedToken
-}
 
 func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
@@ -45,7 +34,6 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pat := eeTypes.NewGettablePAT(
-		generatePATToken(),
 		req.Name,
 		req.Role,
 		user.ID,
