@@ -3,13 +3,32 @@ package types
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 )
+
+type GettablePAT struct {
+	CreatedByUser PatUser `json:"createdByUser"`
+	UpdatedByUser PatUser `json:"updatedByUser"`
+
+	StorablePersonalAccessToken
+}
+
+type PatUser struct {
+	types.User
+	NotFound bool `json:"notFound"`
+}
+
+func NewGettablePAT(token, name, role, userID string, expiresAt int64) GettablePAT {
+	return GettablePAT{
+		StorablePersonalAccessToken: NewStorablePersonalAccessToken(token, name, role, userID, expiresAt),
+	}
+}
 
 type StorablePersonalAccessToken struct {
 	bun.BaseModel `bun:"table:personal_access_tokens"`
 
-	TimeAuditable
+	types.TimeAuditable
 	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
 	ID              int    `json:"id" bun:"id,pk,autoincrement"`
 	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
@@ -26,7 +45,7 @@ func NewStorablePersonalAccessToken(token, name, role, userID string, expiresAt 
 	now := time.Now()
 	if expiresAt != 0 {
 		// convert expiresAt to unix timestamp from days
-		expiresAt = time.Now().Unix() + (expiresAt * 24 * 60 * 60)
+		expiresAt = now.Unix() + (expiresAt * 24 * 60 * 60)
 	}
 	return StorablePersonalAccessToken{
 		Token:           token,
@@ -37,7 +56,7 @@ func NewStorablePersonalAccessToken(token, name, role, userID string, expiresAt 
 		LastUsed:        0,
 		Revoked:         false,
 		UpdatedByUserID: "",
-		TimeAuditable: TimeAuditable{
+		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
 			UpdatedAt: now,
 		},

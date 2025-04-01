@@ -33,6 +33,6 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 	return nil
 }
 
-func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, tx bun.Tx, table string, column, columnType, defaultValue string) error {
+func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, bun bun.IDB, table string, column, columnType, defaultValue string) error {
 	return nil
 }

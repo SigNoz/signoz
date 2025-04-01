@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types"
+	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -43,15 +44,13 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	pat := model.PAT{
-		StorablePersonalAccessToken: types.NewStorablePersonalAccessToken(
-			generatePATToken(),
-			req.Name,
-			req.Role,
-			user.ID,
-			req.ExpiresInDays,
-		),
-	}
+	pat := eeTypes.NewGettablePAT(
+		generatePATToken(),
+		req.Name,
+		req.Role,
+		user.ID,
+		req.ExpiresInDays,
+	)
 	err = validatePATRequest(pat)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -68,7 +67,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, &pat)
 }
 
-func validatePATRequest(req model.PAT) error {
+func validatePATRequest(req types.GettablePAT) error {
 	if req.Role == "" || (req.Role != baseconstants.ViewerGroup && req.Role != baseconstants.EditorGroup && req.Role != baseconstants.AdminGroup) {
 		return fmt.Errorf("valid role is required")
 	}
@@ -84,7 +83,7 @@ func validatePATRequest(req model.PAT) error {
 func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	req := model.PAT{}
+	req := types.GettablePAT{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return

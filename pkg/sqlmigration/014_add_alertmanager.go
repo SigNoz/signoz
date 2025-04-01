@@ -50,13 +50,17 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 
 	defer tx.Rollback() //nolint:errcheck
 
-	if _, err := tx.
-		NewDropColumn().
-		Table("notification_channels").
-		ColumnExpr("deleted").
-		Exec(ctx); err != nil {
-		if !strings.Contains(err.Error(), "no such column") {
-			return err
+	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "notification_channels", "deleted"); err != nil {
+		return err
+	} else if exists {
+		if _, err := tx.
+			NewDropColumn().
+			Table("notification_channels").
+			ColumnExpr("deleted").
+			Exec(ctx); err != nil {
+			if !strings.Contains(err.Error(), "no such column") {
+				return err
+			}
 		}
 	}
 
