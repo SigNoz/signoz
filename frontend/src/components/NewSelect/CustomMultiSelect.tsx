@@ -229,17 +229,33 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 */
 	const handleSearch = useCallback(
 		(value: string): void => {
-			const trimmedValue = value.trim();
-			setSearchText(trimmedValue);
+			// Handle multiple comma-separated values
+			if (value.includes(',')) {
+				const values = value
+					.split(',')
+					.map((v) => v.trim())
+					.filter(Boolean);
+				if (values.length > 0) {
+					const newValues = [...selectedValues, ...values];
+					if (onChange) {
+						onChange(
+							newValues as any,
+							newValues.map((v) => ({ label: v, value: v })),
+						);
+					}
+				}
+				setSearchText('');
+				return;
+			}
 
-			// Ensure dropdown opens when typing
+			// Normal single value handling
+			setSearchText(value.trim());
 			if (!isOpen) {
 				setIsOpen(true);
 			}
-
-			if (onSearch) onSearch(trimmedValue);
+			if (onSearch) onSearch(value.trim());
 		},
-		[onSearch, isOpen],
+		[onSearch, isOpen, selectedValues, onChange],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -995,11 +1011,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}
 			notFoundContent={<div className="empty-message">{noDataMessage}</div>}
-			tokenSeparators={[',']}
 			onKeyDown={handleKeyDown}
 			tagRender={tagRender as any}
 			placement={placement}
 			listHeight={300}
+			searchValue={searchText}
 			{...rest}
 		/>
 	);
