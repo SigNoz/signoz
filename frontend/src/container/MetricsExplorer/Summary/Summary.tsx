@@ -13,6 +13,7 @@ import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import InspectModal from '../Inspect';
 import MetricDetails from '../MetricDetails';
 import MetricsSearch from './MetricsSearch';
 import MetricsTable from './MetricsTable';
@@ -35,6 +36,7 @@ function Summary(): JSX.Element {
 		TreemapViewType.TIMESERIES,
 	);
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+	const [isInspectModalOpen, setIsInspectModalOpen] = useState(false);
 	const [selectedMetricName, setSelectedMetricName] = useState<string | null>(
 		null,
 	);
@@ -150,6 +152,17 @@ function Summary(): JSX.Element {
 		setIsMetricDetailsOpen(false);
 	};
 
+	const openInspectModal = (metricName: string): void => {
+		setSelectedMetricName(metricName);
+		setIsInspectModalOpen(true);
+		setIsMetricDetailsOpen(false);
+	};
+
+	const closeInspectModal = (): void => {
+		setIsInspectModalOpen(false);
+		setSelectedMetricName(null);
+	};
+
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="metrics-explorer-summary-tab">
@@ -184,6 +197,14 @@ function Summary(): JSX.Element {
 					onClose={closeMetricDetails}
 					metricName={selectedMetricName}
 					isModalTimeSelection={false}
+					openInspectModal={openInspectModal}
+				/>
+			)}
+			{isInspectModalOpen && (
+				<InspectModal
+					isOpen={isInspectModalOpen}
+					onClose={closeInspectModal}
+					metricName={selectedMetricName}
 				/>
 			)}
 		</Sentry.ErrorBoundary>
