@@ -1,10 +1,11 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/function-component-definition */
 import './styles.scss';
 
 import { CloseOutlined, SearchOutlined } from '@ant-design/icons';
-import { Select, SelectProps, Spin } from 'antd';
+import { Select, SelectProps } from 'antd';
 import cx from 'classnames';
 import { capitalize, isEmpty } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -43,17 +44,12 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	highlightSearch?: boolean;
 	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 	popupMatchSelectWidth?: boolean;
+	errorMessage?: string;
 }
 
 /**
  * CustomSelect Component
  *
- * A comprehensive select component that enhances Ant Design's Select with:
- * - Section-based option grouping
- * - Keyboard navigation with auto-scrolling
- * - Custom value creation
- * - Search highlighting
- * - Accessible design
  */
 const CustomSelect: React.FC<CustomSelectProps> = ({
 	placeholder = 'Search...',
@@ -64,7 +60,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	value,
 	onChange,
 	defaultActiveFirstOption = true,
-	noDataMessage = 'No Data',
+	noDataMessage,
 	onClear,
 	getPopupContainer,
 	dropdownRender,
@@ -72,6 +68,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	placement = 'bottomLeft',
 	popupMatchSelectWidth = true,
 	popupClassName,
+	errorMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -452,8 +449,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 * Renders the custom dropdown with sections and keyboard navigation
 	 */
 	const customDropdownRender = useCallback((): React.ReactElement => {
-		const hasOptions = filteredOptions && filteredOptions.length > 0;
-
 		// Process options based on current value
 		const processedOptions = isEmpty(value)
 			? filteredOptions
@@ -487,6 +482,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				optionIndex += 1;
 				return result;
 			});
+
+		let footerMessage = 'to Navigate';
+
+		if (loading) {
+			footerMessage = 'We are updating the values...';
+		} else if (errorMessage) {
+			footerMessage = errorMessage;
+		} else if (noDataMessage) {
+			footerMessage = noDataMessage;
+		}
 
 		const customMenu = (
 			<div
@@ -524,20 +529,22 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						) : null,
 					)}
 
-				{/* Loading state */}
+				{/* Loading state
 				{!hasOptions && loading && (
 					<div className="loading-container">
 						<Spin size="small" />
 					</div>
-				)}
+				)} */}
 
 				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
-					<div className="navigation-icons">
-						<ChevronUp size={16} />
-						<ChevronDown size={16} />
-					</div>
-					<div className="navigation-text">to Navigate</div>
+					{!loading && !errorMessage && !noDataMessage && (
+						<div className="navigation-icons">
+							<ChevronUp size={16} />
+							<ChevronDown size={16} />
+						</div>
+					)}
+					<div className="navigation-text">{footerMessage}</div>
 				</div>
 			</div>
 		);
@@ -545,16 +552,18 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		return dropdownRender ? dropdownRender(customMenu) : customMenu;
 	}, [
 		filteredOptions,
+		value,
 		splitOptions,
 		searchText,
 		isLabelPresent,
-		handleDropdownClick,
 		loading,
-		dropdownRender,
-		renderOptionWithIndex,
-		value,
+		errorMessage,
+		noDataMessage,
+		handleDropdownClick,
 		handleKeyDown,
 		activeOptionIndex,
+		dropdownRender,
+		renderOptionWithIndex,
 	]);
 
 	// ===== Side Effects =====
@@ -639,13 +648,14 @@ CustomSelect.defaultProps = {
 	onSearch: undefined,
 	options: undefined,
 	defaultActiveFirstOption: true,
-	noDataMessage: 'No Data',
+	noDataMessage: '',
 	onClear: undefined,
 	getPopupContainer: undefined,
 	dropdownRender: undefined,
 	highlightSearch: true,
 	placement: 'bottomLeft',
 	popupMatchSelectWidth: true,
+	errorMessage: '',
 };
 
 export default CustomSelect;
