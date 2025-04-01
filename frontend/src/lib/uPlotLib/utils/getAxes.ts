@@ -1,17 +1,35 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import { uPlotXAxisValuesFormat } from './constants';
 import getGridColor from './getGridColor';
 
+const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
+	PANEL_TYPES.TIME_SERIES,
+	PANEL_TYPES.BAR,
+	PANEL_TYPES.PIE,
+];
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
+const getAxes = ({
+	isDarkMode,
+	yAxisUnit,
+	panelType,
+	isLogScale,
+}: {
+	isDarkMode: boolean;
+	yAxisUnit?: string;
+	panelType?: PANEL_TYPES;
+	isLogScale?: boolean;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+}): any => [
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
-			width: 0.2, // Width of the grid lines,
+			width: isLogScale ? 0.1 : 0.2, // Width of the grid lines,
 			show: true,
 		},
 		ticks: {
@@ -19,24 +37,31 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 			width: 0.3, // Width of the tick lines,
 			show: true,
 		},
-		values: uPlotXAxisValuesFormat,
+		...(PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.includes(panelType)
+			? {
+					values: uPlotXAxisValuesFormat,
+			  }
+			: {}),
 		gap: 5,
 	},
 	{
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
-			width: 0.2, // Width of the grid lines
+			width: isLogScale ? 0.1 : 0.2, // Width of the grid lines
 		},
 		ticks: {
 			// stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
 			width: 0.3, // Width of the tick lines
 			show: true,
 		},
+		...(isLogScale ? { space: 20 } : {}),
 		values: (_, t): string[] =>
 			t.map((v) => {
+				if (v === null || v === undefined || Number.isNaN(v)) {
+					return '';
+				}
 				const value = getToolTipValue(v.toString(), yAxisUnit);
-
 				return `${value}`;
 			}),
 		gap: 5,

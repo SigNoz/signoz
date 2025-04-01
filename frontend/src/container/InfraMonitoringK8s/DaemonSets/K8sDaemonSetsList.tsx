@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sDaemonSetsListPayload } from 'api/infraMonitoring/getK8sDaemonSetsList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sDaemonSetsList } from 'hooks/infraMonitoring/useGetK8sDaemonSetsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -220,6 +221,11 @@ function K8sDaemonSetsList({
 		[daemonSetsData, groupBy],
 	);
 
+	const nestedDaemonSetsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const columns = useMemo(() => getK8sDaemonSetsListColumns(groupBy), [groupBy]);
 
 	const handleGroupByRowClick = (record: K8sDaemonSetsRowData): void => {
@@ -248,6 +254,11 @@ function K8sDaemonSetsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.DaemonSet,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -273,25 +284,47 @@ function K8sDaemonSetsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.DaemonSet,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.DaemonSet,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedDaemonSetData = useMemo(() => {
-		if (!selectedDaemonSetUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the daemonset from the formatted grouped by data
+			return (
+				nestedDaemonSetsData.find(
+					(daemonSet) => daemonSet.daemonSetName === selectedDaemonSetUID,
+				) || null
+			);
+		}
+		// If not grouped by, return the daemonset from the daemonsets data
 		return (
 			daemonSetsData.find(
 				(daemonSet) => daemonSet.daemonSetName === selectedDaemonSetUID,
 			) || null
 		);
-	}, [selectedDaemonSetUID, daemonSetsData]);
+	}, [
+		selectedDaemonSetUID,
+		groupBy.length,
+		daemonSetsData,
+		nestedDaemonSetsData,
+	]);
 
 	const handleRowClick = (record: K8sDaemonSetsRowData): void => {
 		if (groupBy.length === 0) {
@@ -301,8 +334,10 @@ function K8sDaemonSetsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s daemonSet list item clicked', {
-			daemonSetName: record.daemonsetName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.DaemonSet,
 		});
 	};
 
@@ -344,6 +379,10 @@ function K8sDaemonSetsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedDaemonSetUID(record.daemonsetUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -426,6 +465,12 @@ function K8sDaemonSetsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.DaemonSet,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -440,6 +485,16 @@ function K8sDaemonSetsList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.DaemonSet,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -468,10 +523,7 @@ function K8sDaemonSetsList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

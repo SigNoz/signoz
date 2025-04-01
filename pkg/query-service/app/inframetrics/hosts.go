@@ -2,19 +2,22 @@ package inframetrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -332,23 +335,53 @@ func (h *HostsRepo) DidSendHostMetricsData(ctx context.Context, req model.HostLi
 	return count > 0, nil
 }
 
-func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) (bool, error) {
+func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) ([]string, []string, error) {
 	names := []string{}
 	for _, metricName := range metricNamesForHosts {
 		names = append(names, metricName)
 	}
 	namesStr := "'" + strings.Join(names, "','") + "'"
 
+	queryForRecentFingerprints := fmt.Sprintf(`
+	SELECT DISTINCT fingerprint
+	FROM %s.%s
+	WHERE metric_name IN (%s)
+		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 5 MINUTE) * 1000`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_SAMPLES_V4_TABLENAME, namesStr)
+
 	query := fmt.Sprintf(`
-	SELECT count()
+	SELECT DISTINCT JSONExtractString(labels, 'k8s_cluster_name') as k8s_cluster_name, JSONExtractString(labels, 'k8s_node_name') as k8s_node_name
 	FROM %s.%s
 	WHERE metric_name IN (%s)
 		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000
-		AND JSONExtractString(labels, 'host_name') LIKE '%%-otel-agent%%'`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr)
+		AND JSONExtractString(labels, 'host_name') LIKE '%%-otel-agent%%'
+		AND fingerprint GLOBAL IN (%s)`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, queryForRecentFingerprints)
 
-	count, err := h.reader.GetCountOfThings(ctx, query)
-	return count > 0, err
+	result, err := h.reader.GetListResultV3(ctx, query)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	clusterNames := make(map[string]struct{})
+	nodeNames := make(map[string]struct{})
+
+	for _, row := range result {
+		switch v := row.Data["k8s_cluster_name"].(type) {
+		case string:
+			clusterNames[v] = struct{}{}
+		case *string:
+			clusterNames[*v] = struct{}{}
+		}
+		switch v := row.Data["k8s_node_name"].(type) {
+		case string:
+			nodeNames[v] = struct{}{}
+		case *string:
+			nodeNames[*v] = struct{}{}
+		}
+	}
+
+	return maps.Keys(clusterNames), maps.Keys(nodeNames), nil
 }
 
 func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
@@ -372,14 +405,20 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 
 	// don't fail the request if we can't get these values
-	if sendingK8SAgentMetrics, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
-		resp.IsSendingK8SAgentMetrics = sendingK8SAgentMetrics
+	if clusterNames, nodeNames, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
+		resp.IsSendingK8SAgentMetrics = len(clusterNames) > 0 || len(nodeNames) > 0
+		resp.ClusterNames = clusterNames
+		resp.NodeNames = nodeNames
 	}
 	if sentAnyHostMetricsData, err := h.DidSendHostMetricsData(ctx, req); err == nil {
 		resp.SentAnyHostMetricsData = sentAnyHostMetricsData
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
+	if step <= 0 {
+		zap.L().Error("step is less than or equal to 0", zap.Int64("step", step))
+		return resp, errors.New("step is less than or equal to 0")
+	}
 
 	query := HostsTableListQuery.Clone()
 

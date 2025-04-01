@@ -354,7 +354,7 @@ func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
-	json.Unmarshal(jsonbody, &references)
+	_ = json.Unmarshal(jsonbody, &references)
 
 	referencesStringArray := []string{}
 	for _, item := range references {
@@ -750,7 +750,7 @@ type ClusterInfo struct {
 func (ci *ClusterInfo) GetMapFromStruct() map[string]interface{} {
 	var clusterInfoMap map[string]interface{}
 	data, _ := json.Marshal(*ci)
-	json.Unmarshal(data, &clusterInfoMap)
+	_ = json.Unmarshal(data, &clusterInfoMap)
 	return clusterInfoMap
 }
 

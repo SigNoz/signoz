@@ -6,6 +6,7 @@ import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -152,28 +153,27 @@ function JobDetails({
 		[job?.meta.k8s_job_name],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Jobs list details page visited', {
-			job: job?.jobName,
-		});
+		if (job) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Job,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [job]);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -192,6 +192,12 @@ function JobDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Job,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -212,9 +218,12 @@ function JobDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Jobs list details time updated', {
-				job: job?.jobName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Job,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -223,22 +232,26 @@ function JobDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[QUERY_KEYS.K8S_STATEFUL_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
+					[QUERY_KEYS.K8S_JOB_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 				const paginationFilter = value.items.find((item) => item.key?.key === 'id');
 				const newFilters = value.items.filter(
 					(item) =>
-						item.key?.key !== 'id' &&
-						item.key?.key !== QUERY_KEYS.K8S_STATEFUL_SET_NAME,
+						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_JOB_NAME,
 				);
 
-				logEvent('Infra Monitoring: Jobs list details logs filters applied', {
-					job: job?.jobName,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Job,
+						view: 'logs',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -256,23 +269,28 @@ function JobDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
-					[QUERY_KEYS.K8S_STATEFUL_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
+					[QUERY_KEYS.K8S_JOB_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				logEvent('Infra Monitoring: Jobs list details traces filters applied', {
-					job: job?.jobName,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Job,
+						view: 'traces',
+					});
+				}
 
 				return {
 					op: 'AND',
 					items: [
 						...primaryFilters,
 						...value.items.filter(
-							(item) => item.key?.key !== QUERY_KEYS.K8S_STATEFUL_SET_NAME,
+							(item) => item.key?.key !== QUERY_KEYS.K8S_JOB_NAME,
 						),
 					].filter((item): item is TagFilterItem => item !== undefined),
 				};
@@ -292,9 +310,14 @@ function JobDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Jobs list details events filters applied', {
-					job: job?.jobName,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Job,
+						view: 'events',
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -323,15 +346,17 @@ function JobDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Jobs list details explore clicked', {
-			job: job?.jobName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Job,
 			view: selectedView,
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logAndTracesFilters,
+				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -365,7 +390,7 @@ function JobDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logAndTracesFilters,
 						},
 					],
 				},
@@ -531,7 +556,7 @@ function JobDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							category={K8sCategory.JOBS}
 							queryKey="jobLogs"
@@ -547,9 +572,14 @@ function JobDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="jobTraces"
+							category={InfraMonitoringEvents.Job}
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_JOB_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

@@ -58,6 +58,7 @@ export interface GetUPlotChartOptions {
 	tzDate?: (timestamp: number) => Date;
 	timezone?: string;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	isLogScale?: boolean;
 }
 
 /** the function converts series A , series B , series C to
@@ -164,6 +165,7 @@ export const getUPlotChartOptions = ({
 	tzDate,
 	timezone,
 	customSeries,
+	isLogScale,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -220,6 +222,7 @@ export const getUPlotChartOptions = ({
 					softMax,
 					softMin,
 				}),
+				distr: isLogScale ? 3 : 1,
 			},
 		},
 		plugins: [
@@ -387,6 +390,6 @@ export const getUPlotChartOptions = ({
 					hiddenGraph,
 					isDarkMode,
 			  }),
-		axes: getAxes(isDarkMode, yAxisUnit),
+		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};
 };

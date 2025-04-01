@@ -1,8 +1,10 @@
 import './entityTraces.styles.scss';
 
+import logEvent from 'api/common/logEvent';
 import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -20,12 +22,13 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	filterOutPrimaryFilters,
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
 } from '../utils';
@@ -44,6 +47,8 @@ interface Props {
 	tracesFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 	queryKey: string;
+	category: string;
+	queryKeyFilters: string[];
 }
 
 function EntityTraces({
@@ -54,6 +59,8 @@ function EntityTraces({
 	tracesFilters,
 	selectedInterval,
 	queryKey,
+	category,
+	queryKeyFilters,
 }: Props): JSX.Element {
 	const [traces, setTraces] = useState<any[]>([]);
 	const [offset] = useState<number>(0);
@@ -73,14 +80,14 @@ function EntityTraces({
 							...currentQuery.builder.queryData[0].aggregateAttribute,
 						},
 						filters: {
-							items: [],
+							items: filterOutPrimaryFilters(tracesFilters.items, queryKeyFilters),
 							op: 'AND',
 						},
 					},
 				],
 			},
 		}),
-		[currentQuery],
+		[currentQuery, queryKeyFilters, tracesFilters.items],
 	);
 
 	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
@@ -142,6 +149,14 @@ function EntityTraces({
 	const totalCount =
 		data?.payload?.data?.newResult?.data?.result?.[0]?.list?.length || 0;
 
+	const handleRowClick = useCallback(() => {
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			category,
+			view: InfraMonitoringEvents.TracesView,
+		});
+	}, [category]);
+
 	return (
 		<div className="entity-metric-traces">
 			<div className="entity-metric-traces-header">
@@ -194,6 +209,9 @@ function EntityTraces({
 						loading={isFetching}
 						dataSource={traces}
 						columns={traceListColumns}
+						onRow={(): Record<string, unknown> => ({
+							onClick: (): void => handleRowClick(),
+						})}
 					/>
 				</div>
 			)}

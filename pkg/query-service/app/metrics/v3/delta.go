@@ -3,10 +3,10 @@ package v3
 import (
 	"fmt"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
@@ -36,7 +36,7 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string,
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name IN %s AND unix_milli >= %d AND unix_milli <= %d", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=

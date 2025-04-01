@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sDeploymentsData } from 'api/infraMonitoring/getK8sDeploymentsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -157,28 +158,27 @@ function DeploymentDetails({
 		[deployment?.meta.k8s_deployment_name],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Deployments list details page visited', {
-			deployment: deployment?.deploymentName,
-		});
+		if (deployment) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Deployment,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [deployment]);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -197,6 +197,12 @@ function DeploymentDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Deployment,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -217,9 +223,12 @@ function DeploymentDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Deployments list details time updated', {
-				deployment: deployment?.deploymentName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Deployment,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,7 +237,7 @@ function DeploymentDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
@@ -241,12 +250,14 @@ function DeploymentDetails({
 						item.key?.key !== QUERY_KEYS.K8S_DEPLOYMENT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: Deployments list details logs filters applied',
-					{
-						deployment: deployment?.deploymentName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Deployment,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -266,19 +277,21 @@ function DeploymentDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DEPLOYMENT_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: Deployments list details traces filters applied',
-					{
-						deployment: deployment?.deploymentName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Deployment,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -307,12 +320,14 @@ function DeploymentDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: Deployments list details events filters applied',
-					{
-						deployment: deployment?.deploymentName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Deployment,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -343,15 +358,17 @@ function DeploymentDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Deployments list details explore clicked', {
-			deployment: deployment?.deploymentName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Deployment,
 			view: selectedView,
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logAndTracesFilters,
+				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -385,7 +402,7 @@ function DeploymentDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logAndTracesFilters,
 						},
 					],
 				},
@@ -562,7 +579,7 @@ function DeploymentDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKeyFilters={[
 								QUERY_KEYS.K8S_DEPLOYMENT_NAME,
@@ -578,9 +595,14 @@ function DeploymentDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="deploymentTraces"
+							category={InfraMonitoringEvents.Deployment}
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_DEPLOYMENT_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

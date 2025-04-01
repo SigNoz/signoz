@@ -7,12 +7,10 @@ import (
 	"net/http"
 	"regexp"
 
-	// TODO(remove): Remove auth packages
-	"go.signoz.io/signoz/pkg/query-service/auth"
-
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -30,17 +28,15 @@ func NewAnalytics(logger *zap.Logger) *Analytics {
 
 func (a *Analytics) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := auth.AttachJwtToContext(r.Context(), r)
-		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
+
+		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
+		a.getActiveLogs(path, r)
 
 		badResponseBuffer := new(bytes.Buffer)
 		writer := newBadResponseLoggingWriter(w, badResponseBuffer)
 		next.ServeHTTP(writer, r)
-
-		queryRangeData, metadataExists := a.extractQueryRangeData(path, r)
-		a.getActiveLogs(path, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": writer.StatusCode()}
 		if metadataExists {
@@ -50,9 +46,9 @@ func (a *Analytics) Wrap(next http.Handler) http.Handler {
 		}
 
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
+			claims, ok := authtypes.ClaimsFromContext(r.Context())
+			if ok {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, claims.Email, true, false)
 			}
 		}
 
@@ -86,7 +82,7 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 			}
 			r.Body.Close() //  must close
 			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &postData)
+			_ = json.Unmarshal(bodyBytes, &postData)
 
 		} else {
 			return nil, false
@@ -138,8 +134,8 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 		data["queryType"] = queryInfoResult.QueryType
 		data["panelType"] = queryInfoResult.PanelType
 
-		userEmail, err := auth.GetEmailFromJwt(r.Context())
-		if err == nil {
+		claims, ok := authtypes.ClaimsFromContext(r.Context())
+		if ok {
 			// switch case to set data["screen"] based on the referrer
 			switch {
 			case dashboardMatched:
@@ -154,7 +150,7 @@ func (a *Analytics) extractQueryRangeData(path string, r *http.Request) (map[str
 				data["screen"] = "unknown"
 				return data, true
 			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, claims.Email, true, false)
 		}
 	}
 	return data, true

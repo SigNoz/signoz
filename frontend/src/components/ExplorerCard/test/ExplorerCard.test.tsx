@@ -6,10 +6,23 @@ import { DataSource } from 'types/common/queryBuilder';
 import { viewMockData } from '../__mock__/viewData';
 import ExplorerCard from '../ExplorerCard';
 
+const historyReplace = jest.fn();
+
+// eslint-disable-next-line sonarjs/no-duplicate-string
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
+	}),
+	useHistory: (): any => ({
+		...jest.requireActual('react-router-dom').useHistory(),
+		replace: historyReplace,
+	}),
+}));
+
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
 	}),
 }));
 

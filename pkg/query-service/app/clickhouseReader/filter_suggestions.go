@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/utils/fingerprint"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
@@ -174,7 +174,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 			from %s.%s
 			where tag_key = $%d and (
 				string_value != '' or number_value is not null
-			)
+			) and tag_type != 'logfield'
 			limit %d
 		)`, r.logsDB, r.logsTagAttributeTableV2, idx+1, limit))
 

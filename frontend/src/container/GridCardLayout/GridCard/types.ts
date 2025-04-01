@@ -33,10 +33,12 @@ export interface WidgetGraphComponentProps {
 	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
+	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	customErrorMessage?: string;
 }
 
 export interface GridCardGraphProps {
@@ -48,12 +50,17 @@ export interface GridCardGraphProps {
 	variables?: Dashboard['data']['variables'];
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
+	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
 	dataAvailable?: (isDataAvailable: boolean) => void;
 	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	customErrorMessage?: string;
+	start?: number;
+	end?: number;
+	analyticsEvent?: string;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

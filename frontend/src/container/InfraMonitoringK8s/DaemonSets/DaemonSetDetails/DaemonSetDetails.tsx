@@ -6,6 +6,7 @@ import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -155,28 +156,27 @@ function DaemonSetDetails({
 		[daemonSet?.meta.k8s_daemonset_name],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: DaemonSets list details page visited', {
-			daemonSet: daemonSet?.daemonSetName,
-		});
+		if (daemonSet) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.DaemonSet,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [daemonSet]);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -195,6 +195,12 @@ function DaemonSetDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.DaemonSet,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -215,9 +221,12 @@ function DaemonSetDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: DaemonSets list details time updated', {
-				daemonSet: daemonSet?.daemonSetName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.DaemonSet,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -226,7 +235,7 @@ function DaemonSetDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DAEMON_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
@@ -239,9 +248,14 @@ function DaemonSetDetails({
 						item.key?.key !== QUERY_KEYS.K8S_DAEMON_SET_NAME,
 				);
 
-				logEvent('Infra Monitoring: DaemonSets list details logs filters applied', {
-					daemonSet: daemonSet?.daemonSetName,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.DaemonSet,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -259,19 +273,21 @@ function DaemonSetDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_DAEMON_SET_NAME, QUERY_KEYS.K8S_NAMESPACE_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: DaemonSets list details traces filters applied',
-					{
-						daemonSet: daemonSet?.daemonSetName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.DaemonSet,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -298,12 +314,14 @@ function DaemonSetDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: DaemonSets list details events filters applied',
-					{
-						daemonSet: daemonSet?.daemonSetName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.DaemonSet,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -332,15 +350,17 @@ function DaemonSetDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: DaemonSets list details explore clicked', {
-			daemonSet: daemonSet?.daemonSetName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.DaemonSet,
 			view: selectedView,
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logAndTracesFilters,
+				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -374,7 +394,7 @@ function DaemonSetDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logAndTracesFilters,
 						},
 					],
 				},
@@ -551,7 +571,7 @@ function DaemonSetDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							category={K8sCategory.DAEMONSETS}
 							queryKey="daemonsetLogs"
@@ -567,9 +587,14 @@ function DaemonSetDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="daemonsetTraces"
+							category={InfraMonitoringEvents.DaemonSet}
+							queryKeyFilters={[
+								QUERY_KEYS.K8S_DAEMON_SET_NAME,
+								QUERY_KEYS.K8S_NAMESPACE_NAME,
+							]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

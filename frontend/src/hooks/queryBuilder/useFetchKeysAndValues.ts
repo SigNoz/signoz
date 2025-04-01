@@ -1,5 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { getMetricsListFilterValues } from 'api/metricsExplorer/getMetricsListFilterValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	K8sCategory,
@@ -10,10 +12,12 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { useGetMetricsListFilterKeys } from 'hooks/metricsExplorer/useGetMetricsListFilterKeys';
 import useDebounceValue from 'hooks/useDebounce';
 import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
+import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -50,6 +54,7 @@ export const useFetchKeysAndValues = (
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
 	entity?: K8sCategory | null,
+	isMetricsExplorer?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
@@ -98,10 +103,17 @@ export const useFetchKeysAndValues = (
 
 	const isQueryEnabled = useMemo(
 		() =>
-			query.dataSource === DataSource.METRICS && !isInfraMonitoring
+			query.dataSource === DataSource.METRICS &&
+			!isInfraMonitoring &&
+			!isMetricsExplorer
 				? !!query.dataSource && !!query.aggregateAttribute.dataType
 				: true,
-		[isInfraMonitoring, query.aggregateAttribute.dataType, query.dataSource],
+		[
+			isInfraMonitoring,
+			isMetricsExplorer,
+			query.aggregateAttribute.dataType,
+			query.dataSource,
+		],
 	);
 
 	const { data, isFetching, status } = useGetAggregateKeys(
@@ -117,7 +129,7 @@ export const useFetchKeysAndValues = (
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !shouldUseSuggestions,
+			enabled: isMetricsExplorer ? false : isQueryEnabled && !shouldUseSuggestions,
 		},
 		isInfraMonitoring, // isInfraMonitoring
 		entity, // infraMonitoringEntity
@@ -138,6 +150,42 @@ export const useFetchKeysAndValues = (
 			enabled: isQueryEnabled && shouldUseSuggestions,
 		},
 	);
+
+	const {
+		data: metricsListFilterKeysData,
+		isFetching: isFetchingMetricsListFilterKeys,
+		status: fetchingMetricsListFilterKeysStatus,
+	} = useGetMetricsListFilterKeys(
+		{
+			searchText: searchKey,
+		},
+		{
+			enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
+			queryKey: [searchKey],
+		},
+	);
+
+	function isAttributeValuesResponse(
+		payload: any,
+	): payload is IAttributeValuesResponse {
+		return (
+			payload &&
+			(Array.isArray(payload.stringAttributeValues) ||
+				payload.stringAttributeValues === null ||
+				Array.isArray(payload.numberAttributeValues) ||
+				payload.numberAttributeValues === null ||
+				Array.isArray(payload.boolAttributeValues) ||
+				payload.boolAttributeValues === null)
+		);
+	}
+
+	function isMetricsListFilterValuesData(
+		payload: any,
+	): payload is { filterValues: string[] } {
+		return (
+			payload && 'filterValues' in payload && Array.isArray(payload.filterValues)
+		);
+	}
 
 	/**
 	 * Fetches the options to be displayed based on the selected value
@@ -182,6 +230,15 @@ export const useFetchKeysAndValues = (
 						: tagValue?.toString() ?? '',
 				});
 				payload = response.payload;
+			} else if (isMetricsExplorer) {
+				const response = await getMetricsListFilterValues({
+					searchText: searchKey,
+					filterKey: filterAttributeKey?.key ?? tagKey,
+					filterAttributeKeyDataType:
+						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+					limit: 10,
+				});
+				payload = response.payload?.data;
 			} else {
 				const response = await getAttributesValues({
 					aggregateOperator: query.aggregateOperator,
@@ -199,8 +256,17 @@ export const useFetchKeysAndValues = (
 			}
 
 			if (payload) {
-				const values = Object.values(payload).find((el) => !!el) || [];
-				setResults(values);
+				if (isAttributeValuesResponse(payload)) {
+					const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
+					const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+					setResults(key ? payload[key] || [] : []);
+					return;
+				}
+
+				if (isMetricsExplorer && isMetricsListFilterValuesData(payload)) {
+					setResults(payload.filterValues || []);
+					return;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -240,16 +306,44 @@ export const useFetchKeysAndValues = (
 
 	useEffect(() => {
 		if (
-			fetchingSuggestionsStatus === 'success' &&
-			suggestionsData?.payload?.attributes
+			isMetricsExplorer &&
+			fetchingMetricsListFilterKeysStatus === 'success' &&
+			!isFetchingMetricsListFilterKeys &&
+			metricsListFilterKeysData?.payload?.data?.attributeKeys
 		) {
-			setKeys(suggestionsData.payload.attributes);
+			setKeys(metricsListFilterKeysData.payload.data.attributeKeys);
 			setSourceKeys((prevState) =>
 				uniqWith(
-					[...(suggestionsData.payload.attributes ?? []), ...prevState],
+					[
+						...(metricsListFilterKeysData.payload.data.attributeKeys ?? []),
+						...prevState,
+					],
 					isEqual,
 				),
 			);
+		}
+	}, [
+		metricsListFilterKeysData?.payload?.data?.attributeKeys,
+		fetchingMetricsListFilterKeysStatus,
+		isMetricsExplorer,
+		metricsListFilterKeysData,
+		isFetchingMetricsListFilterKeys,
+	]);
+
+	useEffect(() => {
+		if (
+			fetchingSuggestionsStatus === 'success' &&
+			suggestionsData?.payload?.attributes
+		) {
+			if (!isInfraMonitoring) {
+				setKeys(suggestionsData.payload.attributes);
+				setSourceKeys((prevState) =>
+					uniqWith(
+						[...(suggestionsData.payload.attributes ?? []), ...prevState],
+						isEqual,
+					),
+				);
+			}
 		} else {
 			setKeys([]);
 		}
@@ -265,6 +359,7 @@ export const useFetchKeysAndValues = (
 		suggestionsData?.payload?.attributes,
 		fetchingSuggestionsStatus,
 		suggestionsData?.payload?.example_queries,
+		isInfraMonitoring,
 	]);
 
 	return {

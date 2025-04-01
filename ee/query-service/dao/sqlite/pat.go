@@ -3,64 +3,57 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
-	"go.signoz.io/signoz/ee/query-service/model"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	ossTypes "github.com/SigNoz/signoz/pkg/types"
+
 	"go.uber.org/zap"
 )
 
-func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError) {
-	result, err := m.DB().ExecContext(ctx,
-		"INSERT INTO personal_access_tokens (user_id, token, role, name, created_at, expires_at, updated_at, updated_by_user_id, last_used, revoked) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-		p.UserID,
-		p.Token,
-		p.Role,
-		p.Name,
-		p.CreatedAt,
-		p.ExpiresAt,
-		p.UpdatedAt,
-		p.UpdatedByUserID,
-		p.LastUsed,
-		p.Revoked,
-	)
+func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.GettablePAT) (types.GettablePAT, basemodel.BaseApiError) {
+	p.StorablePersonalAccessToken.OrgID = orgID
+	_, err := m.DB().NewInsert().
+		Model(&p.StorablePersonalAccessToken).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Failed to insert PAT in db, err: %v", zap.Error(err))
-		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
+		return types.GettablePAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		zap.L().Error("Failed to get last inserted id, err: %v", zap.Error(err))
-		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
-	}
-	p.Id = strconv.Itoa(int(id))
+
 	createdByUser, _ := m.GetUser(ctx, p.UserID)
 	if createdByUser == nil {
-		p.CreatedByUser = model.User{
+		p.CreatedByUser = types.PatUser{
 			NotFound: true,
 		}
 	} else {
-		p.CreatedByUser = model.User{
-			Id:                createdByUser.Id,
-			Name:              createdByUser.Name,
-			Email:             createdByUser.Email,
-			CreatedAt:         createdByUser.CreatedAt,
-			ProfilePictureURL: createdByUser.ProfilePictureURL,
-			NotFound:          false,
+		p.CreatedByUser = types.PatUser{
+			User: ossTypes.User{
+				ID:    createdByUser.ID,
+				Name:  createdByUser.Name,
+				Email: createdByUser.Email,
+				TimeAuditable: ossTypes.TimeAuditable{
+					CreatedAt: createdByUser.CreatedAt,
+					UpdatedAt: createdByUser.UpdatedAt,
+				},
+				ProfilePictureURL: createdByUser.ProfilePictureURL,
+			},
+			NotFound: false,
 		}
 	}
 	return p, nil
 }
 
-func (m *modelDao) UpdatePAT(ctx context.Context, p model.PAT, id string) basemodel.BaseApiError {
-	_, err := m.DB().ExecContext(ctx,
-		"UPDATE personal_access_tokens SET role=$1, name=$2, updated_at=$3, updated_by_user_id=$4 WHERE id=$5 and revoked=false;",
-		p.Role,
-		p.Name,
-		p.UpdatedAt,
-		p.UpdatedByUserID,
-		id)
+func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p types.GettablePAT, id string) basemodel.BaseApiError {
+	_, err := m.DB().NewUpdate().
+		Model(&p.StorablePersonalAccessToken).
+		Column("role", "name", "updated_at", "updated_by_user_id").
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Where("revoked = false").
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Failed to update PAT in db, err: %v", zap.Error(err))
 		return model.InternalError(fmt.Errorf("PAT update failed"))
@@ -68,66 +61,82 @@ func (m *modelDao) UpdatePAT(ctx context.Context, p model.PAT, id string) basemo
 	return nil
 }
 
-func (m *modelDao) UpdatePATLastUsed(ctx context.Context, token string, lastUsed int64) basemodel.BaseApiError {
-	_, err := m.DB().ExecContext(ctx,
-		"UPDATE personal_access_tokens SET last_used=$1 WHERE token=$2 and revoked=false;",
-		lastUsed,
-		token)
-	if err != nil {
-		zap.L().Error("Failed to update PAT last used in db, err: %v", zap.Error(err))
-		return model.InternalError(fmt.Errorf("PAT last used update failed"))
-	}
-	return nil
-}
+func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.GettablePAT, basemodel.BaseApiError) {
+	pats := []types.StorablePersonalAccessToken{}
 
-func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApiError) {
-	pats := []model.PAT{}
-
-	if err := m.DB().Select(&pats, "SELECT * FROM personal_access_tokens WHERE revoked=false ORDER by updated_at DESC;"); err != nil {
+	if err := m.DB().NewSelect().
+		Model(&pats).
+		Where("revoked = false").
+		Where("org_id = ?", orgID).
+		Order("updated_at DESC").
+		Scan(ctx); err != nil {
 		zap.L().Error("Failed to fetch PATs err: %v", zap.Error(err))
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PATs"))
 	}
+
+	patsWithUsers := []types.GettablePAT{}
 	for i := range pats {
+		patWithUser := types.GettablePAT{
+			StorablePersonalAccessToken: pats[i],
+		}
+
 		createdByUser, _ := m.GetUser(ctx, pats[i].UserID)
 		if createdByUser == nil {
-			pats[i].CreatedByUser = model.User{
+			patWithUser.CreatedByUser = types.PatUser{
 				NotFound: true,
 			}
 		} else {
-			pats[i].CreatedByUser = model.User{
-				Id:                createdByUser.Id,
-				Name:              createdByUser.Name,
-				Email:             createdByUser.Email,
-				CreatedAt:         createdByUser.CreatedAt,
-				ProfilePictureURL: createdByUser.ProfilePictureURL,
-				NotFound:          false,
+			patWithUser.CreatedByUser = types.PatUser{
+				User: ossTypes.User{
+					ID:    createdByUser.ID,
+					Name:  createdByUser.Name,
+					Email: createdByUser.Email,
+					TimeAuditable: ossTypes.TimeAuditable{
+						CreatedAt: createdByUser.CreatedAt,
+						UpdatedAt: createdByUser.UpdatedAt,
+					},
+					ProfilePictureURL: createdByUser.ProfilePictureURL,
+				},
+				NotFound: false,
 			}
 		}
 
 		updatedByUser, _ := m.GetUser(ctx, pats[i].UpdatedByUserID)
 		if updatedByUser == nil {
-			pats[i].UpdatedByUser = model.User{
+			patWithUser.UpdatedByUser = types.PatUser{
 				NotFound: true,
 			}
 		} else {
-			pats[i].UpdatedByUser = model.User{
-				Id:                updatedByUser.Id,
-				Name:              updatedByUser.Name,
-				Email:             updatedByUser.Email,
-				CreatedAt:         updatedByUser.CreatedAt,
-				ProfilePictureURL: updatedByUser.ProfilePictureURL,
-				NotFound:          false,
+			patWithUser.UpdatedByUser = types.PatUser{
+				User: ossTypes.User{
+					ID:    updatedByUser.ID,
+					Name:  updatedByUser.Name,
+					Email: updatedByUser.Email,
+					TimeAuditable: ossTypes.TimeAuditable{
+						CreatedAt: updatedByUser.CreatedAt,
+						UpdatedAt: updatedByUser.UpdatedAt,
+					},
+					ProfilePictureURL: updatedByUser.ProfilePictureURL,
+				},
+				NotFound: false,
 			}
 		}
+
+		patsWithUsers = append(patsWithUsers, patWithUser)
 	}
-	return pats, nil
+	return patsWithUsers, nil
 }
 
-func (m *modelDao) RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError {
+func (m *modelDao) RevokePAT(ctx context.Context, orgID string, id string, userID string) basemodel.BaseApiError {
 	updatedAt := time.Now().Unix()
-	_, err := m.DB().ExecContext(ctx,
-		"UPDATE personal_access_tokens SET revoked=true, updated_by_user_id = $1, updated_at=$2 WHERE id=$3",
-		userID, updatedAt, id)
+	_, err := m.DB().NewUpdate().
+		Model(&types.StorablePersonalAccessToken{}).
+		Set("revoked = ?", true).
+		Set("updated_by_user_id = ?", userID).
+		Set("updated_at = ?", updatedAt).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Failed to revoke PAT in db, err: %v", zap.Error(err))
 		return model.InternalError(fmt.Errorf("PAT revoke failed"))
@@ -135,10 +144,14 @@ func (m *modelDao) RevokePAT(ctx context.Context, id string, userID string) base
 	return nil
 }
 
-func (m *modelDao) GetPAT(ctx context.Context, token string) (*model.PAT, basemodel.BaseApiError) {
-	pats := []model.PAT{}
+func (m *modelDao) GetPAT(ctx context.Context, token string) (*types.GettablePAT, basemodel.BaseApiError) {
+	pats := []types.StorablePersonalAccessToken{}
 
-	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE token=? and revoked=false;`, token); err != nil {
+	if err := m.DB().NewSelect().
+		Model(&pats).
+		Where("token = ?", token).
+		Where("revoked = false").
+		Scan(ctx); err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PAT"))
 	}
 
@@ -149,13 +162,22 @@ func (m *modelDao) GetPAT(ctx context.Context, token string) (*model.PAT, basemo
 		}
 	}
 
-	return &pats[0], nil
+	patWithUser := types.GettablePAT{
+		StorablePersonalAccessToken: pats[0],
+	}
+
+	return &patWithUser, nil
 }
 
-func (m *modelDao) GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError) {
-	pats := []model.PAT{}
+func (m *modelDao) GetPATByID(ctx context.Context, orgID string, id string) (*types.GettablePAT, basemodel.BaseApiError) {
+	pats := []types.StorablePersonalAccessToken{}
 
-	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE id=? and revoked=false;`, id); err != nil {
+	if err := m.DB().NewSelect().
+		Model(&pats).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Where("revoked = false").
+		Scan(ctx); err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PAT"))
 	}
 
@@ -166,26 +188,25 @@ func (m *modelDao) GetPATByID(ctx context.Context, id string) (*model.PAT, basem
 		}
 	}
 
-	return &pats[0], nil
+	patWithUser := types.GettablePAT{
+		StorablePersonalAccessToken: pats[0],
+	}
+
+	return &patWithUser, nil
 }
 
 // deprecated
-func (m *modelDao) GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError) {
-	users := []basemodel.UserPayload{}
+func (m *modelDao) GetUserByPAT(ctx context.Context, orgID string, token string) (*ossTypes.GettableUser, basemodel.BaseApiError) {
+	users := []ossTypes.GettableUser{}
 
-	query := `SELECT
-				u.id,
-				u.name,
-				u.email,
-				u.password,
-				u.created_at,
-				u.profile_picture_url,
-				u.org_id,
-				u.group_id
-			  FROM users u, personal_access_tokens p
-			  WHERE u.id = p.user_id and p.token=? and p.expires_at >= strftime('%s', 'now');`
-
-	if err := m.DB().Select(&users, query, token); err != nil {
+	if err := m.DB().NewSelect().
+		Model(&users).
+		Column("u.id", "u.name", "u.email", "u.password", "u.created_at", "u.profile_picture_url", "u.org_id", "u.group_id").
+		Join("JOIN personal_access_tokens p ON u.id = p.user_id").
+		Where("p.token = ?", token).
+		Where("p.expires_at >= strftime('%s', 'now')").
+		Where("p.org_id = ?", orgID).
+		Scan(ctx); err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to fetch user from PAT, err: %v", err))
 	}
 

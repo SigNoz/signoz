@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	contribsdkconfig "go.opentelemetry.io/contrib/config"
@@ -11,8 +13,6 @@ import (
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/version"
 )
 
 var _ factory.Service = (*SDK)(nil)
@@ -23,16 +23,17 @@ type SDK struct {
 	logger             *slog.Logger
 	sdk                contribsdkconfig.SDK
 	prometheusRegistry *prometheus.Registry
+	startCh            chan struct{}
 }
 
 // New creates a new Instrumentation instance with configured providers.
 // It sets up logging, tracing, and metrics based on the provided configuration.
-func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
+func New(ctx context.Context, cfg Config, build version.Build, serviceName string) (*SDK, error) {
 	// Set default resource attributes if not provided
 	if cfg.Resource.Attributes == nil {
 		cfg.Resource.Attributes = map[string]any{
-			string(semconv.ServiceNameKey):    build.Name,
-			string(semconv.ServiceVersionKey): build.Version,
+			string(semconv.ServiceNameKey):    serviceName,
+			string(semconv.ServiceVersionKey): build.Version(),
 		}
 	}
 
@@ -96,14 +97,17 @@ func New(ctx context.Context, build version.Build, cfg Config) (*SDK, error) {
 		sdk:                sdk,
 		prometheusRegistry: prometheusRegistry,
 		logger:             NewLogger(cfg),
+		startCh:            make(chan struct{}),
 	}, nil
 }
 
 func (i *SDK) Start(ctx context.Context) error {
+	<-i.startCh
 	return nil
 }
 
 func (i *SDK) Stop(ctx context.Context) error {
+	close(i.startCh)
 	return i.sdk.Shutdown(ctx)
 }
 

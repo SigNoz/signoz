@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery) (string, error) {
@@ -49,7 +49,7 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery) (st
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name IN %s AND unix_milli >= %d AND unix_milli <= %d", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key), start, end)
 
 	queryTmpl :=
 		"SELECT %s toStartOfHour(now()) as ts," + // now() has no menaing & used as a placeholder for ts

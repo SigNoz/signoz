@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sVolumesListPayload } from 'api/infraMonitoring/getK8sVolumesList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sVolumesList } from 'hooks/infraMonitoring/useGetK8sVolumesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -42,7 +43,6 @@ import {
 	K8sVolumesRowData,
 } from './utils';
 import VolumeDetails from './VolumeDetails';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sVolumesList({
 	isFiltersVisible,
@@ -198,6 +198,11 @@ function K8sVolumesList({
 		[groupedByRowData, groupBy],
 	);
 
+	const nestedVolumesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const { data, isFetching, isLoading, isError } = useGetK8sVolumesList(
 		query as K8sVolumesListPayload,
 		{
@@ -240,6 +245,11 @@ function K8sVolumesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Volumes,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -265,25 +275,41 @@ function K8sVolumesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Volumes,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Volumes,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedVolumeData = useMemo(() => {
 		if (!selectedVolumeUID) return null;
+		if (groupBy.length > 0) {
+			return (
+				nestedVolumesData.find(
+					(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
+				) || null
+			);
+		}
 		return (
 			volumesData.find(
 				(volume) => volume.persistentVolumeClaimName === selectedVolumeUID,
 			) || null
 		);
-	}, [selectedVolumeUID, volumesData]);
+	}, [selectedVolumeUID, volumesData, groupBy.length, nestedVolumesData]);
 
 	const handleRowClick = (record: K8sVolumesRowData): void => {
 		if (groupBy.length === 0) {
@@ -293,8 +319,10 @@ function K8sVolumesList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s volume list item clicked', {
-			volumeUID: record.volumeUID,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Volumes,
 		});
 	};
 
@@ -336,6 +364,10 @@ function K8sVolumesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedVolumeUID(record.volumeUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -418,6 +450,12 @@ function K8sVolumesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Volumes,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -432,6 +470,16 @@ function K8sVolumesList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Volumes,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -460,10 +508,7 @@ function K8sVolumesList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

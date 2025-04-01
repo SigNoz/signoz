@@ -241,18 +241,19 @@
 				height: 54px;
 				position: relative;
 				width: 100%;
+				padding-left: 15px;
 				cursor: pointer;
 
 				.span-line {
-					position: absolute;
+					position: relative;
 					height: 12px;
 					top: 35%;
 					border-radius: 6px;
 				}
 
 				.span-line-text {
-					position: absolute;
-					top: 65%;
+					position: relative;
+					top: 40%;
 					font-variant-numeric: lining-nums tabular-nums stacked-fractions
 						slashed-zero;
 					font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;

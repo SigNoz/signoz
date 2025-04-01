@@ -3,7 +3,7 @@
 import './SideNav.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -28,7 +29,7 @@ import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
+import { checkVersionState } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -58,7 +59,11 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { user, featureFlags, licenses } = useAppContext();
+	const { user, featureFlags, licenses, trialInfo } = useAppContext();
+
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
 
 	const [licenseTag, setLicenseTag] = useState('');
 
@@ -70,7 +75,7 @@ function SideNav(): JSX.Element {
 
 	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
 		UserManagementMenuItems[]
-	>([manageLicenseMenuItem]);
+	>([]);
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -82,23 +87,23 @@ function SideNav(): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser,
+		isCommunityEnterpriseUser,
+	} = useGetTenantLicense();
 
 	const { t } = useTranslation('');
 
 	const licenseStatus: string =
 		licenses?.licenses?.find((e: License) => e.isCurrent)?.status || '';
 
-	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const isLicenseActive =
 		licenseStatus?.toLocaleLowerCase() ===
 		LICENSE_PLAN_STATUS.VALID.toLocaleLowerCase();
-
-	const isEnterprise = licenses?.licenses?.some(
-		(license: License) =>
-			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.ENTERPRISE_PLAN,
-	);
 
 	const onClickSignozCloud = (): void => {
 		window.open(
@@ -131,10 +136,15 @@ function SideNav(): JSX.Element {
 			menuRoute: '/get-started',
 			menuLabel: 'Get Started',
 		});
+
+		const onboaringRoute = isOnboardingV3Enabled
+			? ROUTES.GET_STARTED_WITH_CLOUD
+			: ROUTES.GET_STARTED;
+
 		if (isCtrlMetaKey(event)) {
-			openInNewTab('/get-started');
+			openInNewTab(onboaringRoute);
 		} else {
-			history.push(`/get-started`);
+			history.push(onboaringRoute);
 		}
 	};
 
@@ -188,14 +198,21 @@ function SideNav(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (isCloudUserVal) {
+		if (isCloudUser) {
 			setLicenseTag('Cloud');
-		} else if (isEnterprise) {
+		} else if (isEnterpriseSelfHostedUser) {
 			setLicenseTag('Enterprise');
-		} else {
-			setLicenseTag('Free');
+		} else if (isCommunityEnterpriseUser) {
+			setLicenseTag('Enterprise');
+		} else if (isCommunityUser) {
+			setLicenseTag('Community');
 		}
-	}, [isCloudUserVal, isEnterprise]);
+	}, [
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+		isCommunityUser,
+	]);
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
@@ -239,7 +256,7 @@ function SideNav(): JSX.Element {
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
-			onClickHandler(ROUTES.MESSAGING_QUEUES, null),
+			onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
 		);
 
 		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
@@ -266,14 +283,28 @@ function SideNav(): JSX.Element {
 		let updatedUserManagementItems: UserManagementMenuItems[] = [
 			manageLicenseMenuItem,
 		];
-		if (isCloudUserVal || isEECloudUser()) {
+
+		const isApiMonitoringEnabled = featureFlags?.find(
+			(flag) => flag.name === FeatureKeys.THIRD_PARTY_API,
+		)?.active;
+
+		if (!isApiMonitoringEnabled) {
+			updatedMenuItems = updatedMenuItems.filter(
+				(item) => item.key !== ROUTES.API_MONITORING,
+			);
+		}
+
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
 			const isOnboardingEnabled =
 				featureFlags?.find((feature) => feature.name === FeatureKeys.ONBOARDING)
 					?.active || false;
+
 			if (!isOnboardingEnabled) {
 				updatedMenuItems = updatedMenuItems.filter(
 					(item) =>
-						item.key !== ROUTES.GET_STARTED && item.key !== ROUTES.ONBOARDING,
+						item.key !== ROUTES.GET_STARTED &&
+						item.key !== ROUTES.ONBOARDING &&
+						item.key !== ROUTES.GET_STARTED_WITH_CLOUD,
 				);
 			}
 
@@ -290,6 +321,11 @@ function SideNav(): JSX.Element {
 			}
 
 			updatedUserManagementItems = [helpSupportMenuItem];
+
+			// Show manage license menu item for EE cloud users with a active license
+			if (isEnterpriseSelfHostedUser) {
+				updatedUserManagementItems.push(manageLicenseMenuItem);
+			}
 		} else {
 			updatedMenuItems = updatedMenuItems.filter(
 				(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
@@ -305,18 +341,20 @@ function SideNav(): JSX.Element {
 				onClick: onClickVersionHandler,
 			};
 
-			updatedUserManagementItems = [
-				versionMenuItem,
-				slackSupportMenuItem,
-				manageLicenseMenuItem,
-			];
+			updatedUserManagementItems = [versionMenuItem, slackSupportMenuItem];
+
+			if (isCommunityEnterpriseUser) {
+				updatedUserManagementItems.push(manageLicenseMenuItem);
+			}
 		}
 		setMenuItems(updatedMenuItems);
 		setUserManagementMenuItems(updatedUserManagementItems);
 	}, [
+		isCommunityEnterpriseUser,
 		currentVersion,
 		featureFlags,
-		isCloudUserVal,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
 		isCurrentVersionError,
 		isLatestVersion,
 		licenses?.licenses,
@@ -335,7 +373,7 @@ function SideNav(): JSX.Element {
 							// eslint-disable-next-line react/no-unknown-property
 							onClick={(event: MouseEvent): void => {
 								// Current home page
-								onClickHandler(ROUTES.APPLICATION, event);
+								onClickHandler(ROUTES.HOME, event);
 							}}
 						>
 							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
@@ -344,12 +382,31 @@ function SideNav(): JSX.Element {
 						</div>
 
 						{licenseTag && (
-							<div className="license tag nav-item-label">{licenseTag}</div>
+							<Tooltip
+								title={
+									// eslint-disable-next-line no-nested-ternary
+									isCommunityUser
+										? 'You are running the community version of SigNoz. You have to install the Enterprise edition in order enable Enterprise features.'
+										: isCommunityEnterpriseUser
+										? 'You do not have an active license present. Add an active license to enable Enterprise features.'
+										: ''
+								}
+								placement="bottomRight"
+							>
+								<div
+									className={cx(
+										'license tag nav-item-label',
+										isCommunityEnterpriseUser && 'community-enterprise-user',
+									)}
+								>
+									{licenseTag}
+								</div>
+							</Tooltip>
 						)}
 					</div>
 				</div>
 
-				{isCloudUserVal && (
+				{isCloudUser && user?.role !== USER_ROLES.VIEWER && (
 					<div className="get-started-nav-items">
 						<Button
 							className="get-started-btn"
@@ -368,7 +425,7 @@ function SideNav(): JSX.Element {
 					</div>
 				)}
 
-				<div className={cx(`nav-wrapper`, isCloudUserVal && 'nav-wrapper-cloud')}>
+				<div className={cx(`nav-wrapper`, isCloudUser && 'nav-wrapper-cloud')}>
 					<div className="primary-nav-items">
 						{menuItems.map((item, index) => (
 							<NavItem

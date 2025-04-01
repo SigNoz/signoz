@@ -2,7 +2,8 @@ import './ValueInfo.styles.scss';
 
 import { FileSearchOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Row } from 'antd';
-import { useNavigateToTraces } from 'components/CeleryTask/useNavigateToTraces';
+import logEvent from 'api/common/logEvent';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -14,6 +15,7 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -81,7 +83,7 @@ export default function ValueInfo({
 		[isLoading, getValues],
 	);
 
-	const navigateToTrace = useNavigateToTraces();
+	const navigateToExplorer = useNavigateToExplorer();
 
 	const avgLatencyInMs = useMemo(() => {
 		if (avgLatency === 'NaN') return 'NaN';
@@ -113,6 +115,9 @@ export default function ValueInfo({
 		return 'red';
 	};
 
+	const mqAnalyticsTitle =
+		'MQ Overview Page: Right drawer navigation to trace page';
+
 	return (
 		<Card className="value-info-card">
 			<Row gutter={16}>
@@ -133,7 +138,20 @@ export default function ValueInfo({
 						icon={<FileSearchOutlined />}
 						className="trace-button"
 						disabled={isLoading}
-						onClick={(): void => navigateToTrace(filters ?? [])}
+						onClick={(): void => {
+							logEvent(mqAnalyticsTitle, {
+								filters,
+								minTime,
+								maxTime,
+								source: 'request rate',
+							});
+							navigateToExplorer({
+								filters: filters ?? [],
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+							});
+						}}
 					>
 						View Traces
 					</Button>
@@ -155,24 +173,35 @@ export default function ValueInfo({
 						icon={<FileSearchOutlined />}
 						className="trace-button"
 						disabled={isLoading}
-						onClick={(): void =>
-							navigateToTrace([
-								...(filters ?? []),
-								{
-									id: uuidv4(),
-									key: {
-										dataType: DataTypes.bool,
-										id: 'has_error--bool----true',
-										isColumn: true,
-										isJSON: false,
-										key: 'has_error',
-										type: '',
+						onClick={(): void => {
+							logEvent(mqAnalyticsTitle, {
+								filters,
+								minTime,
+								maxTime,
+								source: 'error rate',
+							});
+							navigateToExplorer({
+								filters: [
+									...(filters ?? []),
+									{
+										id: uuidv4(),
+										key: {
+											dataType: DataTypes.bool,
+											id: 'has_error--bool----true',
+											isColumn: true,
+											isJSON: false,
+											key: 'has_error',
+											type: '',
+										},
+										op: '=',
+										value: 'true',
 									},
-									op: '=',
-									value: 'true',
-								},
-							])
-						}
+								],
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+							});
+						}}
 					>
 						View Traces
 					</Button>
@@ -194,7 +223,20 @@ export default function ValueInfo({
 						icon={<FileSearchOutlined />}
 						className="trace-button"
 						disabled={isLoading}
-						onClick={(): void => navigateToTrace(filters ?? [])}
+						onClick={(): void => {
+							logEvent(mqAnalyticsTitle, {
+								filters,
+								minTime,
+								maxTime,
+								source: 'average latency',
+							});
+							navigateToExplorer({
+								filters: filters ?? [],
+								dataSource: DataSource.TRACES,
+								startTime: minTime,
+								endTime: maxTime,
+							});
+						}}
 					>
 						View Traces
 					</Button>

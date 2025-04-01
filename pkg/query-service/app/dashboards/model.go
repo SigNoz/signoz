@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -10,19 +9,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
-	"github.com/gosimple/slug"
-	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
 
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
 // This time the global variable is unexported.
-var db *sqlx.DB
+var store sqlstore.SQLStore
 
 // User for mapping job,instance from grafana
 var (
@@ -35,205 +33,43 @@ var (
 )
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(inputDB *sqlx.DB) error {
-	db = inputDB
-	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		uuid TEXT NOT NULL UNIQUE,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		data TEXT NOT NULL
-	);`
-
-	_, err := db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating dashboard table: %s", err.Error())
-	}
-
-	table_schema = `CREATE TABLE IF NOT EXISTS rules (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		updated_at datetime NOT NULL,
-		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating rules table: %s", err.Error())
-	}
-
-	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		name TEXT NOT NULL UNIQUE,
-		type TEXT NOT NULL,
-		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating notification_channles table: %s", err.Error())
-	}
-
-	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		description TEXT,
-		alert_ids TEXT,
-		schedule TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		created_by TEXT NOT NULL,
-		updated_at datetime NOT NULL,
-		updated_by TEXT NOT NULL
-	);`
-	_, err = db.Exec(tableSchema)
-	if err != nil {
-		return fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
-	}
-
-	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		transaction_id TEXT NOT NULL,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		table_name TEXT NOT NULL,
-		ttl INTEGER DEFAULT 0,
-		cold_storage_ttl INTEGER DEFAULT 0,
-		status TEXT NOT NULL
-	);`
-
-	_, err = db.Exec(table_schema)
-	if err != nil {
-		return fmt.Errorf("error in creating ttl_status table: %s", err.Error())
-	}
-
-	// sqlite does not support "IF NOT EXISTS"
-	createdAt := `ALTER TABLE rules ADD COLUMN created_at datetime;`
-	_, err = db.Exec(createdAt)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column created_at to rules table: %s", err.Error())
-	}
-
-	createdBy := `ALTER TABLE rules ADD COLUMN created_by TEXT;`
-	_, err = db.Exec(createdBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column created_by to rules table: %s", err.Error())
-	}
-
-	updatedBy := `ALTER TABLE rules ADD COLUMN updated_by TEXT;`
-	_, err = db.Exec(updatedBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column updated_by to rules table: %s", err.Error())
-	}
-
-	createdBy = `ALTER TABLE dashboards ADD COLUMN created_by TEXT;`
-	_, err = db.Exec(createdBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column created_by to dashboards table: %s", err.Error())
-	}
-
-	updatedBy = `ALTER TABLE dashboards ADD COLUMN updated_by TEXT;`
-	_, err = db.Exec(updatedBy)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column updated_by to dashboards table: %s", err.Error())
-	}
-
-	locked := `ALTER TABLE dashboards ADD COLUMN locked INTEGER DEFAULT 0;`
-	_, err = db.Exec(locked)
-	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
-	}
-
+func InitDB(sqlStore sqlstore.SQLStore) error {
+	store = sqlStore
 	telemetry.GetInstance().SetDashboardsInfoCallback(GetDashboardsInfo)
 
 	return nil
 }
 
-type Dashboard struct {
-	Id        int       `json:"id" db:"id"`
-	Uuid      string    `json:"uuid" db:"uuid"`
-	Slug      string    `json:"-" db:"-"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	CreateBy  *string   `json:"created_by" db:"created_by"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	UpdateBy  *string   `json:"updated_by" db:"updated_by"`
-	Title     string    `json:"-" db:"-"`
-	Data      Data      `json:"data" db:"data"`
-	Locked    *int      `json:"isLocked" db:"locked"`
-}
-
-type Data map[string]interface{}
-
-// func (c *Data) Value() (driver.Value, error) {
-// 	if c != nil {
-// 		b, err := json.Marshal(c)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		return string(b), nil
-// 	}
-// 	return nil, nil
-// }
-
-func (c *Data) Scan(src interface{}) error {
-	var data []byte
-	if b, ok := src.([]byte); ok {
-		data = b
-	} else if s, ok := src.(string); ok {
-		data = []byte(s)
-	}
-	return json.Unmarshal(data, c)
-}
-
 // CreateDashboard creates a new dashboard
-func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
-	dash := &Dashboard{
+func CreateDashboard(ctx context.Context, orgID string, email string, data map[string]interface{}, fm interfaces.FeatureLookup) (*types.Dashboard, *model.ApiError) {
+	dash := &types.Dashboard{
 		Data: data,
 	}
-	var userEmail string
-	if user := common.GetUserFromContext(ctx); user != nil {
-		userEmail = user.Email
-	}
+
+	dash.OrgID = orgID
 	dash.CreatedAt = time.Now()
-	dash.CreateBy = &userEmail
+	dash.CreatedBy = email
 	dash.UpdatedAt = time.Now()
-	dash.UpdateBy = &userEmail
+	dash.UpdatedBy = email
 	dash.UpdateSlug()
-	dash.Uuid = uuid.New().String()
+	dash.UUID = uuid.New().String()
 	if data["uuid"] != nil {
-		dash.Uuid = data["uuid"].(string)
+		dash.UUID = data["uuid"].(string)
 	}
 
-	mapData, err := json.Marshal(dash.Data)
-	if err != nil {
-		zap.L().Error("Error in marshalling data field in dashboard: ", zap.Any("dashboard", dash), zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
-	}
-
-	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, created_by, updated_at, updated_by, data) VALUES ($1, $2, $3, $4, $5, $6)",
-		dash.Uuid, dash.CreatedAt, userEmail, dash.UpdatedAt, userEmail, mapData)
-
+	err := store.BunDB().NewInsert().Model(dash).Returning("id").Scan(ctx, &dash.ID)
 	if err != nil {
 		zap.L().Error("Error in inserting dashboard data: ", zap.Any("dashboard", dash), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
-	lastInsertId, err := result.LastInsertId()
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
-	}
-	dash.Id = int(lastInsertId)
 
 	return dash, nil
 }
 
-func GetDashboards(ctx context.Context) ([]Dashboard, *model.ApiError) {
+func GetDashboards(ctx context.Context, orgID string) ([]types.Dashboard, *model.ApiError) {
+	dashboards := []types.Dashboard{}
 
-	dashboards := []Dashboard{}
-	query := `SELECT * FROM dashboards`
-
-	err := db.Select(&dashboards, query)
+	err := store.BunDB().NewSelect().Model(&dashboards).Where("org_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -241,23 +77,19 @@ func GetDashboards(ctx context.Context) ([]Dashboard, *model.ApiError) {
 	return dashboards, nil
 }
 
-func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLookup) *model.ApiError {
+func DeleteDashboard(ctx context.Context, orgID, uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 
-	dashboard, dErr := GetDashboard(ctx, uuid)
+	dashboard, dErr := GetDashboard(ctx, orgID, uuid)
 	if dErr != nil {
 		zap.L().Error("Error in getting dashboard: ", zap.String("uuid", uuid), zap.Any("error", dErr))
 		return dErr
 	}
 
-	if user := common.GetUserFromContext(ctx); user != nil {
-		if dashboard.Locked != nil && *dashboard.Locked == 1 {
-			return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
-		}
+	if dashboard.Locked != nil && *dashboard.Locked == 1 {
+		return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
 	}
 
-	query := `DELETE FROM dashboards WHERE uuid=?`
-
-	result, err := db.Exec(query, uuid)
+	result, err := store.BunDB().NewDelete().Model(&types.Dashboard{}).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -273,12 +105,10 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 	return nil
 }
 
-func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError) {
+func GetDashboard(ctx context.Context, orgID, uuid string) (*types.Dashboard, *model.ApiError) {
 
-	dashboard := Dashboard{}
-	query := `SELECT * FROM dashboards WHERE uuid=?`
-
-	err := db.Get(&dashboard, query, uuid)
+	dashboard := types.Dashboard{}
+	err := store.BunDB().NewSelect().Model(&dashboard).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Scan(ctx)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
@@ -286,7 +116,7 @@ func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError
 	return &dashboard, nil
 }
 
-func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
+func UpdateDashboard(ctx context.Context, orgID, userEmail, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*types.Dashboard, *model.ApiError) {
 
 	mapData, err := json.Marshal(data)
 	if err != nil {
@@ -294,17 +124,13 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	dashboard, apiErr := GetDashboard(ctx, uuid)
+	dashboard, apiErr := GetDashboard(ctx, orgID, uuid)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	var userEmail string
-	if user := common.GetUserFromContext(ctx); user != nil {
-		userEmail = user.Email
-		if dashboard.Locked != nil && *dashboard.Locked == 1 {
-			return nil, model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to edit it"))
-		}
+	if dashboard.Locked != nil && *dashboard.Locked == 1 {
+		return nil, model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to edit it"))
 	}
 
 	// if the total count of panels has reduced by more than 1,
@@ -319,11 +145,10 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	}
 
 	dashboard.UpdatedAt = time.Now()
-	dashboard.UpdateBy = &userEmail
+	dashboard.UpdatedBy = userEmail
 	dashboard.Data = data
 
-	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, updated_by=$2, data=$3 WHERE uuid=$4;",
-		dashboard.UpdatedAt, userEmail, mapData, dashboard.Uuid)
+	_, err = store.BunDB().NewUpdate().Model(dashboard).Set("updated_at = ?", dashboard.UpdatedAt).Set("updated_by = ?", userEmail).Set("data = ?", mapData).Where("uuid = ?", dashboard.UUID).Exec(ctx)
 
 	if err != nil {
 		zap.L().Error("Error in inserting dashboard data", zap.Any("data", data), zap.Error(err))
@@ -332,33 +157,26 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	return dashboard, nil
 }
 
-func LockUnlockDashboard(ctx context.Context, uuid string, lock bool) *model.ApiError {
-	var query string
-	if lock {
-		query = `UPDATE dashboards SET locked=1 WHERE uuid=?;`
-	} else {
-		query = `UPDATE dashboards SET locked=0 WHERE uuid=?;`
+func LockUnlockDashboard(ctx context.Context, orgID, uuid string, lock bool) *model.ApiError {
+	dashboard, apiErr := GetDashboard(ctx, orgID, uuid)
+	if apiErr != nil {
+		return apiErr
 	}
 
-	_, err := db.Exec(query, uuid)
+	var lockValue int
+	if lock {
+		lockValue = 1
+	} else {
+		lockValue = 0
+	}
 
+	_, err := store.BunDB().NewUpdate().Model(dashboard).Set("locked = ?", lockValue).Where("org_id = ?", orgID).Where("uuid = ?", uuid).Exec(ctx)
 	if err != nil {
 		zap.L().Error("Error in updating dashboard", zap.String("uuid", uuid), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	return nil
-}
-
-// UpdateSlug updates the slug
-func (d *Dashboard) UpdateSlug() {
-	var title string
-
-	if val, ok := d.Data["title"]; ok {
-		title = val.(string)
-	}
-
-	d.Slug = SlugifyTitle(title)
 }
 
 func IsPostDataSane(data *map[string]interface{}) error {
@@ -368,21 +186,6 @@ func IsPostDataSane(data *map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-func SlugifyTitle(title string) string {
-	s := slug.Make(strings.ToLower(title))
-	if s == "" {
-		// If the dashboard name is only characters outside of the
-		// sluggable characters, the slug creation will return an
-		// empty string which will mess up URLs. This failsafe picks
-		// that up and creates the slug as a base64 identifier instead.
-		s = base64.RawURLEncoding.EncodeToString([]byte(title))
-		if slug.MaxLength != 0 && len(s) > slug.MaxLength {
-			s = s[:slug.MaxLength]
-		}
-	}
-	return s
 }
 
 func getWidgetIds(data map[string]interface{}) []string {
@@ -438,9 +241,8 @@ func getIdDifference(existingIds []string, newIds []string) []string {
 func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	dashboardsInfo := model.DashboardsInfo{}
 	// fetch dashboards from dashboard db
-	query := "SELECT data FROM dashboards"
-	var dashboardsData []Dashboard
-	err := db.Select(&dashboardsData, query)
+	dashboards := []types.Dashboard{}
+	err := store.BunDB().NewSelect().Model(&dashboards).Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return &dashboardsInfo, err
@@ -449,7 +251,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	var dashboardNames []string
 	count := 0
 	queriesWithTagAttrs := 0
-	for _, dashboard := range dashboardsData {
+	for _, dashboard := range dashboards {
 		if isDashboardWithPanelAndName(dashboard.Data) {
 			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
 		}
@@ -480,7 +282,7 @@ func GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	}
 
 	dashboardsInfo.DashboardNames = dashboardNames
-	dashboardsInfo.TotalDashboards = len(dashboardsData)
+	dashboardsInfo.TotalDashboards = len(dashboards)
 	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	dashboardsInfo.QueriesWithTSV2 = count
 	dashboardsInfo.QueriesWithTagAttrs = queriesWithTagAttrs
@@ -645,4 +447,88 @@ func countPanelsInDashboard(inputData map[string]interface{}) model.DashboardsIn
 		DashboardsWithTraceChQuery:   traceChQueryCount,
 		LogsPanelsWithAttrContainsOp: logsPanelsWithAttrContains,
 	}
+}
+
+func GetDashboardsWithMetricNames(ctx context.Context, orgID string, metricNames []string) (map[string][]map[string]string, *model.ApiError) {
+	dashboards := []types.Dashboard{}
+	err := store.BunDB().NewSelect().Model(&dashboards).Where("org_id = ?", orgID).Scan(ctx)
+	if err != nil {
+		zap.L().Error("Error in getting dashboards", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+	if err != nil {
+		zap.L().Error("Error in getting dashboards", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	// Initialize result map for each metric
+	result := make(map[string][]map[string]string)
+
+	// Process the JSON data in Go
+	for _, dashboard := range dashboards {
+		var dashData = dashboard.Data
+
+		dashTitle, _ := dashData["title"].(string)
+		widgets, ok := dashData["widgets"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, w := range widgets {
+			widget, ok := w.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			widgetTitle, _ := widget["title"].(string)
+			widgetID, _ := widget["id"].(string)
+
+			query, ok := widget["query"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			builder, ok := query["builder"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			queryData, ok := builder["queryData"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			for _, qd := range queryData {
+				data, ok := qd.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				if dataSource, ok := data["dataSource"].(string); !ok || dataSource != "metrics" {
+					continue
+				}
+
+				aggregateAttr, ok := data["aggregateAttribute"].(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				if key, ok := aggregateAttr["key"].(string); ok {
+					// Check if this metric is in our list of interest
+					for _, metricName := range metricNames {
+						if strings.TrimSpace(key) == metricName {
+							result[metricName] = append(result[metricName], map[string]string{
+								"dashboard_id":   dashboard.UUID,
+								"widget_name":    widgetTitle,
+								"widget_id":      widgetID,
+								"dashboard_name": dashTitle,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return result, nil
 }

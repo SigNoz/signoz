@@ -1,4 +1,4 @@
-import { ApiV2Instance as axios } from 'api';
+import { ApiV3Instance as axios } from 'api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
 

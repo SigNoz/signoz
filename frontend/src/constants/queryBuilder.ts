@@ -1,6 +1,7 @@
 // ** Helpers
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
+import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
 	AutocompleteType,
 	BaseAutocompleteData,
@@ -407,3 +408,28 @@ export const HAVING_OPERATORS: string[] = [
 	OPERATORS['<='],
 	OPERATORS['<'],
 ];
+
+export enum PanelDisplay {
+	TIME_SERIES = 'Time Series',
+	VALUE = 'Number',
+	TABLE = 'Table',
+	LIST = 'List',
+	BAR = 'Bar',
+	PIE = 'Pie',
+	HISTOGRAM = 'Histogram',
+}
+
+export const DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY: Record<
+	DataTypes,
+	keyof IAttributeValuesResponse
+> = {
+	[DataTypes.String]: 'stringAttributeValues',
+	[DataTypes.Float64]: 'numberAttributeValues',
+	[DataTypes.Int64]: 'numberAttributeValues',
+	[DataTypes.bool]: 'boolAttributeValues',
+	[DataTypes.ArrayFloat64]: 'numberAttributeValues',
+	[DataTypes.ArrayInt64]: 'numberAttributeValues',
+	[DataTypes.ArrayString]: 'stringAttributeValues',
+	[DataTypes.ArrayBool]: 'boolAttributeValues',
+	[DataTypes.EMPTY]: 'stringAttributeValues',
+};

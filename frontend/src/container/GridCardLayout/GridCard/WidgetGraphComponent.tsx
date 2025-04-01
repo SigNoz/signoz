@@ -2,20 +2,23 @@ import '../GridCardLayout.styles.scss';
 
 import { Skeleton, Typography } from 'antd';
 import cx from 'classnames';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
+	RefObject,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -24,13 +27,16 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
+import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getLocalStorageGraphVisibilityState } from './utils';
+import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -44,11 +50,14 @@ function WidgetGraphComponent({
 	setRequestData,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
+	customErrorMessage,
 }: WidgetGraphComponentProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
@@ -64,6 +73,11 @@ function WidgetGraphComponent({
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
+	const [
+		currentGraphRef,
+		setCurrentGraphRef,
+	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
+
 	useEffect(() => {
 		if (!lineChartRef.current) return;
 
@@ -74,6 +88,8 @@ function WidgetGraphComponent({
 	}, []);
 
 	const tableProcessedDataRef = useRef<RowData[]>([]);
+
+	const navigateToExplorerPages = useNavigateToExplorerPages();
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -132,18 +148,14 @@ function WidgetGraphComponent({
 			(l) => l.i === widget.id,
 		);
 
-		// added the cloned panel on the top as it is given most priority when arranging
-		// in the layout. React_grid_layout assigns priority from top, hence no random position for cloned panel
-		const layout = [
-			{
-				i: uuid,
-				w: originalPanelLayout?.w || 6,
-				x: 0,
-				h: originalPanelLayout?.h || 6,
-				y: 0,
-			},
-			...(selectedDashboard.data.layout || []),
-		];
+		const newLayoutItem = placeWidgetAtBottom(
+			uuid,
+			selectedDashboard?.data.layout || [],
+			originalPanelLayout?.w || 6,
+			originalPanelLayout?.h || 6,
+		);
+
+		const layout = [...(selectedDashboard.data.layout || []), newLayoutItem];
 
 		updateDashboardMutation.mutateAsync(
 			{
@@ -175,7 +187,7 @@ function WidgetGraphComponent({
 						graphType: widget?.panelTypes,
 						widgetId: uuid,
 					};
-					history.push(`${pathname}/new?${createQueryParams(queryParams)}`);
+					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
 				},
 			},
 		);
@@ -196,7 +208,7 @@ function WidgetGraphComponent({
 		const separator = existingSearch.toString() ? '&' : '';
 		const newSearch = `${existingSearch}${separator}${updatedSearch}`;
 
-		history.push({
+		safeNavigate({
 			pathname,
 			search: newSearch,
 		});
@@ -223,7 +235,7 @@ function WidgetGraphComponent({
 			});
 			setGraphVisibility(localStoredVisibilityState);
 		}
-		history.push({
+		safeNavigate({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
 		});
@@ -231,20 +243,39 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
-	const loadingState =
-		(queryResponse.isLoading || queryResponse.status === 'idle') &&
-		widget.panelTypes !== PANEL_TYPES.LIST;
+	const graphClick = useGraphClickToShowButton({
+		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
+		isButtonEnabled: (widget?.query?.builder?.queryData ?? []).some(
+			(q) =>
+				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+		),
+		buttonClassName: 'view-onclick-show-button',
+	});
 
-	if (loadingState) {
-		return (
-			<Skeleton
-				style={{
-					height: '100%',
-					padding: '16px',
-				}}
-			/>
-		);
-	}
+	const navigateToExplorer = useNavigateToExplorer();
+
+	const graphClickHandler = (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		metric?: { [key: string]: string },
+		queryData?: { queryName: string; inFocusOrNot: boolean },
+	): void => {
+		handleGraphClick({
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+			metric,
+			queryData,
+			widget,
+			navigateToExplorerPages,
+			navigateToExplorer,
+			notifications,
+			graphClick,
+		});
+	};
 
 	return (
 		<div
@@ -296,6 +327,9 @@ function WidgetGraphComponent({
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
+					onClickHandler={onClickHandler ?? graphClickHandler}
+					customOnDragSelect={customOnDragSelect}
+					setCurrentGraphRef={setCurrentGraphRef}
 				/>
 			</Modal>
 
@@ -317,6 +351,13 @@ function WidgetGraphComponent({
 					setSearchTerm={setSearchTerm}
 				/>
 			</div>
+
+			{queryResponse.error && customErrorMessage && (
+				<div className="error-message-container">
+					<Typography.Text type="warning">{customErrorMessage}</Typography.Text>
+				</div>
+			)}
+
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
 				<Skeleton />
 			)}
@@ -331,7 +372,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={onClickHandler}
+						onClickHandler={onClickHandler ?? graphClickHandler}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}

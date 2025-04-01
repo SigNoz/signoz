@@ -24,6 +24,7 @@ import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -33,7 +34,6 @@ import { useMutation, useQuery } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
-import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
@@ -138,14 +138,16 @@ export default function BillingContainer(): JSX.Element {
 		user,
 		org,
 		licenses,
-		isFetchingLicenses,
-		licensesFetchError,
+		trialInfo,
+		isFetchingActiveLicenseV3,
+		activeLicenseV3,
+		activeLicenseV3FetchError,
 	} = useAppContext();
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
 
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const processUsageData = useCallback(
 		(data: any): void => {
@@ -182,7 +184,7 @@ export default function BillingContainer(): JSX.Element {
 
 			setData(formattedUsageData);
 
-			if (!licenses?.onTrial) {
+			if (!trialInfo?.onTrial) {
 				const remainingDays = getRemainingDays(billingPeriodEnd) - 1;
 
 				setHeaderText(
@@ -196,21 +198,22 @@ export default function BillingContainer(): JSX.Element {
 
 			setApiResponse(data?.payload || {});
 		},
-		[licenses?.onTrial],
+		[trialInfo?.onTrial],
 	);
 
 	const isSubscriptionPastDue =
 		apiResponse.subscriptionStatus === SubscriptionStatus.PastDue;
 
-	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
-		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.id],
-		{
-			queryFn: () => getUsage(activeLicense?.key || ''),
-			onError: handleError,
-			enabled: activeLicense !== null,
-			onSuccess: processUsageData,
-		},
-	);
+	const {
+		isLoading,
+		isFetching: isFetchingBillingData,
+		data: billingData,
+	} = useQuery([REACT_QUERY_KEY.GET_BILLING_USAGE, user?.id], {
+		queryFn: () => getUsage(activeLicense?.key || ''),
+		onError: handleError,
+		enabled: activeLicense !== null,
+		onSuccess: processUsageData,
+	});
 
 	useEffect(() => {
 		const activeValidLicense =
@@ -218,24 +221,29 @@ export default function BillingContainer(): JSX.Element {
 
 		setActiveLicense(activeValidLicense);
 
-		if (!isFetchingLicenses && licenses?.onTrial && !licensesFetchError) {
-			const remainingDays = getRemainingDays(licenses?.trialEnd);
+		if (
+			!isFetchingActiveLicenseV3 &&
+			!activeLicenseV3FetchError &&
+			trialInfo?.onTrial
+		) {
+			const remainingDays = getRemainingDays(trialInfo?.trialEnd);
 
 			setIsFreeTrial(true);
 			setBillAmount(0);
 			setDaysRemaining(remainingDays > 0 ? remainingDays : 0);
 			setHeaderText(
 				`You are in free trial period. Your free trial will end on ${getFormattedDate(
-					licenses?.trialEnd,
+					trialInfo?.trialEnd,
 				)}`,
 			);
 		}
 	}, [
 		licenses?.licenses,
-		licenses?.onTrial,
-		licenses?.trialEnd,
-		isFetchingLicenses,
-		licensesFetchError,
+		activeLicenseV3,
+		trialInfo?.onTrial,
+		trialInfo?.trialEnd,
+		isFetchingActiveLicenseV3,
+		activeLicenseV3FetchError,
 	]);
 
 	const columns: ColumnsType<DataType> = [
@@ -318,16 +326,14 @@ export default function BillingContainer(): JSX.Element {
 	});
 
 	const handleBilling = useCallback(async () => {
-		if (isFreeTrial && !licenses?.trialConvertedToSubscription) {
+		if (!trialInfo?.trialConvertedToSubscription) {
 			logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
 			updateCreditCard({
-				licenseKey: activeLicense?.key || '',
-				successURL: window.location.href,
-				cancelURL: window.location.href,
+				url: window.location.href,
 			});
 		} else {
 			logEvent('Billing : Manage Billing', {
@@ -336,16 +342,13 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			manageCreditCard({
-				licenseKey: activeLicense?.key || '',
-				successURL: window.location.href,
-				cancelURL: window.location.href,
+				url: window.location.href,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		activeLicense?.key,
 		isFreeTrial,
-		licenses?.trialConvertedToSubscription,
+		trialInfo?.trialConvertedToSubscription,
 		manageCreditCard,
 		updateCreditCard,
 	]);
@@ -411,6 +414,12 @@ export default function BillingContainer(): JSX.Element {
 		}
 	}, [apiResponse, notifications]);
 
+	const showGracePeriodMessage =
+		!isLoading &&
+		!trialInfo?.trialConvertedToSubscription &&
+		!trialInfo?.onTrial &&
+		trialInfo?.gracePeriodEnd;
+
 	return (
 		<div className="billing-container">
 			<Flex vertical style={{ marginBottom: 16 }}>
@@ -433,7 +442,8 @@ export default function BillingContainer(): JSX.Element {
 							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
 							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
 						</Typography.Title>
-						{!isLoading && !isFetchingBillingData ? (
+
+						{!isLoading && !isFetchingBillingData && !showGracePeriodMessage ? (
 							<Typography.Text style={{ fontSize: 12, color: Color.BG_VANILLA_400 }}>
 								{daysRemaining} {daysRemainingStr}
 							</Typography.Text>
@@ -451,20 +461,21 @@ export default function BillingContainer(): JSX.Element {
 							Download CSV
 						</Button>
 						<Button
+							data-testid="header-billing-button"
 							type="primary"
 							size="middle"
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading}
 							onClick={handleBilling}
 						>
-							{isFreeTrial && !licenses?.trialConvertedToSubscription
-								? t('upgrade_plan')
-								: t('manage_billing')}
+							{trialInfo?.trialConvertedToSubscription
+								? t('manage_billing')
+								: t('upgrade_plan')}
 						</Button>
 					</Flex>
 				</Flex>
 
-				{licenses?.onTrial && licenses?.trialConvertedToSubscription && (
+				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
 					<Typography.Text
 						ellipsis
 						style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
@@ -473,18 +484,35 @@ export default function BillingContainer(): JSX.Element {
 					</Typography.Text>
 				)}
 
-				{!isLoading && !isFetchingBillingData ? (
-					headerText && (
-						<Alert
-							message={headerText}
-							type="info"
-							showIcon
-							style={{ marginTop: 12 }}
-						/>
-					)
-				) : (
+				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
+					? headerText && (
+							<Alert
+								message={headerText}
+								type="info"
+								showIcon
+								style={{ marginTop: 12 }}
+							/>
+					  )
+					: null}
+
+				{isLoading || isFetchingBillingData ? (
 					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
-				)}
+				) : null}
+
+				{!isLoading &&
+				!isFetchingBillingData &&
+				billingData &&
+				trialInfo?.gracePeriodEnd &&
+				showGracePeriodMessage ? (
+					<Alert
+						message={`Your data is safe with us until ${getFormattedDate(
+							trialInfo?.gracePeriodEnd || Date.now(),
+						)}. Please upgrade plan now to retain your data.`}
+						type="info"
+						showIcon
+						style={{ marginTop: 12 }}
+					/>
+				) : null}
 
 				{isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
@@ -514,7 +542,7 @@ export default function BillingContainer(): JSX.Element {
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
-			{isFreeTrial && !licenses?.trialConvertedToSubscription && (
+			{!trialInfo?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">
 					<Row
 						justify="space-between"
@@ -552,6 +580,7 @@ export default function BillingContainer(): JSX.Element {
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<Button
+								data-testid="upgrade-plan-button"
 								type="primary"
 								size="middle"
 								loading={isLoadingBilling || isLoadingManageBilling}

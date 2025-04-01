@@ -4,6 +4,7 @@ import './QueryBuilderSearchV2.styles.scss';
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
+	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
@@ -86,6 +87,7 @@ interface QueryBuilderSearchV2Props {
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
+	hardcodedAttributeKeys?: BaseAutocompleteData[];
 }
 
 export interface Option {
@@ -118,6 +120,7 @@ function QueryBuilderSearchV2(
 		className,
 		suffixIcon,
 		whereClauseConfig,
+		hardcodedAttributeKeys,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -232,7 +235,7 @@ function QueryBuilderSearchV2(
 		},
 		{
 			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsDataSource,
+			enabled: isQueryEnabled && !isLogsDataSource && !hardcodedAttributeKeys,
 		},
 	);
 
@@ -673,13 +676,42 @@ function QueryBuilderSearchV2(
 						value: key,
 					})) || []),
 				]);
-			} else {
+			} else if (hardcodedAttributeKeys) {
+				const filteredKeys = hardcodedAttributeKeys.filter((key) =>
+					key.key
+						.toLowerCase()
+						.includes((searchValue?.split(' ')[0] || '').toLowerCase()),
+				);
 				setDropdownOptions(
-					data?.payload?.attributeKeys?.map((key) => ({
+					filteredKeys.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
+					})),
 				);
+			} else {
+				setDropdownOptions([
+					// Add user typed option if it doesn't exist in the payload
+					...(!isEmpty(tagKey) &&
+					!data?.payload?.attributeKeys?.some((val) => isEqual(val.key, tagKey))
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					// Map existing attribute keys from payload
+					...(data?.payload?.attributeKeys?.map((key) => ({
+						label: key.key,
+						value: key,
+					})) || []),
+				]);
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
@@ -737,9 +769,11 @@ function QueryBuilderSearchV2(
 					values.push(tagValue[tagValue.length - 1]);
 			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			values.push(
-				...(Object.values(attributeValues?.payload || {}).find((el) => !!el) || []),
-			);
+			if (attributeValues?.payload) {
+				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
+				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+				values.push(...(attributeValues?.payload?.[key] || []));
+			}
 
 			setDropdownOptions(
 				values.map((val) => ({
@@ -749,6 +783,7 @@ function QueryBuilderSearchV2(
 			);
 		}
 	}, [
+		hardcodedAttributeKeys,
 		attributeValues?.payload,
 		currentFilterItem?.key?.dataType,
 		currentState,
@@ -946,6 +981,7 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
+						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
@@ -981,6 +1017,7 @@ QueryBuilderSearchV2.defaultProps = {
 	className: '',
 	suffixIcon: null,
 	whereClauseConfig: {},
+	hardcodedAttributeKeys: undefined,
 };
 
 export default QueryBuilderSearchV2;

@@ -123,6 +123,7 @@ export const getUplotHistogramChartOptions = ({
 	setGraphsVisibilityStates,
 	mergeAllQueries,
 	onClickHandler = _noop,
+	panelType,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
@@ -210,5 +211,5 @@ export const getUplotHistogramChartOptions = ({
 				},
 			],
 		},
-		axes: getAxes(isDarkMode),
+		axes: getAxes({ isDarkMode, panelType }),
 	} as uPlot.Options);

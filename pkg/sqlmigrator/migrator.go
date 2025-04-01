@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlstore"
 )
 
 var (
@@ -24,8 +24,16 @@ type migrator struct {
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, sqlstore sqlstore.SQLStore, migrations *migrate.Migrations, config Config) SQLMigrator {
 	return &migrator{
-		migrator: migrate.NewMigrator(sqlstore.BunDB(), migrations, migrate.WithTableName(migrationTableName), migrate.WithLocksTableName(migrationLockTableName)),
-		settings: factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/signoz/pkg/sqlmigrator"),
+		migrator: migrate.NewMigrator(
+			sqlstore.BunDB(),
+			migrations,
+			migrate.WithTableName(migrationTableName),
+			migrate.WithLocksTableName(migrationLockTableName),
+			// This is to ensure that the migration is marked as applied only on success. If the migration fails, no entry is made in the migration table
+			// and the migration will be retried.
+			migrate.WithMarkAppliedOnSuccess(true),
+		),
+		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlmigrator"),
 		config:   config,
 		dialect:  sqlstore.BunDB().Dialect().Name().String(),
 	}
@@ -93,13 +101,15 @@ func (migrator *migrator) Lock(ctx context.Context) error {
 		select {
 		case <-timer.C:
 			err := errors.New("timed out waiting for lock")
-			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout, "dialect", migrator.dialect)
+			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout.String(), "dialect", migrator.dialect)
 			return err
 		case <-ticker.C:
-			if err := migrator.migrator.Lock(ctx); err == nil {
+			var err error
+			if err = migrator.migrator.Lock(ctx); err == nil {
 				migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", "dialect", migrator.dialect)
 				return nil
 			}
+			migrator.settings.Logger().ErrorContext(ctx, "attempt to acquire lock failed", "error", err, "lock_interval", migrator.config.Lock.Interval.String(), "dialect", migrator.dialect)
 		case <-ctx.Done():
 			return ctx.Err()
 		}

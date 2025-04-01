@@ -10,6 +10,10 @@ export interface DashboardSortOrder {
 	search: string;
 }
 
+export type WidgetColumnWidths = {
+	[widgetId: string]: Record<string, number>;
+};
+
 export interface IDashboardContext {
 	isDashboardSliderOpen: boolean;
 	isDashboardLocked: boolean;
@@ -45,4 +49,9 @@ export interface IDashboardContext {
 	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
 	dashboardQueryRangeCalled: boolean;
 	setDashboardQueryRangeCalled: (value: boolean) => void;
+	selectedRowWidgetId: string | null;
+	setSelectedRowWidgetId: React.Dispatch<React.SetStateAction<string | null>>;
+	isDashboardFetching: boolean;
+	columnWidths: WidgetColumnWidths;
+	setColumnWidths: React.Dispatch<React.SetStateAction<WidgetColumnWidths>>;
 }

@@ -26,7 +26,8 @@ const plugins = [
 	new HtmlWebpackPlugin({
 		template: 'src/index.html.ejs',
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-		SEGMENT_ID: process.env.SEGMENT_ID,
+		CUSTOMERIO_SITE_ID: process.env.CUSTOMERIO_SITE_ID,
+		CUSTOMERIO_ID: process.env.CUSTOMERIO_ID,
 		POSTHOG_KEY: process.env.POSTHOG_KEY,
 		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 		SENTRY_ORG: process.env.SENTRY_ORG,
@@ -49,7 +50,8 @@ const plugins = [
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			WEBSOCKET_API_ENDPOINT: process.env.WEBSOCKET_API_ENDPOINT,
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-			SEGMENT_ID: process.env.SEGMENT_ID,
+			CUSTOMERIO_SITE_ID: process.env.CUSTOMERIO_SITE_ID,
+			CUSTOMERIO_ID: process.env.CUSTOMERIO_ID,
 			POSTHOG_KEY: process.env.POSTHOG_KEY,
 			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
 			SENTRY_ORG: process.env.SENTRY_ORG,
@@ -142,12 +144,26 @@ const config = {
 				],
 			},
 			{
-				test: /\.(jpe?g|png|gif|svg)$/i,
+				test: /\.(png|jpe?g|gif|svg)$/i,
 				use: [
-					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
-					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
+					{
+						loader: 'file-loader',
+					},
+					{
+						loader: 'image-webpack-loader',
+						options: {
+							bypassOnDebug: true,
+							optipng: {
+								optimizationLevel: 7,
+							},
+							gifsicle: {
+								interlaced: false,
+							},
+						},
+					},
 				],
 			},
+
 			{
 				test: /\.(ttf|eot|woff|woff2)$/,
 				use: ['file-loader'],

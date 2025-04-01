@@ -3,11 +3,11 @@ import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -21,15 +21,15 @@ function ServiceTraceTable({
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
-	const { licenses, isFetchingLicenses } = useAppContext();
-	const isCloudUserVal = isCloudUser();
+	const { isFetchingActiveLicenseV3, trialInfo } = useAppContext();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
 		if (
-			!isFetchingLicenses &&
-			licenses?.onTrial &&
-			!licenses?.trialConvertedToSubscription &&
+			!isFetchingActiveLicenseV3 &&
+			trialInfo?.onTrial &&
+			!trialInfo?.trialConvertedToSubscription &&
 			isCloudUserVal
 		) {
 			if (services.length > 0) {
@@ -42,9 +42,9 @@ function ServiceTraceTable({
 	}, [
 		services,
 		isCloudUserVal,
-		isFetchingLicenses,
-		licenses?.onTrial,
-		licenses?.trialConvertedToSubscription,
+		isFetchingActiveLicenseV3,
+		trialInfo?.onTrial,
+		trialInfo?.trialConvertedToSubscription,
 	]);
 
 	const paginationConfig = {
@@ -71,6 +71,7 @@ function ServiceTraceTable({
 				loading={loading}
 				dataSource={services}
 				rowKey="serviceName"
+				className="service-traces-table"
 			/>
 		</>
 	);

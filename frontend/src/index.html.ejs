@@ -49,12 +49,10 @@
 		/>
 		<meta data-react-helmet="true" name="docusaurus_locale" content="en" />
 		<meta data-react-helmet="true" name="docusaurus_tag" content="default" />
-		<meta name="robots" content="noindex">
+		<meta name="robots" content="noindex" />
 		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
 
 		<link rel="stylesheet" href="/css/uPlot.min.css" />
-
-
 	</head>
 	<body>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
@@ -98,18 +96,18 @@
 				}
 			})();
 		</script>
-
 		<script>
-			//Set your SEGMENT_ID
-			const SEGMENT_ID = '<%= htmlWebpackPlugin.options.SEGMENT_ID %>';
-
+			const CUSTOMERIO_ID = '<%= htmlWebpackPlugin.options.CUSTOMERIO_ID %>';
+			const CUSTOMERIO_SITE_ID =
+				'<%= htmlWebpackPlugin.options.CUSTOMERIO_SITE_ID %>';
 			!(function () {
-				var analytics = (window.analytics = window.analytics || []);
+				var i = 'cioanalytics',
+					analytics = (window[i] = window[i] || []);
 				if (!analytics.initialize)
 					if (analytics.invoked)
 						window.console &&
 							console.error &&
-							console.error('Segment snippet included twice.');
+							console.error('Snippet included twice.');
 					else {
 						analytics.invoked = !0;
 						analytics.methods = [
@@ -136,35 +134,36 @@
 						];
 						analytics.factory = function (e) {
 							return function () {
-								if (window.analytics.initialized)
-									return window.analytics[e].apply(window.analytics, arguments);
-								var i = Array.prototype.slice.call(arguments);
-								i.unshift(e);
-								analytics.push(i);
+								var t = Array.prototype.slice.call(arguments);
+								t.unshift(e);
+								analytics.push(t);
 								return analytics;
 							};
 						};
-						for (var i = 0; i < analytics.methods.length; i++) {
-							var key = analytics.methods[i];
+						for (var e = 0; e < analytics.methods.length; e++) {
+							var key = analytics.methods[e];
 							analytics[key] = analytics.factory(key);
 						}
-						analytics.load = function (key, i) {
+						analytics.load = function (key, e) {
 							var t = document.createElement('script');
 							t.type = 'text/javascript';
 							t.async = !0;
+							t.setAttribute('data-global-customerio-analytics-key', i);
 							t.src =
-								'https://analytics-cdn.signoz.io/analytics.js/v1/' +
+								'https://cdp.customer.io/v1/analytics-js/snippet/' +
 								key +
 								'/analytics.min.js';
 							var n = document.getElementsByTagName('script')[0];
 							n.parentNode.insertBefore(t, n);
-							analytics._loadOptions = i;
+							analytics._writeKey = key;
+							analytics._loadOptions = e;
 						};
-						analytics._writeKey = SEGMENT_ID;
-						analytics.SNIPPET_VERSION = '4.16.1';
-						analytics.load(SEGMENT_ID, {
+						analytics.SNIPPET_VERSION = '4.15.3';
+						analytics.load(CUSTOMERIO_ID, {
 							integrations: {
-								'Segment.io': { apiHost: 'analytics-api.signoz.io/v1' },
+								'Customer.io In-App Plugin': {
+									siteId: CUSTOMERIO_SITE_ID,
+								},
 							},
 						});
 						analytics.page();

@@ -16,6 +16,7 @@ import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sDeploymentsListPayload } from 'api/infraMonitoring/getK8sDeploymentsList';
 import classNames from 'classnames';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sDeploymentsList } from 'hooks/infraMonitoring/useGetK8sDeploymentsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -220,6 +221,11 @@ function K8sDeploymentsList({
 		[deploymentsData, groupBy],
 	);
 
+	const nestedDeploymentsData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const columns = useMemo(() => getK8sDeploymentsListColumns(groupBy), [
 		groupBy,
 	]);
@@ -250,6 +256,11 @@ function K8sDeploymentsList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Deployment,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -275,25 +286,48 @@ function K8sDeploymentsList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Deployment,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Deployment,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedDeploymentData = useMemo(() => {
 		if (!selectedDeploymentUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the deployment from the formatted grouped by deployments data
+			return (
+				nestedDeploymentsData.find(
+					(deployment) => deployment.deploymentName === selectedDeploymentUID,
+				) || null
+			);
+		}
+		// If not grouped by, return the deployment from the deployments data
 		return (
 			deploymentsData.find(
 				(deployment) => deployment.deploymentName === selectedDeploymentUID,
 			) || null
 		);
-	}, [selectedDeploymentUID, deploymentsData]);
+	}, [
+		selectedDeploymentUID,
+		groupBy.length,
+		deploymentsData,
+		nestedDeploymentsData,
+	]);
 
 	const handleRowClick = (record: K8sDeploymentsRowData): void => {
 		if (groupBy.length === 0) {
@@ -303,8 +337,10 @@ function K8sDeploymentsList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s deployment list item clicked', {
-			deploymentUID: record.deploymentName,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Deployment,
 		});
 	};
 
@@ -346,6 +382,10 @@ function K8sDeploymentsList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedDeploymentUID(record.deploymentUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -429,6 +469,12 @@ function K8sDeploymentsList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Deployment,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -443,6 +489,16 @@ function K8sDeploymentsList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Deployment,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -471,10 +527,7 @@ function K8sDeploymentsList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

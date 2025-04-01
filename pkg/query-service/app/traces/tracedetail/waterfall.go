@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sort"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 var (
@@ -158,7 +158,7 @@ func CalculateServiceTime(serviceIntervals map[string][]Interval) map[string]uin
 
 func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoots []*model.Span, spanIdToSpanNodeMap map[string]*model.Span, isSelectedSpanIDUnCollapsed bool) ([]*model.Span, []string, string, string) {
 
-	var preOrderTraversal = []*model.Span{}
+	var preOrderTraversal = make([]*model.Span, 0)
 	var rootServiceName, rootServiceEntryPoint string
 	updatedUncollapsedSpans := uncollapsedSpans
 

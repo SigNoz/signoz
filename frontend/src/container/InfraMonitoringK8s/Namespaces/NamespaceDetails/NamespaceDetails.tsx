@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -143,28 +144,27 @@ function NamespaceDetails({
 		[namespace?.namespaceName],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Namespaces list details page visited', {
-			namespace: namespace?.namespaceName,
-		});
+		if (namespace) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Namespace,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [namespace]);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -183,6 +183,12 @@ function NamespaceDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Namespace,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -203,9 +209,12 @@ function NamespaceDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Namespaces list details time updated', {
-				namespace: namespace?.namespaceName,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Namespace,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,7 +223,7 @@ function NamespaceDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_NAMESPACE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
 						item.key?.key ?? '',
@@ -226,9 +235,14 @@ function NamespaceDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_NAMESPACE_NAME,
 				);
 
-				logEvent('Infra Monitoring: Namespaces list details logs filters applied', {
-					namespace: namespace?.namespaceName,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Namespace,
+						view: InfraMonitoringEvents.LogsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -246,19 +260,21 @@ function NamespaceDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_NAMESPACE_NAME, QUERY_KEYS.K8S_CLUSTER_NAME].includes(
 						item.key?.key ?? '',
 					),
 				);
 
-				logEvent(
-					'Infra Monitoring: Namespaces list details traces filters applied',
-					{
-						namespace: namespace?.namespaceName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Namespace,
+						view: InfraMonitoringEvents.TracesView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -285,12 +301,14 @@ function NamespaceDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent(
-					'Infra Monitoring: Namespaces list details events filters applied',
-					{
-						namespace: namespace?.namespaceName,
-					},
-				);
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						category: InfraMonitoringEvents.Namespace,
+						view: InfraMonitoringEvents.EventsView,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -319,15 +337,17 @@ function NamespaceDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Namespaces list details explore clicked', {
-			namespace: namespace?.namespaceName,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Namespace,
 			view: selectedView,
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logAndTracesFilters,
+				items: logAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -361,7 +381,7 @@ function NamespaceDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logAndTracesFilters,
 						},
 					],
 				},
@@ -527,7 +547,7 @@ function NamespaceDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="namespaceLogs"
 							category={K8sCategory.NAMESPACES}
@@ -540,9 +560,11 @@ function NamespaceDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="namespaceTraces"
+							category={InfraMonitoringEvents.Namespace}
+							queryKeyFilters={[QUERY_KEYS.K8S_NAMESPACE_NAME]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

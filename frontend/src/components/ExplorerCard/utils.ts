@@ -27,11 +27,11 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	viewKey,
 	data,
 ) => {
-	const selectedView = data?.find((view) => view.uuid === viewKey);
+	const selectedView = data?.find((view) => view.id === viewKey);
 	if (selectedView) {
-		const { compositeQuery, name, uuid, extraData } = selectedView;
+		const { compositeQuery, name, id, extraData } = selectedView;
 		const query = mapQueryDataFromApi(compositeQuery);
-		return { query, name, uuid, panelType: compositeQuery.panelType, extraData };
+		return { query, name, id, panelType: compositeQuery.panelType, extraData };
 	}
 	return undefined;
 };
@@ -80,12 +80,13 @@ export const isQueryUpdatedInView = ({
 	data,
 	stagedQuery,
 	currentPanelType,
+	options,
 }: IsQueryUpdatedInViewProps): boolean => {
 	const currentViewDetails = getViewDetailsUsingViewKey(viewKey, data);
 	if (!currentViewDetails) {
 		return false;
 	}
-	const { query, panelType } = currentViewDetails;
+	const { query, panelType, extraData } = currentViewDetails;
 
 	// Omitting id from aggregateAttribute and groupBy
 	const updatedCurrentQuery = omitIdFromQuery(stagedQuery);
@@ -97,12 +98,15 @@ export const isQueryUpdatedInView = ({
 	) {
 		return false;
 	}
-
 	return (
 		panelType !== currentPanelType ||
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||
 		!isEqual(query.clickhouse_sql, updatedCurrentQuery?.clickhouse_sql) ||
-		!isEqual(query.promql, updatedCurrentQuery?.promql)
+		!isEqual(query.promql, updatedCurrentQuery?.promql) ||
+		!isEqual(
+			options?.selectColumns,
+			extraData && JSON.parse(extraData)?.selectColumns,
+		)
 	);
 };
 

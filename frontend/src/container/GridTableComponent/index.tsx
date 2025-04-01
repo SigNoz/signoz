@@ -23,21 +23,15 @@ import {
 	TableData,
 } from './utils';
 
-export const HoverButtonWrapper = styled.div`
+const ButtonWrapper = styled.div`
 	position: absolute;
 	right: 0;
 	top: 50%;
 	transform: translateY(-50%);
-	opacity: 0;
-	transition: opacity 0.2s;
 `;
 
 const RelativeWrapper = styled.div`
 	position: relative;
-
-	&:hover ${HoverButtonWrapper} {
-		opacity: 1;
-	}
 `;
 
 function GridTableComponent({
@@ -49,6 +43,7 @@ function GridTableComponent({
 	sticky,
 	openTracesButton,
 	onOpenTraceBtnClick,
+	widgetId,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
@@ -206,12 +201,12 @@ function GridTableComponent({
 					return (
 						<RelativeWrapper>
 							{LineClampedTextComponent}
-							<HoverButtonWrapper className="hover-button">
+							<ButtonWrapper className="hover-button">
 								<button type="button" className="open-traces-button">
 									<Compass size={12} />
 									Open Trace
 								</button>
-							</HoverButtonWrapper>
+							</ButtonWrapper>
 						</RelativeWrapper>
 					);
 				},
@@ -235,6 +230,7 @@ function GridTableComponent({
 				columns={openTracesButton ? columnDataWithOpenTracesButton : newColumnData}
 				dataSource={dataSource}
 				sticky={sticky}
+				widgetId={widgetId}
 				onRow={
 					openTracesButton
 						? (record): React.HTMLAttributes<HTMLElement> => ({

@@ -1,14 +1,13 @@
 package model
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/pkg/errors"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type License struct {
@@ -59,37 +58,6 @@ type LicensePlan struct {
 	ValidFrom  int64  `json:"validFrom"`
 	ValidUntil int64  `json:"validUntil"`
 	Status     string `json:"status"`
-}
-
-func (l *License) ParsePlan() error {
-	l.LicensePlan = LicensePlan{}
-
-	planData, err := base64.StdEncoding.DecodeString(l.PlanDetails)
-	if err != nil {
-		return err
-	}
-
-	plan := LicensePlan{}
-	err = json.Unmarshal([]byte(planData), &plan)
-	if err != nil {
-		l.ValidationMessage = "failed to parse plan from license"
-		return errors.Wrap(err, "failed to parse plan from license")
-	}
-
-	l.LicensePlan = plan
-	l.ParseFeatures()
-	return nil
-}
-
-func (l *License) ParseFeatures() {
-	switch l.PlanKey {
-	case Pro:
-		l.FeatureSet = ProPlan
-	case Enterprise:
-		l.FeatureSet = EnterprisePlan
-	default:
-		l.FeatureSet = BasicPlan
-	}
 }
 
 type Licenses struct {
@@ -171,8 +139,8 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	if err != nil {
 		return nil, err
 	}
-	// if license status is inactive then default it to basic
-	if status == LicenseStatusInactive {
+	// if license status is invalid then default it to basic
+	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic
 	}
 
@@ -267,4 +235,12 @@ func ConvertLicenseV3ToLicenseV2(l *LicenseV3) *License {
 			Status:     l.Status},
 	}
 
+}
+
+type CheckoutRequest struct {
+	SuccessURL string `json:"url"`
+}
+
+type PortalRequest struct {
+	SuccessURL string `json:"url"`
 }

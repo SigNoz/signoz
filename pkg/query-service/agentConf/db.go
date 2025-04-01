@@ -5,11 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
@@ -17,10 +16,6 @@ import (
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
 	db *sqlx.DB
-}
-
-func (r *Repo) initDB(inputDB *sqlx.DB) error {
-	return sqlite.InitDB(inputDB)
 }
 
 func (r *Repo) GetConfigHistory(
@@ -171,8 +166,8 @@ func (r *Repo) insertConfig(
 	defer func() {
 		if fnerr != nil {
 			// remove all the damage (invalid rows from db)
-			r.db.Exec("DELETE FROM agent_config_versions WHERE id = $1", c.ID)
-			r.db.Exec("DELETE FROM agent_config_elements WHERE version_id=$1", c.ID)
+			_, _ = r.db.Exec("DELETE FROM agent_config_versions WHERE id = $1", c.ID)
+			_, _ = r.db.Exec("DELETE FROM agent_config_elements WHERE version_id=$1", c.ID)
 		}
 	}()
 

@@ -8,21 +8,21 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/formatter"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/formatter"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
-	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 
 type PromRule struct {
 	*BaseRule
-	pqlEngine *pqle.PqlEngine
+	prometheus prometheus.Prometheus
 }
 
 func NewPromRule(
@@ -30,7 +30,7 @@ func NewPromRule(
 	postableRule *PostableRule,
 	logger *zap.Logger,
 	reader interfaces.Reader,
-	pqlEngine *pqle.PqlEngine,
+	prometheus prometheus.Prometheus,
 	opts ...RuleOption,
 ) (*PromRule, error) {
 
@@ -40,8 +40,8 @@ func NewPromRule(
 	}
 
 	p := PromRule{
-		BaseRule:  baseRule,
-		pqlEngine: pqlEngine,
+		BaseRule:   baseRule,
+		prometheus: prometheus,
 	}
 	p.logger = logger
 
@@ -108,7 +108,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 	zap.L().Info("evaluating promql query", zap.String("name", r.Name()), zap.String("query", q))
-	res, err := r.pqlEngine.RunAlertQuery(ctx, q, start, end, interval)
+	res, err := r.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
@@ -304,6 +304,43 @@ func (r *PromRule) String() string {
 	}
 
 	return string(byt)
+}
+
+func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (promql.Matrix, error) {
+	q, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, qs, start, end, interval)
+	if err != nil {
+		return nil, err
+	}
+
+	res := q.Exec(ctx)
+
+	if res.Err != nil {
+		return nil, res.Err
+	}
+
+	switch typ := res.Value.(type) {
+	case promql.Vector:
+		series := make([]promql.Series, 0, len(typ))
+		value := res.Value.(promql.Vector)
+		for _, smpl := range value {
+			series = append(series, promql.Series{
+				Metric: smpl.Metric,
+				Floats: []promql.FPoint{{T: smpl.T, F: smpl.F}},
+			})
+		}
+		return series, nil
+	case promql.Scalar:
+		value := res.Value.(promql.Scalar)
+		series := make([]promql.Series, 0, 1)
+		series = append(series, promql.Series{
+			Floats: []promql.FPoint{{T: value.T, F: value.V}},
+		})
+		return series, nil
+	case promql.Matrix:
+		return res.Value.(promql.Matrix), nil
+	default:
+		return nil, fmt.Errorf("rule result is not a vector or scalar")
+	}
 }
 
 func toCommonSeries(series promql.Series) v3.Series {

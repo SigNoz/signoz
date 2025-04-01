@@ -3,6 +3,7 @@
 import './MQTables.styles.scss';
 
 import { Skeleton, Table, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
@@ -23,11 +24,12 @@ import {
 	MessagingQueueServiceDetailType,
 	MessagingQueuesViewType,
 	MessagingQueuesViewTypeOptions,
+	ProducerLatencyOptions,
 	RowData,
 	SelectedTimelineQuery,
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -130,6 +132,7 @@ function MessagingQueuesTable({
 	tableApi,
 	validConfigPresent = false,
 	type = 'Detail',
+	option = ProducerLatencyOptions.Producers,
 }: {
 	currentTab?: MessagingQueueServiceDetailType;
 	selectedView: MessagingQueuesViewTypeOptions;
@@ -141,6 +144,7 @@ function MessagingQueuesTable({
 	>;
 	validConfigPresent?: boolean;
 	type?: 'Detail' | 'Overview';
+	option?: ProducerLatencyOptions;
 }): JSX.Element {
 	const [columns, setColumns] = useState<any[]>([]);
 	const [tableData, setTableData] = useState<any[]>([]);
@@ -261,6 +265,43 @@ function MessagingQueuesTable({
 			: `${configDetailQueryData?.service_name || ''} ${
 					configDetailQueryData?.topic || ''
 			  } ${configDetailQueryData?.partition || ''}`;
+
+	const prevTableDataRef = useRef<string>();
+
+	useEffect(() => {
+		if (tableData.length > 0 && type === 'Overview') {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(`MQ Kafka: ${MessagingQueuesViewType[selectedView].label}`, {
+					dataRender: tableData.length,
+				});
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [option, JSON.stringify(tableData), selectedView]);
+
+	useEffect(() => {
+		if (tableData.length > 0 && type === 'Detail') {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(
+					`MQ Kafka: ${MessagingQueuesViewType[selectedView].label} - details`,
+					{
+						dataRender: tableData.length,
+						activeTab: currentTab,
+						topic: configDetailQueryData?.topic,
+						partition: configDetailQueryData?.partition,
+						serviceName: configDetailQueryData?.service_name,
+					},
+				);
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentTab, JSON.stringify(tableData), selectedView]);
 
 	return (
 		<div className="mq-tables-container">

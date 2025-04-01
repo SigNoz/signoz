@@ -12,9 +12,7 @@ const updateCreditCardApi = async (
 ): Promise<SuccessResponse<CheckoutSuccessPayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/checkout', {
-			licenseKey: props.licenseKey,
-			successURL: props.successURL,
-			cancelURL: props.cancelURL, // temp
+			url: props.url,
 		});
 
 		return {

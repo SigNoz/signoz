@@ -150,11 +150,20 @@ function VariableItem({
 							let allSelected = false;
 							// The default value for multi-select is ALL and first value for
 							// single select
-							if (variableData.multiSelect) {
-								value = newOptionsData;
-								allSelected = true;
-							} else {
-								[value] = newOptionsData;
+							if (valueNotInList) {
+								if (variableData.multiSelect) {
+									value = newOptionsData;
+									allSelected = true;
+								} else {
+									[value] = newOptionsData;
+								}
+							} else if (variableData.multiSelect) {
+								const { selectedValue } = variableData;
+								allSelected =
+									newOptionsData.length > 0 &&
+									Array.isArray(selectedValue) &&
+									selectedValue.length === newOptionsData.length &&
+									newOptionsData.every((option) => selectedValue.includes(option));
 							}
 
 							if (variableData && variableData?.name && variableData?.id) {
@@ -226,12 +235,16 @@ function VariableItem({
 					}
 					setErrorMessage(message);
 				}
+				setVariablesToGetUpdated((prev) =>
+					prev.filter((v) => v !== variableData.name),
+				);
 			},
 		},
 	);
 
-	const handleChange = (value: string | string[]): void => {
-		// if value is equal to selected value then return
+	const handleChange = (inputValue: string | string[]): void => {
+		const value = variableData.multiSelect && !inputValue ? [] : inputValue;
+
 		if (
 			value === variableData.selectedValue ||
 			(Array.isArray(value) &&

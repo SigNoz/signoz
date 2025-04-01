@@ -15,6 +15,7 @@ import {
 import { ColumnType, SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sNodesListPayload } from 'api/infraMonitoring/getK8sNodesList';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useGetK8sNodesList } from 'hooks/infraMonitoring/useGetK8sNodesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -188,6 +189,11 @@ function K8sNodesList({
 		return queryPayload;
 	}, [pageSize, currentPage, queryFilters, minTime, maxTime, orderBy, groupBy]);
 
+	const nestedNodesData = useMemo(() => {
+		if (!selectedRowData || !groupedByRowData?.payload?.data.records) return [];
+		return groupedByRowData?.payload?.data?.records || [];
+	}, [groupedByRowData, selectedRowData]);
+
 	const formattedGroupedByNodesData = useMemo(
 		() =>
 			formatDataForTable(groupedByRowData?.payload?.data?.records || [], groupBy),
@@ -236,6 +242,11 @@ function K8sNodesList({
 		): void => {
 			if (pagination.current) {
 				setCurrentPage(pagination.current);
+				logEvent(InfraMonitoringEvents.PageNumberChanged, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Node,
+				});
 			}
 
 			if ('field' in sorter && sorter.order) {
@@ -261,21 +272,37 @@ function K8sNodesList({
 			handleChangeQueryData('filters', value);
 			setCurrentPage(1);
 
-			logEvent('Infra Monitoring: K8s list filters applied', {
-				filters: value,
-			});
+			if (value.items.length > 0) {
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.ListPage,
+					category: InfraMonitoringEvents.Node,
+				});
+			}
 		},
 		[handleChangeQueryData],
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: K8s list page visited', {});
-	}, []);
+		logEvent(InfraMonitoringEvents.PageVisited, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Node,
+			total: data?.payload?.data?.total,
+		});
+	}, [data?.payload?.data?.total]);
 
 	const selectedNodeData = useMemo(() => {
 		if (!selectedNodeUID) return null;
+		if (groupBy.length > 0) {
+			// If grouped by, return the node from the formatted grouped by nodes data
+			return (
+				nestedNodesData.find((node) => node.nodeUID === selectedNodeUID) || null
+			);
+		}
+		// If not grouped by, return the node from the nodes data
 		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
-	}, [selectedNodeUID, nodesData]);
+	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
@@ -285,8 +312,10 @@ function K8sNodesList({
 			handleGroupByRowClick(record);
 		}
 
-		logEvent('Infra Monitoring: K8s node list item clicked', {
-			nodeUID: record.nodeUID,
+		logEvent(InfraMonitoringEvents.ItemClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Node,
 		});
 	};
 
@@ -329,6 +358,10 @@ function K8sNodesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
+						onRow={(record): { onClick: () => void; className: string } => ({
+							onClick: (): void => setselectedNodeUID(record.nodeUID),
+							className: 'expanded-clickable-row',
+						})}
 					/>
 
 					{groupedByRowData?.payload?.data?.total &&
@@ -411,6 +444,12 @@ function K8sNodesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
+
+			logEvent(InfraMonitoringEvents.GroupByChanged, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.ListPage,
+				category: InfraMonitoringEvents.Node,
+			});
 		},
 		[groupByFiltersData],
 	);
@@ -425,6 +464,16 @@ function K8sNodesList({
 			);
 		}
 	}, [groupByFiltersData]);
+
+	const onPaginationChange = (page: number, pageSize: number): void => {
+		setCurrentPage(page);
+		setPageSize(pageSize);
+		logEvent(InfraMonitoringEvents.PageNumberChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.ListPage,
+			category: InfraMonitoringEvents.Node,
+		});
+	};
 
 	return (
 		<div className="k8s-list">
@@ -451,10 +500,7 @@ function K8sNodesList({
 					total: totalCount,
 					showSizeChanger: true,
 					hideOnSinglePage: false,
-					onChange: (page, pageSize): void => {
-						setCurrentPage(page);
-						setPageSize(pageSize);
-					},
+					onChange: onPaginationChange,
 				}}
 				scroll={{ x: true }}
 				loading={{

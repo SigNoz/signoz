@@ -8,13 +8,13 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	filterprocessor "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
+	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
-	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -65,10 +65,6 @@ func Initiate(options *ManagerOptions) (*Manager, error) {
 		configSubscribers: map[string]func(){},
 	}
 
-	err := m.initDB(options.DB)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not init agentConf db")
-	}
 	return m, nil
 }
 
@@ -110,9 +106,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
 		}
 
-		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
-			recommendation, latestConfig,
-		)
+		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(recommendation, latestConfig)
 		if apiErr != nil {
 			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
 				"failed to generate agent config recommendation for %s", featureType,
@@ -133,7 +127,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
-		m.updateDeployStatus(
+		_ = m.updateDeployStatus(
 			context.Background(),
 			featureType,
 			configVersion,
@@ -172,7 +166,7 @@ func (m *Manager) ReportConfigDeploymentStatus(
 			newStatus = string(DeployFailed)
 			message = fmt.Sprintf("%s: %s", agentId, err.Error())
 		}
-		m.updateDeployStatusByHash(
+		_ = m.updateDeployStatusByHash(
 			context.Background(), featureConfId, newStatus, message,
 		)
 	}
@@ -251,7 +245,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		_ = m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
 	case ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
@@ -269,7 +263,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 			return err
 		}
 
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		_ = m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
 	}
 
 	return nil
@@ -300,7 +294,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	_ = m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
 
@@ -324,7 +318,7 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 		message = fmt.Sprintf("%s: %s", agentId, err.Error())
 	}
 
-	m.updateDeployStatusByHash(context.Background(), hash, status, message)
+	_ = m.updateDeployStatusByHash(context.Background(), hash, status, message)
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
@@ -351,6 +345,6 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	_ = m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }

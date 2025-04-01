@@ -130,6 +130,39 @@
 			cursor: pointer;
 		}
 	}
+	.go-to-docs {
+		display: flex;
+		flex-direction: column;
+		gap: 44px;
+		&__container {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			margin-top: 4px;
+
+			&-message {
+				color: var(--bg-vanilla-400);
+				font-size: 14px;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+		&__button {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			cursor: pointer;
+			margin: 0 0 4px;
+			padding: 0;
+			&-text {
+				color: var(--bg-robin-400);
+				font-family: Inter;
+				font-size: 14px;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+	}
 }
 
 .lightMode {

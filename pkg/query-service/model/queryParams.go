@@ -50,7 +50,21 @@ type GetTopOperationsParams struct {
 	Limit       int             `json:"limit"`
 }
 
+type EventType string
+
+const (
+	TrackEvent    EventType = "track"
+	IdentifyEvent EventType = "identify"
+	GroupEvent    EventType = "group"
+)
+
+// IsValid checks if the EventType is one of the valid values
+func (e EventType) IsValid() bool {
+	return e == TrackEvent || e == IdentifyEvent || e == GroupEvent
+}
+
 type RegisterEventParams struct {
+	EventType   EventType              `json:"eventType"`
 	EventName   string                 `json:"eventName"`
 	Attributes  map[string]interface{} `json:"attributes"`
 	RateLimited bool                   `json:"rateLimited"`

@@ -3,8 +3,8 @@ package render
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	jsoniter "github.com/json-iterator/go"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -56,6 +56,8 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusConflict
 	case errors.TypeUnauthenticated:
 		httpCode = http.StatusUnauthorized
+	case errors.TypeUnsupported:
+		httpCode = http.StatusNotImplemented
 	}
 
 	rea := make([]responseerroradditional, len(a))
@@ -66,7 +68,7 @@ func Error(rw http.ResponseWriter, cause error) {
 	body, err := json.Marshal(&response{
 		Status: StatusError.s,
 		Error: &responseerror{
-			Code:    c,
+			Code:    c.String(),
 			Url:     u,
 			Message: m,
 			Errors:  rea,

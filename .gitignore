@@ -54,6 +54,7 @@ ee/query-service/tests/test-deploy/data/
 bin/
 .local/
 */query-service/queries.active
+ee/query-service/db
 
 # e2e
 
@@ -76,3 +77,9 @@ dist/
 
 # ignore user_scripts that is fetched by init-clickhouse
 deploy/common/clickhouse/user_scripts/
+
+queries.active
+
+
+# .devenv tmp files
+.devenv/**/tmp/**

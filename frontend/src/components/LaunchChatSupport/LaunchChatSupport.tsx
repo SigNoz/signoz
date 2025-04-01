@@ -6,17 +6,16 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CreditCard, HelpCircle, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
-import { License } from 'types/api/licenses/def';
-import { isCloudUser } from 'utils/app';
 
 export interface LaunchChatSupportProps {
 	eventName: string;
@@ -38,17 +37,15 @@ function LaunchChatSupport({
 	onHoverText = '',
 	intercomMessageDisabled = false,
 }: LaunchChatSupportProps): JSX.Element | null {
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { notifications } = useNotifications();
 	const {
-		licenses,
-		isFetchingLicenses,
+		trialInfo,
 		featureFlags,
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		isLoggedIn,
 	} = useAppContext();
-	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
@@ -73,11 +70,10 @@ function LaunchChatSupport({
 		if (
 			!isFetchingFeatureFlags &&
 			(featureFlags || featureFlagsFetchError) &&
-			licenses
+			trialInfo
 		) {
 			let isChatSupportEnabled = false;
 			let isPremiumSupportEnabled = false;
-			const isCloudUserVal = isCloudUser();
 			if (featureFlags && featureFlags.length > 0) {
 				isChatSupportEnabled =
 					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
@@ -91,7 +87,7 @@ function LaunchChatSupport({
 				isLoggedIn &&
 				!isPremiumSupportEnabled &&
 				isChatSupportEnabled &&
-				!licenses.trialConvertedToSubscription &&
+				!trialInfo.trialConvertedToSubscription &&
 				isCloudUserVal
 			);
 		}
@@ -99,18 +95,11 @@ function LaunchChatSupport({
 	}, [
 		featureFlags,
 		featureFlagsFetchError,
+		isCloudUserVal,
 		isFetchingFeatureFlags,
 		isLoggedIn,
-		licenses,
+		trialInfo,
 	]);
-
-	useEffect(() => {
-		if (!isFetchingLicenses && licenses) {
-			const activeValidLicense =
-				licenses.licenses?.find((license) => license.isCurrent === true) || null;
-			setActiveLicense(activeValidLicense);
-		}
-	}, [isFetchingLicenses, licenses]);
 
 	const handleFacingIssuesClick = (): void => {
 		if (showAddCreditCardModal) {
@@ -164,9 +153,7 @@ function LaunchChatSupport({
 		});
 
 		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
+			url: window.location.href,
 		});
 	};
 

@@ -122,7 +122,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 		[graphCompatibleData.data.result],
 	);
 
-	const axesOptions = getAxes(isDarkMode, '');
+	const axesOptions = getAxes({ isDarkMode, yAxisUnit: '' });
 
 	const optionsForChart: uPlot.Options = useMemo(
 		() => ({

@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"time"
 
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 func PrepareLinksToTraces(start, end time.Time, filterItems []v3.FilterItem) string {
@@ -148,7 +148,7 @@ func PrepareLinksToLogs(start, end time.Time, filterItems []v3.FilterItem) strin
 // i.e Severity text = WARN
 // If the Severity text is not part of the group by clause, then we add it as it is
 func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, groupByItems []v3.AttributeKey, keys map[string]v3.AttributeKey) []v3.FilterItem {
-	var filterItems []v3.FilterItem
+	filterItems := make([]v3.FilterItem, 0)
 
 	added := make(map[string]struct{})
 

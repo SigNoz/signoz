@@ -1,6 +1,7 @@
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
@@ -11,9 +12,10 @@ import { getRoutes } from './utils';
 
 function SettingsPage(): JSX.Element {
 	const { pathname } = useLocation();
-	const { user, featureFlags, licenses } = useAppContext();
+	const { user, featureFlags, trialInfo } = useAppContext();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
-	const isWorkspaceBlocked = licenses?.workSpaceBlock || false;
+	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
@@ -32,9 +34,19 @@ function SettingsPage(): JSX.Element {
 				isCurrentOrgSettings,
 				isGatewayEnabled,
 				isWorkspaceBlocked,
+				isCloudUser,
+				isEnterpriseSelfHostedUser,
 				t,
 			),
-		[user.role, isCurrentOrgSettings, isGatewayEnabled, isWorkspaceBlocked, t],
+		[
+			user.role,
+			isCurrentOrgSettings,
+			isGatewayEnabled,
+			isWorkspaceBlocked,
+			isCloudUser,
+			isEnterpriseSelfHostedUser,
+			t,
+		],
 	);
 
 	return <RouteTab routes={routes} activeKey={pathname} history={history} />;

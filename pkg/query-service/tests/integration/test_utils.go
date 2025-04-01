@@ -13,20 +13,29 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
 )
+
+var jwt = authtypes.NewJWT("secret", 1*time.Hour, 2*time.Hour)
 
 func NewMockClickhouseReader(
 	t *testing.T, testDB *sqlx.DB, featureFlags interfaces.FeatureLookup,
@@ -35,14 +44,12 @@ func NewMockClickhouseReader(
 ) {
 	require.NotNil(t, testDB)
 
-	mockDB, err := mockhouse.NewClickHouseWithQueryMatcher(nil, sqlmock.QueryMatcherRegexp)
-
-	require.Nil(t, err, "could not init mock clickhouse")
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 	reader := clickhouseReader.NewReaderFromClickhouseConnection(
-		mockDB,
-		clickhouseReader.NewOptions("", 10, 10, 10*time.Second, ""),
+		clickhouseReader.NewOptions("", ""),
 		testDB,
-		"",
+		telemetryStore,
+		prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 		featureFlags,
 		"",
 		true,
@@ -51,7 +58,7 @@ func NewMockClickhouseReader(
 		nil,
 	)
 
-	return reader, mockDB
+	return reader, telemetryStore.Mock()
 }
 
 func addLogsQueryExpectation(
@@ -147,10 +154,10 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser() (*model.User, *model.ApiError) {
+func createTestUser() (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{
+	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
 		Name: "test",
 	})
 	if apiErr != nil {
@@ -167,24 +174,24 @@ func createTestUser() (*model.User, *model.ApiError) {
 	userId := uuid.NewString()
 	return dao.DB().CreateUser(
 		ctx,
-		&model.User{
-			Id:       userId,
+		&types.User{
+			ID:       userId,
 			Name:     "test",
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
-			OrgId:    org.Id,
-			GroupId:  group.Id,
+			OrgID:    org.ID,
+			GroupID:  group.ID,
 		},
 		true,
 	)
 }
 
 func AuthenticatedRequestForTest(
-	user *model.User,
+	user *types.User,
 	path string,
 	postData interface{},
 ) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user)
+	userJwt, err := auth.GenerateJWTForUser(user, jwt)
 	if err != nil {
 		return nil, err
 	}
@@ -203,6 +210,13 @@ func AuthenticatedRequestForTest(
 	}
 
 	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
+
+	ctx, err := jwt.ContextFromRequest(req.Context(), req.Header.Get("Authorization"))
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+
 	return req, nil
 }
 

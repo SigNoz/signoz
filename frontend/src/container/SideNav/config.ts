@@ -28,6 +28,7 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.HOME_PAGE]: [QueryParams.resourceAttributes],
 	[ROUTES.GET_STARTED]: [QueryParams.resourceAttributes],
 	[ROUTES.ONBOARDING]: [QueryParams.resourceAttributes],
+	[ROUTES.GET_STARTED_WITH_CLOUD]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_ALL_ALERT]: [QueryParams.resourceAttributes],
 	[ROUTES.LIST_LICENSES]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGIN]: [QueryParams.resourceAttributes],
@@ -49,12 +50,13 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.TRACE_EXPLORER]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGS_PIPELINES]: [QueryParams.resourceAttributes],
 	[ROUTES.WORKSPACE_LOCKED]: [QueryParams.resourceAttributes],
-	[ROUTES.MESSAGING_QUEUES]: [QueryParams.resourceAttributes],
-	[ROUTES.MESSAGING_QUEUES_DETAIL]: [QueryParams.resourceAttributes],
+	[ROUTES.MESSAGING_QUEUES_KAFKA]: [QueryParams.resourceAttributes],
+	[ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES_CELERY_TASK]: [QueryParams.resourceAttributes],
 	[ROUTES.MESSAGING_QUEUES_OVERVIEW]: [QueryParams.resourceAttributes],
 	[ROUTES.INFRASTRUCTURE_MONITORING_HOSTS]: [QueryParams.resourceAttributes],
 	[ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES]: [
 		QueryParams.resourceAttributes,
 	],
+	[ROUTES.HOME]: [QueryParams.resourceAttributes],
 };

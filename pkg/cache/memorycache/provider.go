@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/factory"
 	go_cache "github.com/patrickmn/go-cache"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 type provider struct {
@@ -75,7 +75,7 @@ func (c *provider) SetTTL(_ context.Context, cacheKey string, ttl time.Duration)
 	if !found {
 		return
 	}
-	c.cc.Replace(cacheKey, item, ttl)
+	_ = c.cc.Replace(cacheKey, item, ttl)
 }
 
 // Remove removes the cache entry

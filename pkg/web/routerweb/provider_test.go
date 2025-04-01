@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/factory/providertest"
-	"go.signoz.io/signoz/pkg/web"
 )
 
 func TestServeHttpWithoutPrefix(t *testing.T) {
@@ -24,7 +24,7 @@ func TestServeHttpWithoutPrefix(t *testing.T) {
 	expected, err := io.ReadAll(fi)
 	require.NoError(t, err)
 
-	web, err := New(context.Background(), providertest.NewSettings(), web.Config{Prefix: "/", Directory: filepath.Join("testdata")})
+	web, err := New(context.Background(), factorytest.NewSettings(), web.Config{Prefix: "/", Directory: filepath.Join("testdata")})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()
@@ -89,7 +89,7 @@ func TestServeHttpWithPrefix(t *testing.T) {
 	expected, err := io.ReadAll(fi)
 	require.NoError(t, err)
 
-	web, err := New(context.Background(), providertest.NewSettings(), web.Config{Prefix: "/web", Directory: filepath.Join("testdata")})
+	web, err := New(context.Background(), factorytest.NewSettings(), web.Config{Prefix: "/web", Directory: filepath.Join("testdata")})
 	require.NoError(t, err)
 
 	router := mux.NewRouter()

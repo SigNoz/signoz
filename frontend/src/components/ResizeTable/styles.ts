@@ -8,6 +8,8 @@ export const SpanStyle = styled.span`
 	width: 0.625rem;
 	height: 100%;
 	cursor: col-resize;
+	margin-left: 4px;
+	margin-right: 4px;
 `;
 
 export const DragSpanStyle = styled.span`

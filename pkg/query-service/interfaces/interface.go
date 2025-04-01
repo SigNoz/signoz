@@ -4,13 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/querycache"
 )
 
 type Reader interface {
@@ -48,12 +47,14 @@ type Reader interface {
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
 	FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error)
-	GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest, skipDotNames bool) (*v3.AggregateAttributeResponse, error)
+	GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest, skipDotNames bool, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error)
 	GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 
 	// Returns `MetricStatus` for latest received metric among `metricNames`. Useful for status calculations
-	GetLatestReceivedMetric(ctx context.Context, metricNames []string) (*model.MetricStatus, *model.ApiError)
+	GetLatestReceivedMetric(
+		ctx context.Context, metricNames []string, labelValues map[string]string,
+	) (*model.MetricStatus, *model.ApiError)
 
 	// QB V3 metrics/traces/logs
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
@@ -84,11 +85,6 @@ type Reader interface {
 		req *v3.QBFilterSuggestionsRequest,
 	) (*v3.QBFilterSuggestionsResponse, *model.ApiError)
 
-	// Connection needed for rules, not ideal but required
-	GetConn() clickhouse.Conn
-	GetQueryEngine() *promql.Engine
-	GetFanoutStorage() *storage.Storage
-
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error
 
@@ -115,6 +111,35 @@ type Reader interface {
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
+
+	GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError)
+	GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError)
+	GetAllMetricFilterTypes(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError)
+	GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest, skipDotNames bool) (*[]v3.AttributeKey, *model.ApiError)
+
+	GetMetricsDataPoints(ctx context.Context, metricName string) (uint64, *model.ApiError)
+	GetMetricsLastReceived(ctx context.Context, metricName string) (int64, *model.ApiError)
+	GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError)
+	GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError)
+	GetAttributesForMetricName(ctx context.Context, metricName string, start, end *int64) (*[]metrics_explorer.Attribute, *model.ApiError)
+
+	ListSummaryMetrics(ctx context.Context, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError)
+
+	GetMetricsTimeSeriesPercentage(ctx context.Context, request *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError)
+	GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError)
+
+	GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError)
+	GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError)
+
+	GetMetricsAllResourceAttributes(ctx context.Context, start int64, end int64) (map[string]uint64, *model.ApiError)
+	GetInspectMetricsFingerprints(ctx context.Context, attributes []string, req *metrics_explorer.InspectMetricsRequest) ([]string, *model.ApiError)
+	GetInspectMetrics(ctx context.Context, req *metrics_explorer.InspectMetricsRequest, fingerprints []string) (*metrics_explorer.InspectMetricsResponse, *model.ApiError)
+
+	DeleteMetricsMetadata(ctx context.Context, metricName string) *model.ApiError
+	UpdateMetricsMetadata(ctx context.Context, req *model.UpdateMetricsMetadata) *model.ApiError
+	GetUpdatedMetricsMetadata(ctx context.Context, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError)
+
+	CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError)
 }
 
 type Querier interface {
@@ -127,5 +152,8 @@ type Querier interface {
 
 type QueryCache interface {
 	FindMissingTimeRanges(start, end int64, step int64, cacheKey string) []querycache.MissInterval
+	FindMissingTimeRangesV2(start, end int64, step int64, cacheKey string) []querycache.MissInterval
 	MergeWithCachedSeriesData(cacheKey string, newData []querycache.CachedSeriesData) []querycache.CachedSeriesData
+	StoreSeriesInCache(cacheKey string, series []querycache.CachedSeriesData)
+	MergeWithCachedSeriesDataV2(cacheKey string, series []querycache.CachedSeriesData) []querycache.CachedSeriesData
 }

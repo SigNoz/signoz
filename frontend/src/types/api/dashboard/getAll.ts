@@ -46,10 +46,10 @@ export interface IDashboardVariable {
 export interface Dashboard {
 	id: number;
 	uuid: string;
-	created_at: string;
-	updated_at: string;
-	created_by: string;
-	updated_by: string;
+	createdAt: string;
+	updatedAt: string;
+	createdBy: string;
+	updatedBy: string;
 	data: DashboardData;
 	isLocked?: boolean;
 }
@@ -108,6 +108,8 @@ export interface IBaseWidget {
 	columnUnits?: ColumnUnit;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
+	isLogScale?: boolean;
+	columnWidths?: Record<string, number>;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

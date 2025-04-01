@@ -75,6 +75,7 @@ function QueryBuilderSearch({
 	placeholder,
 	suffixIcon,
 	isInfraMonitoring,
+	isMetricsExplorer,
 	disableNavigationShortcuts,
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
@@ -87,6 +88,8 @@ function QueryBuilderSearch({
 		() => pathname === ROUTES.TRACES_EXPLORER,
 		[pathname],
 	);
+
+	const [isEditingTag, setIsEditingTag] = useState(false);
 
 	const {
 		updateTag,
@@ -111,6 +114,7 @@ function QueryBuilderSearch({
 		isLogsExplorerPage,
 		isInfraMonitoring,
 		entity,
+		isMetricsExplorer,
 	);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -127,11 +131,22 @@ function QueryBuilderSearch({
 		isLogsExplorerPage,
 		isInfraMonitoring,
 		entity,
+		isMetricsExplorer,
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
+
+	const toggleEditMode = useCallback(
+		(value: boolean) => {
+			// Editing mode is required only in infra monitoring or metrics explorer
+			if (isInfraMonitoring || isMetricsExplorer) {
+				setIsEditingTag(value);
+			}
+		},
+		[isInfraMonitoring, isMetricsExplorer],
+	);
 
 	const onTagRender = ({
 		value,
@@ -146,13 +161,17 @@ function QueryBuilderSearch({
 
 		const onCloseHandler = (): void => {
 			onClose();
+			// Editing is done after closing a tag
+			toggleEditMode(false);
 			handleSearch('');
 			setSearchKey('');
 		};
 
 		const tagEditHandler = (value: string): void => {
 			updateTag(value);
-			if (isInfraMonitoring) {
+			// Editing starts
+			toggleEditMode(true);
+			if (isInfraMonitoring || isMetricsExplorer) {
 				setSearchValue(value);
 			} else {
 				handleSearch(value);
@@ -188,6 +207,11 @@ function QueryBuilderSearch({
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 
+		// Editing is done after enter key press
+		if (event.key === 'Enter') {
+			toggleEditMode(false);
+		}
+
 		if (
 			!disableNavigationShortcuts &&
 			(event.ctrlKey || event.metaKey) &&
@@ -219,8 +243,11 @@ function QueryBuilderSearch({
 	);
 
 	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS && !isInfraMonitoring,
-		[query.dataSource, isInfraMonitoring],
+		() =>
+			query.dataSource === DataSource.METRICS &&
+			!isInfraMonitoring &&
+			!isMetricsExplorer,
+		[query.dataSource, isInfraMonitoring, isMetricsExplorer],
 	);
 
 	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
@@ -270,7 +297,14 @@ function QueryBuilderSearch({
 			};
 		});
 
-		onChange(initialTagFilters);
+		// If in infra monitoring or metrics explorer, only run the onChange query when editing is finsished.
+		if (isInfraMonitoring || isMetricsExplorer) {
+			if (!isEditingTag) {
+				onChange(initialTagFilters);
+			}
+		} else {
+			onChange(initialTagFilters);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sourceKeys]);
 
@@ -367,7 +401,11 @@ function QueryBuilderSearch({
 					)
 				}
 				showAction={['focus']}
-				onBlur={handleOnBlur}
+				onBlur={(e: React.FocusEvent<HTMLInputElement>): void => {
+					handleOnBlur(e);
+					// Editing is done after tapping out of the input
+					toggleEditMode(false);
+				}}
 				popupClassName={isLogsExplorerPage ? 'logs-explorer-popup' : ''}
 				dropdownRender={(menu): ReactElement => (
 					<div>
@@ -466,6 +504,7 @@ interface QueryBuilderSearchProps {
 	isInfraMonitoring?: boolean;
 	disableNavigationShortcuts?: boolean;
 	entity?: K8sCategory | null;
+	isMetricsExplorer?: boolean;
 }
 
 QueryBuilderSearch.defaultProps = {
@@ -476,6 +515,7 @@ QueryBuilderSearch.defaultProps = {
 	isInfraMonitoring: false,
 	disableNavigationShortcuts: false,
 	entity: null,
+	isMetricsExplorer: false,
 };
 
 export interface CustomTagProps {

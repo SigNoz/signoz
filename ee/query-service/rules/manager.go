@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/google/uuid"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 
@@ -28,6 +28,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -47,7 +48,8 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.Prometheus,
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -68,6 +70,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Reader,
 			opts.Cache,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 		if err != nil {
 			return task, err
@@ -126,6 +129,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			opts.UseTraceNewSchema,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -141,9 +145,10 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.Prometheus,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 
 		if err != nil {
@@ -160,6 +165,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			opts.Cache,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
+			baserules.WithSQLStore(opts.SQLStore),
 		)
 		if err != nil {
 			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", rule.Name()), zap.Error(err))

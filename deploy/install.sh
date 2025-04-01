@@ -127,7 +127,7 @@ check_os() {
 # The script should error out in case they aren't available
 check_ports_occupied() {
     local port_check_output
-    local ports_pattern="3301|4317"
+    local ports_pattern="8080|4317"
 
     if is_mac; then
         port_check_output="$(netstat -anp tcp | awk '$6 == "LISTEN" && $4 ~ /^.*\.('"$ports_pattern"')$/')"
@@ -144,7 +144,7 @@ check_ports_occupied() {
         send_event "port_not_available"
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
-        echo "SigNoz requires ports 3301 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
+        echo "SigNoz requires ports 8080 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
         echo "You can run SigNoz on another port following this guide https://signoz.io/docs/install/troubleshooting/"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
@@ -248,7 +248,7 @@ wait_for_containers_start() {
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3301/api/v1/health?live=1" || true)"
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8080/api/v1/health?live=1" || true)"
         if [[ status_code -eq 200 ]]; then
             break
         else
@@ -484,7 +484,7 @@ pushd "${BASE_DIR}/${DOCKER_STANDALONE_DIR}" > /dev/null 2>&1
 
 # check for open ports, if signoz is not installed
 if is_command_present docker-compose; then
-    if $sudo_cmd $docker_compose_cmd ps | grep "signoz-query-service" | grep -q "healthy" > /dev/null 2>&1; then
+    if $sudo_cmd $docker_compose_cmd ps | grep "signoz" | grep -q "healthy" > /dev/null 2>&1; then
         echo "SigNoz already installed, skipping the occupied ports check"
     else
         check_ports_occupied
@@ -533,7 +533,7 @@ else
     echo ""
     echo "🟢 Your installation is complete!"
     echo ""
-    echo -e "🟢 Your frontend is running on http://localhost:3301"
+    echo -e "🟢 SigNoz is running on http://localhost:8080"
     echo ""
     echo "ℹ️  By default, retention period is set to 15 days for logs and traces, and 30 days for metrics."
     echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"

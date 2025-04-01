@@ -3,6 +3,12 @@
 # Do not modify this file
 #
 
+##################### Version #####################
+version:
+  banner:
+    # Whether to enable the version banner on startup.
+    enabled: true
+
 ##################### Instrumentation #####################
 instrumentation:
   logs:
@@ -66,15 +72,88 @@ sqlstore:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
 
-
 ##################### APIServer #####################
 apiserver:
   timeout:
+    # Default request timeout.
     default: 60s
+    # Maximum request timeout.
     max: 600s
+    # List of routes to exclude from request timeout.
     excluded_routes:
       - /api/v1/logs/tail
       - /api/v3/logs/livetail
   logging:
+    # List of routes to exclude from request responselogging.
     excluded_routes:
       - /api/v1/health
+      - /api/v1/version
+      - /
+
+##################### TelemetryStore #####################
+telemetrystore:
+  # Maximum number of idle connections in the connection pool.
+  max_idle_conns: 50
+  # Maximum number of open connections to the database.
+  max_open_conns: 100
+  # Maximum time to wait for a connection to be established.
+  dial_timeout: 5s
+  # Specifies the telemetrystore provider to use.
+  provider: clickhouse
+  clickhouse:
+    # The DSN to use for clickhouse.
+    dsn: tcp://localhost:9000
+
+##################### Prometheus #####################
+prometheus:
+  active_query_tracker:
+    # Whether to enable the active query tracker.
+    enabled: true
+    # The path to use for the active query tracker.
+    path: ""
+    # The maximum number of concurrent queries.
+    max_concurrent: 20
+
+##################### Alertmanager #####################
+alertmanager:
+  # Specifies the alertmanager provider to use.
+  provider: legacy
+  legacy:
+    # The API URL (with prefix) of the legacy Alertmanager instance.
+    api_url: http://localhost:9093/api
+  signoz:
+    # The poll interval for periodically syncing the alertmanager with the config in the store.
+    poll_interval: 1m
+    # The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
+    external_url: http://localhost:8080
+    # The global configuration for the alertmanager. All the exahustive fields can be found in the upstream: https://github.com/prometheus/alertmanager/blob/efa05feffd644ba4accb526e98a8c6545d26a783/config/config.go#L833
+    global:
+      # ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
+      resolve_timeout: 5m
+    route:
+      # GroupByStr is the list of labels to group alerts by.
+      group_by:
+        - alertname
+      # GroupInterval is the interval at which alerts are grouped.
+      group_interval: 1m
+      # GroupWait is the time to wait before sending alerts to receivers.
+      group_wait: 1m
+      # RepeatInterval is the interval at which alerts are repeated.
+      repeat_interval: 1h
+    alerts:
+      # Interval between garbage collection of alerts.
+      gc_interval: 30m
+    silences:
+      # Maximum number of silences, including expired silences. If negative or zero, no limit is set.
+      max: 0
+      # Maximum size of the silences in bytes. If negative or zero, no limit is set.
+      max_size_bytes: 0
+      # Interval between garbage collection and snapshotting of the silences. The snapshot will be stored in the state store.
+      maintenance_interval: 15m
+      # Retention of the silences.
+      retention: 120h
+    nflog:
+      # Interval between garbage collection and snapshotting of the notification logs. The snapshot will be stored in the state store.
+      maintenance_interval: 15m
+      # Retention of the notification logs.
+      retention: 120h

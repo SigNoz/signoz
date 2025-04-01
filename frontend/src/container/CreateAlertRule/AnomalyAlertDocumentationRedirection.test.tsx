@@ -36,6 +36,11 @@ window.ResizeObserver =
 		unobserve: jest.fn(),
 	}));
 
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
 describe('Anomaly Alert Documentation Redirection', () => {
 	let mockWindowOpen: jest.Mock;
 

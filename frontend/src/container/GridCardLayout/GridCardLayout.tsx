@@ -15,8 +15,8 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import {
@@ -44,7 +44,11 @@ import { EditMenuAction, ViewMenuAction } from './config';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
-import { removeUndefinedValuesFromLayout } from './utils';
+import {
+	hasColumnWidthsChanged,
+	removeUndefinedValuesFromLayout,
+} from './utils';
+import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
 interface GraphLayoutProps {
@@ -54,6 +58,7 @@ interface GraphLayoutProps {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { handle } = props;
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		selectedDashboard,
 		layouts,
@@ -64,6 +69,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		isDashboardLocked,
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
+		setSelectedRowWidgetId,
+		isDashboardFetching,
+		columnWidths,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
@@ -109,7 +117,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	}
 
 	const userRole: ROLES | null =
-		selectedDashboard?.created_by === user?.email
+		selectedDashboard?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -158,6 +166,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			logEventCalledRef.current = true;
 		}
 	}, [data]);
+
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
@@ -167,12 +176,22 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				...selectedDashboard.data,
 				panelMap: { ...currentPanelMap },
 				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				widgets: selectedDashboard?.data?.widgets?.map((widget) => {
+					if (columnWidths?.[widget.id]) {
+						return {
+							...widget,
+							columnWidths: columnWidths[widget.id],
+						};
+					}
+					return widget;
+				}),
 			},
 			uuid: selectedDashboard.uuid,
 		};
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			onSuccess: (updatedDashboard) => {
+				setSelectedRowWidgetId(null);
 				if (updatedDashboard.payload) {
 					if (updatedDashboard.payload.data.layout)
 						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
@@ -190,7 +209,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const widgetActions = !isDashboardLocked
 		? [...ViewMenuAction, ...EditMenuAction]
-		: [...ViewMenuAction];
+		: [...ViewMenuAction, MenuItemKeys.CreateAlerts];
 
 	const handleLayoutChange = (layout: Layout[]): void => {
 		const filterLayout = removeUndefinedValuesFromLayout(layout);
@@ -211,30 +230,42 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, pathname, urlQuery],
+		[dispatch, pathname, safeNavigate, urlQuery],
 	);
 
 	useEffect(() => {
 		if (
+			isDashboardLocked ||
+			!saveLayoutPermission ||
+			updateDashboardMutation.isLoading ||
+			isDashboardFetching
+		) {
+			return;
+		}
+
+		const shouldSaveLayout =
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
-			!isEqual(layouts, dashboardLayout) &&
-			!isDashboardLocked &&
-			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading
-		) {
+			!isEqual(layouts, dashboardLayout);
+
+		const shouldSaveColumnWidths =
+			dashboardLayout &&
+			Array.isArray(dashboardLayout) &&
+			dashboardLayout.length > 0 &&
+			hasColumnWidthsChanged(columnWidths, selectedDashboard);
+
+		if (shouldSaveLayout || shouldSaveColumnWidths) {
 			onSaveHandler();
 		}
-
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dashboardLayout]);
+	}, [dashboardLayout, columnWidths]);
 
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');

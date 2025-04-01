@@ -1,54 +1,88 @@
 package signoz
 
 import (
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/cache/memorycache"
-	"go.signoz.io/signoz/pkg/cache/rediscache"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
-	"go.signoz.io/signoz/pkg/web"
-	"go.signoz.io/signoz/pkg/web/noopweb"
-	"go.signoz.io/signoz/pkg/web/routerweb"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/cache/rediscache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	"github.com/SigNoz/signoz/pkg/web"
+	"github.com/SigNoz/signoz/pkg/web/noopweb"
+	"github.com/SigNoz/signoz/pkg/web/routerweb"
 )
 
-type ProviderConfig struct {
-	// Map of all cache provider factories
-	CacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]]
-
-	// Map of all web provider factories
-	WebProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]]
-
-	// Map of all sqlstore provider factories
-	SQLStoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]]
-
-	// Map of all sql migration provider factories
-	SQLMigrationProviderFactories factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]]
+func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]] {
+	return factory.MustNewNamedMap(
+		memorycache.NewFactory(),
+		rediscache.NewFactory(),
+	)
 }
 
-func NewProviderConfig() ProviderConfig {
-	return ProviderConfig{
-		CacheProviderFactories: factory.MustNewNamedMap(
-			memorycache.NewFactory(),
-			rediscache.NewFactory(),
-		),
-		WebProviderFactories: factory.MustNewNamedMap(
-			routerweb.NewFactory(),
-			noopweb.NewFactory(),
-		),
-		SQLStoreProviderFactories: factory.MustNewNamedMap(
-			sqlitesqlstore.NewFactory(),
-		),
-		SQLMigrationProviderFactories: factory.MustNewNamedMap(
-			sqlmigration.NewAddDataMigrationsFactory(),
-			sqlmigration.NewAddOrganizationFactory(),
-			sqlmigration.NewAddPreferencesFactory(),
-			sqlmigration.NewAddDashboardsFactory(),
-			sqlmigration.NewAddSavedViewsFactory(),
-			sqlmigration.NewAddAgentsFactory(),
-			sqlmigration.NewAddPipelinesFactory(),
-			sqlmigration.NewAddIntegrationsFactory(),
-		),
-	}
+func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]] {
+	return factory.MustNewNamedMap(
+		routerweb.NewFactory(),
+		noopweb.NewFactory(),
+	)
+}
+
+func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]] {
+	hook := sqlstorehook.NewLoggingFactory()
+	return factory.MustNewNamedMap(
+		sqlitesqlstore.NewFactory(hook),
+	)
+}
+
+func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlmigration.SQLMigration, sqlmigration.Config]] {
+	return factory.MustNewNamedMap(
+		sqlmigration.NewAddDataMigrationsFactory(),
+		sqlmigration.NewAddOrganizationFactory(),
+		sqlmigration.NewAddPreferencesFactory(),
+		sqlmigration.NewAddDashboardsFactory(),
+		sqlmigration.NewAddSavedViewsFactory(),
+		sqlmigration.NewAddAgentsFactory(),
+		sqlmigration.NewAddPipelinesFactory(),
+		sqlmigration.NewAddIntegrationsFactory(),
+		sqlmigration.NewAddLicensesFactory(),
+		sqlmigration.NewAddPatsFactory(),
+		sqlmigration.NewModifyDatetimeFactory(),
+		sqlmigration.NewModifyOrgDomainFactory(),
+		sqlmigration.NewUpdateOrganizationFactory(sqlstore),
+		sqlmigration.NewAddAlertmanagerFactory(sqlstore),
+		sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlstore),
+		sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlstore),
+		sqlmigration.NewUpdatePipelines(sqlstore),
+		sqlmigration.NewDropLicensesSitesFactory(sqlstore),
+		sqlmigration.NewUpdateInvitesFactory(sqlstore),
+		sqlmigration.NewUpdatePatFactory(sqlstore),
+	)
+}
+
+func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
+	return factory.MustNewNamedMap(
+		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewSettingsFactory(), telemetrystorehook.NewLoggingFactory()),
+	)
+}
+
+func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[prometheus.Prometheus, prometheus.Config]] {
+	return factory.MustNewNamedMap(
+		clickhouseprometheus.NewFactory(telemetryStore),
+	)
+}
+
+func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+	return factory.MustNewNamedMap(
+		legacyalertmanager.NewFactory(sqlstore),
+		signozalertmanager.NewFactory(sqlstore),
+	)
 }

@@ -7,6 +7,7 @@ import { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sClustersData } from 'api/infraMonitoring/getK8sClustersList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
+import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -141,28 +142,27 @@ function ClusterDetails({
 		[cluster?.meta.k8s_cluster_name],
 	);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
-
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logsAndTracesFilters, setLogsAndTracesFilters] = useState<
+		IBuilderQuery['filters']
+	>(initialFilters);
 
 	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
 		initialEventsFilters,
 	);
 
 	useEffect(() => {
-		logEvent('Infra Monitoring: Clusters list details page visited', {
-			cluster: cluster?.clusterUID,
-		});
+		if (cluster) {
+			logEvent(InfraMonitoringEvents.PageVisited, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Cluster,
+			});
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [cluster]);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
+		setLogsAndTracesFilters(initialFilters);
 		setEventsFilters(initialEventsFilters);
 	}, [initialFilters, initialEventsFilters]);
 
@@ -181,6 +181,12 @@ function ClusterDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		logEvent(InfraMonitoringEvents.TabChanged, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Cluster,
+			view: e.target.value,
+		});
 	};
 
 	const handleTimeChange = useCallback(
@@ -201,9 +207,12 @@ function ClusterDetails({
 				});
 			}
 
-			logEvent('Infra Monitoring: Clusters list details time updated', {
-				cluster: cluster?.clusterUID,
+			logEvent(InfraMonitoringEvents.TimeUpdated, {
+				entity: InfraMonitoringEvents.K8sEntity,
+				page: InfraMonitoringEvents.DetailedPage,
+				category: InfraMonitoringEvents.Cluster,
 				interval,
+				view: selectedView,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,7 +221,7 @@ function ClusterDetails({
 
 	const handleChangeLogFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setLogFilters((prevFilters) => {
+			setLogsAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
 				);
@@ -222,9 +231,14 @@ function ClusterDetails({
 						item.key?.key !== 'id' && item.key?.key !== QUERY_KEYS.K8S_CLUSTER_NAME,
 				);
 
-				logEvent('Infra Monitoring: Clusters list details logs filters applied', {
-					cluster: cluster?.clusterUID,
-				});
+				if (newFilters.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						view: InfraMonitoringEvents.LogsView,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -244,14 +258,19 @@ function ClusterDetails({
 
 	const handleChangeTracesFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
-			setTracesFilters((prevFilters) => {
+			setLogsAndTracesFilters((prevFilters) => {
 				const primaryFilters = prevFilters.items.filter((item) =>
 					[QUERY_KEYS.K8S_CLUSTER_NAME].includes(item.key?.key ?? ''),
 				);
 
-				logEvent('Infra Monitoring: Clusters list details traces filters applied', {
-					cluster: cluster?.clusterUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						view: InfraMonitoringEvents.TracesView,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -280,9 +299,14 @@ function ClusterDetails({
 					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
 				);
 
-				logEvent('Infra Monitoring: Clusters list details events filters applied', {
-					cluster: cluster?.clusterUID,
-				});
+				if (value.items.length > 0) {
+					logEvent(InfraMonitoringEvents.FilterApplied, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.DetailedPage,
+						view: InfraMonitoringEvents.EventsView,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
 				return {
 					op: 'AND',
@@ -313,15 +337,17 @@ function ClusterDetails({
 			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
 		}
 
-		logEvent('Infra Monitoring: Clusters list details explore clicked', {
-			cluster: cluster?.clusterUID,
+		logEvent(InfraMonitoringEvents.ExploreClicked, {
+			entity: InfraMonitoringEvents.K8sEntity,
+			page: InfraMonitoringEvents.DetailedPage,
+			category: InfraMonitoringEvents.Cluster,
 			view: selectedView,
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
 			const filtersWithoutPagination = {
-				...logFilters,
-				items: logFilters.items.filter((item) => item.key?.key !== 'id'),
+				...logsAndTracesFilters,
+				items: logsAndTracesFilters.items.filter((item) => item.key?.key !== 'id'),
 			};
 
 			const compositeQuery = {
@@ -355,7 +381,7 @@ function ClusterDetails({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: tracesFilters,
+							filters: logsAndTracesFilters,
 						},
 					],
 				},
@@ -519,7 +545,7 @@ function ClusterDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logFilters}
+							logFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="clusterLogs"
 							category={K8sCategory.CLUSTERS}
@@ -532,9 +558,11 @@ function ClusterDetails({
 							isModalTimeSelection={isModalTimeSelection}
 							handleTimeChange={handleTimeChange}
 							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={tracesFilters}
+							tracesFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey="clusterTraces"
+							category={InfraMonitoringEvents.Cluster}
+							queryKeyFilters={[QUERY_KEYS.K8S_CLUSTER_NAME]}
 						/>
 					)}
 					{selectedView === VIEW_TYPES.EVENTS && (

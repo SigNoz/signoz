@@ -1,63 +1,58 @@
 package app
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"os"
-	"regexp"
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 
+	eemiddleware "github.com/SigNoz/signoz/ee/http/middleware"
+	"github.com/SigNoz/signoz/ee/query-service/app/api"
+	"github.com/SigNoz/signoz/ee/query-service/app/db"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	"go.signoz.io/signoz/ee/query-service/app/api"
-	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/auth"
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
-	"go.signoz.io/signoz/ee/query-service/interfaces"
-	"go.signoz.io/signoz/ee/query-service/rules"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/web"
 
-	licensepkg "go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/usage"
+	licensepkg "github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/usage"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	baseexplorer "github.com/SigNoz/signoz/pkg/query-service/app/explorer"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -74,9 +69,6 @@ type ServerOptions struct {
 	DisableRules               bool
 	RuleRepoURL                string
 	PreferSpanMetrics          bool
-	MaxIdleConns               int
-	MaxOpenConns               int
-	DialTimeout                time.Duration
 	CacheConfigPath            string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
@@ -84,6 +76,7 @@ type ServerOptions struct {
 	GatewayUrl                 string
 	UseLogsNewSchema           bool
 	UseTraceNewSchema          bool
+	Jwt                        *authtypes.JWT
 }
 
 // Server runs HTTP api service
@@ -114,12 +107,12 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-	modelDao, err := dao.InitDao(serverOptions.SigNoz.SQLStore.SQLxDB())
+	modelDao, err := dao.InitDao(serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -127,7 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -137,42 +130,31 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB())
+	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
 
 	// set license manager as feature flag provider in dao
 	modelDao.SetFlagProvider(lm)
-	readerReady := make(chan bool)
 
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
 		return nil, err
 	}
 
-	var reader interfaces.DataConnector
-	storage := os.Getenv("STORAGE")
-	if storage == "clickhouse" {
-		zap.L().Info("Using ClickHouse as datastore ...")
-		qb := db.NewDataConnector(
-			serverOptions.SigNoz.SQLStore.SQLxDB(),
-			serverOptions.PromConfigPath,
-			lm,
-			serverOptions.MaxIdleConns,
-			serverOptions.MaxOpenConns,
-			serverOptions.DialTimeout,
-			serverOptions.Cluster,
-			serverOptions.UseLogsNewSchema,
-			serverOptions.UseTraceNewSchema,
-			fluxIntervalForTraceDetail,
-			serverOptions.SigNoz.Cache,
-		)
-		go qb.Start(readerReady)
-		reader = qb
-	} else {
-		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
-	}
+	reader := db.NewDataConnector(
+		serverOptions.SigNoz.SQLStore.SQLxDB(),
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
+		lm,
+		serverOptions.Cluster,
+		serverOptions.UseLogsNewSchema,
+		serverOptions.UseTraceNewSchema,
+		fluxIntervalForTraceDetail,
+		serverOptions.SigNoz.Cache,
+	)
+
 	skipConfig := &basemodel.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
 		// read skip config
@@ -190,9 +172,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
-	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath,
-		baseconst.GetAlertManagerApiPrefix(),
+	rm, err := makeRulesManager(
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
@@ -201,6 +181,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		lm,
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,
+		serverOptions.SigNoz.Alertmanager,
+		serverOptions.SigNoz.SQLStore,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 	)
 
 	if err != nil {
@@ -213,14 +197,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
+	integrationsController, err := integrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore.SQLxDB())
+	cloudIntegrationsController, err := cloudintegrations.NewController(serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create cloud provider integrations controller: %w", err,
@@ -229,7 +213,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore.SQLxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -245,7 +229,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.Config.TelemetryStore.Clickhouse.DSN)
 	if err != nil {
 		return nil, err
 	}
@@ -266,9 +250,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		MaxIdleConns:                  serverOptions.MaxIdleConns,
-		MaxOpenConns:                  serverOptions.MaxOpenConns,
-		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        modelDao,
 		RulesManager:                  rm,
 		UsageManager:                  usageManager,
@@ -280,11 +261,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
 		Gateway:                       gatewayProxy,
+		GatewayUrl:                    serverOptions.GatewayUrl,
 		UseLogsNewSchema:              serverOptions.UseLogsNewSchema,
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
+		JWT:                           serverOptions.Jwt,
 	}
 
-	apiHandler, err := api.NewAPIHandler(apiOpts)
+	apiHandler, err := api.NewAPIHandler(apiOpts, serverOptions.SigNoz)
 	if err != nil {
 		return nil, err
 	}
@@ -317,6 +300,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
+	errorList := reader.PreloadMetricsMetadata(context.Background())
+	for _, er := range errorList {
+		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
+	}
+
 	return s, nil
 }
 
@@ -324,6 +312,8 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := baseapp.NewRouter()
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -355,14 +345,14 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 
 	// add auth middleware
-	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		user, err := auth.GetUserFromRequest(r, apiHandler)
+	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
+		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if user.User.OrgId == "" {
+		if user.User.OrgID == "" {
 			return nil, basemodel.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
@@ -370,6 +360,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
+	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -387,6 +379,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
 	apiHandler.RegisterWebSocketPaths(r, am)
 	apiHandler.RegisterMessagingQueuesRoutes(r, am)
+	apiHandler.RegisterThirdPartyApiRoutes(r, am)
+	apiHandler.MetricExplorerRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -406,174 +400,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	return &http.Server{
 		Handler: handler,
 	}, nil
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-type loggingResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
-	// we default to that status code.
-	return &loggingResponseWriter{w, http.StatusOK}
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// Flush implements the http.Flush interface.
-func (lrw *loggingResponseWriter) Flush() {
-	lrw.ResponseWriter.(http.Flusher).Flush()
-}
-
-// TODO(remove): Implemented at pkg/http/middleware/logging.go
-// Support websockets
-func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := lrw.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("hijack not supported")
-	}
-	return h.Hijack()
-}
-
-func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFromV3 := "/api/v3/query_range"
-	pathToExtractBodyFromV4 := "/api/v4/query_range"
-
-	data := map[string]interface{}{}
-	var postData *v3.QueryRangeParamsV3
-
-	if (r.Method == "POST") && ((path == pathToExtractBodyFromV3) || (path == pathToExtractBodyFromV4)) {
-		if r.Body != nil {
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				return nil, false
-			}
-			r.Body.Close() //  must close
-			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &postData)
-
-		} else {
-			return nil, false
-		}
-
-	} else {
-		return nil, false
-	}
-
-	referrer := r.Header.Get("Referer")
-
-	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
-	if err != nil {
-		zap.L().Error("error while matching the referrer", zap.Error(err))
-	}
-	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
-	if err != nil {
-		zap.L().Error("error while matching the alert: ", zap.Error(err))
-	}
-	logsExplorerMatched, err := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
-	if err != nil {
-		zap.L().Error("error while matching the logs explorer: ", zap.Error(err))
-	}
-	traceExplorerMatched, err := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
-	if err != nil {
-		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
-	}
-
-	queryInfoResult := telemetry.GetInstance().CheckQueryInfo(postData)
-
-	if (queryInfoResult.MetricsUsed || queryInfoResult.LogsUsed || queryInfoResult.TracesUsed) && (queryInfoResult.FilterApplied) {
-		if queryInfoResult.MetricsUsed {
-			telemetry.GetInstance().AddActiveMetricsUser()
-		}
-		if queryInfoResult.LogsUsed {
-			telemetry.GetInstance().AddActiveLogsUser()
-		}
-		if queryInfoResult.TracesUsed {
-			telemetry.GetInstance().AddActiveTracesUser()
-		}
-		data["metricsUsed"] = queryInfoResult.MetricsUsed
-		data["logsUsed"] = queryInfoResult.LogsUsed
-		data["tracesUsed"] = queryInfoResult.TracesUsed
-		data["filterApplied"] = queryInfoResult.FilterApplied
-		data["groupByApplied"] = queryInfoResult.GroupByApplied
-		data["aggregateOperator"] = queryInfoResult.AggregateOperator
-		data["aggregateAttributeKey"] = queryInfoResult.AggregateAttributeKey
-		data["numberOfQueries"] = queryInfoResult.NumberOfQueries
-		data["queryType"] = queryInfoResult.QueryType
-		data["panelType"] = queryInfoResult.PanelType
-
-		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
-		if err == nil {
-			// switch case to set data["screen"] based on the referrer
-			switch {
-			case dashboardMatched:
-				data["screen"] = "panel"
-			case alertMatched:
-				data["screen"] = "alert"
-			case logsExplorerMatched:
-				data["screen"] = "logs-explorer"
-			case traceExplorerMatched:
-				data["screen"] = "traces-explorer"
-			default:
-				data["screen"] = "unknown"
-				return data, true
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
-		}
-	}
-	return data, true
-}
-
-func getActiveLogs(path string, r *http.Request) {
-	// if path == "/api/v1/dashboards/{uuid}" {
-	// 	telemetry.GetInstance().AddActiveMetricsUser()
-	// }
-	if path == "/api/v1/logs" {
-		hasFilters := len(r.URL.Query().Get("q"))
-		if hasFilters > 0 {
-			telemetry.GetInstance().AddActiveLogsUser()
-		}
-
-	}
-
-}
-
-func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := baseauth.AttachJwtToContext(r.Context(), r)
-		r = r.WithContext(ctx)
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-
-		queryRangeData, metadataExists := extractQueryRangeData(path, r)
-		getActiveLogs(path, r)
-
-		lrw := NewLoggingResponseWriter(w)
-		next.ServeHTTP(lrw, r)
-
-		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-		if metadataExists {
-			for key, value := range queryRangeData {
-				data[key] = value
-			}
-		}
-
-		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := baseauth.GetEmailFromJwt(r.Context())
-			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
-			}
-		}
-
-	})
 }
 
 // initListeners initialises listeners of the server
@@ -707,8 +533,6 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	promConfigPath,
-	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
@@ -716,39 +540,31 @@ func makeRulesManager(
 	disableRules bool,
 	fm baseint.FeatureLookup,
 	useLogsNewSchema bool,
-	useTraceNewSchema bool) (*baserules.Manager, error) {
-
-	// create engine
-	pqle, err := pqle.FromConfigPath(promConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pql engine : %v", err)
-	}
-
-	// notifier opts
-	notifierOpts := basealm.NotifierOptions{
-		QueueCapacity:    10000,
-		Timeout:          1 * time.Second,
-		AlertManagerURLs: []string{alertManagerURL},
-	}
-
+	useTraceNewSchema bool,
+	alertmanager alertmanager.Alertmanager,
+	sqlstore sqlstore.SQLStore,
+	telemetryStore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
+) (*baserules.Manager, error) {
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		NotifierOpts: notifierOpts,
-		PqlEngine:    pqle,
-		RepoURL:      ruleRepoURL,
-		DBConn:       db,
-		Context:      context.Background(),
-		Logger:       zap.L(),
-		DisableRules: disableRules,
-		FeatureFlags: fm,
-		Reader:       ch,
-		Cache:        cache,
-		EvalDelay:    baseconst.GetEvalDelay(),
-
+		TelemetryStore:      telemetryStore,
+		Prometheus:          prometheus,
+		RepoURL:             ruleRepoURL,
+		DBConn:              db,
+		Context:             context.Background(),
+		Logger:              zap.L(),
+		DisableRules:        disableRules,
+		FeatureFlags:        fm,
+		Reader:              ch,
+		Cache:               cache,
+		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
 		UseLogsNewSchema:    useLogsNewSchema,
 		UseTraceNewSchema:   useTraceNewSchema,
 		PrepareTestRuleFunc: rules.TestNotification,
+		Alertmanager:        alertmanager,
+		SQLStore:            sqlstore,
 	}
 
 	// create Manager

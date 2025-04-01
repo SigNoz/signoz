@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"sync/atomic"
@@ -16,11 +15,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/ee/query-service/dao"
-	licenseserver "go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	licenseserver "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
+	"github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
 )
 
 const (
@@ -46,9 +45,9 @@ type Manager struct {
 	tenantID string
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string) (*Manager, error) {
 	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
-	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(os.Getenv("ClickHouseUrl"))
+	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(chUrl)
 
 	tenantID := ""
 	if len(hostNameRegexMatches) == 2 {
@@ -166,7 +165,7 @@ func (lm *Manager) UploadUsage() {
 		usageData.CollectorID = usage.CollectorID
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
-		usageData.Tenant = usage.Tenant
+		usageData.Tenant = "default"
 		usageData.OrgName = orgName
 		usageData.TenantId = lm.tenantID
 		usagesPayload = append(usagesPayload, usageData)

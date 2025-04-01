@@ -2,13 +2,12 @@ package sqlmigration
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/factory"
 )
 
 // SQLMigration is the interface for a single migration.
@@ -62,27 +61,28 @@ func MustNew(
 	return migrations
 }
 
-func WrapIfNotExists(ctx context.Context, db *bun.DB, table string, column string) func(q *bun.AddColumnQuery) *bun.AddColumnQuery {
-	return func(q *bun.AddColumnQuery) *bun.AddColumnQuery {
-		if db.Dialect().Name() != dialect.SQLite {
-			return q.IfNotExists()
-		}
+func GetColumnType(ctx context.Context, bun bun.IDB, table string, column string) (string, error) {
+	var columnType string
+	var err error
 
-		var result string
-		err := db.
-			NewSelect().
-			ColumnExpr("name").
-			Table("pragma_table_info").
-			Where("arg = ?", table).
+	if bun.Dialect().Name() == dialect.SQLite {
+		err = bun.NewSelect().
+			ColumnExpr("type").
+			TableExpr("pragma_table_info(?)", table).
 			Where("name = ?", column).
-			Scan(ctx, &result)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return q
-			}
-			return q.Err(err)
-		}
-
-		return q.Err(ErrNoExecute)
+			Scan(ctx, &columnType)
+	} else {
+		err = bun.NewSelect().
+			ColumnExpr("data_type").
+			TableExpr("information_schema.columns").
+			Where("table_name = ?", table).
+			Where("column_name = ?", column).
+			Scan(ctx, &columnType)
 	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return columnType, nil
 }

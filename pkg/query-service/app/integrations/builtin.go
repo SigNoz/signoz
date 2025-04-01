@@ -13,8 +13,8 @@ import (
 	"io/fs"
 	"path"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	koanfJson "github.com/knadh/koanf/parsers/json"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -229,6 +229,16 @@ func readFileIfUri(fs embed.FS, maybeFileUri string, basedir string) (interface{
 	} else if strings.HasSuffix(maybeFileUri, ".svg") {
 		base64Svg := base64.StdEncoding.EncodeToString(fileContents)
 		dataUri := fmt.Sprintf("data:image/svg+xml;base64,%s", base64Svg)
+		return dataUri, nil
+
+	} else if strings.HasSuffix(maybeFileUri, ".jpeg") || strings.HasSuffix(maybeFileUri, ".jpg") {
+		base64Contents := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/jpeg;base64,%s", base64Contents)
+		return dataUri, nil
+
+	} else if strings.HasSuffix(maybeFileUri, ".png") {
+		base64Contents := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/png;base64,%s", base64Contents)
 		return dataUri, nil
 
 	}

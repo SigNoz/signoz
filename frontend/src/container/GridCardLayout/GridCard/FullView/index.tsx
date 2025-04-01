@@ -20,11 +20,11 @@ import {
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useChartMutable } from 'hooks/useChartMutable';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
-import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -48,7 +48,11 @@ function FullView({
 	tableProcessedDataRef,
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
+	onClickHandler,
+	customOnDragSelect,
+	setCurrentGraphRef,
 }: FullViewProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -58,6 +62,10 @@ function FullView({
 	const location = useLocation();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		setCurrentGraphRef(fullViewRef);
+	}, [setCurrentGraphRef]);
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
@@ -94,6 +102,7 @@ function FullView({
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 			tableParams: {
 				pagination: {
 					offset: 0,
@@ -137,9 +146,9 @@ function FullView({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, safeNavigate, urlQuery],
 	);
 
 	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
@@ -244,9 +253,10 @@ function FullView({
 						onToggleModelHandler={onToggleModelHandler}
 						setGraphVisibility={setGraphsVisibilityStates}
 						graphVisibility={graphsVisibilityStates}
-						onDragSelect={onDragSelect}
+						onDragSelect={customOnDragSelect ?? onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						searchTerm={searchTerm}
+						onClickHandler={onClickHandler}
 					/>
 				</GraphContainer>
 			</div>

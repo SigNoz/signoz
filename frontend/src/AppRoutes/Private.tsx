@@ -1,18 +1,19 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getOrgUser from 'api/user/getOrgUser';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { matchPath, useLocation } from 'react-router-dom';
-import { LicenseState, LicenseStatus } from 'types/api/licensesV3/getActive';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
-import { isCloudUser } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -32,10 +33,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		user,
 		isLoggedIn: isLoggedInState,
 		isFetchingOrgPreferences,
-		licenses,
-		isFetchingLicenses,
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
+		trialInfo,
+		featureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -53,7 +54,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	);
 	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
 	const currentRoute = mapRoutes.get('current');
-	const isCloudUserVal = isCloudUser();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
@@ -131,17 +132,57 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	};
 
-	useEffect(() => {
-		if (!isFetchingLicenses) {
-			const currentRoute = mapRoutes.get('current');
-			const shouldBlockWorkspace = licenses?.workSpaceBlock;
+	const navigateToWorkSpaceAccessRestricted = (route: any): void => {
+		const { path } = route;
 
-			if (shouldBlockWorkspace && currentRoute) {
+		if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
+			history.push(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
+		}
+	};
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
+			const currentRoute = mapRoutes.get('current');
+
+			const isTerminated = activeLicenseV3.state === LicenseState.TERMINATED;
+			const isExpired = activeLicenseV3.state === LicenseState.EXPIRED;
+			const isCancelled = activeLicenseV3.state === LicenseState.CANCELLED;
+
+			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
+
+			const { platform } = activeLicenseV3;
+
+			if (
+				isWorkspaceAccessRestricted &&
+				platform === LicensePlatform.CLOUD &&
+				currentRoute
+			) {
+				navigateToWorkSpaceAccessRestricted(currentRoute);
+			}
+		}
+	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
+
+	useEffect(() => {
+		if (!isFetchingActiveLicenseV3) {
+			const currentRoute = mapRoutes.get('current');
+			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
+
+			if (
+				shouldBlockWorkspace &&
+				currentRoute &&
+				activeLicenseV3?.platform === LicensePlatform.CLOUD
+			) {
 				navigateToWorkSpaceBlocked(currentRoute);
 			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isFetchingLicenses, licenses?.workSpaceBlock, mapRoutes, pathname]);
+	}, [
+		isFetchingActiveLicenseV3,
+		trialInfo?.workSpaceBlock,
+		activeLicenseV3?.platform,
+		mapRoutes,
+		pathname,
+	]);
 
 	const navigateToWorkSpaceSuspended = (route: any): void => {
 		const { path } = route;
@@ -155,10 +196,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
 			const currentRoute = mapRoutes.get('current');
 			const shouldSuspendWorkspace =
-				activeLicenseV3.status === LicenseStatus.SUSPENDED &&
-				activeLicenseV3.state === LicenseState.PAYMENT_FAILED;
+				activeLicenseV3.state === LicenseState.DEFAULTED;
 
-			if (shouldSuspendWorkspace && currentRoute) {
+			if (
+				shouldSuspendWorkspace &&
+				currentRoute &&
+				activeLicenseV3.platform === LicensePlatform.CLOUD
+			) {
 				navigateToWorkSpaceSuspended(currentRoute);
 			}
 		}
@@ -169,6 +213,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			setOrgData(org[0]);
 		}
 	}, [org]);
+
+	// if the feature flag is enabled and the current route is /get-started then redirect to /get-started-with-signoz-cloud
+	useEffect(() => {
+		if (
+			currentRoute?.path === ROUTES.GET_STARTED &&
+			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
+		) {
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+		}
+	}, [currentRoute, featureFlags]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -204,7 +258,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					history.push(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-					history.push(ROUTES.APPLICATION);
+					history.push(ROUTES.HOME);
 				}
 			} else {
 				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
@@ -218,21 +272,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(fromPathname);
 				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 			} else {
-				history.push(ROUTES.APPLICATION);
+				history.push(ROUTES.HOME);
 			}
 		} else {
 			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
 			history.push(ROUTES.LOGIN);
 		}
-	}, [
-		licenses,
-		isLoggedInState,
-		pathname,
-		user,
-		isOldRoute,
-		currentRoute,
-		location,
-	]);
+	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

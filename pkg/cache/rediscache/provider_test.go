@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	_cache "github.com/SigNoz/signoz/pkg/cache"
 	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
-	_cache "go.signoz.io/signoz/pkg/cache"
 )
 
 type CacheableEntity struct {
@@ -35,7 +35,7 @@ func TestStore(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
+	_ = cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
@@ -53,7 +53,7 @@ func TestRetrieve(t *testing.T) {
 	retrieveCacheableEntity := new(CacheableEntity)
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
+	_ = cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	data, err := storeCacheableEntity.MarshalBinary()
 	assert.NoError(t, err)
@@ -85,7 +85,7 @@ func TestSetTTL(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
+	_ = cache.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectExpire("key", 4*time.Second).RedisNil()
 	cache.SetTTL(context.Background(), "key", 4*time.Second)
@@ -105,7 +105,7 @@ func TestRemove(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
+	_ = c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectDel("key").RedisNil()
 	c.Remove(context.Background(), "key")
@@ -125,10 +125,10 @@ func TestBulkRemove(t *testing.T) {
 	}
 
 	mock.ExpectSet("key", storeCacheableEntity, 10*time.Second).RedisNil()
-	c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
+	_ = c.Store(context.Background(), "key", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectSet("key2", storeCacheableEntity, 10*time.Second).RedisNil()
-	c.Store(context.Background(), "key2", storeCacheableEntity, 10*time.Second)
+	_ = c.Store(context.Background(), "key2", storeCacheableEntity, 10*time.Second)
 
 	mock.ExpectDel("key", "key2").RedisNil()
 	c.BulkRemove(context.Background(), []string{"key", "key2"})

@@ -4,7 +4,7 @@ import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import uPlot from 'uplot';
 
@@ -50,6 +50,7 @@ export interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: OnClickPluginOpts['onClick'];
+	customOnDragSelect?: (start: number, end: number) => void;
 	name: string;
 	tableProcessedDataRef: MutableRefObject<RowData[]>;
 	version?: string;
@@ -57,6 +58,7 @@ export interface FullViewProps {
 	yAxisUnit?: string;
 	isDependedDataLoaded?: boolean;
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
+	setCurrentGraphRef: Dispatch<SetStateAction<RefObject<HTMLDivElement> | null>>;
 }
 
 export interface GraphManagerProps extends UplotProps {

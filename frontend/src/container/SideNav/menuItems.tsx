@@ -3,11 +3,14 @@ import ROUTES from 'constants/routes';
 import {
 	BarChart2,
 	BellDot,
+	Binoculars,
 	Boxes,
 	BugIcon,
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	HardDrive,
+	Home,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
@@ -28,6 +31,18 @@ export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
 	label: 'Get Started',
 	icon: <RocketOutlined rotate={45} />,
+};
+
+export const getStartedV3MenuItem = {
+	key: ROUTES.GET_STARTED_WITH_CLOUD,
+	label: 'Get Started',
+	icon: <RocketOutlined rotate={45} />,
+};
+
+export const homeMenuItem = {
+	key: ROUTES.HOME,
+	label: 'Home',
+	icon: <Home size={16} />,
 };
 
 export const inviteMemberMenuItem = {
@@ -68,9 +83,14 @@ export const trySignozCloudMenuItem: SidebarItem = {
 
 const menuItems: SidebarItem[] = [
 	{
+		key: ROUTES.HOME,
+		label: 'Home',
+		icon: <Home size={16} />,
+	},
+	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChart2 size={16} />,
+		icon: <HardDrive size={16} />,
 	},
 	{
 		key: ROUTES.TRACES_EXPLORER,
@@ -83,10 +103,15 @@ const menuItems: SidebarItem[] = [
 		icon: <ScrollText size={16} />,
 	},
 	{
+		key: ROUTES.METRICS_EXPLORER,
+		label: 'Metrics',
+		icon: <BarChart2 size={16} />,
+		isNew: true,
+	},
+	{
 		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		label: 'Infra Monitoring',
 		icon: <Boxes size={16} />,
-		isNew: true,
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
@@ -94,9 +119,15 @@ const menuItems: SidebarItem[] = [
 		icon: <LayoutGrid size={16} />,
 	},
 	{
-		key: ROUTES.MESSAGING_QUEUES,
+		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		label: 'Messaging Queues',
 		icon: <ListMinus size={16} />,
+	},
+	{
+		key: ROUTES.API_MONITORING,
+		label: 'API Monitoring',
+		icon: <Binoculars size={16} />,
+		isNew: true,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
@@ -136,6 +167,7 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACE]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
+	[ROUTES.METRICS_EXPLORER_BASE]: ROUTES.METRICS_EXPLORER,
 };
 
 export default menuItems;

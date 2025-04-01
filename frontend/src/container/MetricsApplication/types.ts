@@ -21,6 +21,7 @@ export interface NavigateToTraceProps {
 	maxTime: number;
 	selectedTraceTags: string;
 	apmToTraceQuery: Query;
+	safeNavigate: (path: string) => void;
 }
 
 export interface DatabaseCallsRPSProps extends DatabaseCallProps {

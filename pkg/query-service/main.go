@@ -4,20 +4,17 @@ import (
 	"context"
 	"flag"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	prommodel "github.com/prometheus/common/model"
-	"go.signoz.io/signoz/pkg/config"
-	"go.signoz.io/signoz/pkg/config/envprovider"
-	"go.signoz.io/signoz/pkg/config/fileprovider"
-	"go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/migrate"
-	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.signoz.io/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/config"
+	"github.com/SigNoz/signoz/pkg/config/envprovider"
+	"github.com/SigNoz/signoz/pkg/config/fileprovider"
+	"github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -25,15 +22,10 @@ import (
 
 func initZapLog() *zap.Logger {
 	config := zap.NewProductionConfig()
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	return logger
-}
-
-func init() {
-	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
 
 func main() {
@@ -77,7 +69,6 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	version.PrintVersion()
 
 	config, err := signoz.NewConfig(context.Background(), config.ResolverConfig{
 		Uris: []string{"env:"},
@@ -85,15 +76,40 @@ func main() {
 			envprovider.NewFactory(),
 			fileprovider.NewFactory(),
 		},
+	}, signoz.DeprecatedFlags{
+		MaxIdleConns: maxIdleConns,
+		MaxOpenConns: maxOpenConns,
+		DialTimeout:  dialTimeout,
+		Config:       promConfigPath,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
 	}
 
-	signoz, err := signoz.New(context.Background(), config, signoz.NewProviderConfig())
+	version.Info.PrettyPrint(config.Version)
+
+	signoz, err := signoz.New(
+		context.Background(),
+		config,
+		signoz.NewCacheProviderFactories(),
+		signoz.NewWebProviderFactories(),
+		signoz.NewSQLStoreProviderFactories(),
+		signoz.NewTelemetryStoreProviderFactories(),
+	)
 	if err != nil {
-		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
+
+	// Read the jwt secret key
+	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
+
+	if len(jwtSecret) == 0 {
+		zap.L().Warn("No JWT secret key is specified.")
+	} else {
+		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	jwt := authtypes.NewJWT(jwtSecret, 30*time.Minute, 30*24*time.Hour)
 
 	serverOptions := &app.ServerOptions{
 		Config:                     config,
@@ -104,9 +120,6 @@ func main() {
 		PrivateHostPort:            constants.PrivateHostPort,
 		DisableRules:               disableRules,
 		RuleRepoURL:                ruleRepoURL,
-		MaxIdleConns:               maxIdleConns,
-		MaxOpenConns:               maxOpenConns,
-		DialTimeout:                dialTimeout,
 		CacheConfigPath:            cacheConfigPath,
 		FluxInterval:               fluxInterval,
 		FluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
@@ -114,21 +127,7 @@ func main() {
 		UseLogsNewSchema:           useLogsNewSchema,
 		UseTraceNewSchema:          useTraceNewSchema,
 		SigNoz:                     signoz,
-	}
-
-	// Read the jwt secret key
-	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
-
-	if len(auth.JwtSecret) == 0 {
-		zap.L().Warn("No JWT secret key is specified.")
-	} else {
-		zap.L().Info("JWT secret key set successfully.")
-	}
-
-	if err := migrate.Migrate(signoz.SQLStore.SQLxDB()); err != nil {
-		zap.L().Error("Failed to migrate", zap.Error(err))
-	} else {
-		zap.L().Info("Migration successful")
+		Jwt:                        jwt,
 	}
 
 	server, err := app.NewServer(serverOptions)
@@ -144,22 +143,20 @@ func main() {
 		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
-	signalsChannel := make(chan os.Signal, 1)
-	signal.Notify(signalsChannel, os.Interrupt, syscall.SIGTERM)
+	signoz.Start(context.Background())
 
-	for {
-		select {
-		case status := <-server.HealthCheckStatus():
-			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
-		case <-signalsChannel:
-			logger.Info("Received OS Interrupt Signal ... ")
-			err := server.Stop()
-			if err != nil {
-				logger.Fatal("Failed to stop server", zap.Error(err))
-			}
-			logger.Info("Server stopped")
-			return
-		}
+	if err := signoz.Wait(context.Background()); err != nil {
+		zap.L().Fatal("Failed to start signoz", zap.Error(err))
+	}
+
+	err = server.Stop()
+	if err != nil {
+		zap.L().Fatal("Failed to stop server", zap.Error(err))
+	}
+
+	err = signoz.Stop(context.Background())
+	if err != nil {
+		zap.L().Fatal("Failed to stop signoz", zap.Error(err))
 	}
 
 }

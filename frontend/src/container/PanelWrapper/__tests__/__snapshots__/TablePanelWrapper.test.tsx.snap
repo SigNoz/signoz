@@ -9,6 +9,8 @@ exports[`Table panel wrappper tests table should render fine with the query resp
   width: 0.625rem;
   height: 100%;
   cursor: col-resize;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 
 .c0 {
@@ -54,7 +56,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
       class="query-table"
     >
       <div
-        class="ant-table-wrapper css-dev-only-do-not-override-2i2tap"
+        class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-2i2tap"
       >
         <div
           class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
@@ -82,7 +84,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                       <tr>
                         <th
                           aria-label="service_name"
-                          class="ant-table-cell ant-table-column-has-sorters react-resizable"
+                          class="resizable-header react-resizable"
                           scope="col"
                           tabindex="0"
                         >
@@ -143,12 +145,12 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             </span>
                           </div>
                           <span
-                            class="c1 react-resizable-handle"
+                            class="c1 resize-handle"
                           />
                         </th>
                         <th
                           aria-label="latency-per-service"
-                          class="ant-table-cell ant-table-column-has-sorters react-resizable"
+                          class="resizable-header react-resizable"
                           scope="col"
                           tabindex="0"
                         >
@@ -209,7 +211,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                             </span>
                           </div>
                           <span
-                            class="c1 react-resizable-handle"
+                            class="c1 resize-handle"
                           />
                         </th>
                       </tr>
@@ -221,7 +223,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                   style="overflow-x: auto; overflow-y: hidden;"
                 >
                   <table
-                    style="width: auto; min-width: 100%; table-layout: fixed;"
+                    style="min-width: 100%; table-layout: fixed;"
                   >
                     <colgroup>
                       <col
@@ -266,7 +268,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               demo-app
                             </div>
@@ -277,7 +279,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               4.35 s
                             </div>
@@ -292,7 +294,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               customer
                             </div>
@@ -303,7 +305,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               431 ms
                             </div>
@@ -318,7 +320,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               mysql
                             </div>
@@ -329,7 +331,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               431 ms
                             </div>
@@ -344,7 +346,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               frontend
                             </div>
@@ -355,7 +357,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               287 ms
                             </div>
@@ -370,7 +372,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               driver
                             </div>
@@ -381,7 +383,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               230 ms
                             </div>
@@ -396,7 +398,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               route
                             </div>
@@ -407,7 +409,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               66.4 ms
                             </div>
@@ -422,7 +424,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               redis
                             </div>
@@ -433,7 +435,7 @@ exports[`Table panel wrappper tests table should render fine with the query resp
                         >
                           <div>
                             <div
-                              class="line-clamped-text"
+                              class="line-clamped-wrapper__text"
                             >
                               31.3 ms
                             </div>

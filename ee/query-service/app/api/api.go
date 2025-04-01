@@ -5,30 +5,30 @@ import (
 	"net/http/httputil"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/interfaces"
+	"github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/usage"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
-	"go.signoz.io/signoz/ee/query-service/interfaces"
-	"go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/usage"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	rules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/version"
 )
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
 	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
-	MaxIdleConns                  int
-	MaxOpenConns                  int
-	DialTimeout                   time.Duration
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
@@ -39,10 +39,12 @@ type APIHandlerOptions struct {
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
 	Gateway                       *httputil.ReverseProxy
+	GatewayUrl                    string
 	// Querier Influx Interval
 	FluxInterval      time.Duration
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	JWT               *authtypes.JWT
 }
 
 type APIHandler struct {
@@ -51,15 +53,12 @@ type APIHandler struct {
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
+func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		SkipConfig:                    opts.SkipConfig,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
-		MaxIdleConns:                  opts.MaxIdleConns,
-		MaxOpenConns:                  opts.MaxOpenConns,
-		DialTimeout:                   opts.DialTimeout,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
@@ -70,6 +69,8 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		FluxInterval:                  opts.FluxInterval,
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
+		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		Signoz:                        signoz,
 	})
 
 	if err != nil {
@@ -117,13 +118,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.listLicenses)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.applyLicense)).
-		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/featureFlags",
 		am.OpenAccess(ah.getFeatureFlags)).
@@ -178,11 +172,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
-	// v2
-	router.HandleFunc("/api/v2/licenses",
-		am.ViewAccess(ah.listLicensesV2)).
-		Methods(http.MethodGet)
-
 	// v3
 	router.HandleFunc("/api/v3/licenses", am.ViewAccess(ah.listLicensesV3)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.applyLicenseV3)).Methods(http.MethodPost)
@@ -199,10 +188,20 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 }
 
+func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+
+	ah.APIHandler.RegisterCloudIntegrationsRoutes(router, am)
+
+	router.HandleFunc(
+		"/api/v1/cloud-integrations/{cloudProvider}/accounts/generate-connection-params",
+		am.EditAccess(ah.CloudIntegrationsGenerateConnectionParams),
+	).Methods(http.MethodGet)
+
+}
+
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := basemodel.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: ah.SetupCompleted,
 	}

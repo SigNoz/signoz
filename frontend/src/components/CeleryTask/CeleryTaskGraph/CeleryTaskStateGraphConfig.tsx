@@ -2,8 +2,15 @@
 import './CeleryTaskGraph.style.scss';
 
 import { Col, Row } from 'antd';
-import { Dispatch, SetStateAction } from 'react';
+import logEvent from 'api/common/logEvent';
+import { QueryParams } from 'constants/query';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 
+import {
+	applyCeleryFilterOnWidgetData,
+	getFiltersFromQueryParams,
+} from '../CeleryUtils';
 import {
 	celeryAllStateCountWidgetData,
 	celeryFailedStateCountWidgetData,
@@ -38,19 +45,36 @@ function CeleryTaskStateGraphConfig({
 		{ label: 'Successful', key: CeleryTaskState.Successful },
 	];
 
+	const urlQuery = useUrlQuery();
+
 	const handleTabClick = (key: CeleryTaskState): void => {
 		setBarState(key as CeleryTaskState);
+		logEvent('MQ Celery: State graph tab clicked', {
+			taskName: urlQuery.get(QueryParams.taskName),
+			graphState: key,
+		});
 	};
 
-	const { values, isLoading, isError } = useGetValueFromWidget(
-		[
-			celeryAllStateCountWidgetData,
-			celeryFailedStateCountWidgetData,
-			celeryRetryStateCountWidgetData,
-			celerySuccessStateCountWidgetData,
-		],
-		['celery-task-states'],
+	const selectedFilters = useMemo(
+		() =>
+			getFiltersFromQueryParams(
+				QueryParams.taskName,
+				urlQuery,
+				'celery.task_name',
+			),
+		[urlQuery],
 	);
+
+	const widgetData = [
+		celeryAllStateCountWidgetData,
+		celeryFailedStateCountWidgetData,
+		celeryRetryStateCountWidgetData,
+		celerySuccessStateCountWidgetData,
+	].map((data) => applyCeleryFilterOnWidgetData(selectedFilters || [], data));
+
+	const { values, isLoading, isError } = useGetValueFromWidget(widgetData, [
+		'celery-task-states',
+	]);
 
 	return (
 		<Row className="celery-task-states">
@@ -66,7 +90,13 @@ function CeleryTaskStateGraphConfig({
 					<div className="celery-task-states__label-wrapper">
 						<div className="celery-task-states__label">{tab.label}</div>
 						<div className="celery-task-states__value">
-							{isLoading ? '-' : isError ? '-' : values[index]}
+							{isLoading
+								? '-'
+								: isError
+								? '-'
+								: Number.isNaN(values[index])
+								? '-'
+								: Math.round(Number(values[index]))}
 						</div>
 					</div>
 					{tab.key === barState && <div className="celery-task-states__indicator" />}
