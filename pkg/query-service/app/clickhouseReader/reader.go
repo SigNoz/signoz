@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 	"reflect"
 	"regexp"
 	"sort"
@@ -16,20 +15,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"honnef.co/go/tools/config"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
-	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/promql"
 
-	"github.com/prometheus/prometheus/storage"
-	"github.com/prometheus/prometheus/storage/remote"
+	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -38,7 +33,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/jmoiron/sqlx"
 
-	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
 	queryprogress "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader/query_progress"
@@ -120,6 +114,7 @@ var (
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
 	db                      clickhouse.Conn
+	prometheus              prometheus.Prometheus
 	localDB                 *sqlx.DB
 	TraceDB                 string
 	operationsTable         string
@@ -138,9 +133,6 @@ type ClickHouseReader struct {
 	logsAttributeKeys       string
 	logsResourceKeys        string
 	logsTagAttributeTableV2 string
-	queryEngine             *promql.Engine
-	remoteStorage           *remote.Storage
-	fanoutStorage           *storage.Storage
 	queryProgressTracker    queryprogress.QueryProgressTracker
 
 	logsTableV2              string
@@ -175,8 +167,8 @@ type ClickHouseReader struct {
 // NewTraceReader returns a TraceReader for the database
 func NewReader(
 	localDB *sqlx.DB,
-	db driver.Conn,
-	configFile string,
+	telemetryStore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
@@ -185,14 +177,14 @@ func NewReader(
 	cache cache.Cache,
 ) *ClickHouseReader {
 	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	return NewReaderFromClickhouseConnection(options, localDB, telemetryStore, prometheus, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
 func NewReaderFromClickhouseConnection(
-	db driver.Conn,
 	options *Options,
 	localDB *sqlx.DB,
-	configFile string,
+	telemetryStore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
 	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
@@ -215,7 +207,8 @@ func NewReaderFromClickhouseConnection(
 	}
 
 	return &ClickHouseReader{
-		db:                      db,
+		db:                      telemetryStore.ClickhouseDB(),
+		prometheus:              prometheus,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
 		operationsTable:         options.primary.OperationsTable,
@@ -235,7 +228,6 @@ func NewReaderFromClickhouseConnection(
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
 		logsTagAttributeTableV2: options.primary.LogsTagAttributeTableV2,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
-		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
@@ -262,154 +254,8 @@ func NewReaderFromClickhouseConnection(
 	}
 }
 
-func (r *ClickHouseReader) Start(readerReady chan bool) {
-	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
-	allowedFormat := promlog.AllowedFormat{}
-	allowedFormat.Set("logfmt")
-
-	promlogConfig := promlog.Config{
-		Level:  &logLevel,
-		Format: &allowedFormat,
-	}
-
-	logger := promlog.New(&promlogConfig)
-
-	startTime := func() (int64, error) {
-		return int64(promModel.Latest), nil
-	}
-
-	remoteStorage := remote.NewStorage(
-		log.With(logger, "component", "remote"),
-		nil,
-		startTime,
-		"",
-		time.Duration(1*time.Minute),
-		nil,
-		false,
-	)
-
-	cfg := struct {
-		configFile string
-
-		localStoragePath    string
-		lookbackDelta       promModel.Duration
-		webTimeout          promModel.Duration
-		queryTimeout        promModel.Duration
-		queryConcurrency    int
-		queryMaxSamples     int
-		RemoteFlushDeadline promModel.Duration
-
-		prometheusURL string
-
-		logLevel promlog.AllowedLevel
-	}{
-		configFile: r.promConfigFile,
-	}
-
-	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-
-	opts := promql.EngineOpts{
-		Logger:     log.With(logger, "component", "query engine"),
-		Reg:        nil,
-		MaxSamples: 50000000,
-		Timeout:    time.Duration(2 * time.Minute),
-		ActiveQueryTracker: promql.NewActiveQueryTracker(
-			"",
-			20,
-			log.With(logger, "component", "activeQueryTracker"),
-		),
-	}
-
-	queryEngine := promql.NewEngine(opts)
-
-	reloaders := []func(cfg *config.Config) error{
-		remoteStorage.ApplyConfig,
-	}
-
-	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
-	type closeOnce struct {
-		C     chan struct{}
-		once  sync.Once
-		Close func()
-	}
-	// Wait until the server is ready to handle reloading.
-	reloadReady := &closeOnce{
-		C: make(chan struct{}),
-	}
-	reloadReady.Close = func() {
-		reloadReady.once.Do(func() {
-			close(reloadReady.C)
-		})
-	}
-
-	var g group.Group
-	{
-		// Initial configuration loading.
-		cancel := make(chan struct{})
-		g.Add(
-			func() error {
-				var err error
-				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
-				if err != nil {
-					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
-				}
-
-				reloadReady.Close()
-
-				<-cancel
-
-				return nil
-			},
-			func(err error) {
-				close(cancel)
-			},
-		)
-	}
-	r.queryEngine = queryEngine
-	r.remoteStorage = remoteStorage
-	r.fanoutStorage = &fanoutStorage
-	readerReady <- true
-
-	if err := g.Run(); err != nil {
-		level.Error(logger).Log("err", err)
-		os.Exit(1)
-	}
-
-}
-
-func (r *ClickHouseReader) GetQueryEngine() *promql.Engine {
-	return r.queryEngine
-}
-
-func (r *ClickHouseReader) GetFanoutStorage() *storage.Storage {
-	return r.fanoutStorage
-}
-
-func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
-	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
-
-	conf, err := config.LoadFile(filename, false, false, logger)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
-	}
-
-	failed := false
-	for _, rl := range rls {
-		if err := rl(conf); err != nil {
-			level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
-			failed = true
-		}
-	}
-	if failed {
-		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
-	}
-	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
-	return conf, nil
-}
-
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.queryEngine.NewInstantQuery(ctx, r.remoteStorage, nil, queryParams.Query, queryParams.Time)
+	qry, err := r.prometheus.Engine().NewInstantQuery(ctx, r.prometheus.Storage(), nil, queryParams.Query, queryParams.Time)
 	if err != nil {
 		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
@@ -428,7 +274,7 @@ func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, que
 }
 
 func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.queryEngine.NewRangeQuery(ctx, r.remoteStorage, nil, query.Query, query.Start, query.End, query.Step)
+	qry, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, query.Query, query.Start, query.End, query.Step)
 
 	if err != nil {
 		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -1143,7 +989,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -1291,7 +1137,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-	levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	if r.useTraceNewSchema {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)

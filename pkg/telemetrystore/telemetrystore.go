@@ -4,28 +4,26 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type TelemetryStore interface {
-	ClickHouseDB() clickhouse.Conn
+	ClickhouseDB() clickhouse.Conn
 }
 
 type TelemetryStoreHook interface {
-	BeforeQuery(ctx context.Context, query string, args ...interface{}) (context.Context, string, []interface{})
-	AfterQuery(ctx context.Context, query string, args []interface{}, rows driver.Rows, err error)
+	BeforeQuery(ctx context.Context, event *QueryEvent) context.Context
+	AfterQuery(ctx context.Context, event *QueryEvent)
 }
 
-func WrapBeforeQuery(hooks []TelemetryStoreHook, ctx context.Context, query string, args ...interface{}) (context.Context, string, []interface{}) {
+func WrapBeforeQuery(hooks []TelemetryStoreHook, ctx context.Context, event *QueryEvent) context.Context {
 	for _, hook := range hooks {
-		ctx, query, args = hook.BeforeQuery(ctx, query, args...)
+		ctx = hook.BeforeQuery(ctx, event)
 	}
-	return ctx, query, args
+	return ctx
 }
 
-// runAfterHooks executes all after hooks in order
-func WrapAfterQuery(hooks []TelemetryStoreHook, ctx context.Context, query string, args []interface{}, rows driver.Rows, err error) {
-	for _, hook := range hooks {
-		hook.AfterQuery(ctx, query, args, rows, err)
+func WrapAfterQuery(hooks []TelemetryStoreHook, ctx context.Context, event *QueryEvent) {
+	for i := len(hooks) - 1; i >= 0; i-- {
+		hooks[i].AfterQuery(ctx, event)
 	}
 }

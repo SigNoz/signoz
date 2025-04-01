@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
@@ -62,12 +64,19 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdatePipelines(sqlstore),
 		sqlmigration.NewDropLicensesSitesFactory(sqlstore),
 		sqlmigration.NewUpdateInvitesFactory(sqlstore),
+		sqlmigration.NewUpdatePatFactory(sqlstore),
 	)
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
-		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
+		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewSettingsFactory(), telemetrystorehook.NewLoggingFactory()),
+	)
+}
+
+func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[prometheus.Prometheus, prometheus.Config]] {
+	return factory.MustNewNamedMap(
+		clickhouseprometheus.NewFactory(telemetryStore),
 	)
 }
 

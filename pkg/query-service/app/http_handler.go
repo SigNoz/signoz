@@ -24,12 +24,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/prometheus/promql"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/prometheus/prometheus/promql"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
@@ -614,6 +614,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
+		render.Success(rw, http.StatusOK, []any{})
+	})).Methods(http.MethodGet)
+	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
+		render.Error(rw, errorsV2.New(errorsV2.TypeUnsupported, errorsV2.CodeUnsupported, "not implemented"))
+	})).Methods(http.MethodGet)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddleware) {

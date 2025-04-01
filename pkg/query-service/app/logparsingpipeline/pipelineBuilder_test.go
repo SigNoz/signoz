@@ -10,8 +10,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
@@ -228,7 +229,9 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 	makeTestPipeline := func(config []pipelinetypes.PipelineOperator) pipelinetypes.GettablePipeline {
 		return pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				ID:      uuid.New().String(),
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
 				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
@@ -457,7 +460,9 @@ func TestResourceFiltersWork(t *testing.T) {
 
 	testPipeline := pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			ID:      uuid.New().String(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID: 1,
 			Name:    "pipeline1",
 			Alias:   "pipeline1",
@@ -525,7 +530,9 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 	} {
 		testPipeline := pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				ID:      uuid.New().String(),
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
 				OrderID: 1,
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
@@ -584,7 +591,9 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 
 	testPipeline := pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			ID:      uuid.New().String(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID: 1,
 			Name:    "pipeline1",
 			Alias:   "pipeline1",
@@ -645,7 +654,9 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 
 	testPipeline := pipelinetypes.GettablePipeline{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			ID:      uuid.New().String(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID: 1,
 			Name:    "pipeline1",
 			Alias:   "pipeline1",
@@ -752,7 +763,9 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 
 	testPipelines := []pipelinetypes.GettablePipeline{{
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			ID:      uuid.New().String(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID: 1,
 			Name:    "pipeline1",
 			Alias:   "pipeline1",
@@ -783,7 +796,9 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 		},
 	}, {
 		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			ID:      uuid.New().String(),
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
 			OrderID: 2,
 			Name:    "pipeline2",
 			Alias:   "pipeline2",

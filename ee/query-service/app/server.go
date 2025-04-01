@@ -18,13 +18,14 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
-	"github.com/SigNoz/signoz/ee/query-service/interfaces"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -49,7 +50,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -137,18 +137,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// set license manager as feature flag provider in dao
 	modelDao.SetFlagProvider(lm)
-	readerReady := make(chan bool)
 
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
 		return nil, err
 	}
 
-	var reader interfaces.DataConnector
-	qb := db.NewDataConnector(
+	reader := db.NewDataConnector(
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
-		serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
-		serverOptions.PromConfigPath,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 		lm,
 		serverOptions.Cluster,
 		serverOptions.UseLogsNewSchema,
@@ -156,8 +154,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		fluxIntervalForTraceDetail,
 		serverOptions.SigNoz.Cache,
 	)
-	go qb.Start(readerReady)
-	reader = qb
 
 	skipConfig := &basemodel.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
@@ -176,9 +172,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
-	<-readerReady
 	rm, err := makeRulesManager(
-		serverOptions.PromConfigPath,
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
@@ -189,6 +183,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.UseTraceNewSchema,
 		serverOptions.SigNoz.Alertmanager,
 		serverOptions.SigNoz.SQLStore,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 	)
 
 	if err != nil {
@@ -233,7 +229,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickHouseDB(), serverOptions.Config.TelemetryStore.ClickHouse.DSN)
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.Config.TelemetryStore.Clickhouse.DSN)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +300,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	errorList := qb.PreloadMetricsMetadata(context.Background())
+	errorList := reader.PreloadMetricsMetadata(context.Background())
 	for _, er := range errorList {
 		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
 	}
@@ -537,7 +533,6 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	promConfigPath,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
@@ -548,16 +543,13 @@ func makeRulesManager(
 	useTraceNewSchema bool,
 	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
+	telemetryStore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
 ) (*baserules.Manager, error) {
-	// create engine
-	pqle, err := pqle.FromConfigPath(promConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pql engine : %v", err)
-	}
-
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		PqlEngine:           pqle,
+		TelemetryStore:      telemetryStore,
+		Prometheus:          prometheus,
 		RepoURL:             ruleRepoURL,
 		DBConn:              db,
 		Context:             context.Background(),

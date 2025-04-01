@@ -12,8 +12,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -82,7 +84,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	// prepare config elements
 	elements := make([]string, len(pipelines))
 	for i, p := range pipelines {
-		elements[i] = p.ID
+		elements[i] = p.ID.StringValue()
 	}
 
 	// prepare config by calling gen func
@@ -110,7 +112,9 @@ func (ic *LogParsingPipelineController) ValidatePipelines(
 	for _, pp := range postedPipelines {
 		gettablePipelines = append(gettablePipelines, pipelinetypes.GettablePipeline{
 			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				ID:          uuid.New().String(),
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
 				OrderID:     pp.OrderID,
 				Enabled:     pp.Enabled,
 				Name:        pp.Name,
@@ -145,10 +149,11 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	// todo(nitya): remove this once we fix agents in multitenancy
 	defaultOrgID, err := ic.GetDefaultOrgID(ctx)
 	if err != nil {
-		return nil, model.WrapApiError(err, "failed to get default org ID")
+		// we don't want to fail the request if we can't get the default org ID
+		// we will just return an empty list of pipelines
+		zap.L().Warn("failed to get default org ID", zap.Error(err))
+		return result, nil
 	}
-
-	fmt.Println("defaultOrgID", defaultOrgID)
 
 	if version >= 0 {
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, defaultOrgID, version)

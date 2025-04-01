@@ -70,7 +70,7 @@ function EndPointMetrics({
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={metricsData?.rate}>
-								<span className="round-metric-tag">{metricsData?.rate}/sec</span>
+								<span className="round-metric-tag">{metricsData?.rate} ops/sec</span>
 							</Tooltip>
 						)}
 					</Typography.Text>
