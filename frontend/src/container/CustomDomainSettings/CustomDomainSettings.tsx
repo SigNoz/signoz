@@ -61,7 +61,7 @@ export default function CustomDomainSettings(): JSX.Element {
 		isLoading: isLoadingDeploymentsData,
 		isFetching: isFetchingDeploymentsData,
 		refetch: refetchDeploymentsData,
-	} = useGetDeploymentsData();
+	} = useGetDeploymentsData(true);
 
 	const {
 		mutate: updateSubDomain,
