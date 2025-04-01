@@ -231,7 +231,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 		return false
 	}
 
-	zap.L().Debug("alert found in maintenance", zap.String("alert", ruleID), zap.String("maintenance", m.Name))
+	zap.L().Info("alert found in maintenance", zap.String("alert", ruleID), zap.String("maintenance", m.Name))
 
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
@@ -244,16 +244,17 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 	// fixed schedule
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		zap.L().Debug("checking fixed schedule",
+		zap.L().Info("checking fixed schedule",
 			zap.String("rule", ruleID),
 			zap.String("maintenance", m.Name),
 			zap.Time("currentTime", currentTime),
 			zap.Time("startTime", m.Schedule.StartTime),
 			zap.Time("endTime", m.Schedule.EndTime))
 
-		if currentTime.Equal(m.Schedule.StartTime) ||
-			currentTime.Equal(m.Schedule.EndTime) ||
-			(currentTime.After(m.Schedule.StartTime) && currentTime.Before(m.Schedule.EndTime)) {
+		startTime := m.Schedule.StartTime.In(loc)
+		endTime := m.Schedule.EndTime.In(loc)
+		if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
+			(currentTime.After(startTime) && currentTime.Before(endTime)) {
 			return true
 		}
 	}
@@ -264,7 +265,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 		duration := time.Duration(m.Schedule.Recurrence.Duration)
 		end := start.Add(duration)
 
-		zap.L().Debug("checking recurring schedule base info",
+		zap.L().Info("checking recurring schedule base info",
 			zap.String("rule", ruleID),
 			zap.String("maintenance", m.Name),
 			zap.Time("startTime", start),
@@ -272,7 +273,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 		// Make sure the recurrence has started
 		if currentTime.Before(start.In(loc)) {
-			zap.L().Debug("current time is before recurrence start time",
+			zap.L().Info("current time is before recurrence start time",
 				zap.String("rule", ruleID),
 				zap.String("maintenance", m.Name))
 			return false
@@ -282,7 +283,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 		if m.Schedule.Recurrence.EndTime != nil {
 			endTime := *m.Schedule.Recurrence.EndTime
 			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
-				zap.L().Debug("current time is after recurrence end time",
+				zap.L().Info("current time is after recurrence end time",
 					zap.String("rule", ruleID),
 					zap.String("maintenance", m.Name))
 				return false
@@ -313,7 +314,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 					endHour, endMinute, 0, 0, loc)
 			}
 
-			zap.L().Debug("checking daily schedule",
+			zap.L().Info("checking daily schedule",
 				zap.String("rule", ruleID),
 				zap.String("maintenance", m.Name),
 				zap.Time("currentTime", currentTime),
@@ -327,11 +328,11 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 			}
 
 			// Check previous day if we crossed midnight and current time is before the end time today
-			if crossesMidnight && currentTime.Hour() < endHour ||
-				(currentTime.Hour() == endHour && currentTime.Minute() < endMinute) {
+			if crossesMidnight && (currentTime.Hour() < endHour ||
+				(currentTime.Hour() == endHour && currentTime.Minute() < endMinute)) {
 
 				yesterdayStart := startTime.AddDate(0, 0, -1)
-				zap.L().Debug("checking previous day for daily schedule",
+				zap.L().Info("checking previous day for daily schedule",
 					zap.Time("yesterdayStart", yesterdayStart))
 
 				if currentTime.After(yesterdayStart) {
@@ -364,7 +365,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 					endHour, endMinute, 0, 0, loc)
 			}
 
-			zap.L().Debug("checking weekly schedule",
+			zap.L().Info("checking weekly schedule",
 				zap.String("rule", ruleID),
 				zap.String("maintenance", m.Name),
 				zap.Time("currentTime", currentTime),
@@ -397,7 +398,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 					yesterdayStart := time.Date(yesterdayTime.Year(), yesterdayTime.Month(),
 						yesterdayTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
 
-					zap.L().Debug("checking previous day for weekly schedule",
+					zap.L().Info("checking previous day for weekly schedule",
 						zap.Time("yesterdayStart", yesterdayStart),
 						zap.String("yesterdayWeekday", string(yesterdayWeekday)))
 
@@ -409,13 +410,14 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 		case RepeatTypeMonthly:
 			// Create this month's start time on the specified day
-			monthStartDay := start.Day()
+			referenceDay := start.Day()
 
 			// Adjust for month length if needed
 			// Get number of days in current month
 			currentYear, currentMonth, _ := currentTime.Date()
 			lastDay := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, loc).Day()
 
+			monthStartDay := referenceDay
 			if monthStartDay > lastDay {
 				monthStartDay = lastDay
 			}
@@ -430,7 +432,8 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 			endTime := startTime.AddDate(0, 0, durationDays)
 			endTime = endTime.Add(time.Duration(remainingHours * float64(time.Hour)))
 
-			zap.L().Debug("checking monthly schedule",
+			crossesMonth := endTime.Month() != startTime.Month() || endTime.Year() != startTime.Year()
+			zap.L().Info("checking monthly schedule",
 				zap.String("rule", ruleID),
 				zap.String("maintenance", m.Name),
 				zap.Time("currentTime", currentTime),
@@ -443,33 +446,43 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 				return true
 			}
 
-			// If crosses to previous month, check previous month's window
-			if durationDays > 0 {
-				// Check if we're in the early days of the month and might be in previous month's window
-				if currentTime.Day() <= durationDays {
-					prevMonth := currentTime.AddDate(0, -1, 0)
-					prevYear, prevMonthVal, _ := prevMonth.Date()
+			durationDays = int(duration.Hours()/24) + 1 // Add 1 to handle partial days
 
-					// Get last day of previous month
-					lastDayPrevMonth := time.Date(prevYear, prevMonthVal+1, 0, 0, 0, 0, 0, loc).Day()
-					prevMonthStartDay := start.Day()
+			// Check if we're in the early days of the month and might be in previous month's window
+			if currentTime.Day() <= durationDays && crossesMonth {
+				// Get previous month
+				var prevYear int
+				var prevMonth time.Month
 
-					if prevMonthStartDay > lastDayPrevMonth {
-						prevMonthStartDay = lastDayPrevMonth
-					}
+				if currentMonth == time.January {
+					prevYear = currentYear - 1
+					prevMonth = time.December
+				} else {
+					prevYear = currentYear
+					prevMonth = currentMonth - 1
+				}
 
-					prevMonthStart := time.Date(prevYear, prevMonthVal, prevMonthStartDay,
-						start.Hour(), start.Minute(), 0, 0, loc)
-					prevMonthEnd := prevMonthStart.AddDate(0, 0, durationDays)
-					prevMonthEnd = prevMonthEnd.Add(time.Duration(remainingHours * float64(time.Hour)))
+				// Get last day of previous month
+				lastDayPrevMonth := time.Date(prevYear, prevMonth+1, 0, 0, 0, 0, 0, loc).Day()
 
-					zap.L().Debug("checking previous month for monthly schedule",
-						zap.Time("prevMonthStart", prevMonthStart),
-						zap.Time("prevMonthEnd", prevMonthEnd))
+				// Adjust for month length
+				prevMonthStartDay := referenceDay
+				if referenceDay > lastDayPrevMonth {
+					prevMonthStartDay = lastDayPrevMonth
+				}
 
-					if currentTime.After(prevMonthStart) && currentTime.Before(prevMonthEnd) {
-						return true
-					}
+				// Create previous month's start and end times
+				prevMonthStart := time.Date(prevYear, prevMonth, prevMonthStartDay,
+					start.Hour(), start.Minute(), 0, 0, loc)
+				prevMonthEnd := prevMonthStart.Add(duration)
+
+				zap.L().Info("checking previous month for monthly schedule",
+					zap.Time("prevMonthStart", prevMonthStart),
+					zap.Time("prevMonthEnd", prevMonthEnd))
+
+				if (currentTime.After(prevMonthStart) || currentTime.Equal(prevMonthStart)) &&
+					(currentTime.Before(prevMonthEnd) || currentTime.Equal(prevMonthEnd)) {
+					return true
 				}
 			}
 		}
@@ -487,7 +500,14 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {
-	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
+	loc, err := time.LoadLocation(m.Schedule.Timezone)
+	if err != nil {
+		// handle error appropriately, for example log and return false or fallback to UTC
+		zap.L().Error("Error loading timezone", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
+		return false
+	}
+	now := time.Now().In(loc)
+
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
 		return now.Before(m.Schedule.StartTime)
 	}

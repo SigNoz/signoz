@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+// Helper function to create a time pointer
+func timePtr(t time.Time) *time.Time {
+	return &t
+}
+
 func TestShouldSkipMaintenance(t *testing.T) {
 
 	cases := []struct {
@@ -13,6 +18,324 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		ts          time.Time
 		skip        bool
 	}{
+		// Testing weekly recurrence with midnight crossing
+		{
+			name: "weekly-across-midnight-previous-day",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
+						Duration:   Duration(time.Hour * 4),                      // Until Tuesday 02:00
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 2, 1, 30, 0, 0, time.UTC), // Tuesday 01:30
+			skip: true,
+		},
+		// Weekly recurrence where the previous day is not in RepeatOn
+		{
+			name: "weekly-across-midnight-previous-day-not-in-repeaton",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 4, 2, 22, 0, 0, 0, time.UTC), // Tuesday 22:00
+						Duration:   Duration(time.Hour * 4),                      // Until Wednesday 02:00
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnTuesday}, // Only Tuesday
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 3, 1, 30, 0, 0, time.UTC), // Wednesday 01:30
+			skip: true,
+		},
+		// Daily recurrence with midnight crossing
+		{
+			name: "daily-maintenance-across-midnight",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC), // 23:00
+						Duration:   Duration(time.Hour * 2),                      // Until 01:00 next day
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 2, 0, 30, 0, 0, time.UTC), // 00:30 next day
+			skip: true,
+		},
+		// Exactly at start time boundary
+		{
+			name: "at-start-time-boundary",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), // Exactly at start time
+			skip: true,
+		},
+		// Exactly at end time boundary
+		{
+			name: "at-end-time-boundary",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC), // Exactly at end time
+			skip: true,
+		},
+		// Monthly maintenance with multi-day duration
+		{
+			name: "monthly-multi-day-duration",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 72), // 3 days
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 30, 12, 30, 0, 0, time.UTC), // Within the 3-day window
+			skip: true,
+		},
+		// Monthly maintenance that crosses to next month
+		{
+			name: "monthly-crosses-to-next-month",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 30, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 48), // 2 days, crosses to Feb 1
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 2, 1, 11, 0, 0, 0, time.UTC), // Feb 1, 11:00
+			skip: true,
+		},
+		// Different timezone tests
+		{
+			name: "timezone-offset-test",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "America/New_York", // UTC-5 or UTC-4 depending on DST
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 22, 0, 0, 0, time.FixedZone("America/New_York", -5*3600)),
+						Duration:   Duration(time.Hour * 4),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 2, 3, 30, 0, 0, time.UTC), // 22:30 NY time on Jan 1
+			skip: true,
+		},
+		// Test negative case - time well outside window
+		{
+			name: "daily-maintenance-time-outside-window",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC), // 4 hours after start, 2 hours after end
+			skip: false,
+		},
+		// Test for recurring maintenance with an end date that is before the current time
+		{
+			name: "recurring-maintenance-with-past-end-date",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+						EndTime:    timePtr(time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC)),
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 15, 12, 30, 0, 0, time.UTC), // After the end date
+			skip: false,
+		},
+		// Monthly recurring maintenance spanning end of month into beginning of next month
+		{
+			name: "monthly-maintenance-spans-month-end",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 3, 31, 22, 0, 0, 0, time.UTC), // March 31, 22:00
+						Duration:   Duration(time.Hour * 6),                       // Until April 1, 04:00
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 1, 2, 0, 0, 0, time.UTC), // April 1, 02:00
+			skip: true,
+		},
+		// Test for RepeatOn with empty array (should apply to all days)
+		{
+			name: "weekly-empty-repeaton",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{}, // Empty - should apply to all days
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 7, 12, 30, 0, 0, time.UTC), // Sunday
+			skip: true,
+		},
+		// February has fewer days than January - test the edge case when maintenance is on 31st
+		{
+			name: "monthly-maintenance-february-fewer-days",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 2, 28, 12, 30, 0, 0, time.UTC), // February 28th (not 29th in this test)
+			skip: false,                                          // Should be true if the code correctly handles month end adjustments
+		},
+		{
+			name: "daily-maintenance-crosses-midnight",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 23, 30, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 1), // Crosses to 00:30 next day
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 2, 0, 15, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "monthly-maintenance-crosses-month-end",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 2, 29, 12, 30, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-days",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 30, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 48), // 2 days duration
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 2, 1, 11, 0, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "weekly-maintenance-crosses-midnight",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 4, 1, 23, 0, 0, 0, time.UTC), // Monday 23:00
+						Duration:   Duration(time.Hour * 2),                      // Until Tuesday 01:00
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 2, 0, 30, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-days",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 30, 12, 30, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "daily-maintenance-crosses-midnight",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 4), // Until 02:00 next day
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 2, 1, 0, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-hours",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 2),
+						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 2, 29, 12, 30, 0, 0, time.UTC),
+			skip: true,
+		},
 		{
 			name: "fixed planned maintenance start <= ts <= end",
 			maintenance: &PlannedMaintenance{
