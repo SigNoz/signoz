@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
@@ -58,9 +57,7 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 			Table("notification_channels").
 			ColumnExpr("deleted").
 			Exec(ctx); err != nil {
-			if !strings.Contains(err.Error(), "no such column") {
-				return err
-			}
+			return err
 		}
 	}
 
