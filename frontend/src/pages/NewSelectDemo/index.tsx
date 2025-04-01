@@ -167,7 +167,6 @@ function NewSelectDemo(): JSX.Element {
 	// State management for demo
 	const [singleSelectValue, setSingleSelectValue] = useState<string>();
 	const [multiSelectValue, setMultiSelectValue] = useState<string[]>([]);
-	const [searchText, setSearchText] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [showError, setShowError] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string>('');
@@ -185,22 +184,8 @@ function NewSelectDemo(): JSX.Element {
 
 	const { basicData, largeData } = sampleData;
 
-	// Filter options based on search text
-	const getFilteredOptions = (options: any[]): any[] =>
-		options.filter((option) =>
-			option.label.toLowerCase().includes(searchText.toLowerCase()),
-		);
-
 	// Handle search with simulated loading
-	const handleSearch = (text: string): void => {
-		setSearchText(text);
-		setLoading(true);
-
-		// Simulate API delay
-		setTimeout(() => {
-			setLoading(false);
-		}, 500);
-	};
+	const handleSearch = (): void => {};
 
 	// Toggle error state for demo
 	const toggleError = (): void => {
@@ -225,7 +210,7 @@ function NewSelectDemo(): JSX.Element {
 	// Get options based on current demo state
 	const getOptions = (baseOptions: any[]): any[] => {
 		if (noData) return [];
-		return getFilteredOptions(baseOptions);
+		return baseOptions;
 	};
 
 	return (
@@ -476,6 +461,7 @@ function NewSelectDemo(): JSX.Element {
 										onSearch={handleSearch}
 										loading={loading}
 										customStatusText={showError ? errorMessage : undefined}
+										enableAllSelection={false}
 									/>
 
 									<Divider />
@@ -492,9 +478,7 @@ function NewSelectDemo(): JSX.Element {
 											console.log('With Related/All', value);
 											setMultiSelectValue(value as string[]);
 										}}
-										relatedValues={basicData.relatedValues}
-										allValues={basicData.allValues}
-										options={getOptions(basicData.options)}
+										options={[...getOptions(basicData.options), ...largeData.allValues]}
 										onSearch={handleSearch}
 										loading={loading}
 										customStatusText={showError ? errorMessage : undefined}
@@ -538,8 +522,6 @@ function NewSelectDemo(): JSX.Element {
 											console.log('Large Dataset Multi', value);
 											setMultiSelectValue(value as string[]);
 										}}
-										relatedValues={largeData.relatedValues}
-										allValues={largeData.allValues}
 										options={getOptions(largeData.options)}
 										onSearch={handleSearch}
 										loading={loading}
