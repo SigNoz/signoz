@@ -7,7 +7,7 @@ import './styles.scss';
 import { SearchOutlined } from '@ant-design/icons';
 import { Checkbox, Select, SelectProps } from 'antd';
 import cx from 'classnames';
-import { isEmpty } from 'lodash-es';
+import { capitalize, isEmpty } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
@@ -18,6 +18,8 @@ import React, {
 	useState,
 } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import { prioritizeOrAddOptionForMultiSelect } from './utils';
 
 export interface OptionData {
 	label: string;
@@ -69,7 +71,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	dropdownMatchSelectWidth = true,
 	noDataMessage,
 	onClear,
-	enableAllSelection,
+	enableAllSelection = true,
 	// showAddCustomValue = true,
 	getPopupContainer,
 	dropdownRender,
@@ -87,6 +89,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const [activeChipIndex, setActiveChipIndex] = useState<number>(-1); // For tracking active chip/tag
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
+	const [visibleOptions, setVisibleOptions] = useState<OptionData[]>([]);
+	const isClickInsideDropdownRef = useRef(false);
 
 	// Convert single string value to array for consistency
 	const selectedValues = useMemo(
@@ -117,25 +121,25 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	/**
 	 * Checks if a label exists in the provided options
 	 */
-	// const isLabelPresent = useCallback(
-	// 	(options: OptionData[], label: string): boolean =>
-	// 		options.some((option) => {
-	// 			const lowerLabel = label.toLowerCase();
+	const isLabelPresent = useCallback(
+		(options: OptionData[], label: string): boolean =>
+			options.some((option) => {
+				const lowerLabel = label.toLowerCase();
 
-	// 			// Check in nested options if they exist
-	// 			if ('options' in option && Array.isArray(option.options)) {
-	// 				return (
-	// 					option.options?.some(
-	// 						(subOption) => subOption.label.toLowerCase() === lowerLabel,
-	// 					) || false
-	// 				);
-	// 			}
+				// Check in nested options if they exist
+				if ('options' in option && Array.isArray(option.options)) {
+					return (
+						option.options?.some(
+							(subOption) => subOption.label.toLowerCase() === lowerLabel,
+						) || false
+					);
+				}
 
-	// 			// Check top-level option
-	// 			return option.label.toLowerCase() === lowerLabel;
-	// 		}),
-	// 	[],
-	// );
+				// Check top-level option
+				return option.label.toLowerCase() === lowerLabel;
+			}),
+		[],
+	);
 
 	/**
 	 * Filters options based on search text
@@ -198,6 +202,25 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		(): OptionData[] => filterOptionsBySearch(options, searchText),
 		[options, searchText, filterOptionsBySearch],
 	);
+
+	useEffect(() => {
+		if (!isEmpty(searchText)) {
+			setVisibleOptions([
+				{
+					label: searchText,
+					value: searchText,
+					type: 'custom',
+				},
+				...filteredOptions,
+			]);
+		} else {
+			setVisibleOptions(
+				selectedValues.length > 0 && isEmpty(searchText)
+					? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
+					: filteredOptions,
+			);
+		}
+	}, [filteredOptions, searchText, options, selectedValues]);
 
 	// ===== Event Handlers =====
 
@@ -271,7 +294,12 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					: [...selectedValues, option.value];
 
 				if (onChange) {
-					onChange(newValues as any, newValues as any);
+					onChange(
+						newValues,
+						newValues.map(
+							(v) => options.find((o) => o.value === v) ?? { label: v, value: v },
+						),
+					);
 				}
 			};
 
@@ -288,39 +316,50 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						selected: isSelected,
 						active: isActive,
 					})}
+					onClick={(e): void => {
+						e.stopPropagation();
+						e.preventDefault();
+						handleItemSelection();
+						setActiveChipIndex(-1);
+						setActiveIndex(-1);
+					}}
+					onKeyDown={(e): void => {
+						if ((e.key === 'Enter' || e.key === ' ') && isActive) {
+							e.stopPropagation();
+							e.preventDefault();
+							handleItemSelection();
+						}
+					}}
+					onMouseEnter={(): void => {
+						setActiveIndex(index ?? -1);
+						setActiveChipIndex(-1); // Clear chip selection when hovering ALL option
+					}}
 					role="option"
 					aria-selected={isSelected}
 					aria-disabled={option.disabled}
 					tabIndex={isActive ? 0 : -1}
 				>
-					<Checkbox
-						checked={isSelected}
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							handleItemSelection();
-						}}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.stopPropagation();
-								e.preventDefault();
-								handleItemSelection();
-							}
-						}}
-						style={{ width: '100%', height: '100%' }}
-					>
+					<Checkbox checked={isSelected}>
 						<div className="option-content">
 							<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
-							{option.type === 'custom' && <div className="option-badge">Custom</div>}
+							{option.type === 'custom' && (
+								<div className="option-badge">{capitalize(option.type)}</div>
+							)}
 						</div>
 					</Checkbox>
 				</div>
 			);
 		},
-		[highlightMatchedText, searchText, onChange, activeIndex, selectedValues],
+		[
+			activeIndex,
+			highlightMatchedText,
+			searchText,
+			selectedValues,
+			onChange,
+			options,
+		],
 	);
 
-	console.log(activeIndex);
 	/**
 	 * Helper function to render option with index tracking
 	 */
@@ -352,22 +391,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		}
 	}, [options, selectedValues, onChange, getAllValues]);
 
-	const shouldEnableAllSelection = enableAllSelection;
-
 	// Modify keyboard navigation to handle dropdown navigation and chip selection
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLElement>): void => {
 			// Get flattened list of all selectable options
 			const getFlatOptions = (): OptionData[] => {
-				if (!filteredOptions) return [];
+				if (!visibleOptions) return [];
 
 				const flatList: OptionData[] = [];
-				const allOptionValues = getAllValues(options);
-				const hasAll =
-					shouldEnableAllSelection && !searchText && allOptionValues.length > 0;
+				const hasAll = enableAllSelection && !searchText;
 
 				// Process options
-				const { sectionOptions, nonSectionOptions } = splitOptions(filteredOptions);
+				const { sectionOptions, nonSectionOptions } = splitOptions(visibleOptions);
 
 				// Add all options to flat list
 				if (hasAll) {
@@ -635,15 +670,13 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			isOpen,
 			activeIndex,
 			activeChipIndex,
-			filteredOptions,
 			onChange,
 			selectedValues,
 			splitOptions,
-			getAllValues,
 			searchText,
-			shouldEnableAllSelection,
+			enableAllSelection,
 			handleSelectAll,
-			options,
+			visibleOptions,
 		],
 	);
 
@@ -652,51 +685,51 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		e.stopPropagation();
 	}, []);
 
-	// Render a section with the given label and options
-	const renderSection = useCallback(
-		(
-			section: OptionData,
-			mapFn: (options: OptionData[]) => React.ReactNode,
-		): React.ReactElement | null => {
-			if (isEmpty(section.options)) return null;
+	// Add mousedown handler to the dropdown container
+	const handleDropdownMouseDown = useCallback((e: React.MouseEvent): void => {
+		e.preventDefault(); // Prevent focus change
+		isClickInsideDropdownRef.current = true;
+	}, []);
 
-			return (
-				<div className="select-group" key={section.label}>
-					<div className="group-label" role="heading" aria-level={2}>
-						{section.label}
-					</div>
-					<div
-						className="scrollable-group"
-						role="group"
-						aria-label={`${section.label} options`}
-					>
-						{section.options && mapFn(section.options)}
-					</div>
-				</div>
-			);
-		},
-		[],
-	);
+	// Handle blur with the flag
+	const handleBlur = useCallback((): void => {
+		if (isClickInsideDropdownRef.current) {
+			isClickInsideDropdownRef.current = false;
+			return;
+		}
+		// Handle actual blur
+		setIsOpen(false);
+	}, []);
 
 	// Custom dropdown render with sections support
 	const customDropdownRender = useCallback((): React.ReactElement => {
 		// Process options based on current search
-		const processedOptions = filteredOptions;
+		const processedOptions =
+			selectedValues.length > 0 && isEmpty(searchText)
+				? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
+				: filteredOptions;
 
 		const { sectionOptions, nonSectionOptions } = splitOptions(processedOptions);
 
 		// Check if we need to add a custom option based on search text
-		// const isSearchTextNotPresent =
-		// 	!isEmpty(searchText) && !isLabelPresent(processedOptions, searchText);
+		const isSearchTextNotPresent =
+			!isEmpty(searchText) && !isLabelPresent(processedOptions, searchText);
 
-		const allOptionValues = getAllValues(options);
+		if (isSearchTextNotPresent) {
+			nonSectionOptions.unshift({
+				label: searchText,
+				value: searchText,
+				type: 'custom',
+			});
+		}
+
+		const allOptionValues = getAllValues(processedOptions); // todo-sagar - should this be options or processedOptions?
 		const allOptionsSelected =
 			allOptionValues.length > 0 &&
 			allOptionValues.every((val) => selectedValues.includes(val));
 
 		// Determine if ALL option should be shown
-		const showAllOption =
-			shouldEnableAllSelection && !searchText && allOptionValues.length > 0;
+		const showAllOption = enableAllSelection && !searchText;
 
 		// Initialize optionIndex based on whether the ALL option is shown
 		// If ALL option is shown, it gets index 0, and other options start at index 1
@@ -715,15 +748,13 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				return result;
 			});
 
-		const hasOptions = nonSectionOptions.length > 0 || sectionOptions.length > 0;
-
 		let footerMessage = 'to Navigate';
 
 		if (loading) {
 			footerMessage = 'We are updating the values...';
 		} else if (customStatusText) {
 			footerMessage = customStatusText;
-		} else if (noDataMessage && !hasOptions) {
+		} else if (noDataMessage) {
 			footerMessage = noDataMessage;
 		}
 
@@ -731,10 +762,15 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			<div
 				ref={dropdownRef}
 				className="custom-multiselect-dropdown"
+				onMouseDown={handleDropdownMouseDown}
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
+				onBlur={handleBlur}
 				role="listbox"
 				aria-multiselectable="true"
+				aria-activedescendant={
+					activeIndex >= 0 ? `option-${activeIndex}` : undefined
+				}
 				tabIndex={-1}
 			>
 				{/* ALL checkbox only when search is empty */}
@@ -757,21 +793,21 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							ref={(el): void => {
 								optionRefs.current[0] = el;
 							}}
-						>
-							<Checkbox
-								checked={allOptionsSelected}
-								onClick={(e): void => {
+							onClick={(e): void => {
+								e.stopPropagation();
+								e.preventDefault();
+								handleSelectAll();
+							}}
+							onKeyDown={(e): void => {
+								if ((e.key === 'Enter' || e.key === ' ') && activeIndex === 0) {
 									e.stopPropagation();
 									e.preventDefault();
 									handleSelectAll();
-								}}
-								onKeyDown={(e): void => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.stopPropagation();
-										e.preventDefault();
-										handleSelectAll();
-									}
-								}}
+								}
+							}}
+						>
+							<Checkbox
+								checked={allOptionsSelected}
 								style={{ width: '100%', height: '100%' }}
 							>
 								<div className="option-content">
@@ -783,45 +819,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					</>
 				)}
 
-				{/* Add custom value option when search has content
-				{showAddCustomValue && searchText && isSearchTextNotPresent && (
-					<div
-						className="custom-value-option"
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							// Add custom value functionality
-							if (!searchText || selectedValues.includes(searchText)) return;
-
-							const newValues = [...selectedValues, searchText];
-							if (onChange) {
-								onChange(newValues as any, newValues as any);
-							}
-							setSearchText('');
-						}}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === ' ') {
-								e.stopPropagation();
-								e.preventDefault();
-								if (!searchText || selectedValues.includes(searchText)) return;
-
-								const newValues = [...selectedValues, searchText];
-								if (onChange) {
-									onChange(newValues as any, newValues as any);
-								}
-								setSearchText('');
-							}
-						}}
-						role="option"
-						aria-selected={selectedValues.includes(searchText)}
-						tabIndex={0}
-					>
-						<Checkbox checked={selectedValues.includes(searchText)}>
-							Add &ldquo;{searchText}&rdquo;
-						</Checkbox>
-					</div>
-				)} */}
-
 				{/* Non-section options when not searching */}
 				{nonSectionOptions.length > 0 && (
 					<div className="no-section-options">{mapOptions(nonSectionOptions)}</div>
@@ -829,7 +826,22 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 				{/* Section options when not searching */}
 				{sectionOptions.length > 0 &&
-					sectionOptions.map((section) => renderSection(section, mapOptions))}
+					sectionOptions.map((section) =>
+						!isEmpty(section.options) ? (
+							<div className="select-group" key={section.label}>
+								<div className="group-label" role="heading" aria-level={2}>
+									{section.label}
+								</div>
+								<div
+									className="scrollable-group"
+									role="group"
+									aria-label={`${section.label} options`}
+								>
+									{section.options && mapOptions(section.options)}
+								</div>
+							</div>
+						) : null,
+					)}
 
 				{/* {loading && (
 					<div className="loading-container">
@@ -839,7 +851,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 				{/* Navigation footer */}
 				<div className="navigation-footer" role="note">
-					{!loading && !customStatusText && hasOptions && (
+					{!loading && !customStatusText && !noDataMessage && (
 						<div className="navigation-icons">
 							<ChevronUp size={16} />
 							<ChevronDown size={16} />
@@ -852,23 +864,24 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		return dropdownRender ? dropdownRender(customMenu) : customMenu;
 	}, [
+		selectedValues,
+		searchText,
 		filteredOptions,
 		splitOptions,
-		searchText,
+		isLabelPresent,
 		getAllValues,
-		options,
-		shouldEnableAllSelection,
+		enableAllSelection,
 		loading,
 		customStatusText,
 		noDataMessage,
+		handleDropdownMouseDown,
 		handleDropdownClick,
 		handleKeyDown,
+		handleBlur,
 		activeIndex,
-		selectedValues,
 		dropdownRender,
 		renderOptionWithIndex,
 		handleSelectAll,
-		renderSection,
 	]);
 
 	// ===== Side Effects =====
