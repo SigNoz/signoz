@@ -321,6 +321,11 @@ function SideNav(): JSX.Element {
 			}
 
 			updatedUserManagementItems = [helpSupportMenuItem];
+
+			// Show manage license menu item for EE cloud users with a active license
+			if (isEnterpriseSelfHostedUser) {
+				updatedUserManagementItems.push(manageLicenseMenuItem);
+			}
 		} else {
 			updatedMenuItems = updatedMenuItems.filter(
 				(item) => item.key !== ROUTES.INTEGRATIONS && item.key !== ROUTES.BILLING,
