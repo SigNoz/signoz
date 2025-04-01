@@ -47,14 +47,6 @@ export interface CustomMultiSelectProps
 	dropdownMatchSelectWidth?: boolean | number;
 	noDataMessage?: string;
 	onClear?: () => void;
-	/**
-	 * @deprecated Use enableAllSelection instead
-	 */
-	allowSelectAll?: boolean;
-	/**
-	 * Controls whether the "ALL" checkbox is displayed at the top of the dropdown.
-	 * When checked, it selects all available options across all sections.
-	 */
 	enableAllSelection?: boolean;
 	showAddCustomValue?: boolean;
 	getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
@@ -77,7 +69,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	dropdownMatchSelectWidth = true,
 	noDataMessage,
 	onClear,
-	allowSelectAll = true,
 	enableAllSelection,
 	// showAddCustomValue = true,
 	getPopupContainer,
@@ -361,8 +352,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		}
 	}, [options, selectedValues, onChange, getAllValues]);
 
-	// Use allowSelectAll as a fallback for enableAllSelection for backward compatibility
-	const shouldEnableAllSelection = enableAllSelection ?? allowSelectAll;
+	const shouldEnableAllSelection = enableAllSelection;
 
 	// Modify keyboard navigation to handle dropdown navigation and chip selection
 	const handleKeyDown = useCallback(
@@ -1012,7 +1002,6 @@ CustomMultiSelect.defaultProps = {
 	dropdownMatchSelectWidth: true,
 	noDataMessage: '',
 	onClear: undefined,
-	allowSelectAll: true,
 	enableAllSelection: undefined, // Falls back to allowSelectAll
 	showAddCustomValue: true,
 	getPopupContainer: undefined,
