@@ -228,7 +228,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				},
 			},
 			ts:   time.Date(2024, 2, 28, 12, 30, 0, 0, time.UTC), // February 28th (not 29th in this test)
-			skip: false,                                          // Should be true if the code correctly handles month end adjustments
+			skip: false,
 		},
 		{
 			name: "daily-maintenance-crosses-midnight",
