@@ -18,7 +18,7 @@ import React, {
 } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { prioritizeOrAddOption } from './utils';
+import { prioritizeOrAddOptionForSingleSelect } from './utils';
 
 export interface OptionData {
 	label: string;
@@ -324,7 +324,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					const { sectionOptions, nonSectionOptions } = splitOptions(
 						isEmpty(value)
 							? filteredOptions
-							: prioritizeOrAddOption(filteredOptions, value),
+							: prioritizeOrAddOptionForSingleSelect(filteredOptions, value),
 					);
 
 					// Add custom option if needed
@@ -452,7 +452,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		// Process options based on current value
 		const processedOptions = isEmpty(value)
 			? filteredOptions
-			: prioritizeOrAddOption(filteredOptions, value);
+			: prioritizeOrAddOptionForSingleSelect(filteredOptions, value);
 
 		const { sectionOptions, nonSectionOptions } = splitOptions(processedOptions);
 

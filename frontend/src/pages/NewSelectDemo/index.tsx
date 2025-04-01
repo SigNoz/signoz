@@ -95,12 +95,15 @@ const generateSampleData = (): { basicData: any; largeData: any } => {
 		allValues: [
 			{
 				label: 'Kubernetes Pods',
-				options: Array(5)
-					.fill(0)
-					.map((_, i) => ({
-						label: `pod-${i + 1}-kubernetes-cluster-production`,
-						value: `pod-${i + 1}-kubernetes-cluster-production`,
-					})),
+				options: [
+					{ label: 'abc', value: 'abc' },
+					...Array(5)
+						.fill(0)
+						.map((_, i) => ({
+							label: `pod-${i + 1}-kubernetes-cluster-production`,
+							value: `pod-${i + 1}-kubernetes-cluster-production`,
+						})),
+				],
 			},
 			{
 				label: 'AWS EC2 Instances',
