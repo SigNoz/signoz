@@ -234,7 +234,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				const values = value
 					.split(',')
 					.map((v) => v.trim())
-					.filter(Boolean);
+					.filter(Boolean)
+					// Filter out values that already exist in selectedValues
+					.filter((v) => !selectedValues.includes(v));
+
 				if (values.length > 0) {
 					const newValues = [...selectedValues, ...values];
 					if (onChange) {
@@ -567,21 +570,34 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						e.stopPropagation();
 						e.preventDefault();
 
-						if (activeIndex >= 0 && activeIndex < flatOptions.length) {
-							// Select the focused option but keep dropdown open
-							const selectedOption = flatOptions[activeIndex];
+						// If there's search text, add it as a new value if it's not already selected
+						if (searchText.trim()) {
+							const trimmedValue = searchText.trim();
+							// Check if value already exists in selectedValues
+							if (!selectedValues.includes(trimmedValue)) {
+								const newValues = [...selectedValues, trimmedValue];
+								if (onChange) {
+									onChange(
+										newValues as any,
+										newValues.map((v) => ({ label: v, value: v })),
+									);
+								}
+							}
+							setSearchText('');
+							return;
+						}
 
-							// Check if it's the ALL option
+						// Existing logic for selecting active option
+						if (activeIndex >= 0 && activeIndex < flatOptions.length) {
+							const selectedOption = flatOptions[activeIndex];
 							if (selectedOption.value === '__all__') {
 								handleSelectAll();
 							} else if (selectedOption.value && onChange) {
 								const newValues = selectedValues.includes(selectedOption.value)
 									? selectedValues.filter((v) => v !== selectedOption.value)
 									: [...selectedValues, selectedOption.value];
-
 								onChange(newValues as any, newValues as any);
 							}
-							// Don't close dropdown, just update selection
 						}
 						break;
 
