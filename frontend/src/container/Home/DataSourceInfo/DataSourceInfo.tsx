@@ -23,10 +23,13 @@ function DataSourceInfo({
 
 	const notSendingData = !dataSentToSigNoz;
 
+	const isEnabled =
+		activeLicenseV3 && activeLicenseV3.platform === LicensePlatform.CLOUD;
+
 	const {
 		data: deploymentsData,
 		isError: isErrorDeploymentsData,
-	} = useGetDeploymentsData();
+	} = useGetDeploymentsData(isEnabled || false);
 
 	const [region, setRegion] = useState<string>('');
 	const [url, setUrl] = useState<string>('');

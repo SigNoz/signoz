@@ -39,6 +39,7 @@ type SQLStoreHook interface {
 type SQLDialect interface {
 	MigrateIntToTimestamp(context.Context, bun.IDB, string, string) error
 	MigrateIntToBoolean(context.Context, bun.IDB, string, string) error
+	AddNotNullDefaultToColumn(context.Context, bun.IDB, string, string, string, string) error
 	GetColumnType(context.Context, bun.IDB, string, string) (string, error)
 	ColumnExists(context.Context, bun.IDB, string, string) (bool, error)
 	RenameColumn(context.Context, bun.IDB, string, string, string) (bool, error)

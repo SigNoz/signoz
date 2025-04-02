@@ -2,6 +2,7 @@ package postgressqlstore
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/uptrace/bun"
@@ -207,5 +208,13 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 		return err
 	}
 
+	return nil
+}
+
+func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, bun bun.IDB, table string, column, columnType, defaultValue string) error {
+	query := fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s, ALTER COLUMN %s SET NOT NULL", table, column, defaultValue, column)
+	if _, err := bun.ExecContext(ctx, query); err != nil {
+		return err
+	}
 	return nil
 }

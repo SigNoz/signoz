@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
-	"github.com/SigNoz/signoz/ee/query-service/model"
+	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
@@ -135,19 +135,12 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newPAT := model.PAT{
-		StorablePersonalAccessToken: types.StorablePersonalAccessToken{
-			Token:     generatePATToken(),
-			UserID:    integrationUser.ID,
-			Name:      integrationPATName,
-			Role:      baseconstants.ViewerGroup,
-			ExpiresAt: 0,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
-		},
-	}
+	newPAT := eeTypes.NewGettablePAT(
+		integrationPATName,
+		baseconstants.ViewerGroup,
+		integrationUser.ID,
+		0,
+	)
 	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
