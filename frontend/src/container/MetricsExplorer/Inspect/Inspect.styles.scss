@@ -1,4 +1,14 @@
 .inspect-metrics-modal {
+	display: flex;
+	gap: 16px;
+
+	.inspect-metrics-fallback {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+	}
+
 	.inspect-metrics-title {
 		display: flex;
 		align-items: center;
