@@ -3,8 +3,6 @@ package rules
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"slices"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -83,6 +81,16 @@ const (
 	RepeatOnFriday    RepeatOn = "friday"
 	RepeatOnSaturday  RepeatOn = "saturday"
 )
+
+var RepeatOnAllMap = map[RepeatOn]time.Weekday{
+	RepeatOnSunday:    time.Sunday,
+	RepeatOnMonday:    time.Monday,
+	RepeatOnTuesday:   time.Tuesday,
+	RepeatOnWednesday: time.Wednesday,
+	RepeatOnThursday:  time.Thursday,
+	RepeatOnFriday:    time.Friday,
+	RepeatOnSaturday:  time.Saturday,
+}
 
 type Recurrence struct {
 	StartTime  time.Time  `json:"startTime"`
@@ -211,7 +219,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 }
 
 func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
-
+	// Check if the alert ID is in the maintenance window
 	found := false
 	if m.AlertIds != nil {
 		for _, alertID := range *m.AlertIds {
@@ -227,95 +235,160 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 		found = true
 	}
 
-	if found {
+	if !found {
+		return false
+	}
 
-		zap.L().Info("alert found in maintenance", zap.String("alert", ruleID), zap.Any("maintenance", m.Name))
+	zap.L().Info("alert found in maintenance", zap.String("alert", ruleID), zap.String("maintenance", m.Name))
 
-		// If alert is found, we check if it should be skipped based on the schedule
-		// If it should be skipped, we return true
-		// If it should not be skipped, we return false
+	// If alert is found, we check if it should be skipped based on the schedule
+	loc, err := time.LoadLocation(m.Schedule.Timezone)
+	if err != nil {
+		zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
+		return false
+	}
 
-		// fixed schedule
-		if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-			// if the current time in the timezone is between the start and end time
-			loc, err := time.LoadLocation(m.Schedule.Timezone)
-			if err != nil {
-				zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
-				return false
-			}
+	currentTime := now.In(loc)
 
-			currentTime := now.In(loc)
-			zap.L().Info("checking fixed schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", m.Schedule.StartTime), zap.Time("endTime", m.Schedule.EndTime))
-			if currentTime.After(m.Schedule.StartTime) && currentTime.Before(m.Schedule.EndTime) {
-				return true
-			}
-		}
+	// fixed schedule
+	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
+		zap.L().Info("checking fixed schedule",
+			zap.String("rule", ruleID),
+			zap.String("maintenance", m.Name),
+			zap.Time("currentTime", currentTime),
+			zap.Time("startTime", m.Schedule.StartTime),
+			zap.Time("endTime", m.Schedule.EndTime))
 
-		// recurring schedule
-		if m.Schedule.Recurrence != nil {
-			zap.L().Info("evaluating recurrence schedule")
-			start := m.Schedule.Recurrence.StartTime
-			end := m.Schedule.Recurrence.StartTime.Add(time.Duration(m.Schedule.Recurrence.Duration))
-			// if the current time in the timezone is between the start and end time
-			loc, err := time.LoadLocation(m.Schedule.Timezone)
-			if err != nil {
-				zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
-				return false
-			}
-			currentTime := now.In(loc)
-
-			zap.L().Info("checking recurring schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start), zap.Time("endTime", end))
-
-			// make sure the start time is not after the current time
-			if currentTime.Before(start.In(loc)) {
-				zap.L().Info("current time is before start time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start.In(loc)))
-				return false
-			}
-
-			var endTime time.Time
-			if m.Schedule.Recurrence.EndTime != nil {
-				endTime = *m.Schedule.Recurrence.EndTime
-			}
-			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
-				zap.L().Info("current time is after end time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("endTime", end.In(loc)))
-				return false
-			}
-
-			switch m.Schedule.Recurrence.RepeatType {
-			case RepeatTypeDaily:
-				// take the hours and minutes from the start time and add them to the current time
-				startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-				endTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), end.Hour(), end.Minute(), 0, 0, loc)
-				zap.L().Info("checking daily schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
-
-				if currentTime.After(startTime) && currentTime.Before(endTime) {
-					return true
-				}
-			case RepeatTypeWeekly:
-				// if the current time in the timezone is between the start and end time on the RepeatOn day
-				startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-				endTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), end.Hour(), end.Minute(), 0, 0, loc)
-				zap.L().Info("checking weekly schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
-				if currentTime.After(startTime) && currentTime.Before(endTime) {
-					if len(m.Schedule.Recurrence.RepeatOn) == 0 {
-						return true
-					} else if slices.Contains(m.Schedule.Recurrence.RepeatOn, RepeatOn(strings.ToLower(currentTime.Weekday().String()))) {
-						return true
-					}
-				}
-			case RepeatTypeMonthly:
-				// if the current time in the timezone is between the start and end time on the day of the current month
-				startTime := time.Date(currentTime.Year(), currentTime.Month(), start.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-				endTime := time.Date(currentTime.Year(), currentTime.Month(), end.Day(), end.Hour(), end.Minute(), 0, 0, loc)
-				zap.L().Info("checking monthly schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
-				if currentTime.After(startTime) && currentTime.Before(endTime) && currentTime.Day() == start.Day() {
-					return true
-				}
-			}
+		startTime := m.Schedule.StartTime.In(loc)
+		endTime := m.Schedule.EndTime.In(loc)
+		if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
+			(currentTime.After(startTime) && currentTime.Before(endTime)) {
+			return true
 		}
 	}
-	// If alert is not found, we return false
+
+	// recurring schedule
+	if m.Schedule.Recurrence != nil {
+		start := m.Schedule.Recurrence.StartTime
+		duration := time.Duration(m.Schedule.Recurrence.Duration)
+
+		zap.L().Info("checking recurring schedule base info",
+			zap.String("rule", ruleID),
+			zap.String("maintenance", m.Name),
+			zap.Time("startTime", start),
+			zap.Duration("duration", duration))
+
+		// Make sure the recurrence has started
+		if currentTime.Before(start.In(loc)) {
+			zap.L().Info("current time is before recurrence start time",
+				zap.String("rule", ruleID),
+				zap.String("maintenance", m.Name))
+			return false
+		}
+
+		// Check if recurrence has expired
+		if m.Schedule.Recurrence.EndTime != nil {
+			endTime := *m.Schedule.Recurrence.EndTime
+			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
+				zap.L().Info("current time is after recurrence end time",
+					zap.String("rule", ruleID),
+					zap.String("maintenance", m.Name))
+				return false
+			}
+		}
+
+		switch m.Schedule.Recurrence.RepeatType {
+		case RepeatTypeDaily:
+			return m.checkDaily(currentTime, m.Schedule.Recurrence, loc)
+		case RepeatTypeWeekly:
+			return m.checkWeekly(currentTime, m.Schedule.Recurrence, loc)
+		case RepeatTypeMonthly:
+			return m.checkMonthly(currentTime, m.Schedule.Recurrence, loc)
+		}
+	}
+
 	return false
+}
+
+// checkDaily rebases the recurrence start to today (or yesterday if needed)
+// and returns true if currentTime is within [candidate, candidate+Duration].
+func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+	candidate := time.Date(
+		currentTime.Year(), currentTime.Month(), currentTime.Day(),
+		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+		loc,
+	)
+	if candidate.After(currentTime) {
+		candidate = candidate.AddDate(0, 0, -1)
+	}
+	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
+}
+
+// checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
+// time-of-day onto the allowed weekday. It does this for each allowed day and returns true
+// if the current time falls within the candidate window.
+func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+	// If no days specified, treat as every day (like daily).
+	if len(rec.RepeatOn) == 0 {
+		return m.checkDaily(currentTime, rec, loc)
+	}
+
+	for _, day := range rec.RepeatOn {
+		allowedDay, ok := RepeatOnAllMap[day]
+		if !ok {
+			continue // skip invalid days
+		}
+		// Compute the day difference: allowedDay - current weekday.
+		delta := int(allowedDay) - int(currentTime.Weekday())
+		// Build a candidate occurrence by rebasing today's date to the allowed weekday.
+		candidate := time.Date(
+			currentTime.Year(), currentTime.Month(), currentTime.Day(),
+			rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+			loc,
+		).AddDate(0, 0, delta)
+		// If the candidate is in the future, subtract 7 days.
+		if candidate.After(currentTime) {
+			candidate = candidate.AddDate(0, 0, -7)
+		}
+		if currentTime.Sub(candidate) <= time.Duration(rec.Duration) {
+			return true
+		}
+	}
+	return false
+}
+
+// checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
+// If the candidate for the current month is in the future, it uses the previous month.
+func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+	refDay := rec.StartTime.Day()
+	year, month, _ := currentTime.Date()
+	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
+	day := refDay
+	if refDay > lastDay {
+		day = lastDay
+	}
+	candidate := time.Date(year, month, day,
+		rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+		loc,
+	)
+	if candidate.After(currentTime) {
+		// Use previous month.
+		candidate = candidate.AddDate(0, -1, 0)
+		y, m, _ := candidate.Date()
+		lastDayPrev := time.Date(y, m+1, 0, 0, 0, 0, 0, loc).Day()
+		if refDay > lastDayPrev {
+			candidate = time.Date(y, m, lastDayPrev,
+				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				loc,
+			)
+		} else {
+			candidate = time.Date(y, m, refDay,
+				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				loc,
+			)
+		}
+	}
+	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
 }
 
 func (m *PlannedMaintenance) IsActive(now time.Time) bool {
@@ -327,7 +400,14 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {
-	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
+	loc, err := time.LoadLocation(m.Schedule.Timezone)
+	if err != nil {
+		// handle error appropriately, for example log and return false or fallback to UTC
+		zap.L().Error("Error loading timezone", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
+		return false
+	}
+	now := time.Now().In(loc)
+
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
 		return now.Before(m.Schedule.StartTime)
 	}
