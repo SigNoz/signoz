@@ -505,7 +505,6 @@ function NewSelectDemo(): JSX.Element {
 										onSearch={handleSearch}
 										loading={loading}
 										customStatusText={showError ? errorMessage : undefined}
-										tokenSeparators={[',']}
 									/>
 								</Space>
 							</Card>
@@ -558,24 +557,6 @@ function NewSelectDemo(): JSX.Element {
 									/>
 
 									<Divider />
-
-									<Title level={5}>Custom Value Support</Title>
-									<Paragraph>
-										Type something that doesn&apos;t match any option and press Enter to
-										add a custom value.
-									</Paragraph>
-									<CustomMultiSelect
-										placeholder="Type custom values..."
-										value={multiSelectValue}
-										onChange={(value): void => {
-											console.log('Custom Value Multi', value);
-											setMultiSelectValue(value as string[]);
-										}}
-										options={getOptions(basicData.options)}
-										onSearch={handleSearch}
-										loading={loading}
-										customStatusText={showError ? errorMessage : undefined}
-									/>
 								</Space>
 							</Card>
 						</Col>
