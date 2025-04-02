@@ -11,12 +11,12 @@ RUN apk update && \
     apk add ca-certificates && \
     rm -rf /var/cache/apk/*
 
-COPY ./target/${OS}-${ARCH}/signoz /root/signoz
+COPY ./target/${OS}-${ARCH}/signoz-community /root/signoz-community
 COPY ./conf/prometheus.yml /root/config/prometheus.yml
 COPY ./templates/email /root/templates
 COPY frontend/build/ /root/signoz/web/
 
-RUN chmod 755 /root /root/signoz
+RUN chmod 755 /root /root/signoz-community
 
-ENTRYPOINT ["./signoz"]
+ENTRYPOINT ["./signoz-community"]
 CMD ["-config", "/root/config/prometheus.yml"]
