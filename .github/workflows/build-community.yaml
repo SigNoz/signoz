@@ -38,7 +38,7 @@ jobs:
         -X github.com/signoz/zeus/pkg/version.time=\$($MAKE info-timestamp)
         -X github.com/signoz/zeus/pkg/version.branch=\$($MAKE info-branch)'
       GO_CGO_ENABLED: 1
-      DOCKER_BASE_IMAGES: '{"distroless":"gcr.io/distroless/base:latest","golang":"golang:1.22-bullseye"}'
-      DOCKER_DOCKERFILE_PATH: Dockerfile.multi-arch
+      DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
+      DOCKER_DOCKERFILE_PATH: ./pkg/query-service/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
       DOCKER_PROVIDERS: hub
