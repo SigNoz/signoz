@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -36,7 +37,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
@@ -1079,7 +1079,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ic := aH.IntegrationsController
-	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context(), claims.OrgID)
 	if err != nil {
 		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
 	} else {
@@ -1273,7 +1273,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 		} else {
 			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-				r.Context(), uuid,
+				r.Context(), claims.OrgID, uuid,
 			)
 			if apiError != nil {
 				RespondError(w, apiError, nil)
@@ -3576,9 +3576,14 @@ func (aH *APIHandler) ListIntegrations(
 	for k, values := range r.URL.Query() {
 		params[k] = values[0]
 	}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	resp, apiErr := aH.IntegrationsController.ListIntegrations(
-		r.Context(), params,
+		r.Context(), claims.OrgID, params,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integrations")
@@ -3591,8 +3596,13 @@ func (aH *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	integration, apiErr := aH.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integration details")
@@ -3606,8 +3616,13 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	isInstalled, apiErr := aH.IntegrationsController.IsIntegrationInstalled(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to check if integration is installed")
@@ -3621,7 +3636,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	}
 
 	connectionTests, apiErr := aH.IntegrationsController.GetIntegrationConnectionTests(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to fetch integration connection tests")
@@ -3820,8 +3835,14 @@ func (aH *APIHandler) InstallIntegration(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), &req,
+		r.Context(), claims.OrgID, &req,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3842,7 +3863,13 @@ func (aH *APIHandler) UninstallIntegration(
 		return
 	}
 
-	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), claims.OrgID, &req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
