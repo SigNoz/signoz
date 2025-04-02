@@ -69,7 +69,7 @@ jobs:
         -tags timetzdata
         -ldflags='-linkmode external -extldflags \"-static\" -s -w
         -X github.com/signoz/zeus/pkg/version.Version=\$($MAKE info-version)
-        -X github.com/signoz/zeus/pkg/version.variant=community
+        -X github.com/signoz/zeus/pkg/version.variant=enterprise
         -X github.com/signoz/zeus/pkg/version.hash=\$($MAKE info-commit-short)
         -X github.com/signoz/zeus/pkg/version.time=\$($MAKE info-timestamp)
         -X github.com/signoz/zeus/pkg/version.branch=\$($MAKE info-branch)
