@@ -50,7 +50,6 @@ export interface CustomMultiSelectProps
 	noDataMessage?: string;
 	onClear?: () => void;
 	enableAllSelection?: boolean;
-	showAddCustomValue?: boolean;
 	getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
 	dropdownRender?: (menu: React.ReactElement) => React.ReactElement;
 	highlightSearch?: boolean;
@@ -72,7 +71,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	noDataMessage,
 	onClear,
 	enableAllSelection = true,
-	// showAddCustomValue = true,
 	getPopupContainer,
 	dropdownRender,
 	highlightSearch = true,
@@ -1047,8 +1045,7 @@ CustomMultiSelect.defaultProps = {
 	dropdownMatchSelectWidth: true,
 	noDataMessage: '',
 	onClear: undefined,
-	enableAllSelection: undefined, // Falls back to allowSelectAll
-	showAddCustomValue: true,
+	enableAllSelection: undefined,
 	getPopupContainer: undefined,
 	dropdownRender: undefined,
 	highlightSearch: true,
