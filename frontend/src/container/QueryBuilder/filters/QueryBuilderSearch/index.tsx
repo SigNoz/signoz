@@ -358,7 +358,6 @@ function QueryBuilderSearch({
 		</Select.Option>
 	));
 
-	console.log('isTracesExplorerPage', isTracesExplorerPage);
 	return (
 		<div className="query-builder-search-container">
 			<Select
