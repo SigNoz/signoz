@@ -260,13 +260,14 @@ function NewSelectDemo(): JSX.Element {
 						<Col span={12}>
 							<Card title="Basic Features" className="demo-card">
 								<Space direction="vertical" style={{ width: '100%' }}>
-									<Title level={5}>Standard Usage</Title>
+									<Title level={5}>Standard Usage [Default Value]</Title>
 									<Paragraph>
 										Basic single select with search and custom dropdown rendering.
 									</Paragraph>
 									<CustomSelect
 										placeholder="Search..."
 										value={singleSelectValue}
+										defaultValue="abc"
 										onChange={(value): void => {
 											console.log('Basic Usage', value);
 											setSingleSelectValue(value as string);
