@@ -14,7 +14,7 @@ RUN apk update && \
 COPY ./target/${OS}-${ARCH}/signoz-community /root/signoz-community
 COPY ./conf/prometheus.yml /root/config/prometheus.yml
 COPY ./templates/email /root/templates
-COPY frontend/build/ /root/signoz/web/
+COPY frontend/build/ /etc/signoz/web/
 
 RUN chmod 755 /root /root/signoz-community
 
