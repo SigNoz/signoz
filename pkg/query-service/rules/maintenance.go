@@ -321,8 +321,7 @@ func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, 
 	if candidate.After(currentTime) {
 		candidate = candidate.AddDate(0, 0, -1)
 	}
-	windowEnd := candidate.Add(time.Duration(rec.Duration))
-	return !currentTime.Before(candidate) && !currentTime.After(windowEnd)
+	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
 }
 
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
@@ -351,9 +350,7 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 		if candidate.After(currentTime) {
 			candidate = candidate.AddDate(0, 0, -7)
 		}
-		windowEnd := candidate.Add(time.Duration(rec.Duration))
-		// If currentTime is within [candidate, candidate+duration], return true.
-		if !currentTime.Before(candidate) && !currentTime.After(windowEnd) {
+		if currentTime.Sub(candidate) <= time.Duration(rec.Duration) {
 			return true
 		}
 	}
@@ -391,8 +388,7 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 			)
 		}
 	}
-	windowEnd := candidate.Add(time.Duration(rec.Duration))
-	return !currentTime.Before(candidate) && !currentTime.After(windowEnd)
+	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
 }
 
 func (m *PlannedMaintenance) IsActive(now time.Time) bool {
