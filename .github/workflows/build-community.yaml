@@ -5,12 +5,25 @@ on:
     branches:
       - main
     tags:
-      - v[0-9]+.[0-9]+.[0-9]+
-      - v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+
+      - v*
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_providers: ${{ steps.set-docker-providers.outputs.providers }}
+    steps:
+      - name: set-docker-providers
+        id: set-docker-providers
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ || ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc.[0-9]+$ ]]; then
+            echo "providers=hub,gcp" >> $GITHUB_OUTPUT
+          else
+            echo "providers=gcp" >> $GITHUB_OUTPUT
+          fi
   js-build:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@feat/new-build
+    needs: prepare
     secrets: inherit
     with:
       PRIMUS_REF: dockerhub
@@ -21,7 +34,7 @@ jobs:
       DOCKER_MANIFEST: false
   go-build:
     uses: signoz/primus.workflows/.github/workflows/go-build.yaml@feat/new-build
-    needs: js-build
+    needs: [prepare, js-build]
     secrets: inherit
     with:
       PRIMUS_REF: dockerhub
@@ -41,4 +54,4 @@ jobs:
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
       DOCKER_DOCKERFILE_PATH: ./pkg/query-service/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
-      DOCKER_PROVIDERS: hub
+      DOCKER_PROVIDERS: ${{ needs.prepare.outputs.docker_providers }}

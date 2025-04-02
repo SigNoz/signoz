@@ -58,7 +58,7 @@ jobs:
       DOCKER_MANIFEST: false
   go-build:
     uses: signoz/primus.workflows/.github/workflows/go-build.yaml@feat/new-build
-    needs: js-build
+    needs: [prepare, js-build]
     secrets: inherit
     with:
       PRIMUS_REF: dockerhub
