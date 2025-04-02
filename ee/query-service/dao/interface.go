@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/ee/types"
 	basedao "github.com/SigNoz/signoz/pkg/query-service/dao"
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -36,11 +35,11 @@ type ModelDao interface {
 	DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError
 	GetDomainByEmail(ctx context.Context, email string) (*types.GettableOrgDomain, basemodel.BaseApiError)
 
-	CreatePAT(ctx context.Context, orgID string, p model.PAT) (model.PAT, basemodel.BaseApiError)
-	UpdatePAT(ctx context.Context, orgID string, p model.PAT, id string) basemodel.BaseApiError
-	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
-	GetPATByID(ctx context.Context, orgID string, id string) (*model.PAT, basemodel.BaseApiError)
+	CreatePAT(ctx context.Context, orgID string, p types.GettablePAT) (types.GettablePAT, basemodel.BaseApiError)
+	UpdatePAT(ctx context.Context, orgID string, p types.GettablePAT, id string) basemodel.BaseApiError
+	GetPAT(ctx context.Context, pat string) (*types.GettablePAT, basemodel.BaseApiError)
+	GetPATByID(ctx context.Context, orgID string, id string) (*types.GettablePAT, basemodel.BaseApiError)
 	GetUserByPAT(ctx context.Context, orgID string, token string) (*ossTypes.GettableUser, basemodel.BaseApiError)
-	ListPATs(ctx context.Context, orgID string) ([]model.PAT, basemodel.BaseApiError)
+	ListPATs(ctx context.Context, orgID string) ([]types.GettablePAT, basemodel.BaseApiError)
 	RevokePAT(ctx context.Context, orgID string, id string, userID string) basemodel.BaseApiError
 }

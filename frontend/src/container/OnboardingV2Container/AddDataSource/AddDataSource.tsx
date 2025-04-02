@@ -15,11 +15,12 @@ import {
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import ROUTES from 'constants/routes';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
-import { ArrowRight, X } from 'lucide-react';
+import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
@@ -68,6 +69,7 @@ interface Entity {
 		};
 	};
 	tags: string[];
+	relatedSearchKeywords?: string[];
 	link?: string;
 }
 
@@ -99,8 +101,11 @@ const ONBOARDING_V3_ANALYTICS_EVENTS_MAP = {
 	GET_EXPERT_ASSISTANCE_BUTTON_CLICKED: 'Get expert assistance clicked',
 	INVITE_TEAM_MEMBER_BUTTON_CLICKED: 'Invite team member clicked',
 	CLOSE_ONBOARDING_CLICKED: 'Close onboarding clicked',
+	DATA_SOURCE_REQUESTED: 'Datasource requested',
+	DATA_SOURCE_SEARCHED: 'Searched',
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
@@ -109,6 +114,8 @@ function OnboardingAddDataSource(): JSX.Element {
 	const { org } = useAppContext();
 
 	const [setupStepItems, setSetupStepItems] = useState(setupStepItemsBase);
+
+	const [searchQuery, setSearchQuery] = useState<string>('');
 
 	const question2Ref = useRef<HTMLDivElement | null>(null);
 	const question3Ref = useRef<HTMLDivElement | null>(null);
@@ -120,7 +127,14 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const [currentStep, setCurrentStep] = useState(1);
 
+	const [dataSourceRequest, setDataSourceRequest] = useState<string>('');
+
 	const [hasMoreQuestions, setHasMoreQuestions] = useState<boolean>(true);
+
+	const [
+		showRequestDataSourceModal,
+		setShowRequestDataSourceModal,
+	] = useState<boolean>(false);
 
 	const [
 		showInviteTeamMembersModal,
@@ -144,6 +158,11 @@ function OnboardingAddDataSource(): JSX.Element {
 	);
 
 	const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+	const [
+		dataSourceRequestSubmitted,
+		setDataSourceRequestSubmitted,
+	] = useState<boolean>(false);
 
 	const handleScrollToStep = (ref: React.RefObject<HTMLDivElement>): void => {
 		setTimeout(() => {
@@ -286,8 +305,10 @@ function OnboardingAddDataSource(): JSX.Element {
 		setGroupedDataSources(groupedDataSources);
 	}, []);
 
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		const query = e.target.value.toLowerCase();
+	const debouncedUpdate = useDebouncedFn((query) => {
+		setSearchQuery(query as string);
+
+		setDataSourceRequestSubmitted(false);
 
 		if (query === '') {
 			setGroupedDataSources(
@@ -298,15 +319,35 @@ function OnboardingAddDataSource(): JSX.Element {
 
 		const filteredDataSources = onboardingConfigWithLinks.filter(
 			(dataSource) =>
-				dataSource.label.toLowerCase().includes(query) ||
-				dataSource.tags.some((tag) => tag.toLowerCase().includes(query)),
+				dataSource.label.toLowerCase().includes(query as string) ||
+				dataSource.tags.some((tag) =>
+					tag.toLowerCase().includes(query as string),
+				) ||
+				dataSource.relatedSearchKeywords?.some((keyword) =>
+					keyword?.toLowerCase().includes(query as string),
+				),
 		);
 
 		setGroupedDataSources(
 			groupDataSourcesByTags(filteredDataSources as Entity[]),
 		);
-	};
 
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SEARCHED}`,
+			{
+				searchedDataSource: query,
+			},
+		);
+	}, 300);
+
+	const handleSearch = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>): void => {
+			const query = e.target.value.trim().toLowerCase();
+
+			debouncedUpdate(query || '');
+		},
+		[debouncedUpdate],
+	);
 	const handleFilterByCategory = (category: string): void => {
 		setSelectedDataSource(null);
 		setSelectedFramework(null);
@@ -409,6 +450,129 @@ function OnboardingAddDataSource(): JSX.Element {
 		setShowInviteTeamMembersModal(true);
 	};
 
+	const handleSubmitDataSourceRequest = (): void => {
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
+			{
+				requestedDataSource: dataSourceRequest,
+			},
+		);
+		setShowRequestDataSourceModal(false);
+		setDataSourceRequestSubmitted(true);
+	};
+
+	const handleRequestDataSource = (): void => {
+		setShowRequestDataSourceModal(true);
+	};
+
+	const handleRaiseRequest = (): void => {
+		logEvent(
+			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
+			{
+				requestedDataSource: searchQuery,
+			},
+		);
+
+		setDataSourceRequestSubmitted(true);
+	};
+
+	const renderRequestDataSource = (): JSX.Element => {
+		const isSearchQueryEmpty = searchQuery.length === 0;
+		const isNoResultsFound = Object.keys(groupedDataSources).length === 0;
+
+		return (
+			<div className="request-data-source-container">
+				{!isNoResultsFound && (
+					<>
+						<Typography.Text>Can’t find what you’re looking for?</Typography.Text>
+
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="279"
+							height="2"
+							viewBox="0 0 279 2"
+							fill="none"
+						>
+							<path
+								d="M0 1L279 1"
+								stroke="#7190F9"
+								strokeOpacity="0.2"
+								strokeDasharray="4 4"
+							/>
+						</svg>
+
+						{!dataSourceRequestSubmitted && (
+							<Button
+								type="default"
+								className="periscope-btn request-data-source-btn secondary"
+								icon={<Goal size={16} />}
+								onClick={handleRequestDataSource}
+							>
+								Request Data Source
+							</Button>
+						)}
+
+						{dataSourceRequestSubmitted && (
+							<Button
+								type="default"
+								className="periscope-btn request-data-source-btn success"
+								icon={<CheckIcon size={16} />}
+							>
+								Request raised
+							</Button>
+						)}
+					</>
+				)}
+
+				{isNoResultsFound && !isSearchQueryEmpty && (
+					<>
+						<Typography.Text>
+							Our team can help add{' '}
+							<span className="request-data-source-search-query">{searchQuery}</span>{' '}
+							support for you
+						</Typography.Text>
+
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="279"
+							height="2"
+							viewBox="0 0 279 2"
+							fill="none"
+						>
+							<path
+								d="M0 1L279 1"
+								stroke="#7190F9"
+								strokeOpacity="0.2"
+								strokeDasharray="4 4"
+							/>
+						</svg>
+
+						{!dataSourceRequestSubmitted && (
+							<Button
+								type="default"
+								className="periscope-btn request-data-source-btn secondary"
+								icon={<Goal size={16} />}
+								onClick={handleRaiseRequest}
+							>
+								Raise request
+							</Button>
+						)}
+
+						{dataSourceRequestSubmitted && (
+							<Button
+								type="default"
+								className="periscope-btn request-data-source-btn success"
+								icon={<CheckIcon size={16} />}
+							>
+								Request raised
+							</Button>
+						)}
+					</>
+				)}
+			</div>
+		);
+	};
+
 	return (
 		<div className="onboarding-v2">
 			<Layout>
@@ -433,6 +597,15 @@ function OnboardingAddDataSource(): JSX.Element {
 						</div>
 
 						<div className="header-right-section">
+							<Button
+								type="default"
+								className="periscope-btn invite-teammate-btn outlined"
+								onClick={handleShowInviteTeamMembersModal}
+								icon={<UserPlus size={16} />}
+							>
+								Invite a teammate
+							</Button>
+
 							<LaunchChatSupport
 								attributes={{
 									dataSource: selectedDataSource?.dataSource,
@@ -442,7 +615,7 @@ function OnboardingAddDataSource(): JSX.Element {
 								}}
 								eventName={`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.GET_HELP_BUTTON_CLICKED}`}
 								message=""
-								buttonText="Get Help"
+								buttonText="Contact Support"
 								className="periscope-btn get-help-btn outlined"
 							/>
 						</div>
@@ -461,7 +634,11 @@ function OnboardingAddDataSource(): JSX.Element {
 				</Header>
 
 				<div className="onboarding-product-setup-container">
-					<div className="onboarding-product-setup-container_left-section">
+					<div
+						className={`onboarding-product-setup-container_left-section ${
+							currentStep === 1 ? 'step-id-1' : 'step-id-2'
+						}`}
+					>
 						<div className="perlian-bg" />
 
 						{currentStep === 1 && (
@@ -491,6 +668,7 @@ function OnboardingAddDataSource(): JSX.Element {
 												<div className="onboarding-data-source-search">
 													<Input
 														placeholder="Search"
+														maxLength={20}
 														onChange={handleSearch}
 														addonAfter={<SearchOutlined />}
 													/>
@@ -525,6 +703,14 @@ function OnboardingAddDataSource(): JSX.Element {
 														</div>
 													</div>
 												))}
+
+												{Object.keys(groupedDataSources).length === 0 && (
+													<div className="no-results-found-container">
+														<Typography.Text>No results for {searchQuery} :/</Typography.Text>
+													</div>
+												)}
+
+												{!selectedDataSource && renderRequestDataSource()}
 											</div>
 
 											<div className="data-source-categories-filter-container">
@@ -534,33 +720,66 @@ function OnboardingAddDataSource(): JSX.Element {
 														Filters{' '}
 													</Typography.Title>
 
-													<Typography.Title
-														level={5}
-														className={`onboarding-filters-item-title ${
-															selectedCategory === 'All' ? 'selected' : ''
-														}`}
+													<div
+														key="all"
+														className="onboarding-data-source-category-item"
 														onClick={(): void => handleFilterByCategory('All')}
+														role="button"
+														tabIndex={0}
+														onKeyDown={(e): void => {
+															if (e.key === 'Enter' || e.key === ' ') {
+																handleFilterByCategory('All');
+															}
+														}}
 													>
-														All ({onboardingConfigWithLinks.length})
-													</Typography.Title>
+														<Typography.Title
+															level={5}
+															className={`onboarding-filters-item-title ${
+																selectedCategory === 'All' ? 'selected' : ''
+															}`}
+														>
+															All
+														</Typography.Title>
+
+														<div className="line-divider" />
+
+														<Typography.Text className="onboarding-filters-item-count">
+															{onboardingConfigWithLinks.length}
+														</Typography.Text>
+													</div>
 
 													{Object.keys(groupedDataSources).map((tag) => (
-														<div key={tag} className="onboarding-data-source-category-item">
+														<div
+															key={tag}
+															className="onboarding-data-source-category-item"
+															onClick={(): void => handleFilterByCategory(tag)}
+															role="button"
+															tabIndex={0}
+															onKeyDown={(e): void => {
+																if (e.key === 'Enter' || e.key === ' ') {
+																	handleFilterByCategory(tag);
+																}
+															}}
+														>
 															<Typography.Title
 																level={5}
 																className={`onboarding-filters-item-title ${
 																	selectedCategory === tag ? 'selected' : ''
 																}`}
-																onClick={(): void => handleFilterByCategory(tag)}
 															>
-																{tag} ({groupedDataSources[tag].length})
+																{tag}
 															</Typography.Title>
+
+															<div className="line-divider" />
+
+															<Typography.Text className="onboarding-filters-item-count">
+																{groupedDataSources[tag].length}
+															</Typography.Text>
 														</div>
 													))}
 												</div>
 											</div>
 										</div>
-
 										{selectedDataSource &&
 											selectedDataSource?.question &&
 											!isEmpty(selectedDataSource?.question) && (
@@ -615,7 +834,6 @@ function OnboardingAddDataSource(): JSX.Element {
 													)}
 												</div>
 											)}
-
 										{selectedFramework &&
 											selectedFramework?.question &&
 											!isEmpty(selectedFramework?.question) && (
@@ -659,7 +877,6 @@ function OnboardingAddDataSource(): JSX.Element {
 													)}
 												</div>
 											)}
-
 										{!hasMoreQuestions && showConfigureProduct && (
 											<div className="questionaire-footer" ref={configureProdRef}>
 												<Button
@@ -767,39 +984,6 @@ function OnboardingAddDataSource(): JSX.Element {
 					</div>
 
 					<div className="onboarding-product-setup-container_right-section">
-						{currentStep === 1 && (
-							<div className="invite-user-section-content">
-								<Button
-									type="default"
-									shape="round"
-									className="invite-user-section-content-button"
-									onClick={handleShowInviteTeamMembersModal}
-								>
-									Invite a team member to help with this step
-									<ArrowRight size={14} />
-								</Button>
-								<div className="need-help-section-content-divider">Or</div>
-								<div className="need-help-section-content">
-									<Typography.Text>
-										Need help with setup? Upgrade now and get expert assistance.
-									</Typography.Text>
-
-									<LaunchChatSupport
-										attributes={{
-											dataSource: selectedDataSource?.dataSource,
-											framework: selectedFramework?.label,
-											environment: selectedEnvironment?.label,
-											currentPage: setupStepItems[currentStep]?.title || '',
-										}}
-										eventName={`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.GET_EXPERT_ASSISTANCE_BUTTON_CLICKED}`}
-										message=""
-										buttonText="Get Expert Assistance"
-										className="periscope-btn get-help-btn rounded-btn outlined"
-									/>
-								</div>
-							</div>
-						)}
-
 						{currentStep === 2 && <OnboardingIngestionDetails />}
 					</div>
 				</div>
@@ -821,6 +1005,46 @@ function OnboardingAddDataSource(): JSX.Element {
 							setTeamMembers={(): void => {}}
 							onNext={(): void => setShowInviteTeamMembersModal(false)}
 							onClose={(): void => setShowInviteTeamMembersModal(false)}
+						/>
+					</div>
+				</Modal>
+
+				<Modal
+					className="request-data-source-modal"
+					title={<span className="title">Request Data Source</span>}
+					open={showRequestDataSourceModal}
+					closable
+					onCancel={(): void => setShowRequestDataSourceModal(false)}
+					width="640px"
+					footer={[
+						<Button
+							type="default"
+							className="periscope-btn outlined"
+							key="back"
+							onClick={(): void => setShowRequestDataSourceModal(false)}
+							icon={<X size={16} />}
+						>
+							Cancel
+						</Button>,
+						<Button
+							key="submit"
+							type="primary"
+							className="periscope-btn primary"
+							disabled={dataSourceRequest.length <= 0}
+							onClick={handleSubmitDataSourceRequest}
+							icon={<CheckIcon size={16} />}
+						>
+							Submit request
+						</Button>,
+					]}
+					destroyOnClose
+				>
+					<div className="request-data-source-modal-content">
+						<Typography.Text>Enter your request</Typography.Text>
+						<Input
+							placeholder="Eg: Kotlin"
+							className="request-data-source-modal-input"
+							onChange={(e): void => setDataSourceRequest(e.target.value)}
 						/>
 					</div>
 				</Modal>

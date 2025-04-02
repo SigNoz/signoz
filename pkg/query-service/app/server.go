@@ -113,8 +113,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// initiate feature manager
 	fm := featureManager.StartManager()
 
-	readerReady := make(chan bool)
-
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
 		return nil, err
@@ -150,7 +148,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
-	<-readerReady
 	rm, err := makeRulesManager(
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
