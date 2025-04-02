@@ -1,0 +1,42 @@
+name: build-community
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+jobs:
+  js-build:
+    uses: signoz/primus.workflows/.github/workflows/js-build.yaml@feat/new-build
+    secrets: inherit
+    with:
+      PRIMUS_REF: dockerhub
+      JS_WORKDIR: frontend
+      JS_UPLOAD_ARTIFACT_NAME: community-jsbuild-${{ github.sha }}
+      JS_UPLOAD_ARTIFACT_PATH: frontend/build
+      DOCKER_BUILD: false
+      DOCKER_MANIFEST: false
+  go-build:
+    uses: signoz/primus.workflows/.github/workflows/go-build.yaml@feat/new-build
+    needs: js-build
+    secrets: inherit
+    with:
+      PRIMUS_REF: dockerhub
+      GO_NAME: signoz-community
+      GO_DOWNLOAD_ARTIFACT_NAME: community-jsbuild-${{ github.sha }}
+      GO_DOWNLOAD_ARTIFACT_PATH: frontend/build
+      GO_BUILD_CONTEXT: ./pkg/query-service
+      GO_BUILD_FLAGS: >-
+        -ldflags='-linkmode external -extldflags \"-static\" -s -w
+        -X github.com/signoz/zeus/pkg/version.Version=\$($MAKE info-version)
+        -X github.com/signoz/zeus/pkg/version.variant=community
+        -X github.com/signoz/zeus/pkg/version.hash=\$($MAKE info-commit-short)
+        -X github.com/signoz/zeus/pkg/version.time=\$($MAKE info-timestamp)
+        -X github.com/signoz/zeus/pkg/version.branch=\$($MAKE info-branch)'
+      GO_CGO_ENABLED: 1
+      DOCKER_BASE_IMAGES: '{"distroless":"gcr.io/distroless/base:latest","golang":"golang:1.22-bullseye"}'
+      DOCKER_DOCKERFILE_PATH: Dockerfile.multi-arch
+      DOCKER_MANIFEST: true
+      DOCKER_PROVIDERS: hub

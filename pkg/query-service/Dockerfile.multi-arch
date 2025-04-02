@@ -1,0 +1,25 @@
+ARG DISTROLESS_SHA="pass-a-valid-docker-sha-otherwise-this-will-fail"
+
+FROM debian:bullseye-slim AS certs
+RUN apt-get update && \
+    apt-get install -y ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+FROM gcr.io/distroless/base@sha256:${DISTROLESS_SHA}
+LABEL maintainer="signoz"
+WORKDIR /root
+
+ARG OS="linux"
+ARG ARCH
+
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+COPY ./target/${OS}-${ARCH}/signoz /root/signoz
+COPY ./conf/prometheus.yml /root/config/prometheus.yml
+COPY ./templates/email /root/templates
+COPY frontend/build/ /root/signoz/web/
+
+RUN chmod 755 /root /root/signoz
+
+ENTRYPOINT ["./signoz"]
+CMD ["-config", "/root/config/prometheus.yml"]

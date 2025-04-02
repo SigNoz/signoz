@@ -1,0 +1,81 @@
+name: build-enterprise
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_providers: ${{ steps.set-docker-providers.outputs.providers }}
+    steps:
+      - name: create-dotenv
+        run: |
+          mkdir -p frontend
+          echo 'CI=1' > frontend/.env
+          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' >> frontend/.env
+          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
+          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
+          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
+          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
+          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
+          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
+          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
+          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
+          echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
+          echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
+      - name: upload-dotenv
+        uses: actions/upload-artifact@v4
+        with:
+          name: enterprise-dotenv-${{ github.sha }}
+          path: frontend/.env
+          if-no-files-found: error
+          include-hidden-files: true
+      - name: set-docker-providers
+        id: set-docker-providers
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "providers=hub,gcp" >> $GITHUB_OUTPUT
+          else
+            echo "providers=gcp" >> $GITHUB_OUTPUT
+          fi
+  js-build:
+    uses: signoz/primus.workflows/.github/workflows/js-build.yaml@feat/new-build
+    needs: prepare
+    secrets: inherit
+    with:
+      PRIMUS_REF: dockerhub
+      JS_WORKDIR: frontend
+      JS_DOWNLOAD_ARTIFACT_NAME: enterprise-dotenv-${{ github.sha }}
+      JS_DOWNLOAD_ARTIFACT_PATH: frontend/.env
+      JS_UPLOAD_ARTIFACT_NAME: enterprise-jsbuild-${{ github.sha }}
+      JS_UPLOAD_ARTIFACT_PATH: frontend/build
+      DOCKER_BUILD: false
+      DOCKER_MANIFEST: false
+  go-build:
+    uses: signoz/primus.workflows/.github/workflows/go-build.yaml@feat/new-build
+    needs: js-build
+    secrets: inherit
+    with:
+      PRIMUS_REF: dockerhub
+      GO_DOWNLOAD_ARTIFACT_NAME: enterprise-jsbuild-${{ github.sha }}
+      GO_DOWNLOAD_ARTIFACT_PATH: frontend/build
+      GO_BUILD_CONTEXT: ./ee/query-service
+      GO_BUILD_FLAGS: >-
+        -ldflags='-linkmode external -extldflags \"-static\" -s -w
+        -X github.com/signoz/zeus/pkg/version.Version=\$($MAKE info-version)
+        -X github.com/signoz/zeus/pkg/version.variant=community
+        -X github.com/signoz/zeus/pkg/version.hash=\$($MAKE info-commit-short)
+        -X github.com/signoz/zeus/pkg/version.time=\$($MAKE info-timestamp)
+        -X github.com/signoz/zeus/pkg/version.branch=\$($MAKE info-branch)
+        -X github.com/signoz/zeus/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
+        -X github.com/signoz/zeus/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1'
+      GO_CGO_ENABLED: 1
+      DOCKER_BASE_IMAGES: '{"distroless":"gcr.io/distroless/base:latest","golang":"golang:1.22-bullseye"}'
+      DOCKER_DOCKERFILE_PATH: Dockerfile.multi-arch
+      DOCKER_MANIFEST: true
+      DOCKER_PROVIDERS: ${{ needs.prepare.outputs.docker_providers }}
