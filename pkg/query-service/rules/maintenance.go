@@ -3,8 +3,6 @@ package rules
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"slices"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -83,6 +81,16 @@ const (
 	RepeatOnFriday    RepeatOn = "friday"
 	RepeatOnSaturday  RepeatOn = "saturday"
 )
+
+var RepeatOnAllMap = map[RepeatOn]time.Weekday{
+	RepeatOnSunday:    time.Sunday,
+	RepeatOnMonday:    time.Monday,
+	RepeatOnTuesday:   time.Tuesday,
+	RepeatOnWednesday: time.Wednesday,
+	RepeatOnThursday:  time.Thursday,
+	RepeatOnFriday:    time.Friday,
+	RepeatOnSaturday:  time.Saturday,
+}
 
 type Recurrence struct {
 	StartTime  time.Time  `json:"startTime"`
@@ -263,7 +271,6 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 	if m.Schedule.Recurrence != nil {
 		start := m.Schedule.Recurrence.StartTime
 		duration := time.Duration(m.Schedule.Recurrence.Duration)
-		end := start.Add(duration)
 
 		zap.L().Info("checking recurring schedule base info",
 			zap.String("rule", ruleID),
@@ -292,203 +299,100 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 		switch m.Schedule.Recurrence.RepeatType {
 		case RepeatTypeDaily:
-			// Create start time for current day
-			startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
-				start.Hour(), start.Minute(), 0, 0, loc)
-
-			// Create end time, handling cases that cross midnight
-			endHour, endMinute := end.Hour(), end.Minute()
-			var endTime time.Time
-
-			// If duration is 24 hours or more, or if end time hour is earlier than start time hour,
-			// we're crossing midnight
-			crossesMidnight := duration >= 24*time.Hour || (end.Hour() < start.Hour() ||
-				(end.Hour() == start.Hour() && end.Minute() < start.Minute()))
-
-			if crossesMidnight {
-				// Set end time to the next day
-				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day()+1,
-					endHour, endMinute, 0, 0, loc)
-			} else {
-				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
-					endHour, endMinute, 0, 0, loc)
-			}
-
-			zap.L().Info("checking daily schedule",
-				zap.String("rule", ruleID),
-				zap.String("maintenance", m.Name),
-				zap.Time("currentTime", currentTime),
-				zap.Time("startTime", startTime),
-				zap.Time("endTime", endTime),
-				zap.Bool("crossesMidnight", crossesMidnight))
-
-			if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
-				(currentTime.After(startTime) && currentTime.Before(endTime)) {
-				return true
-			}
-
-			// Check previous day if we crossed midnight and current time is before the end time today
-			if crossesMidnight && (currentTime.Hour() < endHour ||
-				(currentTime.Hour() == endHour && currentTime.Minute() < endMinute)) {
-
-				yesterdayStart := startTime.AddDate(0, 0, -1)
-				zap.L().Info("checking previous day for daily schedule",
-					zap.Time("yesterdayStart", yesterdayStart))
-
-				if currentTime.After(yesterdayStart) {
-					return true
-				}
-			}
-
+			return m.checkDaily(currentTime, m.Schedule.Recurrence, loc)
 		case RepeatTypeWeekly:
-			// Get weekday as string for comparison
-			currentWeekday := RepeatOn(strings.ToLower(currentTime.Weekday().String()))
-
-			// Create today's start time
-			startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
-				start.Hour(), start.Minute(), 0, 0, loc)
-
-			// Create end time, handling cases that cross midnight
-			endHour, endMinute := end.Hour(), end.Minute()
-			var endTime time.Time
-
-			// Check if window crosses midnight
-			crossesMidnight := duration >= 24*time.Hour || (end.Hour() < start.Hour() ||
-				(end.Hour() == start.Hour() && end.Minute() < start.Minute()))
-
-			if crossesMidnight {
-				// Set end time to the next day
-				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day()+1,
-					endHour, endMinute, 0, 0, loc)
-			} else {
-				endTime = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(),
-					endHour, endMinute, 0, 0, loc)
-			}
-
-			zap.L().Info("checking weekly schedule",
-				zap.String("rule", ruleID),
-				zap.String("maintenance", m.Name),
-				zap.Time("currentTime", currentTime),
-				zap.Time("startTime", startTime),
-				zap.Time("endTime", endTime),
-				zap.String("currentWeekday", string(currentWeekday)),
-				zap.Bool("crossesMidnight", crossesMidnight))
-
-			// Check if today is a maintenance day
-			todayMaintenance := len(m.Schedule.Recurrence.RepeatOn) == 0 ||
-				slices.Contains(m.Schedule.Recurrence.RepeatOn, currentWeekday)
-
-			if todayMaintenance {
-				if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
-					(currentTime.After(startTime) && currentTime.Before(endTime)) {
-					return true
-				}
-			}
-
-			// If crosses midnight, check if yesterday was a maintenance day
-			if crossesMidnight && (currentTime.Hour() < endHour ||
-				(currentTime.Hour() == endHour && currentTime.Minute() < endMinute)) {
-
-				yesterdayTime := currentTime.AddDate(0, 0, -1)
-				yesterdayWeekday := RepeatOn(strings.ToLower(yesterdayTime.Weekday().String()))
-				yesterdayMaintenance := len(m.Schedule.Recurrence.RepeatOn) == 0 ||
-					slices.Contains(m.Schedule.Recurrence.RepeatOn, yesterdayWeekday)
-
-				if yesterdayMaintenance {
-					yesterdayStart := time.Date(yesterdayTime.Year(), yesterdayTime.Month(),
-						yesterdayTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
-
-					zap.L().Info("checking previous day for weekly schedule",
-						zap.Time("yesterdayStart", yesterdayStart),
-						zap.String("yesterdayWeekday", string(yesterdayWeekday)))
-
-					if currentTime.After(yesterdayStart) {
-						return true
-					}
-				}
-			}
-
+			return m.checkWeekly(currentTime, m.Schedule.Recurrence, loc)
 		case RepeatTypeMonthly:
-			// Create this month's start time on the specified day
-			referenceDay := start.Day()
-
-			// Adjust for month length if needed
-			// Get number of days in current month
-			currentYear, currentMonth, _ := currentTime.Date()
-			lastDay := time.Date(currentYear, currentMonth+1, 0, 0, 0, 0, 0, loc).Day()
-
-			monthStartDay := referenceDay
-			if monthStartDay > lastDay {
-				monthStartDay = lastDay
-			}
-
-			startTime := time.Date(currentTime.Year(), currentTime.Month(), monthStartDay,
-				start.Hour(), start.Minute(), 0, 0, loc)
-
-			// Check if window crosses to next day/month
-			durationDays := int(duration.Hours() / 24)
-			remainingHours := duration.Hours() - float64(durationDays*24)
-
-			endTime := startTime.AddDate(0, 0, durationDays)
-			endTime = endTime.Add(time.Duration(remainingHours * float64(time.Hour)))
-
-			crossesMonth := endTime.Month() != startTime.Month() || endTime.Year() != startTime.Year()
-			zap.L().Info("checking monthly schedule",
-				zap.String("rule", ruleID),
-				zap.String("maintenance", m.Name),
-				zap.Time("currentTime", currentTime),
-				zap.Time("startTime", startTime),
-				zap.Time("endTime", endTime),
-				zap.Int("durationDays", durationDays))
-
-			if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
-				(currentTime.After(startTime) && currentTime.Before(endTime)) {
-				return true
-			}
-
-			durationDays = int(duration.Hours()/24) + 1 // Add 1 to handle partial days
-
-			// Check if we're in the early days of the month and might be in previous month's window
-			if currentTime.Day() <= durationDays && crossesMonth {
-				// Get previous month
-				var prevYear int
-				var prevMonth time.Month
-
-				if currentMonth == time.January {
-					prevYear = currentYear - 1
-					prevMonth = time.December
-				} else {
-					prevYear = currentYear
-					prevMonth = currentMonth - 1
-				}
-
-				// Get last day of previous month
-				lastDayPrevMonth := time.Date(prevYear, prevMonth+1, 0, 0, 0, 0, 0, loc).Day()
-
-				// Adjust for month length
-				prevMonthStartDay := referenceDay
-				if referenceDay > lastDayPrevMonth {
-					prevMonthStartDay = lastDayPrevMonth
-				}
-
-				// Create previous month's start and end times
-				prevMonthStart := time.Date(prevYear, prevMonth, prevMonthStartDay,
-					start.Hour(), start.Minute(), 0, 0, loc)
-				prevMonthEnd := prevMonthStart.Add(duration)
-
-				zap.L().Info("checking previous month for monthly schedule",
-					zap.Time("prevMonthStart", prevMonthStart),
-					zap.Time("prevMonthEnd", prevMonthEnd))
-
-				if (currentTime.After(prevMonthStart) || currentTime.Equal(prevMonthStart)) &&
-					(currentTime.Before(prevMonthEnd) || currentTime.Equal(prevMonthEnd)) {
-					return true
-				}
-			}
+			return m.checkMonthly(currentTime, m.Schedule.Recurrence, loc)
 		}
 	}
 
 	return false
+}
+
+// checkDaily rebases the recurrence start to today (or yesterday if needed)
+// and returns true if currentTime is within [candidate, candidate+Duration].
+func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+	candidate := time.Date(
+		currentTime.Year(), currentTime.Month(), currentTime.Day(),
+		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+		loc,
+	)
+	if candidate.After(currentTime) {
+		candidate = candidate.AddDate(0, 0, -1)
+	}
+	windowEnd := candidate.Add(time.Duration(rec.Duration))
+	return !currentTime.Before(candidate) && !currentTime.After(windowEnd)
+}
+
+// checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
+// time-of-day onto the allowed weekday. It does this for each allowed day and returns true
+// if the current time falls within the candidate window.
+func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+	// If no days specified, treat as every day (like daily).
+	if len(rec.RepeatOn) == 0 {
+		return m.checkDaily(currentTime, rec, loc)
+	}
+
+	for _, day := range rec.RepeatOn {
+		allowedDay, ok := RepeatOnAllMap[day]
+		if !ok {
+			continue // skip invalid days
+		}
+		// Compute the day difference: allowedDay - current weekday.
+		delta := int(allowedDay) - int(currentTime.Weekday())
+		// Build a candidate occurrence by rebasing today's date to the allowed weekday.
+		candidate := time.Date(
+			currentTime.Year(), currentTime.Month(), currentTime.Day(),
+			rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+			loc,
+		).AddDate(0, 0, delta)
+		// If the candidate is in the future, subtract 7 days.
+		if candidate.After(currentTime) {
+			candidate = candidate.AddDate(0, 0, -7)
+		}
+		windowEnd := candidate.Add(time.Duration(rec.Duration))
+		// If currentTime is within [candidate, candidate+duration], return true.
+		if !currentTime.Before(candidate) && !currentTime.After(windowEnd) {
+			return true
+		}
+	}
+	return false
+}
+
+// checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
+// If the candidate for the current month is in the future, it uses the previous month.
+func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+	refDay := rec.StartTime.Day()
+	year, month, _ := currentTime.Date()
+	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
+	day := refDay
+	if refDay > lastDay {
+		day = lastDay
+	}
+	candidate := time.Date(year, month, day,
+		rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+		loc,
+	)
+	if candidate.After(currentTime) {
+		// Use previous month.
+		candidate = candidate.AddDate(0, -1, 0)
+		y, m, _ := candidate.Date()
+		lastDayPrev := time.Date(y, m+1, 0, 0, 0, 0, 0, loc).Day()
+		if refDay > lastDayPrev {
+			candidate = time.Date(y, m, lastDayPrev,
+				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				loc,
+			)
+		} else {
+			candidate = time.Date(y, m, refDay,
+				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				loc,
+			)
+		}
+	}
+	windowEnd := candidate.Add(time.Duration(rec.Duration))
+	return !currentTime.Before(candidate) && !currentTime.After(windowEnd)
 }
 
 func (m *PlannedMaintenance) IsActive(now time.Time) bool {

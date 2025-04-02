@@ -18,6 +18,22 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		ts          time.Time
 		skip        bool
 	}{
+		{
+			name: "only-on-saturday",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "Europe/London",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 24),
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnMonday, RepeatOnTuesday, RepeatOnWednesday, RepeatOnThursday, RepeatOnFriday, RepeatOnSunday},
+					},
+				},
+			},
+			ts:   time.Date(2025, 3, 20, 12, 0, 0, 0, time.UTC),
+			skip: true,
+		},
 		// Testing weekly recurrence with midnight crossing
 		{
 			name: "weekly-across-midnight-previous-day",
@@ -33,6 +49,40 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				},
 			},
 			ts:   time.Date(2024, 4, 2, 1, 30, 0, 0, time.UTC), // Tuesday 01:30
+			skip: true,
+		},
+		// Testing weekly recurrence with midnight crossing
+		{
+			name: "weekly-across-midnight-previous-day",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
+						Duration:   Duration(time.Hour * 4),                      // Until Tuesday 02:00
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 23, 1, 30, 0, 0, time.UTC), // Tuesday 01:30
+			skip: true,
+		},
+		// Testing weekly recurrence with multi day duration
+		{
+			name: "weekly-across-midnight-previous-day",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
+						Duration:   Duration(time.Hour * 52),                     // Until Thursday 02:00
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
+					},
+				},
+			},
+			ts:   time.Date(2024, 4, 25, 1, 30, 0, 0, time.UTC), // Tuesday 01:30
 			skip: true,
 		},
 		// Weekly recurrence where the previous day is not in RepeatOn
@@ -110,6 +160,23 @@ func TestShouldSkipMaintenance(t *testing.T) {
 						StartTime:  time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
 						Duration:   Duration(time.Hour * 72), // 3 days
 						RepeatType: RepeatTypeMonthly,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 30, 12, 30, 0, 0, time.UTC), // Within the 3-day window
+			skip: true,
+		},
+		// Weekly maintenance with multi-day duration
+		{
+			name: "weekly-multi-day-duration",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
+						Duration:   Duration(time.Hour * 72), // 3 days
+						RepeatType: RepeatTypeWeekly,
+						RepeatOn:   []RepeatOn{RepeatOnSunday},
 					},
 				},
 			},
