@@ -30,6 +30,7 @@ jobs:
       GO_DOWNLOAD_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./pkg/query-service
       GO_BUILD_FLAGS: >-
+        -tags timetzdata
         -ldflags='-linkmode external -extldflags \"-static\" -s -w
         -X github.com/signoz/zeus/pkg/version.Version=\$($MAKE info-version)
         -X github.com/signoz/zeus/pkg/version.variant=community
