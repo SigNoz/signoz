@@ -61,7 +61,7 @@ import {
 import { USER_ROLES } from 'types/roles';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
-	getFormattedDate,
+	// getFormattedDate,
 	getFormattedDateWithMinutes,
 	getRemainingDays,
 } from 'utils/timeUtils';
@@ -594,7 +594,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			{showTrialExpiryBanner && !showPaymentFailedWarning && (
+			{/* {showTrialExpiryBanner && !showPaymentFailedWarning && (
 				<div className="trial-expiry-banner">
 					You are in free trial period. Your free trial will end on{' '}
 					<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
@@ -611,7 +611,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						'Please contact your administrator for upgrading to a paid plan.'
 					)}
 				</div>
-			)}
+			)} */}
 
 			{showWorkspaceRestricted && renderWorkspaceRestrictedBanner()}
 
