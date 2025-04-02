@@ -1,6 +1,6 @@
 ARG ALPINE_SHA="pass-a-valid-docker-sha-otherwise-this-will-fail"
 
-FROM alpine:${ALPINE_SHA}
+FROM alpine@sha256:${ALPINE_SHA}
 LABEL maintainer="signoz"
 WORKDIR /root
 
