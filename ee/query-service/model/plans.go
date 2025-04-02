@@ -159,7 +159,14 @@ var BasicPlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.TraceFunnels,
-		Active:     false,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.ThirdPartyApi,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -288,7 +295,14 @@ var ProPlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.TraceFunnels,
-		Active:     false,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.ThirdPartyApi,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -431,7 +445,14 @@ var EnterprisePlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.TraceFunnels,
-		Active:     false,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.ThirdPartyApi,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

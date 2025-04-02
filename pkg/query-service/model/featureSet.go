@@ -25,6 +25,7 @@ const AlertChannelEmail = "ALERT_CHANNEL_EMAIL"
 const AnomalyDetection = "ANOMALY_DETECTION"
 const HostsInfraMonitoring = "HOSTS_INFRA_MONITORING"
 const TraceFunnels = "TRACE_FUNNELS"
+const ThirdPartyApi = "THIRD_PARTY_API"
 
 var BasicPlan = FeatureSet{
 	Feature{
@@ -127,7 +128,14 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       TraceFunnels,
-		Active:     false,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
+		Name:       ThirdPartyApi,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
