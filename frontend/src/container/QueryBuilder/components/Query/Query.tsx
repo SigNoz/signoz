@@ -453,7 +453,7 @@ export const Query = memo(function Query({
 										</Col>
 									)}
 									<Col flex="1" className="qb-search-container">
-										{[DataSource.LOGS, DataSource.TRACES].includes(query.dataSource) ? (
+										{query.dataSource === DataSource.LOGS ? (
 											<QueryBuilderSearchV2
 												query={query}
 												onChange={handleChangeTagFilters}
