@@ -1,9 +1,9 @@
-.traces-funnels__header {
+.traces-funnels-header {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 
-	&.traces-funnels__header__title {
+	&.traces-funnels-header-title {
 		color: var(--bg-vanilla-100);
 		font-size: 18px;
 		font-style: normal;
@@ -13,7 +13,7 @@
 		margin: 0;
 	}
 
-	&.traces-funnels__header__subtitle {
+	&.traces-funnels-header-subtitle {
 		color: var(--bg-vanilla-400);
 		font-size: 14px;
 		line-height: 20px;
@@ -21,12 +21,12 @@
 }
 
 .lightMode {
-	.traces-funnels__header {
-		&.traces-funnels__header__title {
+	.traces-funnels-header {
+		&.traces-funnels-header-title {
 			color: var(--bg-ink-500);
 		}
 
-		&.traces-funnels__header__subtitle {
+		&.traces-funnels-header-subtitle {
 			color: var(--bg-ink-400);
 		}
 	}
