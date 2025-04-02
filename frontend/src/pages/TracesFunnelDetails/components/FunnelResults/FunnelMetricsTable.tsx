@@ -72,6 +72,7 @@ function FunnelMetricsTable({
 	isError,
 	emptyState,
 }: FunnelMetricsTableProps): JSX.Element {
+	console.log('data', data);
 	return (
 		<div className="funnel-metrics">
 			<div className="funnel-metrics__header">
