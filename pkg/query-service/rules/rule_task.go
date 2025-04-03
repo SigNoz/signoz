@@ -297,6 +297,12 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
+	defer func() {
+		if r := recover(); r != nil {
+			zap.L().Error("panic during threshold rule evaluation", zap.Any("panic", r))
+		}
+	}()
+
 	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
 
 	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
