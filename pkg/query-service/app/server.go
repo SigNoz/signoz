@@ -186,7 +186,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
+	preferenceModule := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
@@ -204,7 +204,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		Signoz:                        serverOptions.SigNoz,
-		Preference:                    preference,
+		Preference:                    preferenceModule,
 	})
 	if err != nil {
 		return nil, err
