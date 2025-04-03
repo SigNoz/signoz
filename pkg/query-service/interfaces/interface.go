@@ -22,7 +22,7 @@ type Reader interface {
 	GetServicesList(ctx context.Context) (*[]string, error)
 	GetDependencyGraph(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
 
-	GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
+	GetTTL(ctx context.Context, orgID string, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
 
 	// GetDisks returns a list of disks configured in the underlying DB. It is supported by
 	// clickhouse only.
@@ -44,7 +44,7 @@ type Reader interface {
 	GetFlamegraphSpansForTrace(ctx context.Context, traceID string, req *model.GetFlamegraphSpansForTraceParams) (*model.GetFlamegraphSpansForTraceResponse, *model.ApiError)
 
 	// Setter Interfaces
-	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
+	SetTTL(ctx context.Context, orgID string, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
 	FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error)
 	GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest, skipDotNames bool, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error)
