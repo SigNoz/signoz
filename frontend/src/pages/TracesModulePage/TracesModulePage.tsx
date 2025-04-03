@@ -16,7 +16,7 @@ function TracesModulePage(): JSX.Element {
 
 	const isTraceFunnelsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.TRACE_FUNNELS)
-			?.active || false;
+			?.active ?? false;
 
 	const routes: TabRoutes[] = [
 		tracesExplorer,
