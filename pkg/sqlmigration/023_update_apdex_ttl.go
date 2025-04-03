@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -128,7 +127,7 @@ func (migration *updateApdexTtl) Up(ctx context.Context, db *bun.DB) error {
 			return nil
 		})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = migration.
@@ -146,36 +145,38 @@ func (migration *updateApdexTtl) Up(ctx context.Context, db *bun.DB) error {
 				}
 			}
 
-			var orgIDs []string
-			if err := migration.
-				store.
-				BunDB().
-				NewSelect().
-				Model((*types.Organization)(nil)).
-				Column("id").
-				Scan(ctx, &orgIDs); err != nil {
-				return err
-			}
-
-			if len(orgIDs) > 1 {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot have more than one org id")
-			}
-
 			if err == nil && len(existingTTLStatus) > 0 {
-				newTTLStatus := migration.
-					CopyExistingTTLStatusToNewTTLStatus(existingTTLStatus, orgIDs[0])
-				_, err = tx.
-					NewInsert().
-					Model(&newTTLStatus).
-					Exec(ctx)
+				var orgID string
+				err := migration.
+					store.
+					BunDB().
+					NewSelect().
+					Model((*types.Organization)(nil)).
+					Column("id").
+					Scan(ctx, &orgID)
 				if err != nil {
-					return err
+					if err != sql.ErrNoRows {
+						return err
+					}
 				}
+
+				if err == nil {
+					newTTLStatus := migration.
+						CopyExistingTTLStatusToNewTTLStatus(existingTTLStatus, orgID)
+					_, err = tx.
+						NewInsert().
+						Model(&newTTLStatus).
+						Exec(ctx)
+					if err != nil {
+						return err
+					}
+				}
+
 			}
 			return nil
 		})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = tx.Commit()
