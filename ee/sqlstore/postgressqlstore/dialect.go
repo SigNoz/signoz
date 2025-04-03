@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/uptrace/bun"
@@ -192,8 +193,8 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 	return true, nil
 }
 
-func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, reference string, cb func(context.Context) error) error {
-	if reference == "" {
+func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, references []string, cb func(context.Context) error) error {
+	if len(references) == 0 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
 	}
 	exists, err := dialect.TableExists(ctx, bun, newModel)
@@ -204,20 +205,25 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 		return nil
 	}
 
-	fkReference := ""
-	if reference == Org {
-		fkReference = OrgReference
-	} else if reference == User {
-		fkReference = UserReference
+	var fkReferences []string
+	for _, reference := range references {
+		if reference == Org && !slices.Contains(fkReferences, OrgReference) {
+			fkReferences = append(fkReferences, OrgReference)
+		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
+			fkReferences = append(fkReferences, UserReference)
+		}
 	}
 
-	_, err = bun.
+	createTable := bun.
 		NewCreateTable().
 		IfNotExists().
-		Model(newModel).
-		ForeignKey(fkReference).
-		Exec(ctx)
+		Model(newModel)
 
+	for _, fk := range fkReferences {
+		createTable = createTable.ForeignKey(fk)
+	}
+
+	_, err = createTable.Exec(ctx)
 	if err != nil {
 		return err
 	}

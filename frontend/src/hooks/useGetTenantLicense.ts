@@ -11,7 +11,7 @@ export const useGetTenantLicense = (): {
 	const { activeLicenseV3, activeLicenseV3FetchError } = useAppContext();
 
 	const responsePayload = {
-		isCloudUser: activeLicenseV3?.platform === LicensePlatform.CLOUD || false,
+		isCloudUser: true,
 		isEnterpriseSelfHostedUser:
 			activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED || false,
 		isCommunityUser: false,

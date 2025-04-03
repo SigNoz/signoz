@@ -10,9 +10,12 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/ee/types"
 	eeTypes "github.com/SigNoz/signoz/ee/types"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -93,7 +96,12 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.UpdatedByUserID = user.ID
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
 	req.UpdatedAt = time.Now()
 	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
@@ -126,7 +134,12 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
 	user, err := auth.GetUserFromReqContext(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{
@@ -136,7 +149,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	zap.L().Info("Revoke PAT with id", zap.String("id", id))
+	zap.L().Info("Revoke PAT with id", zap.String("id", id.StringValue()))
 	if apierr := ah.AppDao().RevokePAT(ctx, user.OrgID, id, user.ID); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
