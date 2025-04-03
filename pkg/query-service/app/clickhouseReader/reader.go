@@ -119,7 +119,6 @@ type ClickHouseReader struct {
 	db                      clickhouse.Conn
 	prometheus              prometheus.Prometheus
 	sqlDB                   sqlstore.SQLStore
-	sqlDB                   sqlstore.SQLStore
 	TraceDB                 string
 	operationsTable         string
 	durationTable           string
@@ -1690,8 +1689,6 @@ func getLocalTableName(tableName string) string {
 }
 
 func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
-	// Keep only latest 100 transactions/requests
-	r.deleteTtlTransactions(ctx, 100)
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -1785,7 +1782,7 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, orgID string, param
 						Model(new(types.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
 						Set("status = ?", constants.StatusFailed).
-						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -1805,7 +1802,7 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, orgID string, param
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
-					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -1820,7 +1817,7 @@ func (r *ClickHouseReader) SetTTLLogsV2(ctx context.Context, orgID string, param
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusSuccess).
-				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -1929,7 +1926,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, orgID string, par
 						Model(new(types.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
 						Set("status = ?", constants.StatusFailed).
-						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -1950,7 +1947,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, orgID string, par
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
-					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -1965,7 +1962,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, orgID string, par
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusSuccess).
-				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -1982,7 +1979,7 @@ func (r *ClickHouseReader) SetTTLTracesV2(ctx context.Context, orgID string, par
 func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// Keep only latest 100 transactions/requests
-	r.deleteTtlTransactions(ctx, 100)
+	r.deleteTtlTransactions(ctx, orgID, 100)
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -2180,7 +2177,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 						Model(new(types.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
 						Set("status = ?", constants.StatusFailed).
-						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -2201,7 +2198,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
-					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -2216,7 +2213,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusSuccess).
-				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -2285,7 +2282,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 						Model(new(types.TTLSetting)).
 						Set("updated_at = ?", time.Now()).
 						Set("status = ?", constants.StatusFailed).
-						Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
 						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -2306,7 +2303,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 					Model(new(types.TTLSetting)).
 					Set("updated_at = ?", time.Now()).
 					Set("status = ?", constants.StatusFailed).
-					Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
 					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -2321,7 +2318,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 				Model(new(types.TTLSetting)).
 				Set("updated_at = ?", time.Now()).
 				Set("status = ?", constants.StatusSuccess).
-				Where("id = ?", statusItem.Identifiable.ID.StringValue()).
+				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
@@ -2337,7 +2334,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID string, numberOfTransactionsStore int) {
 	limitTransactions := []string{}
 	err := r.
 		sqlDB.
@@ -2345,6 +2342,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 		NewSelect().
 		ColumnExpr("distinct(transaction_id)").
 		Model(new(types.TTLSetting)).
+		Where("org_id = ?", orgID).
 		OrderExpr("created_at DESC").
 		Limit(numberOfTransactionsStore).
 		Scan(ctx, &limitTransactions)
@@ -2587,7 +2585,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTTL, Status: status}, nil
 
 	case constants.LogsTTL:
-		tableNameArray := []string{r.logsDB + "." + r.logsTable}
+		tableNameArray := []string{r.logsDB + "." + r.logsTableName}
 		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, orgID, tableNameArray)
 		if err != nil {
@@ -2597,7 +2595,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		if err != nil {
 			return nil, err
 		}
-		ttlQuery, err := r.checkTTLStatusItem(ctx, tableNameArray[0], orgID)
+		ttlQuery, err := r.checkTTLStatusItem(ctx, orgID, tableNameArray[0])
 		if err != nil {
 			return nil, err
 		}
