@@ -9,12 +9,14 @@ import (
 	"github.com/SigNoz/signoz/ee/types"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	ossTypes "github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"go.uber.org/zap"
 )
 
 func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.GettablePAT) (types.GettablePAT, basemodel.BaseApiError) {
 	p.StorablePersonalAccessToken.OrgID = orgID
+	p.StorablePersonalAccessToken.ID = valuer.GenerateUUID()
 	_, err := m.DB().NewInsert().
 		Model(&p.StorablePersonalAccessToken).
 		Exec(ctx)
@@ -46,11 +48,11 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 	return p, nil
 }
 
-func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p types.GettablePAT, id string) basemodel.BaseApiError {
+func (m *modelDao) UpdatePAT(ctx context.Context, orgID string, p types.GettablePAT, id valuer.UUID) basemodel.BaseApiError {
 	_, err := m.DB().NewUpdate().
 		Model(&p.StorablePersonalAccessToken).
 		Column("role", "name", "updated_at", "updated_by_user_id").
-		Where("id = ?", id).
+		Where("id = ?", id.StringValue()).
 		Where("org_id = ?", orgID).
 		Where("revoked = false").
 		Exec(ctx)
@@ -127,14 +129,14 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 	return patsWithUsers, nil
 }
 
-func (m *modelDao) RevokePAT(ctx context.Context, orgID string, id string, userID string) basemodel.BaseApiError {
+func (m *modelDao) RevokePAT(ctx context.Context, orgID string, id valuer.UUID, userID string) basemodel.BaseApiError {
 	updatedAt := time.Now().Unix()
 	_, err := m.DB().NewUpdate().
 		Model(&types.StorablePersonalAccessToken{}).
 		Set("revoked = ?", true).
 		Set("updated_by_user_id = ?", userID).
 		Set("updated_at = ?", updatedAt).
-		Where("id = ?", id).
+		Where("id = ?", id.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
@@ -169,12 +171,12 @@ func (m *modelDao) GetPAT(ctx context.Context, token string) (*types.GettablePAT
 	return &patWithUser, nil
 }
 
-func (m *modelDao) GetPATByID(ctx context.Context, orgID string, id string) (*types.GettablePAT, basemodel.BaseApiError) {
+func (m *modelDao) GetPATByID(ctx context.Context, orgID string, id valuer.UUID) (*types.GettablePAT, basemodel.BaseApiError) {
 	pats := []types.StorablePersonalAccessToken{}
 
 	if err := m.DB().NewSelect().
 		Model(&pats).
-		Where("id = ?", id).
+		Where("id = ?", id.StringValue()).
 		Where("org_id = ?", orgID).
 		Where("revoked = false").
 		Scan(ctx); err != nil {

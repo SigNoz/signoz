@@ -110,7 +110,7 @@ func (migration *updateAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingChannel), new(newChannel), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingChannel), new(newChannel), []string{OrgReference}, func(ctx context.Context) error {
 			existingChannels := make([]*existingChannel, 0)
 			err = tx.
 				NewSelect().
