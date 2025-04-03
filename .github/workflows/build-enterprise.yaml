@@ -13,6 +13,14 @@ jobs:
     outputs:
       docker_providers: ${{ steps.set-docker-providers.outputs.providers }}
     steps:
+      - name: set-docker-providers
+        id: set-docker-providers
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ || ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc.[0-9]+$ ]]; then
+            echo "providers=hub,gcp" >> $GITHUB_OUTPUT
+          else
+            echo "providers=gcp" >> $GITHUB_OUTPUT
+          fi
       - name: create-dotenv
         run: |
           mkdir -p frontend
@@ -28,21 +36,11 @@ jobs:
           echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
           echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
           echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
-      - name: upload-dotenv
-        uses: actions/upload-artifact@v4
+      - name: cache-dotenv
+        uses: actions/cache@v4
         with:
-          name: enterprise-dotenv-${{ github.sha }}
           path: frontend/.env
-          if-no-files-found: error
-          include-hidden-files: true
-      - name: set-docker-providers
-        id: set-docker-providers
-        run: |
-          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ || ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc.[0-9]+$ ]]; then
-            echo "providers=hub,gcp" >> $GITHUB_OUTPUT
-          else
-            echo "providers=gcp" >> $GITHUB_OUTPUT
-          fi
+          key: enterprise-dotenv-${{ github.sha }}
   js-build:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@feat/new-build
     needs: prepare
@@ -50,8 +48,7 @@ jobs:
     with:
       PRIMUS_REF: dockerhub
       JS_WORKDIR: frontend
-      JS_DOWNLOAD_ARTIFACT_NAME: enterprise-dotenv-${{ github.sha }}
-      JS_DOWNLOAD_ARTIFACT_PATH: frontend/.env
+      JS_DOTENV_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
       JS_UPLOAD_ARTIFACT_NAME: enterprise-jsbuild-${{ github.sha }}
       JS_UPLOAD_ARTIFACT_PATH: frontend/build
       DOCKER_BUILD: false
