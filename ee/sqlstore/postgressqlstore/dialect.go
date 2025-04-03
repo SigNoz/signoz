@@ -110,7 +110,7 @@ func (dialect *dialect) GetColumnType(ctx context.Context, bun bun.IDB, table st
 
 	err := bun.NewSelect().
 		ColumnExpr("data_type").
-		TableExpr("").
+		TableExpr("information_schema.columns").
 		Where("table_name = ?", table).
 		Where("column_name = ?", column).
 		Scan(ctx, &columnType)
