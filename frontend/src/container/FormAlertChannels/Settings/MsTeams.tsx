@@ -9,7 +9,7 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="webhook_url" label={t('field_webhook_url')}>
+			<Form.Item required name="webhook_url" label={t('field_webhook_url')}>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
