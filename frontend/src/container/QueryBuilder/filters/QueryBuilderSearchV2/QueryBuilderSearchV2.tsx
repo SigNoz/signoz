@@ -689,29 +689,12 @@ function QueryBuilderSearchV2(
 					})),
 				);
 			} else {
-				setDropdownOptions([
-					// Add user typed option if it doesn't exist in the payload
-					...(!isEmpty(tagKey) &&
-					!data?.payload?.attributeKeys?.some((val) => isEqual(val.key, tagKey))
-						? [
-								{
-									label: tagKey,
-									value: {
-										key: tagKey,
-										dataType: DataTypes.EMPTY,
-										type: '',
-										isColumn: false,
-										isJSON: false,
-									},
-								},
-						  ]
-						: []),
-					// Map existing attribute keys from payload
-					...(data?.payload?.attributeKeys?.map((key) => ({
+				setDropdownOptions(
+					data?.payload?.attributeKeys?.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || []),
-				]);
+					})) || [],
+				);
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
@@ -981,7 +964,6 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
-						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
