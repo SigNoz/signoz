@@ -1,10 +1,12 @@
 import './TraceDetailV2.styles.scss';
 
 import { Button, Tabs } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Compass, Cone, TowerControl, Undo } from 'lucide-react';
 import TraceDetail from 'pages/TraceDetail';
+import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 
 import TraceDetailsV2 from './TraceDetailV2';
@@ -54,6 +56,10 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 
 export default function TraceDetailsPage(): JSX.Element {
 	const [showOldTraceDetails, setShowOldTraceDetails] = useState<boolean>(false);
+	const { featureFlags } = useAppContext();
+	const isTraceFunnelsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.TRACE_FUNNELS)
+			?.active ?? false;
 	const items = [
 		{
 			label: (
@@ -64,15 +70,19 @@ export default function TraceDetailsPage(): JSX.Element {
 			key: 'trace-details',
 			children: <TraceDetailsV2 />,
 		},
-		{
-			label: (
-				<div className="tab-item">
-					<Cone className="funnel-icon" size={16} /> Funnels
-				</div>
-			),
-			key: 'funnels',
-			children: <div />,
-		},
+		...(isTraceFunnelsEnabled
+			? [
+					{
+						label: (
+							<div className="tab-item">
+								<Cone className="funnel-icon" size={16} /> Funnels
+							</div>
+						),
+						key: 'funnels',
+						children: <div />,
+					},
+			  ]
+			: []),
 		{
 			label: (
 				<div className="tab-item">
