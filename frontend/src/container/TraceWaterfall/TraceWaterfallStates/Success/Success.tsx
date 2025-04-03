@@ -326,7 +326,7 @@ function Success(props: ISuccessProps): JSX.Element {
 	const { featureFlags } = useAppContext();
 	const isTraceFunnelsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.TRACE_FUNNELS)
-			?.active || true;
+			?.active ?? false;
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
