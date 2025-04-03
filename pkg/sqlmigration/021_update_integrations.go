@@ -56,6 +56,31 @@ type newInstalledIntegration struct {
 	OrgID       string    `json:"org_id" bun:"org_id,type:text,unique:org_id_type,references:organizations(id),on_delete:cascade"`
 }
 
+type existingCloudIntegration struct {
+	bun.BaseModel `bun:"table:cloud_integrations_accounts"`
+
+	CloudProvider       string     `bun:"cloud_provider,type:text,unique:cloud_provider_id"`
+	ID                  string     `bun:"id,type:text,notnull,unique:cloud_provider_id"`
+	ConfigJSON          string     `bun:"config_json,type:text"`
+	CloudAccountID      string     `bun:"cloud_account_id,type:text"`
+	LastAgentReportJSON string     `bun:"last_agent_report_json,type:text"`
+	CreatedAt           time.Time  `bun:"created_at,notnull,default:current_timestamp"`
+	RemovedAt           *time.Time `bun:"removed_at,type:timestamp"`
+}
+
+type newCloudIntegration struct {
+	bun.BaseModel `bun:"table:cloud_integration"`
+
+	types.Identifiable
+	types.TimeAuditable
+	Provider        string     `json:"provider" bun:"provider,type:text"`
+	Config          string     `json:"config" bun:"config,type:text"`
+	AccountID       string     `json:"account_id" bun:"account_id,type:text"`
+	LastAgentReport string     `json:"last_agent_report" bun:"last_agent_report,type:text"`
+	RemovedAt       *time.Time `json:"removed_at" bun:"removed_at,type:timestamp"`
+	OrgID           string     `json:"org_id" bun:"org_id,type:text"`
+}
+
 func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 	// begin transaction
@@ -75,6 +100,9 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		return nil
 	}
 
+	// ---
+	// installed integrations
+	// ---
 	err = migration.
 		store.
 		Dialect().
@@ -103,6 +131,47 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 			}
 			return nil
 		})
+	if err != nil {
+		return err
+	}
+
+	// ---
+	// cloud integrations
+	// ---
+	err = migration.
+		store.
+		Dialect().
+		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegration), new(newCloudIntegration), func(ctx context.Context) error {
+			existingIntegrations := make([]*existingCloudIntegration, 0)
+			err = tx.
+				NewSelect().
+				Model(&existingIntegrations).
+				Scan(ctx)
+			if err != nil {
+				if err != sql.ErrNoRows {
+					return err
+				}
+			}
+
+			if err == nil && len(existingIntegrations) > 0 {
+				newIntegrations := migration.
+					CopyOldCloudIntegrationsToNewCloudIntegrations(existingIntegrations)
+				_, err = tx.
+					NewInsert().
+					Model(&newIntegrations).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+
+	// add unique constraint to cloud_integration table
+	_, err = tx.ExecContext(ctx, `CREATE UNIQUE INDEX unique_cloud_integration ON cloud_integration (id, provider, org_id)`)
 	if err != nil {
 		return err
 	}
@@ -144,6 +213,39 @@ func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(existi
 			ConfigJSON:  integration.ConfigJSON,
 			InstalledAt: integration.InstalledAt,
 			OrgID:       orgIDs[0],
+		})
+	}
+
+	return newIntegrations
+}
+
+func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrations(existingIntegrations []*existingCloudIntegration) []*newCloudIntegration {
+	newIntegrations := make([]*newCloudIntegration, 0)
+	// get the first org id
+	orgIDs := make([]string, 0)
+	err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		zap.L().Error("failed to get org id", zap.Error(err))
+		return nil
+	}
+	if len(orgIDs) == 0 {
+		return nil
+	}
+
+	for _, integration := range existingIntegrations {
+		newIntegrations = append(newIntegrations, &newCloudIntegration{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Provider:        integration.CloudProvider,
+			AccountID:       integration.CloudAccountID,
+			Config:          integration.ConfigJSON,
+			LastAgentReport: integration.LastAgentReportJSON,
+			RemovedAt:       integration.RemovedAt,
+			OrgID:           orgIDs[0],
 		})
 	}
 
