@@ -61,7 +61,7 @@ This command:
 
 1. Run the backend server:
    ```bash
-   make run-go
+   make go-run-community
    ```
 
 2. Verify it's working:

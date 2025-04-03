@@ -1,5 +1,6 @@
 import {
 	getMetricsListFilterKeys,
+	GetMetricsListFilterKeysParams,
 	MetricsListFilterKeysResponse,
 } from 'api/metricsExplorer/getMetricsListFilterKeys';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -8,6 +9,7 @@ import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseGetMetricsListFilterKeys = (
+	params: GetMetricsListFilterKeysParams,
 	options?: UseQueryOptions<
 		SuccessResponse<MetricsListFilterKeysResponse> | ErrorResponse,
 		Error
@@ -19,6 +21,7 @@ type UseGetMetricsListFilterKeys = (
 >;
 
 export const useGetMetricsListFilterKeys: UseGetMetricsListFilterKeys = (
+	params,
 	options,
 	headers,
 ) => {
@@ -38,7 +41,7 @@ export const useGetMetricsListFilterKeys: UseGetMetricsListFilterKeys = (
 		SuccessResponse<MetricsListFilterKeysResponse> | ErrorResponse,
 		Error
 	>({
-		queryFn: ({ signal }) => getMetricsListFilterKeys(signal, headers),
+		queryFn: ({ signal }) => getMetricsListFilterKeys(params, signal, headers),
 		...options,
 		queryKey,
 	});

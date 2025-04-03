@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/google/uuid"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 
@@ -48,7 +48,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.Prometheus,
 			baserules.WithSQLStore(opts.SQLStore),
 		)
 
@@ -145,7 +145,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			parsedRule,
 			opts.Logger,
 			opts.Reader,
-			opts.ManagerOpts.PqlEngine,
+			opts.ManagerOpts.Prometheus,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),

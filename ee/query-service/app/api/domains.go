@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/ee/types"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/model"
 )
 
 func (ah *APIHandler) listDomainsByOrg(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func (ah *APIHandler) listDomainsByOrg(w http.ResponseWriter, r *http.Request) {
 func (ah *APIHandler) postDomain(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	req := model.OrgDomain{}
+	req := types.GettableOrgDomain{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -54,12 +55,12 @@ func (ah *APIHandler) putDomain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := model.OrgDomain{Id: domainId}
+	req := types.GettableOrgDomain{StorableOrgDomain: types.StorableOrgDomain{ID: domainId}}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	req.Id = domainId
+	req.ID = domainId
 	if err := req.Valid(nil); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 	}

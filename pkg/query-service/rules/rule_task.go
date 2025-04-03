@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	opentracing "github.com/opentracing/opentracing-go"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 
@@ -296,6 +296,12 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			zap.L().Error("panic during threshold rule evaluation", zap.Any("panic", r))
+		}
+	}()
 
 	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
 

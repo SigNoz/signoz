@@ -9,9 +9,9 @@ import (
 	"path"
 	"sort"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	koanfJson "github.com/knadh/koanf/parsers/json"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
 )
 

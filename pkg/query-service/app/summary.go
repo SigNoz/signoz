@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/pkg/query-service/model"
 
-	explorer "go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
+	explorer "github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"go.uber.org/zap"
 )
 
@@ -67,17 +67,17 @@ func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, _ := io.ReadAll(r.Body)
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	ctx := r.Context()
-	params, apiError := explorer.ParseSummaryListMetricsParams(r)
-	if apiError != nil {
-		zap.L().Error("error parsing metric list metric summary api request", zap.Error(apiError.Err))
-		RespondError(w, model.BadRequest(apiError), nil)
+	params, apiErr := explorer.ParseSummaryListMetricsParams(r)
+	if apiErr != nil {
+		zap.L().Error("error parsing metric list metric summary api request", zap.Error(apiErr.Err))
+		RespondError(w, model.BadRequest(apiErr), nil)
 		return
 	}
 
 	slmr, apiErr := aH.SummaryService.ListMetricsWithSummary(ctx, params)
 	if apiErr != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiErr.Err))
-		RespondError(w, apiError, nil)
+		zap.L().Error("error in getting list metrics summary", zap.Error(apiErr.Err))
+		RespondError(w, apiErr, nil)
 		return
 	}
 	aH.Respond(w, slmr)
@@ -89,13 +89,13 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params, apiError := explorer.ParseTreeMapMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing heatmap metric params", zap.Error(apiError.Err))
+		zap.L().Error("error parsing tree map metric params", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}
 	result, apiError := aH.SummaryService.GetMetricsTreemap(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting heatmap data", zap.Error(apiError.Err))
+		zap.L().Error("error getting tree map data", zap.Error(apiError.Err))
 		RespondError(w, apiError, nil)
 		return
 	}

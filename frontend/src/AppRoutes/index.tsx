@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -15,6 +16,7 @@ import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
@@ -26,6 +28,7 @@ import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { extractDomain } from 'utils/app';
 
+import { Home } from './pageComponents';
 import PrivateRoute from './Private';
 import defaultRoutes, {
 	AppRoutes,
@@ -45,7 +48,6 @@ function App(): JSX.Element {
 		activeLicenseV3,
 		isFetchingActiveLicenseV3,
 		userFetchError,
-		licensesFetchError,
 		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
 		featureFlags,
@@ -55,10 +57,7 @@ function App(): JSX.Element {
 
 	const { hostname, pathname } = window.location;
 
-	const {
-		isCloudUser: isCloudUserVal,
-		isEECloudUser: isEECloudUserVal,
-	} = useGetTenantLicense();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -168,7 +167,7 @@ function App(): JSX.Element {
 
 			let updatedRoutes = defaultRoutes;
 			// if the user is a cloud user
-			if (isCloudUserVal || isEECloudUserVal) {
+			if (isCloudUser || isEnterpriseSelfHostedUser) {
 				// if the user is on basic plan then remove billing
 				if (isOnBasicPlan) {
 					updatedRoutes = updatedRoutes.filter(
@@ -190,10 +189,10 @@ function App(): JSX.Element {
 		isLoggedInState,
 		user,
 		licenses,
-		isCloudUserVal,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
 		isFetchingLicenses,
 		isFetchingUser,
-		isEECloudUserVal,
 	]);
 
 	useEffect(() => {
@@ -208,6 +207,7 @@ function App(): JSX.Element {
 		}
 	}, [pathname]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
 		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
@@ -233,7 +233,12 @@ function App(): JSX.Element {
 			const showAddCreditCardModal =
 				!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
-			if (isLoggedInState && isChatSupportEnabled && !showAddCreditCardModal) {
+			if (
+				isLoggedInState &&
+				isChatSupportEnabled &&
+				!showAddCreditCardModal &&
+				(isCloudUser || isEnterpriseSelfHostedUser)
+			) {
 				window.Intercom('boot', {
 					app_id: process.env.INTERCOM_APP_ID,
 					email: user?.email || '',
@@ -252,13 +257,53 @@ function App(): JSX.Element {
 		licenses,
 		activeLicenseV3,
 		trialInfo,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
 	]);
 
 	useEffect(() => {
-		if (!isFetchingUser && isCloudUserVal && user && user.email) {
+		if (!isFetchingUser && isCloudUser && user && user.email) {
 			enableAnalytics(user);
 		}
-	}, [user, isFetchingUser, isCloudUserVal, enableAnalytics]);
+	}, [user, isFetchingUser, isCloudUser, enableAnalytics]);
+
+	useEffect(() => {
+		if (isCloudUser || isEnterpriseSelfHostedUser) {
+			if (process.env.POSTHOG_KEY) {
+				posthog.init(process.env.POSTHOG_KEY, {
+					api_host: 'https://us.i.posthog.com',
+					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+				});
+			}
+
+			Sentry.init({
+				dsn: process.env.SENTRY_DSN,
+				tunnel: process.env.TUNNEL_URL,
+				environment: 'production',
+				integrations: [
+					Sentry.browserTracingIntegration(),
+					Sentry.replayIntegration({
+						maskAllText: false,
+						blockAllMedia: false,
+					}),
+				],
+				// Performance Monitoring
+				tracesSampleRate: 1.0, //  Capture 100% of the transactions
+				// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+				tracePropagationTargets: [],
+				// Session Replay
+				replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+				replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+			});
+		} else {
+			posthog.reset();
+			Sentry.close();
+
+			if (window.cioanalytics && typeof window.cioanalytics.reset === 'function') {
+				window.cioanalytics.reset();
+			}
+		}
+	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
 	// if the user is in logged in state
 	if (isLoggedInState) {
@@ -270,60 +315,55 @@ function App(): JSX.Element {
 		// if the required calls fails then return a something went wrong error
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
-		if (
-			(userFetchError || licensesFetchError) &&
-			pathname !== ROUTES.SOMETHING_WENT_WRONG
-		) {
+		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
 			history.replace(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
-		if (
-			(!licenses || !user.email || !featureFlags) &&
-			!userFetchError &&
-			!licensesFetchError
-		) {
+		if ((!licenses || !user.email || !featureFlags) && !userFetchError) {
 			return <Spinner tip="Loading..." />;
 		}
 	}
 
 	return (
-		<ConfigProvider theme={themeConfig}>
-			<Router history={history}>
-				<CompatRouter>
-					<NotificationProvider>
-						<PrivateRoute>
-							<ResourceProvider>
-								<QueryBuilderProvider>
-									<DashboardProvider>
-										<KeyboardHotkeysProvider>
-											<AlertRuleProvider>
-												<AppLayout>
-													<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-														<Switch>
-															{routes.map(({ path, component, exact }) => (
-																<Route
-																	key={`${path}`}
-																	exact={exact}
-																	path={path}
-																	component={component}
-																/>
-															))}
-
-															<Route path="*" component={NotFound} />
-														</Switch>
-													</Suspense>
-												</AppLayout>
-											</AlertRuleProvider>
-										</KeyboardHotkeysProvider>
-									</DashboardProvider>
-								</QueryBuilderProvider>
-							</ResourceProvider>
-						</PrivateRoute>
-					</NotificationProvider>
-				</CompatRouter>
-			</Router>
-		</ConfigProvider>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<ConfigProvider theme={themeConfig}>
+				<Router history={history}>
+					<CompatRouter>
+						<NotificationProvider>
+							<PrivateRoute>
+								<ResourceProvider>
+									<QueryBuilderProvider>
+										<DashboardProvider>
+											<KeyboardHotkeysProvider>
+												<AlertRuleProvider>
+													<AppLayout>
+														<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+															<Switch>
+																{routes.map(({ path, component, exact }) => (
+																	<Route
+																		key={`${path}`}
+																		exact={exact}
+																		path={path}
+																		component={component}
+																	/>
+																))}
+																<Route exact path="/" component={Home} />
+																<Route path="*" component={NotFound} />
+															</Switch>
+														</Suspense>
+													</AppLayout>
+												</AlertRuleProvider>
+											</KeyboardHotkeysProvider>
+										</DashboardProvider>
+									</QueryBuilderProvider>
+								</ResourceProvider>
+							</PrivateRoute>
+						</NotificationProvider>
+					</CompatRouter>
+				</Router>
+			</ConfigProvider>
+		</Sentry.ErrorBoundary>
 	);
 }
 

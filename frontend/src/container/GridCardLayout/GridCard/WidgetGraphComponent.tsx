@@ -2,6 +2,7 @@ import '../GridCardLayout.styles.scss';
 
 import { Skeleton, Typography } from 'antd';
 import cx from 'classnames';
+import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -17,6 +18,7 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
+	RefObject,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -25,13 +27,16 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
+import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
+import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getLocalStorageGraphVisibilityState } from './utils';
+import { getLocalStorageGraphVisibilityState, handleGraphClick } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -45,6 +50,7 @@ function WidgetGraphComponent({
 	setRequestData,
 	onClickHandler,
 	onDragSelect,
+	customOnDragSelect,
 	customTooltipElement,
 	openTracesButton,
 	onOpenTraceBtnClick,
@@ -67,6 +73,11 @@ function WidgetGraphComponent({
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
+	const [
+		currentGraphRef,
+		setCurrentGraphRef,
+	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
+
 	useEffect(() => {
 		if (!lineChartRef.current) return;
 
@@ -77,6 +88,8 @@ function WidgetGraphComponent({
 	}, []);
 
 	const tableProcessedDataRef = useRef<RowData[]>([]);
+
+	const navigateToExplorerPages = useNavigateToExplorerPages();
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -230,6 +243,40 @@ function WidgetGraphComponent({
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 
+	const graphClick = useGraphClickToShowButton({
+		graphRef: currentGraphRef?.current ? currentGraphRef : graphRef,
+		isButtonEnabled: (widget?.query?.builder?.queryData ?? []).some(
+			(q) =>
+				q.dataSource === DataSource.TRACES || q.dataSource === DataSource.LOGS,
+		),
+		buttonClassName: 'view-onclick-show-button',
+	});
+
+	const navigateToExplorer = useNavigateToExplorer();
+
+	const graphClickHandler = (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		metric?: { [key: string]: string },
+		queryData?: { queryName: string; inFocusOrNot: boolean },
+	): void => {
+		handleGraphClick({
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+			metric,
+			queryData,
+			widget,
+			navigateToExplorerPages,
+			navigateToExplorer,
+			notifications,
+			graphClick,
+		});
+	};
+
 	return (
 		<div
 			style={{
@@ -280,6 +327,9 @@ function WidgetGraphComponent({
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					tableProcessedDataRef={tableProcessedDataRef}
+					onClickHandler={onClickHandler ?? graphClickHandler}
+					customOnDragSelect={customOnDragSelect}
+					setCurrentGraphRef={setCurrentGraphRef}
 				/>
 			</Modal>
 
@@ -322,7 +372,7 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
-						onClickHandler={onClickHandler}
+						onClickHandler={onClickHandler ?? graphClickHandler}
 						onDragSelect={onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						customTooltipElement={customTooltipElement}

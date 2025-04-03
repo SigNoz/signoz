@@ -10,15 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	eeTypes "github.com/SigNoz/signoz/ee/types"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/types"
 	"go.uber.org/zap"
 )
 
@@ -118,7 +118,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		return "", apiErr
 	}
 
-	allPats, err := ah.AppDao().ListPATs(ctx)
+	allPats, err := ah.AppDao().ListPATs(ctx, orgId)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -135,16 +135,13 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		zap.String("cloudProvider", cloudProvider),
 	)
 
-	newPAT := model.PAT{
-		Token:     generatePATToken(),
-		UserID:    integrationUser.ID,
-		Name:      integrationPATName,
-		Role:      baseconstants.ViewerGroup,
-		ExpiresAt: 0,
-		CreatedAt: time.Now().Unix(),
-		UpdatedAt: time.Now().Unix(),
-	}
-	integrationPAT, err := ah.AppDao().CreatePAT(ctx, newPAT)
+	newPAT := eeTypes.NewGettablePAT(
+		integrationPATName,
+		baseconstants.ViewerGroup,
+		integrationUser.ID,
+		0,
+	)
+	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,

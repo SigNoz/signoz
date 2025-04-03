@@ -13,27 +13,29 @@ import (
 	"text/template"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
+	"github.com/SigNoz/signoz/pkg/types"
+	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -841,6 +843,29 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 	return errs
 }
 
+// chTransformQuery transforms the clickhouse query with the given variables
+// it is used to check what would be the query if variables are selected as __all__.
+// for now, this is just a pass through, but in the future, we will use it to
+// dashboard variables
+// TODO(srikanthccv): version based query replacement
+func chTransformQuery(query string, variables map[string]interface{}) {
+	varsForTransform := make([]chVariables.VariableValue, 0, len(variables))
+	for name := range variables {
+		varsForTransform = append(varsForTransform, chVariables.VariableValue{
+			Name:        name,
+			Values:      []string{"__all__"},
+			IsSelectAll: true,
+			FieldType:   "scalar",
+		})
+	}
+	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
+	transformedQuery, err := transformer.Transform()
+	if err != nil {
+		zap.L().Warn("failed to transform clickhouse query", zap.Error(err))
+	}
+	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
+}
+
 func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
 
 	var queryRangeParams *v3.QueryRangeParamsV3
@@ -979,6 +1004,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				continue
 			}
 
+			chTransformQuery(chQuery.Query, queryRangeParams.Variables)
 			for name, value := range queryRangeParams.Variables {
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)

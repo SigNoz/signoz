@@ -5,36 +5,26 @@ import (
 	"encoding/json"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 type provider struct {
-	settings telemetrystore.ClickHouseQuerySettings
+	settings telemetrystore.QuerySettings
 }
 
-func NewFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("clickhousesettings"), New)
+func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("settings"), NewSettings)
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
+func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
 	return &provider{
-		settings: config.ClickHouse.QuerySettings,
+		settings: config.Clickhouse.QuerySettings,
 	}, nil
 }
 
-func (h *provider) BeforeQuery(ctx context.Context, query string, args ...interface{}) (context.Context, string, []interface{}) {
-	return h.clickHouseSettings(ctx, query, args...)
-}
-
-func (h *provider) AfterQuery(ctx context.Context, query string, args []interface{}, rows driver.Rows, err error) {
-	return
-}
-
-// clickHouseSettings adds clickhouse settings to queries
-func (h *provider) clickHouseSettings(ctx context.Context, query string, args ...interface{}) (context.Context, string, []interface{}) {
+func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
 	settings := clickhouse.Settings{}
 
 	// Apply default settings
@@ -64,11 +54,26 @@ func (h *provider) clickHouseSettings(ctx context.Context, query string, args ..
 	}
 
 	if ctx.Value("clickhouse_max_threads") != nil {
-		if maxThreads, ok := ctx.Value("clickhouse_max_threads").(int); ok { settings["max_threads"] = maxThreads }
+		if maxThreads, ok := ctx.Value("clickhouse_max_threads").(int); ok {
+			settings["max_threads"] = maxThreads
+		}
+	}
+
+	if ctx.Value("max_result_rows") != nil && ctx.Value("result_overflow_mode") != nil {
+		if maxResultRows, ok := ctx.Value("max_result_rows").(int); ok { settings["max_result_rows"] = maxResultRows }
+		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
+	}
+
+	if ctx.Value("max_rows_to_group_by") != nil && ctx.Value("result_overflow_mode") != nil {
+		settings["max_rows_to_group_by"] = ctx.Value("max_rows_to_group_by").(int)
+		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
-	return ctx, query, args
+	return ctx
+}
+
+func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
 }
 
 func (h *provider) getLogComment(ctx context.Context) string {

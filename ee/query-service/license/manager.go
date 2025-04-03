@@ -7,18 +7,18 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
 
 	"sync"
 
-	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
-	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/model"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -45,12 +45,12 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(db *sqlx.DB, bundb *bun.DB, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, store sqlstore.SQLStore, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
 
-	repo := NewLicenseRepo(db, bundb)
+	repo := NewLicenseRepo(db, store)
 	m := &Manager{
 		repo: &repo,
 	}

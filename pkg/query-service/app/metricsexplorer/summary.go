@@ -10,13 +10,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/model/metrics_explorer"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -54,7 +54,7 @@ func (receiver *SummaryService) FilterValues(ctx context.Context, params *metric
 	case "metric_name":
 		var filterValues []string
 		request := v3.AggregateAttributeRequest{DataSource: v3.DataSourceMetrics, SearchText: params.SearchText, Limit: params.Limit}
-		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true)
+		attributes, err := receiver.reader.GetMetricAggregateAttributes(ctx, &request, true, true)
 		if err != nil {
 			return nil, model.InternalError(err)
 		}
@@ -104,6 +104,8 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 		metricDetailsDTO.Metadata.MetricType = metadata.Type
 		metricDetailsDTO.Metadata.Description = metadata.Description
 		metricDetailsDTO.Metadata.Unit = metadata.Unit
+		metricDetailsDTO.Metadata.Temporality = metadata.Temporality
+		metricDetailsDTO.Metadata.Monotonic = metadata.IsMonotonic
 		return nil
 	})
 
@@ -223,21 +225,21 @@ func (receiver *SummaryService) GetMetricsTreemap(ctx context.Context, params *m
 	var response metrics_explorer.TreeMap
 	switch params.Treemap {
 	case metrics_explorer.TimeSeriesTeeMap:
-		cardinality, apiError := receiver.reader.GetMetricsTimeSeriesPercentage(ctx, params)
+		ts, apiError := receiver.reader.GetMetricsTimeSeriesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		if cardinality != nil {
-			response.TimeSeries = *cardinality
+		if ts != nil {
+			response.TimeSeries = *ts
 		}
 		return &response, nil
 	case metrics_explorer.SamplesTreeMap:
-		dataPoints, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
+		samples, apiError := receiver.reader.GetMetricsSamplesPercentage(ctx, params)
 		if apiError != nil {
 			return nil, apiError
 		}
-		if dataPoints != nil {
-			response.Samples = *dataPoints
+		if samples != nil {
+			response.Samples = *samples
 		}
 		return &response, nil
 	default:

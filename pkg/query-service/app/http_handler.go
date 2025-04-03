@@ -18,56 +18,58 @@ import (
 	"text/template"
 	"time"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	errorsV2 "go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/http/render"
-	"go.signoz.io/signoz/pkg/query-service/app/metricsexplorer"
-	"go.signoz.io/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/prometheus/promql"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/prometheus/prometheus/promql"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/app/inframetrics"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	queues2 "go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/thirdPartyApi"
-	"go.signoz.io/signoz/pkg/query-service/app/logs"
-	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	logsv4 "go.signoz.io/signoz/pkg/query-service/app/logs/v4"
-	"go.signoz.io/signoz/pkg/query-service/app/metrics"
-	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/app/querier"
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/contextlinks"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
+	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
+	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
+	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
+	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/dao"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/version"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 type status string
@@ -296,7 +298,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	return aH, nil
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type structuredResponse struct {
 	Data   interface{}       `json:"data"`
 	Total  int               `json:"total"`
@@ -305,13 +307,13 @@ type structuredResponse struct {
 	Errors []structuredError `json:"errors"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type structuredError struct {
 	Code int    `json:"code,omitempty"`
 	Msg  string `json:"msg"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
@@ -319,7 +321,7 @@ type ApiResponse struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -365,7 +367,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	}
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&ApiResponse{
@@ -482,7 +484,7 @@ func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
-// todo(remove): Implemented at render package (go.signoz.io/signoz/pkg/http/render) with the new error structure
+// todo(remove): Implemented at render package (github.com/SigNoz/signoz/pkg/http/render) with the new error structure
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -551,8 +553,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
@@ -614,6 +614,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
+		render.Success(rw, http.StatusOK, []any{})
+	})).Methods(http.MethodGet)
+	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
+		render.Error(rw, errorsV2.New(errorsV2.TypeUnsupported, errorsV2.CodeUnsupported, "not implemented"))
+	})).Methods(http.MethodGet)
 }
 
 func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *AuthMiddleware) {
@@ -1897,9 +1904,8 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	version := version.GetVersion()
 	versionResponse := model.GetVersionResponse{
-		Version:        version,
+		Version:        version.Info.Version(),
 		EE:             "Y",
 		SetupCompleted: aH.SetupCompleted,
 	}
@@ -4461,6 +4467,11 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 }
 
 func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -4472,9 +4483,9 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var apierr *model.ApiError
 
 	if version != -1 {
-		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), version)
+		payload, apierr = aH.listLogsPipelinesByVersion(context.Background(), claims.OrgID, version)
 	} else {
-		payload, apierr = aH.listLogsPipelines(context.Background())
+		payload, apierr = aH.listLogsPipelines(context.Background(), claims.OrgID)
 	}
 
 	if apierr != nil {
@@ -4485,7 +4496,7 @@ func (aH *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
+func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID string) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
@@ -4515,7 +4526,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context) (
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, orgID string, version int) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	payload, err := aH.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
@@ -4536,7 +4547,13 @@ func (aH *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 
 func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
-	req := logparsingpipeline.PostablePipelines{}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	req := pipelinetypes.PostablePipelines{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
@@ -4545,7 +4562,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	createPipeline := func(
 		ctx context.Context,
-		postable []logparsingpipeline.PostablePipeline,
+		postable []pipelinetypes.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
@@ -4556,7 +4573,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, validationErr
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, claims.OrgID, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
@@ -4616,12 +4633,18 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
+	viewUUID, err := valuer.NewUUID(viewID)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
+
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	view, err := explorer.GetView(r.Context(), claims.OrgID, viewID)
+	view, err := explorer.GetView(r.Context(), claims.OrgID, viewUUID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4632,8 +4655,13 @@ func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
+	viewUUID, err := valuer.NewUUID(viewID)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
 	var view v3.SavedView
-	err := json.NewDecoder(r.Body).Decode(&view)
+	err = json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -4649,7 +4677,7 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	err = explorer.UpdateView(r.Context(), claims.OrgID, viewID, view)
+	err = explorer.UpdateView(r.Context(), claims.OrgID, viewUUID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4661,12 +4689,17 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
 	viewID := mux.Vars(r)["viewId"]
+	viewUUID, err := valuer.NewUUID(viewID)
+	if err != nil {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	err := explorer.DeleteView(r.Context(), claims.OrgID, viewID)
+	err = explorer.DeleteView(r.Context(), claims.OrgID, viewUUID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -4686,7 +4719,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true)
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req, true, false)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:

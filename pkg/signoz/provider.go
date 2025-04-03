@@ -1,24 +1,25 @@
 package signoz
 
 import (
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/alertmanager/legacyalertmanager"
-	"go.signoz.io/signoz/pkg/alertmanager/signozalertmanager"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/cache/memorycache"
-	"go.signoz.io/signoz/pkg/cache/rediscache"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/postgressqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlitesqlstore"
-	"go.signoz.io/signoz/pkg/sqlstore/sqlstorehook"
-	"go.signoz.io/signoz/pkg/telemetrystore"
-	"go.signoz.io/signoz/pkg/telemetrystore/clickhousetelemetrystore"
-	"go.signoz.io/signoz/pkg/telemetrystore/telemetrystorehook"
-	"go.signoz.io/signoz/pkg/web"
-	"go.signoz.io/signoz/pkg/web/noopweb"
-	"go.signoz.io/signoz/pkg/web/routerweb"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/legacyalertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/cache/rediscache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
+	"github.com/SigNoz/signoz/pkg/web"
+	"github.com/SigNoz/signoz/pkg/web/noopweb"
+	"github.com/SigNoz/signoz/pkg/web/routerweb"
 )
 
 func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]] {
@@ -39,7 +40,6 @@ func NewSQLStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[sql
 	hook := sqlstorehook.NewLoggingFactory()
 	return factory.MustNewNamedMap(
 		sqlitesqlstore.NewFactory(hook),
-		postgressqlstore.NewFactory(hook),
 	)
 }
 
@@ -58,14 +58,25 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewModifyDatetimeFactory(),
 		sqlmigration.NewModifyOrgDomainFactory(),
 		sqlmigration.NewUpdateOrganizationFactory(sqlstore),
-		sqlmigration.NewAddAlertmanagerFactory(),
+		sqlmigration.NewAddAlertmanagerFactory(sqlstore),
 		sqlmigration.NewUpdateDashboardAndSavedViewsFactory(sqlstore),
+		sqlmigration.NewUpdatePatAndOrgDomainsFactory(sqlstore),
+		sqlmigration.NewUpdatePipelines(sqlstore),
+		sqlmigration.NewDropLicensesSitesFactory(sqlstore),
+		sqlmigration.NewUpdateInvitesFactory(sqlstore),
+		sqlmigration.NewUpdatePatFactory(sqlstore),
 	)
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
-		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewFactory()),
+		clickhousetelemetrystore.NewFactory(telemetrystorehook.NewSettingsFactory(), telemetrystorehook.NewLoggingFactory()),
+	)
+}
+
+func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[prometheus.Prometheus, prometheus.Config]] {
+	return factory.MustNewNamedMap(
+		clickhouseprometheus.NewFactory(telemetryStore),
 	)
 }
 

@@ -12,47 +12,47 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/jmoiron/sqlx"
 
+	eemiddleware "github.com/SigNoz/signoz/ee/http/middleware"
+	"github.com/SigNoz/signoz/ee/query-service/app/api"
+	"github.com/SigNoz/signoz/ee/query-service/app/db"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
+	"github.com/SigNoz/signoz/ee/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	eemiddleware "go.signoz.io/signoz/ee/http/middleware"
-	"go.signoz.io/signoz/ee/query-service/app/api"
-	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/auth"
-	"go.signoz.io/signoz/ee/query-service/constants"
-	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
-	"go.signoz.io/signoz/ee/query-service/interfaces"
-	"go.signoz.io/signoz/ee/query-service/rules"
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/http/middleware"
-	"go.signoz.io/signoz/pkg/signoz"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
-	"go.signoz.io/signoz/pkg/types/authtypes"
-	"go.signoz.io/signoz/pkg/web"
 
-	licensepkg "go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/usage"
+	licensepkg "github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/usage"
 
-	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	baseapp "go.signoz.io/signoz/pkg/query-service/app"
-	"go.signoz.io/signoz/pkg/query-service/app/cloudintegrations"
-	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
-	"go.signoz.io/signoz/pkg/query-service/app/integrations"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
-	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	"go.signoz.io/signoz/pkg/query-service/app/preferences"
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/healthcheck"
-	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
-	baserules "go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/telemetry"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
+	baseexplorer "github.com/SigNoz/signoz/pkg/query-service/app/explorer"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
+	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
+	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
+	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
+	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -112,7 +112,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
+	if err := baseexplorer.InitWithDSN(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore.BunDB()); err != nil {
+	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
 
@@ -130,25 +130,23 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate license manager
-	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore.BunDB())
+	lm, err := licensepkg.StartManager(serverOptions.SigNoz.SQLStore.SQLxDB(), serverOptions.SigNoz.SQLStore)
 	if err != nil {
 		return nil, err
 	}
 
 	// set license manager as feature flag provider in dao
 	modelDao.SetFlagProvider(lm)
-	readerReady := make(chan bool)
 
 	fluxIntervalForTraceDetail, err := time.ParseDuration(serverOptions.FluxIntervalForTraceDetail)
 	if err != nil {
 		return nil, err
 	}
 
-	var reader interfaces.DataConnector
-	qb := db.NewDataConnector(
+	reader := db.NewDataConnector(
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
-		serverOptions.SigNoz.TelemetryStore.ClickHouseDB(),
-		serverOptions.PromConfigPath,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 		lm,
 		serverOptions.Cluster,
 		serverOptions.UseLogsNewSchema,
@@ -156,8 +154,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		fluxIntervalForTraceDetail,
 		serverOptions.SigNoz.Cache,
 	)
-	go qb.Start(readerReady)
-	reader = qb
 
 	skipConfig := &basemodel.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
@@ -176,9 +172,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		c = cache.NewCache(cacheOpts)
 	}
 
-	<-readerReady
 	rm, err := makeRulesManager(
-		serverOptions.PromConfigPath,
 		serverOptions.RuleRepoURL,
 		serverOptions.SigNoz.SQLStore.SQLxDB(),
 		reader,
@@ -189,6 +183,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.UseTraceNewSchema,
 		serverOptions.SigNoz.Alertmanager,
 		serverOptions.SigNoz.SQLStore,
+		serverOptions.SigNoz.TelemetryStore,
+		serverOptions.SigNoz.Prometheus,
 	)
 
 	if err != nil {
@@ -217,7 +213,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
-		serverOptions.SigNoz.SQLStore.SQLxDB(), integrationsController.GetPipelinesForInstalledIntegrations,
+		serverOptions.SigNoz.SQLStore, integrationsController.GetPipelinesForInstalledIntegrations,
 	)
 	if err != nil {
 		return nil, err
@@ -233,7 +229,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickHouseDB(), serverOptions.Config.TelemetryStore.ClickHouse.DSN)
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.Config.TelemetryStore.Clickhouse.DSN)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +300,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
-	errorList := qb.PreloadMetricsMetadata(context.Background())
+	errorList := reader.PreloadMetricsMetadata(context.Background())
 	for _, er := range errorList {
 		zap.L().Error("failed to preload metrics metadata", zap.Error(er))
 	}
@@ -317,7 +313,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	r := baseapp.NewRouter()
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -350,7 +346,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 
 	// add auth middleware
 	getUserFromRequest := func(ctx context.Context) (*types.GettableUser, error) {
-		user, err := auth.GetUserFromRequestContext(ctx, apiHandler)
+		user, err := auth.GetUserFromReqContext(ctx)
 
 		if err != nil {
 			return nil, err
@@ -365,7 +361,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	r.Use(middleware.NewAuth(zap.L(), s.serverOptions.Jwt, []string{"Authorization", "Sec-WebSocket-Protocol"}).Wrap)
-	r.Use(eemiddleware.NewPat([]string{"SIGNOZ-API-KEY"}).Wrap)
+	r.Use(eemiddleware.NewPat(s.serverOptions.SigNoz.SQLStore, []string{"SIGNOZ-API-KEY"}).Wrap)
 	r.Use(middleware.NewTimeout(zap.L(),
 		s.serverOptions.Config.APIServer.Timeout.ExcludedRoutes,
 		s.serverOptions.Config.APIServer.Timeout.Default,
@@ -537,7 +533,6 @@ func (s *Server) Stop() error {
 }
 
 func makeRulesManager(
-	promConfigPath,
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
@@ -548,16 +543,13 @@ func makeRulesManager(
 	useTraceNewSchema bool,
 	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
+	telemetryStore telemetrystore.TelemetryStore,
+	prometheus prometheus.Prometheus,
 ) (*baserules.Manager, error) {
-	// create engine
-	pqle, err := pqle.FromConfigPath(promConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pql engine : %v", err)
-	}
-
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		PqlEngine:           pqle,
+		TelemetryStore:      telemetryStore,
+		Prometheus:          prometheus,
 		RepoURL:             ruleRepoURL,
 		DBConn:              db,
 		Context:             context.Background(),

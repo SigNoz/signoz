@@ -26,6 +26,7 @@ function TablePanelWrapper({
 			searchTerm={searchTerm}
 			openTracesButton={openTracesButton}
 			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			widgetId={widget.id}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

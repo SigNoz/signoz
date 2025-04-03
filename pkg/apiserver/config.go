@@ -3,7 +3,7 @@ package apiserver
 import (
 	"time"
 
-	"go.signoz.io/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory"
 )
 
 // Config holds the configuration for config.
@@ -43,6 +43,8 @@ func newConfig() factory.Config {
 		Logging: Logging{
 			ExcludedRoutes: []string{
 				"/api/v1/health",
+				"/api/v1/version",
+				"/",
 			},
 		},
 	}

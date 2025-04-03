@@ -11,13 +11,12 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import ROUTES from 'constants/routes';
 import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Compass, X } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
+import { isInspectEnabled } from '../Inspect/utils';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
@@ -26,16 +25,16 @@ import { MetricDetailsProps } from './types';
 import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
-	getMetricDetailsQuery,
 } from './utils';
 
 function MetricDetails({
 	onClose,
 	isOpen,
 	metricName,
+	openInspectModal,
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { safeNavigate } = useSafeNavigate();
+	// const { safeNavigate } = useSafeNavigate();
 
 	const {
 		data,
@@ -53,6 +52,8 @@ function MetricDetails({
 		if (!metric) return null;
 		return formatTimestampToReadableDate(metric.lastReceived);
 	}, [metric]);
+
+	const showInspectFeature = useMemo(() => isInspectEnabled(), []);
 
 	const isMetricDetailsLoading = isLoading || isFetching;
 
@@ -72,15 +73,15 @@ function MetricDetails({
 		);
 	}, [metric]);
 
-	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
-		if (metricName) {
-			const compositeQuery = getMetricDetailsQuery(metricName);
-			const encodedCompositeQuery = JSON.stringify(compositeQuery);
-			safeNavigate(
-				`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
-			);
-		}
-	}, [metricName, safeNavigate]);
+	// const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
+	// 	if (metricName) {
+	// 		const compositeQuery = getMetricDetailsQuery(metricName);
+	// 		const encodedCompositeQuery = JSON.stringify(compositeQuery);
+	// 		safeNavigate(
+	// 			`${ROUTES.METRICS_EXPLORER_EXPLORER}?compositeQuery=${encodedCompositeQuery}`,
+	// 		);
+	// 	}
+	// }, [metricName, safeNavigate]);
 
 	const isMetricDetailsError = metricDetailsError || !metric;
 
@@ -93,7 +94,8 @@ function MetricDetails({
 						<Divider type="vertical" />
 						<Typography.Text>{metric?.name}</Typography.Text>
 					</div>
-					<Button
+					{/* TODO: Enable this once we have fixed the redirect issue */}
+					{/* <Button
 						onClick={goToMetricsExplorerwithSelectedMetric}
 						icon={<Compass size={16} />}
 						disabled={!metricName}
@@ -101,7 +103,20 @@ function MetricDetails({
 						rel="noopener noreferrer"
 					>
 						Open in Explorer
-					</Button>
+					</Button> */}
+					{/* Show the based on the feature flag. Will remove before releasing the feature */}
+					{showInspectFeature && (
+						<Button
+							className="inspect-metrics-button"
+							aria-label="Inspect Metric"
+							icon={<Compass size={18} />}
+							onClick={(): void => {
+								if (metric?.name) {
+									openInspectModal(metric.name);
+								}
+							}}
+						/>
+					)}
 				</div>
 			}
 			placement="right"

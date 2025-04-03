@@ -3,17 +3,18 @@ package signoz
 import (
 	"context"
 
-	"go.signoz.io/signoz/pkg/alertmanager"
-	"go.signoz.io/signoz/pkg/cache"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/instrumentation"
-	"go.signoz.io/signoz/pkg/sqlmigration"
-	"go.signoz.io/signoz/pkg/sqlmigrator"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/telemetrystore"
-	"go.signoz.io/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/sqlmigration"
+	"github.com/SigNoz/signoz/pkg/sqlmigrator"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/version"
 
-	"go.signoz.io/signoz/pkg/web"
+	"github.com/SigNoz/signoz/pkg/web"
 )
 
 type SigNoz struct {
@@ -22,6 +23,7 @@ type SigNoz struct {
 	Web            web.Web
 	SQLStore       sqlstore.SQLStore
 	TelemetryStore telemetrystore.TelemetryStore
+	Prometheus     prometheus.Prometheus
 	Alertmanager   alertmanager.Alertmanager
 }
 
@@ -34,12 +36,13 @@ func New(
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
-	instrumentation, err := instrumentation.New(ctx, version.Build{}, config.Instrumentation)
+	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
 	if err != nil {
 		return nil, err
 	}
 
-	instrumentation.Logger().DebugContext(ctx, "starting signoz", "config", config)
+	instrumentation.Logger().InfoContext(ctx, "starting signoz", "version", version.Info.Version(), "variant", version.Info.Variant(), "commit", version.Info.Hash(), "branch", version.Info.Branch(), "go", version.Info.GoVersion(), "time", version.Info.Time())
+	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", "config", config)
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
@@ -92,6 +95,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize prometheus from the available prometheus provider factories
+	prometheus, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Prometheus,
+		NewPrometheusProviderFactories(telemetrystore),
+		config.Prometheus.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
@@ -134,6 +149,7 @@ func New(
 		Web:            web,
 		SQLStore:       sqlstore,
 		TelemetryStore: telemetrystore,
+		Prometheus:     prometheus,
 		Alertmanager:   alertmanager,
 	}, nil
 }

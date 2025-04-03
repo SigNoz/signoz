@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"golang.org/x/exp/maps"
 )
 
@@ -124,7 +124,7 @@ func (c *Controller) GenerateConnectionUrl(
 	}
 
 	// TODO(Raj): parameterized this in follow up changes
-	agentVersion := "0.0.2"
+	agentVersion := "0.0.3"
 
 	connectionUrl := fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cloudformation/home?region=%s#/stacks/quickcreate?",

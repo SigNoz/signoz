@@ -24,7 +24,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { defaultTo, isEmpty, isUndefined } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useAppContext } from 'providers/App/App';
@@ -74,6 +74,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 		selectedRowWidgetId,
 		setSelectedRowWidgetId,
+		columnWidths,
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
@@ -170,6 +171,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [isFillSpans, setIsFillSpans] = useState<boolean>(
 		selectedWidget?.fillSpans || false,
 	);
+	const [isLogScale, setIsLogScale] = useState<boolean>(
+		selectedWidget?.isLogScale || false,
+	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
@@ -234,8 +238,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
+				isLogScale,
+				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		columnUnits,
 		currentQuery,
@@ -255,6 +262,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		bucketCount,
 		combineHistogram,
 		stackedBarChart,
+		isLogScale,
+		columnWidths,
 	]);
 
 	const closeModal = (): void => {
@@ -315,7 +324,25 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	// request data should be handled by the parent and the child components should consume the same
 	// this has been moved here from the left container
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
-		if (selectedWidget && selectedGraph !== PANEL_TYPES.LIST) {
+		const updatedQuery = cloneDeep(stagedQuery || initialQueriesMap.metrics);
+		updatedQuery.builder.queryData[0].pageSize = 10;
+
+		if (selectedWidget) {
+			if (selectedGraph === PANEL_TYPES.LIST) {
+				return {
+					query: updatedQuery,
+					graphType: PANEL_TYPES.LIST,
+					selectedTime: selectedTime.enum || 'GLOBAL_TIME',
+					globalSelectedInterval,
+					variables: getDashboardVariables(selectedDashboard?.data.variables),
+					tableParams: {
+						pagination: {
+							offset: 0,
+							limit: updatedQuery.builder.queryData[0].limit || 0,
+						},
+					},
+				};
+			}
 			return {
 				selectedTime: selectedWidget?.timePreferance,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
@@ -327,8 +354,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
 			};
 		}
-		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
-		updatedQuery.builder.queryData[0].pageSize = 10;
 
 		// If stagedQuery exists, don't re-run the query (e.g. when clicking on Add to Dashboard from logs and traces explorer)
 		if (!stagedQuery) {
@@ -336,15 +361,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		}
 		return {
 			query: updatedQuery,
-			graphType: PANEL_TYPES.LIST,
+			graphType: selectedGraph,
 			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 			globalSelectedInterval,
-			tableParams: {
-				pagination: {
-					offset: 0,
-					limit: updatedQuery.builder.queryData[0].limit || 0,
-				},
-			},
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		};
 	});
 
@@ -358,6 +378,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 				fillGaps: selectedWidget.fillSpans || false,
+				isLogScale: selectedWidget.isLogScale || false,
 				formatForWeb:
 					getGraphTypeForFormat(selectedGraph || selectedWidget.panelTypes) ===
 					PANEL_TYPES.TABLE,
@@ -368,6 +389,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stagedQuery,
 		selectedTime,
 		selectedWidget.fillSpans,
+		selectedWidget.isLogScale,
 		globalSelectedInterval,
 	]);
 
@@ -431,6 +453,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
@@ -457,6 +480,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
 								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
@@ -719,6 +743,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							selectedWidget={selectedWidget}
 							isFillSpans={isFillSpans}
 							setIsFillSpans={setIsFillSpans}
+							isLogScale={isLogScale}
+							setIsLogScale={setIsLogScale}
 							softMin={softMin}
 							setSoftMin={setSoftMin}
 							softMax={softMax}

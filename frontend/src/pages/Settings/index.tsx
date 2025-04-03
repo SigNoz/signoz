@@ -13,10 +13,7 @@ import { getRoutes } from './utils';
 function SettingsPage(): JSX.Element {
 	const { pathname } = useLocation();
 	const { user, featureFlags, trialInfo } = useAppContext();
-	const {
-		isCloudUser: isCloudAccount,
-		isEECloudUser: isEECloudAccount,
-	} = useGetTenantLicense();
+	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
@@ -37,8 +34,8 @@ function SettingsPage(): JSX.Element {
 				isCurrentOrgSettings,
 				isGatewayEnabled,
 				isWorkspaceBlocked,
-				isCloudAccount,
-				isEECloudAccount,
+				isCloudUser,
+				isEnterpriseSelfHostedUser,
 				t,
 			),
 		[
@@ -46,8 +43,8 @@ function SettingsPage(): JSX.Element {
 			isCurrentOrgSettings,
 			isGatewayEnabled,
 			isWorkspaceBlocked,
-			isCloudAccount,
-			isEECloudAccount,
+			isCloudUser,
+			isEnterpriseSelfHostedUser,
 			t,
 		],
 	);

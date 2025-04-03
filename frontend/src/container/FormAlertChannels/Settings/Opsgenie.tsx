@@ -1,4 +1,5 @@
 import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { useTranslation } from 'react-i18next';
 
 import { OpsgenieChannel } from '../../CreateAlertChannels/config';
@@ -19,7 +20,21 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="api_key" label={t('field_opsgenie_api_key')} required>
+			<Form.Item
+				name="api_key"
+				label={t('field_opsgenie_api_key')}
+				tooltip={{
+					title: (
+						<MarkdownRenderer
+							markdownContent={t('tooltip_opsgenie_api_key')}
+							variables={{}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+				required
+			>
 				<Input
 					onChange={handleInputChange('api_key')}
 					data-testid="opsgenie-api-key-textbox"

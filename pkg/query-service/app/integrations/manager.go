@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/rules"
-	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.signoz.io/signoz/pkg/types"
 )
 
 type IntegrationAuthor struct {
@@ -39,7 +39,7 @@ type IntegrationAssets struct {
 }
 
 type LogsAssets struct {
-	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines"`
+	Pipelines []pipelinetypes.PostablePipeline `json:"pipelines"`
 }
 
 type IntegrationConfigStep struct {
@@ -257,33 +257,36 @@ func (m *Manager) UninstallIntegration(
 
 func (m *Manager) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+) ([]pipelinetypes.GettablePipeline, *model.ApiError) {
 	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	pipelines := []logparsingpipeline.Pipeline{}
+	gettablePipelines := []pipelinetypes.GettablePipeline{}
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
-			pp := logparsingpipeline.Pipeline{
+			gettablePipelines = append(gettablePipelines, pipelinetypes.GettablePipeline{
 				// Alias is used for identifying integration pipelines. Id can't be used for this
 				// since versioning while saving pipelines requires a new id for each version
 				// to avoid altering history when pipelines are edited/reordered etc
-				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
-				Id:          uuid.NewString(),
-				OrderId:     p.OrderId,
-				Enabled:     p.Enabled,
-				Name:        p.Name,
-				Description: &p.Description,
-				Filter:      p.Filter,
-				Config:      p.Config,
-			}
-			pipelines = append(pipelines, pp)
+				StoreablePipeline: pipelinetypes.StoreablePipeline{
+					Alias: AliasForIntegrationPipeline(ii.Id, p.Alias),
+					Identifiable: types.Identifiable{
+						ID: valuer.GenerateUUID(),
+					},
+					OrderID:     p.OrderID,
+					Enabled:     p.Enabled,
+					Name:        p.Name,
+					Description: p.Description,
+				},
+				Filter: p.Filter,
+				Config: p.Config,
+			})
 		}
 	}
 
-	return pipelines, nil
+	return gettablePipelines, nil
 }
 
 func (m *Manager) dashboardUuid(integrationId string, dashboardId string) string {

@@ -5,26 +5,32 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
-	"go.signoz.io/signoz/pkg/alertmanager/alertmanagerserver"
-	"go.signoz.io/signoz/pkg/factory"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
-type addAlertmanager struct{}
-
-func NewAddAlertmanagerFactory() factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_alertmanager"), newAddAlertmanager)
+type addAlertmanager struct {
+	store sqlstore.SQLStore
 }
 
-func newAddAlertmanager(_ context.Context, _ factory.ProviderSettings, _ Config) (SQLMigration, error) {
-	return &addAlertmanager{}, nil
+func NewAddAlertmanagerFactory(store sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_alertmanager"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return newAddAlertmanager(ctx, ps, c, store)
+	})
+}
+
+func newAddAlertmanager(_ context.Context, _ factory.ProviderSettings, _ Config, store sqlstore.SQLStore) (SQLMigration, error) {
+	return &addAlertmanager{
+		store: store,
+	}, nil
 }
 
 func (migration *addAlertmanager) Register(migrations *migrate.Migrations) error {
@@ -43,23 +49,28 @@ func (migration *addAlertmanager) Up(ctx context.Context, db *bun.DB) error {
 
 	defer tx.Rollback() //nolint:errcheck
 
-	if _, err := tx.
-		NewDropColumn().
-		Table("notification_channels").
-		ColumnExpr("deleted").
-		Exec(ctx); err != nil {
-		if !strings.Contains(err.Error(), "no such column") {
+	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "notification_channels", "deleted"); err != nil {
+		return err
+	} else if exists {
+		if _, err := tx.
+			NewDropColumn().
+			Table("notification_channels").
+			ColumnExpr("deleted").
+			Exec(ctx); err != nil {
 			return err
 		}
 	}
 
-	if _, err := tx.
-		NewAddColumn().
-		Table("notification_channels").
-		ColumnExpr("org_id").
-		Apply(WrapIfNotExists(ctx, db, "notification_channels", "org_id")).
-		Exec(ctx); err != nil && err != ErrNoExecute {
+	if exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "notification_channels", "org_id"); err != nil {
 		return err
+	} else if !exists {
+		if _, err := tx.
+			NewAddColumn().
+			Table("notification_channels").
+			ColumnExpr("org_id TEXT REFERENCES organizations(id) ON DELETE CASCADE").
+			Exec(ctx); err != nil && err != ErrNoExecute {
+			return err
+		}
 	}
 
 	if _, err := tx.

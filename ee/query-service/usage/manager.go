@@ -15,11 +15,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.signoz.io/signoz/ee/query-service/dao"
-	licenseserver "go.signoz.io/signoz/ee/query-service/integrations/signozio"
-	"go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/ee/query-service/dao"
+	licenseserver "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
+	"github.com/SigNoz/signoz/ee/query-service/license"
+	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
 )
 
 const (

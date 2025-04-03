@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/config/configtest"
 	"github.com/stretchr/testify/assert"
-	"go.signoz.io/signoz/pkg/config/configtest"
 )
 
 // This is a test to ensure that all fields of config implement the factory.Config interface and are valid with

@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/metrics"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/metrics"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
 
@@ -303,7 +303,7 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 
@@ -319,7 +319,7 @@ func GetClickhouseColumnNameV2(typeName string, dataType, field string) string {
 		typeName = constants.Attributes
 	}
 
-	if typeName != string(v3.AttributeKeyTypeResource) {
+	if typeName != string(v3.AttributeKeyTypeResource) && len(typeName) > 0 {
 		typeName = typeName[:len(typeName)-1]
 	}
 

@@ -5,11 +5,11 @@ import (
 	"math"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/cache"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/cache"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
 
@@ -313,6 +313,9 @@ func (p *BaseSeasonalProvider) getScore(
 	series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *v3.Series, value float64, idx int,
 ) float64 {
 	expectedValue := p.getExpectedValue(series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries, idx)
+	if expectedValue < 0 {
+		expectedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
+	}
 	return (value - expectedValue) / p.getStdDev(weekSeries)
 }
 

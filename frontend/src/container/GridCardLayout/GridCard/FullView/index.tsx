@@ -48,6 +48,9 @@ function FullView({
 	tableProcessedDataRef,
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
+	onClickHandler,
+	customOnDragSelect,
+	setCurrentGraphRef,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { selectedTime: globalSelectedTime } = useSelector<
@@ -59,6 +62,10 @@ function FullView({
 	const location = useLocation();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		setCurrentGraphRef(fullViewRef);
+	}, [setCurrentGraphRef]);
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
@@ -95,6 +102,7 @@ function FullView({
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 			tableParams: {
 				pagination: {
 					offset: 0,
@@ -245,9 +253,10 @@ function FullView({
 						onToggleModelHandler={onToggleModelHandler}
 						setGraphVisibility={setGraphsVisibilityStates}
 						graphVisibility={graphsVisibilityStates}
-						onDragSelect={onDragSelect}
+						onDragSelect={customOnDragSelect ?? onDragSelect}
 						tableProcessedDataRef={tableProcessedDataRef}
 						searchTerm={searchTerm}
+						onClickHandler={onClickHandler}
 					/>
 				</GraphContainer>
 			</div>

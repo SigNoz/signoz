@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"strconv"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
-	"go.signoz.io/signoz/pkg/errors"
-	"go.signoz.io/signoz/pkg/sqlstore"
-	"go.signoz.io/signoz/pkg/types/alertmanagertypes"
 )
 
 type config struct {
