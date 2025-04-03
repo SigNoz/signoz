@@ -36,3 +36,11 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 func (dialect *dialect) AddNotNullDefaultToColumn(ctx context.Context, bun bun.IDB, table string, column, columnType, defaultValue string) error {
 	return nil
 }
+
+func (dialect *dialect) UpdatePrimaryKey(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, cb func(context.Context) error) error {
+	return nil
+}
+
+func (dialect *dialect) IndexExists(ctx context.Context, bun bun.IDB, table string, index string) (bool, error) {
+	return false, nil
+}
