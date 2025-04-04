@@ -1251,7 +1251,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", true, true, time.Duration(time.Second), readerCache)
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -1348,7 +1348,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		}
 		readerCache, err := memorycache.New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{TTL: DefaultFrequency}})
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), readerCache)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", true, true, time.Duration(time.Second), readerCache)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1453,7 +1453,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1575,7 +1575,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), fm, "", true, true, time.Duration(time.Second), nil)
+		reader := clickhouseReader.NewReaderFromClickhouseConnection(options, nil, telemetryStore, prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}), "", true, true, time.Duration(time.Second), nil)
 
 		rule, err := NewThresholdRule("69", &postableRule, fm, reader, true, true)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
