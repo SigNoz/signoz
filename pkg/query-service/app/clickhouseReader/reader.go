@@ -15,10 +15,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/featurecontrol"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"honnef.co/go/tools/config"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
@@ -31,6 +32,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/jmoiron/sqlx"
 
 	"go.uber.org/zap"
@@ -43,7 +45,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -116,6 +117,7 @@ type ClickHouseReader struct {
 	db                      clickhouse.Conn
 	prometheus              prometheus.Prometheus
 	localDB                 *sqlx.DB
+	featureControl          featurecontrol.FeatureControl
 	TraceDB                 string
 	operationsTable         string
 	durationTable           string
@@ -140,15 +142,8 @@ type ClickHouseReader struct {
 	logsResourceTableV2      string
 	logsResourceLocalTableV2 string
 
-	promConfigFile string
-	promConfig     *config.Config
-	featureFlags   interfaces.FeatureLookup
-
 	liveTailRefreshSeconds int
 	cluster                string
-
-	useLogsNewSchema  bool
-	useTraceNewSchema bool
 
 	logsTableName      string
 	logsLocalTableName string
@@ -169,15 +164,13 @@ func NewReader(
 	localDB *sqlx.DB,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
-	featureFlag interfaces.FeatureLookup,
+	featureControl featurecontrol.FeatureControl,
 	cluster string,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickHouseReader {
 	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(options, localDB, telemetryStore, prometheus, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	return NewReaderFromClickhouseConnection(options, localDB, telemetryStore, prometheus, featureControl, cluster, fluxIntervalForTraceDetail, cache)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -185,15 +178,15 @@ func NewReaderFromClickhouseConnection(
 	localDB *sqlx.DB,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
-	featureFlag interfaces.FeatureLookup,
+	featureControl featurecontrol.FeatureControl,
 	cluster string,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
 	fluxIntervalForTraceDetail time.Duration,
 	cache cache.Cache,
 ) *ClickHouseReader {
 	logsTableName := options.primary.LogsTable
 	logsLocalTableName := options.primary.LogsLocalTable
+
+	useLogsNewSchema, _ := featureControl.Boolean(context.Background(), valuer.UUID{}, featuretypes.UseLogsNewSchema)
 	if useLogsNewSchema {
 		logsTableName = options.primary.LogsTableV2
 		logsLocalTableName = options.primary.LogsLocalTableV2
@@ -201,52 +194,47 @@ func NewReaderFromClickhouseConnection(
 
 	traceTableName := options.primary.IndexTable
 	traceLocalTableName := options.primary.LocalIndexTable
+	useTraceNewSchema, _ := featureControl.Boolean(context.Background(), valuer.UUID{}, featuretypes.UseTracesNewSchema)
 	if useTraceNewSchema {
 		traceTableName = options.primary.TraceIndexTableV3
 		traceLocalTableName = options.primary.TraceLocalTableNameV3
 	}
 
 	return &ClickHouseReader{
-		db:                      telemetryStore.ClickhouseDB(),
-		prometheus:              prometheus,
-		localDB:                 localDB,
-		TraceDB:                 options.primary.TraceDB,
-		operationsTable:         options.primary.OperationsTable,
-		indexTable:              options.primary.IndexTable,
-		errorTable:              options.primary.ErrorTable,
-		usageExplorerTable:      options.primary.UsageExplorerTable,
-		durationTable:           options.primary.DurationTable,
-		SpansTable:              options.primary.SpansTable,
-		spanAttributeTableV2:    options.primary.SpanAttributeTableV2,
-		spanAttributesKeysTable: options.primary.SpanAttributeKeysTable,
-		dependencyGraphTable:    options.primary.DependencyGraphTable,
-		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
-		logsDB:                  options.primary.LogsDB,
-		logsTable:               options.primary.LogsTable,
-		logsLocalTable:          options.primary.LogsLocalTable,
-		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
-		logsResourceKeys:        options.primary.LogsResourceKeysTable,
-		logsTagAttributeTableV2: options.primary.LogsTagAttributeTableV2,
-		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
-		featureFlags:            featureFlag,
-		cluster:                 cluster,
-		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
-
-		useLogsNewSchema:  useLogsNewSchema,
-		useTraceNewSchema: useTraceNewSchema,
-
-		logsTableV2:              options.primary.LogsTableV2,
-		logsLocalTableV2:         options.primary.LogsLocalTableV2,
-		logsResourceTableV2:      options.primary.LogsResourceTableV2,
-		logsResourceLocalTableV2: options.primary.LogsResourceLocalTableV2,
-		logsTableName:            logsTableName,
-		logsLocalTableName:       logsLocalTableName,
-
-		traceLocalTableName:  traceLocalTableName,
-		traceTableName:       traceTableName,
-		traceResourceTableV3: options.primary.TraceResourceTableV3,
-		traceSummaryTable:    options.primary.TraceSummaryTable,
-
+		db:                         telemetryStore.ClickhouseDB(),
+		prometheus:                 prometheus,
+		localDB:                    localDB,
+		TraceDB:                    options.primary.TraceDB,
+		operationsTable:            options.primary.OperationsTable,
+		indexTable:                 options.primary.IndexTable,
+		errorTable:                 options.primary.ErrorTable,
+		usageExplorerTable:         options.primary.UsageExplorerTable,
+		durationTable:              options.primary.DurationTable,
+		SpansTable:                 options.primary.SpansTable,
+		spanAttributeTableV2:       options.primary.SpanAttributeTableV2,
+		spanAttributesKeysTable:    options.primary.SpanAttributeKeysTable,
+		dependencyGraphTable:       options.primary.DependencyGraphTable,
+		topLevelOperationsTable:    options.primary.TopLevelOperationsTable,
+		logsDB:                     options.primary.LogsDB,
+		logsTable:                  options.primary.LogsTable,
+		logsLocalTable:             options.primary.LogsLocalTable,
+		logsAttributeKeys:          options.primary.LogsAttributeKeysTable,
+		logsResourceKeys:           options.primary.LogsResourceKeysTable,
+		logsTagAttributeTableV2:    options.primary.LogsTagAttributeTableV2,
+		liveTailRefreshSeconds:     options.primary.LiveTailRefreshSeconds,
+		featureControl:             featureControl,
+		cluster:                    cluster,
+		queryProgressTracker:       queryprogress.NewQueryProgressTracker(),
+		logsTableV2:                options.primary.LogsTableV2,
+		logsLocalTableV2:           options.primary.LogsLocalTableV2,
+		logsResourceTableV2:        options.primary.LogsResourceTableV2,
+		logsResourceLocalTableV2:   options.primary.LogsResourceLocalTableV2,
+		logsTableName:              logsTableName,
+		logsLocalTableName:         logsLocalTableName,
+		traceLocalTableName:        traceLocalTableName,
+		traceTableName:             traceTableName,
+		traceResourceTableV3:       options.primary.TraceResourceTableV3,
+		traceSummaryTable:          options.primary.TraceSummaryTable,
 		fluxIntervalForTraceDetail: fluxIntervalForTraceDetail,
 		cache:                      cache,
 		metadataDB:                 options.primary.MetadataDB,
@@ -297,7 +285,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	services := []string{}
 	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
 
-	if r.useTraceNewSchema {
+	if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 		query = fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName)
 	}
 
@@ -545,7 +533,7 @@ func (r *ClickHouseReader) GetServicesV2(ctx context.Context, queryParams *model
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
-	if r.useTraceNewSchema {
+	if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 		return r.GetServicesV2(ctx, queryParams, skipConfig)
 	}
 
@@ -899,7 +887,7 @@ func (r *ClickHouseReader) GetTopOperationsV2(ctx context.Context, queryParams *
 
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
-	if r.useTraceNewSchema {
+	if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 		return r.GetTopOperationsV2(ctx, queryParams)
 	}
 
@@ -1104,8 +1092,8 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
-	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	smartAlgoEnabled := err == nil
+	ok, _ = r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseSmartTraceDetail)
+	smartAlgoEnabled := ok
 	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
 		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
@@ -1139,7 +1127,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
 		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
-	if r.useTraceNewSchema {
+	if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
 	}
 
@@ -1217,8 +1205,8 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	end = time.Now()
 	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
-	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	smartAlgoEnabled := err == nil
+	ok, _ = r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseSmartTraceDetail)
+	smartAlgoEnabled := ok
 	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
 		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
@@ -1901,7 +1889,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	switch params.Type {
 	case constants.TraceTTL:
-		if r.useTraceNewSchema {
+		if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 			return r.SetTTLTracesV2(ctx, params)
 		}
 
@@ -2046,7 +2034,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			go metricTTL(tableName)
 		}
 	case constants.LogsTTL:
-		if r.useLogsNewSchema {
+		if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseLogsNewSchema); ok {
 			return r.SetTTLLogsV2(ctx, params)
 		}
 
@@ -2713,7 +2701,7 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, 
 	var spansInLastHeartBeatInterval uint64
 
 	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, int(interval.Minutes()))
-	if r.useTraceNewSchema {
+	if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 		queryStr = fmt.Sprintf("SELECT count() from %s.%s where ts_bucket_start >= toUInt64(toUnixTimestamp(now() - toIntervalMinute(%d))) - 1800 and timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, r.traceTableName, int(interval.Minutes()), int(interval.Minutes()))
 	}
 	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
@@ -2853,7 +2841,7 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
 	group by serviceName, env, language;`, r.TraceDB, r.traceTableName, int(interval.Minutes()))
 
-	if r.useTraceNewSchema {
+	if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 		queryStr = fmt.Sprintf(`select serviceName, resources_string['deployment.environment'] as env, 
 	resources_string['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
@@ -2958,8 +2946,9 @@ func (r *ClickHouseReader) extractSelectedAndInterestingFields(tableStatement st
 		if overrideFieldType != "" {
 			field.Type = overrideFieldType
 		}
+		ok, _ := r.featureControl.Boolean(context.Background(), valuer.UUID{}, featuretypes.UseLogsNewSchema)
 		// all static fields are assumed to be selected as we don't allow changing them
-		if isColumn(r.useLogsNewSchema, tableStatement, field.Type, field.Name, field.DataType) {
+		if isColumn(ok, tableStatement, field.Type, field.Name, field.DataType) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
@@ -3040,7 +3029,8 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		return &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
 
-	if r.useLogsNewSchema {
+	ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseLogsNewSchema)
+	if ok {
 		return r.UpdateLogFieldV2(ctx, field)
 	}
 
@@ -3929,6 +3919,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	var tagKey string
 	var dataType string
 	var attType string
+	ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseLogsNewSchema)
 	for rows.Next() {
 		if err := rows.Scan(&tagKey, &attType, &dataType); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
@@ -3937,7 +3928,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(attType),
-			IsColumn: isColumn(r.useLogsNewSchema, statements[0].Statement, attType, tagKey, dataType),
+			IsColumn: isColumn(ok, statements[0].Statement, attType, tagKey, dataType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3983,6 +3974,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	var attributeKey string
 	var attributeDataType string
 	var tagType string
+	ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseLogsNewSchema)
 	for rows.Next() {
 		if err := rows.Scan(&attributeKey, &tagType, &attributeDataType); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
@@ -3992,7 +3984,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(r.useLogsNewSchema, statements[0].Statement, tagType, attributeKey, attributeDataType),
+			IsColumn: isColumn(ok, statements[0].Statement, tagType, attributeKey, attributeDataType),
 		}
 
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -4723,7 +4715,8 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	}
 
 	fields := constants.NewStaticFieldsTraces
-	if !r.useTraceNewSchema {
+	ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema)
+	if !ok {
 		fields = constants.DeprecatedStaticFieldsTraces
 	}
 
@@ -4787,7 +4780,8 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 
 	// remove this later just to have NewStaticFieldsTraces in the response
 	fields := constants.NewStaticFieldsTraces
-	if !r.useTraceNewSchema {
+	ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema)
+	if !ok {
 		fields = constants.DeprecatedStaticFieldsTraces
 	}
 
@@ -4851,7 +4845,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 
 		// TODO(nitya): remove 24 hour limit in future after checking the perf/resource implications
 		where := "timestamp >= toDateTime64(now() - INTERVAL 48 HOUR, 9)"
-		if r.useTraceNewSchema {
+		if ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema); ok {
 			where += " AND ts_bucket_start >= toUInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR))"
 		}
 		query = fmt.Sprintf("SELECT DISTINCT %s FROM %s.%s WHERE %s AND %s ILIKE $1 LIMIT $2", selectKey, r.TraceDB, r.traceTableName, where, filterValueColumnWhere)
@@ -4949,7 +4943,8 @@ func (r *ClickHouseReader) GetSpanAttributeKeysV2(ctx context.Context) (map[stri
 }
 
 func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error) {
-	if r.useTraceNewSchema {
+	ok, _ := r.featureControl.Boolean(ctx, valuer.UUID{}, featuretypes.UseTracesNewSchema)
+	if ok {
 		return r.GetSpanAttributeKeysV2(ctx)
 	}
 	var query string

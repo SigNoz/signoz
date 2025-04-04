@@ -89,63 +89,6 @@ func EnableHostsInfraMonitoring() bool {
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
-func IsDurationSortFeatureEnabled() bool {
-	isDurationSortFeatureEnabledStr := DurationSortFeature
-	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isDurationSortFeatureEnabledBool
-}
-
-func IsTimestampSortFeatureEnabled() bool {
-	isTimestampSortFeatureEnabledStr := TimestampSortFeature
-	isTimestampSortFeatureEnabledBool, err := strconv.ParseBool(isTimestampSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isTimestampSortFeatureEnabledBool
-}
-
-func IsPreferRPMFeatureEnabled() bool {
-	preferRPMFeatureEnabledStr := PreferRPMFeature
-	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return preferRPMFeatureEnabledBool
-}
-
-var DEFAULT_FEATURE_SET = model.FeatureSet{
-	model.Feature{
-		Name:       DurationSort,
-		Active:     IsDurationSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}, model.Feature{
-		Name:       TimestampSort,
-		Active:     IsTimestampSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       model.UseSpanMetrics,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       PreferRPM,
-		Active:     IsPreferRPMFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-}
-
 func GetEvalDelay() time.Duration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
 	evalDelayDuration, err := time.ParseDuration(evalDelayStr)

@@ -8,7 +8,6 @@ import (
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -46,8 +45,7 @@ type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelTy
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, options metricsV3.Options) (string, error)
 
 type QueryBuilder struct {
-	options      QueryBuilderOptions
-	featureFlags interfaces.FeatureLookup
+	options QueryBuilderOptions
 }
 
 type QueryBuilderOptions struct {
@@ -56,10 +54,9 @@ type QueryBuilderOptions struct {
 	BuildMetricQuery prepareMetricQueryFunc
 }
 
-func NewQueryBuilder(options QueryBuilderOptions, featureFlags interfaces.FeatureLookup) *QueryBuilder {
+func NewQueryBuilder(options QueryBuilderOptions) *QueryBuilder {
 	return &QueryBuilder{
-		options:      options,
-		featureFlags: featureFlags,
+		options: options,
 	}
 }
 

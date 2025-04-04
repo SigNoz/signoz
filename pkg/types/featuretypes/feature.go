@@ -10,17 +10,18 @@ import (
 )
 
 var (
-	ErrCodeFeatureNotFound = errors.MustNewCode("feature_not_found")
+	ErrCodeNoFeaturesFound     = errors.MustNewCode("no_features_found")
+	ErrCodeFeatureNotFound     = errors.MustNewCode("feature_not_found")
+	ErrCodeFeatureKindMismatch = errors.MustNewCode("feature_kind_mismatch")
 )
 
-type GettableFeature struct {
-	*OrgFeature
-	Feature Feature `json:"feature"`
+type GettableOrgFeature struct {
+	*StorableOrgFeature `json:"org_feature"`
+	StorableFeature     *StorableFeature `json:"feature"`
 }
 
 type Feature struct {
-	ID valuer.UUID `bun:"id" json:"id"`
-
+	types.Identifiable
 	// Name is the name of the feature flag.
 	Name Name `bun:"name" json:"name"`
 
@@ -38,17 +39,18 @@ type Feature struct {
 
 	// Default is the default value of the feature flag.
 	Default any `bun:"default" json:"default"`
-
-	types.TimeAuditable
 }
 
 type StorableFeature struct {
 	bun.BaseModel `bun:"table:feature"`
 	Feature
+	types.TimeAuditable
 }
 
-type OrgFeature struct {
-	ID        valuer.UUID `bun:"id" json:"id"`
+type StorableOrgFeature struct {
+	bun.BaseModel `bun:"table:org_feature"`
+
+	types.Identifiable
 	FeatureID valuer.UUID `bun:"feature_id" json:"feature_id"`
 	IsChanged bool        `bun:"is_changed" json:"is_changed"`
 	Value     any         `bun:"value" json:"value"`
@@ -56,27 +58,22 @@ type OrgFeature struct {
 	types.TimeAuditable
 }
 
-type StorableOrgFeature struct {
-	bun.BaseModel `bun:"table:org_feature"`
-	OrgFeature
-}
+// func NewGettableFeaturesFromOrgFeatures(orgFeatures []*OrgFeature, registry *Registry) []GettableFeature {
+// 	gettableFeatures := make([]GettableFeature, 0)
+// 	for _, orgFeature := range orgFeatures {
+// 		feature, err := registry.Get(orgFeature.FeatureID)
+// 		if err != nil {
+// 			continue
+// 		}
 
-func NewGettableFeaturesFromOrgFeatures(orgFeatures []*OrgFeature, registry *Registry) []GettableFeature {
-	gettableFeatures := make([]GettableFeature, 0)
-	for _, orgFeature := range orgFeatures {
-		feature, err := registry.Get(orgFeature.FeatureID)
-		if err != nil {
-			continue
-		}
+// 		gettableFeatures = append(gettableFeatures, GettableFeature{
+// 			OrgFeature: orgFeature,
+// 			Feature:    feature,
+// 		})
+// 	}
 
-		gettableFeatures = append(gettableFeatures, GettableFeature{
-			OrgFeature: orgFeature,
-			Feature:    feature,
-		})
-	}
-
-	return gettableFeatures
-}
+// 	return gettableFeatures
+// }
 
 func (f *StorableOrgFeature) Update(feature Feature) error {
 	return nil
@@ -84,11 +81,11 @@ func (f *StorableOrgFeature) Update(feature Feature) error {
 
 type FeatureStore interface {
 	// Set creates or updates a feature
-	Set(context.Context, ...Feature) error
+	Set(context.Context, ...StorableFeature) error
 
 	// SetForOrg creates or updates a feature for an org
-	SetForOrg(context.Context, map[Action][]*StorableOrgFeature) error
+	SetOrgFeature(context.Context, map[Action][]*StorableOrgFeature) error
 
 	// GetForOrg returns the feature for the given orgID
-	GetForOrg(context.Context, string) ([]*StorableOrgFeature, error)
+	GetOrgFeatures(context.Context, valuer.UUID) ([]*StorableOrgFeature, error)
 }

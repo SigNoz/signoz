@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/dao"
 	"github.com/SigNoz/signoz/ee/query-service/integrations/gateway"
-	"github.com/SigNoz/signoz/ee/query-service/interfaces"
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -26,7 +25,7 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector                 interfaces.DataConnector
+	DataConnector                 baseint.Reader
 	SkipConfig                    *basemodel.SkipConfig
 	PreferSpanMetrics             bool
 	AppDao                        dao.ModelDao

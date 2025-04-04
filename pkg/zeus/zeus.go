@@ -3,12 +3,13 @@ package zeus
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/ee/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/types/metertypes"
 )
 
 type Zeus interface {
 	// Returns the license for the given key.
-	GetLicense(context.Context, string) (*licensetypes.License, error)
+	GetLicense(context.Context, string) (licensetypes.License, error)
 
 	// Returns the checkout URL for the given license key.
 	GetCheckoutURL(context.Context, string) (string, error)
@@ -19,6 +20,6 @@ type Zeus interface {
 	// Returns the deployment for the given license key.
 	GetDeployment(context.Context, string) ([]byte, error)
 
-	// Puts the meter for the given license key.
-	PutUsage(context.Context)
+	// Puts the usage for the given license key.
+	PutMeters(context.Context, string, metertypes.Meters) error
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/featurecontrol"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
@@ -13,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/version"
+	"github.com/SigNoz/signoz/pkg/zeus"
 
 	"github.com/SigNoz/signoz/pkg/web"
 )
@@ -25,6 +27,8 @@ type SigNoz struct {
 	TelemetryStore telemetrystore.TelemetryStore
 	Prometheus     prometheus.Prometheus
 	Alertmanager   alertmanager.Alertmanager
+	Zeus           zeus.Zeus
+	FeatureControl featurecontrol.FeatureControl
 }
 
 func New(

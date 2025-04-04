@@ -1,10 +1,12 @@
 package licensetypes
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -12,11 +14,17 @@ type GettableLicenseParams struct {
 	Active *bool
 }
 
-type GettableLicenses = []*License
+type GettableLicenses = []License
 
 type License interface {
 	// ID returns the unique identifier for the license
 	ID() valuer.UUID
+
+	// OrgID returns the organization ID for the license
+	OrgID() valuer.UUID
+
+	// Contents returns the raw data for the license
+	Contents() []byte
 
 	// Key returns the key for the license
 	Key() string
@@ -26,6 +34,12 @@ type License interface {
 
 	// UpdatedAt returns the last update time for the license
 	UpdatedAt() time.Time
+
+	// FeatureRegistry returns the feature registry for the license
+	FeatureRegistry() *featuretypes.Registry
+
+	// LicenseFeatures returns the features for the license
+	LicenseFeatures() []*featuretypes.LicenseFeature
 }
 
 func NewGettableLicenseParams(req *http.Request) (GettableLicenseParams, error) {
@@ -45,4 +59,18 @@ func NewGettableLicenseParams(req *http.Request) (GettableLicenseParams, error) 
 	}
 
 	return params, nil
+}
+
+type Store interface {
+	// Set creates or updates a license.
+	Set(context.Context, License) error
+
+	// Get returns the license for the given orgID
+	Get(context.Context, valuer.UUID) ([]License, error)
+
+	// GetLatest returns the latest license for the given orgID
+	GetLatest(context.Context, valuer.UUID) (License, error)
+
+	// ListOrgs returns the list of orgs
+	ListOrgs(context.Context) ([]valuer.UUID, error)
 }
