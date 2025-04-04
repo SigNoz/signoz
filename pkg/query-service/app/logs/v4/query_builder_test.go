@@ -853,6 +853,35 @@ func TestPrepareLogsQuery(t *testing.T) {
 				"( (simpleJSONHas(labels, 'host') AND labels like '%host%') ))) group by `name`,`host` order by `name` DESC",
 		},
 		{
+			name: "Test TS with limit- first",
+			args: args{
+				start:     1680066360726,
+				end:       1680066458000,
+				queryType: v3.QueryTypeBuilder,
+				panelType: v3.PanelTypeGraph,
+				mq: &v3.BuilderQuery{
+					QueryName:          "A",
+					StepInterval:       60,
+					AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+					AggregateOperator:  v3.AggregateOperatorCountDistinct,
+					Expression:         "A",
+					Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+						{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+						{Key: v3.AttributeKey{Key: "service.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "app", Operator: "="},
+					},
+					},
+					Limit:   10,
+					GroupBy: []v3.AttributeKey{{Key: "user", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+				},
+				options: v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
+			},
+			want: "SELECT `user` from (SELECT attributes_string['user'] as `user`, toFloat64(count(distinct(attributes_string['name']))) as value from signoz_logs.distributed_logs_v2 " +
+				"where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['method'] = 'GET' " +
+				"AND mapContains(attributes_string, 'method') AND mapContains(attributes_string, 'user') AND mapContains(attributes_string, 'name') AND (resource_fingerprint GLOBAL IN " +
+				"(SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (seen_at_ts_bucket_start >= 1680064560) AND (seen_at_ts_bucket_start <= 1680066458) AND simpleJSONExtractString(labels, 'service.name') = 'app' " +
+				"AND labels like '%service.name%app%')) group by `user` order by value DESC) LIMIT 10",
+		},
+		{
 			name: "Test TS with limit- second",
 			args: args{
 				start:     1680066360726,

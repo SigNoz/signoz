@@ -510,6 +510,23 @@ var testBuildTracesQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
+		Name:  "Test aggregate rate without aggregate attribute",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorRate,
+			Expression:        "A",
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/60.000000 as value from" +
+			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
+			" '1680066458000000000') group by ts order by value DESC",
+		PanelType: v3.PanelTypeGraph,
+		Options:   v3.QBOptions{GraphLimitQtype: ""},
+	},
+	{
 		Name:  "Test aggregate count on fixed column of float64 type with filter",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
@@ -849,6 +866,53 @@ var testBuildTracesQueryData = []struct {
 			", sum(bytes)/60.000000 as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND has(stringTagMap, 'method') group by `method`,ts order by `method` ASC",
+		PanelType: v3.PanelTypeGraph,
+		Options:   v3.QBOptions{GraphLimitQtype: ""},
+	},
+	{
+		Name:  "Test aggregate rate",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
+			AggregateOperator:  v3.AggregateOperatorRate,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
+			", count(numberTagMap['bytes'])/60.000000 as value " +
+			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC",
+		PanelType: v3.PanelTypeGraph,
+		Options:   v3.QBOptions{GraphLimitQtype: ""},
+	},
+	{
+		Name:  "Test aggregate RateSum without fixed column",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
+			AggregateOperator:  v3.AggregateOperatorRateSum,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, " +
+			"stringTagMap['method'] as `method`, " +
+			"sum(numberTagMap['bytes'])/60.000000 as value " +
+			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
 		Options:   v3.QBOptions{GraphLimitQtype: ""},
 	},
