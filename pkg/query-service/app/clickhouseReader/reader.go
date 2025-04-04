@@ -4197,11 +4197,16 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
+	tagTypeFilter := `tag_type != 'logfield'`
+	if req.TagType != "" {
+		tagTypeFilter = fmt.Sprintf(`tag_type != 'logfield' and tag_type = '%s'`, req.TagType)
+	}
+
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where tag_type != 'logfield' and tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where %s and tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2, tagTypeFilter)
 		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from %s.%s where tag_type != 'logfield' limit $1", r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from %s.%s where %s limit $1", r.logsDB, r.logsTagAttributeTableV2, tagTypeFilter)
 		rows, err = r.db.Query(ctx, query, req.Limit)
 	}
 
@@ -4236,13 +4241,15 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
-	// add other attributes
-	for _, f := range constants.StaticFieldsLogsV3 {
-		if (v3.AttributeKey{} == f) {
-			continue
-		}
-		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			response.AttributeKeys = append(response.AttributeKeys, f)
+	// add other attributes only when the tagType is not resource or instrumentation scope
+	if req.TagType != v3.TagTypeResource && req.TagType != v3.TagTypeInstrumentationScope {
+		for _, f := range constants.StaticFieldsLogsV3 {
+			if (v3.AttributeKey{} == f) {
+				continue
+			}
+			if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+				response.AttributeKeys = append(response.AttributeKeys, f)
+			}
 		}
 	}
 
@@ -4984,7 +4991,12 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 and tag_type != 'spanfield' LIMIT $2", r.TraceDB, r.spanAttributeTableV2)
+	tagTypeFilter := `tag_type != 'spanfield'`
+	if req.TagType != "" {
+		tagTypeFilter = fmt.Sprintf(`tag_type != 'spanfield' and tag_type = '%s'`, req.TagType)
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 and %s LIMIT $2", r.TraceDB, r.spanAttributeTableV2, tagTypeFilter)
 
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 
@@ -5029,13 +5041,16 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		fields = constants.DeprecatedStaticFieldsTraces
 	}
 
-	// add the new static fields
-	for _, f := range fields {
-		if (v3.AttributeKey{} == f) {
-			continue
-		}
-		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			response.AttributeKeys = append(response.AttributeKeys, f)
+	// add the new static fields only when the tagType is not resource or instrumentation scope
+	// when the tagType is specified, we only send the attributes for the specified tagType
+	if req.TagType != v3.TagTypeResource && req.TagType != v3.TagTypeInstrumentationScope {
+		for _, f := range fields {
+			if (v3.AttributeKey{} == f) {
+				continue
+			}
+			if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+				response.AttributeKeys = append(response.AttributeKeys, f)
+			}
 		}
 	}
 
