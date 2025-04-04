@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
@@ -53,13 +52,6 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.CustomMetricsFunction,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
@@ -139,13 +131,6 @@ var BasicPlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
 		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.HostsInfraMonitoring,
-		Active:     constants.EnableHostsInfraMonitoring(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -175,13 +160,6 @@ var ProPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.CustomMetricsFunction,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
@@ -266,13 +244,6 @@ var ProPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.HostsInfraMonitoring,
-		Active:     constants.EnableHostsInfraMonitoring(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.TraceFunnels,
 		Active:     false,
 		Usage:      0,
@@ -292,13 +263,6 @@ var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.OSS,
 		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.CustomMetricsFunction,
-		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -397,13 +361,6 @@ var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.AnomalyDetection,
 		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.HostsInfraMonitoring,
-		Active:     constants.EnableHostsInfraMonitoring(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

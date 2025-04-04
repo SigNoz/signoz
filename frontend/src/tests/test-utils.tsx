@@ -201,13 +201,6 @@ export function getAppContextMock(
 				route: '',
 			},
 			{
-				name: FeatureKeys.CUSTOM_METRICS_FUNCTION,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
 				name: FeatureKeys.QUERY_BUILDER_PANELS,
 				active: true,
 				usage: 0,

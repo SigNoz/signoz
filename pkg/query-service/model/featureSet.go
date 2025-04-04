@@ -9,7 +9,6 @@ type Feature struct {
 	Route      string `db:"route" json:"route"`
 }
 
-const CustomMetricsFunction = "CUSTOM_METRICS_FUNCTION"
 const DisableUpsell = "DISABLE_UPSELL"
 const OSS = "OSS"
 const QueryBuilderPanels = "QUERY_BUILDER_PANELS"
@@ -35,13 +34,6 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       DisableUpsell,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	Feature{
-		Name:       CustomMetricsFunction,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
