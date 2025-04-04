@@ -33,7 +33,7 @@ func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, erro
 	}
 
 	return &Registry{
-		logger:   logger.With("pkg", "go.signoz.io/pkg/factory"),
+		logger:   logger.With("pkg", "github.com/SigNoz/pkg/factory"),
 		services: m,
 		startCh:  make(chan error, 1),
 		stopCh:   make(chan error, len(services)),
