@@ -47,7 +47,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: dockerhub
-      JS_WORKDIR: frontend
+      JS_SRC: frontend
       JS_DOTENV_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
       JS_UPLOAD_ARTIFACT_NAME: enterprise-jsbuild-${{ github.sha }}
       JS_UPLOAD_ARTIFACT_PATH: frontend/build

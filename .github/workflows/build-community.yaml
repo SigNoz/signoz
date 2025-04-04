@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: dockerhub
-      JS_WORKDIR: frontend
+      JS_SRC: frontend
       JS_UPLOAD_ARTIFACT_NAME: community-jsbuild-${{ github.sha }}
       JS_UPLOAD_ARTIFACT_PATH: frontend/build
       DOCKER_BUILD: false
