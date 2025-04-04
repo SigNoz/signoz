@@ -23,7 +23,6 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		tr, err := baserules.NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,
