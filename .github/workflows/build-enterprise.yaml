@@ -17,7 +17,7 @@ jobs:
         id: set-docker-providers
         run: |
           if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ || ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc.[0-9]+$ ]]; then
-            echo "providers=hub,gcp" >> $GITHUB_OUTPUT
+            echo "providers=dockerhub gcp" >> $GITHUB_OUTPUT
           else
             echo "providers=gcp" >> $GITHUB_OUTPUT
           fi
