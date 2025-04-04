@@ -201,13 +201,6 @@ export function getAppContextMock(
 				route: '',
 			},
 			{
-				name: FeatureKeys.SMART_TRACE_DETAIL,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
 				name: FeatureKeys.CUSTOM_METRICS_FUNCTION,
 				active: true,
 				usage: 0,

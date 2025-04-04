@@ -120,7 +120,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
-		fm,
 		serverOptions.Cluster,
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,
