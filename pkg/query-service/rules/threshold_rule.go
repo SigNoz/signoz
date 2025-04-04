@@ -58,7 +58,6 @@ type ThresholdRule struct {
 func NewThresholdRule(
 	id string,
 	p *PostableRule,
-	featureFlags interfaces.FeatureLookup,
 	reader interfaces.Reader,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
@@ -82,7 +81,6 @@ func NewThresholdRule(
 		Reader:            reader,
 		Cache:             nil,
 		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FeatureLookup:     featureFlags,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
 	}
@@ -91,7 +89,6 @@ func NewThresholdRule(
 		Reader:            reader,
 		Cache:             nil,
 		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FeatureLookup:     featureFlags,
 		UseLogsNewSchema:  useLogsNewSchema,
 		UseTraceNewSchema: useTraceNewSchema,
 	}
