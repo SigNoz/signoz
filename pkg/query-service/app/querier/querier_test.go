@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -1383,7 +1382,6 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					queryBuilder.QueryBuilderOptions{
 						BuildTraceQuery: tracesV3.PrepareTracesQuery,
 					},
-					featureManager.StartManager(),
 				),
 			}
 			// Update query parameters

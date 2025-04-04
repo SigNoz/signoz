@@ -8,7 +8,6 @@ import (
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/stretchr/testify/require"
 )
@@ -51,8 +50,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		fm := featureManager.StartManager()
-		qb := NewQueryBuilder(qbOptions, fm)
+		qb := NewQueryBuilder(qbOptions)
 
 		queries, err := qb.PrepareQueries(q)
 
@@ -93,8 +91,7 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		fm := featureManager.StartManager()
-		qb := NewQueryBuilder(qbOptions, fm)
+		qb := NewQueryBuilder(qbOptions)
 
 		_, err := qb.PrepareQueries(q)
 
@@ -168,8 +165,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		fm := featureManager.StartManager()
-		qb := NewQueryBuilder(qbOptions, fm)
+		qb := NewQueryBuilder(qbOptions)
 
 		queries, err := qb.PrepareQueries(q)
 
@@ -338,8 +334,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		fm := featureManager.StartManager()
-		qb := NewQueryBuilder(qbOptions, fm)
+		qb := NewQueryBuilder(qbOptions)
 
 		queries, err := qb.PrepareQueries(q)
 		require.Contains(t, queries["F1"], "SELECT A.`os.type` as `os.type`, A.`ts` as `ts`, A.value + B.value as value FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.memory.usage'] AND temporality = '' AND __normalized = true AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000 AND JSONExtractString(labels, 'os.type') = 'linux') as filtered_time_series USING fingerprint WHERE metric_name IN ['system.memory.usage'] AND unix_milli >= 1735036080000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) as A  INNER JOIN (SELECT * FROM (SELECT `os.type`,  toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) as ts, sum(value) as value FROM signoz_metrics.distributed_samples_v4 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'os.type') as `os.type`, fingerprint FROM signoz_metrics.time_series_v4_1day WHERE metric_name IN ['system.network.io'] AND temporality = '' AND __normalized = true AND unix_milli >= 1734998400000 AND unix_milli < 1735637880000) as filtered_time_series USING fingerprint WHERE metric_name IN ['system.network.io'] AND unix_milli >= 1735036020000 AND unix_milli < 1735637880000 GROUP BY `os.type`, ts ORDER BY `os.type` ASC, ts) HAVING value > 4) as B  ON A.`os.type` = B.`os.type` AND A.`ts` = B.`ts`")
@@ -498,8 +493,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			qbOptions := QueryBuilderOptions{
 				BuildMetricQuery: metricsv3.PrepareMetricQuery,
 			}
-			fm := featureManager.StartManager()
-			qb := NewQueryBuilder(qbOptions, fm)
+			qb := NewQueryBuilder(qbOptions)
 			queries, err := qb.PrepareQueries(c.query)
 
 			require.NoError(t, err)
@@ -703,8 +697,7 @@ func TestLogsQueryWithFormula(t *testing.T) {
 	qbOptions := QueryBuilderOptions{
 		BuildLogQuery: logsV3.PrepareLogsQuery,
 	}
-	fm := featureManager.StartManager()
-	qb := NewQueryBuilder(qbOptions, fm)
+	qb := NewQueryBuilder(qbOptions)
 
 	for _, test := range testLogsWithFormula {
 		t.Run(test.Name, func(t *testing.T) {
@@ -914,8 +907,7 @@ func TestLogsQueryWithFormulaV2(t *testing.T) {
 	qbOptions := QueryBuilderOptions{
 		BuildLogQuery: logsV4.PrepareLogsQuery,
 	}
-	fm := featureManager.StartManager()
-	qb := NewQueryBuilder(qbOptions, fm)
+	qb := NewQueryBuilder(qbOptions)
 
 	for _, test := range testLogsWithFormulaV2 {
 		t.Run(test.Name, func(t *testing.T) {
