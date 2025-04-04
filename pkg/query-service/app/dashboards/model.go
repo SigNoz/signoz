@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -41,7 +40,7 @@ func InitDB(sqlStore sqlstore.SQLStore) error {
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(ctx context.Context, orgID string, email string, data map[string]interface{}, fm interfaces.FeatureLookup) (*types.Dashboard, *model.ApiError) {
+func CreateDashboard(ctx context.Context, orgID string, email string, data map[string]interface{}) (*types.Dashboard, *model.ApiError) {
 	dash := &types.Dashboard{
 		Data: data,
 	}
@@ -77,7 +76,7 @@ func GetDashboards(ctx context.Context, orgID string) ([]types.Dashboard, *model
 	return dashboards, nil
 }
 
-func DeleteDashboard(ctx context.Context, orgID, uuid string, fm interfaces.FeatureLookup) *model.ApiError {
+func DeleteDashboard(ctx context.Context, orgID, uuid string) *model.ApiError {
 
 	dashboard, dErr := GetDashboard(ctx, orgID, uuid)
 	if dErr != nil {
@@ -116,7 +115,7 @@ func GetDashboard(ctx context.Context, orgID, uuid string) (*types.Dashboard, *m
 	return &dashboard, nil
 }
 
-func UpdateDashboard(ctx context.Context, orgID, userEmail, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*types.Dashboard, *model.ApiError) {
+func UpdateDashboard(ctx context.Context, orgID, userEmail, uuid string, data map[string]interface{}) (*types.Dashboard, *model.ApiError) {
 
 	mapData, err := json.Marshal(data)
 	if err != nil {
