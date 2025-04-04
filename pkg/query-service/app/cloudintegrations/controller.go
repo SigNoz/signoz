@@ -38,7 +38,7 @@ func NewController(sqlStore sqlstore.SQLStore) (
 		return nil, fmt.Errorf("couldn't create cloud provider accounts repo: %w", err)
 	}
 
-	serviceConfigRepo, err := newServiceConfigRepository(sqlStore.SQLxDB())
+	serviceConfigRepo, err := newServiceConfigRepository(sqlStore)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cloud provider service config repo: %w", err)
 	}
@@ -258,7 +258,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
-		ctx, cloudProvider, *account.AccountID,
+		ctx, orgId, cloudProvider, *account.AccountID,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -354,6 +354,7 @@ type ListServicesResponse struct {
 
 func (c *Controller) ListServices(
 	ctx context.Context,
+	orgID string,
 	cloudProvider string,
 	cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
@@ -367,10 +368,10 @@ func (c *Controller) ListServices(
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
 
-	svcConfigs := map[string]*CloudServiceConfig{}
+	svcConfigs := map[string]*types.CloudServiceConfig{}
 	if cloudAccountId != nil {
 		svcConfigs, apiErr = c.serviceConfigRepo.getAllForAccount(
-			ctx, cloudProvider, *cloudAccountId,
+			ctx, orgID, cloudProvider, *cloudAccountId,
 		)
 		if apiErr != nil {
 			return nil, model.WrapApiError(
@@ -394,6 +395,7 @@ func (c *Controller) ListServices(
 
 func (c *Controller) GetServiceDetails(
 	ctx context.Context,
+	orgID string,
 	cloudProvider string,
 	serviceId string,
 	cloudAccountId *string,
@@ -410,7 +412,7 @@ func (c *Controller) GetServiceDetails(
 
 	if cloudAccountId != nil {
 		config, apiErr := c.serviceConfigRepo.get(
-			ctx, cloudProvider, *cloudAccountId, serviceId,
+			ctx, orgID, cloudProvider, *cloudAccountId, serviceId,
 		)
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, model.WrapApiError(apiErr, "couldn't fetch service config")
@@ -437,18 +439,18 @@ func (c *Controller) GetServiceDetails(
 }
 
 type UpdateServiceConfigRequest struct {
-	CloudAccountId string             `json:"cloud_account_id"`
-	Config         CloudServiceConfig `json:"config"`
+	CloudAccountId string                   `json:"cloud_account_id"`
+	Config         types.CloudServiceConfig `json:"config"`
 }
 
 type UpdateServiceConfigResponse struct {
-	Id     string             `json:"id"`
-	Config CloudServiceConfig `json:"config"`
+	Id     string                   `json:"id"`
+	Config types.CloudServiceConfig `json:"config"`
 }
 
 func (c *Controller) UpdateServiceConfig(
 	ctx context.Context,
-	orgId string,
+	orgID string,
 	cloudProvider string,
 	serviceId string,
 	req UpdateServiceConfigRequest,
@@ -460,7 +462,7 @@ func (c *Controller) UpdateServiceConfig(
 
 	// can only update config for a connected cloud account id
 	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
-		ctx, orgId, cloudProvider, req.CloudAccountId,
+		ctx, orgID, cloudProvider, req.CloudAccountId,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't find connected cloud account")
@@ -473,7 +475,7 @@ func (c *Controller) UpdateServiceConfig(
 	}
 
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
-		ctx, cloudProvider, req.CloudAccountId, serviceId, req.Config,
+		ctx, orgID, cloudProvider, req.CloudAccountId, serviceId, req.Config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't update service config")
@@ -507,10 +509,10 @@ func (c *Controller) AvailableDashboards(ctx context.Context, orgId string) (
 }
 
 func (c *Controller) AvailableDashboardsForCloudProvider(
-	ctx context.Context, orgId string, cloudProvider string,
+	ctx context.Context, orgID string, cloudProvider string,
 ) ([]types.Dashboard, *model.ApiError) {
 
-	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgId, cloudProvider)
+	accountRecords, apiErr := c.accountsRepo.listConnected(ctx, orgID, cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list connected cloud accounts")
 	}
@@ -521,7 +523,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 	for _, ar := range accountRecords {
 		if ar.AccountID != nil {
 			configsBySvcId, apiErr := c.serviceConfigRepo.getAllForAccount(
-				ctx, cloudProvider, *ar.AccountID,
+				ctx, orgID, cloudProvider, *ar.AccountID,
 			)
 			if apiErr != nil {
 				return nil, apiErr

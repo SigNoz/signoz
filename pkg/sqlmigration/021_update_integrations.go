@@ -81,6 +81,26 @@ type newCloudIntegration struct {
 	OrgID           string     `json:"org_id" bun:"org_id,type:text"`
 }
 
+type existingCloudIntegrationService struct {
+	bun.BaseModel `bun:"table:cloud_integrations_service_configs"`
+
+	CloudProvider  string    `bun:"cloud_provider,type:text,notnull,unique:service_cloud_provider_account"`
+	CloudAccountID string    `bun:"cloud_account_id,type:text,notnull,unique:service_cloud_provider_account"`
+	ServiceID      string    `bun:"service_id,type:text,notnull,unique:service_cloud_provider_account"`
+	ConfigJSON     string    `bun:"config_json,type:text"`
+	CreatedAt      time.Time `bun:"created_at,default:current_timestamp"`
+}
+
+type newCloudIntegrationService struct {
+	bun.BaseModel `bun:"table:cloud_integration_service,alias:cis"`
+
+	types.Identifiable
+	types.TimeAuditable
+	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
+	Config             string `bun:"config,type:text"`
+	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
+}
+
 func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 	// begin transaction
@@ -106,7 +126,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingInstalledIntegration), new(newInstalledIntegration), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingInstalledIntegration), new(newInstalledIntegration), []string{}, func(ctx context.Context) error {
 			existingIntegrations := make([]*existingInstalledIntegration, 0)
 			err = tx.
 				NewSelect().
@@ -141,7 +161,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegration), new(newCloudIntegration), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegration), new(newCloudIntegration), []string{}, func(ctx context.Context) error {
 			existingIntegrations := make([]*existingCloudIntegration, 0)
 			err = tx.
 				NewSelect().
@@ -172,6 +192,41 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 	// add unique constraint to cloud_integration table
 	_, err = tx.ExecContext(ctx, `CREATE UNIQUE INDEX unique_cloud_integration ON cloud_integration (id, provider, org_id)`)
+	if err != nil {
+		return err
+	}
+
+	// ---
+	// cloud integration service
+	// ---
+	err = migration.
+		store.
+		Dialect().
+		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegrationService), new(newCloudIntegrationService), []string{}, func(ctx context.Context) error {
+			existingServices := make([]*existingCloudIntegrationService, 0)
+			err = tx.
+				NewSelect().
+				Model(&existingServices).
+				Scan(ctx)
+			if err != nil {
+				if err != sql.ErrNoRows {
+					return err
+				}
+			}
+
+			if err == nil && len(existingServices) > 0 {
+				newServices := migration.
+					CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(existingServices)
+				_, err = tx.
+					NewInsert().
+					Model(&newServices).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
 	if err != nil {
 		return err
 	}
@@ -250,4 +305,49 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 	}
 
 	return newIntegrations
+}
+
+func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
+	newServices := make([]*newCloudIntegrationService, 0)
+	// get the first org id
+	orgIDs := make([]string, 0)
+	err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		zap.L().Error("failed to get org id", zap.Error(err))
+		return nil
+	}
+	if len(orgIDs) == 0 {
+		return nil
+	}
+
+	for _, service := range existingServices {
+		var cloudIntegrationID string
+		err := migration.store.BunDB().NewSelect().
+			Model(&newCloudIntegration{}).
+			Column("id").
+			Where("account_id = ?", service.CloudAccountID).
+			Where("provider = ?", service.CloudProvider).
+			Where("org_id = ?", orgIDs[0]).
+			Scan(context.Background(), &cloudIntegrationID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			}
+			zap.L().Error("failed to get cloud integration id", zap.Error(err))
+			return nil
+		}
+		newServices = append(newServices, &newCloudIntegrationService{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Type:               service.ServiceID,
+			Config:             service.ConfigJSON,
+			CloudIntegrationID: cloudIntegrationID,
+		})
+	}
+
+	return newServices
 }

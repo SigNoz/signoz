@@ -162,8 +162,8 @@ func TestAWSIntegrationServices(t *testing.T) {
 		},
 	)
 
-	testSvcConfig := cloudintegrations.CloudServiceConfig{
-		Metrics: &cloudintegrations.CloudServiceMetricsConfig{
+	testSvcConfig := types.CloudServiceConfig{
+		Metrics: &types.CloudServiceMetricsConfig{
 			Enabled: true,
 		},
 	}
@@ -237,14 +237,14 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	// helper
 	setServiceConfig := func(svcId string, metricsEnabled bool, logsEnabled bool) {
-		testSvcConfig := cloudintegrations.CloudServiceConfig{}
+		testSvcConfig := types.CloudServiceConfig{}
 		if metricsEnabled {
-			testSvcConfig.Metrics = &cloudintegrations.CloudServiceMetricsConfig{
+			testSvcConfig.Metrics = &types.CloudServiceMetricsConfig{
 				Enabled: metricsEnabled,
 			}
 		}
 		if logsEnabled {
-			testSvcConfig.Logs = &cloudintegrations.CloudServiceLogsConfig{
+			testSvcConfig.Logs = &types.CloudServiceLogsConfig{
 				Enabled: logsEnabled,
 			}
 		}

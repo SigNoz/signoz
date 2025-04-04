@@ -1,8 +1,6 @@
 package cloudintegrations
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/types"
@@ -15,7 +13,7 @@ type CloudServiceSummary struct {
 
 	// Present only if the service has been configured in the
 	// context of a cloud provider account.
-	Config *CloudServiceConfig `json:"config,omitempty"`
+	Config *types.CloudServiceConfig `json:"config,omitempty"`
 }
 
 type CloudServiceDetails struct {
@@ -32,44 +30,6 @@ type CloudServiceDetails struct {
 	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
 
 	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry_collection_strategy"`
-}
-
-type CloudServiceConfig struct {
-	Logs    *CloudServiceLogsConfig    `json:"logs,omitempty"`
-	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
-}
-
-// For serializing from db
-func (c *CloudServiceConfig) Scan(src any) error {
-	data, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("tried to scan from %T instead of bytes", src)
-	}
-
-	return json.Unmarshal(data, &c)
-}
-
-// For serializing to db
-func (c *CloudServiceConfig) Value() (driver.Value, error) {
-	if c == nil {
-		return nil, nil
-	}
-
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't serialize cloud service config to JSON: %w", err,
-		)
-	}
-	return serialized, nil
-}
-
-type CloudServiceLogsConfig struct {
-	Enabled bool `json:"enabled"`
-}
-
-type CloudServiceMetricsConfig struct {
-	Enabled bool `json:"enabled"`
 }
 
 type CloudServiceAssets struct {

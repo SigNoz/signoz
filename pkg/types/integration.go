@@ -165,12 +165,50 @@ func (r *AgentReport) Value() (driver.Value, error) {
 	return serialized, nil
 }
 
-type CloudIntegrationServiceConfig struct {
-	bun.BaseModel `bun:"table:cloud_integrations_service_configs"`
+type CloudIntegrationService struct {
+	bun.BaseModel `bun:"table:cloud_integration_service,alias:cis"`
 
-	CloudProvider  string    `bun:"cloud_provider,type:text,notnull,unique:service_cloud_provider_account"`
-	CloudAccountID string    `bun:"cloud_account_id,type:text,notnull,unique:service_cloud_provider_account"`
-	ServiceID      string    `bun:"service_id,type:text,notnull,unique:service_cloud_provider_account"`
-	ConfigJSON     string    `bun:"config_json,type:text"`
-	CreatedAt      time.Time `bun:"created_at,default:current_timestamp"`
+	Identifiable
+	TimeAuditable
+	Type               string             `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
+	Config             CloudServiceConfig `bun:"config,type:text"`
+	CloudIntegrationID string             `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
+}
+
+type CloudServiceLogsConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+type CloudServiceMetricsConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+type CloudServiceConfig struct {
+	Logs    *CloudServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+// For serializing from db
+func (c *CloudServiceConfig) Scan(src any) error {
+	data, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("tried to scan from %T instead of bytes", src)
+	}
+
+	return json.Unmarshal(data, &c)
+}
+
+// For serializing to db
+func (c *CloudServiceConfig) Value() (driver.Value, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	serialized, err := json.Marshal(c)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't serialize cloud service config to JSON: %w", err,
+		)
+	}
+	return serialized, nil
 }

@@ -178,7 +178,7 @@ func TestConfigureService(t *testing.T) {
 
 	// should start out without any service config
 	svcListResp, apiErr := controller.ListServices(
-		context.TODO(), "aws", &testCloudAccountId,
+		context.TODO(), user.OrgID, "aws", &testCloudAccountId,
 	)
 	require.Nil(apiErr)
 
@@ -186,7 +186,7 @@ func TestConfigureService(t *testing.T) {
 	require.Nil(svcListResp.Services[0].Config)
 
 	svcDetails, apiErr := controller.GetServiceDetails(
-		context.TODO(), "aws", testSvcId, &testCloudAccountId,
+		context.TODO(), user.OrgID, "aws", testSvcId, &testCloudAccountId,
 	)
 	require.Nil(apiErr)
 	require.Equal(testSvcId, svcDetails.Id)
@@ -198,8 +198,8 @@ func TestConfigureService(t *testing.T) {
 	require.NotEmpty(testConnectedAccount.AccountID)
 	require.Equal(testCloudAccountId, *testConnectedAccount.AccountID)
 
-	testSvcConfig := CloudServiceConfig{
-		Metrics: &CloudServiceMetricsConfig{
+	testSvcConfig := types.CloudServiceConfig{
+		Metrics: &types.CloudServiceMetricsConfig{
 			Enabled: true,
 		},
 	}
@@ -214,14 +214,14 @@ func TestConfigureService(t *testing.T) {
 	require.Equal(testSvcConfig, updateSvcConfigResp.Config)
 
 	svcDetails, apiErr = controller.GetServiceDetails(
-		context.TODO(), "aws", testSvcId, &testCloudAccountId,
+		context.TODO(), user.OrgID, "aws", testSvcId, &testCloudAccountId,
 	)
 	require.Nil(apiErr)
 	require.Equal(testSvcId, svcDetails.Id)
 	require.Equal(testSvcConfig, *svcDetails.Config)
 
 	svcListResp, apiErr = controller.ListServices(
-		context.TODO(), "aws", &testCloudAccountId,
+		context.TODO(), user.OrgID, "aws", &testCloudAccountId,
 	)
 	require.Nil(apiErr)
 	for _, svc := range svcListResp.Services {
