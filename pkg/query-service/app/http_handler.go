@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -44,7 +45,6 @@ import (
 	logsv4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	metricsv3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -142,6 +142,8 @@ type APIHandler struct {
 	AlertmanagerAPI *alertmanager.API
 
 	Signoz *signoz.SigNoz
+
+	Preference preference.API
 }
 
 type APIHandlerOpts struct {
@@ -187,6 +189,8 @@ type APIHandlerOpts struct {
 	AlertmanagerAPI *alertmanager.API
 
 	Signoz *signoz.SigNoz
+
+	Preference preference.API
 }
 
 // NewAPIHandler returns an APIHandler
@@ -257,6 +261,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
+		Preference:                    opts.Preference,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -1865,8 +1870,15 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
 	// Context is not used here as TTL is long duration DB operation
-	result, apiErr := aH.reader.SetTTL(context.Background(), ttlParams)
+	result, apiErr := aH.reader.SetTTL(context.Background(), claims.OrgID, ttlParams)
 	if apiErr != nil {
 		if apiErr.Typ == model.ErrorConflict {
 			aH.HandleError(w, apiErr.Err, http.StatusConflict)
@@ -1886,7 +1898,14 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetTTL(r.Context(), ttlParams)
+	ctx := r.Context()
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		RespondError(w, &model.ApiError{Err: errors.New("failed to get org id from context"), Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	result, apiErr := aH.reader.GetTTL(r.Context(), claims.OrgID, ttlParams)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -3415,132 +3434,37 @@ func (aH *APIHandler) getProducerConsumerEval(
 func (aH *APIHandler) getUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	preference, apiErr := preferences.GetUserPreference(
-		r.Context(), preferenceId, claims.OrgID, claims.UserID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetUserPreference(w, r)
 }
 
 func (aH *APIHandler) updateUserPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	req := preferences.UpdatePreference{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-	preference, apiErr := preferences.UpdateUserPreference(r.Context(), preferenceId, req.PreferenceValue, claims.UserID)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.UpdateUserPreference(w, r)
 }
 
 func (aH *APIHandler) getAllUserPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, apiErr := preferences.GetAllUserPreferences(
-		r.Context(), claims.OrgID, claims.UserID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetAllUserPreferences(w, r)
 }
 
 func (aH *APIHandler) getOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, apiErr := preferences.GetOrgPreference(
-		r.Context(), preferenceId, claims.OrgID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetOrgPreference(w, r)
 }
 
 func (aH *APIHandler) updateOrgPreference(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	preferenceId := mux.Vars(r)["preferenceId"]
-	req := preferences.UpdatePreference{}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-	preference, apiErr := preferences.UpdateOrgPreference(r.Context(), preferenceId, req.PreferenceValue, claims.OrgID)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.UpdateOrgPreference(w, r)
 }
 
 func (aH *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
-		return
-	}
-	preference, apiErr := preferences.GetAllOrgPreferences(
-		r.Context(), claims.OrgID,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, preference)
+	aH.Preference.GetAllOrgPreferences(w, r)
 }
 
 // RegisterIntegrationRoutes Registers all Integrations

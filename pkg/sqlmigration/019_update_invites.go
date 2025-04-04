@@ -75,7 +75,7 @@ func (migration *updateInvites) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingInvite), new(newInvite), func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingInvite), new(newInvite), []string{OrgReference}, func(ctx context.Context) error {
 			existingInvites := make([]*existingInvite, 0)
 			err = tx.
 				NewSelect().
