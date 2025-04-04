@@ -557,7 +557,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)

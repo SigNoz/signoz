@@ -53,13 +53,6 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.SmartTraceDetail,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.CustomMetricsFunction,
 		Active:     false,
 		Usage:      0,
@@ -182,13 +175,6 @@ var ProPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.SmartTraceDetail,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
 		Name:       basemodel.CustomMetricsFunction,
 		Active:     true,
 		Usage:      0,
@@ -306,13 +292,6 @@ var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.OSS,
 		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	basemodel.Feature{
-		Name:       basemodel.SmartTraceDetail,
-		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
