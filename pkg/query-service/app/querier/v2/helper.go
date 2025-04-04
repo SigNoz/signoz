@@ -25,7 +25,6 @@ func prepareLogsQuery(_ context.Context,
 	end int64,
 	builderQuery *v3.BuilderQuery,
 	params *v3.QueryRangeParamsV3,
-	preferRPM bool,
 ) (string, error) {
 	logsQueryBuilder := logsV3.PrepareLogsQuery
 	if useLogsNewSchema {
@@ -45,7 +44,7 @@ func prepareLogsQuery(_ context.Context,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+			v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 		)
 		if err != nil {
 			return query, err
@@ -56,7 +55,7 @@ func prepareLogsQuery(_ context.Context,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+			v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
 		)
 		if err != nil {
 			return query, err
@@ -71,7 +70,7 @@ func prepareLogsQuery(_ context.Context,
 		params.CompositeQuery.QueryType,
 		params.CompositeQuery.PanelType,
 		builderQuery,
-		v3.QBOptions{PreferRPM: preferRPM},
+		v3.QBOptions{},
 	)
 	if err != nil {
 		return query, err
@@ -89,13 +88,6 @@ func (q *querier) runBuilderQuery(
 ) {
 	defer wg.Done()
 	queryName := builderQuery.QueryName
-
-	var preferRPM bool
-
-	if q.featureLookUp != nil {
-		preferRPM = q.featureLookUp.CheckFeature(constants.PreferRPM) == nil
-	}
-
 	// making a local clone since we should not update the global params if there is sift by
 	start := params.Start
 	end := params.End
@@ -110,7 +102,7 @@ func (q *querier) runBuilderQuery(
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 			zap.L().Info("skipping cache for logs query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
-			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, start, end, builderQuery, params)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -124,7 +116,7 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]querycache.CachedSeriesData, 0)
 		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
 		for _, miss := range misses {
-			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, q.UseLogsNewSchema, miss.Start, miss.End, builderQuery, params)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -192,7 +184,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+				v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -203,7 +195,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+				v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
@@ -216,7 +208,7 @@ func (q *querier) runBuilderQuery(
 				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
-				v3.QBOptions{PreferRPM: preferRPM},
+				v3.QBOptions{},
 			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
@@ -245,7 +237,7 @@ func (q *querier) runBuilderQuery(
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 		zap.L().Info("skipping cache for metrics query", zap.String("queryName", queryName), zap.Int64("start", params.Start), zap.Int64("end", params.End), zap.Int64("step", params.Step), zap.Bool("noCache", params.NoCache), zap.String("cacheKey", cacheKeys[queryName]))
-		query, err := metricsV4.PrepareMetricQuery(start, end, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
+		query, err := metricsV4.PrepareMetricQuery(start, end, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{})
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return

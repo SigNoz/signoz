@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/uptrace/bun"
 )
@@ -28,19 +30,23 @@ var (
 type StoreableState struct {
 	bun.BaseModel `bun:"table:alertmanager_state"`
 
-	ID        uint64    `bun:"id,pk,autoincrement"`
-	Silences  string    `bun:"silences,nullzero"`
-	NFLog     string    `bun:"nflog,nullzero"`
-	CreatedAt time.Time `bun:"created_at"`
-	UpdatedAt time.Time `bun:"updated_at"`
-	OrgID     string    `bun:"org_id"`
+	types.Identifiable
+	types.TimeAuditable
+	Silences string `bun:"silences,nullzero"`
+	NFLog    string `bun:"nflog,nullzero"`
+	OrgID    string `bun:"org_id"`
 }
 
 func NewStoreableState(orgID string) *StoreableState {
 	return &StoreableState{
-		OrgID:     orgID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		OrgID: orgID,
 	}
 }
 

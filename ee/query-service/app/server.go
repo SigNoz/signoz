@@ -44,7 +44,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/app/preferences"
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
@@ -116,10 +115,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := preferences.InitDB(serverOptions.SigNoz.SQLStore.SQLxDB()); err != nil {
-		return nil, err
-	}
-
 	if err := dashboards.InitDB(serverOptions.SigNoz.SQLStore); err != nil {
 		return nil, err
 	}
@@ -144,10 +139,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	reader := db.NewDataConnector(
-		serverOptions.SigNoz.SQLStore.SQLxDB(),
+		serverOptions.SigNoz.SQLStore,
 		serverOptions.SigNoz.TelemetryStore,
 		serverOptions.SigNoz.Prometheus,
-		lm,
 		serverOptions.Cluster,
 		serverOptions.UseLogsNewSchema,
 		serverOptions.UseTraceNewSchema,

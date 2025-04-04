@@ -52,7 +52,6 @@ const LogsTTL = "logs"
 
 const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
-const PreferRPM = "PreferRPM"
 
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
@@ -72,8 +71,6 @@ var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/l
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 
 var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
-
-var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
@@ -107,15 +104,6 @@ func IsTimestampSortFeatureEnabled() bool {
 	return isTimestampSortFeatureEnabledBool
 }
 
-func IsPreferRPMFeatureEnabled() bool {
-	preferRPMFeatureEnabledStr := PreferRPMFeature
-	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return preferRPMFeatureEnabledBool
-}
-
 var DEFAULT_FEATURE_SET = model.FeatureSet{
 	model.Feature{
 		Name:       DurationSort,
@@ -133,13 +121,6 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	model.Feature{
 		Name:       model.UseSpanMetrics,
 		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       PreferRPM,
-		Active:     IsPreferRPMFeatureEnabled(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
@@ -28,11 +29,10 @@ func NewGettablePAT(name, role, userID string, expiresAt int64) GettablePAT {
 }
 
 type StorablePersonalAccessToken struct {
-	bun.BaseModel `bun:"table:personal_access_tokens"`
-
+	bun.BaseModel `bun:"table:personal_access_token"`
+	types.Identifiable
 	types.TimeAuditable
 	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
-	ID              int    `json:"id" bun:"id,pk,autoincrement"`
 	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
 	UserID          string `json:"userId" bun:"user_id,type:text,notnull"`
 	Token           string `json:"token" bun:"token,type:text,notnull,unique"`
@@ -68,6 +68,9 @@ func NewStorablePersonalAccessToken(name, role, userID string, expiresAt int64) 
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
 			UpdatedAt: now,
+		},
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
 		},
 	}
 }
