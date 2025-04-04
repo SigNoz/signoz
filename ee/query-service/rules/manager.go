@@ -65,7 +65,6 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		ar, err := NewAnomalyRule(
 			ruleId,
 			opts.Rule,
-			opts.FF,
 			opts.Reader,
 			opts.Cache,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
@@ -122,7 +121,6 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		rule, err = baserules.NewThresholdRule(
 			alertname,
 			parsedRule,
-			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,
@@ -159,7 +157,6 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		rule, err = NewAnomalyRule(
 			alertname,
 			parsedRule,
-			opts.FF,
 			opts.Reader,
 			opts.Cache,
 			baserules.WithSendAlways(),
