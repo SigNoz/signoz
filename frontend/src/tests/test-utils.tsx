@@ -285,20 +285,6 @@ export function getAppContextMock(
 				route: '',
 			},
 			{
-				name: FeatureKeys.DurationSort,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.TimestampSort,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
 				name: FeatureKeys.ONBOARDING,
 				active: true,
 				usage: 0,
