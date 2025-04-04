@@ -170,6 +170,11 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		)
 	}
 
+	// set updated_at to current timestamp if it's an upsert
+	onConflictSetStmts = append(
+		onConflictSetStmts, setColStatement("updated_at"),
+	)
+
 	onConflictClause := ""
 	if len(onConflictSetStmts) > 0 {
 		onConflictClause = fmt.Sprintf(
@@ -179,9 +184,13 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	}
 
 	integration := types.CloudIntegration{
-		OrgID:           orgId,
-		Provider:        cloudProvider,
-		Identifiable:    types.Identifiable{ID: valuer.MustNewUUID(*id)},
+		OrgID:        orgId,
+		Provider:     cloudProvider,
+		Identifiable: types.Identifiable{ID: valuer.MustNewUUID(*id)},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
 		Config:          config,
 		AccountID:       AccountId,
 		LastAgentReport: agentReport,

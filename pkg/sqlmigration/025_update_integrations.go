@@ -191,7 +191,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	// add unique constraint to cloud_integration table
-	_, err = tx.ExecContext(ctx, `CREATE UNIQUE INDEX unique_cloud_integration ON cloud_integration (id, provider, org_id)`)
+	_, err = tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS unique_cloud_integration ON cloud_integration (id, provider, org_id)`)
 	if err != nil {
 		return err
 	}
