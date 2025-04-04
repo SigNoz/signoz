@@ -1475,5 +1475,4 @@ type URLShareableOptions struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
-	PreferRPM       bool
 }
