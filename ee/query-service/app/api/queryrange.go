@@ -88,28 +88,24 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 				anomaly.WithCache[*anomaly.WeeklyProvider](aH.opts.Cache),
 				anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.WeeklyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](aH.opts.FeatureFlags),
 			)
 		case anomaly.SeasonalityDaily:
 			provider = anomaly.NewDailyProvider(
 				anomaly.WithCache[*anomaly.DailyProvider](aH.opts.Cache),
 				anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.DailyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.DailyProvider](aH.opts.FeatureFlags),
 			)
 		case anomaly.SeasonalityHourly:
 			provider = anomaly.NewHourlyProvider(
 				anomaly.WithCache[*anomaly.HourlyProvider](aH.opts.Cache),
 				anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.HourlyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.HourlyProvider](aH.opts.FeatureFlags),
 			)
 		default:
 			provider = anomaly.NewDailyProvider(
 				anomaly.WithCache[*anomaly.DailyProvider](aH.opts.Cache),
 				anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
 				anomaly.WithReader[*anomaly.DailyProvider](aH.opts.DataConnector),
-				anomaly.WithFeatureLookup[*anomaly.DailyProvider](aH.opts.FeatureFlags),
 			)
 		}
 		anomalies, err := provider.GetAnomalies(r.Context(), &anomaly.GetAnomaliesRequest{Params: queryRangeParams})
