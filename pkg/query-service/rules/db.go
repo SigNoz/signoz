@@ -3,67 +3,58 @@ package rules
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 // Data store to capture user alert rule settings
 type RuleDB interface {
 	// CreateRule stores rule in the db and returns tx and group name (on success)
-	CreateRule(context.Context, *StoredRule, func(context.Context, int64) error) (int64, error)
+	CreateRule(context.Context, *ruletypes.Rule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
 
 	// EditRuleTx updates the given rule in the db and returns tx and group name (on success)
-	EditRule(context.Context, *StoredRule, func(context.Context) error) error
+	EditRule(context.Context, *ruletypes.Rule, func(context.Context) error) error
 
 	// DeleteRuleTx deletes the given rule in the db and returns tx and group name (on success)
-	DeleteRule(context.Context, string, func(context.Context) error) error
+	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
 
 	// GetStoredRules fetches the rule definitions from db
-	GetStoredRules(ctx context.Context) ([]StoredRule, error)
+	GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.Rule, error)
 
 	// GetStoredRule for a given ID from DB
-	GetStoredRule(ctx context.Context, id string) (*StoredRule, error)
+	GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Rule, error)
 
 	// CreatePlannedMaintenance stores a given maintenance in db
-	CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error)
+	CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance) (valuer.UUID, error)
 
 	// DeletePlannedMaintenance deletes the given maintenance in the db
-	DeletePlannedMaintenance(ctx context.Context, id string) (string, error)
+	DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error
 
 	// GetPlannedMaintenanceByID fetches the maintenance definition from db by id
-	GetPlannedMaintenanceByID(ctx context.Context, id string) (*PlannedMaintenance, error)
+	GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*ruletypes.GettablePlannedMaintenance, error)
 
 	// EditPlannedMaintenance updates the given maintenance in the db
-	EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error)
+	EditPlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance, id valuer.UUID) error
 
 	// GetAllPlannedMaintenance fetches the maintenance definitions from db
-	GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMaintenance, error)
+	GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.GettablePlannedMaintenance, error)
 
 	// used for internal telemetry
 	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
-}
 
-type StoredRule struct {
-	bun.BaseModel `bun:"rules"`
-
-	Id        int        `json:"id" db:"id" bun:"id,pk,autoincrement"`
-	CreatedAt *time.Time `json:"created_at" db:"created_at" bun:"created_at"`
-	CreatedBy *string    `json:"created_by" db:"created_by" bun:"created_by"`
-	UpdatedAt *time.Time `json:"updated_at" db:"updated_at" bun:"updated_at"`
-	UpdatedBy *string    `json:"updated_by" db:"updated_by" bun:"updated_by"`
-	Data      string     `json:"data" db:"data" bun:"data"`
+	ListOrgs(ctx context.Context) ([]string, error)
 }
 
 type ruleDB struct {
@@ -76,7 +67,7 @@ func NewRuleDB(db *sqlx.DB, sqlstore sqlstore.SQLStore) RuleDB {
 }
 
 // CreateRule stores a given rule in db and returns task name and error (if any)
-func (r *ruleDB) CreateRule(ctx context.Context, storedRule *StoredRule, cb func(context.Context, int64) error) (int64, error) {
+func (r *ruleDB) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context, valuer.UUID) error) (valuer.UUID, error) {
 	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
@@ -87,24 +78,24 @@ func (r *ruleDB) CreateRule(ctx context.Context, storedRule *StoredRule, cb func
 			return err
 		}
 
-		return cb(ctx, int64(storedRule.Id))
+		return cb(ctx, storedRule.ID)
 	})
 
 	if err != nil {
-		return 0, err
+		return valuer.UUID{}, err
 	}
 
-	return int64(storedRule.Id), nil
+	return storedRule.ID, nil
 }
 
 // EditRule stores a given rule string in database and returns task name and error (if any)
-func (r *ruleDB) EditRule(ctx context.Context, storedRule *StoredRule, cb func(context.Context) error) error {
+func (r *ruleDB) EditRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context) error) error {
 	return r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewUpdate().
 			Model(storedRule).
-			WherePK().
+			Where("id = ?", storedRule.ID.StringValue()).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -115,13 +106,13 @@ func (r *ruleDB) EditRule(ctx context.Context, storedRule *StoredRule, cb func(c
 }
 
 // DeleteRule deletes a given rule with id and returns taskname and error (if any)
-func (r *ruleDB) DeleteRule(ctx context.Context, id string, cb func(context.Context) error) error {
+func (r *ruleDB) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.Context) error) error {
 	if err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
-			Model(&StoredRule{}).
-			Where("id = ?", id).
+			Model(new(ruletypes.Rule)).
+			Where("id = ?", id.StringValue()).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -135,124 +126,174 @@ func (r *ruleDB) DeleteRule(ctx context.Context, id string, cb func(context.Cont
 	return nil
 }
 
-func (r *ruleDB) GetStoredRules(ctx context.Context) ([]StoredRule, error) {
-
-	rules := []StoredRule{}
-
-	query := "SELECT id, created_at, created_by, updated_at, updated_by, data FROM rules"
-
-	err := r.Select(&rules, query)
-
+func (r *ruleDB) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.Rule, error) {
+	rules := make([]*ruletypes.Rule, 0)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&rules).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, err
+		return rules, err
 	}
 
 	return rules, nil
 }
 
-func (r *ruleDB) GetStoredRule(ctx context.Context, id string) (*StoredRule, error) {
-	intId, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid id parameter")
-	}
-
-	rule := &StoredRule{}
-
-	query := fmt.Sprintf("SELECT id, created_at, created_by, updated_at, updated_by, data FROM rules WHERE id=%d", intId)
-	err = r.Get(rule, query)
-
-	// zap.L().Info(query)
-
+func (r *ruleDB) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Rule, error) {
+	rule := new(ruletypes.Rule)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(rule).
+		Where("id = ?", id.StringValue()).
+		Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, err
+		return rule, err
 	}
-
 	return rule, nil
 }
 
-func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMaintenance, error) {
-	maintenances := []PlannedMaintenance{}
-
-	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance"
-
-	err := r.Select(&maintenances, query)
-
+func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.GettablePlannedMaintenance, error) {
+	maintenances := make([]*ruletypes.GettablePlannedMaintenance, 0)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&maintenances).
+		Relation("Rules").
+		Where("org_id = ?", orgID).
+		Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, err
+		return maintenances, err
 	}
 
 	return maintenances, nil
 }
 
-func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*PlannedMaintenance, error) {
-	maintenance := &PlannedMaintenance{}
-
-	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE id=$1"
-	err := r.Get(maintenance, query, id)
-
+func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*ruletypes.GettablePlannedMaintenance, error) {
+	maintenance := new(ruletypes.GettablePlannedMaintenance)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(maintenance).
+		Relation("Rules").
+		Where("id = ?", id.StringValue()).
+		Scan(ctx)
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, err
+		return maintenance, err
 	}
 
 	return maintenance, nil
 }
 
-func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error) {
+func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance) (valuer.UUID, error) {
 
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return 0, errors.New("no claims found in context")
+		return valuer.UUID{}, errors.New("no claims found in context")
 	}
-	maintenance.CreatedBy = claims.Email
-	maintenance.CreatedAt = time.Now()
-	maintenance.UpdatedBy = claims.Email
-	maintenance.UpdatedAt = time.Now()
 
-	query := "INSERT INTO planned_maintenance (name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: claims.Email,
+			UpdatedBy: claims.Email,
+		},
+		Name:        maintenance.Name,
+		Description: maintenance.Description,
+		Schedule:    maintenance.Schedule,
+		OrgID:       claims.OrgID,
+	}
 
-	result, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.CreatedAt, maintenance.CreatedBy, maintenance.UpdatedAt, maintenance.UpdatedBy)
+	maintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
+	for _, ruleIDStr := range *maintenance.AlertIds {
+		ruleID, err := valuer.NewUUID(ruleIDStr)
+		if err != nil {
+			return valuer.UUID{}, err
+		}
 
+		maintenanceRules = append(maintenanceRules, &ruletypes.StorablePlannedMaintenanceRule{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			PlannedMaintenanceID: storablePlannedMaintenance.ID,
+			RuleID:               ruleID,
+		})
+	}
+
+	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		_, err := r.sqlstore.
+			BunDBCtx(ctx).
+			NewInsert().
+			Model(storablePlannedMaintenance).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewInsert().
+			Model(&maintenanceRules).
+			Exec(ctx)
+
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return 0, err
+		return valuer.UUID{}, err
 	}
 
-	return result.LastInsertId()
+	return storablePlannedMaintenance.ID, nil
 }
 
-func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (string, error) {
-	query := "DELETE FROM planned_maintenance WHERE id=$1"
-	_, err := r.Exec(query, id)
-
+func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
+	_, err := r.sqlstore.
+		BunDB().
+		NewDelete().
+		Model(new(ruletypes.StorablePlannedMaintenance)).
+		Where("id = ?", id.StringValue()).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return "", err
+		return err
 	}
 
-	return "", nil
+	return nil
 }
 
-func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
+func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id valuer.UUID) error {
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return "", errors.New("no claims found in context")
+		return errors.New("no claims found in context")
 	}
 	maintenance.UpdatedBy = claims.Email
 	maintenance.UpdatedAt = time.Now()
 
-	query := "UPDATE planned_maintenance SET name=$1, description=$2, schedule=$3, alert_ids=$4, updated_at=$5, updated_by=$6 WHERE id=$7"
-	_, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.UpdatedAt, maintenance.UpdatedBy, id)
-
+	_, err := r.sqlstore.
+		BunDB().
+		NewUpdate().
+		Model(maintenance).
+		Where("id = ?", id.StringValue()).
+		Exec(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return "", err
+		return err
 	}
 
-	return "", nil
+	return nil
 }
 
 func (r *ruleDB) getChannels() (*[]model.ChannelItem, *model.ApiError) {
@@ -384,4 +425,19 @@ func (r *ruleDB) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
 	}
 
 	return &alertsInfo, nil
+}
+
+func (r *ruleDB) ListOrgs(ctx context.Context) ([]string, error) {
+	orgIDs := []string{}
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		ColumnExpr("id").
+		Model(new(types.Organization)).
+		Scan(ctx, &orgIDs)
+	if err != nil {
+		return orgIDs, err
+	}
+
+	return orgIDs, nil
 }

@@ -1,11 +1,14 @@
-package rules
+package ruletypes
 
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -17,18 +20,41 @@ var (
 	ErrMissingDuration   = errors.New("missing duration")
 )
 
-type PlannedMaintenance struct {
-	Id          int64     `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Description string    `json:"description" db:"description"`
-	Schedule    *Schedule `json:"schedule" db:"schedule"`
-	AlertIds    *AlertIds `json:"alertIds" db:"alert_ids"`
-	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-	CreatedBy   string    `json:"createdBy" db:"created_by"`
-	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
-	UpdatedBy   string    `json:"updatedBy" db:"updated_by"`
+type StorablePlannedMaintenance struct {
+	bun.BaseModel `bun:"table:planned_maintenance"`
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	Name        string    `bun:"name,type:text,notnull"`
+	Description string    `bun:"description,type:text"`
+	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
+	OrgID       string    `bun:"org_id,type:text"`
+}
+
+type GettablePlannedMaintenance struct {
+	Id          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Schedule    *Schedule `json:"schedule"`
+	AlertIds    *AlertIds `json:"alertIds"`
+	CreatedAt   time.Time `json:"createdAt"`
+	CreatedBy   string    `json:"createdBy"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	UpdatedBy   string    `json:"updatedBy"`
 	Status      string    `json:"status"`
 	Kind        string    `json:"kind"`
+}
+
+type StorablePlannedMaintenanceRule struct {
+	bun.BaseModel `bun:"table:planned_maintenance_rule"`
+	types.Identifiable
+	PlannedMaintenanceID valuer.UUID `bun:"planned_maintenance_id,type:text"`
+	RuleID               valuer.UUID `bun:"rule_id,type:text"`
+}
+
+type GettablePlannedMaintenanceRule struct {
+	*StorablePlannedMaintenance `bun:",extend"`
+	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
 type AlertIds []string
@@ -44,185 +70,11 @@ func (a *AlertIds) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }
 
-type Schedule struct {
-	Timezone   string      `json:"timezone"`
-	StartTime  time.Time   `json:"startTime,omitempty"`
-	EndTime    time.Time   `json:"endTime,omitempty"`
-	Recurrence *Recurrence `json:"recurrence"`
-}
-
-func (s *Schedule) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, s)
-	}
-	return nil
-}
-
-func (s *Schedule) Value() (driver.Value, error) {
-	return json.Marshal(s)
-}
-
-type RepeatType string
-
-const (
-	RepeatTypeDaily   RepeatType = "daily"
-	RepeatTypeWeekly  RepeatType = "weekly"
-	RepeatTypeMonthly RepeatType = "monthly"
-)
-
-type RepeatOn string
-
-const (
-	RepeatOnSunday    RepeatOn = "sunday"
-	RepeatOnMonday    RepeatOn = "monday"
-	RepeatOnTuesday   RepeatOn = "tuesday"
-	RepeatOnWednesday RepeatOn = "wednesday"
-	RepeatOnThursday  RepeatOn = "thursday"
-	RepeatOnFriday    RepeatOn = "friday"
-	RepeatOnSaturday  RepeatOn = "saturday"
-)
-
-var RepeatOnAllMap = map[RepeatOn]time.Weekday{
-	RepeatOnSunday:    time.Sunday,
-	RepeatOnMonday:    time.Monday,
-	RepeatOnTuesday:   time.Tuesday,
-	RepeatOnWednesday: time.Wednesday,
-	RepeatOnThursday:  time.Thursday,
-	RepeatOnFriday:    time.Friday,
-	RepeatOnSaturday:  time.Saturday,
-}
-
-type Recurrence struct {
-	StartTime  time.Time  `json:"startTime"`
-	EndTime    *time.Time `json:"endTime,omitempty"`
-	Duration   Duration   `json:"duration"`
-	RepeatType RepeatType `json:"repeatType"`
-	RepeatOn   []RepeatOn `json:"repeatOn"`
-}
-
-func (r *Recurrence) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, r)
-	}
-	return nil
-}
-
-func (r *Recurrence) Value() (driver.Value, error) {
-	return json.Marshal(r)
-}
-
-func (s Schedule) MarshalJSON() ([]byte, error) {
-	loc, err := time.LoadLocation(s.Timezone)
-	if err != nil {
-		return nil, err
-	}
-
-	var startTime, endTime time.Time
-	if !s.StartTime.IsZero() {
-		startTime = time.Date(s.StartTime.Year(), s.StartTime.Month(), s.StartTime.Day(), s.StartTime.Hour(), s.StartTime.Minute(), s.StartTime.Second(), s.StartTime.Nanosecond(), loc)
-	}
-	if !s.EndTime.IsZero() {
-		endTime = time.Date(s.EndTime.Year(), s.EndTime.Month(), s.EndTime.Day(), s.EndTime.Hour(), s.EndTime.Minute(), s.EndTime.Second(), s.EndTime.Nanosecond(), loc)
-	}
-
-	var recurrence *Recurrence
-	if s.Recurrence != nil {
-		recStartTime := time.Date(s.Recurrence.StartTime.Year(), s.Recurrence.StartTime.Month(), s.Recurrence.StartTime.Day(), s.Recurrence.StartTime.Hour(), s.Recurrence.StartTime.Minute(), s.Recurrence.StartTime.Second(), s.Recurrence.StartTime.Nanosecond(), loc)
-		var recEndTime *time.Time
-		if s.Recurrence.EndTime != nil {
-			end := time.Date(s.Recurrence.EndTime.Year(), s.Recurrence.EndTime.Month(), s.Recurrence.EndTime.Day(), s.Recurrence.EndTime.Hour(), s.Recurrence.EndTime.Minute(), s.Recurrence.EndTime.Second(), s.Recurrence.EndTime.Nanosecond(), loc)
-			recEndTime = &end
-		}
-		recurrence = &Recurrence{
-			StartTime:  recStartTime,
-			EndTime:    recEndTime,
-			Duration:   s.Recurrence.Duration,
-			RepeatType: s.Recurrence.RepeatType,
-			RepeatOn:   s.Recurrence.RepeatOn,
-		}
-	}
-
-	return json.Marshal(&struct {
-		Timezone   string      `json:"timezone"`
-		StartTime  string      `json:"startTime"`
-		EndTime    string      `json:"endTime"`
-		Recurrence *Recurrence `json:"recurrence,omitempty"`
-	}{
-		Timezone:   s.Timezone,
-		StartTime:  startTime.Format(time.RFC3339),
-		EndTime:    endTime.Format(time.RFC3339),
-		Recurrence: recurrence,
-	})
-}
-
-func (s *Schedule) UnmarshalJSON(data []byte) error {
-	aux := &struct {
-		Timezone   string      `json:"timezone"`
-		StartTime  string      `json:"startTime"`
-		EndTime    string      `json:"endTime"`
-		Recurrence *Recurrence `json:"recurrence,omitempty"`
-	}{}
-	if err := json.Unmarshal(data, aux); err != nil {
-		return err
-	}
-
-	loc, err := time.LoadLocation(aux.Timezone)
-	if err != nil {
-		return err
-	}
-
-	var startTime time.Time
-	if aux.StartTime != "" {
-		startTime, err = time.Parse(time.RFC3339, aux.StartTime)
-		if err != nil {
-			return err
-		}
-		s.StartTime = time.Date(startTime.Year(), startTime.Month(), startTime.Day(), startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(), loc)
-	}
-
-	var endTime time.Time
-	if aux.EndTime != "" {
-		endTime, err = time.Parse(time.RFC3339, aux.EndTime)
-		if err != nil {
-			return err
-		}
-		s.EndTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endTime.Hour(), endTime.Minute(), endTime.Second(), endTime.Nanosecond(), loc)
-	}
-
-	s.Timezone = aux.Timezone
-
-	if aux.Recurrence != nil {
-		recStartTime, err := time.Parse(time.RFC3339, aux.Recurrence.StartTime.Format(time.RFC3339))
-		if err != nil {
-			return err
-		}
-
-		var recEndTime *time.Time
-		if aux.Recurrence.EndTime != nil {
-			end, err := time.Parse(time.RFC3339, aux.Recurrence.EndTime.Format(time.RFC3339))
-			if err != nil {
-				return err
-			}
-			endConverted := time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), end.Nanosecond(), loc)
-			recEndTime = &endConverted
-		}
-
-		s.Recurrence = &Recurrence{
-			StartTime:  time.Date(recStartTime.Year(), recStartTime.Month(), recStartTime.Day(), recStartTime.Hour(), recStartTime.Minute(), recStartTime.Second(), recStartTime.Nanosecond(), loc),
-			EndTime:    recEndTime,
-			Duration:   aux.Recurrence.Duration,
-			RepeatType: aux.Recurrence.RepeatType,
-			RepeatOn:   aux.Recurrence.RepeatOn,
-		}
-	}
-	return nil
-}
-
-func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
+func (m *GettablePlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
 	if m.AlertIds != nil {
-		for _, alertID := range *m.AlertIds {
+		for _, alertID := range m.AlertIds {
 			if alertID == ruleID {
 				found = true
 				break
@@ -231,7 +83,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 	}
 
 	// If no alert ids, then skip all alerts
-	if m.AlertIds == nil || len(*m.AlertIds) == 0 {
+	if m.AlertIds == nil || len(m.AlertIds) == 0 {
 		found = true
 	}
 
@@ -312,7 +164,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
 // and returns true if currentTime is within [candidate, candidate+Duration].
-func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *GettablePlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
 		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
@@ -327,7 +179,7 @@ func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, 
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
 // time-of-day onto the allowed weekday. It does this for each allowed day and returns true
 // if the current time falls within the candidate window.
-func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *GettablePlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	// If no days specified, treat as every day (like daily).
 	if len(rec.RepeatOn) == 0 {
 		return m.checkDaily(currentTime, rec, loc)
@@ -359,7 +211,7 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
-func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	refDay := rec.StartTime.Day()
 	year, month, _ := currentTime.Date()
 	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
@@ -391,15 +243,15 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 	return currentTime.Sub(candidate) <= time.Duration(rec.Duration)
 }
 
-func (m *PlannedMaintenance) IsActive(now time.Time) bool {
+func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
 	ruleID := "maintenance"
-	if m.AlertIds != nil && len(*m.AlertIds) > 0 {
-		ruleID = (*m.AlertIds)[0]
+	if m.AlertIds != nil && len(m.AlertIds) > 0 {
+		ruleID = (m.AlertIds)[0]
 	}
 	return m.shouldSkip(ruleID, now)
 }
 
-func (m *PlannedMaintenance) IsUpcoming() bool {
+func (m *GettablePlannedMaintenance) IsUpcoming() bool {
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
 		// handle error appropriately, for example log and return false or fallback to UTC
@@ -417,11 +269,11 @@ func (m *PlannedMaintenance) IsUpcoming() bool {
 	return false
 }
 
-func (m *PlannedMaintenance) IsRecurring() bool {
+func (m *GettablePlannedMaintenance) IsRecurring() bool {
 	return m.Schedule.Recurrence != nil
 }
 
-func (m *PlannedMaintenance) Validate() error {
+func (m *GettablePlannedMaintenance) Validate() error {
 	if m.Name == "" {
 		return ErrMissingName
 	}
@@ -457,7 +309,7 @@ func (m *PlannedMaintenance) Validate() error {
 	return nil
 }
 
-func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
+func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
 	var status string
 	if m.IsActive(now) {
@@ -476,11 +328,11 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		Id          int64     `json:"id" db:"id"`
+		Id          string    `json:"id" db:"id"`
 		Name        string    `json:"name" db:"name"`
 		Description string    `json:"description" db:"description"`
 		Schedule    *Schedule `json:"schedule" db:"schedule"`
-		AlertIds    *AlertIds `json:"alertIds" db:"alert_ids"`
+		AlertIds    []string  `json:"alertIds" db:"alert_ids"`
 		CreatedAt   time.Time `json:"createdAt" db:"created_at"`
 		CreatedBy   string    `json:"createdBy" db:"created_by"`
 		UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -25,8 +24,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type PrepareTaskOptions struct {
@@ -42,6 +44,7 @@ type PrepareTaskOptions struct {
 	SQLStore          sqlstore.SQLStore
 	UseLogsNewSchema  bool
 	UseTraceNewSchema bool
+	OrgID             string
 }
 
 type PrepareTestRuleOptions struct {
@@ -171,7 +174,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(TaskTypeCh, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
 
 	} else if opts.Rule.RuleType == RuleTypeProm {
 
@@ -192,7 +195,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(TaskTypeProm, opts.TaskName, taskNamesuffix, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, RuleTypeProm, RuleTypeThreshold)
@@ -226,11 +229,11 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	return m, nil
 }
 
-func (m *Manager) Start() {
-	if err := m.initiate(); err != nil {
+func (m *Manager) Start(ctx context.Context) {
+	if err := m.initiate(ctx); err != nil {
 		zap.L().Error("failed to initialize alerting rules manager", zap.Error(err))
 	}
-	m.run()
+	m.run(ctx)
 }
 
 func (m *Manager) RuleDB() RuleDB {
@@ -245,44 +248,51 @@ func (m *Manager) Pause(b bool) {
 	}
 }
 
-func (m *Manager) initiate() error {
-	storedRules, err := m.ruleDB.GetStoredRules(context.Background())
+func (m *Manager) initiate(ctx context.Context) error {
+	orgIDs, err := m.ruleDB.ListOrgs(ctx)
 	if err != nil {
 		return err
 	}
-	if len(storedRules) == 0 {
-		return nil
-	}
+
 	var loadErrors []error
-
-	for _, rec := range storedRules {
-		taskName := fmt.Sprintf("%d-groupname", rec.Id)
-		parsedRule, err := ParsePostableRule([]byte(rec.Data))
-
+	for _, orgID := range orgIDs {
+		storedRules, err := m.ruleDB.GetStoredRules(ctx, orgID)
 		if err != nil {
-			if errors.Is(err, ErrFailedToParseJSON) {
-				zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
+			return err
+		}
+		if len(storedRules) == 0 {
+			return nil
+		}
 
-				// see if rule is stored in yaml format
-				parsedRule, err = parsePostableRule([]byte(rec.Data), RuleDataKindYaml)
+		for _, rec := range storedRules {
+			taskName := fmt.Sprintf("%d-groupname", rec.ID.StringValue())
+			parsedRule, err := ParsePostableRule([]byte(rec.Data))
 
-				if err != nil {
-					zap.L().Error("failed to parse and initialize yaml rule", zap.String("name", taskName), zap.Error(err))
+			if err != nil {
+				if errors.Is(err, ErrFailedToParseJSON) {
+					zap.L().Info("failed to load rule in json format, trying yaml now:", zap.String("name", taskName))
+
+					// see if rule is stored in yaml format
+					parsedRule, err = parsePostableRule([]byte(rec.Data), RuleDataKindYaml)
+
+					if err != nil {
+						zap.L().Error("failed to parse and initialize yaml rule", zap.String("name", taskName), zap.Error(err))
+						// just one rule is being parsed so expect just one error
+						loadErrors = append(loadErrors, err)
+						continue
+					}
+				} else {
+					zap.L().Error("failed to parse and initialize rule", zap.String("name", taskName), zap.Error(err))
 					// just one rule is being parsed so expect just one error
 					loadErrors = append(loadErrors, err)
 					continue
 				}
-			} else {
-				zap.L().Error("failed to parse and initialize rule", zap.String("name", taskName), zap.Error(err))
-				// just one rule is being parsed so expect just one error
-				loadErrors = append(loadErrors, err)
-				continue
 			}
-		}
-		if !parsedRule.Disabled {
-			err := m.addTask(parsedRule, taskName)
-			if err != nil {
-				zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
+			if !parsedRule.Disabled {
+				err := m.addTask(ctx, orgID, parsedRule, taskName)
+				if err != nil {
+					zap.L().Error("failed to load the rule definition", zap.String("name", taskName), zap.Error(err))
+				}
 			}
 		}
 	}
@@ -295,13 +305,13 @@ func (m *Manager) initiate() error {
 }
 
 // Run starts processing of the rule manager.
-func (m *Manager) run() {
+func (m *Manager) run(ctx context.Context) {
 	// initiate blocked tasks
 	close(m.block)
 }
 
 // Stop the rule manager's rule evaluation cycles.
-func (m *Manager) Stop() {
+func (m *Manager) Stop(ctx context.Context) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -316,10 +326,15 @@ func (m *Manager) Stop() {
 
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
-func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error {
+func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) error {
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return errors.New("claims not found in context")
+	}
+
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		return err
 	}
 
 	parsedRule, err := ParsePostableRule([]byte(ruleStr))
@@ -332,9 +347,8 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 		return err
 	}
 
-	now := time.Now()
-	existingRule.UpdatedAt = &now
-	existingRule.UpdatedBy = &claims.Email
+	existingRule.UpdatedAt = time.Now()
+	existingRule.UpdatedBy = claims.Email
 	existingRule.Data = ruleStr
 
 	return m.ruleDB.EditRule(ctx, existingRule, func(ctx context.Context) error {
@@ -357,7 +371,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		err = cfg.UpdateRuleIDMatcher(id, preferredChannels)
+		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
 		}
@@ -368,7 +382,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 		}
 
 		if !m.opts.DisableRules {
-			err = m.syncRuleStateWithTask(prepareTaskName(existingRule.Id), parsedRule)
+			err = m.syncRuleStateWithTask(ctx, claims.OrgID, prepareTaskName(existingRule.ID.StringValue()), parsedRule)
 			if err != nil {
 				return err
 			}
@@ -378,7 +392,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 	})
 }
 
-func (m *Manager) editTask(rule *PostableRule, taskName string) error {
+func (m *Manager) editTask(ctx context.Context, orgID string, rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -398,6 +412,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 
 		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
 		UseTraceNewSchema: m.opts.UseTraceNewSchema,
+		OrgID:             orgID,
 	})
 
 	if err != nil {
@@ -434,11 +449,11 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	return nil
 }
 
-func (m *Manager) DeleteRule(ctx context.Context, id string) error {
-	_, err := strconv.Atoi(id)
+func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		zap.L().Error("delete rule received an rule id in invalid format, must be a number", zap.String("id", id), zap.Error(err))
-		return fmt.Errorf("delete rule received an rule id in invalid format, must be a number")
+		zap.L().Error("delete rule received an rule id in invalid format, must be a valid uuid-v7", zap.String("id", idStr), zap.Error(err))
+		return fmt.Errorf("delete rule received an rule id in invalid format, must be a valid uuid-v7")
 	}
 
 	claims, ok := authtypes.ClaimsFromContext(ctx)
@@ -457,7 +472,7 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 			return err
 		}
 
-		err = cfg.DeleteRuleIDMatcher(id)
+		err = cfg.DeleteRuleIDMatcher(id.StringValue())
 		if err != nil {
 			return err
 		}
@@ -467,7 +482,7 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 			return err
 		}
 
-		taskName := prepareTaskName(id)
+		taskName := prepareTaskName(id.StringValue())
 		if !m.opts.DisableRules {
 			m.deleteTask(taskName)
 		}
@@ -495,26 +510,34 @@ func (m *Manager) deleteTask(taskName string) {
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule, error) {
-	parsedRule, err := ParsePostableRule([]byte(ruleStr))
-	if err != nil {
-		return nil, err
-	}
-
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("claims not found in context")
 	}
 
-	now := time.Now()
-	storedRule := &StoredRule{
-		CreatedAt: &now,
-		CreatedBy: &claims.Email,
-		UpdatedAt: &now,
-		UpdatedBy: &claims.Email,
-		Data:      ruleStr,
+	parsedRule, err := ParsePostableRule([]byte(ruleStr))
+	if err != nil {
+		return nil, err
 	}
 
-	id, err := m.ruleDB.CreateRule(ctx, storedRule, func(ctx context.Context, id int64) error {
+	now := time.Now()
+	storedRule := &ruletypes.Rule{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: claims.Email,
+			UpdatedBy: claims.Email,
+		},
+		Data:  ruleStr,
+		OrgID: claims.OrgID,
+	}
+
+	id, err := m.ruleDB.CreateRule(ctx, storedRule, func(ctx context.Context, id valuer.UUID) error {
 		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
 		if err != nil {
 			return err
@@ -534,7 +557,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		err = cfg.CreateRuleIDMatcher(fmt.Sprintf("%d", id), preferredChannels)
+		err = cfg.CreateRuleIDMatcher(fmt.Sprintf("%d", id.StringValue()), preferredChannels)
 		if err != nil {
 			return err
 		}
@@ -544,9 +567,9 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 			return err
 		}
 
-		taskName := prepareTaskName(id)
+		taskName := prepareTaskName(id.StringValue())
 		if !m.opts.DisableRules {
-			if err := m.addTask(parsedRule, taskName); err != nil {
+			if err := m.addTask(ctx, claims.OrgID, parsedRule, taskName); err != nil {
 				return err
 			}
 		}
@@ -558,12 +581,12 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 	}
 
 	return &GettableRule{
-		Id:           fmt.Sprintf("%d", id),
+		Id:           fmt.Sprintf("%d", id.StringValue()),
 		PostableRule: *parsedRule,
 	}, nil
 }
 
-func (m *Manager) addTask(rule *PostableRule, taskName string) error {
+func (m *Manager) addTask(ctx context.Context, orgID string, rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -582,6 +605,7 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 
 		UseLogsNewSchema:  m.opts.UseLogsNewSchema,
 		UseTraceNewSchema: m.opts.UseTraceNewSchema,
+		OrgID:             orgID,
 	})
 
 	if err != nil {
@@ -768,9 +792,12 @@ func (m *Manager) ListActiveRules() ([]Rule, error) {
 }
 
 func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
-
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, errors.New("claims not found in context")
+	}
 	// fetch rules from DB
-	storedRules, err := m.ruleDB.GetStoredRules(ctx)
+	storedRules, err := m.ruleDB.GetStoredRules(ctx, claims.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -782,11 +809,11 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 		ruleResponse := &GettableRule{}
 		if err := json.Unmarshal([]byte(s.Data), ruleResponse); err != nil { // Parse []byte to go struct pointer
-			zap.L().Error("failed to unmarshal rule from db", zap.Int("id", s.Id), zap.Error(err))
+			zap.L().Error("failed to unmarshal rule from db", zap.String("id", s.ID.StringValue()), zap.Error(err))
 			continue
 		}
 
-		ruleResponse.Id = fmt.Sprintf("%d", s.Id)
+		ruleResponse.Id = s.ID.StringValue()
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
@@ -795,17 +822,22 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 		} else {
 			ruleResponse.State = rm.State()
 		}
-		ruleResponse.CreatedAt = s.CreatedAt
-		ruleResponse.CreatedBy = s.CreatedBy
-		ruleResponse.UpdatedAt = s.UpdatedAt
-		ruleResponse.UpdatedBy = s.UpdatedBy
+		ruleResponse.CreatedAt = &s.CreatedAt
+		ruleResponse.CreatedBy = &s.CreatedBy
+		ruleResponse.UpdatedAt = &s.UpdatedAt
+		ruleResponse.UpdatedBy = &s.UpdatedBy
 		resp = append(resp, ruleResponse)
 	}
 
 	return &GettableRules{Rules: resp}, nil
 }
 
-func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error) {
+func (m *Manager) GetRule(ctx context.Context, idStr string) (*GettableRule, error) {
+	id, err := valuer.NewUUID(idStr)
+	if err != nil {
+		return nil, err
+	}
+
 	s, err := m.ruleDB.GetStoredRule(ctx, id)
 	if err != nil {
 		return nil, err
@@ -814,7 +846,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
 		return nil, err
 	}
-	r.Id = fmt.Sprintf("%d", s.Id)
+	r.Id = id.StringValue()
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
 		r.State = model.StateDisabled
@@ -822,10 +854,10 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 	} else {
 		r.State = rm.State()
 	}
-	r.CreatedAt = s.CreatedAt
-	r.CreatedBy = s.CreatedBy
-	r.UpdatedAt = s.UpdatedAt
-	r.UpdatedBy = s.UpdatedBy
+	r.CreatedAt = &s.CreatedAt
+	r.CreatedBy = &s.CreatedBy
+	r.UpdatedAt = &s.UpdatedAt
+	r.UpdatedBy = &s.UpdatedBy
 
 	return r, nil
 }
@@ -833,7 +865,7 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 // syncRuleStateWithTask ensures that the state of a stored rule matches
 // the task state. For example - if a stored rule is disabled, then
 // there is no task running against it.
-func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) error {
+func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID string, taskName string, rule *PostableRule) error {
 
 	if rule.Disabled {
 		// check if rule has any task running
@@ -845,11 +877,11 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 		// check if rule has a task running
 		if _, ok := m.tasks[taskName]; !ok {
 			// rule has not task, start one
-			if err := m.addTask(rule, taskName); err != nil {
+			if err := m.addTask(ctx, orgID, rule, taskName); err != nil {
 				return err
 			}
 		} else {
-			if err := m.editTask(rule, taskName); err != nil {
+			if err := m.editTask(ctx, orgID, rule, taskName); err != nil {
 				return err
 			}
 		}
@@ -864,29 +896,30 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 //   - over write the patch attributes received in input (ruleStr)
 //   - re-deploy or undeploy task as necessary
 //   - update the patched rule in the DB
-func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) (*GettableRule, error) {
+func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleIdStr string) (*GettableRule, error) {
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return nil, errors.New("claims not found in context")
 	}
 
-	if ruleId == "" {
-		return nil, fmt.Errorf("id is mandatory for patching rule")
+	ruleID, err := valuer.NewUUID(ruleIdStr)
+	if err != nil {
+		return nil, errors.New(err.Error())
 	}
 
-	taskName := prepareTaskName(ruleId)
+	taskName := prepareTaskName(ruleID.StringValue())
 
 	// retrieve rule from DB
-	storedJSON, err := m.ruleDB.GetStoredRule(ctx, ruleId)
+	storedJSON, err := m.ruleDB.GetStoredRule(ctx, ruleID)
 	if err != nil {
-		zap.L().Error("failed to get stored rule with given id", zap.String("id", ruleId), zap.Error(err))
+		zap.L().Error("failed to get stored rule with given id", zap.String("id", ruleID.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
 	// storedRule holds the current stored rule from DB
 	storedRule := PostableRule{}
 	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
-		zap.L().Error("failed to unmarshal stored rule with given id", zap.String("id", ruleId), zap.Error(err))
+		zap.L().Error("failed to unmarshal stored rule with given id", zap.String("id", ruleID.StringValue()), zap.Error(err))
 		return nil, err
 	}
 
@@ -897,7 +930,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(taskName, patchedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, claims.OrgID, taskName, patchedRule); err != nil {
 		zap.L().Error("failed to sync stored rule state with the task", zap.String("taskName", taskName), zap.Error(err))
 		return nil, err
 	}
@@ -910,12 +943,12 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	now := time.Now()
 	storedJSON.Data = string(patchedRuleBytes)
-	storedJSON.UpdatedBy = &claims.Email
-	storedJSON.UpdatedAt = &now
+	storedJSON.UpdatedBy = claims.Email
+	storedJSON.UpdatedAt = now
 
 	err = m.ruleDB.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(taskName, &storedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, claims.OrgID, taskName, &storedRule); err != nil {
 			zap.L().Error("failed to restore rule after patch failure", zap.String("taskName", taskName), zap.Error(err))
 		}
 		return nil, err
@@ -923,12 +956,12 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 
 	// prepare http response
 	response := GettableRule{
-		Id:           ruleId,
+		Id:           ruleID.StringValue(),
 		PostableRule: *patchedRule,
 	}
 
 	// fetch state of rule from memory
-	if rm, ok := m.rules[ruleId]; !ok {
+	if rm, ok := m.rules[ruleID.StringValue()]; !ok {
 		response.State = model.StateDisabled
 		response.Disabled = true
 	} else {
@@ -966,9 +999,13 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 }
 
 func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames []string) (map[string][]GettableRule, *model.ApiError) {
-	result := make(map[string][]GettableRule)
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if !ok {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: errors.New("claims not found in context")}
+	}
 
-	rules, err := m.ruleDB.GetStoredRules(ctx)
+	result := make(map[string][]GettableRule)
+	rules, err := m.ruleDB.GetStoredRules(ctx, claims.OrgID)
 	if err != nil {
 		zap.L().Error("Error getting stored rules", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -987,11 +1024,11 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 			continue
 		}
 
-		rule.Id = fmt.Sprintf("%d", storedRule.Id)
-		rule.CreatedAt = storedRule.CreatedAt
-		rule.CreatedBy = storedRule.CreatedBy
-		rule.UpdatedAt = storedRule.UpdatedAt
-		rule.UpdatedBy = storedRule.UpdatedBy
+		rule.Id = storedRule.ID.StringValue()
+		rule.CreatedAt = &storedRule.CreatedAt
+		rule.CreatedBy = &storedRule.CreatedBy
+		rule.UpdatedAt = &storedRule.UpdatedAt
+		rule.UpdatedBy = &storedRule.UpdatedBy
 
 		for _, query := range rule.RuleCondition.CompositeQuery.BuilderQueries {
 			if query.AggregateAttribute.Key != "" {

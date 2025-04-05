@@ -36,11 +36,12 @@ type PromRuleTask struct {
 	notify NotifyFunc
 
 	ruleDB RuleDB
+	orgID  string
 }
 
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
-func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB, orgID string) *PromRuleTask {
 	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {
@@ -60,6 +61,7 @@ func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		notify:               notify,
 		ruleDB:               ruleDB,
 		logger:               opts.Logger,
+		orgID:                orgID,
 	}
 }
 
@@ -323,9 +325,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 	}()
 
 	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
-
-	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
-
+	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx, g.orgID)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 	}

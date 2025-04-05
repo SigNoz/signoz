@@ -33,12 +33,13 @@ type RuleTask struct {
 	notify NotifyFunc
 
 	ruleDB RuleDB
+	orgID  string
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB, orgID string) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -56,6 +57,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		terminated: make(chan struct{}),
 		notify:     notify,
 		ruleDB:     ruleDB,
+		orgID:      orgID,
 	}
 }
 
@@ -305,7 +307,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
 
-	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
+	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx, g.orgID)
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))

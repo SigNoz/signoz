@@ -429,11 +429,11 @@ func (s *Server) initListeners() error {
 }
 
 // Start listening on http and private http port concurrently
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 
 	// initiate rule manager first
 	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start()
+		s.ruleManager.Start(ctx)
 	} else {
 		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
 	}

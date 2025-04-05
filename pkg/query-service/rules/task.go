@@ -29,9 +29,9 @@ type Task interface {
 
 // newTask returns an appropriate group for
 // rule type
-func newTask(taskType TaskType, name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) Task {
+func newTask(taskType TaskType, name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB, orgID string) Task {
 	if taskType == TaskTypeCh {
-		return NewRuleTask(name, file, frequency, rules, opts, notify, ruleDB)
+		return NewRuleTask(name, file, frequency, rules, opts, notify, ruleDB, orgID)
 	}
-	return NewPromRuleTask(name, file, frequency, rules, opts, notify, ruleDB)
+	return NewPromRuleTask(name, file, frequency, rules, opts, notify, ruleDB, orgID)
 }
