@@ -284,16 +284,74 @@ func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance ruletyp
 	if !ok {
 		return errors.New("no claims found in context")
 	}
-	// need to create storable types here and return
-	maintenance.UpdatedBy = claims.Email
-	maintenance.UpdatedAt = time.Now()
 
-	_, err := r.sqlstore.
-		BunDB().
-		NewUpdate().
-		Model(maintenance).
-		Where("id = ?", id.StringValue()).
-		Exec(ctx)
+	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
+		Identifiable: types.Identifiable{
+			ID: id,
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: maintenance.CreatedAt,
+			UpdatedAt: time.Now(),
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: maintenance.CreatedBy,
+			UpdatedBy: claims.Email,
+		},
+		Name:        maintenance.Name,
+		Description: maintenance.Description,
+		Schedule:    maintenance.Schedule,
+		OrgID:       claims.OrgID,
+	}
+
+	storablePlannedMaintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
+	for _, ruleIDStr := range maintenance.RuleIDs {
+		ruleID, err := valuer.NewUUID(ruleIDStr)
+		if err != nil {
+			return err
+		}
+
+		storablePlannedMaintenanceRules = append(storablePlannedMaintenanceRules, &ruletypes.StorablePlannedMaintenanceRule{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			RuleID:               ruleID,
+			PlannedMaintenanceID: storablePlannedMaintenance.ID,
+		})
+	}
+
+	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		_, err := r.sqlstore.
+			BunDBCtx(ctx).
+			NewUpdate().
+			Model(storablePlannedMaintenance).
+			WherePK().
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(new(ruletypes.StorablePlannedMaintenanceRule)).
+			Where("planned_maintenance_id = ?", storablePlannedMaintenance.ID.StringValue()).
+			Exec(ctx)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewInsert().
+			Model(&storablePlannedMaintenanceRules).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+
+	})
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return err
