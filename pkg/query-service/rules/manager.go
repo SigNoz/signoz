@@ -38,7 +38,6 @@ type PrepareTaskOptions struct {
 	Logger            *zap.Logger
 	Reader            interfaces.Reader
 	Cache             cache.Cache
-	FF                interfaces.FeatureLookup
 	ManagerOpts       *ManagerOptions
 	NotifyFunc        NotifyFunc
 	SQLStore          sqlstore.SQLStore
@@ -53,7 +52,6 @@ type PrepareTestRuleOptions struct {
 	Logger            *zap.Logger
 	Reader            interfaces.Reader
 	Cache             cache.Cache
-	FF                interfaces.FeatureLookup
 	ManagerOpts       *ManagerOptions
 	NotifyFunc        NotifyFunc
 	SQLStore          sqlstore.SQLStore
@@ -92,7 +90,6 @@ type ManagerOptions struct {
 	Logger       *zap.Logger
 	ResendDelay  time.Duration
 	DisableRules bool
-	FeatureFlags interfaces.FeatureLookup
 	Reader       interfaces.Reader
 	Cache        cache.Cache
 
@@ -117,9 +114,7 @@ type Manager struct {
 	// datastore to store alert definitions
 	ruleDB RuleDB
 
-	logger *zap.Logger
-
-	featureFlags        interfaces.FeatureLookup
+	logger              *zap.Logger
 	reader              interfaces.Reader
 	cache               cache.Cache
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
@@ -159,7 +154,6 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		tr, err := NewThresholdRule(
 			ruleId,
 			opts.Rule,
-			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,
@@ -217,7 +211,6 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		opts:                o,
 		block:               make(chan struct{}),
 		logger:              o.Logger,
-		featureFlags:        o.FeatureFlags,
 		reader:              o.Reader,
 		cache:               o.Cache,
 		prepareTaskFunc:     o.PrepareTaskFunc,
@@ -405,7 +398,6 @@ func (m *Manager) editTask(_ context.Context, orgID string, rule *PostableRule, 
 		Logger:      m.logger,
 		Reader:      m.reader,
 		Cache:       m.cache,
-		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
 		SQLStore:    m.sqlstore,
@@ -598,7 +590,6 @@ func (m *Manager) addTask(_ context.Context, orgID string, rule *PostableRule, t
 		Logger:      m.logger,
 		Reader:      m.reader,
 		Cache:       m.cache,
-		FF:          m.featureFlags,
 		ManagerOpts: m.opts,
 		NotifyFunc:  m.prepareNotifyFunc(),
 		SQLStore:    m.sqlstore,
@@ -987,7 +978,6 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		Logger:            m.logger,
 		Reader:            m.reader,
 		Cache:             m.cache,
-		FF:                m.featureFlags,
 		ManagerOpts:       m.opts,
 		NotifyFunc:        m.prepareTestNotifyFunc(),
 		SQLStore:          m.sqlstore,
