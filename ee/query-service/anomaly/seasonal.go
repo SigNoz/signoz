@@ -50,7 +50,6 @@ type BaseSeasonalProvider struct {
 	fluxInterval time.Duration
 	cache        cache.Cache
 	keyGenerator cache.KeyGenerator
-	ff           interfaces.FeatureLookup
 }
 
 func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomalyQueryParams {
