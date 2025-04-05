@@ -467,10 +467,6 @@ function FormAlertRules({
 		panelType,
 	]);
 
-	const isAlertAvailable =
-		!featureFlags?.find((flag) => flag.name === FeatureKeys.QUERY_BUILDER_ALERTS)
-			?.active || false;
-
 	const saveRule = useCallback(async () => {
 		if (!isFormValid()) {
 			return;
@@ -689,7 +685,6 @@ function FormAlertRules({
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
 	const isAlertAvailableToSave =
-		isAlertAvailable &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
