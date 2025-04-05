@@ -117,6 +117,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		const isWidgetNotPresent = isUndefined(selectedWidget);
 		if (isWidgetNotPresent) {
 			setIsNewDashboard(true);
+		} else {
+			setIsNewDashboard(false);
 		}
 
 		if (!logEventCalledRef.current) {
@@ -131,7 +133,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [widgets]);
 
 	const getWidget = useCallback(() => {
 		const widgetId = query.get('widgetId');
