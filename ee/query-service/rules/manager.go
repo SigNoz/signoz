@@ -8,6 +8,7 @@ import (
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -18,7 +19,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	var task baserules.Task
 
 	ruleId := baserules.RuleIdFromTaskName(opts.TaskName)
-	if opts.Rule.RuleType == baserules.RuleTypeThreshold {
+	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
 			ruleId,
@@ -37,9 +38,9 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
-	} else if opts.Rule.RuleType == baserules.RuleTypeProm {
+	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		pr, err := baserules.NewPromRule(
@@ -58,9 +59,9 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
-	} else if opts.Rule.RuleType == baserules.RuleTypeAnomaly {
+	} else if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
 		ar, err := NewAnomalyRule(
 			ruleId,
@@ -77,10 +78,10 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, ar)
 
 		// create anomaly rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
 
 	} else {
-		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, baserules.RuleTypeProm, baserules.RuleTypeThreshold)
+		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
 	}
 
 	return task, nil
@@ -105,12 +106,12 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, baserules.TestAlertPostFix)
+	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix)
 
 	var rule baserules.Rule
 	var err error
 
-	if parsedRule.RuleType == baserules.RuleTypeThreshold {
+	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
 		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
@@ -134,7 +135,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			return 0, basemodel.BadRequest(err)
 		}
 
-	} else if parsedRule.RuleType == baserules.RuleTypeProm {
+	} else if parsedRule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		rule, err = baserules.NewPromRule(
@@ -152,7 +153,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", rule.Name()), zap.Error(err))
 			return 0, basemodel.BadRequest(err)
 		}
-	} else if parsedRule.RuleType == baserules.RuleTypeAnomaly {
+	} else if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
 		rule, err = NewAnomalyRule(
 			alertname,
@@ -190,9 +191,9 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 // newTask returns an appropriate group for
 // rule type
-func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, ruleDB baserules.RuleDB, orgID string) baserules.Task {
+func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID string) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
-		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, ruleDB, orgID)
+		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
 	}
-	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, ruleDB, orgID)
+	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
 }

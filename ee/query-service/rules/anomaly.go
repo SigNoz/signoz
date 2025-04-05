@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -52,7 +53,7 @@ type AnomalyRule struct {
 
 func NewAnomalyRule(
 	id string,
-	p *baserules.PostableRule,
+	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
 	cache cache.Cache,
 	opts ...baserules.RuleOption,
@@ -60,7 +61,7 @@ func NewAnomalyRule(
 
 	zap.L().Info("creating new AnomalyRule", zap.String("id", id), zap.Any("opts", opts))
 
-	if p.RuleCondition.CompareOp == baserules.ValueIsBelow {
+	if p.RuleCondition.CompareOp == ruletypes.ValueIsBelow {
 		target := -1 * *p.RuleCondition.Target
 		p.RuleCondition.Target = &target
 	}
@@ -117,7 +118,7 @@ func NewAnomalyRule(
 	return &t, nil
 }
 
-func (r *AnomalyRule) Type() baserules.RuleType {
+func (r *AnomalyRule) Type() ruletypes.RuleType {
 	return RuleTypeAnomaly
 }
 
@@ -213,7 +214,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var alerts = make(map[uint64]*baserules.Alert, len(res))
+	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
@@ -225,7 +226,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		threshold := valueFormatter.Format(r.TargetVal(), r.Unit())
 		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
-		tmplData := baserules.AlertTemplateData(l, value, threshold)
+		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -233,7 +234,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
 
-			tmpl := baserules.NewTemplateExpander(
+			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
 				"__alert_"+r.Name(),
@@ -278,7 +279,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			return nil, err
 		}
 
-		alerts[h] = &baserules.Alert{
+		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
@@ -319,7 +320,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > baserules.ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
@@ -375,10 +376,10 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 func (r *AnomalyRule) String() string {
 
-	ar := baserules.PostableRule{
+	ar := ruletypes.PostableRule{
 		AlertName:         r.Name(),
 		RuleCondition:     r.Condition(),
-		EvalWindow:        baserules.Duration(r.EvalWindow()),
+		EvalWindow:        ruletypes.Duration(r.EvalWindow()),
 		Labels:            r.Labels().Map(),
 		Annotations:       r.Annotations().Map(),
 		PreferredChannels: r.PreferredChannels(),

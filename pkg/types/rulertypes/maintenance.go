@@ -1,10 +1,11 @@
 package ruletypes
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -12,11 +13,7 @@ import (
 )
 
 var (
-	ErrMissingName       = errors.New("missing name")
-	ErrMissingSchedule   = errors.New("missing schedule")
-	ErrMissingTimezone   = errors.New("missing timezone")
-	ErrMissingRepeatType = errors.New("missing repeat type")
-	ErrMissingDuration   = errors.New("missing duration")
+	ErrCodeInvalidPlannedDowntimePayload = errors.MustNewCode("invalid_planned_downtime_payload")
 )
 
 type StorablePlannedMaintenance struct {
@@ -24,10 +21,10 @@ type StorablePlannedMaintenance struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string    `bun:"name,type:text,notnull"`
-	Description string    `bun:"description,type:text"`
-	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
-	OrgID       string    `bun:"org_id,type:text"`
+	Name        string   `bun:"name,type:text,notnull"`
+	Description string   `bun:"description,type:text"`
+	Schedule    Schedule `bun:"schedule,type:text,notnull"`
+	OrgID       string   `bun:"org_id,type:text"`
 }
 
 type GettablePlannedMaintenance struct {
@@ -67,9 +64,8 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 			}
 		}
 	}
-
 	// If no alert ids, then skip all alerts
-	if m.RuleIDs == nil {
+	if len(m.RuleIDs) == 0 {
 		found = true
 	}
 
@@ -78,7 +74,6 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 	}
 
 	zap.L().Info("alert found in maintenance", zap.String("alert", ruleID), zap.String("maintenance", m.Name))
-
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
@@ -261,35 +256,35 @@ func (m *GettablePlannedMaintenance) IsRecurring() bool {
 
 func (m *GettablePlannedMaintenance) Validate() error {
 	if m.Name == "" {
-		return ErrMissingName
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing name in the payload")
 	}
 	if m.Schedule == nil {
-		return ErrMissingSchedule
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing schedule in the payload")
 	}
 	if m.Schedule.Timezone == "" {
-		return ErrMissingTimezone
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing timezone in the payload")
 	}
 
 	_, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
-		return errors.New("invalid timezone")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "invalid timezone in the payload")
 	}
 
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
 		if m.Schedule.StartTime.After(m.Schedule.EndTime) {
-			return errors.New("start time cannot be after end time")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "start time cannot be after end time")
 		}
 	}
 
 	if m.Schedule.Recurrence != nil {
 		if m.Schedule.Recurrence.RepeatType == "" {
-			return ErrMissingRepeatType
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing repeat type in the payload")
 		}
 		if m.Schedule.Recurrence.Duration == 0 {
-			return ErrMissingDuration
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing duration in the payload")
 		}
 		if m.Schedule.Recurrence.EndTime != nil && m.Schedule.Recurrence.EndTime.Before(m.Schedule.Recurrence.StartTime) {
-			return errors.New("end time cannot be before start time")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "end time cannot be before start time")
 		}
 	}
 	return nil
@@ -352,11 +347,19 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 		Id:          m.ID.StringValue(),
 		Name:        m.Name,
 		Description: m.Description,
-		Schedule:    m.Schedule,
+		Schedule:    &m.Schedule,
 		RuleIDs:     ruleIDs,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedBy:   m.UpdatedBy,
 	}
+}
+
+type MaintenanceStore interface {
+	CreatePlannedMaintenance(context.Context, GettablePlannedMaintenance) (valuer.UUID, error)
+	DeletePlannedMaintenance(context.Context, valuer.UUID) error
+	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*GettablePlannedMaintenance, error)
+	EditPlannedMaintenance(context.Context, GettablePlannedMaintenance, valuer.UUID) error
+	GetAllPlannedMaintenance(context.Context, string) ([]*GettablePlannedMaintenance, error)
 }

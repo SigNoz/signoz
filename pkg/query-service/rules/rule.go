@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
 )
 
 // A Rule encapsulates a vector expression which is evaluated at a specified
@@ -13,16 +14,16 @@ import (
 type Rule interface {
 	ID() string
 	Name() string
-	Type() RuleType
+	Type() ruletypes.RuleType
 
 	Labels() labels.BaseLabels
 	Annotations() labels.BaseLabels
-	Condition() *RuleCondition
+	Condition() *ruletypes.RuleCondition
 	EvalDelay() time.Duration
 	EvalWindow() time.Duration
 	HoldDuration() time.Duration
 	State() model.AlertState
-	ActiveAlerts() []*Alert
+	ActiveAlerts() []*ruletypes.Alert
 
 	PreferredChannels() []string
 
@@ -30,8 +31,8 @@ type Rule interface {
 	String() string
 	SetLastError(error)
 	LastError() error
-	SetHealth(RuleHealth)
-	Health() RuleHealth
+	SetHealth(ruletypes.RuleHealth)
+	Health() ruletypes.RuleHealth
 	SetEvaluationDuration(time.Duration)
 	GetEvaluationDuration() time.Duration
 	SetEvaluationTimestamp(time.Time)

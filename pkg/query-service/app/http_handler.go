@@ -742,9 +742,9 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context(), claims.OrgID)
+	schedules, err := aH.ruleManager.MaintenanceStore().GetAllPlannedMaintenance(r.Context(), claims.OrgID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -785,9 +785,9 @@ func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	schedule, err := aH.ruleManager.MaintenanceStore().GetPlannedMaintenanceByID(r.Context(), id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 	aH.Respond(w, schedule)
@@ -801,13 +801,13 @@ func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	_, err = aH.ruleManager.MaintenanceStore().CreatePlannedMaintenance(r.Context(), schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 	aH.Respond(w, nil)
@@ -824,17 +824,17 @@ func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Reques
 	var schedule ruletypes.GettablePlannedMaintenance
 	err = json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+	err = aH.ruleManager.MaintenanceStore().EditPlannedMaintenance(r.Context(), schedule, id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -849,9 +849,9 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	err = aH.ruleManager.MaintenanceStore().DeletePlannedMaintenance(r.Context(), id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -958,12 +958,12 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 	aH.Respond(w, stateItems)
 }
 
-func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
 	filterItems := []v3.FilterItem{}
 	groupBy := []v3.AttributeKey{}
 	keys := make(map[string]v3.AttributeKey)
 
-	if rule.AlertType == rules.AlertTypeLogs {
+	if rule.AlertType == ruletypes.AlertTypeLogs {
 		logFields, err := aH.reader.GetLogFields(ctx)
 		if err == nil {
 			params := &v3.QueryRangeParamsV3{
@@ -973,7 +973,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 		} else {
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
-	} else if rule.AlertType == rules.AlertTypeTraces {
+	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
 		if err == nil {
 			keys = traceFields
@@ -982,7 +982,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 		}
 	}
 
-	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+	if rule.AlertType == ruletypes.AlertTypeLogs || rule.AlertType == ruletypes.AlertTypeTraces {
 		if rule.RuleCondition.CompositeQuery != nil {
 			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
 				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
@@ -1035,9 +1035,9 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
 			// to get the correct query range
 			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
-			if rule.AlertType == rules.AlertTypeLogs {
+			if rule.AlertType == ruletypes.AlertTypeLogs {
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
-			} else if rule.AlertType == rules.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
@@ -1073,9 +1073,9 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
 			end := time.Unix(params.End/1000, 0)
 			start := time.Unix(params.Start/1000, 0)
-			if rule.AlertType == rules.AlertTypeLogs {
+			if rule.AlertType == ruletypes.AlertTypeLogs {
 				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
-			} else if rule.AlertType == rules.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}

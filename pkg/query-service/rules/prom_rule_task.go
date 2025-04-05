@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/common"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
 	"go.uber.org/zap"
@@ -35,13 +36,13 @@ type PromRuleTask struct {
 	logger *zap.Logger
 	notify NotifyFunc
 
-	ruleDB RuleDB
-	orgID  string
+	maintenanceStore ruletypes.MaintenanceStore
+	orgID            string
 }
 
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
-func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB, orgID string) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID string) *PromRuleTask {
 	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {
@@ -59,7 +60,7 @@ func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
 		notify:               notify,
-		ruleDB:               ruleDB,
+		maintenanceStore:     maintenanceStore,
 		logger:               opts.Logger,
 		orgID:                orgID,
 	}
@@ -325,7 +326,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 	}()
 
 	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
-	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx, g.orgID)
+	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
 	}
@@ -376,7 +377,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			_, err := rule.Eval(ctx, ts)
 			if err != nil {
-				rule.SetHealth(HealthBad)
+				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
 				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
