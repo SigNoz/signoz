@@ -3,39 +3,37 @@ package integrations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/jmoiron/sqlx"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type InstalledIntegrationsSqliteRepo struct {
-	db *sqlx.DB
+	store sqlstore.SQLStore
 }
 
-func NewInstalledIntegrationsSqliteRepo(db *sqlx.DB) (
+func NewInstalledIntegrationsSqliteRepo(store sqlstore.SQLStore) (
 	*InstalledIntegrationsSqliteRepo, error,
 ) {
 	return &InstalledIntegrationsSqliteRepo{
-		db: db,
+		store: store,
 	}, nil
 }
 
 func (r *InstalledIntegrationsSqliteRepo) list(
 	ctx context.Context,
-) ([]InstalledIntegration, *model.ApiError) {
-	integrations := []InstalledIntegration{}
+	orgId string,
+) ([]types.InstalledIntegration, *model.ApiError) {
+	integrations := []types.InstalledIntegration{}
 
-	err := r.db.SelectContext(
-		ctx, &integrations, `
-			select
-				integration_id,
-				config_json,
-				installed_at
-			from integrations_installed
-			order by installed_at
-		`,
-	)
+	err := r.store.BunDB().NewSelect().
+		Model(&integrations).
+		Where("org_id = ?", orgId).
+		Order("installed_at").
+		Scan(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"could not query installed integrations: %w", err,
@@ -45,38 +43,28 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 }
 
 func (r *InstalledIntegrationsSqliteRepo) get(
-	ctx context.Context, integrationIds []string,
-) (map[string]InstalledIntegration, *model.ApiError) {
-	integrations := []InstalledIntegration{}
+	ctx context.Context, orgId string, integrationIds []string,
+) (map[string]types.InstalledIntegration, *model.ApiError) {
+	integrations := []types.InstalledIntegration{}
 
-	idPlaceholders := []string{}
 	idValues := []interface{}{}
 	for _, id := range integrationIds {
-		idPlaceholders = append(idPlaceholders, "?")
 		idValues = append(idValues, id)
 	}
 
-	err := r.db.SelectContext(
-		ctx, &integrations, fmt.Sprintf(`
-			select
-				integration_id,
-				config_json,
-				installed_at
-			from integrations_installed
-			where integration_id in (%s)`,
-			strings.Join(idPlaceholders, ", "),
-		),
-		idValues...,
-	)
+	err := r.store.BunDB().NewSelect().Model(&integrations).
+		Where("org_id = ?", orgId).
+		Where("type IN (?)", bun.In(idValues)).
+		Scan(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"could not query installed integrations: %w", err,
 		))
 	}
 
-	result := map[string]InstalledIntegration{}
+	result := map[string]types.InstalledIntegration{}
 	for _, ii := range integrations {
-		result[ii.IntegrationId] = ii
+		result[ii.Type] = ii
 	}
 
 	return result, nil
@@ -84,55 +72,57 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 
 func (r *InstalledIntegrationsSqliteRepo) upsert(
 	ctx context.Context,
-	integrationId string,
-	config InstalledIntegrationConfig,
-) (*InstalledIntegration, *model.ApiError) {
-	serializedConfig, err := config.Value()
-	if err != nil {
-		return nil, model.BadRequest(fmt.Errorf(
-			"could not serialize integration config: %w", err,
-		))
+	orgId string,
+	integrationType string,
+	config types.InstalledIntegrationConfig,
+) (*types.InstalledIntegration, *model.ApiError) {
+
+	integration := types.InstalledIntegration{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		OrgID:      orgId,
+		Type:       integrationType,
+		ConfigJSON: config,
 	}
 
-	_, dbErr := r.db.ExecContext(
-		ctx, `
-			INSERT INTO integrations_installed (
-				integration_id,
-				config_json
-			) values ($1, $2)
-			on conflict(integration_id) do update
-				set config_json=excluded.config_json
-		`, integrationId, serializedConfig,
-	)
+	_, dbErr := r.store.BunDB().NewInsert().
+		Model(&integration).
+		On("conflict (type, org_id) DO UPDATE").
+		Set("config_json = EXCLUDED.config_json").
+		Exec(ctx)
+
 	if dbErr != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"could not insert record for integration installation: %w", dbErr,
 		))
 	}
 
-	res, apiErr := r.get(ctx, []string{integrationId})
+	res, apiErr := r.get(ctx, orgId, []string{integrationType})
 	if apiErr != nil || len(res) < 1 {
 		return nil, model.WrapApiError(
 			apiErr, "could not fetch installed integration",
 		)
 	}
 
-	installed := res[integrationId]
+	installed := res[integrationType]
 
 	return &installed, nil
 }
 
 func (r *InstalledIntegrationsSqliteRepo) delete(
-	ctx context.Context, integrationId string,
+	ctx context.Context, orgId string, integrationType string,
 ) *model.ApiError {
-	_, dbErr := r.db.ExecContext(ctx, `
-		DELETE FROM integrations_installed where integration_id = ?
-	`, integrationId)
+	_, dbErr := r.store.BunDB().NewDelete().
+		Model(&types.InstalledIntegration{}).
+		Where("type = ?", integrationType).
+		Where("org_id = ?", orgId).
+		Exec(ctx)
 
 	if dbErr != nil {
 		return model.InternalError(fmt.Errorf(
 			"could not delete installed integration record for %s: %w",
-			integrationId, dbErr,
+			integrationType, dbErr,
 		))
 	}
 

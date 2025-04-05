@@ -194,9 +194,10 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 }
 
 func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, references []string, cb func(context.Context) error) error {
-	if len(references) == 0 {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
-	}
+	// Nitya: Not enforcing it now
+	// if len(references) == 0 {
+	// 	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
+	// }
 	exists, err := dialect.TableExists(ctx, bun, newModel)
 	if err != nil {
 		return err
