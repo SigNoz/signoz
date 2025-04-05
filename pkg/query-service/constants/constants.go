@@ -155,6 +155,8 @@ const (
 	SIGNOZ_SPAN_INDEX_V3                       = "distributed_signoz_index_v3"
 	SIGNOZ_SPAN_INDEX_LOCAL_TABLENAME          = "signoz_index_v2"
 	SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME       = "signoz_index_v3"
+	SIGNOZ_TAG_ATTRIBUTES_V2_TABLENAME         = "distributed_tag_attributes_v2"
+	SIGNOZ_TAG_ATTRIBUTES_V2_LOCAL_TABLENAME   = "tag_attributes_v2"
 	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME       = "time_series_v4"
 	SIGNOZ_TIMESERIES_V4_TABLENAME             = "distributed_time_series_v4"
 	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME  = "time_series_v4_6hrs"
@@ -165,8 +167,12 @@ const (
 	SIGNOZ_TIMESERIES_v4_TABLENAME             = "distributed_time_series_v4"
 	SIGNOZ_TIMESERIES_v4_1WEEK_TABLENAME       = "distributed_time_series_v4_1week"
 	SIGNOZ_TIMESERIES_v4_6HRS_TABLENAME        = "distributed_time_series_v4_6hrs"
+	SIGNOZ_METADATA_DBNAME                     = "signoz_metadata"
 	SIGNOZ_ATTRIBUTES_METADATA_TABLENAME       = "distributed_attributes_metadata"
 	SIGNOZ_ATTRIBUTES_METADATA_LOCAL_TABLENAME = "attributes_metadata"
+	SIGNOZ_LOG_DBNAME                          = "signoz_logs"
+	SIGNOZ_LOG_V2_TABLENAME                    = "distributed_logs_v2"
+	SIGNOZ_LOG_V2_LOCAL_TABLENAME              = "logs_v2"
 )
 
 // alert related constants
