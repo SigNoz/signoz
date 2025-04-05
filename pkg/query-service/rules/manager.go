@@ -265,7 +265,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 		}
 
 		for _, rec := range storedRules {
-			taskName := fmt.Sprintf("%d-groupname", rec.ID.StringValue())
+			taskName := fmt.Sprintf("%s-groupname", rec.ID.StringValue())
 			parsedRule, err := ParsePostableRule([]byte(rec.Data))
 
 			if err != nil {
@@ -305,7 +305,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 }
 
 // Run starts processing of the rule manager.
-func (m *Manager) run(ctx context.Context) {
+func (m *Manager) run(_ context.Context) {
 	// initiate blocked tasks
 	close(m.block)
 }
@@ -392,7 +392,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 	})
 }
 
-func (m *Manager) editTask(ctx context.Context, orgID string, rule *PostableRule, taskName string) error {
+func (m *Manager) editTask(_ context.Context, orgID string, rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -557,7 +557,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		err = cfg.CreateRuleIDMatcher(fmt.Sprintf("%d", id.StringValue()), preferredChannels)
+		err = cfg.CreateRuleIDMatcher(id.StringValue(), preferredChannels)
 		if err != nil {
 			return err
 		}
@@ -581,12 +581,12 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule
 	}
 
 	return &GettableRule{
-		Id:           fmt.Sprintf("%d", id.StringValue()),
+		Id:           id.StringValue(),
 		PostableRule: *parsedRule,
 	}, nil
 }
 
-func (m *Manager) addTask(ctx context.Context, orgID string, rule *PostableRule, taskName string) error {
+func (m *Manager) addTask(_ context.Context, orgID string, rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
