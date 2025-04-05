@@ -49,6 +49,8 @@
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts"
+		"./**/*.d.ts",
+		"tailwind.config.js",
+		"postcss.config.js"
 	]
 }

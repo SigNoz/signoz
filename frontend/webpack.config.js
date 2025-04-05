@@ -171,6 +171,7 @@ const config = {
 					styleLoader,
 					// Translates CSS into CommonJS
 					cssLoader,
+					'postcss-loader',
 					// Compiles Sass to CSS
 					sassLoader,
 				],

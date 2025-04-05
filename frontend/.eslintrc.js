@@ -17,6 +17,7 @@ module.exports = {
 		'plugin:import/errors',
 		'plugin:import/warnings',
 		'plugin:react/jsx-runtime',
+		// 'plugin:tailwindcss/recommended',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
