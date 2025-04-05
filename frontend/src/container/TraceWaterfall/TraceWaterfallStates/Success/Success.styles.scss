@@ -95,6 +95,10 @@
 			border-radius: 4px;
 			background: rgba(171, 189, 255, 0.06) !important;
 
+			.div-td .span-overview .second-row .add-funnel-button {
+				opacity: 1;
+			}
+
 			.span-overview {
 				background: unset !important;
 
@@ -230,6 +234,24 @@
 							font-weight: 400;
 							line-height: 18px; /* 128.571% */
 							letter-spacing: -0.07px;
+						}
+						.add-funnel-button {
+							position: relative;
+							z-index: 1;
+							opacity: 0;
+							display: flex;
+							align-items: center;
+							gap: 6px;
+							transition: opacity 0.1s ease-in-out;
+
+							&__separator {
+								color: var(--bg-vanilla-400);
+							}
+							&__button {
+								display: flex;
+								align-items: center;
+								justify-content: center;
+							}
 						}
 					}
 				}

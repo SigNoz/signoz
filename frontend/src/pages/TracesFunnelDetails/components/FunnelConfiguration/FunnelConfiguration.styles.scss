@@ -1,0 +1,42 @@
+.funnel-configuration {
+	&__steps-wrapper {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+	}
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 16px;
+		border-bottom: 1px solid var(--bg-slate-400);
+	}
+
+	&__description {
+		padding: 16px 16px 0 16px;
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		line-height: 18px; /* 150% */
+		letter-spacing: -0.06px;
+	}
+
+	.funnel-item__action-icon {
+		opacity: 1;
+	}
+	&__steps {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 16px;
+	}
+}
+
+.lightMode {
+	.funnel-configuration {
+		&__header {
+			border-color: var(--bg-vanilla-300);
+		}
+	}
+}
