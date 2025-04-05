@@ -38,7 +38,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
 
 	} else if opts.Rule.RuleType == baserules.RuleTypeProm {
 
@@ -59,7 +59,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
 
 	} else if opts.Rule.RuleType == baserules.RuleTypeAnomaly {
 		// create anomaly rule
@@ -79,7 +79,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, ar)
 
 		// create anomaly rule task for evalution
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, time.Duration(opts.Rule.Frequency), rules, opts.ManagerOpts, opts.NotifyFunc, opts.RuleDB, opts.OrgID)
 
 	} else {
 		return nil, fmt.Errorf("unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, baserules.RuleTypeProm, baserules.RuleTypeThreshold)
@@ -194,9 +194,9 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 // newTask returns an appropriate group for
 // rule type
-func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, ruleDB baserules.RuleDB) baserules.Task {
+func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, ruleDB baserules.RuleDB, orgID string) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
-		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, ruleDB)
+		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, ruleDB, orgID)
 	}
-	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, ruleDB)
+	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, ruleDB, orgID)
 }

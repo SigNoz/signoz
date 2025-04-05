@@ -517,7 +517,7 @@ func (s *Server) Stop() error {
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
-		s.ruleManager.Stop()
+		s.ruleManager.Stop(context.Background())
 	}
 
 	// stop usage manager

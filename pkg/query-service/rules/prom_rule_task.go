@@ -338,7 +338,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 		shouldSkip := false
 		for _, m := range maintenance {
 			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
-			if m.shouldSkip(rule.ID(), ts) {
+			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
 			}

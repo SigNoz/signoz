@@ -1,7 +1,6 @@
 package ruletypes
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"time"
@@ -36,7 +35,7 @@ type GettablePlannedMaintenance struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Schedule    *Schedule `json:"schedule"`
-	AlertIds    *AlertIds `json:"alertIds"`
+	RuleIDs     []string  `json:"alertIds"`
 	CreatedAt   time.Time `json:"createdAt"`
 	CreatedBy   string    `json:"createdBy"`
 	UpdatedAt   time.Time `json:"updatedAt"`
@@ -57,24 +56,11 @@ type GettablePlannedMaintenanceRule struct {
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
-type AlertIds []string
-
-func (a *AlertIds) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, a)
-	}
-	return nil
-}
-
-func (a *AlertIds) Value() (driver.Value, error) {
-	return json.Marshal(a)
-}
-
-func (m *GettablePlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
+func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
-	if m.AlertIds != nil {
-		for _, alertID := range m.AlertIds {
+	if m.RuleIDs != nil {
+		for _, alertID := range m.RuleIDs {
 			if alertID == ruleID {
 				found = true
 				break
@@ -83,7 +69,7 @@ func (m *GettablePlannedMaintenance) shouldSkip(ruleID string, now time.Time) bo
 	}
 
 	// If no alert ids, then skip all alerts
-	if m.AlertIds == nil || len(m.AlertIds) == 0 {
+	if m.RuleIDs == nil {
 		found = true
 	}
 
@@ -245,10 +231,10 @@ func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Re
 
 func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
 	ruleID := "maintenance"
-	if m.AlertIds != nil && len(m.AlertIds) > 0 {
-		ruleID = (m.AlertIds)[0]
+	if m.RuleIDs != nil {
+		ruleID = (m.RuleIDs)[0]
 	}
-	return m.shouldSkip(ruleID, now)
+	return m.ShouldSkip(ruleID, now)
 }
 
 func (m *GettablePlannedMaintenance) IsUpcoming() bool {
@@ -344,7 +330,7 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Name:        m.Name,
 		Description: m.Description,
 		Schedule:    m.Schedule,
-		AlertIds:    m.AlertIds,
+		AlertIds:    m.RuleIDs,
 		CreatedAt:   m.CreatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedAt:   m.UpdatedAt,
@@ -352,4 +338,23 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Status:      status,
 		Kind:        kind,
 	})
+}
+
+func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettableMaintenance() *GettablePlannedMaintenance {
+	ruleIDs := []string{}
+	for _, storableMaintenanceRule := range m.Rules {
+		ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
+	}
+
+	return &GettablePlannedMaintenance{
+		Id:          m.ID.StringValue(),
+		Name:        m.Name,
+		Description: m.Description,
+		Schedule:    m.Schedule,
+		RuleIDs:     ruleIDs,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+		CreatedBy:   m.CreatedBy,
+		UpdatedBy:   m.UpdatedBy,
+	}
 }

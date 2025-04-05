@@ -383,11 +383,11 @@ func (s *Server) initListeners() error {
 }
 
 // Start listening on http and private http port concurrently
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 
 	// initiate rule manager first
 	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start()
+		s.ruleManager.Start(ctx)
 	} else {
 		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
 	}
@@ -455,7 +455,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
 	if s.httpServer != nil {
 		if err := s.httpServer.Shutdown(context.Background()); err != nil {
 			return err
@@ -471,7 +471,7 @@ func (s *Server) Stop() error {
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
-		s.ruleManager.Stop()
+		s.ruleManager.Stop(ctx)
 	}
 
 	return nil
