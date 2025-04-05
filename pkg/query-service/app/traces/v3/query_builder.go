@@ -310,10 +310,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, _ string, pan
 		v3.AggregateOperatorRate:
 
 		rate := float64(step)
-		if options.PreferRPM {
-			rate = rate / 60.0
-		}
-
 		op := fmt.Sprintf("%s(%s)/%f", AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
