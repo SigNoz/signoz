@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/common"

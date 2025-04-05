@@ -16,7 +16,7 @@ import (
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
 )

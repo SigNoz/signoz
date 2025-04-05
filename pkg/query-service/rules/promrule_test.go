@@ -5,7 +5,7 @@ import (
 	"time"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	pql "github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"

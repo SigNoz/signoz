@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -158,7 +158,7 @@ func (r *AnomalyRule) GetSelectedQuery() string {
 	return r.Condition().GetSelectedQueryName()
 }
 
-func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baserules.Vector, error) {
+func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
@@ -185,7 +185,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 		}
 	}
 
-	var resultVector baserules.Vector
+	var resultVector ruletypes.Vector
 
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
 	zap.L().Info("anomaly scores", zap.String("scores", string(scoresJSON)))

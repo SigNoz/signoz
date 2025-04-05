@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
 	"go.uber.org/zap"

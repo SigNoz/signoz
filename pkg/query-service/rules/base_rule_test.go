@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 func TestBaseRule_RequireMinPoints(t *testing.T) {

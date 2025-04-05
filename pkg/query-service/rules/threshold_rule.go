@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
@@ -259,7 +259,7 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vector, error) {
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
@@ -345,7 +345,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		r.lastTimestampWithDatapoints = time.Now()
 	}
 
-	var resultVector Vector
+	var resultVector ruletypes.Vector
 
 	// if the data is missing for `For` duration then we should send alert
 	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
@@ -354,7 +354,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		if !r.lastTimestampWithDatapoints.IsZero() {
 			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
 		}
-		resultVector = append(resultVector, Sample{
+		resultVector = append(resultVector, ruletypes.Sample{
 			Metric:    lbls.Labels(),
 			IsMissing: true,
 		})

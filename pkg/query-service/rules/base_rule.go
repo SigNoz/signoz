@@ -14,7 +14,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"go.uber.org/zap"
 )
 
@@ -358,8 +358,8 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 	}
 }
 
-func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
-	var alertSmpl Sample
+func (r *BaseRule) ShouldAlert(series v3.Series) (ruletypes.Sample, bool) {
+	var alertSmpl ruletypes.Sample
 	var shouldAlert bool
 	var lbls qslabels.Labels
 
@@ -387,7 +387,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		if r.compareOp() == ruletypes.ValueIsAbove {
 			for _, smpl := range series.Points {
 				if smpl.Value > r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -395,7 +395,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ruletypes.ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value < r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -403,7 +403,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ruletypes.ValueIsEq {
 			for _, smpl := range series.Points {
 				if smpl.Value == r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -411,7 +411,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ruletypes.ValueIsNotEq {
 			for _, smpl := range series.Points {
 				if smpl.Value != r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -419,7 +419,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ruletypes.ValueOutsideBounds {
 			for _, smpl := range series.Points {
 				if math.Abs(smpl.Value) >= r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = true
 					break
 				}
@@ -428,7 +428,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	case ruletypes.AllTheTimes:
 		// If all samples match the condition, the rule is firing.
 		shouldAlert = true
-		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lbls}
+		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: r.targetVal()}, Metric: lbls}
 		if r.compareOp() == ruletypes.ValueIsAbove {
 			for _, smpl := range series.Points {
 				if smpl.Value <= r.targetVal() {
@@ -444,7 +444,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 						minValue = smpl.Value
 					}
 				}
-				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lbls}
+				alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: minValue}, Metric: lbls}
 			}
 		} else if r.compareOp() == ruletypes.ValueIsBelow {
 			for _, smpl := range series.Points {
@@ -460,7 +460,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 						maxValue = smpl.Value
 					}
 				}
-				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lbls}
+				alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: maxValue}, Metric: lbls}
 			}
 		} else if r.compareOp() == ruletypes.ValueIsEq {
 			for _, smpl := range series.Points {
@@ -480,7 +480,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			if shouldAlert {
 				for _, smpl := range series.Points {
 					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
-						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+						alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 						break
 					}
 				}
@@ -488,7 +488,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ruletypes.ValueOutsideBounds {
 			for _, smpl := range series.Points {
 				if math.Abs(smpl.Value) < r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+					alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: smpl.Value}, Metric: lbls}
 					shouldAlert = false
 					break
 				}
@@ -505,7 +505,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			count++
 		}
 		avg := sum / count
-		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls}
+		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: avg}, Metric: lbls}
 		if r.compareOp() == ruletypes.ValueIsAbove {
 			if avg > r.targetVal() {
 				shouldAlert = true
@@ -537,7 +537,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 			}
 			sum += smpl.Value
 		}
-		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls}
+		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: sum}, Metric: lbls}
 		if r.compareOp() == ruletypes.ValueIsAbove {
 			if sum > r.targetVal() {
 				shouldAlert = true
@@ -562,7 +562,7 @@ func (r *BaseRule) ShouldAlert(series v3.Series) (Sample, bool) {
 	case ruletypes.Last:
 		// If the last sample matches the condition, the rule is firing.
 		shouldAlert = false
-		alertSmpl = Sample{Point: Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
+		alertSmpl = ruletypes.Sample{Point: ruletypes.Point{V: series.Points[len(series.Points)-1].Value}, Metric: lbls}
 		if r.compareOp() == ruletypes.ValueIsAbove {
 			if series.Points[len(series.Points)-1].Value > r.targetVal() {
 				shouldAlert = true

@@ -9,7 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/rulertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	opentracing "github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 )
