@@ -59,7 +59,7 @@ type GettablePlannedMaintenanceRule struct {
 func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
-	if m.RuleIDs != nil {
+	if len(m.RuleIDs) > 0 {
 		for _, alertID := range m.RuleIDs {
 			if alertID == ruleID {
 				found = true
@@ -231,7 +231,7 @@ func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Re
 
 func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
 	ruleID := "maintenance"
-	if m.RuleIDs != nil {
+	if len(m.RuleIDs) > 0 {
 		ruleID = (m.RuleIDs)[0]
 	}
 	return m.ShouldSkip(ruleID, now)
@@ -342,8 +342,10 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 
 func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettableMaintenance() *GettablePlannedMaintenance {
 	ruleIDs := []string{}
-	for _, storableMaintenanceRule := range m.Rules {
-		ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
+	if m.Rules != nil {
+		for _, storableMaintenanceRule := range m.Rules {
+			ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
+		}
 	}
 
 	return &GettablePlannedMaintenance{

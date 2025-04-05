@@ -152,7 +152,7 @@ func (r *ruleDB) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.
 		Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return rule, err
+		return nil, err
 	}
 	return rule, nil
 }
@@ -168,7 +168,7 @@ func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]
 		Scan(ctx)
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return make([]*ruletypes.GettablePlannedMaintenance, 0), err
+		return nil, err
 	}
 
 	gettablePlannedMaintenance := make([]*ruletypes.GettablePlannedMaintenance, 0)
@@ -189,7 +189,7 @@ func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) 
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return new(ruletypes.GettablePlannedMaintenance), err
+		return nil, err
 	}
 
 	return storableMaintenanceRules.ConvertGettableMaintenanceRuleToGettableMaintenance(), nil
@@ -240,20 +240,23 @@ func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance rulet
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewInsert().
-			Model(storablePlannedMaintenance).
+			Model(&storablePlannedMaintenance).
 			Exec(ctx)
 		if err != nil {
 			return err
 		}
 
-		_, err = r.sqlstore.
-			BunDBCtx(ctx).
-			NewInsert().
-			Model(&maintenanceRules).
-			Exec(ctx)
+		if len(maintenanceRules) > 0 {
+			_, err = r.sqlstore.
+				BunDBCtx(ctx).
+				NewInsert().
+				Model(&maintenanceRules).
+				Exec(ctx)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+
 		}
 		return nil
 	})
@@ -323,8 +326,8 @@ func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance ruletyp
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewUpdate().
-			Model(storablePlannedMaintenance).
-			WherePK().
+			Model(&storablePlannedMaintenance).
+			Where("id = ?", storablePlannedMaintenance.ID.StringValue()).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -341,14 +344,17 @@ func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance ruletyp
 			return err
 		}
 
-		_, err = r.sqlstore.
-			BunDBCtx(ctx).
-			NewInsert().
-			Model(&storablePlannedMaintenanceRules).
-			Exec(ctx)
-		if err != nil {
-			return err
+		if len(storablePlannedMaintenanceRules) > 0 {
+			_, err = r.sqlstore.
+				BunDBCtx(ctx).
+				NewInsert().
+				Model(&storablePlannedMaintenanceRules).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
 		}
+
 		return nil
 
 	})
