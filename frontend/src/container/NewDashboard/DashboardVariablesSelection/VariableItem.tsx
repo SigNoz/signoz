@@ -19,6 +19,7 @@ import {
 } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
+import { CustomSelect } from 'components/NewSelect';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
@@ -254,6 +255,7 @@ function VariableItem({
 			return;
 		}
 		if (variableData.name) {
+			console.log('value', value);
 			if (
 				value === ALL_SELECT_VALUE ||
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
@@ -423,7 +425,8 @@ function VariableItem({
 					/>
 				) : (
 					!errorMessage &&
-					optionsData && (
+					optionsData &&
+					(mode === 'multiple' ? (
 						<Select
 							key={
 								selectValue && Array.isArray(selectValue)
@@ -520,7 +523,24 @@ function VariableItem({
 								</Select.Option>
 							))}
 						</Select>
-					)
+					) : (
+						<CustomSelect
+							options={optionsData.map((option) => ({
+								label: option.toString(),
+								value: option.toString(),
+							}))}
+							loading={isLoading}
+							className="variable-select"
+							getPopupContainer={popupContainer}
+							defaultValue={selectValue}
+							onChange={handleChange}
+							placeholder="Select value"
+							placement="bottomLeft"
+							showSearch
+							value={selectValue}
+							allowClear
+						/>
+					))
 				)}
 				{variableData.type !== 'TEXTBOX' && errorMessage && (
 					<span style={{ margin: '0 0.5rem' }}>
