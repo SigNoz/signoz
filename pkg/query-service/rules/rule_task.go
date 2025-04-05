@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	opentracing "github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 )
@@ -32,13 +33,14 @@ type RuleTask struct {
 	pause  bool
 	notify NotifyFunc
 
-	ruleDB RuleDB
+	maintenanceStore ruletypes.MaintenanceStore
+	orgID            string
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID string) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -46,16 +48,17 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	return &RuleTask{
-		name:       name,
-		file:       file,
-		pause:      false,
-		frequency:  frequency,
-		rules:      rules,
-		opts:       opts,
-		done:       make(chan struct{}),
-		terminated: make(chan struct{}),
-		notify:     notify,
-		ruleDB:     ruleDB,
+		name:             name,
+		file:             file,
+		pause:            false,
+		frequency:        frequency,
+		rules:            rules,
+		opts:             opts,
+		done:             make(chan struct{}),
+		terminated:       make(chan struct{}),
+		notify:           notify,
+		maintenanceStore: maintenanceStore,
+		orgID:            orgID,
 	}
 }
 
@@ -305,7 +308,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
 
-	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
+	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID)
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
@@ -319,7 +322,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 		shouldSkip := false
 		for _, m := range maintenance {
 			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
-			if m.shouldSkip(rule.ID(), ts) {
+			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
 			}
@@ -357,7 +360,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			_, err := rule.Eval(ctx, ts)
 			if err != nil {
-				rule.SetHealth(HealthBad)
+				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
 				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))

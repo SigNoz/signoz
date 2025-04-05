@@ -135,7 +135,7 @@ func main() {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
 
-	if err := server.Start(); err != nil {
+	if err := server.Start(context.Background()); err != nil {
 		logger.Fatal("Could not start servers", zap.Error(err))
 	}
 
@@ -149,7 +149,7 @@ func main() {
 		zap.L().Fatal("Failed to start signoz", zap.Error(err))
 	}
 
-	err = server.Stop()
+	err = server.Stop(context.Background())
 	if err != nil {
 		zap.L().Fatal("Failed to stop server", zap.Error(err))
 	}
