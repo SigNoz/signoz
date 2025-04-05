@@ -22,16 +22,46 @@ export const useGetQueryRange: UseGetQueryRange = (
 	options,
 	headers,
 ) => {
-	const newRequestData: GetQueryResultsProps = useMemo(
-		() => ({
+	const newRequestData: GetQueryResultsProps = useMemo(() => {
+		const isListWithSingleTimestampOrder =
+			requestData.graphType === PANEL_TYPES.LIST &&
+			requestData.query.builder?.queryData[0]?.orderBy?.length === 1 &&
+			// exclude list with id filter (i.e. context logs)
+			!requestData.query.builder?.queryData[0].filters.items.some(
+				(filter) => filter.key?.key === 'id',
+			) &&
+			requestData.query.builder?.queryData[0].orderBy[0].columnName ===
+				'timestamp';
+
+		const modifiedRequestData = {
 			...requestData,
 			graphType:
 				requestData.graphType === PANEL_TYPES.BAR
 					? PANEL_TYPES.TIME_SERIES
 					: requestData.graphType,
-		}),
-		[requestData],
-	);
+		};
+
+		// If the query is a list with a single timestamp order, we need to add the id column to the order by clause
+		if (isListWithSingleTimestampOrder) {
+			modifiedRequestData.query.builder = {
+				...requestData.query.builder,
+				queryData: [
+					{
+						...requestData.query.builder.queryData[0],
+						orderBy: [
+							...requestData.query.builder.queryData[0].orderBy,
+							{
+								columnName: 'id',
+								order: requestData.query.builder.queryData[0].orderBy[0].order,
+							},
+						],
+					},
+				],
+			};
+		}
+
+		return modifiedRequestData;
+	}, [requestData]);
 
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
