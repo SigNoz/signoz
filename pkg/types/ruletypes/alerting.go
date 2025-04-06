@@ -19,8 +19,7 @@ import (
 const (
 	// how long before re-sending the alert
 	ResolvedRetention = 15 * time.Minute
-
-	TestAlertPostFix = "_TEST_ALERT"
+	TestAlertPostFix  = "_TEST_ALERT"
 )
 
 type RuleType string

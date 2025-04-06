@@ -21,10 +21,10 @@ type StorablePlannedMaintenance struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string   `bun:"name,type:text,notnull"`
-	Description string   `bun:"description,type:text"`
-	Schedule    Schedule `bun:"schedule,type:text,notnull"`
-	OrgID       string   `bun:"org_id,type:text"`
+	Name        string    `bun:"name,type:text,notnull"`
+	Description string    `bun:"description,type:text"`
+	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
+	OrgID       string    `bun:"org_id,type:text"`
 }
 
 type GettablePlannedMaintenance struct {
@@ -347,7 +347,7 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 		Id:          m.ID.StringValue(),
 		Name:        m.Name,
 		Description: m.Description,
-		Schedule:    &m.Schedule,
+		Schedule:    m.Schedule,
 		RuleIDs:     ruleIDs,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,

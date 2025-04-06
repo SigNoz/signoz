@@ -80,7 +80,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		},
 		Name:        maintenance.Name,
 		Description: maintenance.Description,
-		Schedule:    *maintenance.Schedule,
+		Schedule:    maintenance.Schedule,
 		OrgID:       claims.OrgID,
 	}
 
@@ -166,7 +166,7 @@ func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ru
 		},
 		Name:        maintenance.Name,
 		Description: maintenance.Description,
-		Schedule:    *maintenance.Schedule,
+		Schedule:    maintenance.Schedule,
 		OrgID:       claims.OrgID,
 	}
 
