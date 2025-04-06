@@ -109,10 +109,6 @@ func NewRegistry(features ...*Feature) (Registry, error) {
 
 func (registry *registry) MergeOrOverride(other Registry) Registry {
 	for _, feature := range other.List() {
-		if _, ok := registry.features[feature.Name]; ok {
-			registry.features[feature.Name] = feature
-		}
-
 		registry.features[feature.Name] = feature
 	}
 
