@@ -1013,7 +1013,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						break;
 
 					case 'ArrowRight':
-						// No special handling needed for right arrow in dropdown
+						// Start chip navigation when right arrow is pressed and we have chips to navigate
+						if (visibleIndices.length > 0 && !hasInputText) {
+							e.stopPropagation();
+							e.preventDefault();
+							// Navigate to the first chip
+							setActiveChipIndex(0);
+							setActiveIndex(-1);
+						}
 						break;
 
 					default:
