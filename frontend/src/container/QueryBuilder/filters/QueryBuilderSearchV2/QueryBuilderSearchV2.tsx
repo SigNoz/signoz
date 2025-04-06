@@ -54,6 +54,7 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
+import SpanScopeSelector from '../QueryBuilderSearch/SpanScopeSelector';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import {
 	checkCommaInValue,
@@ -924,6 +925,11 @@ function QueryBuilderSearchV2(
 		);
 	};
 
+	const isTracesDataSource = useMemo(
+		() => query.dataSource === DataSource.TRACES,
+		[query.dataSource],
+	);
+
 	return (
 		<div className="query-builder-search-v2">
 			<Select
@@ -1008,6 +1014,7 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
+			{isTracesDataSource && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }
