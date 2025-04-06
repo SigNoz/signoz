@@ -10,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/modules/preference"
+	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -20,6 +22,7 @@ import (
 	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
 )
@@ -53,6 +56,7 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
+	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
@@ -70,6 +74,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		Signoz:                        signoz,
+		Preference:                    preference,
 	})
 
 	if err != nil {
@@ -156,7 +161,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", am.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
 
 	// PAT APIs
 	router.HandleFunc("/api/v1/pats", am.AdminAccess(ah.createPAT)).Methods(http.MethodPost)

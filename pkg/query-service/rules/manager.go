@@ -111,8 +111,7 @@ type Manager struct {
 	// datastore to store alert definitions
 	ruleDB RuleDB
 
-	logger *zap.Logger
-
+	logger              *zap.Logger
 	reader              interfaces.Reader
 	cache               cache.Cache
 	prepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)

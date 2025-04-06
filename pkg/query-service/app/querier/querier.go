@@ -93,7 +93,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildTraceQuery:  tracesQueryBuilder,
 			BuildLogQuery:    logsQueryBuilder,
 			BuildMetricQuery: metricsV3.PrepareMetricQuery,
-		})
+		}),
 
 		testingMode:       opts.TestingMode,
 		returnedSeries:    opts.ReturnedSeries,

@@ -315,6 +315,13 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			zap.L().Error("panic during promql rule evaluation", zap.Any("panic", r))
+		}
+	}()
+
 	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
 
 	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
