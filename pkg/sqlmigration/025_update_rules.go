@@ -158,71 +158,71 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 					}
 				}
 			}
+			err = migration.store.Dialect().UpdatePrimaryKey(ctx, tx, new(existingMaintenance), new(newMaintenance), OrgReference, func(ctx context.Context) error {
+				_, err := tx.
+					NewCreateTable().
+					IfNotExists().
+					Model(new(storablePlannedMaintenanceRule)).
+					ForeignKey(`("planned_maintenance_id") REFERENCES "planned_maintenance_new" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
+					ForeignKey(`("rule_id") REFERENCES "rule" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+
+				existingMaintenances := make([]*existingMaintenance, 0)
+				err = tx.
+					NewSelect().
+					Model(&existingMaintenances).
+					Scan(ctx)
+				if err != nil {
+					if err != sql.ErrNoRows {
+						return err
+					}
+				}
+				if err == nil && len(existingMaintenances) > 0 {
+					var orgID string
+					err := migration.
+						store.
+						BunDB().
+						NewSelect().
+						Model((*types.Organization)(nil)).
+						Column("id").
+						Scan(ctx, &orgID)
+					if err != nil {
+						if err != sql.ErrNoRows {
+							return err
+						}
+					}
+					if err == nil {
+						newMaintenances, newMaintenancesRules := migration.CopyExistingMaintenancesToNewMaintenancesAndRules(existingMaintenances, orgID, ruleIDToRuleUUIDMap)
+						_, err = tx.
+							NewInsert().
+							Model(&newMaintenances).
+							Exec(ctx)
+						if err != nil {
+							return err
+						}
+
+						_, err = tx.
+							NewInsert().
+							Model(&newMaintenancesRules).
+							Exec(ctx)
+						if err != nil {
+							return err
+						}
+					}
+
+				}
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
 			return nil
 		})
 
-	if err != nil {
-		return err
-	}
-
-	err = migration.store.Dialect().UpdatePrimaryKey(ctx, tx, new(existingMaintenance), new(newMaintenance), OrgReference, func(ctx context.Context) error {
-		_, err := tx.
-			NewCreateTable().
-			IfNotExists().
-			Model(new(storablePlannedMaintenanceRule)).
-			ForeignKey(`("planned_maintenance_id") REFERENCES "planned_maintenance_new" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
-			ForeignKey(`("rule_id") REFERENCES "rule" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		existingMaintenances := make([]*existingMaintenance, 0)
-		err = tx.
-			NewSelect().
-			Model(&existingMaintenances).
-			Scan(ctx)
-		if err != nil {
-			if err != sql.ErrNoRows {
-				return err
-			}
-		}
-		if err == nil && len(existingMaintenances) > 0 {
-			var orgID string
-			err := migration.
-				store.
-				BunDB().
-				NewSelect().
-				Model((*types.Organization)(nil)).
-				Column("id").
-				Scan(ctx, &orgID)
-			if err != nil {
-				if err != sql.ErrNoRows {
-					return err
-				}
-			}
-			if err == nil {
-				newMaintenances, newMaintenancesRules := migration.CopyExistingMaintenancesToNewMaintenancesAndRules(existingMaintenances, orgID, ruleIDToRuleUUIDMap)
-				_, err = tx.
-					NewInsert().
-					Model(&newMaintenances).
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-
-				_, err = tx.
-					NewInsert().
-					Model(&newMaintenancesRules).
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-			}
-
-		}
-		return nil
-	})
 	if err != nil {
 		return err
 	}
