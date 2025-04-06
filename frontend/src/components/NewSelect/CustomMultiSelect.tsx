@@ -28,7 +28,7 @@ export interface OptionData {
 	className?: string;
 	style?: React.CSSProperties;
 	options?: OptionData[];
-	type?: 'defined' | 'custom';
+	type?: 'defined' | 'custom' | 'regex';
 }
 
 interface CustomTagProps {
@@ -485,7 +485,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					<Checkbox checked={isSelected}>
 						<div className="option-content">
 							<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
-							{option.type === 'custom' && (
+							{(option.type === 'custom' || option.type === 'regex') && (
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 						</div>
@@ -576,6 +576,21 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						value: '__all__', // Special value for the ALL option
 						type: 'defined',
 					});
+				}
+
+				// Add Regex to flat list
+				if (!isEmpty(searchText)) {
+					// Only add regex wrapper if it doesn't already look like a regex pattern
+					const isAlreadyRegex =
+						searchText.startsWith('.*') && searchText.endsWith('.*');
+
+					if (!isAlreadyRegex) {
+						flatList.push({
+							label: `.*${searchText}.*`,
+							value: `.*${searchText}.*`,
+							type: 'regex',
+						});
+					}
 				}
 
 				flatList.push(...nonSectionOptions);
@@ -1119,15 +1134,37 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		const isSearchTextNotPresent =
 			!isEmpty(searchText) && !isLabelPresent(processedOptions, searchText);
 
+		// We will add these options in this order, which will be reflected in the UI
+		const customOptions: OptionData[] = [];
+
+		// add regex options first since they appear first in the UI
+		if (!isEmpty(searchText)) {
+			// Only add regex wrapper if it doesn't already look like a regex pattern
+			const isAlreadyRegex =
+				searchText.startsWith('.*') && searchText.endsWith('.*');
+
+			if (!isAlreadyRegex) {
+				customOptions.push({
+					label: `.*${searchText}.*`,
+					value: `.*${searchText}.*`,
+					type: 'regex',
+				});
+			}
+		}
+
+		// add custom option next
 		if (isSearchTextNotPresent) {
-			nonSectionOptions.unshift({
+			customOptions.push({
 				label: searchText,
 				value: searchText,
 				type: 'custom',
 			});
 		}
 
-		const allOptionValues = getAllValues(processedOptions); // todo-sagar - should this be options or processedOptions?
+		// Now add all custom options at the beginning
+		const enhancedNonSectionOptions = [...customOptions, ...nonSectionOptions];
+
+		const allOptionValues = getAllValues(processedOptions);
 		const allOptionsSelected =
 			allOptionValues.length > 0 &&
 			allOptionValues.every((val) => selectedValues.includes(val));
@@ -1224,8 +1261,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				)}
 
 				{/* Non-section options when not searching */}
-				{nonSectionOptions.length > 0 && (
-					<div className="no-section-options">{mapOptions(nonSectionOptions)}</div>
+				{enhancedNonSectionOptions.length > 0 && (
+					<div className="no-section-options">
+						{mapOptions(enhancedNonSectionOptions)}
+					</div>
 				)}
 
 				{/* Section options when not searching */}
