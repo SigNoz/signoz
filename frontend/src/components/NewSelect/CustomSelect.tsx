@@ -518,11 +518,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								<div className="group-label" role="heading" aria-level={2}>
 									{section.label}
 								</div>
-								<div
-									className="scrollable-group"
-									role="group"
-									aria-label={`${section.label} options`}
-								>
+								<div role="group" aria-label={`${section.label} options`}>
 									{section.options && mapOptions(section.options)}
 								</div>
 							</div>
