@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrCodeInvalidPlannedDowntimePayload = errors.MustNewCode("invalid_planned_downtime_payload")
+	ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 )
 
 type StorablePlannedMaintenance struct {
@@ -256,35 +256,35 @@ func (m *GettablePlannedMaintenance) IsRecurring() bool {
 
 func (m *GettablePlannedMaintenance) Validate() error {
 	if m.Name == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing name in the payload")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing name in the payload")
 	}
 	if m.Schedule == nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing schedule in the payload")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
 	}
 	if m.Schedule.Timezone == "" {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing timezone in the payload")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
 	}
 
 	_, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "invalid timezone in the payload")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
 	}
 
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
 		if m.Schedule.StartTime.After(m.Schedule.EndTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "start time cannot be after end time")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
 		}
 	}
 
 	if m.Schedule.Recurrence != nil {
 		if m.Schedule.Recurrence.RepeatType == "" {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing repeat type in the payload")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
 		}
 		if m.Schedule.Recurrence.Duration == 0 {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "missing duration in the payload")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
 		}
 		if m.Schedule.Recurrence.EndTime != nil && m.Schedule.Recurrence.EndTime.Before(m.Schedule.Recurrence.StartTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedDowntimePayload, "end time cannot be before start time")
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
 		}
 	}
 	return nil

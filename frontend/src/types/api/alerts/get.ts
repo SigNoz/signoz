@@ -5,7 +5,7 @@ export interface Props {
 }
 
 export interface GettableAlert extends AlertDef {
-	id: number;
+	id: string;
 	alert: string;
 	state: string;
 	disabled: boolean;

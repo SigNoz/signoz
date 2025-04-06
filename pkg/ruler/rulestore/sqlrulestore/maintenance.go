@@ -44,11 +44,11 @@ func (r *maintenance) GetAllPlannedMaintenance(ctx context.Context, orgID string
 }
 
 func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*ruletypes.GettablePlannedMaintenance, error) {
-	storableMaintenanceRules := new(ruletypes.GettablePlannedMaintenanceRule)
+	storableMaintenanceRule := new(ruletypes.GettablePlannedMaintenanceRule)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
-		Model(storableMaintenanceRules).
+		Model(storableMaintenanceRule).
 		Relation("Rules").
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
@@ -56,7 +56,7 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 		return nil, err
 	}
 
-	return storableMaintenanceRules.ConvertGettableMaintenanceRuleToGettableMaintenance(), nil
+	return storableMaintenanceRule.ConvertGettableMaintenanceRuleToGettableMaintenance(), nil
 }
 
 func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance) (valuer.UUID, error) {

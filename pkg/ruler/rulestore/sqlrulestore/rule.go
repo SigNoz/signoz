@@ -25,7 +25,6 @@ func NewRuleStore(db *sqlx.DB, store sqlstore.SQLStore) ruletypes.RuleStore {
 	return &rule{sqlstore: store, DB: db}
 }
 
-// CreateRule stores a given rule in db and returns task name and error (if any)
 func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context, valuer.UUID) error) (valuer.UUID, error) {
 	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
@@ -47,7 +46,6 @@ func (r *rule) CreateRule(ctx context.Context, storedRule *ruletypes.Rule, cb fu
 	return storedRule.ID, nil
 }
 
-// EditRule stores a given rule string in database and returns task name and error (if any)
 func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.Rule, cb func(context.Context) error) error {
 	return r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
@@ -64,7 +62,6 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.Rule, cb func
 	})
 }
 
-// DeleteRule deletes a given rule with id and returns taskname and error (if any)
 func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.Context) error) error {
 	if err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.

@@ -21,7 +21,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
-import { isEqual } from 'lodash-es';
+import { isEmpty, isEqual } from 'lodash-es';
 import { BellDot, ExternalLink } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAppContext } from 'providers/App/App';
@@ -121,7 +121,7 @@ function FormAlertRules({
 	// use query client
 	const ruleCache = useQueryClient();
 
-	const isNewRule = ruleId === 0;
+	const isNewRule = !ruleId || isEmpty(ruleId);
 
 	const [loading, setLoading] = useState(false);
 	const [queryStatus, setQueryStatus] = useState<string>('');
@@ -485,7 +485,7 @@ function FormAlertRules({
 
 		try {
 			const apiReq =
-				ruleId && ruleId > 0
+				ruleId && !isEmpty(ruleId)
 					? { data: postableAlert, id: ruleId }
 					: { data: postableAlert };
 
@@ -495,7 +495,7 @@ function FormAlertRules({
 				logData = {
 					status: 'success',
 					statusMessage:
-						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
+						!ruleId || isEmpty(ruleId) ? t('rule_created') : t('rule_edited'),
 				};
 
 				notifications.success({
@@ -547,7 +547,7 @@ function FormAlertRules({
 			dataSource: ALERTS_DATA_SOURCE_MAP[postableAlert?.alertType as AlertTypes],
 			channelNames: postableAlert?.preferredChannels,
 			broadcastToAll: postableAlert?.broadcastToAll,
-			isNewRule: !ruleId || ruleId === 0,
+			isNewRule: !ruleId || isEmpty(ruleId),
 			ruleId,
 			queryType: currentQuery.queryType,
 			alertId: postableAlert?.id,
@@ -632,7 +632,7 @@ function FormAlertRules({
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
 			channelNames: postableAlert?.preferredChannels,
 			broadcastToAll: postableAlert?.broadcastToAll,
-			isNewRule: !ruleId || ruleId === 0,
+			isNewRule: !ruleId || isEmpty(ruleId),
 			ruleId,
 			queryType: currentQuery.queryType,
 			status: statusResponse.status,
@@ -709,7 +709,7 @@ function FormAlertRules({
 		alertDef?.broadcastToAll ||
 		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
 
-	const isRuleCreated = !ruleId || ruleId === 0;
+	const isRuleCreated = !ruleId || isEmpty(ruleId);
 
 	function handleRedirection(option: AlertTypes): void {
 		let url;
@@ -725,7 +725,7 @@ function FormAlertRules({
 		if (url) {
 			logEvent('Alert: Check example alert clicked', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				isNewRule: !ruleId || ruleId === 0,
+				isNewRule: !ruleId || isEmpty(ruleId),
 				ruleId,
 				queryType: currentQuery.queryType,
 				link: url,
@@ -891,8 +891,8 @@ function FormAlertRules({
 							type="default"
 							onClick={onCancelHandler}
 						>
-							{ruleId === 0 && t('button_cancelchanges')}
-							{ruleId > 0 && t('button_discard')}
+							{(!ruleId || isEmpty(ruleId)) && t('button_cancelchanges')}
+							{ruleId && !isEmpty(ruleId) && t('button_discard')}
 						</ActionButton>
 					</ButtonContainer>
 				</MainFormContainer>
@@ -909,7 +909,7 @@ interface FormAlertRuleProps {
 	alertType?: AlertTypes;
 	formInstance: FormInstance;
 	initialValue: AlertDef;
-	ruleId: number;
+	ruleId: string;
 }
 
 export default FormAlertRules;

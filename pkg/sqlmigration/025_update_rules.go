@@ -89,7 +89,7 @@ type storablePlannedMaintenanceRule struct {
 func NewUpdateRulesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.
 		NewProviderFactory(
-			factory.MustNewName("update_reset_rules"),
+			factory.MustNewName("update_rules"),
 			func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 				return newUpdateRules(ctx, ps, c, sqlstore)
 			})
