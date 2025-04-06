@@ -56,6 +56,7 @@ export interface CustomMultiSelectProps
 	customStatusText?: string;
 	popupClassName?: string;
 	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
+	maxTagCount?: number;
 }
 
 const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
@@ -77,6 +78,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	customStatusText,
 	popupClassName,
 	placement = 'bottomLeft',
+	maxTagCount,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -85,6 +87,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const selectRef = useRef<BaseSelectRef>(null);
 	const [activeIndex, setActiveIndex] = useState<number>(-1);
 	const [activeChipIndex, setActiveChipIndex] = useState<number>(-1); // For tracking active chip/tag
+	const [selectionStart, setSelectionStart] = useState<number>(-1);
+	const [selectionEnd, setSelectionEnd] = useState<number>(-1);
+	const [selectedChips, setSelectedChips] = useState<number[]>([]);
+	const [isSelectionMode, setIsSelectionMode] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 	const [visibleOptions, setVisibleOptions] = useState<OptionData[]>([]);
@@ -220,6 +226,125 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		}
 	}, [filteredOptions, searchText, options, selectedValues]);
 
+	// ===== Text Selection Utilities =====
+
+	/**
+	 * Clears all chip selections
+	 */
+	const clearSelection = useCallback((): void => {
+		setSelectionStart(-1);
+		setSelectionEnd(-1);
+		setSelectedChips([]);
+		setIsSelectionMode(false);
+	}, []);
+
+	/**
+	 * Selects all chips
+	 */
+	const selectAllChips = useCallback((): void => {
+		if (selectedValues.length === 0) return;
+
+		// When maxTagCount is set, only select visible chips
+		const visibleCount =
+			maxTagCount !== undefined && maxTagCount > 0
+				? Math.min(maxTagCount, selectedValues.length)
+				: selectedValues.length;
+
+		const allIndices = Array.from({ length: visibleCount }, (_, i) => i);
+
+		setSelectionStart(0);
+		setSelectionEnd(visibleCount - 1);
+		setSelectedChips(allIndices);
+		setIsSelectionMode(true);
+	}, [selectedValues, maxTagCount]);
+
+	/**
+	 * Gets indices between start and end (inclusive)
+	 */
+	const getIndicesBetween = useCallback(
+		(start: number, end: number): number[] => {
+			const indices: number[] = [];
+			const min = Math.min(start, end);
+			const max = Math.max(start, end);
+
+			for (let i = min; i <= max; i++) {
+				indices.push(i);
+			}
+
+			return indices;
+		},
+		[],
+	);
+
+	/**
+	 * Start selection from an index
+	 */
+	const startSelection = useCallback((index: number): void => {
+		setSelectionStart(index);
+		setSelectionEnd(index);
+		setSelectedChips([index]);
+		setIsSelectionMode(true);
+		setActiveChipIndex(index);
+	}, []);
+
+	/**
+	 * Extend selection to an index
+	 */
+	const extendSelection = useCallback(
+		(index: number): void => {
+			if (selectionStart === -1) {
+				startSelection(index);
+				return;
+			}
+
+			setSelectionEnd(index);
+			const newSelectedChips = getIndicesBetween(selectionStart, index);
+			setSelectedChips(newSelectedChips);
+			setActiveChipIndex(index);
+		},
+		[selectionStart, getIndicesBetween, startSelection],
+	);
+
+	/**
+	 * Handle copy event
+	 */
+	const handleCopy = useCallback((): void => {
+		if (selectedChips.length === 0) return;
+
+		const selectedTexts = selectedChips
+			.sort((a, b) => a - b)
+			.map((index) => selectedValues[index]);
+
+		const textToCopy = selectedTexts.join(', ');
+
+		navigator.clipboard.writeText(textToCopy).catch(console.error);
+	}, [selectedChips, selectedValues]);
+
+	/**
+	 * Handle cut event
+	 */
+	const handleCut = useCallback((): void => {
+		if (selectedChips.length === 0) return;
+
+		// First copy the content
+		handleCopy();
+
+		// Then remove the selected chips
+		const newValues = selectedValues.filter(
+			(_, index) => !selectedChips.includes(index),
+		);
+
+		if (onChange) {
+			onChange(
+				newValues as any,
+				newValues.map((v) => ({ label: v, value: v })),
+			);
+		}
+
+		// Clear selection after cut
+		clearSelection();
+	}, [selectedChips, selectedValues, handleCopy, clearSelection, onChange]);
+
 	// ===== Event Handlers =====
 
 	/**
@@ -227,6 +352,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 */
 	const handleSearch = useCallback(
 		(value: string): void => {
+			setActiveIndex(-1);
 			// Handle multiple comma-separated values
 			if (value.includes(',')) {
 				const values = value
@@ -408,7 +534,29 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		}
 	}, [options, selectedValues, onChange, getAllValues]);
 
-	// Modify keyboard navigation to handle dropdown navigation and chip selection
+	// Helper function to get visible chip indices
+	const getVisibleChipIndices = useCallback((): number[] => {
+		// If no values, return empty array
+		if (selectedValues.length === 0) return [];
+
+		// If maxTagCount is set and greater than 0, only return the first maxTagCount indices
+		const visibleCount =
+			maxTagCount !== undefined && maxTagCount > 0
+				? Math.min(maxTagCount, selectedValues.length)
+				: selectedValues.length;
+
+		return Array.from({ length: visibleCount }, (_, i) => i);
+	}, [selectedValues.length, maxTagCount]);
+
+	// Get the last visible chip index
+	const getLastVisibleChipIndex = useCallback((): number => {
+		const visibleIndices = getVisibleChipIndices();
+		return visibleIndices.length > 0
+			? visibleIndices[visibleIndices.length - 1]
+			: -1;
+	}, [getVisibleChipIndices]);
+
+	// Enhanced keyboard navigation with support for maxTagCount
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLElement>): void => {
 			// Get flattened list of all selectable options
@@ -448,6 +596,195 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const cursorAtStart = isInputActive && activeElement?.selectionStart === 0;
 			const hasInputText = isInputActive && !!activeElement?.value;
 
+			// Get indices of visible chips
+			const visibleIndices = getVisibleChipIndices();
+			const lastVisibleChipIndex = getLastVisibleChipIndex();
+
+			// Handle special keyboard combinations
+			const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+			// Handle Ctrl+A (select all)
+			if (isCtrlOrCmd && e.key === 'a') {
+				e.preventDefault();
+				e.stopPropagation();
+
+				// If there are chips, select them all
+				if (selectedValues.length > 0) {
+					selectAllChips();
+					return;
+				}
+
+				// Otherwise let the default select all behavior happen
+				return;
+			}
+
+			// Handle copy/cut operations
+			if (isCtrlOrCmd && selectedChips.length > 0) {
+				if (e.key === 'c') {
+					e.preventDefault();
+					e.stopPropagation();
+					handleCopy();
+					return;
+				}
+
+				if (e.key === 'x') {
+					e.preventDefault();
+					e.stopPropagation();
+					handleCut();
+					return;
+				}
+			}
+
+			// Handle deletion of selected chips
+			if (
+				(e.key === 'Backspace' || e.key === 'Delete') &&
+				selectedChips.length > 0
+			) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				// Remove all the selected chips
+				const newValues = selectedValues.filter(
+					(_, index) => !selectedChips.includes(index),
+				);
+
+				if (onChange) {
+					onChange(
+						newValues as any,
+						newValues.map((v) => ({ label: v, value: v })),
+					);
+				}
+
+				// Clear selection after deletion
+				clearSelection();
+				return;
+			}
+
+			// Handle selection with Shift + Arrow keys
+			if (e.shiftKey) {
+				// Only handle chip selection if we have chips and either a chip is active
+				// or we're at the start of an empty/unselected input
+				const canHandleChipSelection =
+					selectedValues.length > 0 &&
+					(activeChipIndex >= 0 || (cursorAtStart && !hasInputText));
+
+				if (canHandleChipSelection) {
+					switch (e.key) {
+						case 'ArrowLeft': {
+							e.preventDefault();
+							e.stopPropagation();
+
+							// Start selection if not in selection mode
+							if (!isSelectionMode) {
+								const start =
+									activeChipIndex >= 0 ? activeChipIndex : lastVisibleChipIndex;
+								// Start selection with current chip and immediate neighbor
+								// If we're starting from an active chip, select it and the one to its left
+								if (activeChipIndex >= 0 && activeChipIndex > 0) {
+									setSelectionStart(activeChipIndex);
+									setSelectionEnd(activeChipIndex - 1);
+									setSelectedChips(
+										getIndicesBetween(activeChipIndex, activeChipIndex - 1),
+									);
+									setIsSelectionMode(true);
+									setActiveChipIndex(activeChipIndex - 1);
+								} else {
+									// Fall back to single selection for edge cases
+									startSelection(start);
+								}
+							} else {
+								// Extend selection to the left
+								const newEnd = Math.max(0, selectionEnd - 1);
+								extendSelection(newEnd);
+							}
+							return;
+						}
+
+						case 'ArrowRight': {
+							e.preventDefault();
+							e.stopPropagation();
+
+							// Start selection if not in selection mode
+							if (!isSelectionMode) {
+								const start = activeChipIndex >= 0 ? activeChipIndex : 0;
+								// Start selection with current chip and immediate neighbor
+								// If we're starting from an active chip, select it and the one to its right
+								if (activeChipIndex >= 0 && activeChipIndex < lastVisibleChipIndex) {
+									setSelectionStart(activeChipIndex);
+									setSelectionEnd(activeChipIndex + 1);
+									setSelectedChips(
+										getIndicesBetween(activeChipIndex, activeChipIndex + 1),
+									);
+									setIsSelectionMode(true);
+									setActiveChipIndex(activeChipIndex + 1);
+								} else {
+									// Fall back to single selection for edge cases
+									startSelection(start);
+								}
+							}
+							// Extend selection to the right if not at last chip
+							else if (selectionEnd < lastVisibleChipIndex) {
+								const newEnd = selectionEnd + 1;
+								extendSelection(newEnd);
+							} else {
+								// Move focus to input when extending past last chip
+								clearSelection();
+								setActiveChipIndex(-1);
+								if (selectRef.current) {
+									selectRef.current.focus();
+								}
+							}
+
+							return;
+						}
+
+						case 'Home': {
+							e.preventDefault();
+							e.stopPropagation();
+
+							// Start or extend selection to beginning
+							if (!isSelectionMode) {
+								startSelection(0);
+							} else {
+								extendSelection(0);
+							}
+							return;
+						}
+
+						case 'End': {
+							e.preventDefault();
+							e.stopPropagation();
+
+							// Start or extend selection to end
+							if (!isSelectionMode) {
+								startSelection(lastVisibleChipIndex);
+							} else {
+								extendSelection(lastVisibleChipIndex);
+							}
+							return;
+						}
+
+						default:
+							break;
+					}
+				}
+			}
+			// If any key is pressed without shift/ctrl and we're in selection mode, clear selection
+			else if (isSelectionMode) {
+				// Don't clear selection on navigation keys
+				const isNavigationKey = [
+					'ArrowLeft',
+					'ArrowRight',
+					'ArrowUp',
+					'ArrowDown',
+					'Home',
+					'End',
+				].includes(e.key);
+				if (!isNavigationKey) {
+					clearSelection();
+				}
+			}
+
 			// Handle up/down keys to open dropdown from input
 			if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isOpen) {
 				e.stopPropagation();
@@ -455,6 +792,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				setIsOpen(true);
 				setActiveIndex(0);
 				setActiveChipIndex(-1);
+				clearSelection();
 				return;
 			}
 
@@ -467,22 +805,37 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					case 'ArrowLeft':
 						e.stopPropagation();
 						e.preventDefault();
-						setActiveChipIndex((prev) =>
-							prev <= 0 ? selectedValues.length - 1 : prev - 1,
-						);
+
+						// Only navigate within the visible chip range
+						if (activeChipIndex > 0 && visibleIndices.includes(activeChipIndex - 1)) {
+							// Move to previous visible chip
+							setActiveChipIndex(activeChipIndex - 1);
+						} else {
+							// Wrap around to last visible chip
+							setActiveChipIndex(lastVisibleChipIndex);
+						}
+
+						clearSelection();
 						break;
+
 					case 'ArrowRight':
 						e.stopPropagation();
 						e.preventDefault();
-						if (activeChipIndex >= selectedValues.length - 1) {
+
+						// Only navigate within the visible chip range
+						if (activeChipIndex < lastVisibleChipIndex) {
+							// Move to next visible chip
+							setActiveChipIndex(activeChipIndex + 1);
+						} else {
 							// Move from last chip to input
 							setActiveChipIndex(-1);
+							clearSelection();
 							if (selectRef.current) {
 								selectRef.current.focus();
 							}
-						} else {
-							setActiveChipIndex((prev) => prev + 1);
 						}
+
+						clearSelection();
 						break;
 					case 'Backspace':
 					case 'Delete':
@@ -497,12 +850,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						}
 						// If we deleted the last chip, move focus to previous
 						if (activeChipIndex >= newValues.length) {
-							setActiveChipIndex(newValues.length > 0 ? newValues.length - 1 : -1);
+							setActiveChipIndex(
+								newValues.length > 0
+									? Math.min(activeChipIndex - 1, lastVisibleChipIndex)
+									: -1,
+							);
 						}
+						clearSelection();
 						break;
 					case 'Escape':
 						// Clear chip selection
 						setActiveChipIndex(-1);
+						clearSelection();
 						break;
 					case 'ArrowDown':
 					case 'ArrowUp':
@@ -515,6 +874,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							setActiveChipIndex(-1);
 							setActiveIndex(0);
 						}
+						clearSelection();
 						break;
 					default:
 						// If user types a letter when chip is active, focus the input field
@@ -522,6 +882,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							e.stopPropagation();
 							e.preventDefault();
 							setActiveChipIndex(-1);
+							clearSelection();
 							// Try to focus on the input field
 							if (selectRef.current) {
 								// Focus select which will in turn focus the input
@@ -540,14 +901,16 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						e.stopPropagation();
 						e.preventDefault();
 						setActiveIndex((prev) => (prev < flatOptions.length - 1 ? prev + 1 : 0));
-						setActiveChipIndex(-1); // Clear chip selection when navigating dropdown
+						setActiveChipIndex(-1);
+						clearSelection();
 						break;
 
 					case 'ArrowUp':
 						e.stopPropagation();
 						e.preventDefault();
 						setActiveIndex((prev) => (prev > 0 ? prev - 1 : flatOptions.length - 1));
-						setActiveChipIndex(-1); // Clear chip selection when navigating dropdown
+						setActiveChipIndex(-1);
+						clearSelection();
 						break;
 
 					case 'Tab':
@@ -561,15 +924,26 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							e.preventDefault();
 							setActiveIndex((prev) => (prev < flatOptions.length - 1 ? prev + 1 : 0));
 						}
-						setActiveChipIndex(-1); // Clear chip selection when navigating dropdown
+						setActiveChipIndex(-1);
+						clearSelection();
 						break;
 
 					case 'Enter':
 						e.stopPropagation();
 						e.preventDefault();
 
-						// If there's search text, add it as a new value if it's not already selected
-						if (searchText.trim()) {
+						// If there's an active option in the dropdown, prioritize selecting it
+						if (activeIndex >= 0 && activeIndex < flatOptions.length) {
+							const selectedOption = flatOptions[activeIndex];
+							if (selectedOption.value === '__all__') {
+								handleSelectAll();
+							} else if (selectedOption.value && onChange) {
+								const newValues = selectedValues.includes(selectedOption.value)
+									? selectedValues.filter((v) => v !== selectedOption.value)
+									: [...selectedValues, selectedOption.value];
+								onChange(newValues as any, newValues as any);
+							}
+						} else if (searchText.trim()) {
 							const trimmedValue = searchText.trim();
 							// Check if value already exists in selectedValues
 							if (!selectedValues.includes(trimmedValue)) {
@@ -582,21 +956,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								}
 							}
 							setSearchText('');
-							return;
 						}
 
-						// Existing logic for selecting active option
-						if (activeIndex >= 0 && activeIndex < flatOptions.length) {
-							const selectedOption = flatOptions[activeIndex];
-							if (selectedOption.value === '__all__') {
-								handleSelectAll();
-							} else if (selectedOption.value && onChange) {
-								const newValues = selectedValues.includes(selectedOption.value)
-									? selectedValues.filter((v) => v !== selectedOption.value)
-									: [...selectedValues, selectedOption.value];
-								onChange(newValues as any, newValues as any);
-							}
-						}
 						break;
 
 					case 'Escape':
@@ -628,10 +989,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 					case 'ArrowLeft':
 						// If at start of input, move to chips
-						if (cursorAtStart && selectedValues.length > 0 && !hasInputText) {
+						if (cursorAtStart && visibleIndices.length > 0 && !hasInputText) {
 							e.stopPropagation();
 							e.preventDefault();
-							setActiveChipIndex(selectedValues.length - 1);
+							setActiveChipIndex(lastVisibleChipIndex);
 							setActiveIndex(-1);
 						}
 						break;
@@ -658,10 +1019,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 					case 'ArrowLeft':
 						// Start chip navigation if at start of input and no text or empty input
-						if ((cursorAtStart || !hasInputText) && selectedValues.length > 0) {
+						if ((cursorAtStart || !hasInputText) && visibleIndices.length > 0) {
 							e.stopPropagation();
 							e.preventDefault();
-							setActiveChipIndex(selectedValues.length - 1);
+							// Navigate to the last visible chip - this is what skips the "+N more" chip
+							setActiveChipIndex(lastVisibleChipIndex);
 							setActiveIndex(-1);
 						}
 						break;
@@ -677,10 +1039,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 					case 'Backspace':
 						// If at start of input and no text, select last chip
-						if (cursorAtStart && !hasInputText && selectedValues.length > 0) {
+						if (cursorAtStart && !hasInputText && visibleIndices.length > 0) {
 							e.stopPropagation();
 							e.preventDefault();
-							setActiveChipIndex(selectedValues.length - 1);
+							setActiveChipIndex(lastVisibleChipIndex);
 							setActiveIndex(-1);
 						}
 						break;
@@ -697,16 +1059,28 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			}
 		},
 		[
+			selectedChips,
+			isSelectionMode,
 			isOpen,
-			activeIndex,
 			activeChipIndex,
-			onChange,
 			selectedValues,
-			splitOptions,
-			searchText,
-			enableAllSelection,
-			handleSelectAll,
 			visibleOptions,
+			enableAllSelection,
+			searchText,
+			splitOptions,
+			selectAllChips,
+			handleCopy,
+			handleCut,
+			onChange,
+			clearSelection,
+			getIndicesBetween,
+			startSelection,
+			selectionEnd,
+			extendSelection,
+			activeIndex,
+			handleSelectAll,
+			getVisibleChipIndices,
+			getLastVisibleChipIndex,
 		],
 	);
 
@@ -938,6 +1312,38 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		}
 	}, [isOpen, activeIndex]);
 
+	// Add document level event listeners to handle clicking outside
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent): void => {
+			// Find the select element by its class
+			const selectElement = document.querySelector('.custom-multiselect');
+
+			// If we're in selection mode and the click is outside the component, clear selection
+			if (
+				isSelectionMode &&
+				selectElement &&
+				!selectElement.contains(e.target as Node)
+			) {
+				clearSelection();
+			}
+		};
+
+		const handleKeyDown = (e: KeyboardEvent): void => {
+			// Clear selection when Escape is pressed
+			if (e.key === 'Escape' && isSelectionMode) {
+				clearSelection();
+			}
+		};
+
+		document.addEventListener('click', handleClickOutside);
+		document.addEventListener('keydown', handleKeyDown);
+
+		return (): void => {
+			document.removeEventListener('click', handleClickOutside);
+			document.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [isSelectionMode, clearSelection]);
+
 	// ===== Final Processing =====
 
 	// Function to handle tag focus visually - we'll create a custom tagRender
@@ -946,6 +1352,32 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const { label, value, closable, onClose } = props;
 			const index = selectedValues.indexOf(value);
 			const isActive = index === activeChipIndex;
+			const isSelected = selectedChips.includes(index);
+
+			// Check if this is the "+N" tag (it won't have a matching value in selectedValues)
+			const isPlusNTag =
+				typeof value === 'string' &&
+				value.startsWith('+') &&
+				!selectedValues.includes(value);
+
+			// Don't allow selecting or activating the "+N" tag
+			if (isPlusNTag) {
+				return (
+					<div className="ant-select-selection-item">
+						<span className="ant-select-selection-item-content">{label}</span>
+					</div>
+				);
+			}
+
+			// Check if this tag is beyond visible range
+			const visibleIndices = getVisibleChipIndices();
+			const isVisible = visibleIndices.includes(index);
+
+			// This check is mostly redundant since Ant Design won't render hidden tags,
+			// but we keep it for safety
+			if (!isVisible && !isPlusNTag) {
+				return <div style={{ display: 'none' }} />;
+			}
 
 			const handleTagKeyDown = (e: React.KeyboardEvent): void => {
 				if (e.key === 'Enter' || e.key === ' ') {
@@ -959,9 +1391,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				<div
 					className={cx('ant-select-selection-item', {
 						'ant-select-selection-item-active': isActive,
+						'ant-select-selection-item-selected': isSelected,
 					})}
 					style={
-						isActive
+						isActive || isSelected
 							? { borderColor: '#40a9ff', backgroundColor: '#e6f7ff' }
 							: undefined
 					}
@@ -982,7 +1415,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				</div>
 			);
 		},
-		[selectedValues, activeChipIndex],
+		[selectedValues, activeChipIndex, selectedChips, getVisibleChipIndices],
 	);
 
 	// Apply highlight to matched text in options
@@ -1005,7 +1438,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	return (
 		<Select
 			ref={selectRef}
-			className={cx('custom-multiselect', className)}
+			className={cx('custom-multiselect', className, {
+				'has-selection': selectedChips.length > 0,
+			})}
 			placeholder={placeholder}
 			mode="multiple"
 			showSearch
@@ -1030,6 +1465,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			placement={placement}
 			listHeight={300}
 			searchValue={searchText}
+			maxTagCount={maxTagCount}
 			{...rest}
 		/>
 	);
@@ -1052,6 +1488,7 @@ CustomMultiSelect.defaultProps = {
 	customStatusText: undefined,
 	popupClassName: undefined,
 	placement: 'bottomLeft',
+	maxTagCount: undefined,
 };
 
 export default CustomMultiSelect;
