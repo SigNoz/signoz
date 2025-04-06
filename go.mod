@@ -181,6 +181,7 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/open-feature/go-sdk v1.14.1 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.111.0 // indirect
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect

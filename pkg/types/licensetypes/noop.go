@@ -7,14 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Noop struct {
-	featureRegistry *featuretypes.Registry
-}
+type Noop struct{}
 
 func NewNoop() License {
-	return &Noop{
-		featureRegistry: featuretypes.NewCommunityRegistry(),
-	}
+	return &Noop{}
 }
 
 func (*Noop) ID() valuer.UUID {
@@ -41,10 +37,6 @@ func (*Noop) UpdatedAt() time.Time {
 	return time.Time{}
 }
 
-func (noop *Noop) FeatureRegistry() *featuretypes.Registry {
-	return noop.featureRegistry
-}
-
-func (*Noop) LicenseFeatures() []*featuretypes.LicenseFeature {
-	return []*featuretypes.LicenseFeature{}
+func (*Noop) FeatureValues() []*featuretypes.FeatureValue {
+	return []*featuretypes.FeatureValue{}
 }

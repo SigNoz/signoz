@@ -83,3 +83,4 @@ queries.active
 
 # .devenv tmp files
 .devenv/**/tmp/**
+.qodo

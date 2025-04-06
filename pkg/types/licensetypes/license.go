@@ -35,11 +35,8 @@ type License interface {
 	// UpdatedAt returns the last update time for the license
 	UpdatedAt() time.Time
 
-	// FeatureRegistry returns the feature registry for the license
-	FeatureRegistry() *featuretypes.Registry
-
-	// LicenseFeatures returns the features for the license
-	LicenseFeatures() []*featuretypes.LicenseFeature
+	// FeatureValues returns the feature values for the license
+	FeatureValues() []*featuretypes.FeatureValue
 }
 
 func NewGettableLicenseParams(req *http.Request) (GettableLicenseParams, error) {

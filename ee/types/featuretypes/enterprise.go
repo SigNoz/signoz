@@ -6,17 +6,28 @@ var (
 	SingleSignOn = featuretypes.MustNewName("SingleSignOn")
 )
 
-func NewEnterpriseRegistry() *featuretypes.Registry {
-	enterpriseRegistry := featuretypes.NewRegistry(
+func NewEnterpriseRegistry() (featuretypes.Registry, error) {
+	enterpriseRegistry, err := featuretypes.NewRegistry(
 		&featuretypes.Feature{
 			Name:        SingleSignOn,
 			Kind:        featuretypes.KindBoolean,
 			Description: "Enable single sign on.",
 			Stage:       featuretypes.StageStable,
-			Default:     false,
-			Immutable:   true,
+			Default:     true,
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return enterpriseRegistry.Merge(featuretypes.NewCommunityRegistry())
+	return enterpriseRegistry.MergeOrOverride(featuretypes.MustNewCommunityRegistry()), nil
+}
+
+func MustNewEnterpriseRegistry() featuretypes.Registry {
+	enterpriseRegistry, err := NewEnterpriseRegistry()
+	if err != nil {
+		panic(err)
+	}
+
+	return enterpriseRegistry
 }
