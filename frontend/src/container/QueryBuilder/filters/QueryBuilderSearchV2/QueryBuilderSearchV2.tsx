@@ -54,7 +54,6 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
-import SpanScopeSelector from '../QueryBuilderSearch/SpanScopeSelector';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import {
 	checkCommaInValue,
@@ -64,6 +63,7 @@ import {
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
+import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
 export interface ITag {
