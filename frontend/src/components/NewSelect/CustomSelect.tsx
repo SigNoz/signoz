@@ -27,7 +27,7 @@ export interface OptionData {
 	className?: string;
 	style?: React.CSSProperties;
 	options?: OptionData[];
-	type?: 'defined' | 'custom';
+	type?: 'defined' | 'custom' | 'regex';
 }
 
 export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
