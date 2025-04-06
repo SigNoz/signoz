@@ -112,9 +112,14 @@ type AccountConfig struct {
 
 // For serializing from db
 func (c *AccountConfig) Scan(src any) error {
-	data, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("tried to scan from %T instead of bytes", src)
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, &c)
@@ -142,9 +147,14 @@ type AgentReport struct {
 
 // For serializing from db
 func (r *AgentReport) Scan(src any) error {
-	data, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("tried to scan from %T instead of bytes", src)
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, &r)
