@@ -39,12 +39,32 @@
 		border-radius: 4px;
 		border: 1px solid #e8e8e8;
 		margin-right: 4px;
+		transition: all 0.2s;
 
 		// Style for active tag (keyboard navigation)
 		&-active {
 			border-color: #40a9ff !important;
 			background-color: #e6f7ff !important;
 			outline: 2px solid rgba(24, 144, 255, 0.2);
+		}
+
+		// Style for selected tags (via keyboard or mouse selection)
+		&-selected {
+			border-color: #1890ff !important;
+			background-color: #e6f7ff !important;
+			box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+		}
+	}
+
+	// Class applied when in selection mode
+	&.has-selection {
+		.ant-select-selection-item-selected {
+			cursor: move; // Indicate draggable
+		}
+
+		// Change cursor for selection
+		.ant-select-selector {
+			cursor: text;
 		}
 	}
 }

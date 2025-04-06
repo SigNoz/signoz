@@ -546,7 +546,7 @@ function NewSelectDemo(): JSX.Element {
 										onSearch={handleSearch}
 										loading={loading}
 										customStatusText={showError ? errorMessage : undefined}
-										maxTagCount={2}
+										maxTagCount={5}
 										maxTagPlaceholder={(omittedValues): React.ReactNode => (
 											<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
 												<span>+{omittedValues.length} more</span>
