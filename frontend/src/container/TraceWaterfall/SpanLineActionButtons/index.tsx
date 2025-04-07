@@ -7,16 +7,14 @@ import { Span } from 'types/api/trace/getTraceV2';
 
 export interface SpanLineActionButtonsProps {
 	span: Span;
-	customClassName?: string;
 }
 export default function SpanLineActionButtons({
 	span,
-	customClassName = '',
 }: SpanLineActionButtonsProps): JSX.Element {
 	const { onSpanCopy } = useCopySpanLink(span);
 
 	return (
-		<div className={`span-line-action-buttons ${customClassName}`}>
+		<div className="span-line-action-buttons">
 			<Tooltip title="Copy Span Link">
 				<Button
 					size="small"
@@ -28,7 +26,3 @@ export default function SpanLineActionButtons({
 		</div>
 	);
 }
-
-SpanLineActionButtons.defaultProps = {
-	customClassName: '',
-};
