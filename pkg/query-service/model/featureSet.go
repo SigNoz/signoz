@@ -9,7 +9,6 @@ type Feature struct {
 	Route      string `db:"route" json:"route"`
 }
 
-const SmartTraceDetail = "SMART_TRACE_DETAIL"
 const CustomMetricsFunction = "CUSTOM_METRICS_FUNCTION"
 const DisableUpsell = "DISABLE_UPSELL"
 const OSS = "OSS"
@@ -36,13 +35,6 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       DisableUpsell,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	Feature{
-		Name:       SmartTraceDetail,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

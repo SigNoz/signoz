@@ -46,7 +46,6 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		rule, err = NewThresholdRule(
 			alertname,
 			parsedRule,
-			opts.FF,
 			opts.Reader,
 			opts.UseLogsNewSchema,
 			opts.UseTraceNewSchema,

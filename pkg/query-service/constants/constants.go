@@ -22,8 +22,6 @@ type ContextKey string
 
 const ContextUserKey ContextKey = "user"
 
-var ConfigSignozIo = "https://config.signoz.io/api/v1"
-
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsOSSTelemetryEnabled() bool {
@@ -50,10 +48,6 @@ const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 const LogsTTL = "logs"
 
-const DurationSort = "DurationSort"
-const TimestampSort = "TimestampSort"
-const PreferRPM = "PreferRPM"
-
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 
@@ -63,17 +57,8 @@ var TELEMETRY_ACTIVE_USER_DURATION_MINUTES = GetOrDefaultEnvInt("TELEMETRY_ACTIV
 
 var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
 
-var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
-var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
-
 // [Deprecated] SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
-
-var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
-
-var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
-
-var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
@@ -89,57 +74,10 @@ func EnableHostsInfraMonitoring() bool {
 
 var KafkaSpanEval = GetOrDefaultEnv("KAFKA_SPAN_EVAL", "false")
 
-func IsDurationSortFeatureEnabled() bool {
-	isDurationSortFeatureEnabledStr := DurationSortFeature
-	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isDurationSortFeatureEnabledBool
-}
-
-func IsTimestampSortFeatureEnabled() bool {
-	isTimestampSortFeatureEnabledStr := TimestampSortFeature
-	isTimestampSortFeatureEnabledBool, err := strconv.ParseBool(isTimestampSortFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return isTimestampSortFeatureEnabledBool
-}
-
-func IsPreferRPMFeatureEnabled() bool {
-	preferRPMFeatureEnabledStr := PreferRPMFeature
-	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
-	if err != nil {
-		return false
-	}
-	return preferRPMFeatureEnabledBool
-}
-
 var DEFAULT_FEATURE_SET = model.FeatureSet{
-	model.Feature{
-		Name:       DurationSort,
-		Active:     IsDurationSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	}, model.Feature{
-		Name:       TimestampSort,
-		Active:     IsTimestampSortFeatureEnabled(),
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
 	model.Feature{
 		Name:       model.UseSpanMetrics,
 		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	model.Feature{
-		Name:       PreferRPM,
-		Active:     IsPreferRPMFeatureEnabled(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

@@ -53,7 +53,6 @@ type AnomalyRule struct {
 func NewAnomalyRule(
 	id string,
 	p *baserules.PostableRule,
-	featureFlags interfaces.FeatureLookup,
 	reader interfaces.Reader,
 	cache cache.Cache,
 	opts ...baserules.RuleOption,
@@ -89,10 +88,9 @@ func NewAnomalyRule(
 	zap.L().Info("using seasonality", zap.String("seasonality", t.seasonality.String()))
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        reader,
-		Cache:         cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
+		Reader:       reader,
+		Cache:        cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
@@ -102,21 +100,18 @@ func NewAnomalyRule(
 			anomaly.WithCache[*anomaly.HourlyProvider](cache),
 			anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
 			anomaly.WithReader[*anomaly.HourlyProvider](reader),
-			anomaly.WithFeatureLookup[*anomaly.HourlyProvider](featureFlags),
 		)
 	} else if t.seasonality == anomaly.SeasonalityDaily {
 		t.provider = anomaly.NewDailyProvider(
 			anomaly.WithCache[*anomaly.DailyProvider](cache),
 			anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
 			anomaly.WithReader[*anomaly.DailyProvider](reader),
-			anomaly.WithFeatureLookup[*anomaly.DailyProvider](featureFlags),
 		)
 	} else if t.seasonality == anomaly.SeasonalityWeekly {
 		t.provider = anomaly.NewWeeklyProvider(
 			anomaly.WithCache[*anomaly.WeeklyProvider](cache),
 			anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
 			anomaly.WithReader[*anomaly.WeeklyProvider](reader),
-			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](featureFlags),
 		)
 	}
 	return &t, nil

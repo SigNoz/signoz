@@ -14,9 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
-type Options struct {
-	PreferRPM bool
-}
+type Options struct{}
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05:         0.05,
@@ -387,27 +385,8 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 			query, err = buildMetricQuery(start, end, mq.StepInterval, mq)
 		}
 	}
-
 	if err != nil {
 		return "", err
-	}
-
-	if options.PreferRPM && (mq.AggregateOperator == v3.AggregateOperatorRate ||
-		mq.AggregateOperator == v3.AggregateOperatorSumRate ||
-		mq.AggregateOperator == v3.AggregateOperatorAvgRate ||
-		mq.AggregateOperator == v3.AggregateOperatorMaxRate ||
-		mq.AggregateOperator == v3.AggregateOperatorMinRate ||
-		mq.AggregateOperator == v3.AggregateOperatorRateSum ||
-		mq.AggregateOperator == v3.AggregateOperatorRateAvg ||
-		mq.AggregateOperator == v3.AggregateOperatorRateMax ||
-		mq.AggregateOperator == v3.AggregateOperatorRateMin) {
-		var selectLabels string
-		if mq.AggregateOperator == v3.AggregateOperatorRate {
-			selectLabels = "fullLabels,"
-		} else {
-			selectLabels = groupSelectAttributeKeyTags(mq.GroupBy...)
-		}
-		query = `SELECT ` + selectLabels + ` ts, ceil(value * 60) as value FROM (` + query + `)`
 	}
 
 	if having(mq.Having) != "" {
