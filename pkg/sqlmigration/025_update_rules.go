@@ -204,13 +204,16 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 							return err
 						}
 
-						_, err = tx.
-							NewInsert().
-							Model(&newMaintenancesRules).
-							Exec(ctx)
-						if err != nil {
-							return err
+						if len(newMaintenancesRules) > 0 {
+							_, err = tx.
+								NewInsert().
+								Model(&newMaintenancesRules).
+								Exec(ctx)
+							if err != nil {
+								return err
+							}
 						}
+
 					}
 
 				}
