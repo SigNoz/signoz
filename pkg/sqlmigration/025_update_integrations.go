@@ -140,7 +140,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingIntegrations) > 0 {
 				newIntegrations := migration.
-					CopyOldIntegrationsToNewIntegrations(existingIntegrations)
+					CopyOldIntegrationsToNewIntegrations(tx, existingIntegrations)
 				_, err = tx.
 					NewInsert().
 					Model(&newIntegrations).
@@ -175,7 +175,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingIntegrations) > 0 {
 				newIntegrations := migration.
-					CopyOldCloudIntegrationsToNewCloudIntegrations(existingIntegrations)
+					CopyOldCloudIntegrationsToNewCloudIntegrations(tx, existingIntegrations)
 				_, err = tx.
 					NewInsert().
 					Model(&newIntegrations).
@@ -216,7 +216,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingServices) > 0 {
 				newServices := migration.
-					CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(existingServices)
+					CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx, existingServices)
 				_, err = tx.
 					NewInsert().
 					Model(&newServices).
@@ -243,11 +243,11 @@ func (migration *updateIntegrations) Down(ctx context.Context, db *bun.DB) error
 	return nil
 }
 
-func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(existingIntegrations []*existingInstalledIntegration) []*newInstalledIntegration {
+func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(tx bun.IDB, existingIntegrations []*existingInstalledIntegration) []*newInstalledIntegration {
 	newIntegrations := make([]*newInstalledIntegration, 0)
 	// get the first org id
 	orgIDs := make([]string, 0)
-	err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
+	err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -274,11 +274,11 @@ func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(existi
 	return newIntegrations
 }
 
-func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrations(existingIntegrations []*existingCloudIntegration) []*newCloudIntegration {
+func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrations(tx bun.IDB, existingIntegrations []*existingCloudIntegration) []*newCloudIntegration {
 	newIntegrations := make([]*newCloudIntegration, 0)
 	// get the first org id
 	orgIDs := make([]string, 0)
-	err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
+	err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -307,11 +307,11 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 	return newIntegrations
 }
 
-func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
+func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx bun.IDB, existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
 	newServices := make([]*newCloudIntegrationService, 0)
 	// get the first org id
 	orgIDs := make([]string, 0)
-	err := migration.store.BunDB().NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
+	err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -325,8 +325,8 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 
 	for _, service := range existingServices {
 		var cloudIntegrationID string
-		err := migration.store.BunDB().NewSelect().
-			Model(&newCloudIntegration{}).
+		err := tx.NewSelect().
+			Model((*newCloudIntegration)(nil)).
 			Column("id").
 			Where("account_id = ?", service.CloudAccountID).
 			Where("provider = ?", service.CloudProvider).
