@@ -60,8 +60,8 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: dockerhub
-      GO_DOWNLOAD_ARTIFACT_NAME: enterprise-jsbuild-${{ github.sha }}
-      GO_DOWNLOAD_ARTIFACT_PATH: frontend/build
+      GO_INPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./ee/query-service
       GO_BUILD_FLAGS: >-
         -tags timetzdata

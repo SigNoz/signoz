@@ -39,8 +39,8 @@ jobs:
     with:
       PRIMUS_REF: dockerhub
       GO_NAME: signoz-community
-      GO_DOWNLOAD_ARTIFACT_NAME: community-jsbuild-${{ github.sha }}
-      GO_DOWNLOAD_ARTIFACT_PATH: frontend/build
+      GO_INPUT_ARTIFACT_CACHE_KEY: community-jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./pkg/query-service
       GO_BUILD_FLAGS: >-
         -tags timetzdata
