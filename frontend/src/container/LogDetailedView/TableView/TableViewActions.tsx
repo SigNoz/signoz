@@ -18,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
+import { RESTRICTED_FIELDS } from '../constant';
 import { DataType } from '../TableView';
 import {
 	filterKeyForField,
@@ -142,7 +143,7 @@ export function TableViewActions(
 			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
 				{renderFieldContent()}
 			</CopyClipboardHOC>
-			{!isListViewPanel && (
+			{!isListViewPanel && !RESTRICTED_FIELDS.includes(fieldFilterKey) && (
 				<span className="action-btn">
 					<Tooltip title="Filter for value">
 						<Button
