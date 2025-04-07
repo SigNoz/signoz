@@ -81,7 +81,7 @@ func TestNewLicenseV3(t *testing.T) {
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
 					"plan": map[string]interface{}{
-						"name": "TEAMS",
+						"name": "ENTERPRISE",
 					},
 					"category":    "FREE",
 					"status":      "ACTIVE",
@@ -98,14 +98,14 @@ func TestNewLicenseV3(t *testing.T) {
 		},
 		{
 			name: "Fallback to basic plan if license status is invalid",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"INVALID","plan":{"name":"TEAMS"},"valid_from": 1730899309,"valid_until": -1}`),
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"INVALID","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
 			expected: &LicenseV3{
 				ID:  "does-not-matter",
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
 					"plan": map[string]interface{}{
-						"name": "TEAMS",
+						"name": "ENTERPRISE",
 					},
 					"category":    "FREE",
 					"status":      "INVALID",
@@ -129,7 +129,7 @@ func TestNewLicenseV3(t *testing.T) {
 				Key: "does-not-matter-key",
 				Data: map[string]interface{}{
 					"plan": map[string]interface{}{
-						"name": "TEAMS",
+						"name": "ENTERPRISE",
 					},
 					"valid_from":  1234.456,
 					"valid_until": 5678.567,
