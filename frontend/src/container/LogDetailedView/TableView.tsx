@@ -30,12 +30,10 @@ import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
+import { RESTRICTED_FIELDS } from './constant';
 import FieldRenderer from './FieldRenderer';
 import { TableViewActions } from './TableView/TableViewActions';
 import { filterKeyForField, findKeyPath, flattenObject } from './utils';
-
-// Fields which should be restricted from adding it to query
-const RESTRICTED_FIELDS = ['timestamp'];
 
 interface TableViewProps {
 	logData: ILog;
