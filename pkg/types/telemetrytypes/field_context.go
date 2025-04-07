@@ -18,7 +18,7 @@ import (
 // - Use `scope.` prefix to explicitly indicate and enforce scope context. Example
 //   - `scope.name`
 //   - `scope.version`
-//   - `scope.my.custome.attribute` and `scope.attribute.my.custome.attribute` resolve to same attribute
+//   - `scope.my.custom.attribute` and `scope.attribute.my.custom.attribute` resolve to same attribute
 //
 // - Use `attribute.` to explicitly indicate and enforce attribute context. Example
 //   - `attribute.http.method`
