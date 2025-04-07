@@ -4396,7 +4396,7 @@ func logCommentKVs(ctx context.Context) map[string]string {
 }
 
 // GetTimeSeriesResultV3 runs the query and returns list of time series
-func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
+func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string, args ...any) ([]*v3.Series, error) {
 
 	ctxArgs := map[string]interface{}{"query": query}
 	for k, v := range logCommentKVs(ctx) {
@@ -4467,7 +4467,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 }
 
 // GetListResultV3 runs the query and returns list of rows
-func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
+func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string, args ...any) ([]*v3.Row, error) {
 
 	ctxArgs := map[string]interface{}{"query": query}
 	for k, v := range logCommentKVs(ctx) {
@@ -4476,7 +4476,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	defer utils.Elapsed("GetListResultV3", ctxArgs)()
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, args...)
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))

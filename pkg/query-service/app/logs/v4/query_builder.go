@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	parser "github.com/SigNoz/signoz/pkg/parser/grammar"
 	logsV3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
 var logOperators = map[v3.FilterOperator]string{
@@ -342,7 +345,7 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 	}
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, options v3.QBOptions) (string, []any, error) {
 	// timerange will be sent in epoch millisecond
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
@@ -354,10 +357,33 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// timestamp filter , bucket_start filter is added for primary key
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d) AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", logsStart, logsEnd, bucketStart, bucketEnd)
 
-	// build the where clause for main table
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
-	if err != nil {
-		return "", err
+	var filterSubQuery string
+	var err error
+	var args []any
+
+	if !mq.UseSearchExpr {
+		// build the where clause for main table
+		filterSubQuery, err = buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
+		if err != nil {
+			return "", nil, err
+		}
+	} else {
+		filterSubQuery, args, err = parser.PrepareWhereClause(
+			mq.SearchExpr,
+			mq.FieldKeys,
+			telemetrylogs.NewConditionBuilder(),
+			types.TelemetryFieldKey{
+				Name:          "body",
+				FieldContext:  types.FieldContextLog,
+				FieldDataType: types.FieldDataTypeString,
+			},
+		)
+		if err != nil {
+			return "", nil, err
+		}
+		if len(filterSubQuery) > 0 {
+			filterSubQuery = filterSubQuery[6:]
+		}
 	}
 	if filterSubQuery != "" {
 		filterSubQuery = " AND " + filterSubQuery
@@ -366,7 +392,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// build the where clause for resource table
 	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	// join both the filter clauses
 	if resourceSubQuery != "" {
@@ -388,7 +414,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		sqlSelect := constants.LogsSQLSelectV2
 		queryTmpl := sqlSelect + "from signoz_logs.%s where %s%s order by %s"
 		query := fmt.Sprintf(queryTmpl, DISTRIBUTED_LOGS_V2, timeFilter, filterSubQuery, orderBy)
-		return query, nil
+		return query, args, nil
 		// ---- NOOP ends here ----
 	}
 
@@ -401,7 +427,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// get the group by clause
-	groupBy := logsV3.GroupByAttributeKeyTags(panelType, graphLimitQtype, mq.GroupBy...)
+	groupBy := logsV3.GroupByAttributeKeyTags(panelType, options.GraphLimitQtype, mq.GroupBy...)
 	if panelType != v3.PanelTypeList && groupBy != "" {
 		groupBy = " group by " + groupBy
 	}
@@ -414,17 +440,17 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	// for limit queries, there are two queries formed
 	// in the second query we need to add the placeholder so that first query can be placed
-	if graphLimitQtype == constants.SecondQueryGraphLimit {
+	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
 	aggClause, err := generateAggregateClause(mq.AggregateOperator, aggregationKey, step, timeFilter, filterSubQuery, groupBy, having, orderBy)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	var queryTmplPrefix string
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmplPrefix = "SELECT"
 	} else if panelType == v3.PanelTypeTable {
 		queryTmplPrefix =
@@ -440,10 +466,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// for limit query this is the first query,
 	// we don't the the aggregation value here as we are just concerned with the names of group by
 	// for applying the limit
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		query = "SELECT " + logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + query + ")"
 	}
-	return query, nil
+	return query, args, nil
 }
 
 func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
@@ -481,7 +507,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 }
 
 // PrepareLogsQuery prepares the query for logs
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options v3.QBOptions) (string, []any, error) {
 
 	// adjust the start and end time to the step interval
 	// NOTE: Disabling this as it's creating confusion between charts and actual data
@@ -490,32 +516,36 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	// 	end = end - (end % (mq.StepInterval * 1000))
 	// }
 
+	var query string
+	var args []any
+	var err error
+
 	if options.IsLivetailQuery {
-		query, err := buildLogsLiveTailQuery(mq)
+		query, err = buildLogsLiveTailQuery(mq)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		return query, nil
+		return query, nil, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group_by names (no values)
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
+		query, args, err = buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		query = logsV3.AddLimitToQuery(query, mq.Limit)
 
-		return query, nil
+		return query, args, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
+		query, args, err = buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		return query, nil
+		return query, args, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
+	query, args, err = buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if panelType == v3.PanelTypeValue {
 		query, err = logsV3.ReduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
@@ -524,7 +554,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	if panelType == v3.PanelTypeList {
 		// check if limit exceeded
 		if mq.Limit > 0 && mq.Offset >= mq.Limit {
-			return "", fmt.Errorf("max limit exceeded")
+			return "", nil, fmt.Errorf("max limit exceeded")
 		}
 
 		if mq.PageSize > 0 {
@@ -546,5 +576,5 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query = logsV3.AddLimitToQuery(query, mq.Limit)
 	}
 
-	return query, err
+	return query, args, err
 }

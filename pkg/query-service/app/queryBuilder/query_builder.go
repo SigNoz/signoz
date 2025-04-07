@@ -41,9 +41,9 @@ var SupportedFunctions = []string{
 
 var EvalFuncs = map[string]govaluate.ExpressionFunction{}
 
-type prepareTracesQueryFunc func(start, end int64, panelType v3.PanelType, bq *v3.BuilderQuery, options v3.QBOptions) (string, error)
-type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, options v3.QBOptions) (string, error)
-type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, options metricsV3.Options) (string, error)
+type prepareTracesQueryFunc func(start, end int64, panelType v3.PanelType, bq *v3.BuilderQuery, options v3.QBOptions) (string, []any, error)
+type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, options v3.QBOptions) (string, []any, error)
+type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, options metricsV3.Options) (string, []any, error)
 
 type QueryBuilder struct {
 	options      QueryBuilderOptions
@@ -161,7 +161,7 @@ func (qb *QueryBuilder) PrepareLiveTailQuery(params *v3.QueryRangeParamsV3) (str
 		}
 		for queryName, query := range compositeQuery.BuilderQueries {
 			if query.Expression == queryName {
-				queryStr, err = qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{IsLivetailQuery: true})
+				queryStr, _, err = qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{IsLivetailQuery: true})
 				if err != nil {
 					return "", err
 				}
@@ -172,8 +172,9 @@ func (qb *QueryBuilder) PrepareLiveTailQuery(params *v3.QueryRangeParamsV3) (str
 	return queryStr, nil
 }
 
-func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[string]string, error) {
+func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[string]string, map[string][]any, error) {
 	queries := make(map[string]string)
+	argsMap := make(map[string][]any)
 
 	compositeQuery := params.CompositeQuery
 
@@ -192,52 +193,57 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 				case v3.DataSourceTraces:
 					// for ts query with group by and limit form two queries
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
+						limitQuery, args, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
 							v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
-						placeholderQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
+						placeholderQuery, args, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
 							query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
+						argsMap[queryName] = args
 					} else {
-						queryString, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
+						queryString, args, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
 							query, v3.QBOptions{GraphLimitQtype: ""})
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						queries[queryName] = queryString
+						argsMap[queryName] = args
 					}
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
+						limitQuery, args, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
-						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
+						placeholderQuery, args, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
+						argsMap[queryName] = args
 					} else {
-						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: ""})
+						queryString, args, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: ""})
 						if err != nil {
-							return nil, err
+							return nil, nil, err
 						}
 						queries[queryName] = queryString
+						argsMap[queryName] = args
 					}
 				case v3.DataSourceMetrics:
-					queryString, err := qb.options.BuildMetricQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, metricsV3.Options{})
+					queryString, args, err := qb.options.BuildMetricQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, metricsV3.Options{})
 					if err != nil {
-						return nil, err
+						return nil, nil, err
 					}
 					queries[queryName] = queryString
+					argsMap[queryName] = args
 				default:
 					zap.L().Error("Unknown data source", zap.String("dataSource", string(query.DataSource)))
 				}
@@ -250,12 +256,12 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 
 				queryString, err := expressionToQuery(params, queries, expression, query.QueryName)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 				queries[query.QueryName] = queryString
 			}
@@ -268,7 +274,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 			delete(queries, queryName)
 		}
 	}
-	return queries, nil
+	return queries, argsMap, nil
 }
 
 // cacheKeyGenerator implements the cache.KeyGenerator interface
