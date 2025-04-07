@@ -200,9 +200,14 @@ type CloudServiceConfig struct {
 
 // For serializing from db
 func (c *CloudServiceConfig) Scan(src any) error {
-	data, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("tried to scan from %T instead of bytes", src)
+	var data []byte
+	switch src := src.(type) {
+	case []byte:
+		data = src
+	case string:
+		data = []byte(src)
+	default:
+		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
 	return json.Unmarshal(data, &c)
