@@ -38,7 +38,7 @@ func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
-	return json.Unmarshal(data, &c)
+	return json.Unmarshal(data, c)
 }
 
 // For serializing to db
@@ -129,7 +129,7 @@ func (c *AccountConfig) Scan(src any) error {
 		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
-	return json.Unmarshal(data, &c)
+	return json.Unmarshal(data, c)
 }
 
 // For serializing to db
@@ -164,7 +164,7 @@ func (r *AgentReport) Scan(src any) error {
 		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
-	return json.Unmarshal(data, &r)
+	return json.Unmarshal(data, r)
 }
 
 // For serializing to db
@@ -217,7 +217,7 @@ func (c *CloudServiceConfig) Scan(src any) error {
 		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
 
-	return json.Unmarshal(data, &c)
+	return json.Unmarshal(data, c)
 }
 
 // For serializing to db
