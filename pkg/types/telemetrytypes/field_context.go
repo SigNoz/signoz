@@ -52,6 +52,12 @@ var (
 	FieldContextUnspecified = FieldContext{valuer.NewString("")}
 
 	// Map string representations to FieldContext values
+	// We wouldn't need if not for the fact that we have historically used
+	// "tag" and "attribute" interchangeably.
+	// This means elsewhere in the system, we have used "tag" to refer to "attribute".
+	// There are DB entries that use "tag" and "attribute" interchangeably.
+	// This is a stop gap measure to ensure that we can still use the existing
+	// DB entries.
 	fieldContexts = map[string]FieldContext{
 		"resource":   FieldContextResource,
 		"scope":      FieldContextScope,

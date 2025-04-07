@@ -24,6 +24,9 @@ var (
 	FieldDataTypeUnspecified = FieldDataType{valuer.NewString("")}
 
 	// Map string representations to FieldDataType values
+	// We want to handle all the possible string representations of the data types.
+	// Even if the user uses some non-standard representation, we want to be able to
+	// parse it correctly.
 	fieldDataTypes = map[string]FieldDataType{
 		// String types
 		"string": FieldDataTypeString,
