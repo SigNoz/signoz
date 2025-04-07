@@ -115,11 +115,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		const widgetId = query.get('widgetId');
 		const selectedWidget = widgets?.find((e) => e.id === widgetId);
 		const isWidgetNotPresent = isUndefined(selectedWidget);
-		if (isWidgetNotPresent) {
-			setIsNewDashboard(true);
-		} else {
-			setIsNewDashboard(false);
-		}
+
+		setIsNewDashboard(isWidgetNotPresent);
 
 		if (!logEventCalledRef.current) {
 			logEvent('Panel Edit: Page visited', {
