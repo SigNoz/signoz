@@ -1,4 +1,4 @@
-package db
+package smart
 
 import (
 	"errors"
