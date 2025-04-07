@@ -201,13 +201,6 @@ export function getAppContextMock(
 				route: '',
 			},
 			{
-				name: FeatureKeys.SMART_TRACE_DETAIL,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
 				name: FeatureKeys.CUSTOM_METRICS_FUNCTION,
 				active: true,
 				usage: 0,
@@ -286,20 +279,6 @@ export function getAppContextMock(
 			},
 			{
 				name: FeatureKeys.ANOMALY_DETECTION,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.DurationSort,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.TimestampSort,
 				active: true,
 				usage: 0,
 				usage_limit: -1,

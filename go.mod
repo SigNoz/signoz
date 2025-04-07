@@ -22,7 +22,7 @@ require (
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/go-viper/mapstructure/v2 v2.1.0
 	github.com/gojek/heimdall/v7 v7.0.3
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.1
@@ -77,7 +77,6 @@ require (
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	honnef.co/go/tools v0.0.1-2020.1.4
 	k8s.io/apimachinery v0.31.3
 )
 
@@ -89,7 +88,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/ClickHouse/ch-go v0.61.5 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect

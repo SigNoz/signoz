@@ -28,11 +28,10 @@ func NewHourlyProvider(opts ...GenericProviderOption[*HourlyProvider]) *HourlyPr
 	}
 
 	hp.querierV2 = querierV2.NewQuerier(querierV2.QuerierOptions{
-		Reader:        hp.reader,
-		Cache:         hp.cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  hp.fluxInterval,
-		FeatureLookup: hp.ff,
+		Reader:       hp.reader,
+		Cache:        hp.cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: hp.fluxInterval,
 	})
 
 	return hp

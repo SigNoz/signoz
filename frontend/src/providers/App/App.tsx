@@ -21,6 +21,7 @@ import { useQuery } from 'react-query';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as LicensesResModel } from 'types/api/licenses/getAll';
 import {
+	LicensePlatform,
 	LicenseState,
 	LicenseV3ResModel,
 	TrialInfo,
@@ -145,7 +146,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				).unix(),
 				onTrial: isOnTrial,
 				workSpaceBlock:
-					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED,
+					activeLicenseV3Data.payload.state === LicenseState.EVALUATION_EXPIRED &&
+					activeLicenseV3Data.payload.platform === LicensePlatform.CLOUD,
 				trialConvertedToSubscription:
 					activeLicenseV3Data.payload.state !== LicenseState.ISSUED &&
 					activeLicenseV3Data.payload.state !== LicenseState.EVALUATING &&

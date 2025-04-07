@@ -115,9 +115,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		const widgetId = query.get('widgetId');
 		const selectedWidget = widgets?.find((e) => e.id === widgetId);
 		const isWidgetNotPresent = isUndefined(selectedWidget);
-		if (isWidgetNotPresent) {
-			setIsNewDashboard(true);
-		}
+
+		setIsNewDashboard(isWidgetNotPresent);
 
 		if (!logEventCalledRef.current) {
 			logEvent('Panel Edit: Page visited', {
@@ -131,7 +130,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [widgets]);
 
 	const getWidget = useCallback(() => {
 		const widgetId = query.get('widgetId');
