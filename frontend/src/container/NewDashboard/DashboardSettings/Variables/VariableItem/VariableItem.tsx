@@ -16,6 +16,7 @@ import {
 	ClipboardType,
 	DatabaseZap,
 	LayoutList,
+	Pyramid,
 	X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -30,6 +31,7 @@ import { v4 as generateUUID } from 'uuid';
 
 import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableMode } from '../types';
+import DynamicVariable from './DynamicVariable/DynamicVariable';
 import { LabelContainer, VariableItemRow } from './styles';
 
 const { Option } = Select;
@@ -239,18 +241,18 @@ function VariableItem({
 						<div className="variable-type-btn-group">
 							<Button
 								type="text"
-								icon={<DatabaseZap size={14} />}
+								icon={<Pyramid size={14} />}
 								className={cx(
 									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
-									queryType === 'QUERY' ? 'selected' : '',
+									queryType === 'DYNAMIC' ? 'selected' : '',
 								)}
 								onClick={(): void => {
-									setQueryType('QUERY');
+									setQueryType('DYNAMIC');
 									setPreviewValues([]);
 								}}
 							>
-								Query
+								Dynamic
 							</Button>
 							<Button
 								type="text"
@@ -280,8 +282,28 @@ function VariableItem({
 							>
 								Custom
 							</Button>
+							<Button
+								type="text"
+								icon={<DatabaseZap size={14} />}
+								className={cx(
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									'variable-type-btn',
+									queryType === 'QUERY' ? 'selected' : '',
+								)}
+								onClick={(): void => {
+									setQueryType('QUERY');
+									setPreviewValues([]);
+								}}
+							>
+								Query
+							</Button>
 						</div>
 					</VariableItemRow>
+					{queryType === 'DYNAMIC' && (
+						<div className="variable-dynamic-section">
+							<DynamicVariable />
+						</div>
+					)}
 					{queryType === 'QUERY' && (
 						<div className="query-container">
 							<LabelContainer>
@@ -369,7 +391,9 @@ function VariableItem({
 							/>
 						</VariableItemRow>
 					)}
-					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
+					{(queryType === 'QUERY' ||
+						queryType === 'CUSTOM' ||
+						queryType === 'DYNAMIC') && (
 						<>
 							<VariableItemRow className="variables-preview-section">
 								<LabelContainer style={{ width: '100%' }}>
