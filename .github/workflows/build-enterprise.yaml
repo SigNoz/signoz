@@ -48,9 +48,10 @@ jobs:
     with:
       PRIMUS_REF: dockerhub
       JS_SRC: frontend
-      JS_DOTENV_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
-      JS_UPLOAD_ARTIFACT_NAME: enterprise-jsbuild-${{ github.sha }}
-      JS_UPLOAD_ARTIFACT_PATH: frontend/build
+      JS_INPUT_ARTIFACT_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
+      JS_INPUT_ARTIFACT_PATH: frontend/.env
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:

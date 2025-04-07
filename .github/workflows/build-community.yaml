@@ -28,8 +28,8 @@ jobs:
     with:
       PRIMUS_REF: dockerhub
       JS_SRC: frontend
-      JS_UPLOAD_ARTIFACT_NAME: community-jsbuild-${{ github.sha }}
-      JS_UPLOAD_ARTIFACT_PATH: frontend/build
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: community-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:
