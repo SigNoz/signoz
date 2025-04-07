@@ -74,7 +74,7 @@ func TestNewLicenseV3(t *testing.T) {
 		},
 		{
 			name: "Parse the entire license properly",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"},"valid_from": 1730899309,"valid_until": -1}`),
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from": 1730899309,"valid_until": -1}`),
 			pass: true,
 			expected: &LicenseV3{
 				ID:  "does-not-matter",
@@ -88,7 +88,7 @@ func TestNewLicenseV3(t *testing.T) {
 					"valid_from":  float64(1730899309),
 					"valid_until": float64(-1),
 				},
-				PlanName:   PlanNameTeams,
+				PlanName:   PlanNameEnterprise,
 				ValidFrom:  1730899309,
 				ValidUntil: -1,
 				Status:     "ACTIVE",
@@ -122,7 +122,7 @@ func TestNewLicenseV3(t *testing.T) {
 		},
 		{
 			name: "fallback states for validFrom and validUntil",
-			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"TEAMS"},"valid_from":1234.456,"valid_until":5678.567}`),
+			data: []byte(`{"id":"does-not-matter","key":"does-not-matter-key","category":"FREE","status":"ACTIVE","plan":{"name":"ENTERPRISE"},"valid_from":1234.456,"valid_until":5678.567}`),
 			pass: true,
 			expected: &LicenseV3{
 				ID:  "does-not-matter",
@@ -136,7 +136,7 @@ func TestNewLicenseV3(t *testing.T) {
 					"category":    "FREE",
 					"status":      "ACTIVE",
 				},
-				PlanName:   PlanNameTeams,
+				PlanName:   PlanNameEnterprise,
 				ValidFrom:  1234,
 				ValidUntil: 5678,
 				Status:     "ACTIVE",

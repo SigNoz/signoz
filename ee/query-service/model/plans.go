@@ -6,17 +6,15 @@ import (
 
 const SSO = "SSO"
 const Basic = "BASIC_PLAN"
-const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
 
 var (
 	PlanNameEnterprise = "ENTERPRISE"
-	PlanNameTeams      = "TEAMS"
 	PlanNameBasic      = "BASIC"
 )
 
 var (
-	MapOldPlanKeyToNewPlanName map[string]string = map[string]string{PlanNameBasic: Basic, PlanNameTeams: Pro, PlanNameEnterprise: Enterprise}
+	MapOldPlanKeyToNewPlanName map[string]string = map[string]string{PlanNameBasic: Basic, PlanNameEnterprise: Enterprise}
 )
 
 var (
