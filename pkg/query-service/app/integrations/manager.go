@@ -104,13 +104,6 @@ type IntegrationsListItem struct {
 	IsInstalled bool `json:"is_installed"`
 }
 
-// type InstalledIntegration struct {
-// 	IntegrationId string                     `json:"integration_id" db:"integration_id"`
-// 	Config        InstalledIntegrationConfig `json:"config_json" db:"config_json"`
-// 	InstalledAt   time.Time                  `json:"installed_at" db:"installed_at"`
-// }
-// type InstalledIntegrationConfig map[string]interface{}
-
 type Integration struct {
 	IntegrationDetails
 	Installation *types.InstalledIntegration `json:"installation"`

@@ -81,15 +81,15 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		OrgID:      orgId,
-		Type:       integrationType,
-		ConfigJSON: config,
+		OrgID:  orgId,
+		Type:   integrationType,
+		Config: config,
 	}
 
 	_, dbErr := r.store.BunDB().NewInsert().
 		Model(&integration).
 		On("conflict (type, org_id) DO UPDATE").
-		Set("config_json = EXCLUDED.config_json").
+		Set("config = EXCLUDED.config").
 		Exec(ctx)
 
 	if dbErr != nil {

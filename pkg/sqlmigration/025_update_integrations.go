@@ -51,7 +51,7 @@ type newInstalledIntegration struct {
 
 	types.Identifiable
 	Type        string    `json:"type" bun:"type,type:text,unique:org_id_type"`
-	ConfigJSON  string    `json:"config_json" bun:"config_json,type:text"`
+	Config      string    `json:"config" bun:"config,type:text"`
 	InstalledAt time.Time `json:"installed_at" bun:"installed_at,default:current_timestamp"`
 	OrgID       string    `json:"org_id" bun:"org_id,type:text,unique:org_id_type,references:organizations(id),on_delete:cascade"`
 }
@@ -265,7 +265,7 @@ func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(tx bun
 				ID: valuer.GenerateUUID(),
 			},
 			Type:        integration.IntegrationID,
-			ConfigJSON:  integration.ConfigJSON,
+			Config:      integration.ConfigJSON,
 			InstalledAt: integration.InstalledAt,
 			OrgID:       orgIDs[0],
 		})

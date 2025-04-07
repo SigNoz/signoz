@@ -19,7 +19,7 @@ type InstalledIntegration struct {
 
 	Identifiable
 	Type        string                     `json:"type" bun:"type,type:text,unique:org_id_type"`
-	ConfigJSON  InstalledIntegrationConfig `json:"config_json" bun:"config_json,type:text"`
+	Config      InstalledIntegrationConfig `json:"config" bun:"config,type:text"`
 	InstalledAt time.Time                  `json:"installed_at" bun:"installed_at,default:current_timestamp"`
 	OrgID       string                     `json:"org_id" bun:"org_id,type:text,unique:org_id_type,references:organizations(id),on_delete:cascade"`
 }
@@ -28,10 +28,17 @@ type InstalledIntegrationConfig map[string]interface{}
 
 // For serializing from db
 func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, &c)
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("tried to scan from %T instead of string or bytes", src)
 	}
-	return nil
+
+	return json.Unmarshal(data, &c)
 }
 
 // For serializing to db
