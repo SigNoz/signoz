@@ -164,7 +164,7 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 					IfNotExists().
 					Model(new(storablePlannedMaintenanceRule)).
 					ForeignKey(`("planned_maintenance_id") REFERENCES "planned_maintenance_new" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
-					ForeignKey(`("rule_id") REFERENCES "rule" ("id") ON DELETE CASCADE ON UPDATE CASCADE`).
+					ForeignKey(`("rule_id") REFERENCES "rule" ("id")`).
 					Exec(ctx)
 				if err != nil {
 					return err
