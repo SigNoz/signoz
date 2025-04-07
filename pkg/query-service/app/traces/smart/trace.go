@@ -1,17 +1,16 @@
-package db
+package smart
 
 import (
 	"errors"
 	"strconv"
 
-	"github.com/SigNoz/signoz/ee/query-service/model"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
 // SmartTraceAlgorithm is an algorithm to find the target span and build a tree of spans around it with the given levelUp and levelDown parameters and the given spanLimit
 func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]basemodel.SearchSpansResult, error) {
-	var spans []*model.SpanForTraceDetails
+	var spans []*SpanForTraceDetails
 
 	// if targetSpanId is null or not present then randomly select a span as targetSpanId
 	if (targetSpanId == "" || targetSpanId == "null") && len(payload) > 0 {
@@ -24,7 +23,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 		if len(spanItem.References) > 0 && spanItem.References[0].RefType == "CHILD_OF" {
 			parentID = spanItem.References[0].SpanId
 		}
-		span := &model.SpanForTraceDetails{
+		span := &SpanForTraceDetails{
 			TimeUnixNano: spanItem.TimeUnixNano,
 			SpanID:       spanItem.SpanID,
 			TraceID:      spanItem.TraceID,
@@ -45,7 +44,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	if err != nil {
 		return nil, err
 	}
-	targetSpan := &model.SpanForTraceDetails{}
+	targetSpan := &SpanForTraceDetails{}
 
 	// Find the target span in the span trees
 	for _, root := range roots {
@@ -65,7 +64,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	// Build the final result
-	parents := []*model.SpanForTraceDetails{}
+	parents := []*SpanForTraceDetails{}
 
 	// Get the parent spans of the target span up to the given levelUp parameter and spanLimit
 	preParent := targetSpan
@@ -90,11 +89,11 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	// Get the child spans of the target span until the given levelDown and spanLimit
-	preParents := []*model.SpanForTraceDetails{targetSpan}
-	children := []*model.SpanForTraceDetails{}
+	preParents := []*SpanForTraceDetails{targetSpan}
+	children := []*SpanForTraceDetails{}
 
 	for i := 0; i < levelDown && len(preParents) != 0 && spanLimit > 0; i++ {
-		parents := []*model.SpanForTraceDetails{}
+		parents := []*SpanForTraceDetails{}
 		for _, parent := range preParents {
 			if spanLimit-len(parent.Children) <= 0 {
 				children = append(children, parent.Children[:spanLimit]...)
@@ -108,7 +107,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	// Store the final list of spans in the resultSpanSet map to avoid duplicates
-	resultSpansSet := make(map[*model.SpanForTraceDetails]struct{})
+	resultSpansSet := make(map[*SpanForTraceDetails]struct{})
 	resultSpansSet[targetSpan] = struct{}{}
 	for _, parent := range parents {
 		resultSpansSet[parent] = struct{}{}
@@ -169,12 +168,12 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 }
 
 // buildSpanTrees builds trees of spans from a list of spans.
-func buildSpanTrees(spansPtr *[]*model.SpanForTraceDetails) ([]*model.SpanForTraceDetails, error) {
+func buildSpanTrees(spansPtr *[]*SpanForTraceDetails) ([]*SpanForTraceDetails, error) {
 
 	// Build a map of spanID to span for fast lookup
-	var roots []*model.SpanForTraceDetails
+	var roots []*SpanForTraceDetails
 	spans := *spansPtr
-	mapOfSpans := make(map[string]*model.SpanForTraceDetails, len(spans))
+	mapOfSpans := make(map[string]*SpanForTraceDetails, len(spans))
 
 	for _, span := range spans {
 		if span.ParentID == "" {
@@ -206,8 +205,8 @@ func buildSpanTrees(spansPtr *[]*model.SpanForTraceDetails) ([]*model.SpanForTra
 }
 
 // breadthFirstSearch performs a breadth-first search on the span tree to find the target span.
-func breadthFirstSearch(spansPtr *model.SpanForTraceDetails, targetId string) (*model.SpanForTraceDetails, error) {
-	queue := []*model.SpanForTraceDetails{spansPtr}
+func breadthFirstSearch(spansPtr *SpanForTraceDetails, targetId string) (*SpanForTraceDetails, error) {
+	queue := []*SpanForTraceDetails{spansPtr}
 	visited := make(map[string]bool)
 
 	for len(queue) > 0 {
