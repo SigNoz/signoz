@@ -159,19 +159,6 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 		))
 	}
 
-	// err := r.db.SelectContext(
-	// 	ctx, &records, `
-	// 		select
-	// 			service_id,
-	// 			config_json
-	// 		from cloud_integrations_service_configs
-	// 		where
-	// 			cloud_provider=$1
-	// 			and cloud_account_id=$2
-	// 	`,
-	// 	cloudProvider, cloudAccountId,
-	// )
-
 	result := map[string]*types.CloudServiceConfig{}
 
 	for _, r := range serviceConfigs {
