@@ -1,4 +1,4 @@
-package model
+package smart
 
 type SpanForTraceDetails struct {
 	TimeUnixNano uint64                 `json:"timestamp"`
@@ -14,9 +14,4 @@ type SpanForTraceDetails struct {
 	Events       []string               `json:"event"`
 	HasError     bool                   `json:"hasError"`
 	Children     []*SpanForTraceDetails `json:"children"`
-}
-
-type GetSpansSubQueryDBResponse struct {
-	SpanID  string `ch:"spanID"`
-	TraceID string `ch:"traceID"`
 }
