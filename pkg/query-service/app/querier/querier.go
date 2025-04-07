@@ -43,7 +43,6 @@ type querier struct {
 	fluxInterval time.Duration
 
 	builder *queryBuilder.QueryBuilder
-
 	// used for testing
 	// TODO(srikanthccv): remove this once we have a proper mock
 	testingMode     bool

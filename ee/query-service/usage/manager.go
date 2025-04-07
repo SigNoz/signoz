@@ -4,22 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
 
 	"go.uber.org/zap"
 
-	"github.com/SigNoz/signoz/ee/query-service/dao"
 	licenseserver "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
 const (
@@ -34,35 +33,20 @@ var (
 )
 
 type Manager struct {
-	clickhouseConn clickhouse.Conn
-
-	licenseRepo *license.Repo
-
-	scheduler *gocron.Scheduler
-
-	modelDao dao.ModelDao
-
-	tenantID string
+	telemetryStore telemetrystore.TelemetryStore
+	licenseRepo    *license.Repo
+	scheduler      *gocron.Scheduler
+	zeus           zeus.Zeus
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string) (*Manager, error) {
-	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
-	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(chUrl)
-
-	tenantID := ""
-	if len(hostNameRegexMatches) == 2 {
-		tenantID = hostNameRegexMatches[1]
-		tenantID = strings.TrimSuffix(tenantID, "-clickhouse")
-	}
-
+func New(licenseRepo *license.Repo, telemetryStore telemetrystore.TelemetryStore, zeus zeus.Zeus) (*Manager, error) {
 	m := &Manager{
-		// repository:     repo,
-		clickhouseConn: clickhouseConn,
 		licenseRepo:    licenseRepo,
+		telemetryStore: telemetryStore,
+		zeus:           zeus,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
-		modelDao:       modelDao,
-		tenantID:       tenantID,
 	}
+
 	return m, nil
 }
 
@@ -120,7 +104,7 @@ func (lm *Manager) UploadUsage() {
 
 	for _, db := range dbs {
 		dbusages := []model.UsageDB{}
-		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
+		err := lm.telemetryStore.ClickhouseDB().Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
 		if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
 			zap.L().Error("failed to get usage from clickhouse: %v", zap.Error(err))
 			return
@@ -134,17 +118,6 @@ func (lm *Manager) UploadUsage() {
 	if len(usages) <= 0 {
 		zap.L().Info("no snapshots to upload, skipping.")
 		return
-	}
-
-	zap.L().Info("uploading usage data")
-
-	orgName := ""
-	orgNames, orgError := lm.modelDao.GetOrgs(ctx)
-	if orgError != nil {
-		zap.L().Error("failed to get org data: %v", zap.Error(orgError))
-	}
-	if len(orgNames) == 1 {
-		orgName = orgNames[0].Name
 	}
 
 	usagesPayload := []model.Usage{}
@@ -166,8 +139,8 @@ func (lm *Manager) UploadUsage() {
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
 		usageData.Tenant = "default"
-		usageData.OrgName = orgName
-		usageData.TenantId = lm.tenantID
+		usageData.OrgName = "default"
+		usageData.TenantId = "default"
 		usagesPayload = append(usagesPayload, usageData)
 	}
 
@@ -176,6 +149,7 @@ func (lm *Manager) UploadUsage() {
 		LicenseKey: key,
 		Usage:      usagesPayload,
 	}
+
 	lm.UploadUsageWithExponentalBackOff(ctx, payload)
 }
 

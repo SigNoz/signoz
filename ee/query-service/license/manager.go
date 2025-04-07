@@ -14,8 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/zeus"
 
-	validate "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
@@ -29,6 +29,7 @@ var validationFrequency = 24 * 60 * time.Minute
 
 type Manager struct {
 	repo             *Repo
+	zeus             zeus.Zeus
 	mutex            sync.Mutex
 	validatorRunning bool
 	// end the license validation, this is important to gracefully
@@ -45,7 +46,7 @@ type Manager struct {
 	activeFeatures  basemodel.FeatureSet
 }
 
-func StartManager(db *sqlx.DB, store sqlstore.SQLStore, features ...basemodel.Feature) (*Manager, error) {
+func StartManager(db *sqlx.DB, store sqlstore.SQLStore, zeus zeus.Zeus, features ...basemodel.Feature) (*Manager, error) {
 	if LM != nil {
 		return LM, nil
 	}
@@ -53,6 +54,7 @@ func StartManager(db *sqlx.DB, store sqlstore.SQLStore, features ...basemodel.Fe
 	repo := NewLicenseRepo(db, store)
 	m := &Manager{
 		repo: &repo,
+		zeus: zeus,
 	}
 	if err := m.start(features...); err != nil {
 		return m, err
@@ -173,14 +175,12 @@ func (lm *Manager) ValidatorV3(ctx context.Context) {
 }
 
 func (lm *Manager) RefreshLicense(ctx context.Context) *model.ApiError {
-
-	license, apiError := validate.ValidateLicenseV3(lm.activeLicenseV3.Key)
-	if apiError != nil {
-		zap.L().Error("failed to validate license", zap.Error(apiError.Err))
-		return apiError
+	license, err := lm.zeus.GetLicense(ctx, lm.activeLicenseV3.Key)
+	if err != nil {
+		return model.BadRequest(errors.Wrap(err, "failed to get license"))
 	}
 
-	err := lm.repo.UpdateLicenseV3(ctx, license)
+	err = lm.repo.UpdateLicenseV3(ctx, license)
 	if err != nil {
 		return model.BadRequest(errors.Wrap(err, "failed to update the new license"))
 	}
@@ -247,10 +247,9 @@ func (lm *Manager) ActivateV3(ctx context.Context, licenseKey string) (licenseRe
 		}
 	}()
 
-	license, apiError := validate.ValidateLicenseV3(licenseKey)
-	if apiError != nil {
-		zap.L().Error("failed to get the license", zap.Error(apiError.Err))
-		return nil, apiError
+	license, errv2 := lm.zeus.GetLicense(ctx, lm.activeLicenseV3.Key)
+	if errv2 != nil {
+		return nil, model.BadRequest(errors.Wrap(errv2, "failed to get license"))
 	}
 
 	// insert the new license to the sqlite db

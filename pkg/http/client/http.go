@@ -17,7 +17,7 @@ type Client struct {
 	netc *http.Client
 }
 
-func New(logger *slog.Logger, tracerProvider trace.TracerProvider, meterProvider metric.MeterProvider, opts ...Option) (*Client, error) {
+func New(logger *slog.Logger, tracerProvider trace.TracerProvider, meterProvider metric.MeterProvider, opts ...Option) *Client {
 	clientOpts := options{
 		retryCount:         3,
 		requestResponseLog: false,
@@ -46,7 +46,7 @@ func New(logger *slog.Logger, tracerProvider trace.TracerProvider, meterProvider
 	return &Client{
 		netc: netc,
 		c:    c,
-	}, nil
+	}
 }
 
 func (c *Client) Do(request *http.Request) (*http.Response, error) {
