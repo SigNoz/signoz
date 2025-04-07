@@ -6822,6 +6822,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			data := map[string]interface{}{
 				"traceSize":            traceSummary.NumSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+				"algo":                 "smart",
 			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
 		}
@@ -6832,6 +6833,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 	if ok {
 		data := map[string]interface{}{
 			"traceSize": traceSummary.NumSpans,
+			"algo":      "smart",
 		}
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
 	}
@@ -6922,6 +6924,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
 				"spansRenderLimit": params.SpansRenderLimit,
+				"algo":             "smart",
 			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
 		}
@@ -6960,6 +6963,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			data := map[string]interface{}{
 				"traceSize":            countSpans,
 				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+				"algo":                 "smart",
 			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
 		}
@@ -6970,6 +6974,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	if ok {
 		data := map[string]interface{}{
 			"traceSize": countSpans,
+			"algo":      "smart",
 		}
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
 	}
@@ -7031,6 +7036,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 			data := map[string]interface{}{
 				"traceSize":        len(searchScanResponses),
 				"spansRenderLimit": params.SpansRenderLimit,
+				"algo":             "smart",
 			}
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
 		}
