@@ -56,10 +56,9 @@ type QueryBuilderOptions struct {
 	BuildMetricQuery prepareMetricQueryFunc
 }
 
-func NewQueryBuilder(options QueryBuilderOptions, featureFlags interfaces.FeatureLookup) *QueryBuilder {
+func NewQueryBuilder(options QueryBuilderOptions) *QueryBuilder {
 	return &QueryBuilder{
-		options:      options,
-		featureFlags: featureFlags,
+		options: options,
 	}
 }
 
