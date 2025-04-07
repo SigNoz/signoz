@@ -8,10 +8,17 @@ import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useMemo } from 'react';
 
+import GraphView from './GraphView';
 import { InspectProps } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
-function Inspect({ metricName, isOpen, onClose }: InspectProps): JSX.Element {
+function Inspect({
+	metricName,
+	metricUnit,
+	metricType,
+	isOpen,
+	onClose,
+}: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const {
@@ -19,6 +26,7 @@ function Inspect({ metricName, isOpen, onClose }: InspectProps): JSX.Element {
 		inspectMetricsStatusCode,
 		isInspectMetricsLoading,
 		isInspectMetricsError,
+		formattedInspectMetricsTimeSeries,
 	} = useInspectMetrics(metricName);
 
 	const content = useMemo(() => {
@@ -51,12 +59,29 @@ function Inspect({ metricName, isOpen, onClose }: InspectProps): JSX.Element {
 			);
 		}
 
-		return <div>Inspect</div>;
+		return (
+			<div className="inspect-metrics-content">
+				<div className="inspect-metrics-content-first-col">
+					<GraphView
+						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
+						resetInspection={(): void => {}}
+						metricUnit={metricUnit}
+						metricName={metricName}
+						metricType={metricType}
+					/>
+				</div>
+			</div>
+		);
 	}, [
 		isInspectMetricsLoading,
 		isInspectMetricsError,
-		inspectMetricsTimeSeries.length,
 		inspectMetricsStatusCode,
+		inspectMetricsTimeSeries,
+		formattedInspectMetricsTimeSeries,
+		metricUnit,
+		metricName,
+		metricType,
 	]);
 
 	return (

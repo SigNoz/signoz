@@ -23,4 +23,42 @@
 			color: var(--text-vanilla-500);
 		}
 	}
+
+	.inspect-metrics-content {
+		display: flex;
+		flex-direction: row;
+		gap: 16px;
+
+		.inspect-metrics-content-first-col {
+			display: flex;
+			flex-direction: column;
+			width: 75%;
+
+			.inspect-metrics-graph-view {
+				display: flex;
+				flex-direction: column;
+				gap: 32px;
+
+				.inspect-metrics-graph-view-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+
+					.ant-btn-group {
+						.time-series-button-label,
+						.metric-name-button-label {
+							display: flex;
+							align-items: center;
+							justify-content: center;
+							cursor: default;
+
+							span {
+								color: var(--text-vanilla-100);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
