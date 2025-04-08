@@ -157,8 +157,6 @@ func NewLicenseV3(data map[string]interface{}) (*LicenseV3, error) {
 	}
 
 	switch planName {
-	case PlanNameTeams:
-		features = append(features, ProPlan...)
 	case PlanNameEnterprise:
 		features = append(features, EnterprisePlan...)
 	case PlanNameBasic:
