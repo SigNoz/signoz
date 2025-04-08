@@ -684,10 +684,6 @@ function FormAlertRules({
 
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
-	const isAlertAvailableToSave =
-		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
-		alertType !== AlertTypes.METRICS_BASED_ALERT;
-
 	const onUnitChangeHandler = (value: string): void => {
 		setYAxisUnit(value);
 		// reset target unit
@@ -860,7 +856,6 @@ function FormAlertRules({
 							icon={<SaveOutlined />}
 							disabled={
 								isAlertNameMissing ||
-								isAlertAvailableToSave ||
 								!isChannelConfigurationValid ||
 								queryStatus === 'error'
 							}
