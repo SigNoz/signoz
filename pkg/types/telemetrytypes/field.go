@@ -87,7 +87,10 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	if key == nil { return "" } return fmt.Sprintf("%s_%s_%s", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
+	if key == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s_%s_%s", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
