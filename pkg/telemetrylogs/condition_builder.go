@@ -271,5 +271,5 @@ func (c *conditionBuilder) GetCondition(
 			return "", fmt.Errorf("exists operator is not supported for column type %s", column.Type)
 		}
 	}
-	return "", nil
+	return "", fmt.Errorf("unsupported operator: %v", operator)
 }
