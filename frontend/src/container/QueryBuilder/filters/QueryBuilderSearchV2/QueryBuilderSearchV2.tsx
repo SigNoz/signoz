@@ -291,7 +291,8 @@ function QueryBuilderSearchV2(
 				if (
 					isObject(parsedValue) &&
 					parsedValue?.key &&
-					parsedValue?.key?.split(' ').length > 1
+					parsedValue?.key?.split(' ').length > 1 &&
+					isLogsDataSource
 				) {
 					setTags((prev) => [
 						...prev,
@@ -406,7 +407,13 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[currentFilterItem?.key, currentFilterItem?.op, currentState, searchValue],
+		[
+			currentFilterItem?.key,
+			currentFilterItem?.op,
+			currentState,
+			isLogsDataSource,
+			searchValue,
+		],
 	);
 
 	const handleSearch = useCallback((value: string) => {
