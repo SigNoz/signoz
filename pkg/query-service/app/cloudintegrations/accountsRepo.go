@@ -30,7 +30,7 @@ type cloudProviderAccountsRepository interface {
 		cloudProvider string,
 		id *string,
 		config *types.AccountConfig,
-		cloudAccountId *string,
+		accountId *string,
 		agentReport *types.AgentReport,
 		removedAt *time.Time,
 	) (*types.CloudIntegration, *model.ApiError)
@@ -130,7 +130,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	cloudProvider string,
 	id *string,
 	config *types.AccountConfig,
-	AccountId *string,
+	accountId *string,
 	agentReport *types.AgentReport,
 	removedAt *time.Time,
 ) (*types.CloudIntegration, *model.ApiError) {
@@ -152,7 +152,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		)
 	}
 
-	if AccountId != nil {
+	if accountId != nil {
 		onConflictSetStmts = append(
 			onConflictSetStmts, setColStatement("account_id"),
 		)
@@ -192,7 +192,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 			UpdatedAt: time.Now(),
 		},
 		Config:          config,
-		AccountID:       AccountId,
+		AccountID:       accountId,
 		LastAgentReport: agentReport,
 		RemovedAt:       removedAt,
 	}

@@ -43,18 +43,18 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 }
 
 func (r *InstalledIntegrationsSqliteRepo) get(
-	ctx context.Context, orgId string, integrationIds []string,
+	ctx context.Context, orgId string, integrationTypes []string,
 ) (map[string]types.InstalledIntegration, *model.ApiError) {
 	integrations := []types.InstalledIntegration{}
 
-	idValues := []interface{}{}
-	for _, id := range integrationIds {
-		idValues = append(idValues, id)
+	typeValues := []interface{}{}
+	for _, integrationType := range integrationTypes {
+		typeValues = append(typeValues, integrationType)
 	}
 
 	err := r.store.BunDB().NewSelect().Model(&integrations).
 		Where("org_id = ?", orgId).
-		Where("type IN (?)", bun.In(idValues)).
+		Where("type IN (?)", bun.In(typeValues)).
 		Scan(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
