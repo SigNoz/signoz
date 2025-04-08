@@ -29,12 +29,10 @@ function GraphView({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
+	const start = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
 		minTime,
 	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
+	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 
 	const options: uPlot.Options = useMemo(
 		() => ({
@@ -90,8 +88,8 @@ function GraphView({
 						},
 						scales: {
 							x: {
-								min: startMs,
-								max: endMs,
+								min: start,
+								max: end,
 							},
 						},
 					};
@@ -100,11 +98,11 @@ function GraphView({
 		}),
 		[
 			dimensions.width,
-			endMs,
+			start,
+			end,
 			inspectMetricsTimeSeries,
 			isDarkMode,
 			metricUnit,
-			startMs,
 		],
 	);
 
