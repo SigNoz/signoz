@@ -154,9 +154,10 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
 ) (*types.User, *basemodel.ApiError) {
-	prefix := fmt.Sprintf("%s-%s", orgId, cloudProvider)
-	email := fmt.Sprintf("%s-integration@signoz.io", prefix)
+	cloudIntegrationUser := fmt.Sprintf("%s-integration", cloudProvider)
+	email := fmt.Sprintf("%s@signoz.io", cloudIntegrationUser)
 
+	// TODO(nitya): there should be orgId here
 	integrationUserResult, apiErr := ah.AppDao().GetUserByEmail(ctx, email)
 	if apiErr != nil {
 		return nil, basemodel.WrapApiError(apiErr, "couldn't look for integration user")
@@ -173,8 +174,8 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 
 	newUser := &types.User{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-		Name:         fmt.Sprintf("%s-integration", prefix),
-		Email:        fmt.Sprintf("%s", email),
+		Name:         cloudIntegrationUser,
+		Email:        email,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},

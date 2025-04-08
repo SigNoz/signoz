@@ -367,10 +367,8 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 	return newServices
 }
 
-// copyOldAwsIntegrationUser copies the old aws integration user to the new user
-// the previous user had id = aws-integration, and email = aws-integration@signoz.io
-// the new user will have id = orgID-aws-integration, and email = orgID-aws-integration@signoz.io
-// the pat is also updated for the user.
+// we are making sure that new uuid v7 is added to the user
+// and the pat is connected to the new user.
 func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID string) error {
 	type OldUser struct {
 		bun.BaseModel `bun:"table:users"`
@@ -401,15 +399,10 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 			CreatedAt: time.Now(),
 		},
 		OrgID:    orgID,
-		Name:     orgID + "-aws-integration",
-		Email:    orgID + "-aws-integration@signoz.io",
+		Name:     user.Name,
+		Email:    user.Email,
 		GroupID:  user.GroupID,
 		Password: user.Password,
-	}
-	// insert the new user
-	_, err = tx.NewInsert().Model(newUser).Exec(context.Background())
-	if err != nil {
-		return err
 	}
 
 	// get the pat for the user
@@ -435,6 +428,18 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		Role:      pat.Role,
 	}
 
+	// delete old user
+	_, err = tx.ExecContext(context.Background(), `DELETE FROM users WHERE id = ?`, user.ID)
+	if err != nil {
+		return err
+	}
+
+	// insert the new user
+	_, err = tx.NewInsert().Model(newUser).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+
 	// delete the old pat
 	_, err = tx.ExecContext(context.Background(), `DELETE FROM personal_access_token WHERE id = ?`, pat.ID)
 	if err != nil {
@@ -447,10 +452,5 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		return err
 	}
 
-	// delete old user
-	_, err = tx.ExecContext(context.Background(), `DELETE FROM users WHERE id = ?`, user.ID)
-	if err != nil {
-		return err
-	}
 	return nil
 }
