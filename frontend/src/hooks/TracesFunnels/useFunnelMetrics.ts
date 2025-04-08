@@ -48,11 +48,11 @@ export function useFunnelMetrics({
 			{ title: 'Errors', value: sourceData.errors },
 			{
 				title: 'Avg. Duration',
-				value: getYAxisFormattedValue(sourceData.avg_duration.toString(), 'ms'),
+				value: getYAxisFormattedValue(sourceData.avg_duration.toString(), 'ns'),
 			},
 			{
 				title: 'P99 Latency',
-				value: getYAxisFormattedValue(sourceData.p99_latency.toString(), 'ms'),
+				value: getYAxisFormattedValue(sourceData.p99_latency.toString(), 'ns'),
 			},
 		];
 	}, [overviewData]);
