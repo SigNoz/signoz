@@ -8,7 +8,7 @@ x-common: &common
       max-size: 50m
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
-  !!merge <<: *common
+  <<: *common
   # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
   image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
@@ -37,7 +37,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       soft: 262144
       hard: 262144
 x-zookeeper-defaults: &zookeeper-defaults
-  !!merge <<: *common
+  <<: *common
   image: bitnami/zookeeper:3.7.1
   user: root
   labels:
@@ -52,7 +52,7 @@ x-zookeeper-defaults: &zookeeper-defaults
     timeout: 5s
     retries: 3
 x-db-depend: &db-depend
-  !!merge <<: *common
+  <<: *common
   depends_on:
     clickhouse:
       condition: service_healthy
@@ -60,7 +60,7 @@ x-db-depend: &db-depend
       condition: service_completed_successfully
 services:
   init-clickhouse:
-    !!merge <<: *common
+    <<: *common
     image: clickhouse/clickhouse-server:24.1.2-alpine
     container_name: signoz-init-clickhouse
     command:
@@ -79,7 +79,7 @@ services:
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
-    !!merge <<: *zookeeper-defaults
+    <<: *zookeeper-defaults
     container_name: signoz-zookeeper-1
     # ports:
     #   - "2181:2181"
@@ -94,7 +94,7 @@ services:
       - ZOO_ENABLE_PROMETHEUS_METRICS=yes
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   clickhouse:
-    !!merge <<: *clickhouse-defaults
+    <<: *clickhouse-defaults
     container_name: signoz-clickhouse
     # ports:
     #   - "9000:9000"
@@ -109,7 +109,7 @@ services:
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
-    !!merge <<: *db-depend
+    <<: *db-depend
     image: signoz/signoz:${VERSION:-v0.78.1}
     container_name: signoz
     command:
@@ -143,7 +143,7 @@ services:
       timeout: 5s
       retries: 3
   otel-collector:
-    !!merge <<: *db-depend
+    <<: *db-depend
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.111.38}
     container_name: signoz-otel-collector
     command:
@@ -165,7 +165,7 @@ services:
       signoz:
         condition: service_healthy
   schema-migrator-sync:
-    !!merge <<: *common
+    <<: *common
     image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.111.38}
     container_name: schema-migrator-sync
     command:
@@ -177,7 +177,7 @@ services:
         condition: service_healthy
     restart: on-failure
   schema-migrator-async:
-    !!merge <<: *db-depend
+    <<: *db-depend
     image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-v0.111.38}
     container_name: schema-migrator-async
     command:
