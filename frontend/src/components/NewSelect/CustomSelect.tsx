@@ -6,9 +6,9 @@ import './styles.scss';
 
 import {
 	CloseOutlined,
+	DownOutlined,
 	LoadingOutlined,
 	ReloadOutlined,
-	SearchOutlined,
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Select, SelectProps } from 'antd';
@@ -645,7 +645,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			popupMatchSelectWidth={popupMatchSelectWidth}
 			allowClear={allowClear ? { clearIcon } : false}
 			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<SearchOutlined />}
+			suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
 			dropdownRender={customDropdownRender}
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-select-dropdown-container', popupClassName)}
