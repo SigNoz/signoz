@@ -1,4 +1,4 @@
-package memoryprovider
+package licenseprovider
 
 import (
 	"context"
@@ -17,13 +17,13 @@ type provider struct {
 }
 
 func NewFactory(registry featuretypes.Registry) factory.ProviderFactory[flagger.Provider, flagger.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("memory"), func(ctx context.Context, providerSettings factory.ProviderSettings, config flagger.Config) (flagger.Provider, error) {
+	return factory.NewProviderFactory(factory.MustNewName("license"), func(ctx context.Context, providerSettings factory.ProviderSettings, config flagger.Config) (flagger.Provider, error) {
 		return New(ctx, providerSettings, config, registry)
 	})
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config flagger.Config, registry featuretypes.Registry) (flagger.Provider, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/flagger/memoryprovider")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/flagger/licenseprovider")
 
 	featureValues := make(map[featuretypes.Name]featuretypes.FeatureValue)
 	for _, flag := range config.Boolean.Enabled {
@@ -67,7 +67,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 func (provider *provider) Metadata() openfeature.Metadata {
 	return openfeature.Metadata{
-		Name: "memory",
+		Name: "license",
 	}
 }
 

@@ -5,12 +5,8 @@ import "github.com/SigNoz/signoz/pkg/factory"
 var _ factory.Config = Config{}
 
 type Config struct {
-	Provider string `json:"provider"`
-	Memory   Memory `json:"memory"`
-}
-
-type Memory struct {
-	Boolean Boolean `json:"boolean"`
+	Provider string  `json:"provider"`
+	Boolean  Boolean `json:"boolean"`
 }
 
 type Boolean struct {
@@ -25,7 +21,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Provider: "memory",
-		Memory:   Memory{},
+		Boolean:  Boolean{},
 	}
 
 }
