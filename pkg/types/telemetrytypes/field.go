@@ -130,7 +130,7 @@ func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFie
 	// Let's take an example of `http.status_code`, and consider user sent a string value and number value
 	// When they search for `http.status_code=200`, we will search across both the number columns and string columns
 	// and return the results from both the columns
-	// While we expect user not to send the mixed data types, it invetably happens
+	// While we expect user not to send the mixed data types, it inevitably happens
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
 	case FieldDataTypeString:
