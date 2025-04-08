@@ -187,6 +187,13 @@ function NewSelectDemo(): JSX.Element {
 	// Handle search with simulated loading
 	const handleSearch = (): void => {};
 
+	const onRetry = (): void => {
+		setLoading(true);
+		setTimeout(() => {
+			setLoading(false);
+		}, 1000);
+	};
+
 	// Toggle error state for demo
 	const toggleError = (): void => {
 		setShowError(!showError);
@@ -417,7 +424,9 @@ function NewSelectDemo(): JSX.Element {
 											}}
 											options={getOptions(basicData.options)}
 											onSearch={handleSearch}
-											errorMessage="Unable to fetch data. Please try again."
+											errorMessage="Unable to fetch data. Please try again"
+											onRetry={onRetry}
+											loading={loading}
 										/>
 									</Col>
 

@@ -181,24 +181,7 @@
 	}
 
 	.no-section-options {
-		max-height: 200px;
-		overflow-y: auto;
-		overflow-x: hidden;
-		scrollbar-width: thin;
 		margin-bottom: 8px;
-
-		&::-webkit-scrollbar {
-			width: 6px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background-color: #2c3044;
-			border-radius: 3px;
-		}
-
-		&::-webkit-scrollbar-track {
-			background-color: #1d212d;
-		}
 	}
 
 	.select-group {
@@ -280,12 +263,54 @@
 		.navigation-icons {
 			display: flex;
 			margin-right: 8px;
-			color: rgba(192, 193, 195, 0.45);
+			color: var(--bg-vanilla-400);
 		}
 
 		.navigation-text {
-			color: rgba(192, 193, 195, 0.45);
+			color: var(--bg-vanilla-400);
 			font-size: 12px;
+		}
+
+		.navigation-error {
+			.navigation-text,
+			.navigation-icons {
+				color: var(--bg-cherry-500) !important;
+			}
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			width: 100%;
+			gap: 4px;
+		}
+
+		.navigation-loading {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.navigation-text,
+			.navigation-icons {
+				color: var(--bg-robin-600) !important;
+			}
+		}
+
+		.navigate {
+			display: flex;
+			align-items: center;
+			padding-right: 12px;
+			gap: 6px;
+
+			.icons {
+				width: 14px;
+				height: 14px;
+				flex-shrink: 0;
+				border-radius: 2.286px;
+				border-top: 1.143px solid var(--bg-ink-200);
+				border-right: 1.143px solid var(--bg-ink-200);
+				border-bottom: 2.286px solid var(--bg-ink-200);
+				border-left: 1.143px solid var(--bg-ink-200);
+				background: var(--Ink-400, #121317);
+			}
 		}
 	}
 }
@@ -655,16 +680,6 @@
 			background-color: #f0f0f0;
 		}
 
-		.no-section-options {
-			&::-webkit-scrollbar-thumb {
-				background-color: #ccc;
-			}
-
-			&::-webkit-scrollbar-track {
-				background-color: #f0f0f0;
-			}
-		}
-
 		.select-group {
 			.group-label {
 				color: rgba(0, 0, 0, 0.85);
@@ -708,6 +723,16 @@
 
 			.navigation-text {
 				color: rgba(0, 0, 0, 0.45);
+			}
+
+			.navigate {
+				.icons {
+					border-top: 1.143px solid var(--bg-ink-200);
+					border-right: 1.143px solid var(--bg-ink-200);
+					border-bottom: 2.286px solid var(--bg-ink-200);
+					border-left: 1.143px solid var(--bg-ink-200);
+					background: var(--bg-vanilla-300);
+				}
 			}
 		}
 	}
@@ -759,8 +784,7 @@
 	.custom-select-dropdown,
 	.custom-multiselect-dropdown,
 	.custom-select-dropdown-container,
-	.custom-multiselect-dropdown-container,
-	.no-section-options {
+	.custom-multiselect-dropdown-container {
 		scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
 
 		&::-webkit-scrollbar-track {
