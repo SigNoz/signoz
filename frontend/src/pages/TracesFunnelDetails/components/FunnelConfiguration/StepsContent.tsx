@@ -66,6 +66,7 @@ function StepsContent({
 							}
 						/>
 					))}
+					{/* For now we are only supporting 3 steps */}
 					{steps.length < 3 && (
 						<Step
 							className="steps-content__add-step"
