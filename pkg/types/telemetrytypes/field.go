@@ -50,7 +50,7 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 	}
 
 	// check if there is a field data type provided
-	if len(keyTextParts) > 1 {
+	if len(keyTextParts) >= 1 {
 		lastPart := keyTextParts[len(keyTextParts)-1]
 		lastPartParts := strings.Split(lastPart, ":")
 		if len(lastPartParts) > 1 {
