@@ -41,14 +41,14 @@ const (
 	FilterOperatorNotContains
 )
 
-// ClickhouseConditionBuilder is the interface for building the condition part of the query.
-type ClickhouseConditionBuilder interface {
+// ConditionBuilder is the interface for building the condition part of the query.
+type ConditionBuilder interface {
 	// GetColumn returns the column for the given key.
-	GetColumn(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
+	GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error)
 
 	// GetTableFieldName returns the table field name for the given key.
-	GetTableFieldName(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error)
+	GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error)
 
 	// GetCondition returns the condition for the given key, operator and value.
-	GetCondition(ctx context.Context, key telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	GetCondition(ctx context.Context, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
