@@ -50,16 +50,16 @@ var (
 	}
 )
 
-var _ qbtypes.ClickhouseConditionBuilder = &conditionBuilder{}
+var _ qbtypes.ConditionBuilder = &conditionBuilder{}
 
 type conditionBuilder struct {
 }
 
-func NewConditionBuilder() qbtypes.ClickhouseConditionBuilder {
+func NewConditionBuilder() qbtypes.ConditionBuilder {
 	return &conditionBuilder{}
 }
 
-func (c *conditionBuilder) GetColumn(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (c *conditionBuilder) GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
@@ -92,7 +92,7 @@ func (c *conditionBuilder) GetColumn(ctx context.Context, key telemetrytypes.Tel
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error) {
+func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	column, err := c.GetColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -139,7 +139,7 @@ func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key telemetryt
 
 func (c *conditionBuilder) GetCondition(
 	ctx context.Context,
-	key telemetrytypes.TelemetryFieldKey,
+	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -183,9 +183,9 @@ func (c *conditionBuilder) GetCondition(
 		return sb.NotILike(tblFieldName, value), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(tblFieldName, value), nil
+		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
-		return sb.NotILike(tblFieldName, value), nil
+		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		exp := fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
