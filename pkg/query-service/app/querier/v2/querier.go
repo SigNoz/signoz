@@ -17,6 +17,7 @@ import (
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -57,10 +58,11 @@ type querier struct {
 }
 
 type QuerierOptions struct {
-	Reader       interfaces.Reader
-	Cache        cache.Cache
-	KeyGenerator cache.KeyGenerator
-	FluxInterval time.Duration
+	Reader         interfaces.Reader
+	Cache          cache.Cache
+	KeyGenerator   cache.KeyGenerator
+	FluxInterval   time.Duration
+	TelemetryStore telemetrystore.TelemetryStore
 
 	// used for testing
 	TestingMode       bool

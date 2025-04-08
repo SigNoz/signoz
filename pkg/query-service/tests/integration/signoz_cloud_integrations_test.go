@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/google/uuid"
@@ -364,6 +365,9 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 		CloudIntegrationsController: controller,
 		FeatureFlags:                fm,
 		JWT:                         jwt,
+		Signoz: &signoz.SigNoz{
+			TelemetryStore: nil,
+		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
