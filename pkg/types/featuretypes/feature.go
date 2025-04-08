@@ -11,6 +11,11 @@ var (
 	ErrCodeFeatureVariantNotFound = errors.MustNewCode("feature_variant_not_found")
 )
 
+type GettableFeature struct {
+	*Feature
+	*FeatureVariant
+}
+
 type Feature struct {
 	// Name is the name of the feature flag.
 	Name Name `json:"name"`
@@ -25,18 +30,18 @@ type Feature struct {
 	Stage Stage `json:"stage"`
 
 	// DefaultVariant is the default variant of the feature flag.
-	DefaultVariant string `json:"default_variant"`
+	DefaultVariant string `json:"defaultVariant"`
 
 	// Variants is the variants of the feature flag.
 	Variants map[string]any `json:"variants"`
 }
 
-type FeatureValue struct {
-	// Name is the name of the feature flag.
-	Name Name `json:"name"`
+type FeatureVariant struct {
+	// Variant is the variant of the feature flag.
+	Variant string `json:"variant"`
 
 	// Value is the value of the feature flag.
-	Variant string `json:"variant"`
+	Value any `json:"value"`
 }
 
 func NewKindBooleanFeatureVariants() map[string]any {
@@ -46,7 +51,7 @@ func NewKindBooleanFeatureVariants() map[string]any {
 	}
 }
 
-func GetVariantValue[T any](feature *Feature, variant string) (t T, detail openfeature.ProviderResolutionDetail, err error) {
+func GetFeatureVariantValue[T any](feature *Feature, variant string) (t T, detail openfeature.ProviderResolutionDetail, err error) {
 	value, ok := feature.Variants[variant]
 	if !ok {
 		err = errors.Newf(errors.TypeNotFound, ErrCodeFeatureVariantNotFound, "variant %s not found for feature %s", variant, feature.Name.String())
@@ -75,4 +80,22 @@ func GetVariantValue[T any](feature *Feature, variant string) (t T, detail openf
 	}
 
 	return
+}
+
+func NewGettableFeatures(features []*Feature, featureVariants map[Name]*FeatureVariant) []*GettableFeature {
+	gettableFeatures := make([]*GettableFeature, 0)
+
+	for _, feature := range features {
+		if featureVariant, ok := featureVariants[feature.Name]; ok {
+			gettableFeatures = append(gettableFeatures, &GettableFeature{Feature: feature, FeatureVariant: featureVariant})
+			continue
+		}
+
+		gettableFeatures = append(gettableFeatures, &GettableFeature{Feature: feature, FeatureVariant: &FeatureVariant{
+			Variant: feature.DefaultVariant,
+			Value:   feature.Variants[feature.DefaultVariant],
+		}})
+	}
+
+	return gettableFeatures
 }

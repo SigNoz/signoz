@@ -13,7 +13,10 @@ type Registry interface {
 	MergeOrOverride(Registry) Registry
 
 	// Get returns the feature with the given name.
-	Get(string) (*Feature, openfeature.ProviderResolutionDetail, error)
+	Get(Name) (*Feature, openfeature.ProviderResolutionDetail, error)
+
+	// GetByNameString returns the feature with the given name string.
+	GetByNameString(string) (*Feature, openfeature.ProviderResolutionDetail, error)
 
 	// List returns all the features in the registry.
 	List() []*Feature
@@ -40,61 +43,61 @@ func NewRegistry(features ...*Feature) (Registry, error) {
 		// Check that the type of the default variant and the variants match the kind of the feature
 		switch feature.Kind {
 		case KindBoolean:
-			_, _, err := GetVariantValue[bool](feature, feature.DefaultVariant)
+			_, _, err := GetFeatureVariantValue[bool](feature, feature.DefaultVariant)
 			if err != nil {
 				return nil, err
 			}
 
 			for variant := range feature.Variants {
-				_, _, err := GetVariantValue[bool](feature, variant)
+				_, _, err := GetFeatureVariantValue[bool](feature, variant)
 				if err != nil {
 					return nil, err
 				}
 			}
 		case KindString:
-			_, _, err := GetVariantValue[string](feature, feature.DefaultVariant)
+			_, _, err := GetFeatureVariantValue[string](feature, feature.DefaultVariant)
 			if err != nil {
 				return nil, err
 			}
 
 			for variant := range feature.Variants {
-				_, _, err := GetVariantValue[string](feature, variant)
+				_, _, err := GetFeatureVariantValue[string](feature, variant)
 				if err != nil {
 					return nil, err
 				}
 			}
 		case KindInt:
-			_, _, err := GetVariantValue[int](feature, feature.DefaultVariant)
+			_, _, err := GetFeatureVariantValue[int](feature, feature.DefaultVariant)
 			if err != nil {
 				return nil, err
 			}
 
 			for variant := range feature.Variants {
-				_, _, err := GetVariantValue[int](feature, variant)
+				_, _, err := GetFeatureVariantValue[int](feature, variant)
 				if err != nil {
 					return nil, err
 				}
 			}
 		case KindFloat:
-			_, _, err := GetVariantValue[float64](feature, feature.DefaultVariant)
+			_, _, err := GetFeatureVariantValue[float64](feature, feature.DefaultVariant)
 			if err != nil {
 				return nil, err
 			}
 
 			for variant := range feature.Variants {
-				_, _, err := GetVariantValue[float64](feature, variant)
+				_, _, err := GetFeatureVariantValue[float64](feature, variant)
 				if err != nil {
 					return nil, err
 				}
 			}
 		case KindObject:
-			_, _, err := GetVariantValue[map[string]any](feature, feature.DefaultVariant)
+			_, _, err := GetFeatureVariantValue[map[string]any](feature, feature.DefaultVariant)
 			if err != nil {
 				return nil, err
 			}
 
 			for variant := range feature.Variants {
-				_, _, err := GetVariantValue[map[string]any](feature, variant)
+				_, _, err := GetFeatureVariantValue[map[string]any](feature, variant)
 				if err != nil {
 					return nil, err
 				}
@@ -115,8 +118,21 @@ func (registry *registry) MergeOrOverride(other Registry) Registry {
 	return registry
 }
 
-func (registry *registry) Get(flag string) (*Feature, openfeature.ProviderResolutionDetail, error) {
-	name, err := NewName(flag)
+func (registry *registry) Get(name Name) (*Feature, openfeature.ProviderResolutionDetail, error) {
+	feature, ok := registry.features[name]
+	if !ok {
+		err := errors.Newf(errors.TypeNotFound, ErrCodeFeatureNotFound, "feature %s not found in registry", name.String())
+		return nil, openfeature.ProviderResolutionDetail{
+			ResolutionError: openfeature.NewFlagNotFoundResolutionError(err.Error()),
+			Reason:          openfeature.ErrorReason,
+		}, err
+	}
+
+	return feature, openfeature.ProviderResolutionDetail{}, nil
+}
+
+func (registry *registry) GetByNameString(nameString string) (*Feature, openfeature.ProviderResolutionDetail, error) {
+	name, err := NewName(nameString)
 	if err != nil {
 		return nil, openfeature.ProviderResolutionDetail{
 			ResolutionError: openfeature.NewFlagNotFoundResolutionError(err.Error()),
@@ -124,15 +140,7 @@ func (registry *registry) Get(flag string) (*Feature, openfeature.ProviderResolu
 		}, err
 	}
 
-	feature, ok := registry.features[name]
-	if !ok {
-		return nil, openfeature.ProviderResolutionDetail{
-			ResolutionError: openfeature.NewFlagNotFoundResolutionError(errors.Newf(errors.TypeNotFound, ErrCodeFeatureNotFound, "feature %s not found in registry", name.String()).Error()),
-			Reason:          openfeature.ErrorReason,
-		}, err
-	}
-
-	return feature, openfeature.ProviderResolutionDetail{}, nil
+	return registry.Get(name)
 }
 
 func (registry *registry) List() []*Feature {
