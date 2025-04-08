@@ -699,8 +699,8 @@ function QueryBuilderSearchV2(
 			} else {
 				setDropdownOptions([
 					// Add user typed option if it doesn't exist in the payload
-					...(!isEmpty(tagKey) &&
-					!data?.payload?.attributeKeys?.some((val) => isEqual(val.key, tagKey))
+					...(tagKey.trim().length > 0 &&
+					!data?.payload?.attributeKeys?.some((val) => val.key === tagKey)
 						? [
 								{
 									label: tagKey,
