@@ -56,7 +56,7 @@ export function useInspectMetrics(
 			[...allTimestamps].sort((a, b) => a - b),
 		);
 
-		// Map values to corresponding timestamps, filling missing ones with `null`
+		// Map values to corresponding timestamps, filling missing ones with `0`
 		const formattedSeries = inspectMetricsTimeSeries.map((_, idx) =>
 			timestamps.map((t) => seriesValuesMap[idx].get(t) ?? 0),
 		);
