@@ -27,6 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
@@ -165,16 +166,17 @@ func createTestUser() (*types.User, *model.ApiError) {
 
 	auth.InitAuthCache(ctx)
 
-	userId := uuid.NewString()
+	userId := valuer.GenerateUUID()
+
 	return dao.DB().CreateUser(
 		ctx,
 		&types.User{
-			ID:       userId,
-			Name:     "test",
-			Email:    userId[:8] + "test@test.com",
-			Password: "test",
-			OrgID:    org.ID,
-			GroupID:  group.ID,
+			Identifiable: types.Identifiable{ID: userId},
+			Name:         "test",
+			Email:        fmt.Sprintf("%stest@test.com", userId.String()[len(userId.String())-8:]),
+			Password:     "test",
+			OrgID:        org.ID,
+			GroupID:      group.ID,
 		},
 		true,
 	)

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -231,6 +232,20 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
+	if len(orgIDs) == 0 {
+		err = tx.Commit()
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// copy the old aws integration user to the new user
+	err = migration.copyOldAwsIntegrationUser(tx, orgIDs[0])
+	if err != nil {
+		return err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return err
@@ -350,4 +365,92 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 	}
 
 	return newServices
+}
+
+// copyOldAwsIntegrationUser copies the old aws integration user to the new user
+// the previous user had id = aws-integration, and email = aws-integration@signoz.io
+// the new user will have id = orgID-aws-integration, and email = orgID-aws-integration@signoz.io
+// the pat is also updated for the user.
+func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID string) error {
+	type OldUser struct {
+		bun.BaseModel `bun:"table:users"`
+
+		types.TimeAuditable
+		ID                string `bun:"id,pk,type:text"`
+		Name              string `bun:"name,type:text,notnull" json:"name"`
+		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
+		Password          string `bun:"password,type:text,notnull" json:"-"`
+		ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
+		GroupID           string `bun:"group_id,type:text,notnull" json:"groupId"`
+		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
+	}
+
+	user := &OldUser{}
+	err := tx.NewSelect().Model(user).Where("email = ?", "aws-integration@signoz.io").Scan(context.Background())
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return err
+	}
+
+	// create a new user
+	newUser := &types.User{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+		},
+		OrgID:    orgID,
+		Name:     orgID + "-aws-integration",
+		Email:    orgID + "-aws-integration@signoz.io",
+		GroupID:  user.GroupID,
+		Password: user.Password,
+	}
+	// insert the new user
+	_, err = tx.NewInsert().Model(newUser).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// get the pat for the user
+	pat := &eeTypes.StorablePersonalAccessToken{}
+	err = tx.NewSelect().Model(pat).Where("user_id = ?", "aws-integration").Scan(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// create a new pat
+	newPAT := &eeTypes.StorablePersonalAccessToken{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+		},
+		OrgID:     orgID,
+		UserID:    newUser.ID.String(),
+		Token:     pat.Token,
+		Name:      pat.Name,
+		ExpiresAt: pat.ExpiresAt,
+		LastUsed:  pat.LastUsed,
+		Revoked:   pat.Revoked,
+		Role:      pat.Role,
+	}
+
+	// delete the old pat
+	_, err = tx.ExecContext(context.Background(), `DELETE FROM personal_access_token WHERE id = ?`, pat.ID)
+	if err != nil {
+		return err
+	}
+
+	// insert the new pat
+	_, err = tx.NewInsert().Model(newPAT).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// delete old user
+	_, err = tx.ExecContext(context.Background(), `DELETE FROM users WHERE id = ?`, user.ID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

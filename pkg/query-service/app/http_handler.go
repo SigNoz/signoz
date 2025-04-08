@@ -2208,11 +2208,11 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &types.User{
-		ID:       old.ID,
-		Name:     old.Name,
-		OrgID:    old.OrgID,
-		Email:    old.Email,
-		Password: old.Password,
+		Identifiable: types.Identifiable{ID: old.ID},
+		Name:         old.Name,
+		OrgID:        old.OrgID,
+		Email:        old.Email,
+		Password:     old.Password,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: old.CreatedAt,
 		},
@@ -2338,7 +2338,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID, newGroup.ID)
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID.String(), newGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return

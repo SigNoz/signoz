@@ -39,7 +39,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	pat := eeTypes.NewGettablePAT(
 		req.Name,
 		req.Role,
-		user.ID,
+		user.ID.String(),
 		req.ExpiresInDays,
 	)
 	err = validatePATRequest(pat)
@@ -95,7 +95,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.UpdatedByUserID = user.ID
+	req.UpdatedByUserID = user.ID.String()
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
@@ -123,7 +123,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	zap.L().Info("Get PATs for user", zap.String("user_id", user.ID))
+	zap.L().Info("Get PATs for user", zap.String("user_id", user.ID.String()))
 	pats, apierr := ah.AppDao().ListPATs(ctx, user.OrgID)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
@@ -150,7 +150,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	zap.L().Info("Revoke PAT with id", zap.String("id", id.StringValue()))
-	if apierr := ah.AppDao().RevokePAT(ctx, user.OrgID, id, user.ID); apierr != nil {
+	if apierr := ah.AppDao().RevokePAT(ctx, user.OrgID, id, user.ID.String()); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}

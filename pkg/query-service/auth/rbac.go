@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 )
 
@@ -56,16 +57,16 @@ func GetUserFromReqContext(ctx context.Context) (*types.GettableUser, error) {
 
 	user := &types.GettableUser{
 		User: types.User{
-			ID:      claims.UserID,
-			GroupID: claims.GroupID,
-			Email:   claims.Email,
-			OrgID:   claims.OrgID,
+			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(claims.UserID)},
+			GroupID:      claims.GroupID,
+			Email:        claims.Email,
+			OrgID:        claims.OrgID,
 		},
 	}
 	return user, nil
 }
 
-func IsSelfAccessRequest(user *types.GettableUser, id string) bool { return user.ID == id }
+func IsSelfAccessRequest(user *types.GettableUser, id string) bool { return user.ID.String() == id }
 
 func IsViewer(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.ViewerGroupId }
 func IsEditor(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.EditorGroupId }

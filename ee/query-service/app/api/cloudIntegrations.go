@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -125,7 +126,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 	for _, p := range allPats {
-		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
+		if p.UserID == integrationUser.ID.String() && p.Name == integrationPATName {
 			return p.Token, nil
 		}
 	}
@@ -138,7 +139,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 	newPAT := eeTypes.NewGettablePAT(
 		integrationPATName,
 		baseconstants.ViewerGroup,
-		integrationUser.ID,
+		integrationUser.ID.String(),
 		0,
 	)
 	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
@@ -153,9 +154,10 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	ctx context.Context, orgId string, cloudProvider string,
 ) (*types.User, *basemodel.ApiError) {
-	cloudIntegrationUserId := fmt.Sprintf("%s-integration", cloudProvider)
+	prefix := fmt.Sprintf("%s-%s", orgId, cloudProvider)
+	email := fmt.Sprintf("%s-integration@signoz.io", prefix)
 
-	integrationUserResult, apiErr := ah.AppDao().GetUser(ctx, cloudIntegrationUserId)
+	integrationUserResult, apiErr := ah.AppDao().GetUserByEmail(ctx, email)
 	if apiErr != nil {
 		return nil, basemodel.WrapApiError(apiErr, "couldn't look for integration user")
 	}
@@ -170,9 +172,9 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	)
 
 	newUser := &types.User{
-		ID:    cloudIntegrationUserId,
-		Name:  fmt.Sprintf("%s integration", cloudProvider),
-		Email: fmt.Sprintf("%s@signoz.io", cloudIntegrationUserId),
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		Name:         fmt.Sprintf("%s-integration", prefix),
+		Email:        fmt.Sprintf("%s", email),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},

@@ -62,7 +62,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 		}
 
 		jwt := authtypes.Claims{
-			UserID:  user.ID,
+			UserID:  user.ID.String(),
 			GroupID: user.GroupID,
 			Email:   user.Email,
 			OrgID:   user.OrgID,

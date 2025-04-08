@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 )
 
@@ -52,12 +53,12 @@ func createTestUser() (*types.User, *model.ApiError) {
 	return dao.DB().CreateUser(
 		ctx,
 		&types.User{
-			ID:       userId,
-			Name:     "test",
-			Email:    userId[:8] + "test@test.com",
-			Password: "test",
-			OrgID:    org.ID,
-			GroupID:  group.ID,
+			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(userId)},
+			Name:         "test",
+			Email:        userId[:8] + "test@test.com",
+			Password:     "test",
+			OrgID:        org.ID,
+			GroupID:      group.ID,
 		},
 		true,
 	)
