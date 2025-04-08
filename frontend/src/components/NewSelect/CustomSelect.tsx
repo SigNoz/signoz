@@ -4,11 +4,18 @@
 /* eslint-disable react/function-component-definition */
 import './styles.scss';
 
-import { CloseOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+	CloseOutlined,
+	LoadingOutlined,
+	ReloadOutlined,
+	SearchOutlined,
+} from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
 import { Select, SelectProps } from 'antd';
 import cx from 'classnames';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import React, {
 	useCallback,
 	useEffect,
@@ -45,6 +52,8 @@ export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
 	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 	popupMatchSelectWidth?: boolean;
 	errorMessage?: string;
+	allowClear?: SelectProps['allowClear'];
+	onRetry?: () => void;
 }
 
 /**
@@ -69,6 +78,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	popupMatchSelectWidth = true,
 	popupClassName,
 	errorMessage,
+	allowClear = false,
+	onRetry,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -290,14 +301,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			const trimmedValue = value.trim();
 			setSearchText(trimmedValue);
 
-			// Ensure dropdown opens when typing
-			if (!isOpen) {
-				setIsOpen(true);
-			}
-
 			if (onSearch) onSearch(trimmedValue);
 		},
-		[onSearch, isOpen],
+		[onSearch],
 	);
 
 	/**
@@ -450,9 +456,13 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const customDropdownRender = useCallback((): React.ReactElement => {
 		// Process options based on current value
-		const processedOptions = isEmpty(value)
+		let processedOptions = isEmpty(value)
 			? filteredOptions
 			: prioritizeOrAddOptionForSingleSelect(filteredOptions, value);
+
+		if (!isEmpty(searchText)) {
+			processedOptions = filterOptionsBySearch(processedOptions, searchText);
+		}
 
 		const { sectionOptions, nonSectionOptions } = splitOptions(processedOptions);
 
@@ -482,16 +492,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				optionIndex += 1;
 				return result;
 			});
-
-		let footerMessage = 'to Navigate';
-
-		if (loading) {
-			footerMessage = 'We are updating the values...';
-		} else if (errorMessage) {
-			footerMessage = errorMessage;
-		} else if (noDataMessage) {
-			footerMessage = noDataMessage;
-		}
 
 		const customMenu = (
 			<div
@@ -525,41 +525,64 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						) : null,
 					)}
 
-				{/* Loading state
-				{!hasOptions && loading && (
-					<div className="loading-container">
-						<Spin size="small" />
-					</div>
-				)} */}
-
 				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
 					{!loading && !errorMessage && !noDataMessage && (
-						<div className="navigation-icons">
-							<ChevronUp size={16} />
-							<ChevronDown size={16} />
+						<section className="navigate">
+							<ArrowDown size={8} className="icons" />
+							<ArrowUp size={8} className="icons" />
+							<span className="keyboard-text">to navigate</span>
+						</section>
+					)}
+					{loading && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<LoadingOutlined />
+							</div>
+							<div className="navigation-text">We are updating the values...</div>
 						</div>
 					)}
-					<div className="navigation-text">{footerMessage}</div>
+					{errorMessage && !loading && (
+						<div className="navigation-error">
+							<div className="navigation-text">
+								{errorMessage || SOMETHING_WENT_WRONG}
+							</div>
+							<div className="navigation-icons">
+								<ReloadOutlined
+									twoToneColor={Color.BG_CHERRY_400}
+									onClick={(e): void => {
+										e.stopPropagation();
+										if (onRetry) onRetry();
+									}}
+								/>
+							</div>
+						</div>
+					)}
+
+					{noDataMessage && !loading && (
+						<div className="navigation-text">{noDataMessage}</div>
+					)}
 				</div>
 			</div>
 		);
 
 		return dropdownRender ? dropdownRender(customMenu) : customMenu;
 	}, [
-		filteredOptions,
 		value,
-		splitOptions,
+		filteredOptions,
 		searchText,
+		splitOptions,
 		isLabelPresent,
-		loading,
-		errorMessage,
-		noDataMessage,
 		handleDropdownClick,
 		handleKeyDown,
 		activeOptionIndex,
+		loading,
+		errorMessage,
+		noDataMessage,
 		dropdownRender,
+		filterOptionsBySearch,
 		renderOptionWithIndex,
+		onRetry,
 	]);
 
 	// ===== Side Effects =====
@@ -620,7 +643,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			options={optionsWithHighlight}
 			defaultActiveFirstOption={defaultActiveFirstOption}
 			popupMatchSelectWidth={popupMatchSelectWidth}
-			allowClear={{ clearIcon }}
+			allowClear={allowClear ? { clearIcon } : false}
 			getPopupContainer={getPopupContainer ?? popupContainer}
 			suffixIcon={<SearchOutlined />}
 			dropdownRender={customDropdownRender}
@@ -652,6 +675,8 @@ CustomSelect.defaultProps = {
 	placement: 'bottomLeft',
 	popupMatchSelectWidth: true,
 	errorMessage: '',
+	allowClear: false,
+	onRetry: undefined,
 };
 
 export default CustomSelect;
