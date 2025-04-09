@@ -7,6 +7,10 @@ on:
     tags:
       - v*
 
+defaults:
+  run:
+    shell: bash
+
 env:
   PRIMUS_HOME: .primus
   MAKE: make --no-print-directory --makefile=.primus/src/make/main.mk
@@ -39,10 +43,10 @@ jobs:
           token: ${{ steps.token.outputs.token }}
       - name: build-info
         run: |
-          echo "version=$(eval $MAKE info-version)" >> $GITHUB_OUTPUT
-          echo "hash=$(eval $MAKE info-commit-short)" >> $GITHUB_OUTPUT
-          echo "time=$(eval $MAKE info-timestamp)" >> $GITHUB_OUTPUT
-          echo "branch=$(eval $MAKE info-branch)" >> $GITHUB_OUTPUT
+          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
+          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
+          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
+          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
       - name: set-docker-providers
         id: set-docker-providers
         run: |
