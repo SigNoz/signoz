@@ -164,7 +164,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 		if apierr != nil {
 			var emailDomain string
 			emailComponents := strings.Split(email, "@")
-			if len(emailComponents) > 0 {
+			if len(emailComponents) > 1 {
 				emailDomain = emailComponents[1]
 			}
 			zap.L().Error("failed to get org domain from email", zap.String("emailDomain", emailDomain), zap.Error(apierr.ToError()))
