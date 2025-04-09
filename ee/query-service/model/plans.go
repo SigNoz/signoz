@@ -70,7 +70,7 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.ThirdPartyApi,
+		Name:       basemodel.ThirdPartyAPI,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
@@ -136,7 +136,7 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       basemodel.ThirdPartyApi,
+		Name:       basemodel.ThirdPartyAPI,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
