@@ -310,6 +310,9 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: integration.CreatedAt,
+			},
 			Provider:        integration.CloudProvider,
 			AccountID:       integration.CloudAccountID,
 			Config:          integration.ConfigJSON,
@@ -357,6 +360,9 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 		newServices = append(newServices, &newCloudIntegrationService{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
+			},
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: service.CreatedAt,
 			},
 			Type:               service.ServiceID,
 			Config:             service.ConfigJSON,
