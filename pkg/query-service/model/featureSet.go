@@ -12,6 +12,7 @@ type Feature struct {
 const UseSpanMetrics = "USE_SPAN_METRICS"
 const AnomalyDetection = "ANOMALY_DETECTION"
 const TraceFunnels = "TRACE_FUNNELS"
+const ThirdPartyApi = "THIRD_PARTY_API"
 
 var BasicPlan = FeatureSet{
 	Feature{
@@ -31,6 +32,13 @@ var BasicPlan = FeatureSet{
 	Feature{
 		Name:       TraceFunnels,
 		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
+		Name:       ThirdPartyApi,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
