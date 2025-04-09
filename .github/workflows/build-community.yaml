@@ -75,7 +75,7 @@ jobs:
       GO_BUILD_FLAGS: >-
         -tags timetzdata
         -ldflags='-linkmode external -extldflags \"-static\" -s -w
-        -X github.com/SigNoz/signoz/pkg/version.Version=${{ needs.prepare.outputs.version }}
+        -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
         -X github.com/SigNoz/signoz/pkg/version.variant=community
         -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
         -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
