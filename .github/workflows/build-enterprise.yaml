@@ -39,10 +39,10 @@ jobs:
           token: ${{ steps.token.outputs.token }}
       - name: build-info
         run: |
-          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
-          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
-          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
-          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
+          echo "version=$(eval $MAKE info-version)" >> $GITHUB_OUTPUT
+          echo "hash=$(eval $MAKE info-commit-short)" >> $GITHUB_OUTPUT
+          echo "time=$(eval $MAKE info-timestamp)" >> $GITHUB_OUTPUT
+          echo "branch=$(eval $MAKE info-branch)" >> $GITHUB_OUTPUT
       - name: set-docker-providers
         id: set-docker-providers
         run: |
@@ -96,13 +96,13 @@ jobs:
       GO_BUILD_FLAGS: >-
         -tags timetzdata
         -ldflags='-linkmode external -extldflags \"-static\" -s -w
-        -X github.com/signoz/zeus/pkg/version.Version=${{ needs.prepare.outputs.version }}
-        -X github.com/signoz/zeus/pkg/version.variant=enterprise
-        -X github.com/signoz/zeus/pkg/version.hash=${{ needs.prepare.outputs.hash }}
-        -X github.com/signoz/zeus/pkg/version.time=${{ needs.prepare.outputs.time }}
-        -X github.com/signoz/zeus/pkg/version.branch=${{ needs.prepare.outputs.branch }}
-        -X github.com/signoz/zeus/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
-        -X github.com/signoz/zeus/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1'
+        -X github.com/SigNoz/signoz/pkg/version.Version=${{ needs.prepare.outputs.version }}
+        -X github.com/SigNoz/signoz/pkg/version.variant=enterprise
+        -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
+        -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
+        -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
+        -X github.com/SigNoz/signoz/ee/query-service/constants.ZeusURL=https://api.signoz.cloud
+        -X github.com/SigNoz/signoz/ee/query-service/constants.LicenseSignozIo=https://license.signoz.io/api/v1'
       GO_CGO_ENABLED: 1
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
       DOCKER_DOCKERFILE_PATH: ./ee/query-service/Dockerfile.multi-arch
