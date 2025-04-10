@@ -549,6 +549,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
@@ -1716,6 +1717,22 @@ func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 	result, err := aH.reader.GetServicesList(r.Context())
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
+	params, err := ParseSearchTracesParams(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
+		return
+	}
+
+	result, err := aH.reader.SearchTraces(r.Context(), params)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

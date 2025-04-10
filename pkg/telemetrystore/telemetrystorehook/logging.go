@@ -2,6 +2,8 @@ package telemetrystorehook
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -30,12 +32,21 @@ func (logging) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent
 }
 
 func (hook *logging) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {
-	hook.logger.Log(
-		ctx,
-		hook.level,
-		"::TELEMETRYSTORE-QUERY::",
+	level := hook.level
+	args := []any{
 		"db.query.text", event.Query,
 		"db.query.args", event.QueryArgs,
 		"db.duration", time.Since(event.StartTime).String(),
+	}
+	if event.Err != nil && !errors.Is(event.Err, sql.ErrNoRows) && !errors.Is(event.Err, context.Canceled) {
+		level = slog.LevelError
+		args = append(args, "db.query.error", event.Err)
+	}
+
+	hook.logger.Log(
+		ctx,
+		level,
+		"::TELEMETRYSTORE-QUERY::",
+		args...,
 	)
 }

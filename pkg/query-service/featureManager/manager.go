@@ -32,13 +32,7 @@ func (fm *FeatureManager) CheckFeature(featureKey string) error {
 
 // GetFeatureFlags returns current features
 func (fm *FeatureManager) GetFeatureFlags() (model.FeatureSet, error) {
-	features := append(constants.DEFAULT_FEATURE_SET, model.Feature{
-		Name:       model.OSS,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
+	features := constants.DEFAULT_FEATURE_SET
 	return features, nil
 }
 
