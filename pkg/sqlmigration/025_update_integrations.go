@@ -413,7 +413,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 
 	// get the pat for the user
 	pat := &eeTypes.StorablePersonalAccessToken{}
-	err = tx.NewSelect().Model(pat).Where("user_id = ?", "aws-integration").Scan(context.Background())
+	err = tx.NewSelect().Model(pat).Where("user_id = ? and revoked = false", "aws-integration").Scan(context.Background())
 	if err != nil {
 		return err
 	}
