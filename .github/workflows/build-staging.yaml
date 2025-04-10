@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/staging
   pull_request:
     types: [labeled]
 
@@ -19,7 +18,7 @@ env:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.event.label.name, 'staging:') || github.event.ref == 'refs/heads/main' || github.event.ref == 'refs/heads/feat/staging' }}
+    if: ${{ contains(github.event.label.name, 'staging:') || github.event.ref == 'refs/heads/main' }}
     outputs:
       version: ${{ steps.build-info.outputs.version }}
       hash: ${{ steps.build-info.outputs.hash }}
@@ -54,7 +53,7 @@ jobs:
           staging_label="${{ github.event.label.name }}"
           if [[ "${staging_label}" == "staging:"* ]]; then
               deployment=${staging_label#"staging:"}
-          elif [[ "${{ github.event.ref }}" == "refs/heads/main" || "${{ github.event.ref }}" == "refs/heads/feat/staging" ]]; then
+          elif [[ "${{ github.event.ref }}" == "refs/heads/main" ]]; then
               deployment="staging"
           else
               echo "error: not able to determine deployment. Please verify the PR label or the branch"
@@ -119,8 +118,8 @@ jobs:
       DOCKER_MANIFEST: true
       DOCKER_PROVIDERS: gcp
   staging:
-    if: ${{ github.event.ref == 'refs/heads/main' || github.event.ref == 'refs/heads/feat/staging' }}
-    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@feat/cd-staging
+    if: ${{ contains(github.event.label.name, 'staging:') || github.event.ref == 'refs/heads/main' }}
+    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@main
     secrets: inherit
     needs: [prepare, go-build]
     with:
