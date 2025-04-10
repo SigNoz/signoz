@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - feat/staging
+  pull_request:
+    types: [labeled]
 
 defaults:
   run:
@@ -17,11 +19,13 @@ env:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    if: ${{ contains(github.event.label.name, 'staging:') || github.event.ref == 'refs/heads/main' || github.event.ref == 'refs/heads/feat/staging' }}
     outputs:
       version: ${{ steps.build-info.outputs.version }}
       hash: ${{ steps.build-info.outputs.hash }}
       time: ${{ steps.build-info.outputs.time }}
       branch: ${{ steps.build-info.outputs.branch }}
+      deployment: ${{ steps.build-info.outputs.deployment }}
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
@@ -36,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: signoz/primus
-          ref: ${{ inputs.PRIMUS_REF }}
+          ref: main
           path: .primus
           token: ${{ steps.token.outputs.token }}
       - name: build-info
@@ -46,6 +50,17 @@ jobs:
           echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
           echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
           echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
+
+          staging_label="${{ github.event.label.name }}"
+          if [[ "${staging_label}" == "staging:"* ]]; then
+              deployment=${staging_label#"staging:"}
+          elif [[ "${{ github.event.ref }}" == "refs/heads/main" || "${{ github.event.ref }}" == "refs/heads/feat/staging" ]]; then
+              deployment="staging"
+          else
+              echo "error: not able to determine deployment. Please make sure the workflow is triggered by a PR labeled with 'staging:<deployment>' or by a push to 'main'"
+              exit 1
+          fi
+          echo "deployment=${deployment}" >> $GITHUB_OUTPUT
       - name: create-dotenv
         run: |
           mkdir -p frontend
@@ -103,3 +118,15 @@ jobs:
       DOCKER_DOCKERFILE_PATH: ./ee/query-service/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
       DOCKER_PROVIDERS: gcp
+  staging:
+    if: ${{ github.event.ref == 'refs/heads/main' || github.event.ref == 'refs/heads/feat/staging' }}
+    uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@feat/cd-staging
+    secrets: inherit
+    needs: [prepare, go-build]
+    with:
+      PRIMUS_REF: main
+      GITHUB_ENVIRONMENT: staging
+      GITHUB_SILENT: true
+      GITHUB_REPOSITORY_NAME: ${{ secrets.NP_CHARTS_SAAS_REPOSITORY }}
+      GITHUB_EVENT_NAME: releaser
+      GITHUB_EVENT_PAYLOAD: "{\"deployment\": \"${{ needs.prepare.outputs.deployment }}\", \"signoz_version\": \"${{ needs.prepare.outputs.version }}\"}"
