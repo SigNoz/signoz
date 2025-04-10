@@ -5,4 +5,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 export type AgregatorFilterProps = Pick<AutoCompleteProps, 'disabled'> & {
 	query: IBuilderQuery;
 	onChange: (value: BaseAutocompleteData) => void;
+	defaultValue?: string;
+	onSelect?: (value: BaseAutocompleteData) => void;
 };

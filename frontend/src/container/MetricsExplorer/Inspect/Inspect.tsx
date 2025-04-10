@@ -3,23 +3,28 @@ import './Inspect.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
+import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import GraphView from './GraphView';
+import QueryBuilder from './QueryBuilder';
 import { InspectProps } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
 function Inspect({
-	metricName,
-	metricUnit,
-	metricType,
+	metricName: defaultMetricName,
 	isOpen,
 	onClose,
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const [metricName, setMetricName] = useState<string | null>(defaultMetricName);
+
+	const { data: metricDetailsData } = useGetMetricDetails(metricName ?? '', {
+		enabled: !!metricName,
+	});
 
 	const {
 		inspectMetricsTimeSeries,
@@ -27,7 +32,29 @@ function Inspect({
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,
+		spaceAggregationLabels,
+		metricInspectionOptions,
+		dispatchMetricInspectionOptions,
 	} = useInspectMetrics(metricName);
+
+	const selectedMetricType = useMemo(
+		() => metricDetailsData?.payload?.data?.metadata?.metric_type,
+		[metricDetailsData],
+	);
+
+	const selectedMetricUnit = useMemo(
+		() => metricDetailsData?.payload?.data?.metadata?.unit,
+		[metricDetailsData],
+	);
+
+	const resetInspection = (): void => {
+		// TODO: Implement reset inspection
+	};
+
+	// Reset inspection when the selected metric changes
+	useEffect(() => {
+		resetInspection();
+	}, [metricName]);
 
 	const content = useMemo(() => {
 		if (isInspectMetricsLoading) {
@@ -65,10 +92,18 @@ function Inspect({
 					<GraphView
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
-						resetInspection={(): void => {}}
-						metricUnit={metricUnit}
+						resetInspection={resetInspection}
 						metricName={metricName}
-						metricType={metricType}
+						metricUnit={selectedMetricUnit}
+						metricType={selectedMetricType}
+					/>
+					<QueryBuilder
+						metricName={metricName}
+						metricType={selectedMetricType}
+						setMetricName={setMetricName}
+						spaceAggregationLabels={spaceAggregationLabels}
+						metricInspectionOptions={metricInspectionOptions}
+						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
 					/>
 				</div>
 			</div>
@@ -79,9 +114,12 @@ function Inspect({
 		inspectMetricsStatusCode,
 		inspectMetricsTimeSeries,
 		formattedInspectMetricsTimeSeries,
-		metricUnit,
 		metricName,
-		metricType,
+		selectedMetricType,
+		selectedMetricUnit,
+		spaceAggregationLabels,
+		metricInspectionOptions,
+		dispatchMetricInspectionOptions,
 	]);
 
 	return (

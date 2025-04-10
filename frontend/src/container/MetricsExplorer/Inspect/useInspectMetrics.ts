@@ -1,15 +1,56 @@
 import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
-import { useMemo } from 'react';
+import { useMemo, useReducer } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { convertNanoToMilliseconds } from '../Summary/utils';
-import { UseInspectMetricsReturnData } from './types';
+import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
+import {
+	MetricInspectionAction,
+	MetricInspectionOptions,
+	UseInspectMetricsReturnData,
+} from './types';
+
+const metricInspectionReducer = (
+	state: MetricInspectionOptions,
+	action: MetricInspectionAction,
+): MetricInspectionOptions => {
+	switch (action.type) {
+		case 'SET_TIME_AGGREGATION_OPTION':
+			return {
+				...state,
+				timeAggregationOption: action.payload,
+			};
+		case 'SET_TIME_AGGREGATION_INTERVAL':
+			return {
+				...state,
+				timeAggregationInterval: action.payload,
+			};
+		case 'SET_SPACE_AGGREGATION_OPTION':
+			return {
+				...state,
+				spaceAggregationOption: action.payload,
+			};
+		case 'SET_SPACE_AGGREGATION_LABELS':
+			return {
+				...state,
+				spaceAggregationLabels: action.payload,
+			};
+		case 'SET_FILTERS':
+			return {
+				...state,
+				filters: action.payload,
+			};
+		default:
+			return state;
+	}
+};
 
 export function useInspectMetrics(
 	metricName: string | null,
 ): UseInspectMetricsReturnData {
+	// Inspect Metrics API Call and data formatting
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -64,11 +105,30 @@ export function useInspectMetrics(
 		return [timestamps, ...formattedSeries];
 	}, [inspectMetricsTimeSeries]);
 
+	const spaceAggregationLabels = useMemo(() => {
+		const labels = new Set<string>();
+		inspectMetricsData?.payload?.data.series.forEach((series) => {
+			Object.keys(series.labels).forEach((label) => {
+				labels.add(label);
+			});
+		});
+		return Array.from(labels);
+	}, [inspectMetricsData]);
+
+	// Inspect metrics data selection
+	const [metricInspectionOptions, dispatchMetricInspectionOptions] = useReducer(
+		metricInspectionReducer,
+		INITIAL_INSPECT_METRICS_OPTIONS,
+	);
+
 	return {
 		inspectMetricsTimeSeries,
 		inspectMetricsStatusCode,
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,
+		spaceAggregationLabels,
+		metricInspectionOptions,
+		dispatchMetricInspectionOptions,
 	};
 }
