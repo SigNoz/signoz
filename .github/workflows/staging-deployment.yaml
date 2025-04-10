@@ -36,12 +36,17 @@ jobs:
           echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
           echo "GITHUB_SHA: ${GITHUB_SHA}"
           export VERSION="${GITHUB_SHA:0:7}" # needed for child process to access it
-          export OTELCOL_TAG="main"
           export PATH="/usr/local/go/bin/:$PATH" # needed for Golang to work
           export KAFKA_SPAN_EVAL="true"
-          docker system prune --force
-          docker pull signoz/signoz-otel-collector:main
-          docker pull signoz/signoz-schema-migrator:main
+          docker system prune --force -all
+          OTELCOL_TAG=$(curl -s https://api.github.com/repos/SigNoz/signoz-otel-collector/releases/latest | jq -r '.tag_name // "not-found"')
+          if [[ "${OTELCOL_TAG}" == "not-found" ]]; then
+            echo "warning: unable to determine latest SigNoz OtelCollector release tag, skipping latest otelcol deployment"
+          else
+            export OTELCOL_TAG=${OTELCOL_TAG}
+            docker pull signoz/signoz-otel-collector:${OTELCOL_TAG}
+            docker pull signoz/signoz-schema-migrator:${OTELCOL_TAG}
+          fi
           cd ~/signoz
           git status
           git add .
