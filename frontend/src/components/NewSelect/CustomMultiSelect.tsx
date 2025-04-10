@@ -5,7 +5,7 @@
 import './styles.scss';
 
 import { SearchOutlined } from '@ant-design/icons';
-import { Checkbox, Select, SelectProps } from 'antd';
+import { Button, Checkbox, Select, SelectProps } from 'antd';
 import cx from 'classnames';
 import { capitalize, isEmpty } from 'lodash-es';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -59,6 +59,13 @@ export interface CustomMultiSelectProps
 	maxTagCount?: number;
 }
 
+enum ToggleTagValue {
+	Only = 'Only',
+	All = 'All',
+}
+
+const ALL_SELECTED_VALUE = '__all__'; // Constant for the special value
+
 const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	placeholder = 'Search...',
 	className,
@@ -103,24 +110,122 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		[value],
 	);
 
-	// Helper function to get all values from options
-	const getAllValues = useCallback((optionsList: OptionData[]): string[] => {
-		const values: string[] = [];
+	// Helper function to get all *available* values from options (excluding disabled)
+	const getAllAvailableValues = useCallback(
+		(optionsList: OptionData[]): string[] => {
+			const values: string[] = [];
 
-		optionsList.forEach((option) => {
-			if ('options' in option && Array.isArray(option.options)) {
-				option.options?.forEach((subOption) => {
-					if (subOption.value) values.push(subOption.value);
-				});
-			} else if (option.value) {
-				values.push(option.value);
+			optionsList.forEach((option) => {
+				if ('options' in option && Array.isArray(option.options)) {
+					option.options?.forEach((subOption) => {
+						if (subOption.value) {
+							values.push(subOption.value);
+						}
+					});
+				} else if (option.value) {
+					values.push(option.value);
+				}
+			});
+
+			return values;
+		},
+		[],
+	);
+
+	const allAvailableValues = useMemo(() => {
+		const combinedOptions = prioritizeOrAddOptionForMultiSelect(
+			options,
+			selectedValues,
+		);
+		return getAllAvailableValues(combinedOptions);
+	}, [options, selectedValues, getAllAvailableValues]);
+
+	const isAllSelected = useMemo(() => {
+		if (!enableAllSelection || allAvailableValues.length === 0) {
+			return false;
+		}
+		// Check if every available value is included in the selected values
+		return allAvailableValues.every((val) => selectedValues.includes(val));
+	}, [selectedValues, allAvailableValues, enableAllSelection]);
+
+	// Value passed to the underlying Ant Select component
+	const displayValue = useMemo(
+		() => (isAllSelected ? [ALL_SELECTED_VALUE] : selectedValues),
+		[isAllSelected, selectedValues],
+	);
+
+	// ===== Internal onChange Handler =====
+	const handleInternalChange = useCallback(
+		(newValue: string | string[]): void => {
+			// Ensure newValue is an array
+			const currentNewValue = Array.isArray(newValue) ? newValue : [];
+
+			if (!onChange) return;
+
+			// Case 1: Cleared (empty array or undefined)
+			if (!newValue || currentNewValue.length === 0) {
+				onChange([], []);
+				return;
 			}
-		});
 
-		return values;
-	}, []);
+			// Case 2: "__all__" is selected (means select all actual values)
+			if (currentNewValue.includes(ALL_SELECTED_VALUE)) {
+				const allActualOptions = allAvailableValues.map(
+					(v) => options.flat().find((o) => o.value === v) || { label: v, value: v },
+				);
+				onChange(allAvailableValues as any, allActualOptions as any);
+			} else {
+				// Case 3: Regular values selected
+				// Check if the selection now constitutes "all selected"
+				const nowAllSelected =
+					enableAllSelection &&
+					allAvailableValues.length > 0 &&
+					allAvailableValues.every((val) => currentNewValue.includes(val));
 
-	// ===== Option Filtering & Processing Utilities =====
+				if (nowAllSelected) {
+					const allActualOptions = allAvailableValues.map(
+						(v) =>
+							options.flat().find((o) => o.value === v) || { label: v, value: v },
+					);
+					onChange(allAvailableValues as any, allActualOptions as any);
+				} else {
+					// Pass through the regular selection
+					// Map selected values back to OptionData format if possible
+					const correspondingOptions = currentNewValue.map(
+						(v) =>
+							options.flat().find((o) => o.value === v) || { label: v, value: v },
+					);
+					onChange(currentNewValue as any, correspondingOptions as any);
+				}
+			}
+		},
+		[onChange, allAvailableValues, options, enableAllSelection],
+	);
+
+	// ===== Existing Callbacks (potentially needing adjustment later) =====
+
+	const currentToggleTagValue = useCallback(
+		({ option }: { option: string }): ToggleTagValue => {
+			if (
+				Array.isArray(selectedValues) &&
+				selectedValues?.includes(option.toString()) &&
+				selectedValues.length === 1
+			) {
+				return ToggleTagValue.All;
+			}
+			return ToggleTagValue.Only;
+		},
+		[selectedValues],
+	);
+
+	const ensureValidOption = useCallback(
+		(option: string): boolean =>
+			!(
+				currentToggleTagValue({ option }) === ToggleTagValue.All &&
+				!enableAllSelection
+			),
+		[currentToggleTagValue, enableAllSelection],
+	);
 
 	/**
 	 * Checks if a label exists in the provided options
@@ -415,6 +520,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		[highlightSearch],
 	);
 
+	// Adjusted handleSelectAll for internal change handler
+	const handleSelectAll = useCallback((): void => {
+		if (!options) return;
+
+		if (isAllSelected) {
+			// If all are selected, deselect all
+			handleInternalChange([]);
+		} else {
+			// Otherwise, select all
+			handleInternalChange([ALL_SELECTED_VALUE]);
+		}
+	}, [options, isAllSelected, handleInternalChange]);
+
 	/**
 	 * Renders an individual option
 	 */
@@ -427,10 +545,28 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			const isActive = index === activeIndex;
 			const optionId = `option-${index}`;
 
-			const handleItemSelection = (): void => {
+			const handleItemSelection = (source?: string): void => {
 				// Special handling for ALL option is done by the caller
 
 				if (!option.value) return;
+
+				if (source === 'option') {
+					if (
+						currentToggleTagValue({ option: option.value }) === ToggleTagValue.All
+					) {
+						handleSelectAll();
+					} else {
+						const newValues = [option.value];
+
+						if (onChange) {
+							onChange(
+								newValues,
+								newValues.map((v) => ({ label: v, value: v })),
+							);
+						}
+					}
+					return;
+				}
 
 				const newValues = selectedValues.includes(option.value)
 					? selectedValues.filter((v) => v !== option.value)
@@ -462,7 +598,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					onClick={(e): void => {
 						e.stopPropagation();
 						e.preventDefault();
-						handleItemSelection();
+						handleItemSelection('option');
 						setActiveChipIndex(-1);
 						setActiveIndex(-1);
 					}}
@@ -482,12 +618,30 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					aria-disabled={option.disabled}
 					tabIndex={isActive ? 0 : -1}
 				>
-					<Checkbox checked={isSelected}>
+					<Checkbox
+						checked={isSelected}
+						className="option-checkbox"
+						onClick={(e): void => {
+							e.stopPropagation();
+							e.preventDefault();
+							handleItemSelection('checkbox');
+							setActiveChipIndex(-1);
+							setActiveIndex(-1);
+						}}
+					>
 						<div className="option-content">
 							<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
 							{(option.type === 'custom' || option.type === 'regex') && (
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
+							{option.value && ensureValidOption(option.value) && (
+								<Button type="text" className="only-btn">
+									{currentToggleTagValue({ option: option.value })}
+								</Button>
+							)}
+							<Button type="text" className="toggle-btn">
+								Toggle
+							</Button>
 						</div>
 					</Checkbox>
 				</div>
@@ -497,8 +651,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			activeIndex,
 			highlightMatchedText,
 			searchText,
+			ensureValidOption,
+			currentToggleTagValue,
 			selectedValues,
 			onChange,
+			handleSelectAll,
 			options,
 		],
 	);
@@ -511,28 +668,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			renderOptionItem(option, isSelected, idx),
 		[renderOptionItem],
 	);
-
-	// Handle select all functionality
-	const handleSelectAll = useCallback((): void => {
-		if (!options) return;
-
-		// Use getAllValues to get all values from all options
-		const allOptionValues = getAllValues(options);
-
-		// If all options are already selected, deselect all
-		const allOptionsSelected =
-			allOptionValues.length > 0 &&
-			allOptionValues.every((val) => selectedValues.includes(val));
-
-		if (allOptionsSelected) {
-			if (onChange) {
-				onChange([] as any, [] as any);
-			}
-		} else if (onChange) {
-			// Select all options across sections and non-sections
-			onChange(allOptionValues as any, allOptionValues as any);
-		}
-	}, [options, selectedValues, onChange, getAllValues]);
 
 	// Helper function to get visible chip indices
 	const getVisibleChipIndices = useCallback((): number[] => {
@@ -1171,7 +1306,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		// Now add all custom options at the beginning
 		const enhancedNonSectionOptions = [...customOptions, ...nonSectionOptions];
 
-		const allOptionValues = getAllValues(processedOptions);
+		const allOptionValues = getAllAvailableValues(processedOptions);
 		const allOptionsSelected =
 			allOptionValues.length > 0 &&
 			allOptionValues.every((val) => selectedValues.includes(val));
@@ -1315,7 +1450,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		filteredOptions,
 		splitOptions,
 		isLabelPresent,
-		getAllValues,
+		getAllAvailableValues,
 		enableAllSelection,
 		loading,
 		customStatusText,
@@ -1388,92 +1523,139 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// ===== Final Processing =====
 
-	// Function to handle tag focus visually - we'll create a custom tagRender
+	// Custom Tag Render (needs significant updates)
 	const tagRender = useCallback(
 		(props: CustomTagProps): React.ReactElement => {
 			const { label, value, closable, onClose } = props;
-			const index = selectedValues.indexOf(value);
-			const isActive = index === activeChipIndex;
-			const isSelected = selectedChips.includes(index);
 
-			// Check if this is the "+N" tag (it won't have a matching value in selectedValues)
-			const isPlusNTag =
-				typeof value === 'string' &&
-				value.startsWith('+') &&
-				!selectedValues.includes(value);
+			// If the display value is the special ALL value, render the ALL tag
+			if (value === ALL_SELECTED_VALUE && isAllSelected) {
+				const handleAllTagClose = (
+					e: React.MouseEvent | React.KeyboardEvent,
+				): void => {
+					e.stopPropagation();
+					e.preventDefault();
+					handleInternalChange([]); // Clear selection when ALL tag is closed
+				};
 
-			// Don't allow selecting or activating the "+N" tag
-			if (isPlusNTag) {
+				const handleAllTagKeyDown = (e: React.KeyboardEvent): void => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						handleAllTagClose(e);
+					}
+					// Prevent Backspace/Delete propagation if needed, handle in main keydown handler
+				};
+
 				return (
-					<div className="ant-select-selection-item">
-						<span className="ant-select-selection-item-content">{label}</span>
+					<div
+						className={cx('ant-select-selection-item', {
+							'ant-select-selection-item-active': activeChipIndex === 0, // Treat ALL tag as index 0 when active
+							'ant-select-selection-item-selected': selectedChips.includes(0),
+						})}
+						style={
+							activeChipIndex === 0 || selectedChips.includes(0)
+								? { borderColor: '#40a9ff', backgroundColor: '#e6f7ff' }
+								: undefined
+						}
+					>
+						<span className="ant-select-selection-item-content">ALL</span>
+						{closable && (
+							<span
+								className="ant-select-selection-item-remove"
+								onClick={handleAllTagClose}
+								onKeyDown={handleAllTagKeyDown}
+								role="button"
+								tabIndex={0}
+								aria-label="Remove ALL tag (deselect all)"
+							>
+								×
+							</span>
+						)}
 					</div>
 				);
 			}
 
-			// Check if this tag is beyond visible range
-			const visibleIndices = getVisibleChipIndices();
-			const isVisible = visibleIndices.includes(index);
+			// If not isAllSelected, render individual tags using previous logic
+			// but base indices/visibility on the original `selectedValues`
+			if (!isAllSelected) {
+				const index = selectedValues.indexOf(value);
+				if (index === -1) return <div style={{ display: 'none' }} />; // Should not happen if value comes from displayValue
 
-			// This check is mostly redundant since Ant Design won't render hidden tags,
-			// but we keep it for safety
-			if (!isVisible && !isPlusNTag) {
-				return <div style={{ display: 'none' }} />;
+				const isActive = index === activeChipIndex;
+				const isSelected = selectedChips.includes(index);
+
+				const isPlusNTag =
+					typeof value === 'string' &&
+					value.startsWith('+') &&
+					!selectedValues.includes(value);
+
+				if (isPlusNTag) {
+					// Render the "+N more" tag as before
+					return (
+						<div className="ant-select-selection-item">
+							<span className="ant-select-selection-item-content">{label}</span>
+						</div>
+					);
+				}
+
+				// Check visibility based on original selectedValues length and maxTagCount
+				const visibleCount =
+					maxTagCount !== undefined && maxTagCount > 0
+						? Math.min(maxTagCount, selectedValues.length)
+						: selectedValues.length;
+				const isVisible = index < visibleCount;
+
+				if (!isVisible) {
+					return <div style={{ display: 'none' }} />;
+				}
+
+				const handleTagKeyDown = (e: React.KeyboardEvent): void => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.stopPropagation();
+						e.preventDefault();
+						onClose(); // Default close action removes the specific tag
+					}
+				};
+
+				return (
+					<div
+						className={cx('ant-select-selection-item', {
+							'ant-select-selection-item-active': isActive,
+							'ant-select-selection-item-selected': isSelected,
+						})}
+						style={
+							isActive || isSelected
+								? { borderColor: '#40a9ff', backgroundColor: '#e6f7ff' }
+								: undefined
+						}
+					>
+						<span className="ant-select-selection-item-content">{label}</span>
+						{closable && (
+							<span
+								className="ant-select-selection-item-remove"
+								onClick={onClose} // Default Ant close handler
+								onKeyDown={handleTagKeyDown}
+								role="button"
+								tabIndex={0}
+								aria-label={`Remove tag ${label}`}
+							>
+								×
+							</span>
+						)}
+					</div>
+				);
 			}
 
-			const handleTagKeyDown = (e: React.KeyboardEvent): void => {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.stopPropagation();
-					e.preventDefault();
-					onClose();
-				}
-			};
-
-			return (
-				<div
-					className={cx('ant-select-selection-item', {
-						'ant-select-selection-item-active': isActive,
-						'ant-select-selection-item-selected': isSelected,
-					})}
-					style={
-						isActive || isSelected
-							? { borderColor: '#40a9ff', backgroundColor: '#e6f7ff' }
-							: undefined
-					}
-				>
-					<span className="ant-select-selection-item-content">{label}</span>
-					{closable && (
-						<span
-							className="ant-select-selection-item-remove"
-							onClick={onClose}
-							onKeyDown={handleTagKeyDown}
-							role="button"
-							tabIndex={0}
-							aria-label="Remove tag"
-						>
-							×
-						</span>
-					)}
-				</div>
-			);
+			// Fallback for safety, should not be reached
+			return <div />;
 		},
-		[selectedValues, activeChipIndex, selectedChips, getVisibleChipIndices],
-	);
-
-	// Apply highlight to matched text in options
-	const optionsWithHighlight = useMemo(
-		() =>
-			options
-				?.filter((option) =>
-					String(option.label || '')
-						.toLowerCase()
-						.includes(searchText.toLowerCase()),
-				)
-				?.map((option) => ({
-					...option,
-					label: highlightMatchedText(String(option.label || ''), searchText),
-				})),
-		[options, searchText, highlightMatchedText],
+		[
+			isAllSelected,
+			handleInternalChange,
+			activeChipIndex,
+			selectedChips,
+			selectedValues,
+			maxTagCount,
+		],
 	);
 
 	// ===== Component Rendering =====
@@ -1481,18 +1663,19 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		<Select
 			ref={selectRef}
 			className={cx('custom-multiselect', className, {
-				'has-selection': selectedChips.length > 0,
+				'has-selection': selectedChips.length > 0 && !isAllSelected,
+				'is-all-selected': isAllSelected,
 			})}
 			placeholder={placeholder}
 			mode="multiple"
 			showSearch
 			filterOption={false}
 			onSearch={handleSearch}
-			value={selectedValues}
-			onChange={onChange}
+			value={displayValue}
+			onChange={handleInternalChange}
+			onClear={(): void => handleInternalChange([])}
 			onDropdownVisibleChange={setIsOpen}
 			open={isOpen}
-			options={optionsWithHighlight}
 			defaultActiveFirstOption={defaultActiveFirstOption}
 			popupMatchSelectWidth={dropdownMatchSelectWidth}
 			allowClear
@@ -1507,7 +1690,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			placement={placement}
 			listHeight={300}
 			searchValue={searchText}
-			maxTagCount={maxTagCount}
+			maxTagCount={isAllSelected ? 1 : maxTagCount}
 			{...rest}
 		/>
 	);

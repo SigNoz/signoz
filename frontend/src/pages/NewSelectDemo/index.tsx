@@ -471,7 +471,8 @@ function NewSelectDemo(): JSX.Element {
 										onSearch={handleSearch}
 										loading={loading}
 										customStatusText={showError ? errorMessage : undefined}
-										enableAllSelection={false}
+										enableAllSelection
+										open
 									/>
 
 									<Divider />
