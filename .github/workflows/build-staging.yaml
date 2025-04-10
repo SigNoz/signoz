@@ -59,7 +59,7 @@ jobs:
           elif [[ "${{ github.event.ref }}" == "refs/heads/main" || "${{ github.event.ref }}" == "refs/heads/feat/staging" ]]; then
               deployment="staging"
           else
-              echo "error: not able to determine deployment. Please make sure the workflow is triggered by a PR labeled with 'staging:<deployment>' or by a push to 'main'"
+              echo "error: not able to determine deployment. Please verify the PR label or the branch"
               exit 1
           fi
           echo "deployment=${deployment}" >> $GITHUB_OUTPUT
