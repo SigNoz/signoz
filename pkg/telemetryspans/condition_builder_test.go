@@ -82,7 +82,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := conditionBuilder.GetTableFieldName(ctx, tc.key)
+			result, err := conditionBuilder.GetTableFieldName(ctx, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -256,6 +256,18 @@ func TestGetCondition(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "Contains operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         "admin",
+			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedError: nil,
+		},
+		{
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",
@@ -271,7 +283,7 @@ func TestGetCondition(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.GetCondition(ctx, tc.key, tc.operator, tc.value, sb)
+			cond, err := conditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedError != nil {
