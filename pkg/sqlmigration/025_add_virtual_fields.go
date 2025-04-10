@@ -39,7 +39,7 @@ func (migration *addVirtualFields) Up(ctx context.Context, db *bun.DB) error {
 			UpdatedBy     string    `bun:"updated_by,type:text"`
 			Name          string    `bun:"name,type:text,notnull"`
 			Expression    string    `bun:"expression,type:text,notnull"`
-			Description   string    `bun:"description,type:text,notnull"`
+			Description   string    `bun:"description,type:text"`
 		}{}).
 		IfNotExists().
 		Exec(ctx); err != nil {

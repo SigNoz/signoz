@@ -16,5 +16,5 @@ type VirtualField struct {
 	Name        string `bun:"name,type:text,notnull" json:"name"`
 	Expression  string `bun:"expression,type:text,notnull" json:"expression"`
 	Signal      Signal `bun:"signal,type:text,notnull" json:"signal"`
-	Description string `bun:"description,type:text,notnull" json:"description"`
+	Description string `bun:"description,type:text" json:"description"`
 }
