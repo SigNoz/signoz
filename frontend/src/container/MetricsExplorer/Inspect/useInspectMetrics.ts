@@ -7,6 +7,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { convertNanoToMilliseconds } from '../Summary/utils';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
+	InspectionStep,
 	MetricInspectionAction,
 	MetricInspectionOptions,
 	UseInspectMetricsReturnData,
@@ -121,6 +122,23 @@ export function useInspectMetrics(
 		INITIAL_INSPECT_METRICS_OPTIONS,
 	);
 
+	// Evaluate inspection step
+	const inspectionStep = useMemo(() => {
+		if (
+			metricInspectionOptions.spaceAggregationOption &&
+			metricInspectionOptions.spaceAggregationLabels.length > 0
+		) {
+			return InspectionStep.COMPLETED;
+		}
+		if (
+			metricInspectionOptions.timeAggregationOption &&
+			metricInspectionOptions.timeAggregationInterval
+		) {
+			return InspectionStep.SPACE_AGGREGATION;
+		}
+		return InspectionStep.TIME_AGGREGATION;
+	}, [metricInspectionOptions]);
+
 	return {
 		inspectMetricsTimeSeries,
 		inspectMetricsStatusCode,
@@ -130,5 +148,6 @@ export function useInspectMetrics(
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
+		inspectionStep,
 	};
 }

@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
+import Stepper from './Stepper';
 import { InspectProps } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
@@ -35,6 +36,7 @@ function Inspect({
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
+		inspectionStep,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -104,6 +106,13 @@ function Inspect({
 						spaceAggregationLabels={spaceAggregationLabels}
 						metricInspectionOptions={metricInspectionOptions}
 						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
+						inspectionStep={inspectionStep}
+					/>
+				</div>
+				<div className="inspect-metrics-content-second-col">
+					<Stepper
+						inspectionStep={inspectionStep}
+						resetInspection={resetInspection}
 					/>
 				</div>
 			</div>
@@ -115,11 +124,12 @@ function Inspect({
 		inspectMetricsTimeSeries,
 		formattedInspectMetricsTimeSeries,
 		metricName,
-		selectedMetricType,
 		selectedMetricUnit,
+		selectedMetricType,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
+		inspectionStep,
 	]);
 
 	return (

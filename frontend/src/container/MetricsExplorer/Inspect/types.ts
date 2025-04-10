@@ -18,6 +18,7 @@ export interface UseInspectMetricsReturnData {
 	spaceAggregationLabels: string[];
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	inspectionStep: InspectionStep;
 }
 
 export interface GraphViewProps {
@@ -36,6 +37,7 @@ export interface QueryBuilderProps {
 	spaceAggregationLabels: string[];
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	inspectionStep: InspectionStep;
 }
 
 export interface MetricNameSearchProps {
@@ -53,12 +55,14 @@ export interface MetricFiltersProps {
 export interface MetricTimeAggregationProps {
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	inspectionStep: InspectionStep;
 }
 
 export interface MetricSpaceAggregationProps {
 	spaceAggregationLabels: string[];
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	inspectionStep: InspectionStep;
 }
 
 export enum TimeAggregationOptions {
@@ -78,9 +82,9 @@ export enum SpaceAggregationOptions {
 }
 
 export interface MetricInspectionOptions {
-	timeAggregationOption: TimeAggregationOptions;
-	timeAggregationInterval: number;
-	spaceAggregationOption: SpaceAggregationOptions;
+	timeAggregationOption: TimeAggregationOptions | undefined;
+	timeAggregationInterval: number | undefined;
+	spaceAggregationOption: SpaceAggregationOptions | undefined;
 	spaceAggregationLabels: string[];
 	filters: TagFilter;
 }
@@ -91,3 +95,14 @@ export type MetricInspectionAction =
 	| { type: 'SET_SPACE_AGGREGATION_OPTION'; payload: SpaceAggregationOptions }
 	| { type: 'SET_SPACE_AGGREGATION_LABELS'; payload: string[] }
 	| { type: 'SET_FILTERS'; payload: TagFilter };
+
+export enum InspectionStep {
+	TIME_AGGREGATION = 1,
+	SPACE_AGGREGATION = 2,
+	COMPLETED = 3,
+}
+
+export interface StepperProps {
+	inspectionStep: InspectionStep;
+	resetInspection: () => void;
+}

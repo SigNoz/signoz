@@ -62,12 +62,18 @@ export const SPACE_AGGREGATION_OPTIONS: Record<
 };
 
 export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionOptions = {
-	timeAggregationOption: TimeAggregationOptions.LATEST,
-	timeAggregationInterval: 60,
-	spaceAggregationOption: SpaceAggregationOptions.SUM_BY,
+	timeAggregationOption: undefined,
+	timeAggregationInterval: undefined,
+	spaceAggregationOption: undefined,
 	spaceAggregationLabels: [],
 	filters: {
 		items: [],
 		op: 'and',
 	},
 };
+
+export const TEMPORAL_AGGREGATION_LINK =
+	'https://signoz.io/docs/metrics-management/types-and-aggregation/#step-2-temporal-aggregation';
+
+export const SPACE_AGGREGATION_LINK =
+	'https://signoz.io/docs/metrics-management/types-and-aggregation/#step-3-spatial-aggregation';

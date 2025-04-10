@@ -1,5 +1,6 @@
 import { InfoCircleFilled } from '@ant-design/icons';
 import { Input, Select, Typography } from 'antd';
+import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
@@ -13,6 +14,7 @@ import {
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
 import {
+	InspectionStep,
 	MetricFiltersProps,
 	MetricNameSearchProps,
 	MetricSpaceAggregationProps,
@@ -96,10 +98,15 @@ export function MetricFilters({
 export function MetricTimeAggregation({
 	metricInspectionOptions,
 	dispatchMetricInspectionOptions,
+	inspectionStep,
 }: MetricTimeAggregationProps): JSX.Element {
 	return (
 		<div className="metric-time-aggregation">
-			<div className="metric-time-aggregation-header">
+			<div
+				className={classNames('metric-time-aggregation-header', {
+					'selected-step': inspectionStep === InspectionStep.TIME_AGGREGATION,
+				})}
+			>
 				<Typography.Text>AGGREGATE BY TIME</Typography.Text>
 				<InfoCircleFilled />
 			</div>
@@ -149,10 +156,15 @@ export function MetricSpaceAggregation({
 	spaceAggregationLabels,
 	metricInspectionOptions,
 	dispatchMetricInspectionOptions,
+	inspectionStep,
 }: MetricSpaceAggregationProps): JSX.Element {
 	return (
 		<div className="metric-space-aggregation">
-			<div className="metric-space-aggregation-header">
+			<div
+				className={classNames('metric-space-aggregation-header', {
+					'selected-step': inspectionStep === InspectionStep.SPACE_AGGREGATION,
+				})}
+			>
 				<Typography.Text>AGGREGATE BY LABELS</Typography.Text>
 				<InfoCircleFilled />
 			</div>
