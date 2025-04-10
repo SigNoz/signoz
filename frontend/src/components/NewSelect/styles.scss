@@ -233,6 +233,10 @@
 			align-items: center;
 			width: 100%;
 
+			.option-label-text {
+				margin-bottom: 0;
+			}
+
 			.option-badge {
 				font-size: 12px;
 				padding: 2px 6px;
@@ -249,68 +253,68 @@
 		justify-content: center;
 		padding: 12px;
 	}
+}
 
-	.navigation-footer {
+.navigation-footer {
+	display: flex;
+	align-items: center;
+	padding: 8px 12px;
+	border-top: 1px solid #1d212d;
+	position: sticky;
+	bottom: 0;
+	background-color: #121317;
+	z-index: 1;
+
+	.navigation-icons {
+		display: flex;
+		margin-right: 8px;
+		color: var(--bg-vanilla-400);
+	}
+
+	.navigation-text {
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+	}
+
+	.navigation-error {
+		.navigation-text,
+		.navigation-icons {
+			color: var(--bg-cherry-500) !important;
+		}
 		display: flex;
 		align-items: center;
-		padding: 8px 12px;
-		border-top: 1px solid #1d212d;
-		position: sticky;
-		bottom: 0;
-		background-color: #121317;
-		z-index: 1;
+		justify-content: space-between;
+		width: 100%;
+		gap: 4px;
+	}
 
+	.navigation-loading {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		.navigation-text,
 		.navigation-icons {
-			display: flex;
-			margin-right: 8px;
-			color: var(--bg-vanilla-400);
+			color: var(--bg-robin-600) !important;
 		}
+	}
 
-		.navigation-text {
-			color: var(--bg-vanilla-400);
-			font-size: 12px;
-		}
+	.navigate {
+		display: flex;
+		align-items: center;
+		padding-right: 12px;
+		gap: 6px;
 
-		.navigation-error {
-			.navigation-text,
-			.navigation-icons {
-				color: var(--bg-cherry-500) !important;
-			}
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			width: 100%;
-			gap: 4px;
-		}
-
-		.navigation-loading {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-
-			.navigation-text,
-			.navigation-icons {
-				color: var(--bg-robin-600) !important;
-			}
-		}
-
-		.navigate {
-			display: flex;
-			align-items: center;
-			padding-right: 12px;
-			gap: 6px;
-
-			.icons {
-				width: 14px;
-				height: 14px;
-				flex-shrink: 0;
-				border-radius: 2.286px;
-				border-top: 1.143px solid var(--bg-ink-200);
-				border-right: 1.143px solid var(--bg-ink-200);
-				border-bottom: 2.286px solid var(--bg-ink-200);
-				border-left: 1.143px solid var(--bg-ink-200);
-				background: var(--Ink-400, #121317);
-			}
+		.icons {
+			width: 14px;
+			height: 14px;
+			flex-shrink: 0;
+			border-radius: 2.286px;
+			border-top: 1.143px solid var(--bg-ink-200);
+			border-right: 1.143px solid var(--bg-ink-200);
+			border-bottom: 2.286px solid var(--bg-ink-200);
+			border-left: 1.143px solid var(--bg-ink-200);
+			background: var(--Ink-400, #121317);
 		}
 	}
 }
@@ -406,6 +410,10 @@
 				align-items: center;
 				width: 100%;
 
+				.option-label-text {
+					margin-bottom: 0;
+				}
+
 				.option-badge {
 					font-size: 12px;
 					padding: 2px 6px;
@@ -478,28 +486,6 @@
 		font-style: italic;
 		color: rgba(192, 193, 195, 0.65);
 		border-top: 1px dashed #2c3044;
-	}
-
-	.navigation-footer {
-		display: flex;
-		align-items: center;
-		padding: 8px 12px;
-		border-top: 1px solid #1d212d;
-		position: sticky;
-		bottom: 0;
-		background-color: #121317;
-		z-index: 1;
-
-		.navigation-icons {
-			display: flex;
-			margin-right: 8px;
-			color: rgba(192, 193, 195, 0.45);
-		}
-
-		.navigation-text {
-			color: rgba(192, 193, 195, 0.45);
-			font-size: 12px;
-		}
 	}
 }
 
@@ -762,27 +748,27 @@
 				}
 			}
 		}
+	}
 
-		.navigation-footer {
-			border-top: 1px solid #f0f0f0;
-			background-color: #fff;
+	.navigation-footer {
+		border-top: 1px solid #f0f0f0;
+		background-color: #fff;
 
-			.navigation-icons {
-				color: rgba(0, 0, 0, 0.45);
-			}
+		.navigation-icons {
+			color: rgba(0, 0, 0, 0.45);
+		}
 
-			.navigation-text {
-				color: rgba(0, 0, 0, 0.45);
-			}
+		.navigation-text {
+			color: rgba(0, 0, 0, 0.45);
+		}
 
-			.navigate {
-				.icons {
-					border-top: 1.143px solid var(--bg-ink-200);
-					border-right: 1.143px solid var(--bg-ink-200);
-					border-bottom: 2.286px solid var(--bg-ink-200);
-					border-left: 1.143px solid var(--bg-ink-200);
-					background: var(--bg-vanilla-300);
-				}
+		.navigate {
+			.icons {
+				border-top: 1.143px solid var(--bg-ink-200);
+				border-right: 1.143px solid var(--bg-ink-200);
+				border-bottom: 2.286px solid var(--bg-ink-200);
+				border-left: 1.143px solid var(--bg-ink-200);
+				background: var(--bg-vanilla-300);
 			}
 		}
 	}

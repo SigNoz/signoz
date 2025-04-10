@@ -470,7 +470,7 @@ function NewSelectDemo(): JSX.Element {
 										options={getOptions(basicData.options)}
 										onSearch={handleSearch}
 										loading={loading}
-										customStatusText={showError ? errorMessage : undefined}
+										errorMessage={showError ? errorMessage : undefined}
 										enableAllSelection
 										open
 									/>
@@ -492,7 +492,7 @@ function NewSelectDemo(): JSX.Element {
 										options={[...getOptions(basicData.options), ...largeData.allValues]}
 										onSearch={handleSearch}
 										loading={loading}
-										customStatusText={showError ? errorMessage : undefined}
+										errorMessage={showError ? errorMessage : undefined}
 									/>
 
 									<Divider />
@@ -512,7 +512,7 @@ function NewSelectDemo(): JSX.Element {
 										options={getOptions(basicData.options)}
 										onSearch={handleSearch}
 										loading={loading}
-										customStatusText={showError ? errorMessage : undefined}
+										errorMessage={showError ? errorMessage : undefined}
 									/>
 								</Space>
 							</Card>
@@ -535,7 +535,7 @@ function NewSelectDemo(): JSX.Element {
 										options={getOptions(largeData.options)}
 										onSearch={handleSearch}
 										loading={loading}
-										customStatusText={showError ? errorMessage : undefined}
+										errorMessage={showError ? errorMessage : undefined}
 									/>
 
 									<Divider />
@@ -555,7 +555,7 @@ function NewSelectDemo(): JSX.Element {
 										options={getOptions(basicData.options)}
 										onSearch={handleSearch}
 										loading={loading}
-										customStatusText={showError ? errorMessage : undefined}
+										errorMessage={showError ? errorMessage : undefined}
 										maxTagCount={5}
 										maxTagPlaceholder={(omittedValues): React.ReactNode => (
 											<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
@@ -602,7 +602,9 @@ function NewSelectDemo(): JSX.Element {
 											}}
 											options={getOptions(basicData.options)}
 											onSearch={handleSearch}
-											customStatusText="Unable to fetch data. Please try again."
+											errorMessage="Unable to fetch data. Please try again."
+											onRetry={onRetry}
+											loading={loading}
 										/>
 									</Col>
 

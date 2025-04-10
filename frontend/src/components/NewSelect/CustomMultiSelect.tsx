@@ -4,11 +4,17 @@
 /* eslint-disable react/function-component-definition */
 import './styles.scss';
 
-import { SearchOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Select, SelectProps } from 'antd';
+import {
+	DownOutlined,
+	LoadingOutlined,
+	ReloadOutlined,
+} from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Checkbox, Select, SelectProps, Typography } from 'antd';
 import cx from 'classnames';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
@@ -53,10 +59,12 @@ export interface CustomMultiSelectProps
 	getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
 	dropdownRender?: (menu: React.ReactElement) => React.ReactElement;
 	highlightSearch?: boolean;
-	customStatusText?: string;
+	errorMessage?: string;
 	popupClassName?: string;
 	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 	maxTagCount?: number;
+	allowClear?: SelectProps['allowClear'];
+	onRetry?: () => void;
 }
 
 enum ToggleTagValue {
@@ -77,15 +85,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	defaultActiveFirstOption = true,
 	dropdownMatchSelectWidth = true,
 	noDataMessage,
+	errorMessage,
 	onClear,
 	enableAllSelection = true,
 	getPopupContainer,
 	dropdownRender,
 	highlightSearch = true,
-	customStatusText,
 	popupClassName,
 	placement = 'bottomLeft',
 	maxTagCount,
+	allowClear = false,
+	onRetry,
+	maxTagTextLength,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -630,7 +641,17 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						}}
 					>
 						<div className="option-content">
-							<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
+							<Typography.Text
+								ellipsis={{
+									tooltip: {
+										placement: 'right',
+										autoAdjustOverflow: true,
+									},
+								}}
+								className="option-label-text"
+							>
+								{highlightMatchedText(String(option.label || ''), searchText)}
+							</Typography.Text>
 							{(option.type === 'custom' || option.type === 'regex') && (
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
@@ -1331,16 +1352,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				return result;
 			});
 
-		let footerMessage = 'to Navigate';
-
-		if (loading) {
-			footerMessage = 'We are updating the values...';
-		} else if (customStatusText) {
-			footerMessage = customStatusText;
-		} else if (noDataMessage) {
-			footerMessage = noDataMessage;
-		}
-
 		const customMenu = (
 			<div
 				ref={dropdownRef}
@@ -1424,21 +1435,43 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						) : null,
 					)}
 
-				{/* {loading && (
-					<div className="loading-container">
-						<Spin size="small" />
-					</div>
-				)} */}
-
-				{/* Navigation footer */}
+				{/* Navigation help footer */}
 				<div className="navigation-footer" role="note">
-					{!loading && !customStatusText && !noDataMessage && (
-						<div className="navigation-icons">
-							<ChevronUp size={16} />
-							<ChevronDown size={16} />
+					{!loading && !errorMessage && !noDataMessage && (
+						<section className="navigate">
+							<ArrowDown size={8} className="icons" />
+							<ArrowUp size={8} className="icons" />
+							<span className="keyboard-text">to navigate</span>
+						</section>
+					)}
+					{loading && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<LoadingOutlined />
+							</div>
+							<div className="navigation-text">We are updating the values...</div>
 						</div>
 					)}
-					<div className="navigation-text">{footerMessage}</div>
+					{errorMessage && !loading && (
+						<div className="navigation-error">
+							<div className="navigation-text">
+								{errorMessage || SOMETHING_WENT_WRONG}
+							</div>
+							<div className="navigation-icons">
+								<ReloadOutlined
+									twoToneColor={Color.BG_CHERRY_400}
+									onClick={(e): void => {
+										e.stopPropagation();
+										if (onRetry) onRetry();
+									}}
+								/>
+							</div>
+						</div>
+					)}
+
+					{noDataMessage && !loading && (
+						<div className="navigation-text">{noDataMessage}</div>
+					)}
 				</div>
 			</div>
 		);
@@ -1452,17 +1485,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isLabelPresent,
 		getAllAvailableValues,
 		enableAllSelection,
-		loading,
-		customStatusText,
-		noDataMessage,
 		handleDropdownMouseDown,
 		handleDropdownClick,
 		handleKeyDown,
 		handleBlur,
 		activeIndex,
+		loading,
+		errorMessage,
+		noDataMessage,
 		dropdownRender,
 		renderOptionWithIndex,
 		handleSelectAll,
+		onRetry,
 	]);
 
 	// ===== Side Effects =====
@@ -1678,9 +1712,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			open={isOpen}
 			defaultActiveFirstOption={defaultActiveFirstOption}
 			popupMatchSelectWidth={dropdownMatchSelectWidth}
-			allowClear
+			allowClear={allowClear}
 			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<SearchOutlined />}
+			suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
 			dropdownRender={customDropdownRender}
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}
@@ -1690,6 +1724,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			placement={placement}
 			listHeight={300}
 			searchValue={searchText}
+			maxTagTextLength={maxTagTextLength}
 			maxTagCount={isAllSelected ? 1 : maxTagCount}
 			{...rest}
 		/>
@@ -1710,10 +1745,12 @@ CustomMultiSelect.defaultProps = {
 	getPopupContainer: undefined,
 	dropdownRender: undefined,
 	highlightSearch: true,
-	customStatusText: undefined,
+	errorMessage: undefined,
 	popupClassName: undefined,
 	placement: 'bottomLeft',
 	maxTagCount: undefined,
+	allowClear: false,
+	onRetry: undefined,
 };
 
 export default CustomMultiSelect;
