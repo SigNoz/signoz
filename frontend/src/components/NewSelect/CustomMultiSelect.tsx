@@ -14,7 +14,7 @@ import { Button, Checkbox, Select, SelectProps, Typography } from 'antd';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
@@ -1441,6 +1441,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						<section className="navigate">
 							<ArrowDown size={8} className="icons" />
 							<ArrowUp size={8} className="icons" />
+							<ArrowLeft size={8} className="icons" />
+							<ArrowRight size={8} className="icons" />
 							<span className="keyboard-text">to navigate</span>
 						</section>
 					)}

@@ -38,10 +38,6 @@
 		background-color: #121317;
 		border-color: #1d212d;
 
-		&:hover {
-			scrollbar-width: inherit;
-		}
-
 		&::-webkit-scrollbar {
 			width: 6px;
 		}
