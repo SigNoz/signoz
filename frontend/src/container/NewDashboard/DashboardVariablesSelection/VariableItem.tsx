@@ -426,7 +426,7 @@ function VariableItem({
 				) : (
 					!errorMessage &&
 					optionsData &&
-					(mode === 'multiple' ? (
+					(mode === 'multiple' || variableData.multiSelect ? (
 						<Select
 							key={
 								selectValue && Array.isArray(selectValue)
