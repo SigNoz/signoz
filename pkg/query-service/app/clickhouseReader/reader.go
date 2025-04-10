@@ -21,11 +21,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/mailru/easyjson"
 	"github.com/uptrace/bun"
-	"honnef.co/go/tools/config"
 
 	"github.com/google/uuid"
-	"github.com/mailru/easyjson"
 	"github.com/pkg/errors"
 
 	"github.com/prometheus/prometheus/promql"
@@ -42,11 +41,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/app/services"
+	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/tracedetail"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -143,10 +142,6 @@ type ClickHouseReader struct {
 	logsResourceTableV2      string
 	logsResourceLocalTableV2 string
 
-	promConfigFile string
-	promConfig     *config.Config
-	featureFlags   interfaces.FeatureLookup
-
 	liveTailRefreshSeconds int
 	cluster                string
 
@@ -172,7 +167,6 @@ func NewReader(
 	sqlDB sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
-	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
@@ -180,7 +174,7 @@ func NewReader(
 	cache cache.Cache,
 ) *ClickHouseReader {
 	options := NewOptions(primaryNamespace, archiveNamespace)
-	return NewReaderFromClickhouseConnection(options, sqlDB, telemetryStore, prometheus, featureFlag, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
+	return NewReaderFromClickhouseConnection(options, sqlDB, telemetryStore, prometheus, cluster, useLogsNewSchema, useTraceNewSchema, fluxIntervalForTraceDetail, cache)
 }
 
 func NewReaderFromClickhouseConnection(
@@ -188,7 +182,6 @@ func NewReaderFromClickhouseConnection(
 	sqlDB sqlstore.SQLStore,
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
-	featureFlag interfaces.FeatureLookup,
 	cluster string,
 	useLogsNewSchema bool,
 	useTraceNewSchema bool,
@@ -231,7 +224,6 @@ func NewReaderFromClickhouseConnection(
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
 		logsTagAttributeTableV2: options.primary.LogsTagAttributeTableV2,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
-		featureFlags:            featureFlag,
 		cluster:                 cluster,
 		queryProgressTracker:    queryprogress.NewQueryProgressTracker(),
 
@@ -988,267 +980,6 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	}
 
 	return &usageItems, nil
-}
-
-func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams,
-	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
-	searchSpansResult := []model.SearchSpansResult{
-		{
-			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
-			IsSubTree: false,
-			Events:    make([][]interface{}, 0),
-		},
-	}
-
-	var traceSummary model.TraceSummary
-	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE trace_id=$1", r.TraceDB, r.traceSummaryTable)
-	err := r.db.QueryRow(ctx, summaryQuery, params.TraceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return &searchSpansResult, nil
-		}
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query")
-	}
-
-	if traceSummary.NumSpans > uint64(params.MaxSpansInTrace) {
-		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
-			zap.Uint64("Count", traceSummary.NumSpans))
-		claims, ok := authtypes.ClaimsFromContext(ctx)
-		if ok {
-			data := map[string]interface{}{
-				"traceSize":            traceSummary.NumSpans,
-				"maxSpansInTraceLimit": params.MaxSpansInTrace,
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
-		}
-		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if ok {
-		data := map[string]interface{}{
-			"traceSize": traceSummary.NumSpans,
-		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
-	}
-
-	var startTime, endTime, durationNano uint64
-	var searchScanResponses []model.SpanItemV2
-
-	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
-
-	start := time.Now()
-
-	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
-
-	zap.L().Info(query)
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query")
-	}
-	end := time.Now()
-	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
-
-	searchSpansResult[0].Events = make([][]interface{}, len(searchScanResponses))
-
-	searchSpanResponses := []model.SearchSpanResponseItem{}
-	start = time.Now()
-	for _, item := range searchScanResponses {
-		ref := []model.OtelSpanRef{}
-		err := json.Unmarshal([]byte(item.References), &ref)
-		if err != nil {
-			zap.L().Error("Error unmarshalling references", zap.Error(err))
-			return nil, err
-		}
-
-		// merge attributes_number and attributes_bool to attributes_string
-		for k, v := range item.Attributes_bool {
-			item.Attributes_string[k] = fmt.Sprintf("%v", v)
-		}
-		for k, v := range item.Attributes_number {
-			item.Attributes_string[k] = fmt.Sprintf("%v", v)
-		}
-		for k, v := range item.Resources_string {
-			item.Attributes_string[k] = v
-		}
-
-		jsonItem := model.SearchSpanResponseItem{
-			SpanID:           item.SpanID,
-			TraceID:          item.TraceID,
-			ServiceName:      item.ServiceName,
-			Name:             item.Name,
-			Kind:             int32(item.Kind),
-			DurationNano:     int64(item.DurationNano),
-			HasError:         item.HasError,
-			StatusMessage:    item.StatusMessage,
-			StatusCodeString: item.StatusCodeString,
-			SpanKind:         item.SpanKind,
-			References:       ref,
-			Events:           item.Events,
-			TagMap:           item.Attributes_string,
-		}
-
-		jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
-
-		searchSpanResponses = append(searchSpanResponses, jsonItem)
-		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
-			startTime = jsonItem.TimeUnixNano
-		}
-		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
-			endTime = jsonItem.TimeUnixNano
-		}
-		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
-			durationNano = uint64(jsonItem.DurationNano)
-		}
-	}
-	end = time.Now()
-	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
-
-	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	smartAlgoEnabled := err == nil
-	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
-		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
-		if err != nil {
-			return nil, err
-		}
-		end = time.Now()
-		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		claims, ok := authtypes.ClaimsFromContext(ctx)
-		if ok {
-			data := map[string]interface{}{
-				"traceSize":        len(searchScanResponses),
-				"spansRenderLimit": params.SpansRenderLimit,
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
-		}
-	} else {
-		for i, item := range searchSpanResponses {
-			spanEvents := item.GetValues()
-			searchSpansResult[0].Events[i] = spanEvents
-		}
-	}
-
-	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
-	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
-
-	return &searchSpansResult, nil
-}
-
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
-	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
-		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
-
-	if r.useTraceNewSchema {
-		return r.SearchTracesV2(ctx, params, smartTraceAlgorithm)
-	}
-
-	var countSpans uint64
-	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
-	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query")
-	}
-
-	if countSpans > uint64(params.MaxSpansInTrace) {
-		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
-			zap.Uint64("Count", countSpans))
-		claims, ok := authtypes.ClaimsFromContext(ctx)
-		if ok {
-			data := map[string]interface{}{
-				"traceSize":            countSpans,
-				"maxSpansInTraceLimit": params.MaxSpansInTrace,
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
-		}
-		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if ok {
-		data := map[string]interface{}{
-			"traceSize": countSpans,
-		}
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
-	}
-
-	var startTime, endTime, durationNano uint64
-	var searchScanResponses []model.SearchSpanDBResponseItem
-
-	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
-
-	start := time.Now()
-
-	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
-
-	zap.L().Info(query)
-
-	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
-		return nil, fmt.Errorf("error in processing sql query")
-	}
-	end := time.Now()
-	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
-	searchSpansResult := []model.SearchSpansResult{{
-		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
-		Events:    make([][]interface{}, len(searchScanResponses)),
-		IsSubTree: false,
-	},
-	}
-
-	searchSpanResponses := []model.SearchSpanResponseItem{}
-	start = time.Now()
-	for _, item := range searchScanResponses {
-		var jsonItem model.SearchSpanResponseItem
-		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
-		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		searchSpanResponses = append(searchSpanResponses, jsonItem)
-		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
-			startTime = jsonItem.TimeUnixNano
-		}
-		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
-			endTime = jsonItem.TimeUnixNano
-		}
-		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
-			durationNano = uint64(jsonItem.DurationNano)
-		}
-	}
-	end = time.Now()
-	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
-
-	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
-	smartAlgoEnabled := err == nil
-	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
-		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
-		if err != nil {
-			return nil, err
-		}
-		end = time.Now()
-		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
-		claims, ok := authtypes.ClaimsFromContext(ctx)
-		if ok {
-			data := map[string]interface{}{
-				"traceSize":        len(searchScanResponses),
-				"spansRenderLimit": params.SpansRenderLimit,
-			}
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
-		}
-	} else {
-		for i, item := range searchSpanResponses {
-			spanEvents := item.GetValues()
-			searchSpansResult[0].Events[i] = spanEvents
-		}
-	}
-
-	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
-	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
-
-	return &searchSpansResult, nil
 }
 
 func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
@@ -7076,4 +6807,263 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, metric
 	}
 
 	return cachedMetadata, nil
+}
+
+func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
+	searchSpansResult := []model.SearchSpansResult{
+		{
+			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
+			IsSubTree: false,
+			Events:    make([][]interface{}, 0),
+		},
+	}
+
+	var traceSummary model.TraceSummary
+	summaryQuery := fmt.Sprintf("SELECT * from %s.%s WHERE trace_id=$1", r.TraceDB, r.traceSummaryTable)
+	err := r.db.QueryRow(ctx, summaryQuery, params.TraceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &searchSpansResult, nil
+		}
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+
+	if traceSummary.NumSpans > uint64(params.MaxSpansInTrace) {
+		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
+			zap.Uint64("Count", traceSummary.NumSpans))
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			data := map[string]interface{}{
+				"traceSize":            traceSummary.NumSpans,
+				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+				"algo":                 "smart",
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
+		}
+		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if ok {
+		data := map[string]interface{}{
+			"traceSize": traceSummary.NumSpans,
+			"algo":      "smart",
+		}
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
+	}
+
+	var startTime, endTime, durationNano uint64
+	var searchScanResponses []model.SpanItemV2
+
+	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
+
+	start := time.Now()
+
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
+
+	zap.L().Info(query)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+	end := time.Now()
+	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
+
+	searchSpansResult[0].Events = make([][]interface{}, len(searchScanResponses))
+
+	searchSpanResponses := []model.SearchSpanResponseItem{}
+	start = time.Now()
+	for _, item := range searchScanResponses {
+		ref := []model.OtelSpanRef{}
+		err := json.Unmarshal([]byte(item.References), &ref)
+		if err != nil {
+			zap.L().Error("Error unmarshalling references", zap.Error(err))
+			return nil, err
+		}
+
+		// merge attributes_number and attributes_bool to attributes_string
+		for k, v := range item.Attributes_bool {
+			item.Attributes_string[k] = fmt.Sprintf("%v", v)
+		}
+		for k, v := range item.Attributes_number {
+			item.Attributes_string[k] = fmt.Sprintf("%v", v)
+		}
+		for k, v := range item.Resources_string {
+			item.Attributes_string[k] = v
+		}
+
+		jsonItem := model.SearchSpanResponseItem{
+			SpanID:           item.SpanID,
+			TraceID:          item.TraceID,
+			ServiceName:      item.ServiceName,
+			Name:             item.Name,
+			Kind:             int32(item.Kind),
+			DurationNano:     int64(item.DurationNano),
+			HasError:         item.HasError,
+			StatusMessage:    item.StatusMessage,
+			StatusCodeString: item.StatusCodeString,
+			SpanKind:         item.SpanKind,
+			References:       ref,
+			Events:           item.Events,
+			TagMap:           item.Attributes_string,
+		}
+
+		jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
+
+		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+			startTime = jsonItem.TimeUnixNano
+		}
+		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+			endTime = jsonItem.TimeUnixNano
+		}
+		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+			durationNano = uint64(jsonItem.DurationNano)
+		}
+	}
+	end = time.Now()
+	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
+
+	if len(searchScanResponses) > params.SpansRenderLimit {
+		start = time.Now()
+		searchSpansResult, err = smart.SmartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
+		if err != nil {
+			return nil, err
+		}
+		end = time.Now()
+		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			data := map[string]interface{}{
+				"traceSize":        len(searchScanResponses),
+				"spansRenderLimit": params.SpansRenderLimit,
+				"algo":             "smart",
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
+		}
+	} else {
+		for i, item := range searchSpanResponses {
+			spanEvents := item.GetValues()
+			searchSpansResult[0].Events[i] = spanEvents
+		}
+	}
+
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
+
+	return &searchSpansResult, nil
+}
+
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
+
+	if r.useTraceNewSchema {
+		return r.SearchTracesV2(ctx, params)
+	}
+
+	var countSpans uint64
+	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+
+	if countSpans > uint64(params.MaxSpansInTrace) {
+		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
+			zap.Uint64("Count", countSpans))
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			data := map[string]interface{}{
+				"traceSize":            countSpans,
+				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+				"algo":                 "smart",
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, claims.Email, true, false)
+		}
+		return nil, fmt.Errorf("max spans allowed in trace limit reached, please contact support for more details")
+	}
+
+	claims, ok := authtypes.ClaimsFromContext(ctx)
+	if ok {
+		data := map[string]interface{}{
+			"traceSize": countSpans,
+			"algo":      "smart",
+		}
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, claims.Email, true, false)
+	}
+
+	var startTime, endTime, durationNano uint64
+	var searchScanResponses []model.SearchSpanDBResponseItem
+
+	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+
+	start := time.Now()
+
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
+
+	zap.L().Info(query)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+	end := time.Now()
+	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
+	searchSpansResult := []model.SearchSpansResult{{
+		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
+		Events:    make([][]interface{}, len(searchScanResponses)),
+		IsSubTree: false,
+	},
+	}
+
+	searchSpanResponses := []model.SearchSpanResponseItem{}
+	start = time.Now()
+	for _, item := range searchScanResponses {
+		var jsonItem model.SearchSpanResponseItem
+		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
+		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
+		searchSpanResponses = append(searchSpanResponses, jsonItem)
+		if startTime == 0 || jsonItem.TimeUnixNano < startTime {
+			startTime = jsonItem.TimeUnixNano
+		}
+		if endTime == 0 || jsonItem.TimeUnixNano > endTime {
+			endTime = jsonItem.TimeUnixNano
+		}
+		if durationNano == 0 || uint64(jsonItem.DurationNano) > durationNano {
+			durationNano = uint64(jsonItem.DurationNano)
+		}
+	}
+	end = time.Now()
+	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
+
+	if len(searchScanResponses) > params.SpansRenderLimit {
+		start = time.Now()
+		searchSpansResult, err = smart.SmartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
+		if err != nil {
+			return nil, err
+		}
+		end = time.Now()
+		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+		claims, ok := authtypes.ClaimsFromContext(ctx)
+		if ok {
+			data := map[string]interface{}{
+				"traceSize":        len(searchScanResponses),
+				"spansRenderLimit": params.SpansRenderLimit,
+				"algo":             "smart",
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, claims.Email, true, false)
+		}
+	} else {
+		for i, item := range searchSpanResponses {
+			spanEvents := item.GetValues()
+			searchSpansResult[0].Events[i] = spanEvents
+		}
+	}
+
+	searchSpansResult[0].StartTimestampMillis = startTime - (durationNano / 1000000)
+	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
+
+	return &searchSpansResult, nil
 }

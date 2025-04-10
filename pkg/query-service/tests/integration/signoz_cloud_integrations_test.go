@@ -355,7 +355,7 @@ func NewCloudIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *CloudI
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{

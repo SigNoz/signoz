@@ -200,7 +200,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Cache:             opts.Cache,
 		KeyGenerator:      queryBuilder.NewKeyGenerator(),
 		FluxInterval:      opts.FluxInterval,
-		FeatureLookup:     opts.FeatureFlags,
 		UseLogsNewSchema:  opts.UseLogsNewSchema,
 		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
@@ -210,7 +209,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Cache:             opts.Cache,
 		KeyGenerator:      queryBuilder.NewKeyGenerator(),
 		FluxInterval:      opts.FluxInterval,
-		FeatureLookup:     opts.FeatureFlags,
 		UseLogsNewSchema:  opts.UseLogsNewSchema,
 		UseTraceNewSchema: opts.UseTraceNewSchema,
 	}
@@ -279,7 +277,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildTraceQuery:  tracesQueryBuilder,
 		BuildLogQuery:    logsQueryBuilder,
 	}
-	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	// check if at least one user is created
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
@@ -1148,7 +1146,7 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid, aH.featureFlags)
+	err := dashboards.DeleteDashboard(r.Context(), claims.OrgID, uuid)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -1240,7 +1238,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData, aH.featureFlags)
+	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), claims.OrgID, claims.Email, uuid, postData)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -1313,7 +1311,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData, aH.featureFlags)
+	dash, apiErr := dashboards.CreateDashboard(r.Context(), claims.OrgID, claims.Email, postData)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1728,14 +1726,13 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
-
 	params, err := ParseSearchTracesParams(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), params, nil)
+	result, err := aH.reader.SearchTraces(r.Context(), params)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

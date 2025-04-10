@@ -56,10 +56,9 @@ type QueryBuilderOptions struct {
 	BuildMetricQuery prepareMetricQueryFunc
 }
 
-func NewQueryBuilder(options QueryBuilderOptions, featureFlags interfaces.FeatureLookup) *QueryBuilder {
+func NewQueryBuilder(options QueryBuilderOptions) *QueryBuilder {
 	return &QueryBuilder{
-		options:      options,
-		featureFlags: featureFlags,
+		options: options,
 	}
 }
 
@@ -179,8 +178,6 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 	compositeQuery := params.CompositeQuery
 
 	if compositeQuery != nil {
-		err := qb.featureFlags.CheckFeature(constants.PreferRPM)
-		PreferRPMFeatureEnabled := err == nil
 		// Build queries for each builder query
 		for queryName, query := range compositeQuery.BuilderQueries {
 			// making a local clone since we should not update the global params if there is sift by
@@ -196,12 +193,12 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 					// for ts query with group by and limit form two queries
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
 						limitQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
-							v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
+							v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
 						placeholderQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
-							query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
+							query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
@@ -209,7 +206,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 						queries[queryName] = query
 					} else {
 						queryString, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
-							query, v3.QBOptions{PreferRPM: PreferRPMFeatureEnabled, GraphLimitQtype: ""})
+							query, v3.QBOptions{GraphLimitQtype: ""})
 						if err != nil {
 							return nil, err
 						}
@@ -218,25 +215,25 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
+						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
-						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
+						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
 					} else {
-						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{PreferRPM: PreferRPMFeatureEnabled, GraphLimitQtype: ""})
+						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: ""})
 						if err != nil {
 							return nil, err
 						}
 						queries[queryName] = queryString
 					}
 				case v3.DataSourceMetrics:
-					queryString, err := qb.options.BuildMetricQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, metricsV3.Options{PreferRPM: PreferRPMFeatureEnabled})
+					queryString, err := qb.options.BuildMetricQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, metricsV3.Options{})
 					if err != nil {
 						return nil, err
 					}
