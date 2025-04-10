@@ -1,4 +1,4 @@
-package telemetryspans
+package telemetrytraces
 
 const (
 	DBName                        = "signoz_traces"

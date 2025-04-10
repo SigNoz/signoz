@@ -1,4 +1,4 @@
-package telemetryspans
+package telemetrytraces
 
 import (
 	"context"
