@@ -9,6 +9,7 @@ var (
 	TypeAlreadyExists        = typ{"already-exists"}
 	TypeUnauthenticated      = typ{"unauthenticated"}
 	TypeForbidden            = typ{"forbidden"}
+	TypeBadRequest           = typ{"bad-request"}
 )
 
 // Defines custom error types

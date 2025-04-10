@@ -10,6 +10,16 @@ import (
 	"github.com/uptrace/bun"
 )
 
+type IntegrationUserEmail string
+
+const (
+	AWSIntegrationUserEmail IntegrationUserEmail = "aws-integration@signoz.io"
+)
+
+var AllIntegrationUserEmails = []IntegrationUserEmail{
+	AWSIntegrationUserEmail,
+}
+
 // --------------------------------------------------------------------------
 // Normal integration uses just the installed_integration table
 // --------------------------------------------------------------------------

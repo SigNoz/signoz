@@ -2207,6 +2207,11 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(old.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeBadRequest, errorsV2.CodeBadRequest, "integration user cannot be updated"))
+		return
+	}
+
 	_, apiErr = dao.DB().EditUser(ctx, &types.User{
 		Identifiable: types.Identifiable{ID: old.ID},
 		Name:         old.Name,
@@ -2235,6 +2240,11 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeBadRequest, errorsV2.CodeBadRequest, "integration user cannot be updated"))
 		return
 	}
 

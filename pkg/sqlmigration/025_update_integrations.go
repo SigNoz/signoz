@@ -398,7 +398,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		return err
 	}
 
-	// create a new user
+	// new user
 	newUser := &types.User{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
@@ -411,14 +411,14 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		Password: user.Password,
 	}
 
-	// get the pat for the user
+	// get the pat for old user
 	pat := &eeTypes.StorablePersonalAccessToken{}
 	err = tx.NewSelect().Model(pat).Where("user_id = ? and revoked = false", "aws-integration").Scan(context.Background())
 	if err != nil {
 		return err
 	}
 
-	// create a new pat
+	// new pat
 	newPAT := &eeTypes.StorablePersonalAccessToken{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
@@ -442,12 +442,6 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 
 	// insert the new user
 	_, err = tx.NewInsert().Model(newUser).Exec(context.Background())
-	if err != nil {
-		return err
-	}
-
-	// delete the old pat
-	_, err = tx.ExecContext(context.Background(), `DELETE FROM personal_access_token WHERE id = ?`, pat.ID)
 	if err != nil {
 		return err
 	}
