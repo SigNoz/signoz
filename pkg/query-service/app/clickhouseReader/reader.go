@@ -3972,8 +3972,9 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
-	// add other attributes only when the tagType is not resource or instrumentation scope
-	if req.TagType != v3.TagTypeResource && req.TagType != v3.TagTypeInstrumentationScope {
+	// add other attributes only when the tagType is not specified
+	// i.e retrieve all attributes
+	if req.TagType == "" {
 		for _, f := range constants.StaticFieldsLogsV3 {
 			if (v3.AttributeKey{} == f) {
 				continue
@@ -4772,9 +4773,9 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		fields = constants.DeprecatedStaticFieldsTraces
 	}
 
-	// add the new static fields only when the tagType is not resource or instrumentation scope
-	// when the tagType is specified, we only send the attributes for the specified tagType
-	if req.TagType != v3.TagTypeResource && req.TagType != v3.TagTypeInstrumentationScope {
+	// add the new static fields only when the tagType is not specified
+	// i.e retrieve all attributes
+	if req.TagType == "" {
 		for _, f := range fields {
 			if (v3.AttributeKey{} == f) {
 				continue

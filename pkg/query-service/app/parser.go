@@ -725,13 +725,12 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	// i.e retrieve all attributes
 	if tagType != "" {
 		// what is happening here?
-		// if tagType is undefined(uh oh javascript), set it to empty string
-		// instead of failing the request
-		if tagType == "undefined" {
-			tagType = ""
-		}
+		// if tagType is undefined(uh oh javascript) or any invalid value, set it to empty string
+		// instead of failing the request. Ideally, we should fail the request.
+		// but we are not doing that to maintain backward compatibility.
 		if err := tagType.Validate(); err != nil {
-			return nil, err
+			// if the tagType is invalid, set it to empty string
+			tagType = ""
 		}
 	}
 

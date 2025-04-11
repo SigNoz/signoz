@@ -170,11 +170,12 @@ func TestParseFilterAttributeKeyRequest(t *testing.T) {
 			expectedLimit:      50,
 		},
 		{
-			desc:          "invalid tag type",
-			queryString:   "aggregateOperator=avg&dataSource=traces&tagType=invalid",
-			expectErr:     true,
-			errMsg:        "invalid tag type",
-			expectedLimit: 50,
+			desc:               "invalid tag type",
+			queryString:        "aggregateOperator=avg&dataSource=traces&tagType=invalid",
+			expectedOperator:   v3.AggregateOperatorAvg,
+			expectedDataSource: v3.DataSourceTraces,
+			expectedTagType:    "",
+			expectedLimit:      50,
 		},
 		{
 			desc:               "valid tag type",
