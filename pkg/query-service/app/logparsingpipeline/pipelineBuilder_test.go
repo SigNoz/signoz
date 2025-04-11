@@ -646,7 +646,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	require := require.New(t)
 
 	testLogs := []model.SignozLog{
-		makeTestSignozLog("test log", map[string]interface{}{
+		makeTestSignozLog("test log", map[string]any{
 			"http.method":    "GET",
 			"order.products": `{"ids": ["pid0", "pid1"]}`,
 		}),
