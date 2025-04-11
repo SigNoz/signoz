@@ -18,9 +18,10 @@ import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { convertComposeQueryToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
@@ -109,10 +110,11 @@ function AllErrors(): JSX.Element {
 	);
 
 	const { queries } = useResourceAttribute();
+	const compsiteData = useGetCompositeQueryParam();
 
 	const [{ isLoading, data }, errorCountResponse] = useQueries([
 		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, queries],
+			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compsiteData],
 			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
 				getAll({
 					end: maxTime,
@@ -123,7 +125,10 @@ function AllErrors(): JSX.Element {
 					orderParam: getUpdatedParams,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					tags: convertRawQueriesToTraceSelectedTags(queries),
+					// tags: convertRawQueriesToTraceSelectedTags(queries),
+					tags: convertComposeQueryToTraceSelectedTags(
+						compsiteData?.builder.queryData?.[0]?.filters.items,
+					),
 				}),
 			enabled: !loading,
 		},
@@ -134,7 +139,7 @@ function AllErrors(): JSX.Element {
 				minTime,
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
-				queries,
+				compsiteData,
 			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
@@ -142,7 +147,10 @@ function AllErrors(): JSX.Element {
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					tags: convertRawQueriesToTraceSelectedTags(queries),
+					// tags: convertRawQueriesToTraceSelectedTags(queries),
+					tags: convertComposeQueryToTraceSelectedTags(
+						compsiteData?.builder.queryData?.[0]?.filters.items,
+					),
 				}),
 			enabled: !loading,
 		},
@@ -395,7 +403,8 @@ function AllErrors(): JSX.Element {
 				onApplicationTypeFilter,
 				'Search By Application',
 				'serviceName',
-			),
+			), // should remove??? change table name??
+			// table col name to attr map??
 		},
 	];
 
