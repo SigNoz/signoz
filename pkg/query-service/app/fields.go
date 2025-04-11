@@ -31,7 +31,7 @@ func (aH *APIHandler) getFieldsKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keys, err := aH.FieldsResource.GetFieldKeys(ctx, *fieldKeySelector)
+	keys, err := aH.FieldsResource.GetFieldKeys(ctx, fieldKeySelector)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -55,7 +55,7 @@ func (aH *APIHandler) getFieldsValues(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	values, err := aH.FieldsResource.GetFieldValues(ctx, *fieldValueSelector)
+	values, err := aH.FieldsResource.GetFieldValues(ctx, fieldValueSelector)
 	if err != nil {
 		render.Error(w, err)
 		return
