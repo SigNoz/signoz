@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -381,7 +382,7 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 		return model.InternalError(errors.New("Failed to generate password hash"))
 	}
 
-	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.ID.String()); apiErr != nil {
+	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.ID); apiErr != nil {
 		return apiErr
 	}
 
@@ -438,9 +439,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 	}
 
 	user := &types.User{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
+		ID:       uuid.New().String(),
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hash,
@@ -520,9 +519,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	user := &types.User{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
+		ID:       uuid.New().String(),
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hash,
@@ -602,17 +599,17 @@ func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT)
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,
-		UserId:        user.User.ID.String(),
+		UserId:        user.User.ID,
 	}, nil
 }
 
 func claimsToUserPayload(claims authtypes.Claims) (*types.GettableUser, error) {
 	user := &types.GettableUser{
 		User: types.User{
-			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(claims.UserID)},
-			GroupID:      claims.GroupID,
-			Email:        claims.Email,
-			OrgID:        claims.OrgID,
+			ID:      claims.UserID,
+			GroupID: claims.GroupID,
+			Email:   claims.Email,
+			OrgID:   claims.OrgID,
 		},
 	}
 	return user, nil
@@ -668,13 +665,13 @@ func GenerateJWTForUser(user *types.User, jwt *authtypes.JWT) (model.UserJwtObje
 	j := model.UserJwtObject{}
 	var err error
 	j.AccessJwtExpiry = time.Now().Add(jwt.JwtExpiry).Unix()
-	j.AccessJwt, err = jwt.AccessToken(user.OrgID, user.ID.String(), user.GroupID, user.Email)
+	j.AccessJwt, err = jwt.AccessToken(user.OrgID, user.ID, user.GroupID, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
 	j.RefreshJwtExpiry = time.Now().Add(jwt.JwtRefresh).Unix()
-	j.RefreshJwt, err = jwt.RefreshToken(user.OrgID, user.ID.String(), user.GroupID, user.Email)
+	j.RefreshJwt, err = jwt.RefreshToken(user.OrgID, user.ID, user.GroupID, user.Email)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}

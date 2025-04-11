@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 	"go.uber.org/zap"
@@ -79,7 +80,7 @@ type newCloudIntegration struct {
 	AccountID       string     `json:"account_id" bun:"account_id,type:text"`
 	LastAgentReport string     `json:"last_agent_report" bun:"last_agent_report,type:text"`
 	RemovedAt       *time.Time `json:"removed_at" bun:"removed_at,type:timestamp"`
-	OrgID           string     `json:"org_id" bun:"org_id,type:text"`
+	OrgID           string     `json:"org_id" bun:"org_id,type:text,references:organizations(id),on_delete:cascade"`
 }
 
 type existingCloudIntegrationService struct {
@@ -339,20 +340,7 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 // we are making sure that new uuid v7 is added to the user
 // and the pat is connected to the new user.
 func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID string) error {
-	type OldUser struct {
-		bun.BaseModel `bun:"table:users"`
-
-		types.TimeAuditable
-		ID                string `bun:"id,pk,type:text"`
-		Name              string `bun:"name,type:text,notnull" json:"name"`
-		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
-		Password          string `bun:"password,type:text,notnull" json:"-"`
-		ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
-		GroupID           string `bun:"group_id,type:text,notnull" json:"groupId"`
-		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
-	}
-
-	user := &OldUser{}
+	user := &types.User{}
 	err := tx.NewSelect().Model(user).Where("email = ?", "aws-integration@signoz.io").Scan(context.Background())
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -363,7 +351,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 
 	// new user
 	newUser := &types.User{
-		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		ID: uuid.New().String(),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -390,7 +378,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 			UpdatedAt: time.Now(),
 		},
 		OrgID:     orgID,
-		UserID:    newUser.ID.String(),
+		UserID:    newUser.ID,
 		Token:     pat.Token,
 		Name:      pat.Name,
 		ExpiresAt: pat.ExpiresAt,

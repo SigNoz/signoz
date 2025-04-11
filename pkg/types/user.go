@@ -35,7 +35,7 @@ type User struct {
 	bun.BaseModel `bun:"table:users"`
 
 	TimeAuditable
-	Identifiable
+	ID                string `bun:"id,pk,type:text" json:"id"`
 	Name              string `bun:"name,type:text,notnull" json:"name"`
 	Email             string `bun:"email,type:text,notnull,unique" json:"email"`
 	Password          string `bun:"password,type:text,notnull" json:"-"`

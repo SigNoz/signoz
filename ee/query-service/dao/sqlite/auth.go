@@ -15,7 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -44,10 +44,10 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 	}
 
 	user := &types.User{
-		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-		Name:         "",
-		Email:        email,
-		Password:     hash,
+		ID:       uuid.New().String(),
+		Name:     "",
+		Email:    email,
+		Password: hash,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},

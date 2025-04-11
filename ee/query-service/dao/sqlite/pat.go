@@ -33,9 +33,9 @@ func (m *modelDao) CreatePAT(ctx context.Context, orgID string, p types.Gettable
 	} else {
 		p.CreatedByUser = types.PatUser{
 			User: ossTypes.User{
-				Identifiable: ossTypes.Identifiable{ID: createdByUser.ID},
-				Name:         createdByUser.Name,
-				Email:        createdByUser.Email,
+				ID:    createdByUser.ID,
+				Name:  createdByUser.Name,
+				Email: createdByUser.Email,
 				TimeAuditable: ossTypes.TimeAuditable{
 					CreatedAt: createdByUser.CreatedAt,
 					UpdatedAt: createdByUser.UpdatedAt,
@@ -90,9 +90,9 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 		} else {
 			patWithUser.CreatedByUser = types.PatUser{
 				User: ossTypes.User{
-					Identifiable: ossTypes.Identifiable{ID: createdByUser.ID},
-					Name:         createdByUser.Name,
-					Email:        createdByUser.Email,
+					ID:    createdByUser.ID,
+					Name:  createdByUser.Name,
+					Email: createdByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: createdByUser.CreatedAt,
 						UpdatedAt: createdByUser.UpdatedAt,
@@ -111,9 +111,9 @@ func (m *modelDao) ListPATs(ctx context.Context, orgID string) ([]types.Gettable
 		} else {
 			patWithUser.UpdatedByUser = types.PatUser{
 				User: ossTypes.User{
-					Identifiable: ossTypes.Identifiable{ID: updatedByUser.ID},
-					Name:         updatedByUser.Name,
-					Email:        updatedByUser.Email,
+					ID:    updatedByUser.ID,
+					Name:  updatedByUser.Name,
+					Email: updatedByUser.Email,
 					TimeAuditable: ossTypes.TimeAuditable{
 						CreatedAt: updatedByUser.CreatedAt,
 						UpdatedAt: updatedByUser.UpdatedAt,

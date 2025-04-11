@@ -2208,16 +2208,16 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(old.Email)) {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeBadRequest, errorsV2.CodeBadRequest, "integration user cannot be updated"))
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
 		return
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &types.User{
-		Identifiable: types.Identifiable{ID: old.ID},
-		Name:         old.Name,
-		OrgID:        old.OrgID,
-		Email:        old.Email,
-		Password:     old.Password,
+		ID:       old.ID,
+		Name:     old.Name,
+		OrgID:    old.OrgID,
+		Email:    old.Email,
+		Password: old.Password,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: old.CreatedAt,
 		},
@@ -2244,7 +2244,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeBadRequest, errorsV2.CodeBadRequest, "integration user cannot be updated"))
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
 		return
 	}
 
@@ -2348,7 +2348,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID.String(), newGroup.ID)
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID, newGroup.ID)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return

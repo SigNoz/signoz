@@ -3,11 +3,11 @@ package auth
 import (
 	"context"
 
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
 )
 
@@ -52,21 +52,21 @@ func InitAuthCache(ctx context.Context) error {
 func GetUserFromReqContext(ctx context.Context) (*types.GettableUser, error) {
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("no claims found in context")
+		return nil, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "no claims found in context")
 	}
 
 	user := &types.GettableUser{
 		User: types.User{
-			Identifiable: types.Identifiable{ID: valuer.MustNewUUID(claims.UserID)},
-			GroupID:      claims.GroupID,
-			Email:        claims.Email,
-			OrgID:        claims.OrgID,
+			ID:      claims.UserID,
+			GroupID: claims.GroupID,
+			Email:   claims.Email,
+			OrgID:   claims.OrgID,
 		},
 	}
 	return user, nil
 }
 
-func IsSelfAccessRequest(user *types.GettableUser, id string) bool { return user.ID.String() == id }
+func IsSelfAccessRequest(user *types.GettableUser, id string) bool { return user.ID == id }
 
 func IsViewer(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.ViewerGroupId }
 func IsEditor(user *types.GettableUser) bool { return user.GroupID == AuthCacheObj.EditorGroupId }

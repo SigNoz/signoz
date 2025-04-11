@@ -14,7 +14,6 @@ var (
 	CodeAlreadyExists         = code{"already_exists"}
 	CodeUnauthenticated       = code{"unauthenticated"}
 	CodeForbidden             = code{"forbidden"}
-	CodeBadRequest            = code{"bad_request"}
 )
 
 var (

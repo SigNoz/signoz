@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -126,7 +125,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 	for _, p := range allPats {
-		if p.UserID == integrationUser.ID.String() && p.Name == integrationPATName {
+		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
 			return p.Token, nil
 		}
 	}
@@ -139,7 +138,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 	newPAT := eeTypes.NewGettablePAT(
 		integrationPATName,
 		baseconstants.ViewerGroup,
-		integrationUser.ID.String(),
+		integrationUser.ID,
 		0,
 	)
 	integrationPAT, err := ah.AppDao().CreatePAT(ctx, orgId, newPAT)
@@ -173,9 +172,9 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	)
 
 	newUser := &types.User{
-		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
-		Name:         cloudIntegrationUser,
-		Email:        email,
+		ID:    uuid.New().String(),
+		Name:  cloudIntegrationUser,
+		Email: email,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 		},
