@@ -49,6 +49,23 @@ export const convertOperatorLabelToTraceOperator = (
 	OperatorConversions.find((operator) => operator.label === label)
 		?.traceValue as OperatorValues;
 
+export function capitalizeFirstLetter(str: string): string {
+	if (!str) return '';
+	return str.charAt(0).toUpperCase() + str.slice(1);
+} // temp: To change to map
+
+export const convertComposeQueryToTraceSelectedTags = (
+	filterItems: TagFilterItem[] = [],
+): Tags[] =>
+	filterItems.map((item) => ({
+		Key: item?.key?.key,
+		Operator: capitalizeFirstLetter(item.op), // confirm
+		StringValues: typeof item.value === 'string' ? [item.value] : item.value, // confirm
+		NumberValues: [],
+		BoolValues: [],
+		TagType: 'ResourceAttribute',
+	})) as Tags[];
+
 export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttribute[],
 	tagType = 'ResourceAttribute',
