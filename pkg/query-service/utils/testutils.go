@@ -55,6 +55,7 @@ func NewTestSqliteDB(t *testing.T) (sqlStore sqlstore.SQLStore, testDBFilePath s
 			sqlmigration.NewDropLicensesSitesFactory(sqlStore),
 			sqlmigration.NewUpdateInvitesFactory(sqlStore),
 			sqlmigration.NewUpdatePatFactory(sqlStore),
+			sqlmigration.NewAddVirtualFieldsFactory(),
 			sqlmigration.NewUpdateIntegrationsFactory(sqlStore),
 		),
 	)
