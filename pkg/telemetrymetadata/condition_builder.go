@@ -26,11 +26,11 @@ var (
 type conditionBuilder struct {
 }
 
-func NewConditionBuilder() qbtypes.ClickhouseConditionBuilder {
+func NewConditionBuilder() qbtypes.ConditionBuilder {
 	return &conditionBuilder{}
 }
 
-func (c *conditionBuilder) GetColumn(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (c *conditionBuilder) GetColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return attributeMetadataColumns["resource_attributes"], nil
@@ -40,7 +40,7 @@ func (c *conditionBuilder) GetColumn(ctx context.Context, key telemetrytypes.Tel
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key telemetrytypes.TelemetryFieldKey) (string, error) {
+func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	column, err := c.GetColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -58,7 +58,7 @@ func (c *conditionBuilder) GetTableFieldName(ctx context.Context, key telemetryt
 
 func (c *conditionBuilder) GetCondition(
 	ctx context.Context,
-	key telemetrytypes.TelemetryFieldKey,
+	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
