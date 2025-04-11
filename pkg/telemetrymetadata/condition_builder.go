@@ -102,9 +102,9 @@ func (c *conditionBuilder) GetCondition(
 		return sb.And(containsExp, sb.NotILike(tblFieldName, value)), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.And(containsExp, sb.ILike(tblFieldName, value)), nil
+		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
-		return sb.And(containsExp, sb.NotILike(tblFieldName, value)), nil
+		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		exp := fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
