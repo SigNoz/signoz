@@ -2,10 +2,9 @@ name: build-community
 
 on:
   push:
-    branches:
-      - main
     tags:
-      - v*
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
 
 defaults:
   run:
@@ -19,7 +18,6 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      docker_providers: ${{ steps.set-docker-providers.outputs.providers }}
       version: ${{ steps.build-info.outputs.version }}
       hash: ${{ steps.build-info.outputs.hash }}
       time: ${{ steps.build-info.outputs.time }}
@@ -38,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: signoz/primus
-          ref: ${{ inputs.PRIMUS_REF }}
+          ref: main
           path: .primus
           token: ${{ steps.token.outputs.token }}
       - name: build-info
@@ -47,14 +45,6 @@ jobs:
           echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
           echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
           echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
-      - name: set-docker-providers
-        id: set-docker-providers
-        run: |
-          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ || ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
-            echo "providers=dockerhub gcp" >> $GITHUB_OUTPUT
-          else
-            echo "providers=gcp" >> $GITHUB_OUTPUT
-          fi
   js-build:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
@@ -88,4 +78,4 @@ jobs:
       DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
       DOCKER_DOCKERFILE_PATH: ./pkg/query-service/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
-      DOCKER_PROVIDERS: ${{ needs.prepare.outputs.docker_providers }}
+      DOCKER_PROVIDERS: dockerhub
