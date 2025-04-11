@@ -11,9 +11,12 @@ const logEvent = async (
 	rateLimited?: boolean,
 ): Promise<SuccessResponse<EventSuccessPayloadProps> | ErrorResponse> => {
 	try {
+		// add tenant_url to attributes
+		const { hostname } = window.location;
+		const updatedAttributes = { ...attributes, tenant_url: hostname };
 		const response = await axios.post('/event', {
 			eventName,
-			attributes,
+			attributes: updatedAttributes,
 			eventType: eventType || 'track',
 			rateLimited: rateLimited || false, // TODO: Update this once we have a proper way to handle rate limiting
 		});
