@@ -719,6 +719,21 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
+	// empty string is a valid tagType
+	// i.e retrieve all attributes
+	if tagType != "" {
+		// what is happening here?
+		// if tagType is undefined(uh oh javascript) or any invalid value, set it to empty string
+		// instead of failing the request. Ideally, we should fail the request.
+		// but we are not doing that to maintain backward compatibility.
+		if err := tagType.Validate(); err != nil {
+			// if the tagType is invalid, set it to empty string
+			tagType = ""
+		}
+	}
+
 	if err != nil {
 		limit = 50
 	}
@@ -739,6 +754,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		AggregateAttribute: aggregateAttribute,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
+		TagType:            tagType,
 	}
 	return &req, nil
 }
