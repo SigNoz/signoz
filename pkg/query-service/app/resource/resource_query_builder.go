@@ -28,14 +28,14 @@ var resourceLogOperators = map[v3.FilterOperator]string{
 }
 
 // buildResourceFilter builds a clickhouse filter string for resource labels
-func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}) string {
+func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}, isEscaped bool) string {
 	// for all operators except contains and like
 	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, '%s')", key)
 
 	// for contains and like it will be case insensitive
 	lowerSearchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", key)
 
-	chFmtVal := utils.ClickHouseFormattedValue(value)
+	chFmtVal := utils.ClickHouseFormattedValue(value, isEscaped)
 
 	lowerValue := strings.ToLower(fmt.Sprintf("%s", value))
 
@@ -47,14 +47,25 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 	case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 		return fmt.Sprintf(logsOp, searchKey, chFmtVal)
 	case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-		// this is required as clickhouseFormattedValue add's quotes to the string
+
+		var val string
+		if !isEscaped {
+			val = utils.QuoteEscapedString(lowerValue)
+		} else {
+			val = lowerValue
+		}
+
 		// we also want to treat %, _ as literals for contains
-		escapedStringValue := utils.QuoteEscapedStringForContains(lowerValue, false)
-		return fmt.Sprintf("%s %s '%%%s%%'", lowerSearchKey, logsOp, escapedStringValue)
+		val = utils.EscapedStringForContains(val, false)
+		return fmt.Sprintf("%s %s '%%%s%%'", lowerSearchKey, logsOp, val)
 	case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
-		// this is required as clickhouseFormattedValue add's quotes to the string
-		escapedStringValue := utils.QuoteEscapedString(lowerValue)
-		return fmt.Sprintf("%s %s '%s'", lowerSearchKey, logsOp, escapedStringValue)
+		var val string
+		if !isEscaped {
+			val = utils.QuoteEscapedString(lowerValue)
+		} else {
+			val = lowerValue
+		}
+		return fmt.Sprintf("%s %s '%s'", lowerSearchKey, logsOp, val)
 	default:
 		return fmt.Sprintf("%s %s %s", searchKey, logsOp, chFmtVal)
 	}
@@ -63,7 +74,7 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 // buildIndexFilterForInOperator builds a clickhouse filter string for in operator
 // example:= x in a,b,c = (labels like '%"x"%"a"%' or labels like '%"x":"b"%' or labels like '%"x"="c"%')
 // example:= x nin a,b,c = (labels nlike '%"x"%"a"%' AND labels nlike '%"x"="b"' AND labels nlike '%"x"="c"%')
-func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value interface{}) string {
+func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value interface{}, isEscaped bool) string {
 	conditions := []string{}
 	separator := " OR "
 	sqlOp := "like"
@@ -92,8 +103,18 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 	// if there are no values to filter on, return an empty string
 	if len(values) > 0 {
 		for _, v := range values {
-			value := utils.QuoteEscapedStringForContains(v, true)
-			conditions = append(conditions, fmt.Sprintf("labels %s '%%\"%s\":\"%s\"%%'", sqlOp, key, value))
+
+			var val string
+			if !isEscaped {
+				val = utils.QuoteEscapedString(v)
+			} else {
+				val = v
+			}
+
+			// we also want to treat %, _ as literals for contains
+			val = utils.EscapedStringForContains(val, true)
+
+			conditions = append(conditions, fmt.Sprintf("labels %s '%%\"%s\":\"%s\"%%'", sqlOp, key, val))
 		}
 		return "(" + strings.Join(conditions, separator) + ")"
 	}
@@ -107,10 +128,18 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 // for like/contains we will use lower index
 // we can use lower index for =, in etc but it's difficult to do it for !=, NIN etc
 // if as x != "ABC" we cannot predict something like "not lower(labels) like '%%x%%abc%%'". It has it be "not lower(labels) like '%%x%%ABC%%'"
-func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}) string {
+func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}, isEscaped bool) string {
 	// not using clickhouseFormattedValue as we don't wan't the quotes
 	strVal := fmt.Sprintf("%s", value)
-	fmtValEscapedForContains := utils.QuoteEscapedStringForContains(strVal, true)
+
+	var fmtValEscapedForContains string
+	if !isEscaped {
+		fmtValEscapedForContains = utils.QuoteEscapedString(strVal)
+	} else {
+		fmtValEscapedForContains = strVal
+	}
+
+	fmtValEscapedForContains = utils.EscapedStringForContains(fmtValEscapedForContains, true)
 	fmtValEscapedForContainsLower := strings.ToLower(fmtValEscapedForContains)
 	fmtValEscapedLower := strings.ToLower(utils.QuoteEscapedString(strVal))
 
@@ -132,7 +161,7 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 		// don't try to do anything for regex.
 		return ""
 	case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
-		return buildIndexFilterForInOperator(key, op, value)
+		return buildIndexFilterForInOperator(key, op, value, isEscaped)
 	default:
 		return fmt.Sprintf("labels like '%%%s%%'", key)
 	}
@@ -140,7 +169,7 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 
 // buildResourceFiltersFromFilterItems builds a list of clickhouse filter strings for resource labels from a FilterSet.
 // It skips any filter items that are not resource attributes and checks that the operator is supported and the data type is correct.
-func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
+func buildResourceFiltersFromFilterItems(fs *v3.FilterSet, isEscaped bool) ([]string, error) {
 	var conditions []string
 	if fs == nil || len(fs.Items) == 0 {
 		return nil, nil
@@ -175,11 +204,11 @@ func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 
 		if logsOp, ok := resourceLogOperators[op]; ok {
 			// the filter
-			if resourceFilter := buildResourceFilter(logsOp, keyName, op, value); resourceFilter != "" {
+			if resourceFilter := buildResourceFilter(logsOp, keyName, op, value, isEscaped); resourceFilter != "" {
 				conditions = append(conditions, resourceFilter)
 			}
 			// the additional filter for better usage of the index
-			if resourceIndexFilter := buildResourceIndexFilter(keyName, op, value); resourceIndexFilter != "" {
+			if resourceIndexFilter := buildResourceIndexFilter(keyName, op, value, isEscaped); resourceIndexFilter != "" {
 				conditions = append(conditions, resourceIndexFilter)
 			}
 		} else {
@@ -211,12 +240,12 @@ func buildResourceFiltersFromAggregateAttribute(aggregateAttribute v3.AttributeK
 	return ""
 }
 
-func BuildResourceSubQuery(dbName, tableName string, bucketStart, bucketEnd int64, fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isLiveTail bool) (string, error) {
+func BuildResourceSubQuery(dbName, tableName string, bucketStart, bucketEnd int64, fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isLiveTail bool, isEscaped bool) (string, error) {
 
 	// BUILD THE WHERE CLAUSE
 	var conditions []string
 	// only add the resource attributes to the filters here
-	rs, err := buildResourceFiltersFromFilterItems(fs)
+	rs, err := buildResourceFiltersFromFilterItems(fs, isEscaped)
 	if err != nil {
 		return "", err
 	}

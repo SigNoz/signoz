@@ -168,7 +168,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			if item.Key.IsJSON {
-				filter, err := GetJSONFilter(item)
+				filter, err := GetJSONFilter(item, false)
 				if err != nil {
 					return "", err
 				}
@@ -193,7 +193,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, GetExistsNexistsFilter(op, item))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					columnName := getClickhouseColumnName(item.Key)
-					fmtVal := utils.ClickHouseFormattedValue(value)
+					fmtVal := utils.ClickHouseFormattedValue(value, false)
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
@@ -206,7 +206,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					}
 				default:
 					columnName := getClickhouseColumnName(item.Key)
-					fmtVal := utils.ClickHouseFormattedValue(value)
+					fmtVal := utils.ClickHouseFormattedValue(value, false)
 
 					// for use lower for like and ilike
 					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
@@ -444,7 +444,7 @@ func Having(items []v3.Having) string {
 	// aggregate something and filter on that aggregate
 	var having []string
 	for _, item := range items {
-		having = append(having, fmt.Sprintf("value %s %s", item.Operator, utils.ClickHouseFormattedValue(item.Value)))
+		having = append(having, fmt.Sprintf("value %s %s", item.Operator, utils.ClickHouseFormattedValue(item.Value, false)))
 	}
 	return strings.Join(having, " AND ")
 }

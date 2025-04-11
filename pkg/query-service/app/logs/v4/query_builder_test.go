@@ -169,7 +169,8 @@ func Test_getExistsNexistsFilter(t *testing.T) {
 
 func Test_buildAttributeFilter(t *testing.T) {
 	type args struct {
-		item v3.FilterItem
+		item      v3.FilterItem
+		isEscaped bool
 	}
 	tests := []struct {
 		name    string
@@ -297,10 +298,42 @@ func Test_buildAttributeFilter(t *testing.T) {
 			},
 			want: "lower(body) LIKE lower('test')",
 		},
+		{
+			name: "build attribute filter contains- body escaped",
+			args: args{
+				item: v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "body",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: v3.FilterOperatorContains,
+					Value:    `{\\"hello\\": \\"wo_rld\\"}`,
+				},
+				isEscaped: true,
+			},
+			want: `lower(body) LIKE lower('%{\\"hello\\": \\"wo\_rld\\"}%')`,
+		},
+		{
+			name: "build attribute filter eq- body escaped",
+			args: args{
+				item: v3.FilterItem{
+					Key: v3.AttributeKey{
+						Key:      "body",
+						DataType: v3.AttributeKeyDataTypeString,
+						IsColumn: true,
+					},
+					Operator: v3.FilterOperatorEqual,
+					Value:    `{\\"hello\\": \\"wo_rld\\"}`,
+				},
+				isEscaped: true,
+			},
+			want: `body = '{\\"hello\\": \\"wo_rld\\"}'`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildAttributeFilter(tt.args.item)
+			got, err := buildAttributeFilter(tt.args.item, tt.args.isEscaped)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildAttributeFilter() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -317,6 +350,7 @@ func Test_buildLogsTimeSeriesFilterQuery(t *testing.T) {
 		fs                 *v3.FilterSet
 		groupBy            []v3.AttributeKey
 		aggregateAttribute v3.AttributeKey
+		isEscaped          bool
 	}
 	tests := []struct {
 		name    string
@@ -436,7 +470,7 @@ func Test_buildLogsTimeSeriesFilterQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildLogsTimeSeriesFilterQuery(tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute)
+			got, err := buildLogsTimeSeriesFilterQuery(tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, tt.args.isEscaped)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildLogsTimeSeriesFilterQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -641,6 +675,7 @@ func Test_buildLogsQuery(t *testing.T) {
 		step            int64
 		mq              *v3.BuilderQuery
 		graphLimitQtype string
+		isEscaped       bool
 	}
 	tests := []struct {
 		name    string
@@ -785,7 +820,7 @@ func Test_buildLogsQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype)
+			got, err := buildLogsQuery(tt.args.panelType, tt.args.start, tt.args.end, tt.args.step, tt.args.mq, tt.args.graphLimitQtype, tt.args.isEscaped)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildLogsQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -889,7 +889,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
 			formattedVars[name] = metrics.PromFormattedValue(value)
 		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
-			formattedVars[name] = utils.ClickHouseFormattedValue(value)
+			formattedVars[name] = utils.ClickHouseFormattedValue(value, queryRangeParams.ValuesEscaped)
 		}
 	}
 

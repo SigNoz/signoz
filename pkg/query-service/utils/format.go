@@ -159,10 +159,7 @@ func QuoteEscapedString(str string) string {
 	return str
 }
 
-func QuoteEscapedStringForContains(str string, isIndex bool) string {
-	// https: //clickhouse.com/docs/en/sql-reference/functions/string-search-functions#like
-	str = QuoteEscapedString(str)
-
+func EscapedStringForContains(str string, isIndex bool) string {
 	// we are adding this because if a string contains quote `"` it will be stored as \" in clickhouse
 	// to query that using like our query should be \\\\"
 	if isIndex {
@@ -177,7 +174,7 @@ func QuoteEscapedStringForContains(str string, isIndex bool) string {
 }
 
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
-func ClickHouseFormattedValue(v interface{}) string {
+func ClickHouseFormattedValue(v interface{}, isEscaped bool) string {
 	// if it's pointer convert it to a value
 	v = getPointerValue(v)
 
@@ -187,7 +184,11 @@ func ClickHouseFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", QuoteEscapedString(x))
+		if !isEscaped {
+			return fmt.Sprintf("'%s'", QuoteEscapedString(x))
+		} else {
+			return fmt.Sprintf("'%s'", x)
+		}
 	case bool:
 		return fmt.Sprintf("%v", x)
 
@@ -199,7 +200,11 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case string:
 			str := "["
 			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal.(string)))
+				if !isEscaped {
+					str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal.(string)))
+				} else {
+					str += fmt.Sprintf("'%s'", sVal.(string))
+				}
 				if idx != len(x)-1 {
 					str += ","
 				}
@@ -218,7 +223,11 @@ func ClickHouseFormattedValue(v interface{}) string {
 		}
 		str := "["
 		for idx, sVal := range x {
-			str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal))
+			if !isEscaped {
+				str += fmt.Sprintf("'%s'", QuoteEscapedString(sVal))
+			} else {
+				str += fmt.Sprintf("'%s'", sVal)
+			}
 			if idx != len(x)-1 {
 				str += ","
 			}
@@ -234,13 +243,13 @@ func ClickHouseFormattedValue(v interface{}) string {
 func ClickHouseFormattedMetricNames(v interface{}) string {
 	if name, ok := v.(string); ok {
 		if newName, ok := metrics.MetricsUnderTransition[name]; ok {
-			return ClickHouseFormattedValue([]interface{}{name, newName})
+			return ClickHouseFormattedValue([]interface{}{name, newName}, false)
 		} else {
-			return ClickHouseFormattedValue([]interface{}{name})
+			return ClickHouseFormattedValue([]interface{}{name}, false)
 		}
 	}
 
-	return ClickHouseFormattedValue(v)
+	return ClickHouseFormattedValue(v, false)
 }
 
 func AddBackTickToFormatTag(str string) string {

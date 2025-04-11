@@ -253,7 +253,7 @@ var testGetJSONFilterData = []struct {
 func TestGetJSONFilter(t *testing.T) {
 	for _, tt := range testGetJSONFilterData {
 		Convey("testGetJSONFilter", t, func() {
-			filter, err := GetJSONFilter(tt.FilterItem)
+			filter, err := GetJSONFilter(tt.FilterItem, false)
 			if tt.Error {
 				So(err, ShouldNotBeNil)
 			} else {

@@ -317,9 +317,10 @@ var oneString = "1"
 var trueBool = true
 
 var testClickHouseFormattedValueData = []struct {
-	name  string
-	value interface{}
-	want  interface{}
+	name      string
+	value     interface{}
+	want      interface{}
+	isEscaped bool
 }{
 	{
 		name:  "int",
@@ -394,12 +395,21 @@ var testClickHouseFormattedValueData = []struct {
 		},
 		want: "['test\\'1','test\\'2']",
 	},
+	{
+		name: "[]interface{} with string with single quote escaped",
+		value: []interface{}{
+			`test\\'1`,
+			`test\\'2`,
+		},
+		isEscaped: true,
+		want:      `['test\\'1','test\\'2']`,
+	},
 }
 
 func TestClickHouseFormattedValue(t *testing.T) {
 	for _, tt := range testClickHouseFormattedValueData {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ClickHouseFormattedValue(tt.value)
+			got := ClickHouseFormattedValue(tt.value, tt.isEscaped)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.want)
 			}

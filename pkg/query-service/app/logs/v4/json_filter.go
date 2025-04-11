@@ -30,7 +30,7 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotHas:          "NOT has(%s, %s)",
 }
 
-func GetJSONFilter(item v3.FilterItem) (string, error) {
+func GetJSONFilter(item v3.FilterItem, isEscaped bool) (string, error) {
 
 	dataType := item.Key.DataType
 	isArray := false
@@ -65,13 +65,13 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 			filter = fmt.Sprintf(logsOp, key, logsV3.GetPath(strings.Split(item.Key.Key, ".")[1:]))
 		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex, v3.FilterOperatorHas, v3.FilterOperatorNotHas:
-			fmtVal := utils.ClickHouseFormattedValue(value)
+			fmtVal := utils.ClickHouseFormattedValue(value, isEscaped)
 			filter = fmt.Sprintf(logsOp, key, fmtVal)
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 			val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
 			filter = fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, val)
 		default:
-			fmtVal := utils.ClickHouseFormattedValue(value)
+			fmtVal := utils.ClickHouseFormattedValue(value, isEscaped)
 			filter = fmt.Sprintf("%s %s %s", key, logsOp, fmtVal)
 		}
 	} else {

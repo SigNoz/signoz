@@ -113,7 +113,7 @@ func getExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
 	return fmt.Sprintf(logOperators[op], columnType, columnDataType, item.Key.Key)
 }
 
-func buildAttributeFilter(item v3.FilterItem) (string, error) {
+func buildAttributeFilter(item v3.FilterItem, isEscaped bool) (string, error) {
 	// check if the user is searching for value in all attributes
 	key := item.Key.Key
 	op := v3.FilterOperator(strings.ToLower(string(item.Operator)))
@@ -133,12 +133,12 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 		if (op != v3.FilterOperatorEqual && op != v3.FilterOperatorContains) || item.Key.DataType != v3.AttributeKeyDataTypeString {
 			return "", fmt.Errorf("only = operator and string data type is supported for __attrs")
 		}
-		val := utils.ClickHouseFormattedValue(item.Value)
+		val := utils.ClickHouseFormattedValue(item.Value, isEscaped)
 		return fmt.Sprintf("has(mapValues(attributes_string), %s)", val), nil
 	}
 
 	keyName := getClickhouseKey(item.Key)
-	fmtVal := utils.ClickHouseFormattedValue(value)
+	fmtVal := utils.ClickHouseFormattedValue(value, isEscaped)
 
 	if logsOp, ok := logOperators[op]; ok {
 		switch op {
@@ -148,8 +148,16 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 
 			return fmt.Sprintf(logsOp, keyName, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-			// we also want to treat %, _ as literals for contains
-			val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
+			var val string
+			if !isEscaped {
+				val = utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+			} else {
+				val = fmt.Sprintf("%s", item.Value)
+			}
+
+			// we want to treat %, _ as literals for contains
+			val = utils.EscapedStringForContains(val, false)
+
 			// for body the contains is case insensitive
 			if keyName == BODY {
 				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
@@ -159,7 +167,12 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			}
 		case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
 			// for body use lower for like and ilike
-			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+			var val string
+			if isEscaped {
+				val = utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+			} else {
+				val = fmt.Sprintf("%s", item.Value)
+			}
 			if keyName == BODY {
 				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 				return fmt.Sprintf("lower(%s) %s lower('%s')", keyName, logsOp, val), nil
@@ -174,7 +187,7 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 	}
 }
 
-func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey) (string, error) {
+func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isEscaped bool) (string, error) {
 	var conditions []string
 
 	if fs == nil || len(fs.Items) == 0 {
@@ -189,7 +202,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 		// if the filter is json filter
 		if item.Key.IsJSON {
-			filter, err := GetJSONFilter(item)
+			filter, err := GetJSONFilter(item, isEscaped)
 			if err != nil {
 				return "", err
 			}
@@ -198,7 +211,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		}
 
 		// generate the filter
-		filter, err := buildAttributeFilter(item)
+		filter, err := buildAttributeFilter(item, isEscaped)
 		if err != nil {
 			return "", err
 		}
@@ -342,7 +355,7 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 	}
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, isEscaped bool) (string, error) {
 	// timerange will be sent in epoch millisecond
 	logsStart := utils.GetEpochNanoSecs(start)
 	logsEnd := utils.GetEpochNanoSecs(end)
@@ -355,7 +368,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d) AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", logsStart, logsEnd, bucketStart, bucketEnd)
 
 	// build the where clause for main table
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute, isEscaped)
 	if err != nil {
 		return "", err
 	}
@@ -364,7 +377,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// build the where clause for resource table
-	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false, isEscaped)
 	if err != nil {
 		return "", err
 	}
@@ -446,14 +459,14 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	return query, nil
 }
 
-func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, v3.AttributeKey{})
+func buildLogsLiveTailQuery(mq *v3.BuilderQuery, isEscaped bool) (string, error) {
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, v3.AttributeKey{}, isEscaped)
 	if err != nil {
 		return "", err
 	}
 
 	// no values for bucket start and end
-	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true)
+	resourceSubQuery, err := resource.BuildResourceSubQuery(DB_NAME, DISTRIBUTED_LOGS_V2_RESOURCE, 0, 0, mq.Filters, mq.GroupBy, mq.AggregateAttribute, true, isEscaped)
 	if err != nil {
 		return "", err
 	}
@@ -491,14 +504,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	// }
 
 	if options.IsLivetailQuery {
-		query, err := buildLogsLiveTailQuery(mq)
+		query, err := buildLogsLiveTailQuery(mq, options.ValuesEscaped)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group_by names (no values)
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.ValuesEscaped)
 		if err != nil {
 			return "", err
 		}
@@ -506,14 +519,14 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		return query, nil
 	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.ValuesEscaped)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.ValuesEscaped)
 	if err != nil {
 		return "", err
 	}
