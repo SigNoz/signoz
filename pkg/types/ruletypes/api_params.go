@@ -1,4 +1,4 @@
-package rules
+package ruletypes
 
 import (
 	"context"
@@ -70,16 +70,16 @@ type PostableRule struct {
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, error) {
-	return parsePostableRule(content, "json")
+	return ParsePostableRuleWithKind(content, "json")
 }
 
-func parsePostableRule(content []byte, kind RuleDataKind) (*PostableRule, error) {
-	return parseIntoRule(PostableRule{}, content, kind)
+func ParsePostableRuleWithKind(content []byte, kind RuleDataKind) (*PostableRule, error) {
+	return ParseIntoRule(PostableRule{}, content, kind)
 }
 
 // parseIntoRule loads the content (data) into PostableRule and also
 // validates the end result
-func parseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
+func ParseIntoRule(initRule PostableRule, content []byte, kind RuleDataKind) (*PostableRule, error) {
 	rule := &initRule
 
 	var err error

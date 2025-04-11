@@ -143,7 +143,7 @@ func main() {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
 
-	if err := server.Start(); err != nil {
+	if err := server.Start(context.Background()); err != nil {
 		zap.L().Fatal("Could not start server", zap.Error(err))
 	}
 

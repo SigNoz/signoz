@@ -1,4 +1,4 @@
-package rules
+package ruletypes
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/pkg/errors"
 )
 
 // this file contains common structs and methods used by
@@ -20,8 +19,7 @@ import (
 const (
 	// how long before re-sending the alert
 	ResolvedRetention = 15 * time.Minute
-
-	TestAlertPostFix = "_TEST_ALERT"
+	TestAlertPostFix  = "_TEST_ALERT"
 )
 
 type RuleType string
@@ -63,7 +61,7 @@ type Alert struct {
 	Missing bool
 }
 
-func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
+func (a *Alert) NeedsSending(ts time.Time, resendDelay time.Duration) bool {
 	if a.State == model.StatePending {
 		return false
 	}
@@ -201,39 +199,11 @@ func (rc *RuleCondition) String() string {
 	return string(data)
 }
 
-type Duration time.Duration
-
-func (d Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(d).String())
-}
-
-func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	switch value := v.(type) {
-	case float64:
-		*d = Duration(time.Duration(value))
-		return nil
-	case string:
-		tmp, err := time.ParseDuration(value)
-		if err != nil {
-			return err
-		}
-		*d = Duration(tmp)
-
-		return nil
-	default:
-		return errors.New("invalid duration")
-	}
-}
-
 // prepareRuleGeneratorURL creates an appropriate url
 // for the rule. the URL is sent in slack messages as well as
 // to other systems and allows backtracking to the rule definition
 // from the third party systems.
-func prepareRuleGeneratorURL(ruleId string, source string) string {
+func PrepareRuleGeneratorURL(ruleId string, source string) string {
 	if source == "" {
 		return source
 	}

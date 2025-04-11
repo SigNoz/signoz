@@ -27,14 +27,29 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"ruleId": "439453587",
+							"ruleId": "01961575-461c-7668-875f-05d374062bfc",
 						},
 					},
 					UpdatedAt: time.Now(),
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=439453587",
+			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc",
+		},
+		{
+			name: "SingleAlertWithValidRuleUUIDv4",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"ruleId": "2d8edca5-4f24-4266-afd1-28cefadcfa88",
+						},
+					},
+					UpdatedAt: time.Now(),
+					Timeout:   false,
+				},
+			},
+			expected: "http://localhost:8080/alerts/edit?ruleId=2d8edca5-4f24-4266-afd1-28cefadcfa88",
 		},
 		{
 			name: "SingleAlertWithInvalidRuleId",
@@ -57,7 +72,7 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"ruleId": "1",
+							"ruleId": "01961575-461c-7668-875f-05d374062bfc",
 						},
 					},
 					UpdatedAt: time.Now(),
@@ -66,7 +81,7 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"ruleId": "2",
+							"ruleId": "0196156c-990e-7ec5-b28f-8a3cfbb9c865",
 						},
 					},
 					UpdatedAt: time.Now(),
@@ -81,7 +96,7 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"ruleId": "1",
+							"ruleId": "01961575-461c-7668-875f-05d374062bfc",
 						},
 					},
 					UpdatedAt: time.Now(),
@@ -90,14 +105,14 @@ func TestFromGlobs(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels: model.LabelSet{
-							"ruleId": "1",
+							"ruleId": "01961575-461c-7668-875f-05d374062bfc",
 						},
 					},
 					UpdatedAt: time.Now(),
 					Timeout:   false,
 				},
 			},
-			expected: "http://localhost:8080/alerts/edit?ruleId=1",
+			expected: "http://localhost:8080/alerts/edit?ruleId=01961575-461c-7668-875f-05d374062bfc",
 		},
 		{
 			name: "MultipleAlertsWithNoRuleId",

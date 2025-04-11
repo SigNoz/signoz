@@ -153,7 +153,9 @@ export default function AlertRules({
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
 								src={
-									rule.id % 2 === 0 ? '/Icons/eight-ball.svg' : '/Icons/circus-tent.svg'
+									Math.random() % 2 === 0
+										? '/Icons/eight-ball.svg'
+										: '/Icons/circus-tent.svg'
 								}
 								alt="alert-rules"
 								className="alert-rules-img"

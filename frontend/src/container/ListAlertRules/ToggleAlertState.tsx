@@ -25,7 +25,7 @@ function ToggleAlertState({
 	const defaultErrorMessage = 'Something went wrong';
 
 	const onToggleHandler = async (
-		id: number,
+		id: string,
 		disabled: boolean,
 	): Promise<void> => {
 		try {

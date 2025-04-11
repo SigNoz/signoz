@@ -3,7 +3,6 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
-	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -191,9 +190,9 @@ func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.
 
 func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string][]string, error) {
 	type matcher struct {
-		bun.BaseModel `bun:"table:rules"`
-		ID            int    `bun:"id,pk"`
-		Data          string `bun:"data"`
+		bun.BaseModel `bun:"table:rule"`
+		ID            valuer.UUID `bun:"id,pk"`
+		Data          string      `bun:"data"`
 	}
 
 	matchers := []matcher{}
@@ -213,7 +212,7 @@ func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string]
 	for _, matcher := range matchers {
 		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
 		for _, receiver := range receivers {
-			matchersMap[strconv.Itoa(matcher.ID)] = append(matchersMap[strconv.Itoa(matcher.ID)], receiver.String())
+			matchersMap[matcher.ID.StringValue()] = append(matchersMap[matcher.ID.StringValue()], receiver.String())
 		}
 	}
 

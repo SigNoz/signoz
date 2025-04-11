@@ -153,7 +153,7 @@ type Props = {
 export const useGetAlertRuleDetails = (): Props => {
 	const { ruleId } = useAlertHistoryQueryParams();
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && ruleId !== '';
 
 	const {
 		isLoading,
@@ -163,7 +163,7 @@ export const useGetAlertRuleDetails = (): Props => {
 	} = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
 		queryFn: () =>
 			get({
-				id: parseInt(ruleId || '', 10),
+				id: ruleId || '',
 			}),
 		enabled: isValidRuleId,
 		refetchOnWindowFocus: false,
@@ -204,7 +204,7 @@ export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => 
 		{
 			queryFn: () =>
 				ruleStats({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),
@@ -234,7 +234,7 @@ export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopC
 		{
 			queryFn: () =>
 				topContributors({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),
@@ -287,7 +287,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 		{
 			queryFn: () =>
 				timelineTable({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 					limit: TIMELINE_TABLE_PAGE_SIZE,
@@ -410,7 +410,7 @@ export const useAlertRuleStatusToggle = ({
 
 	const handleAlertStateToggle = (): void => {
 		const args = {
-			id: parseInt(ruleId, 10),
+			id: ruleId,
 			data: { disabled: alertRuleState !== 'disabled' },
 		};
 		toggleAlertState(args);
@@ -512,7 +512,7 @@ export const useAlertRuleUpdate = ({
 export const useAlertRuleDelete = ({
 	ruleId,
 }: {
-	ruleId: number;
+	ruleId: string;
 }): {
 	handleAlertDelete: () => void;
 } => {
@@ -560,7 +560,7 @@ export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTi
 		{
 			queryFn: () =>
 				timelineGraph({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),

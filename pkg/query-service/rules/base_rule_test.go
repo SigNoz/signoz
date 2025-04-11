@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 func TestBaseRule_RequireMinPoints(t *testing.T) {
@@ -17,7 +18,7 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 		{
 			name: "test should skip if less than min points",
 			rule: &BaseRule{
-				ruleCondition: &RuleCondition{
+				ruleCondition: &ruletypes.RuleCondition{
 					RequireMinPoints:  true,
 					RequiredNumPoints: 4,
 				},
@@ -33,11 +34,11 @@ func TestBaseRule_RequireMinPoints(t *testing.T) {
 		{
 			name: "test should alert if more than min points",
 			rule: &BaseRule{
-				ruleCondition: &RuleCondition{
+				ruleCondition: &ruletypes.RuleCondition{
 					RequireMinPoints:  true,
 					RequiredNumPoints: 4,
-					CompareOp:         ValueIsAbove,
-					MatchType:         AtleastOnce,
+					CompareOp:         ruletypes.ValueIsAbove,
+					MatchType:         ruletypes.AtleastOnce,
 					Target:            &threshold,
 				},
 			},
