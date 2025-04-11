@@ -87,11 +87,11 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("%s_%s_%s", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("%s_%s_%s", key.FieldContext.String, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("%s_%s_%s_exists", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
+	return fmt.Sprintf("%s_%s_%s_exists", key.FieldContext.String, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
 type TelemetryFieldValues struct {
