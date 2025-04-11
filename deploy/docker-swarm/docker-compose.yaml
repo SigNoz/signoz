@@ -10,7 +10,7 @@ x-common: &common
       max-size: 50m
       max-file: "3"
 x-clickhouse-defaults: &clickhouse-defaults
-  <<: *common
+  !!merge <<: *common
   image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
   deploy:
@@ -37,7 +37,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       soft: 262144
       hard: 262144
 x-zookeeper-defaults: &zookeeper-defaults
-  <<: *common
+  !!merge <<: *common
   image: bitnami/zookeeper:3.7.1
   user: root
   deploy:
@@ -53,13 +53,13 @@ x-zookeeper-defaults: &zookeeper-defaults
     timeout: 5s
     retries: 3
 x-db-depend: &db-depend
-  <<: *common
+  !!merge <<: *common
   depends_on:
     - clickhouse
     - schema-migrator
 services:
   init-clickhouse:
-    <<: *common
+    !!merge <<: *common
     image: clickhouse/clickhouse-server:24.1.2-alpine
     command:
       - bash
@@ -79,7 +79,7 @@ services:
     volumes:
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
   zookeeper-1:
-    <<: *zookeeper-defaults
+    !!merge <<: *zookeeper-defaults
     # ports:
     #   - "2181:2181"
     #   - "2888:2888"
@@ -93,7 +93,7 @@ services:
       - ZOO_ENABLE_PROMETHEUS_METRICS=yes
       - ZOO_PROMETHEUS_METRICS_PORT_NUMBER=9141
   clickhouse:
-    <<: *clickhouse-defaults
+    !!merge <<: *clickhouse-defaults
     # TODO: needed for clickhouse TCP connectio
     hostname: clickhouse
     # ports:
@@ -109,7 +109,7 @@ services:
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
-    <<: *db-depend
+    !!merge <<: *db-depend
     image: signoz/signoz:v0.78.1
     command:
       - --config=/root/config/prometheus.yml
@@ -142,7 +142,7 @@ services:
       timeout: 5s
       retries: 3
   otel-collector:
-    <<: *db-depend
+    !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:v0.111.38
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -166,7 +166,7 @@ services:
       - schema-migrator
       - signoz
   schema-migrator:
-    <<: *common
+    !!merge <<: *common
     image: signoz/signoz-schema-migrator:v0.111.38
     deploy:
       restart_policy:
