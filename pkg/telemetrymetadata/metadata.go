@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrymetadatatypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 	"go.uber.org/zap"
@@ -36,7 +35,7 @@ type telemetryMetaStore struct {
 	relatedMetadataDBName  string
 	relatedMetadataTblName string
 
-	conditionBuilder qbtypes.ClickhouseConditionBuilder
+	conditionBuilder qbtypes.ConditionBuilder
 }
 
 func NewTelemetryMetaStore(
@@ -52,7 +51,7 @@ func NewTelemetryMetaStore(
 	logsFieldsTblName string,
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
-) (telemetrymetadatatypes.MetadataStore, error) {
+) (telemetrytypes.MetadataStore, error) {
 	return &telemetryMetaStore{
 		telemetrystore:         telemetrystore,
 		tracesDBName:           tracesDBName,
@@ -84,7 +83,7 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 }
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria
-func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
 
 	if len(fieldKeySelectors) == 0 {
 		return nil, nil
@@ -204,7 +203,7 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 }
 
 // getLogsKeys returns the keys from the spans that match the field selection criteria
-func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, nil
 	}
@@ -311,7 +310,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 // getMetricsKeys returns the keys from the metrics that match the field selection criteria
 // TODO(srikanthccv): update the implementation after the dot metrics migration is done
-func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelectors []telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	if len(fieldKeySelectors) == 0 {
 		return nil, nil
 	}
@@ -385,33 +384,33 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	return keys, nil
 }
 
-func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	var err error
 	switch fieldKeySelector.Signal {
 	case telemetrytypes.SignalTraces:
-		keys, err = t.getTracesKeys(ctx, []telemetrytypes.FieldKeySelector{fieldKeySelector})
+		keys, err = t.getTracesKeys(ctx, []*telemetrytypes.FieldKeySelector{fieldKeySelector})
 	case telemetrytypes.SignalLogs:
-		keys, err = t.getLogsKeys(ctx, []telemetrytypes.FieldKeySelector{fieldKeySelector})
+		keys, err = t.getLogsKeys(ctx, []*telemetrytypes.FieldKeySelector{fieldKeySelector})
 	case telemetrytypes.SignalMetrics:
-		keys, err = t.getMetricsKeys(ctx, []telemetrytypes.FieldKeySelector{fieldKeySelector})
+		keys, err = t.getMetricsKeys(ctx, []*telemetrytypes.FieldKeySelector{fieldKeySelector})
 	case telemetrytypes.SignalUnspecified:
 		// get traces keys
-		tracesKeys, err := t.getTracesKeys(ctx, []telemetrytypes.FieldKeySelector{fieldKeySelector})
+		tracesKeys, err := t.getTracesKeys(ctx, []*telemetrytypes.FieldKeySelector{fieldKeySelector})
 		if err != nil {
 			return nil, err
 		}
 		keys = append(keys, tracesKeys...)
 
 		// get logs keys
-		logsKeys, err := t.getLogsKeys(ctx, []telemetrytypes.FieldKeySelector{fieldKeySelector})
+		logsKeys, err := t.getLogsKeys(ctx, []*telemetrytypes.FieldKeySelector{fieldKeySelector})
 		if err != nil {
 			return nil, err
 		}
 		keys = append(keys, logsKeys...)
 
 		// get metrics keys
-		metricsKeys, err := t.getMetricsKeys(ctx, []telemetrytypes.FieldKeySelector{fieldKeySelector})
+		metricsKeys, err := t.getMetricsKeys(ctx, []*telemetrytypes.FieldKeySelector{fieldKeySelector})
 		if err != nil {
 			return nil, err
 		}
@@ -429,11 +428,11 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector telem
 	return mapOfKeys, nil
 }
 
-func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 
-	logsSelectors := []telemetrytypes.FieldKeySelector{}
-	tracesSelectors := []telemetrytypes.FieldKeySelector{}
-	metricsSelectors := []telemetrytypes.FieldKeySelector{}
+	logsSelectors := []*telemetrytypes.FieldKeySelector{}
+	tracesSelectors := []*telemetrytypes.FieldKeySelector{}
+	metricsSelectors := []*telemetrytypes.FieldKeySelector{}
 
 	for _, fieldKeySelector := range fieldKeySelectors {
 		switch fieldKeySelector.Signal {
@@ -477,7 +476,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 	return mapOfKeys, nil
 }
 
-func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
+func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	keys, err := t.GetKeys(ctx, fieldKeySelector)
 	if err != nil {
 		return nil, err
@@ -485,7 +484,7 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector teleme
 	return keys[fieldKeySelector.Name], nil
 }
 
-func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector telemetrytypes.FieldValueSelector) ([]string, error) {
+func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, error) {
 
 	args := []any{}
 
@@ -510,7 +509,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	}
 
 	// TODO(srikanthccv): add the select column
-	selectColumn, _ := t.conditionBuilder.GetTableFieldName(ctx, key)
+	selectColumn, _ := t.conditionBuilder.GetTableFieldName(ctx, &key)
 
 	args = append(args, fieldValueSelector.Limit)
 	filterSubQuery := fmt.Sprintf(
@@ -542,11 +541,11 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 	return attributeValues, nil
 }
 
-func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSelector telemetrytypes.FieldValueSelector) ([]string, error) {
+func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, error) {
 	return t.getRelatedValues(ctx, fieldValueSelector)
 }
 
-func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
 	// build the query to get the keys from the spans that match the field selection criteria
 	var limit int
 
@@ -609,7 +608,7 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 	return values, nil
 }
 
-func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
 	// build the query to get the keys from the spans that match the field selection criteria
 	var limit int
 
@@ -669,11 +668,12 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	return values, nil
 }
 
-func (t *telemetryMetaStore) getMetricFieldValues(_ context.Context, fieldValueSelector telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) getMetricFieldValues(_ context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+	// TODO(srikanthccv): implement this. use new tables?
 	return nil, nil
 }
 
-func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
+func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, error) {
 	var values *telemetrytypes.TelemetryFieldValues
 	var err error
 	switch fieldValueSelector.Signal {

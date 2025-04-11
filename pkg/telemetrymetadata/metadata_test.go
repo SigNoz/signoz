@@ -6,22 +6,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
-	"github.com/SigNoz/signoz/pkg/telemetryspans"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 )
-
-type MockTelemetryStore struct {
-	conn driver.Conn
-}
-
-func (m *MockTelemetryStore) ClickhouseDB() clickhouse.Conn {
-	return m.conn
-}
 
 type regexMatcher struct {
 }
@@ -38,18 +30,14 @@ func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
 }
 
 func TestGetKeys(t *testing.T) {
-	mockTelemetryStore := &MockTelemetryStore{}
-	mock, err := cmock.NewClickHouseWithQueryMatcher(nil, &regexMatcher{})
-	if err != nil {
-		t.Fatalf("Failed to create mock ClickHouse: %v", err)
-	}
-	mockTelemetryStore.conn = mock
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
 
 	metadata, err := NewTelemetryMetaStore(
 		mockTelemetryStore,
-		telemetryspans.DBName,
-		telemetryspans.TagAttributesV2TableName,
-		telemetryspans.SpanIndexV3TableName,
+		telemetrytraces.DBName,
+		telemetrytraces.TagAttributesV2TableName,
+		telemetrytraces.SpanIndexV3TableName,
 		telemetrymetrics.DBName,
 		telemetrymetrics.TimeseriesV41weekTableName,
 		telemetrymetrics.TimeseriesV41weekTableName,
@@ -82,7 +70,7 @@ func TestGetKeys(t *testing.T) {
 			{Name: "tag_data_type", Type: "String"},
 			{Name: "priority", Type: "UInt8"},
 		}, [][]any{{"http.method", "tag", "String", 1}, {"http.method", "tag", "String", 1}}))
-	keys, err := metadata.GetKeys(context.Background(), telemetrytypes.FieldKeySelector{
+	keys, err := metadata.GetKeys(context.Background(), &telemetrytypes.FieldKeySelector{
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextSpan,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
