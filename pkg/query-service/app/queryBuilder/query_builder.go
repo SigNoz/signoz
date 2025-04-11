@@ -193,12 +193,12 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 					// for ts query with group by and limit form two queries
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
 						limitQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
-							v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
+							v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, ValuesEscaped: params.ValuesEscaped})
 						if err != nil {
 							return nil, err
 						}
 						placeholderQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
-							query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
+							query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, ValuesEscaped: params.ValuesEscaped})
 						if err != nil {
 							return nil, err
 						}
@@ -206,7 +206,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 						queries[queryName] = query
 					} else {
 						queryString, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
-							query, v3.QBOptions{GraphLimitQtype: ""})
+							query, v3.QBOptions{GraphLimitQtype: "", ValuesEscaped: params.ValuesEscaped})
 						if err != nil {
 							return nil, err
 						}
@@ -215,18 +215,18 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
+						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, ValuesEscaped: params.ValuesEscaped})
 						if err != nil {
 							return nil, err
 						}
-						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
+						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, ValuesEscaped: params.ValuesEscaped})
 						if err != nil {
 							return nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
 					} else {
-						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: ""})
+						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: "", ValuesEscaped: params.ValuesEscaped})
 						if err != nil {
 							return nil, err
 						}

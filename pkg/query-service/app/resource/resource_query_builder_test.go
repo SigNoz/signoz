@@ -9,10 +9,11 @@ import (
 
 func Test_buildResourceFilter(t *testing.T) {
 	type args struct {
-		logsOp string
-		key    string
-		op     v3.FilterOperator
-		value  interface{}
+		logsOp    string
+		key       string
+		op        v3.FilterOperator
+		value     interface{}
+		isEscaped bool
 	}
 	tests := []struct {
 		name string
@@ -88,7 +89,7 @@ func Test_buildResourceFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildResourceFilter(tt.args.logsOp, tt.args.key, tt.args.op, tt.args.value); got != tt.want {
+			if got := buildResourceFilter(tt.args.logsOp, tt.args.key, tt.args.op, tt.args.value, tt.args.isEscaped); got != tt.want {
 				t.Errorf("buildResourceFilter() = %v, want %v", got, tt.want)
 			}
 		})
@@ -97,9 +98,10 @@ func Test_buildResourceFilter(t *testing.T) {
 
 func Test_buildIndexFilterForInOperator(t *testing.T) {
 	type args struct {
-		key   string
-		op    v3.FilterOperator
-		value interface{}
+		key       string
+		op        v3.FilterOperator
+		value     interface{}
+		isEscaped bool
 	}
 	tests := []struct {
 		name string
@@ -142,10 +144,20 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 			},
 			want: `(labels not like '%"service.name":"application\'\\\\"\_s"%')`,
 		},
+		{
+			name: "test nin string with escaped quotes",
+			args: args{
+				key:       "service.name",
+				op:        v3.FilterOperatorNotIn,
+				value:     `application\'"_s`,
+				isEscaped: true,
+			},
+			want: `(labels not like '%"service.name":"application\'\\\\"\_s"%')`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildIndexFilterForInOperator(tt.args.key, tt.args.op, tt.args.value); got != tt.want {
+			if got := buildIndexFilterForInOperator(tt.args.key, tt.args.op, tt.args.value, tt.args.isEscaped); got != tt.want {
 				t.Errorf("buildIndexFilterForInOperator() = %v, want %v", got, tt.want)
 			}
 		})
@@ -154,9 +166,10 @@ func Test_buildIndexFilterForInOperator(t *testing.T) {
 
 func Test_buildResourceIndexFilter(t *testing.T) {
 	type args struct {
-		key   string
-		op    v3.FilterOperator
-		value interface{}
+		key       string
+		op        v3.FilterOperator
+		value     interface{}
+		isEscaped bool
 	}
 	tests := []struct {
 		name string
@@ -235,10 +248,20 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 			},
 			want: `labels like '%service.name%Application\\\\"%'`,
 		},
+		{
+			name: "test eq with escaped quotes",
+			args: args{
+				key:       "service.name",
+				op:        v3.FilterOperatorEqual,
+				value:     `App\\lication"`,
+				isEscaped: true,
+			},
+			want: `labels like '%service.name%App\\lication\\\\"%'`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildResourceIndexFilter(tt.args.key, tt.args.op, tt.args.value); got != tt.want {
+			if got := buildResourceIndexFilter(tt.args.key, tt.args.op, tt.args.value, tt.args.isEscaped); got != tt.want {
 				t.Errorf("buildResourceIndexFilter() = %v, want %v", got, tt.want)
 			}
 		})
@@ -247,7 +270,8 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 
 func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 	type args struct {
-		fs *v3.FilterSet
+		fs        *v3.FilterSet
+		isEscaped bool
 	}
 	tests := []struct {
 		name    string
@@ -335,7 +359,7 @@ func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildResourceFiltersFromFilterItems(tt.args.fs)
+			got, err := buildResourceFiltersFromFilterItems(tt.args.fs, tt.args.isEscaped)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildResourceFiltersFromFilterItems() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -439,6 +463,7 @@ func Test_buildResourceSubQuery(t *testing.T) {
 		fs                 *v3.FilterSet
 		groupBy            []v3.AttributeKey
 		aggregateAttribute v3.AttributeKey
+		isEscaped          bool
 	}
 	tests := []struct {
 		name    string
@@ -497,7 +522,7 @@ func Test_buildResourceSubQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildResourceSubQuery("signoz_logs", "distributed_logs_v2_resource", tt.args.bucketStart, tt.args.bucketEnd, tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, false)
+			got, err := BuildResourceSubQuery("signoz_logs", "distributed_logs_v2_resource", tt.args.bucketStart, tt.args.bucketEnd, tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, false, tt.args.isEscaped)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildResourceSubQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return

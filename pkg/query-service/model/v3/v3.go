@@ -420,6 +420,7 @@ type FilterAttributeValueResponse struct {
 }
 
 type QueryRangeParamsV3 struct {
+	ValuesEscaped  bool                   `json:"valuesEscaped"`
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
 	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
@@ -1475,4 +1476,5 @@ type URLShareableOptions struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
+	ValuesEscaped   bool
 }
