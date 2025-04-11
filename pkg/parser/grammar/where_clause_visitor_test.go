@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetryspans"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -115,7 +115,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 			},
 			query:                "response.body contains error",
 			expectedSearchString: "WHERE (LOWER(toString(attributes_number['response.body'])) LIKE LOWER(?) OR LOWER(attributes_string['response.body']) LIKE LOWER(?))",
-			expectedSearchArgs:   []any{"error", "error"},
+			expectedSearchArgs:   []any{"%error%", "%error%"},
 		},
 		{
 			name: "search-on-top-level-key",
@@ -390,7 +390,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 			},
 			query:                "response.body contains error",
 			expectedSearchString: "WHERE (LOWER(toString(attributes_number['response.body'])) LIKE LOWER(?) OR LOWER(attributes_string['response.body']) LIKE LOWER(?))",
-			expectedSearchArgs:   []any{"error", "error"},
+			expectedSearchArgs:   []any{"%error%", "%error%"},
 		},
 		{
 			name: "collision-with-attribute-field-and-resource-attribute",
@@ -486,7 +486,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		chQuery, chQueryArgs, err := PrepareWhereClause(c.query, c.fieldKeys, telemetryspans.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+		chQuery, chQueryArgs, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
 			Name:          "dummy",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
