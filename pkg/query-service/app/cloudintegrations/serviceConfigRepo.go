@@ -125,7 +125,7 @@ func (r *serviceConfigSQLRepository) upsert(
 	}
 	_, err = r.store.BunDB().NewInsert().
 		Model(&serviceConfig).
-		On("conflict(cloud_integration_id, type) do update set config=excluded.config").
+		On("conflict(cloud_integration_id, type) do update set config=excluded.config, updated_at=excluded.updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(

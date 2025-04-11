@@ -141,7 +141,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingIntegrations) > 0 {
 				newIntegrations := migration.
-					CopyOldIntegrationsToNewIntegrations(tx, existingIntegrations)
+					CopyOldIntegrationsToNewIntegrations(tx, orgIDs[0], existingIntegrations)
 				_, err = tx.
 					NewInsert().
 					Model(&newIntegrations).
@@ -176,7 +176,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingIntegrations) > 0 {
 				newIntegrations := migration.
-					CopyOldCloudIntegrationsToNewCloudIntegrations(tx, existingIntegrations)
+					CopyOldCloudIntegrationsToNewCloudIntegrations(tx, orgIDs[0], existingIntegrations)
 				_, err = tx.
 					NewInsert().
 					Model(&newIntegrations).
@@ -217,7 +217,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 
 			if err == nil && len(existingServices) > 0 {
 				newServices := migration.
-					CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx, existingServices)
+					CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx, orgIDs[0], existingServices)
 				_, err = tx.
 					NewInsert().
 					Model(&newServices).
@@ -258,21 +258,8 @@ func (migration *updateIntegrations) Down(ctx context.Context, db *bun.DB) error
 	return nil
 }
 
-func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(tx bun.IDB, existingIntegrations []*existingInstalledIntegration) []*newInstalledIntegration {
+func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(tx bun.IDB, orgID string, existingIntegrations []*existingInstalledIntegration) []*newInstalledIntegration {
 	newIntegrations := make([]*newInstalledIntegration, 0)
-	// get the first org id
-	orgIDs := make([]string, 0)
-	err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		zap.L().Error("failed to get org id", zap.Error(err))
-		return nil
-	}
-	if len(orgIDs) == 0 {
-		return nil
-	}
 
 	for _, integration := range existingIntegrations {
 		newIntegrations = append(newIntegrations, &newInstalledIntegration{
@@ -282,28 +269,15 @@ func (migration *updateIntegrations) CopyOldIntegrationsToNewIntegrations(tx bun
 			Type:        integration.IntegrationID,
 			Config:      integration.ConfigJSON,
 			InstalledAt: integration.InstalledAt,
-			OrgID:       orgIDs[0],
+			OrgID:       orgID,
 		})
 	}
 
 	return newIntegrations
 }
 
-func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrations(tx bun.IDB, existingIntegrations []*existingCloudIntegration) []*newCloudIntegration {
+func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrations(tx bun.IDB, orgID string, existingIntegrations []*existingCloudIntegration) []*newCloudIntegration {
 	newIntegrations := make([]*newCloudIntegration, 0)
-	// get the first org id
-	orgIDs := make([]string, 0)
-	err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		zap.L().Error("failed to get org id", zap.Error(err))
-		return nil
-	}
-	if len(orgIDs) == 0 {
-		return nil
-	}
 
 	for _, integration := range existingIntegrations {
 		newIntegrations = append(newIntegrations, &newCloudIntegration{
@@ -312,34 +286,22 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 			},
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: integration.CreatedAt,
+				UpdatedAt: integration.CreatedAt,
 			},
 			Provider:        integration.CloudProvider,
 			AccountID:       integration.CloudAccountID,
 			Config:          integration.ConfigJSON,
 			LastAgentReport: integration.LastAgentReportJSON,
 			RemovedAt:       integration.RemovedAt,
-			OrgID:           orgIDs[0],
+			OrgID:           orgID,
 		})
 	}
 
 	return newIntegrations
 }
 
-func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx bun.IDB, existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
+func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx bun.IDB, orgID string, existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
 	newServices := make([]*newCloudIntegrationService, 0)
-	// get the first org id
-	orgIDs := make([]string, 0)
-	err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(context.Background(), &orgIDs)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		zap.L().Error("failed to get org id", zap.Error(err))
-		return nil
-	}
-	if len(orgIDs) == 0 {
-		return nil
-	}
 
 	for _, service := range existingServices {
 		var cloudIntegrationID string
@@ -348,7 +310,7 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 			Column("id").
 			Where("account_id = ?", service.CloudAccountID).
 			Where("provider = ?", service.CloudProvider).
-			Where("org_id = ?", orgIDs[0]).
+			Where("org_id = ?", orgID).
 			Scan(context.Background(), &cloudIntegrationID)
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -363,6 +325,7 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 			},
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: service.CreatedAt,
+				UpdatedAt: service.CreatedAt,
 			},
 			Type:               service.ServiceID,
 			Config:             service.ConfigJSON,
@@ -403,6 +366,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		OrgID:    orgID,
 		Name:     user.Name,
@@ -423,6 +387,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		OrgID:     orgID,
 		UserID:    newUser.ID.String(),
