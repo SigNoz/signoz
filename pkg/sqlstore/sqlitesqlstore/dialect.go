@@ -17,13 +17,15 @@ var (
 )
 
 var (
-	Org  = "org"
-	User = "user"
+	Org              = "org"
+	User             = "user"
+	CloudIntegration = "cloud_integration"
 )
 
 var (
-	OrgReference  = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	OrgReference              = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference             = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
 type dialect struct {
@@ -185,10 +187,9 @@ func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table inte
 }
 
 func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, references []string, cb func(context.Context) error) error {
-	// Nitya: Not enforcing it now
-	// if len(references) == 0 {
-	// 	return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
-	// }
+	if len(references) == 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot run migration without reference")
+	}
 	exists, err := dialect.TableExists(ctx, bun, newModel)
 	if err != nil {
 		return err
@@ -203,6 +204,8 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, OrgReference)
 		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
 			fkReferences = append(fkReferences, UserReference)
+		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
+			fkReferences = append(fkReferences, CloudIntegrationReference)
 		}
 	}
 

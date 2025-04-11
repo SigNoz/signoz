@@ -55,7 +55,7 @@ type newInstalledIntegration struct {
 	Type        string    `json:"type" bun:"type,type:text,unique:org_id_type"`
 	Config      string    `json:"config" bun:"config,type:text"`
 	InstalledAt time.Time `json:"installed_at" bun:"installed_at,default:current_timestamp"`
-	OrgID       string    `json:"org_id" bun:"org_id,type:text,unique:org_id_type,references:organizations(id),on_delete:cascade"`
+	OrgID       string    `json:"org_id" bun:"org_id,type:text,unique:org_id_type"`
 }
 
 type existingCloudIntegration struct {
@@ -80,7 +80,7 @@ type newCloudIntegration struct {
 	AccountID       string     `json:"account_id" bun:"account_id,type:text"`
 	LastAgentReport string     `json:"last_agent_report" bun:"last_agent_report,type:text"`
 	RemovedAt       *time.Time `json:"removed_at" bun:"removed_at,type:timestamp"`
-	OrgID           string     `json:"org_id" bun:"org_id,type:text,references:organizations(id),on_delete:cascade"`
+	OrgID           string     `json:"org_id" bun:"org_id,type:text"`
 }
 
 type existingCloudIntegrationService struct {
@@ -100,7 +100,7 @@ type newCloudIntegrationService struct {
 	types.TimeAuditable
 	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	Config             string `bun:"config,type:text"`
-	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
+	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type"`
 }
 
 func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
@@ -128,7 +128,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingInstalledIntegration), new(newInstalledIntegration), []string{}, func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingInstalledIntegration), new(newInstalledIntegration), []string{OrgReference}, func(ctx context.Context) error {
 			existingIntegrations := make([]*existingInstalledIntegration, 0)
 			err = tx.
 				NewSelect().
@@ -163,7 +163,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegration), new(newCloudIntegration), []string{}, func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegration), new(newCloudIntegration), []string{OrgReference}, func(ctx context.Context) error {
 			existingIntegrations := make([]*existingCloudIntegration, 0)
 			err = tx.
 				NewSelect().
@@ -204,7 +204,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 	err = migration.
 		store.
 		Dialect().
-		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegrationService), new(newCloudIntegrationService), []string{}, func(ctx context.Context) error {
+		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegrationService), new(newCloudIntegrationService), []string{CloudIntegrationReference}, func(ctx context.Context) error {
 			existingServices := make([]*existingCloudIntegrationService, 0)
 			err = tx.
 				NewSelect().
