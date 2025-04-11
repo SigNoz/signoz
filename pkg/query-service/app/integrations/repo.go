@@ -2,51 +2,33 @@ package integrations
 
 import (
 	"context"
-	"database/sql/driver"
-	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
-// For serializing from db
-func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
-		return json.Unmarshal(data, &c)
-	}
-	return nil
-}
-
-// For serializing to db
-func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
-	filterSetJson, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not serialize integration config to JSON")
-	}
-	return filterSetJson, nil
-}
-
 type InstalledIntegrationsRepo interface {
-	list(context.Context) ([]InstalledIntegration, *model.ApiError)
+	list(ctx context.Context, orgId string) ([]types.InstalledIntegration, *model.ApiError)
 
 	get(
-		ctx context.Context, integrationIds []string,
-	) (map[string]InstalledIntegration, *model.ApiError)
+		ctx context.Context, orgId string, integrationTypes []string,
+	) (map[string]types.InstalledIntegration, *model.ApiError)
 
 	upsert(
 		ctx context.Context,
-		integrationId string,
-		config InstalledIntegrationConfig,
-	) (*InstalledIntegration, *model.ApiError)
+		orgId string,
+		integrationType string,
+		config types.InstalledIntegrationConfig,
+	) (*types.InstalledIntegration, *model.ApiError)
 
-	delete(ctx context.Context, integrationId string) *model.ApiError
+	delete(ctx context.Context, orgId string, integrationType string) *model.ApiError
 }
 
 type AvailableIntegrationsRepo interface {
 	list(context.Context) ([]IntegrationDetails, *model.ApiError)
 
 	get(
-		ctx context.Context, integrationIds []string,
+		ctx context.Context, integrationTypes []string,
 	) (map[string]IntegrationDetails, *model.ApiError)
 
 	// AvailableIntegrationsRepo implementations are expected to cache

@@ -44,7 +44,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 	}
 
 	user := &types.User{
-		ID:       uuid.NewString(),
+		ID:       uuid.New().String(),
 		Name:     "",
 		Email:    email,
 		Password: hash,

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -51,7 +52,7 @@ func InitAuthCache(ctx context.Context) error {
 func GetUserFromReqContext(ctx context.Context) (*types.GettableUser, error) {
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
-		return nil, errors.New("no claims found in context")
+		return nil, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "no claims found in context")
 	}
 
 	user := &types.GettableUser{

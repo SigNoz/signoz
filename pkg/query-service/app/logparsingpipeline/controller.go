@@ -25,12 +25,12 @@ import (
 type LogParsingPipelineController struct {
 	Repo
 
-	GetIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError)
+	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError)
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
-	getIntegrationPipelines func(context.Context) ([]pipelinetypes.GettablePipeline, *model.ApiError),
+	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, *model.ApiError),
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
@@ -164,7 +164,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		result = savedPipelines
 	}
 
-	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx)
+	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx, defaultOrgID)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
 			apiErr, "could not get pipelines for installed integrations",

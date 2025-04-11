@@ -439,7 +439,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*types.User, 
 	}
 
 	user := &types.User{
-		ID:       uuid.NewString(),
+		ID:       uuid.New().String(),
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hash,
@@ -519,7 +519,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	user := &types.User{
-		ID:       uuid.NewString(),
+		ID:       uuid.New().String(),
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hash,
