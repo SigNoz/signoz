@@ -63,6 +63,7 @@ export function useInspectMetrics(
 		data: inspectMetricsData,
 		isLoading: isInspectMetricsLoading,
 		isError: isInspectMetricsError,
+		isRefetching: isInspectMetricsRefetching,
 	} = useGetInspectMetricsDetails(
 		{
 			metricName: metricName ?? '',
@@ -71,6 +72,7 @@ export function useInspectMetrics(
 		},
 		{
 			enabled: !!metricName,
+			keepPreviousData: true,
 		},
 	);
 
@@ -178,5 +180,6 @@ export function useInspectMetrics(
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
 		inspectionStep,
+		isInspectMetricsRefetching,
 	};
 }

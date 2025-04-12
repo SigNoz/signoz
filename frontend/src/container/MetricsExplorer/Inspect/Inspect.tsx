@@ -37,6 +37,7 @@ function Inspect({
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
 		inspectionStep,
+		isInspectMetricsRefetching,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -62,7 +63,7 @@ function Inspect({
 	}, [metricName]);
 
 	const content = useMemo(() => {
-		if (isInspectMetricsLoading) {
+		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
 			return (
 				<div className="inspect-metrics-fallback">
 					<Skeleton active />
@@ -122,6 +123,7 @@ function Inspect({
 		);
 	}, [
 		isInspectMetricsLoading,
+		isInspectMetricsRefetching,
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
 		inspectMetricsTimeSeries,

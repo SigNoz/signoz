@@ -19,6 +19,7 @@ export interface UseInspectMetricsReturnData {
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
+	isInspectMetricsRefetching: boolean;
 }
 
 export interface GraphViewProps {
