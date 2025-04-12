@@ -94,7 +94,8 @@ export type MetricInspectionAction =
 	| { type: 'SET_TIME_AGGREGATION_INTERVAL'; payload: number }
 	| { type: 'SET_SPACE_AGGREGATION_OPTION'; payload: SpaceAggregationOptions }
 	| { type: 'SET_SPACE_AGGREGATION_LABELS'; payload: string[] }
-	| { type: 'SET_FILTERS'; payload: TagFilter };
+	| { type: 'SET_FILTERS'; payload: TagFilter }
+	| { type: 'RESET_INSPECTION' };
 
 export enum InspectionStep {
 	TIME_AGGREGATION = 1,

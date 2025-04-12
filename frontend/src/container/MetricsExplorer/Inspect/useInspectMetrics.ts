@@ -45,6 +45,8 @@ const metricInspectionReducer = (
 				...state,
 				filters: action.payload,
 			};
+		case 'RESET_INSPECTION':
+			return { ...INITIAL_INSPECT_METRICS_OPTIONS };
 		default:
 			return state;
 	}
@@ -124,7 +126,6 @@ export function useInspectMetrics(
 				inspectMetricsTimeSeries,
 				metricInspectionOptions,
 			);
-			console.log('After time aggregation:', timeSeries);
 		}
 
 		// Apply space aggregation
@@ -133,10 +134,7 @@ export function useInspectMetrics(
 				inspectMetricsTimeSeries,
 				metricInspectionOptions,
 			);
-			console.log('After space aggregation:', timeSeries);
 		}
-
-		console.log('Final series:', timeSeries);
 
 		// Collect timestamps and format into chart compatible format
 		timeSeries.forEach((series, idx) => {
@@ -157,10 +155,7 @@ export function useInspectMetrics(
 			timestamps.map((t) => seriesValuesMap[idx].get(t) ?? 0),
 		);
 
-		const formattedInspectMetricsTimeSeries = [timestamps, ...formattedSeries];
-
-		console.log('Formatted series:', formattedInspectMetricsTimeSeries);
-		return formattedInspectMetricsTimeSeries;
+		return [timestamps, ...formattedSeries];
 	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
 
 	const spaceAggregationLabels = useMemo(() => {

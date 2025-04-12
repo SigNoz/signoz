@@ -7,7 +7,7 @@ import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
@@ -49,13 +49,16 @@ function Inspect({
 		[metricDetailsData],
 	);
 
-	const resetInspection = (): void => {
-		// TODO: Implement reset inspection
-	};
+	const resetInspection = useCallback(() => {
+		dispatchMetricInspectionOptions({
+			type: 'RESET_INSPECTION',
+		});
+	}, [dispatchMetricInspectionOptions]);
 
 	// Reset inspection when the selected metric changes
 	useEffect(() => {
 		resetInspection();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [metricName]);
 
 	const content = useMemo(() => {
@@ -123,6 +126,7 @@ function Inspect({
 		inspectMetricsStatusCode,
 		inspectMetricsTimeSeries,
 		formattedInspectMetricsTimeSeries,
+		resetInspection,
 		metricName,
 		selectedMetricUnit,
 		selectedMetricType,

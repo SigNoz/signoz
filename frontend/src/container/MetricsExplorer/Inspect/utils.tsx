@@ -249,7 +249,7 @@ export function applyTimeAggregation(
 	const timeIntervals = Array.from(groupedTimestamps.entries());
 
 	// Apply aggregation based on selected option
-	const aggregatedSeries = inspectMetricsTimeSeries.map((series) => {
+	return inspectMetricsTimeSeries.map((series) => {
 		const aggregatedValues = timeIntervals.map(([intervalStart, values]) => {
 			let aggregatedValue: number;
 
@@ -288,15 +288,6 @@ export function applyTimeAggregation(
 			values: aggregatedValues,
 		};
 	});
-
-	// Update the inspectMetricsTimeSeries with aggregated data
-	inspectMetricsTimeSeries.splice(
-		0,
-		inspectMetricsTimeSeries.length,
-		...aggregatedSeries,
-	);
-
-	return inspectMetricsTimeSeries;
 }
 
 export function applySpaceAggregation(
