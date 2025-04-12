@@ -16,7 +16,6 @@ import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import { GraphViewProps } from './types';
 
 function GraphView({
-	inspectMetricsTimeSeries,
 	formattedInspectMetricsTimeSeries,
 	resetInspection,
 	metricUnit,
@@ -128,7 +127,7 @@ function GraphView({
 						{metricName}
 					</Button>
 					<Button className="time-series-button-label" size="middle" disabled>
-						{`${inspectMetricsTimeSeries.length} time series`}
+						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
 					</Button>
 				</Button.Group>
 
