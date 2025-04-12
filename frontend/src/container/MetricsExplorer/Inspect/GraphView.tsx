@@ -34,6 +34,11 @@ function GraphView({
 	]);
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 
+	console.log(
+		'formattedInspectMetricsTimeSeries',
+		formattedInspectMetricsTimeSeries,
+	);
+
 	const options: uPlot.Options = useMemo(
 		() => ({
 			width: dimensions.width,

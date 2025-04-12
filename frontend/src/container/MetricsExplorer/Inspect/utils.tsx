@@ -229,11 +229,11 @@ export function applyTimeAggregation(
 		return inspectMetricsTimeSeries;
 	}
 
-	// Group timestamps into intervals
-	const groupedTimestamps = new Map<number, number[]>();
-	inspectMetricsTimeSeries.forEach((series) => {
+	// Group timestamps into intervals and aggregate values for each series independently
+	return inspectMetricsTimeSeries.map((series) => {
+		const groupedTimestamps = new Map<number, number[]>();
+
 		series.values.forEach(({ timestamp, value }) => {
-			// Find which interval bucket this timestamp belongs to
 			const intervalBucket =
 				Math.floor(timestamp / (timeAggregationInterval * 1000)) *
 				(timeAggregationInterval * 1000);
@@ -243,45 +243,41 @@ export function applyTimeAggregation(
 			}
 			groupedTimestamps.get(intervalBucket)?.push(parseFloat(value));
 		});
-	});
 
-	// Convert Map to array of [timestamp, values] pairs for iteration
-	const timeIntervals = Array.from(groupedTimestamps.entries());
+		const aggregatedValues = Array.from(groupedTimestamps.entries()).map(
+			([intervalStart, values]) => {
+				let aggregatedValue: number;
 
-	// Apply aggregation based on selected option
-	return inspectMetricsTimeSeries.map((series) => {
-		const aggregatedValues = timeIntervals.map(([intervalStart, values]) => {
-			let aggregatedValue: number;
+				switch (timeAggregationOption) {
+					case TimeAggregationOptions.LATEST:
+						aggregatedValue = values[values.length - 1];
+						break;
+					case TimeAggregationOptions.SUM:
+						aggregatedValue = values.reduce((sum, val) => sum + val, 0);
+						break;
+					case TimeAggregationOptions.AVG:
+						aggregatedValue =
+							values.reduce((sum, val) => sum + val, 0) / values.length;
+						break;
+					case TimeAggregationOptions.MIN:
+						aggregatedValue = Math.min(...values);
+						break;
+					case TimeAggregationOptions.MAX:
+						aggregatedValue = Math.max(...values);
+						break;
+					case TimeAggregationOptions.COUNT:
+						aggregatedValue = values.length;
+						break;
+					default:
+						aggregatedValue = values[values.length - 1];
+				}
 
-			switch (timeAggregationOption) {
-				case TimeAggregationOptions.LATEST:
-					aggregatedValue = values[values.length - 1];
-					break;
-				case TimeAggregationOptions.SUM:
-					aggregatedValue = values.reduce((sum, val) => sum + val, 0);
-					break;
-				case TimeAggregationOptions.AVG:
-					aggregatedValue =
-						values.reduce((sum, val) => sum + val, 0) / values.length;
-					break;
-				case TimeAggregationOptions.MIN:
-					aggregatedValue = Math.min(...values);
-					break;
-				case TimeAggregationOptions.MAX:
-					aggregatedValue = Math.max(...values);
-					break;
-				case TimeAggregationOptions.COUNT:
-					aggregatedValue = values.length;
-					break;
-				default:
-					aggregatedValue = values[values.length - 1];
-			}
-
-			return {
-				timestamp: intervalStart,
-				value: aggregatedValue.toString(),
-			};
-		});
+				return {
+					timestamp: intervalStart,
+					value: aggregatedValue.toString(),
+				};
+			},
+		);
 
 		return {
 			...series,
