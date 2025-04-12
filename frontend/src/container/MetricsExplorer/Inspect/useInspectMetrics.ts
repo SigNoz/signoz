@@ -1,3 +1,4 @@
+import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
 import { useMemo, useReducer } from 'react';
 import { useSelector } from 'react-redux';
@@ -12,6 +13,7 @@ import {
 	MetricInspectionOptions,
 	UseInspectMetricsReturnData,
 } from './types';
+import { applySpaceAggregation, applyTimeAggregation } from './utils';
 
 const metricInspectionReducer = (
 	state: MetricInspectionOptions,
@@ -70,51 +72,18 @@ export function useInspectMetrics(
 		},
 	);
 
-	const inspectMetricsTimeSeries = useMemo(
-		() => inspectMetricsData?.payload?.data?.series ?? [],
-		[inspectMetricsData],
-	);
+	const inspectMetricsTimeSeries = useMemo(() => {
+		const series = inspectMetricsData?.payload?.data?.series ?? [];
+		return series.map((series) => ({
+			...series,
+			values: [...series.values].sort((a, b) => a.timestamp - b.timestamp),
+		}));
+	}, [inspectMetricsData]);
 
 	const inspectMetricsStatusCode = useMemo(
 		() => inspectMetricsData?.statusCode || 200,
 		[inspectMetricsData],
 	);
-
-	const formattedInspectMetricsTimeSeries = useMemo(() => {
-		const allTimestamps = new Set<number>();
-		const seriesValuesMap: Map<number, number | null>[] = [];
-
-		// Collect timestamps and map values
-		inspectMetricsTimeSeries.forEach((series, idx) => {
-			seriesValuesMap[idx] = new Map();
-			series.values.forEach(({ timestamp, value }) => {
-				allTimestamps.add(timestamp);
-				seriesValuesMap[idx].set(timestamp, parseFloat(value));
-			});
-		});
-
-		// Convert timestamps to sorted array
-		const timestamps = Float64Array.from(
-			[...allTimestamps].sort((a, b) => a - b),
-		);
-
-		// Map values to corresponding timestamps, filling missing ones with `0`
-		const formattedSeries = inspectMetricsTimeSeries.map((_, idx) =>
-			timestamps.map((t) => seriesValuesMap[idx].get(t) ?? 0),
-		);
-
-		return [timestamps, ...formattedSeries];
-	}, [inspectMetricsTimeSeries]);
-
-	const spaceAggregationLabels = useMemo(() => {
-		const labels = new Set<string>();
-		inspectMetricsData?.payload?.data.series.forEach((series) => {
-			Object.keys(series.labels).forEach((label) => {
-				labels.add(label);
-			});
-		});
-		return Array.from(labels);
-	}, [inspectMetricsData]);
 
 	// Inspect metrics data selection
 	const [metricInspectionOptions, dispatchMetricInspectionOptions] = useReducer(
@@ -138,6 +107,71 @@ export function useInspectMetrics(
 		}
 		return InspectionStep.TIME_AGGREGATION;
 	}, [metricInspectionOptions]);
+
+	const formattedInspectMetricsTimeSeries = useMemo(() => {
+		const allTimestamps = new Set<number>();
+		const seriesValuesMap: Map<number, number | null>[] = [];
+
+		let timeSeries: InspectMetricsSeries[] = [...inspectMetricsTimeSeries];
+
+		// Apply time aggregation once required options are set
+		if (
+			inspectionStep === InspectionStep.SPACE_AGGREGATION &&
+			metricInspectionOptions.timeAggregationOption &&
+			metricInspectionOptions.timeAggregationInterval
+		) {
+			timeSeries = applyTimeAggregation(
+				inspectMetricsTimeSeries,
+				metricInspectionOptions,
+			);
+			console.log('After time aggregation:', timeSeries);
+		}
+
+		// Apply space aggregation
+		if (inspectionStep === InspectionStep.COMPLETED) {
+			timeSeries = applySpaceAggregation(
+				inspectMetricsTimeSeries,
+				metricInspectionOptions,
+			);
+			console.log('After space aggregation:', timeSeries);
+		}
+
+		console.log('Final series:', timeSeries);
+
+		// Collect timestamps and format into chart compatible format
+		timeSeries.forEach((series, idx) => {
+			seriesValuesMap[idx] = new Map();
+			series.values.forEach(({ timestamp, value }) => {
+				allTimestamps.add(timestamp);
+				seriesValuesMap[idx].set(timestamp, parseFloat(value));
+			});
+		});
+
+		// Convert timestamps to sorted array
+		const timestamps = Float64Array.from(
+			[...allTimestamps].sort((a, b) => a - b),
+		);
+
+		// Map values to corresponding timestamps, filling missing ones with `0`
+		const formattedSeries = timeSeries.map((_, idx) =>
+			timestamps.map((t) => seriesValuesMap[idx].get(t) ?? 0),
+		);
+
+		const formattedInspectMetricsTimeSeries = [timestamps, ...formattedSeries];
+
+		console.log('Formatted series:', formattedInspectMetricsTimeSeries);
+		return formattedInspectMetricsTimeSeries;
+	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
+
+	const spaceAggregationLabels = useMemo(() => {
+		const labels = new Set<string>();
+		inspectMetricsData?.payload?.data.series.forEach((series) => {
+			Object.keys(series.labels).forEach((label) => {
+				labels.add(label);
+			});
+		});
+		return Array.from(labels);
+	}, [inspectMetricsData]);
 
 	return {
 		inspectMetricsTimeSeries,

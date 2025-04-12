@@ -67,7 +67,7 @@ function GraphView({
 				},
 			],
 			series: [
-				...inspectMetricsTimeSeries.map((_, index) => {
+				...formattedInspectMetricsTimeSeries.map((_, index) => {
 					const label = String.fromCharCode(65 + (index % 26));
 					const strokeColor = generateColor(
 						label,
@@ -98,11 +98,11 @@ function GraphView({
 		}),
 		[
 			dimensions.width,
-			start,
-			end,
-			inspectMetricsTimeSeries,
 			isDarkMode,
 			metricUnit,
+			formattedInspectMetricsTimeSeries,
+			start,
+			end,
 		],
 	);
 
