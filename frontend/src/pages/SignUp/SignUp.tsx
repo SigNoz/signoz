@@ -75,6 +75,16 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
 
+	// Early check for invalid token
+	useEffect(() => {
+		if (token && getInviteDetailsResponse.isError) {
+			notifications.error({
+				message: 'Invalid invitation token. Please contact your admin.',
+			});
+			history.push(ROUTES.LOGIN);
+		}
+	}, [token, getInviteDetailsResponse.isError, notifications]);
+
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
@@ -108,8 +118,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		) {
 			const { error } = getInviteDetailsResponse.data;
 			notifications.error({
-				message: error,
+				message: error || 'Invalid invitation token. Please contact your admin.',
 			});
+			// Redirect to login page after showing error
+			history.push(ROUTES.LOGIN);
 		}
 	}, [
 		getInviteDetailsResponse.data,
