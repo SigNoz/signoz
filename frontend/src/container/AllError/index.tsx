@@ -110,11 +110,11 @@ function AllErrors(): JSX.Element {
 	);
 
 	const { queries } = useResourceAttribute();
-	const compsiteData = useGetCompositeQueryParam();
+	const compositeData = useGetCompositeQueryParam();
 
 	const [{ isLoading, data }, errorCountResponse] = useQueries([
 		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compsiteData],
+			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
 			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
 				getAll({
 					end: maxTime,
@@ -127,7 +127,7 @@ function AllErrors(): JSX.Element {
 					serviceName: getUpdatedServiceName,
 					// tags: convertRawQueriesToTraceSelectedTags(queries),
 					tags: convertComposeQueryToTraceSelectedTags(
-						compsiteData?.builder.queryData?.[0]?.filters.items,
+						compositeData?.builder.queryData?.[0]?.filters.items,
 					),
 				}),
 			enabled: !loading,
@@ -139,7 +139,7 @@ function AllErrors(): JSX.Element {
 				minTime,
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
-				compsiteData,
+				compositeData,
 			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
@@ -149,7 +149,7 @@ function AllErrors(): JSX.Element {
 					serviceName: getUpdatedServiceName,
 					// tags: convertRawQueriesToTraceSelectedTags(queries),
 					tags: convertComposeQueryToTraceSelectedTags(
-						compsiteData?.builder.queryData?.[0]?.filters.items,
+						compositeData?.builder.queryData?.[0]?.filters.items,
 					),
 				}),
 			enabled: !loading,
@@ -403,8 +403,7 @@ function AllErrors(): JSX.Element {
 				onApplicationTypeFilter,
 				'Search By Application',
 				'serviceName',
-			), // should remove??? change table name??
-			// table col name to attr map??
+			),
 		},
 	];
 

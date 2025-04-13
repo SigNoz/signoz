@@ -4,7 +4,6 @@ import { OperatorConfigKeys } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-// import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useCallback, useEffect, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -63,10 +62,6 @@ function ResourceAttributesFilter(): JSX.Element | null {
 		</WrapperStyled>
 	);
 }
-
-ResourceAttributesFilter.defaultProps = {
-	suffixIcon: undefined,
-};
 
 export default ResourceAttributesFilter;
 // TODO: limit suggestion list
