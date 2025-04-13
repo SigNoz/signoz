@@ -6,6 +6,10 @@
 		flex-shrink: 0;
 		color: white;// confirm
 	}
+
+	.all-errors-right-section {
+		padding: 0;
+	}
 	
 	&.filter-visible {
 		.all-errors-quick-filter-section {
@@ -13,6 +17,7 @@
 		}
 
 		.all-errors-right-section {
+			padding: 0 10px;
 			width: calc(100% - 260px);
 		}
 	}

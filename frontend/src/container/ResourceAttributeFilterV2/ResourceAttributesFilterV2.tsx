@@ -1,6 +1,5 @@
 import './ResourceAttributesFilter.styles.scss';
 
-import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -12,11 +11,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { WrapperStyled } from './styles';
 
 function ResourceAttributesFilter(): JSX.Element | null {
-	const {
-		currentQuery,
-		handleRunQuery,
-		initQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, initQueryBuilderData } = useQueryBuilder();
 	const query = currentQuery?.builder?.queryData[0] || null;
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -59,7 +54,6 @@ function ResourceAttributesFilter(): JSX.Element | null {
 
 	return (
 		<WrapperStyled>
-			<RightToolbarActions onStageRunQuery={handleRunQuery} />
 			<QueryBuilderSearchV2
 				query={updatedCurrentQuery.builder.queryData[0]}
 				onChange={handleChangeTagFilters}
