@@ -1,5 +1,6 @@
 import './ResourceAttributesFilter.styles.scss';
 
+import { OperatorConfigKeys } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -57,6 +58,7 @@ function ResourceAttributesFilter(): JSX.Element | null {
 			<QueryBuilderSearchV2
 				query={updatedCurrentQuery.builder.queryData[0]}
 				onChange={handleChangeTagFilters}
+				operatorConfigKey={OperatorConfigKeys.EXCEPTIONS}
 			/>
 		</WrapperStyled>
 	);
