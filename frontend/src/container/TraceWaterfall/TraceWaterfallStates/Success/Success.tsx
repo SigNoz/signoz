@@ -11,6 +11,8 @@ import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import SpanLineActionButtons from 'container/TraceWaterfall/SpanLineActionButtons';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
@@ -28,7 +30,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
@@ -169,9 +170,8 @@ function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
 
-	const { search } = useLocation();
-	const history = useHistory();
-	const searchParams = new URLSearchParams(search);
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
@@ -199,8 +199,11 @@ function SpanDuration({
 			onMouseLeave={handleMouseLeave}
 			onClick={(): void => {
 				setSelectedSpan(span);
-				searchParams.set('spanId', span.spanId);
-				history.replace({ search: searchParams.toString() });
+				if (span?.spanId) {
+					urlQuery.set('spanId', span?.spanId);
+				}
+
+				safeNavigate({ search: urlQuery.toString() });
 			}}
 		>
 			<div
