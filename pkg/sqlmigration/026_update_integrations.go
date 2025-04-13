@@ -84,7 +84,7 @@ type newCloudIntegration struct {
 }
 
 type existingCloudIntegrationService struct {
-	bun.BaseModel `bun:"table:cloud_integrations_service_configs"`
+	bun.BaseModel `bun:"table:cloud_integrations_service_configs,alias:c1"`
 
 	CloudProvider  string    `bun:"cloud_provider,type:text,notnull,unique:service_cloud_provider_account"`
 	CloudAccountID string    `bun:"cloud_account_id,type:text,notnull,unique:service_cloud_provider_account"`
@@ -168,6 +168,7 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 			err = tx.
 				NewSelect().
 				Model(&existingIntegrations).
+				Where("removed_at IS NULL"). // we will only copy the accounts that are not removed
 				Scan(ctx)
 			if err != nil {
 				if err != sql.ErrNoRows {
@@ -206,9 +207,14 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		Dialect().
 		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegrationService), new(newCloudIntegrationService), []string{CloudIntegrationReference}, func(ctx context.Context) error {
 			existingServices := make([]*existingCloudIntegrationService, 0)
+
+			// for a account id with same cloud provider and service_id,
+			// we will get the latest created service using created_at column
 			err = tx.
 				NewSelect().
 				Model(&existingServices).
+				Where("created_at = (SELECT MAX(created_at) FROM cloud_integrations_service_configs c2 WHERE c2.cloud_provider = c1.cloud_provider AND c2.cloud_account_id = c1.cloud_account_id AND c2.service_id = c1.service_id)").
+				OrderExpr("c1.cloud_provider, c1.cloud_account_id, c1.service_id").
 				Scan(ctx)
 			if err != nil {
 				if err != sql.ErrNoRows {
@@ -304,6 +310,9 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx bun.IDB, orgID string, existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
 	newServices := make([]*newCloudIntegrationService, 0)
 
+	// existing services are the latest service
+	// for a account id with same cloud provider and service_id,
+	// we will get the latest created service using created_at column
 	for _, service := range existingServices {
 		var cloudIntegrationID string
 		err := tx.NewSelect().
@@ -337,8 +346,6 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIn
 	return newServices
 }
 
-// we are making sure that new uuid v7 is added to the user
-// and the pat is connected to the new user.
 func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID string) error {
 	user := &types.User{}
 	err := tx.NewSelect().Model(user).Where("email = ?", "aws-integration@signoz.io").Scan(context.Background())
