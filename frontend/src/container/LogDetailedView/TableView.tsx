@@ -13,6 +13,7 @@ import AddToQueryHOC, {
 import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
@@ -30,7 +31,6 @@ import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
-import { RESTRICTED_FIELDS } from './constant';
 import FieldRenderer from './FieldRenderer';
 import { TableViewActions } from './TableView/TableViewActions';
 import { filterKeyForField, findKeyPath, flattenObject } from './utils';
@@ -247,7 +247,7 @@ function TableView({
 				}
 
 				const fieldFilterKey = filterKeyForField(field);
-				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
+				if (!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
 							fieldKey={fieldFilterKey}
