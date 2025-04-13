@@ -356,6 +356,11 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 		return err
 	}
 
+	// check if the id is already an uuid
+	if _, err := uuid.Parse(user.ID); err == nil {
+		return nil
+	}
+
 	// new user
 	newUser := &types.User{
 		ID: uuid.New().String(),
