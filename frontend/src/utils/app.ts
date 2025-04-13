@@ -28,8 +28,14 @@ export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
 ): boolean => {
-	const versionCore = currentVersion?.split('-')[0];
-	return versionCore === latestVersion;
+	// Normalize versions by removing 'v' prefix if present
+	const normalizeVersion = (version: string): string => 
+		version?.startsWith('v') ? version.slice(1) : version;
+	
+	const currentNormalized = normalizeVersion(currentVersion?.split('-')[0]);
+	const latestNormalized = normalizeVersion(latestVersion);
+	
+	return currentNormalized === latestNormalized;
 };
 
 // list of forbidden tags to remove in dompurify
