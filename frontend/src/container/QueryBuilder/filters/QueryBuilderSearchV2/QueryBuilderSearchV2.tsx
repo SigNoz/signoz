@@ -740,9 +740,11 @@ function QueryBuilderSearchV2(
 					);
 				}
 			}
-			operatorOptions = filterByOperatorConfig(operatorOptions, operatorConfigKey);
-			operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-			setDropdownOptions(operatorOptions);
+			const filterOperatorOptions = filterByOperatorConfig(
+				operatorOptions,
+				operatorConfigKey,
+			);
+			setDropdownOptions([{ label: '', value: '' }, ...filterOperatorOptions]);
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
