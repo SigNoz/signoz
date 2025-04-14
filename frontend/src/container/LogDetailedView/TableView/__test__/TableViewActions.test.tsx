@@ -106,7 +106,7 @@ describe('TableViewActions', () => {
 				onGroupByAttribute={defaultProps.onGroupByAttribute}
 			/>,
 		);
-		// Verify that action buttons are not rendered in list view panel
+		// Verify that action buttons are rendered for non-restricted fields
 		expect(container.querySelector(ACTION_BUTTON_TEST_ID)).toBeInTheDocument();
 	});
 
