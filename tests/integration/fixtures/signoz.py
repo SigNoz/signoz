@@ -1,21 +1,21 @@
-from http import HTTPStatus
+import logging
 import platform
 import time
+from http import HTTPStatus
 
 import pytest
 import requests
 from dotenv import dotenv_values
 from testcontainers.core.container import DockerContainer, Network
 from testcontainers.core.image import DockerImage
-import logging
 
 from fixtures import types
 
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="package")
-def signoz(
+@pytest.fixture(name="signoz", scope="package")
+def fsignoz(
     network: Network,
     zeus: types.TestContainerWiremock,
     request: pytest.FixtureRequest,
@@ -85,7 +85,7 @@ def signoz(
 
     def stop():
         logs = container.get_wrapped_container().logs(tail=100)
-        LOGGER.info(logs.decode(encoding="utf-8"))
+        print(logs.decode(encoding="utf-8"))
         container.stop(delete_volume=True)
 
     request.addfinalizer(stop)

@@ -11,8 +11,8 @@ from fixtures.fs import LEGACY_PATH
 from fixtures.types import TestContainerConnection
 
 
-@pytest.fixture(scope="package")
-def zookeeper(
+@pytest.fixture(name="zookeeper",scope="package")
+def fzookeeper(
     network: Network, request: pytest.FixtureRequest
 ) -> TestContainerConnection:
     """
@@ -40,8 +40,8 @@ def zookeeper(
     )
 
 
-@pytest.fixture(scope="package")
-def clickhouse(
+@pytest.fixture(name="clickhouse",scope="package")
+def fclickhouse(
     tmpfs: Generator[LEGACY_PATH, Any, None],
     network: Network,
     zookeeper: TestContainerConnection,
