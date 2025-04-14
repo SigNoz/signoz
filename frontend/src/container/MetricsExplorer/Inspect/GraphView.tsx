@@ -16,7 +16,6 @@ import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import { GraphViewProps } from './types';
 
 function GraphView({
-	inspectMetricsTimeSeries,
 	formattedInspectMetricsTimeSeries,
 	resetInspection,
 	metricUnit,
@@ -67,7 +66,7 @@ function GraphView({
 				},
 			],
 			series: [
-				...inspectMetricsTimeSeries.map((_, index) => {
+				...formattedInspectMetricsTimeSeries.map((_, index) => {
 					const label = String.fromCharCode(65 + (index % 26));
 					const strokeColor = generateColor(
 						label,
@@ -98,11 +97,11 @@ function GraphView({
 		}),
 		[
 			dimensions.width,
-			start,
-			end,
-			inspectMetricsTimeSeries,
 			isDarkMode,
 			metricUnit,
+			formattedInspectMetricsTimeSeries,
+			start,
+			end,
 		],
 	);
 
@@ -128,7 +127,8 @@ function GraphView({
 						{metricName}
 					</Button>
 					<Button className="time-series-button-label" size="middle" disabled>
-						{`${inspectMetricsTimeSeries.length} time series`}
+						{/* First time series in that of timestamps. Hence -1 */}
+						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
 					</Button>
 				</Button.Group>
 
