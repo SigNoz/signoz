@@ -208,13 +208,12 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 		RenameTableAndModifyModel(ctx, tx, new(existingCloudIntegrationService), new(newCloudIntegrationService), []string{CloudIntegrationReference}, func(ctx context.Context) error {
 			existingServices := make([]*existingCloudIntegrationService, 0)
 
-			// for a account id with same cloud provider and service_id,
-			// we will get the latest created service using created_at column
+			// only one service per provider,account id and type
+			// so there won't be any duplicates.
+			// just that these will be enabled as soon as the integration for the account is enabled
 			err = tx.
 				NewSelect().
 				Model(&existingServices).
-				Where("created_at = (SELECT MAX(created_at) FROM cloud_integrations_service_configs c2 WHERE c2.cloud_provider = c1.cloud_provider AND c2.cloud_account_id = c1.cloud_account_id AND c2.service_id = c1.service_id)").
-				OrderExpr("c1.cloud_provider, c1.cloud_account_id, c1.service_id").
 				Scan(ctx)
 			if err != nil {
 				if err != sql.ErrNoRows {
@@ -310,9 +309,6 @@ func (migration *updateIntegrations) CopyOldCloudIntegrationsToNewCloudIntegrati
 func (migration *updateIntegrations) CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx bun.IDB, orgID string, existingServices []*existingCloudIntegrationService) []*newCloudIntegrationService {
 	newServices := make([]*newCloudIntegrationService, 0)
 
-	// existing services are the latest service
-	// for a account id with same cloud provider and service_id,
-	// we will get the latest created service using created_at column
 	for _, service := range existingServices {
 		var cloudIntegrationID string
 		err := tx.NewSelect().
