@@ -1,0 +1,1839 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Exceptions - All Errors renders correctly with default props 1`] = `
+.c0 {
+  position: absolute;
+  right: -0.313rem;
+  bottom: 0;
+  z-index: 1;
+  width: 0.625rem;
+  height: 100%;
+  cursor: col-resize;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+<div>
+  <div
+    class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-2i2tap"
+  >
+    <div
+      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+    >
+      <div
+        class="ant-spin-container"
+      >
+        <div
+          class="ant-table ant-table-layout-fixed"
+        >
+          <div
+            class="ant-table-container"
+          >
+            <div
+              class="ant-table-content"
+            >
+              <table
+                style="table-layout: fixed;"
+              >
+                <colgroup>
+                  <col
+                    style="width: 100px;"
+                  />
+                  <col
+                    style="width: 100px;"
+                  />
+                  <col
+                    style="width: 50px;"
+                  />
+                  <col
+                    style="width: 80px;"
+                  />
+                  <col
+                    style="width: 80px;"
+                  />
+                  <col
+                    style="width: 100px;"
+                  />
+                </colgroup>
+                <thead
+                  class="ant-table-thead"
+                >
+                  <tr>
+                    <th
+                      aria-label="Exception Type"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-filter-column"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          <div
+                            class="ant-table-column-sorters"
+                          >
+                            <span
+                              class="ant-table-column-title"
+                            >
+                              Exception Type
+                            </span>
+                            <span
+                              class="ant-table-column-sorter ant-table-column-sorter-full"
+                            >
+                              <span
+                                aria-hidden="true"
+                                class="ant-table-column-sorter-inner"
+                              >
+                                <span
+                                  aria-label="caret-up"
+                                  class="anticon anticon-caret-up ant-table-column-sorter-up"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-up"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                                <span
+                                  aria-label="caret-down"
+                                  class="anticon anticon-caret-down ant-table-column-sorter-down"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-down"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                              </span>
+                            </span>
+                          </div>
+                        </span>
+                        <span
+                          class="ant-dropdown-trigger ant-table-filter-trigger"
+                          role="button"
+                          tabindex="-1"
+                        >
+                          <span
+                            aria-label="search"
+                            class="anticon anticon-search"
+                            role="img"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              data-icon="search"
+                              fill="currentColor"
+                              focusable="false"
+                              height="1em"
+                              viewBox="64 64 896 896"
+                              width="1em"
+                            >
+                              <path
+                                d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"
+                              />
+                            </svg>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      class="resizable-header react-resizable"
+                      scope="col"
+                    >
+                      Error Message
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="Count"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-column-sorters"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          Count
+                        </span>
+                        <span
+                          class="ant-table-column-sorter ant-table-column-sorter-full"
+                        >
+                          <span
+                            aria-hidden="true"
+                            class="ant-table-column-sorter-inner"
+                          >
+                            <span
+                              aria-label="caret-up"
+                              class="anticon anticon-caret-up ant-table-column-sorter-up"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-up"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              aria-label="caret-down"
+                              class="anticon anticon-caret-down ant-table-column-sorter-down"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-down"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="Last Seen"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-column-sorters"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          Last Seen
+                        </span>
+                        <span
+                          class="ant-table-column-sorter ant-table-column-sorter-full"
+                        >
+                          <span
+                            aria-hidden="true"
+                            class="ant-table-column-sorter-inner"
+                          >
+                            <span
+                              aria-label="caret-up"
+                              class="anticon anticon-caret-up ant-table-column-sorter-up"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-up"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              aria-label="caret-down"
+                              class="anticon anticon-caret-down ant-table-column-sorter-down"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-down"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="First Seen"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-column-sorters"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          First Seen
+                        </span>
+                        <span
+                          class="ant-table-column-sorter ant-table-column-sorter-full"
+                        >
+                          <span
+                            aria-hidden="true"
+                            class="ant-table-column-sorter-inner"
+                          >
+                            <span
+                              aria-label="caret-up"
+                              class="anticon anticon-caret-up ant-table-column-sorter-up"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-up"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              aria-label="caret-down"
+                              class="anticon anticon-caret-down ant-table-column-sorter-down"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-down"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="Application"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-filter-column"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          <div
+                            class="ant-table-column-sorters"
+                          >
+                            <span
+                              class="ant-table-column-title"
+                            >
+                              Application
+                            </span>
+                            <span
+                              class="ant-table-column-sorter ant-table-column-sorter-full"
+                            >
+                              <span
+                                aria-hidden="true"
+                                class="ant-table-column-sorter-inner"
+                              >
+                                <span
+                                  aria-label="caret-up"
+                                  class="anticon anticon-caret-up ant-table-column-sorter-up"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-up"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                                <span
+                                  aria-label="caret-down"
+                                  class="anticon anticon-caret-down ant-table-column-sorter-down"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-down"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                              </span>
+                            </span>
+                          </div>
+                        </span>
+                        <span
+                          class="ant-dropdown-trigger ant-table-filter-trigger"
+                          role="button"
+                          tabindex="-1"
+                        >
+                          <span
+                            aria-label="search"
+                            class="anticon anticon-search"
+                            role="img"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              data-icon="search"
+                              fill="currentColor"
+                              focusable="false"
+                              height="1em"
+                              viewBox="64 64 896 896"
+                              width="1em"
+                            >
+                              <path
+                                d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"
+                              />
+                            </svg>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  class="ant-table-tbody"
+                >
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T17:58:00.262775497Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=511b9c91a92b9c5166ecb77235f5743b&timestamp=1744655277797616374"
+                      >
+                        *errors.errorString
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        redis timeout
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      2510
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:57:57
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:28:00
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      redis-manual
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T18:04:00.563597646Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=9ec1b0638aa561e3e10420697e0dff83&timestamp=1744653840563597646"
+                      >
+                        ConnectionError
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPSConnection object at 0x7f4f48578310&gt;: Failed to establish a new connection: [Errno -2] Name or service not known'))
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      1
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:34:00
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:34:00
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      sample-flask-service
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T18:07:39.483096283Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=ea15cf4b68f127f6136567e4e1b3452b&timestamp=1744654059483096283"
+                      >
+                        ConnectionError
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPSConnection object at 0x7f4f48539a00&gt;: Failed to establish a new connection: [Errno -2] Name or service not known'))
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      1
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:37:39
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:37:39
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      sample-flask-service
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T18:01:34.966190542Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=720704cceb2c7926154d7561a7013ab1&timestamp=1744653694966190542"
+                      >
+                        ConnectionError
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPSConnection object at 0x7f4f490b61c0&gt;: Failed to establish a new connection: [Errno -2] Name or service not known'))
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      1
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:31:34
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:31:34
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      sample-flask-service
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ul
+          class="ant-pagination ant-table-pagination ant-table-pagination-left css-dev-only-do-not-override-2i2tap"
+        >
+          <li
+            aria-disabled="true"
+            class="ant-pagination-prev ant-pagination-disabled"
+            title="Previous Page"
+          >
+            <button
+              class="ant-pagination-item-link"
+              disabled=""
+              tabindex="-1"
+              type="button"
+            >
+              <span
+                aria-label="left"
+                class="anticon anticon-left"
+                role="img"
+              >
+                <svg
+                  aria-hidden="true"
+                  data-icon="left"
+                  fill="currentColor"
+                  focusable="false"
+                  height="1em"
+                  viewBox="64 64 896 896"
+                  width="1em"
+                >
+                  <path
+                    d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z"
+                  />
+                </svg>
+              </span>
+            </button>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-1 ant-pagination-item-active"
+            tabindex="0"
+            title="1"
+          >
+            <a
+              rel="nofollow"
+            >
+              1
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-2"
+            tabindex="0"
+            title="2"
+          >
+            <a
+              rel="nofollow"
+            >
+              2
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-3"
+            tabindex="0"
+            title="3"
+          >
+            <a
+              rel="nofollow"
+            >
+              3
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-4"
+            tabindex="0"
+            title="4"
+          >
+            <a
+              rel="nofollow"
+            >
+              4
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-5 ant-pagination-item-before-jump-next"
+            tabindex="0"
+            title="5"
+          >
+            <a
+              rel="nofollow"
+            >
+              5
+            </a>
+          </li>
+          <li
+            class="ant-pagination-jump-next ant-pagination-jump-next-custom-icon"
+            tabindex="0"
+            title="Next 5 Pages"
+          >
+            <a
+              class="ant-pagination-item-link"
+            >
+              <div
+                class="ant-pagination-item-container"
+              >
+                <span
+                  aria-label="double-right"
+                  class="anticon anticon-double-right ant-pagination-item-link-icon"
+                  role="img"
+                >
+                  <svg
+                    aria-hidden="true"
+                    data-icon="double-right"
+                    fill="currentColor"
+                    focusable="false"
+                    height="1em"
+                    viewBox="64 64 896 896"
+                    width="1em"
+                  >
+                    <path
+                      d="M533.2 492.3L277.9 166.1c-3-3.9-7.7-6.1-12.6-6.1H188c-6.7 0-10.4 7.7-6.3 12.9L447.1 512 181.7 851.1A7.98 7.98 0 00188 864h77.3c4.9 0 9.6-2.3 12.6-6.1l255.3-326.1c9.1-11.7 9.1-27.9 0-39.5zm304 0L581.9 166.1c-3-3.9-7.7-6.1-12.6-6.1H492c-6.7 0-10.4 7.7-6.3 12.9L751.1 512 485.7 851.1A7.98 7.98 0 00492 864h77.3c4.9 0 9.6-2.3 12.6-6.1l255.3-326.1c9.1-11.7 9.1-27.9 0-39.5z"
+                    />
+                  </svg>
+                </span>
+                <span
+                  class="ant-pagination-item-ellipsis"
+                >
+                  •••
+                </span>
+              </div>
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-53"
+            tabindex="0"
+            title="53"
+          >
+            <a
+              rel="nofollow"
+            >
+              53
+            </a>
+          </li>
+          <li
+            aria-disabled="false"
+            class="ant-pagination-next"
+            tabindex="0"
+            title="Next Page"
+          >
+            <button
+              class="ant-pagination-item-link"
+              tabindex="-1"
+              type="button"
+            >
+              <span
+                aria-label="right"
+                class="anticon anticon-right"
+                role="img"
+              >
+                <svg
+                  aria-hidden="true"
+                  data-icon="right"
+                  fill="currentColor"
+                  focusable="false"
+                  height="1em"
+                  viewBox="64 64 896 896"
+                  width="1em"
+                >
+                  <path
+                    d="M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z"
+                  />
+                </svg>
+              </span>
+            </button>
+          </li>
+          <li
+            class="ant-pagination-options"
+          >
+            <div
+              aria-label="Page Size"
+              class="ant-select ant-pagination-options-size-changer css-dev-only-do-not-override-2i2tap ant-select-single ant-select-show-arrow ant-select-show-search"
+            >
+              <div
+                class="ant-select-selector"
+              >
+                <span
+                  class="ant-select-selection-search"
+                >
+                  <input
+                    aria-autocomplete="list"
+                    aria-controls="rc_select_TEST_OR_SSR_list"
+                    aria-expanded="false"
+                    aria-haspopup="listbox"
+                    aria-label="Page Size"
+                    aria-owns="rc_select_TEST_OR_SSR_list"
+                    autocomplete="off"
+                    class="ant-select-selection-search-input"
+                    id="rc_select_TEST_OR_SSR"
+                    role="combobox"
+                    type="search"
+                    value=""
+                  />
+                </span>
+                <span
+                  class="ant-select-selection-item"
+                  title="10 / page"
+                >
+                  10 / page
+                </span>
+              </div>
+              <span
+                aria-hidden="true"
+                class="ant-select-arrow"
+                style="user-select: none;"
+                unselectable="on"
+              >
+                <span
+                  aria-label="down"
+                  class="anticon anticon-down ant-select-suffix"
+                  role="img"
+                >
+                  <svg
+                    aria-hidden="true"
+                    data-icon="down"
+                    fill="currentColor"
+                    focusable="false"
+                    height="1em"
+                    viewBox="64 64 896 896"
+                    width="1em"
+                  >
+                    <path
+                      d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"
+                    />
+                  </svg>
+                </span>
+              </span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Exceptions - All Errors should call useQueries with exact composite query object 1`] = `
+.c0 {
+  position: absolute;
+  right: -0.313rem;
+  bottom: 0;
+  z-index: 1;
+  width: 0.625rem;
+  height: 100%;
+  cursor: col-resize;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+<div>
+  <div
+    class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-2i2tap"
+  >
+    <div
+      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+    >
+      <div
+        class="ant-spin-container"
+      >
+        <div
+          class="ant-table ant-table-layout-fixed"
+        >
+          <div
+            class="ant-table-container"
+          >
+            <div
+              class="ant-table-content"
+            >
+              <table
+                style="table-layout: fixed;"
+              >
+                <colgroup>
+                  <col
+                    style="width: 100px;"
+                  />
+                  <col
+                    style="width: 100px;"
+                  />
+                  <col
+                    style="width: 50px;"
+                  />
+                  <col
+                    style="width: 80px;"
+                  />
+                  <col
+                    style="width: 80px;"
+                  />
+                  <col
+                    style="width: 100px;"
+                  />
+                </colgroup>
+                <thead
+                  class="ant-table-thead"
+                >
+                  <tr>
+                    <th
+                      aria-label="Exception Type"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-filter-column"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          <div
+                            class="ant-table-column-sorters"
+                          >
+                            <span
+                              class="ant-table-column-title"
+                            >
+                              Exception Type
+                            </span>
+                            <span
+                              class="ant-table-column-sorter ant-table-column-sorter-full"
+                            >
+                              <span
+                                aria-hidden="true"
+                                class="ant-table-column-sorter-inner"
+                              >
+                                <span
+                                  aria-label="caret-up"
+                                  class="anticon anticon-caret-up ant-table-column-sorter-up"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-up"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                                <span
+                                  aria-label="caret-down"
+                                  class="anticon anticon-caret-down ant-table-column-sorter-down"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-down"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                              </span>
+                            </span>
+                          </div>
+                        </span>
+                        <span
+                          class="ant-dropdown-trigger ant-table-filter-trigger"
+                          role="button"
+                          tabindex="-1"
+                        >
+                          <span
+                            aria-label="search"
+                            class="anticon anticon-search"
+                            role="img"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              data-icon="search"
+                              fill="currentColor"
+                              focusable="false"
+                              height="1em"
+                              viewBox="64 64 896 896"
+                              width="1em"
+                            >
+                              <path
+                                d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"
+                              />
+                            </svg>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      class="resizable-header react-resizable"
+                      scope="col"
+                    >
+                      Error Message
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="Count"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-column-sorters"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          Count
+                        </span>
+                        <span
+                          class="ant-table-column-sorter ant-table-column-sorter-full"
+                        >
+                          <span
+                            aria-hidden="true"
+                            class="ant-table-column-sorter-inner"
+                          >
+                            <span
+                              aria-label="caret-up"
+                              class="anticon anticon-caret-up ant-table-column-sorter-up"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-up"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              aria-label="caret-down"
+                              class="anticon anticon-caret-down ant-table-column-sorter-down"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-down"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="Last Seen"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-column-sorters"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          Last Seen
+                        </span>
+                        <span
+                          class="ant-table-column-sorter ant-table-column-sorter-full"
+                        >
+                          <span
+                            aria-hidden="true"
+                            class="ant-table-column-sorter-inner"
+                          >
+                            <span
+                              aria-label="caret-up"
+                              class="anticon anticon-caret-up ant-table-column-sorter-up"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-up"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              aria-label="caret-down"
+                              class="anticon anticon-caret-down ant-table-column-sorter-down"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-down"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="First Seen"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-column-sorters"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          First Seen
+                        </span>
+                        <span
+                          class="ant-table-column-sorter ant-table-column-sorter-full"
+                        >
+                          <span
+                            aria-hidden="true"
+                            class="ant-table-column-sorter-inner"
+                          >
+                            <span
+                              aria-label="caret-up"
+                              class="anticon anticon-caret-up ant-table-column-sorter-up"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-up"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              aria-label="caret-down"
+                              class="anticon anticon-caret-down ant-table-column-sorter-down"
+                              role="img"
+                            >
+                              <svg
+                                aria-hidden="true"
+                                data-icon="caret-down"
+                                fill="currentColor"
+                                focusable="false"
+                                height="1em"
+                                viewBox="0 0 1024 1024"
+                                width="1em"
+                              >
+                                <path
+                                  d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                />
+                              </svg>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                    <th
+                      aria-label="Application"
+                      class="resizable-header react-resizable"
+                      scope="col"
+                      tabindex="0"
+                    >
+                      <div
+                        class="ant-table-filter-column"
+                      >
+                        <span
+                          class="ant-table-column-title"
+                        >
+                          <div
+                            class="ant-table-column-sorters"
+                          >
+                            <span
+                              class="ant-table-column-title"
+                            >
+                              Application
+                            </span>
+                            <span
+                              class="ant-table-column-sorter ant-table-column-sorter-full"
+                            >
+                              <span
+                                aria-hidden="true"
+                                class="ant-table-column-sorter-inner"
+                              >
+                                <span
+                                  aria-label="caret-up"
+                                  class="anticon anticon-caret-up ant-table-column-sorter-up"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-up"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M858.9 689L530.5 308.2c-9.4-10.9-27.5-10.9-37 0L165.1 689c-12.2 14.2-1.2 35 18.5 35h656.8c19.7 0 30.7-20.8 18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                                <span
+                                  aria-label="caret-down"
+                                  class="anticon anticon-caret-down ant-table-column-sorter-down"
+                                  role="img"
+                                >
+                                  <svg
+                                    aria-hidden="true"
+                                    data-icon="caret-down"
+                                    fill="currentColor"
+                                    focusable="false"
+                                    height="1em"
+                                    viewBox="0 0 1024 1024"
+                                    width="1em"
+                                  >
+                                    <path
+                                      d="M840.4 300H183.6c-19.7 0-30.7 20.8-18.5 35l328.4 380.8c9.4 10.9 27.5 10.9 37 0L858.9 335c12.2-14.2 1.2-35-18.5-35z"
+                                    />
+                                  </svg>
+                                </span>
+                              </span>
+                            </span>
+                          </div>
+                        </span>
+                        <span
+                          class="ant-dropdown-trigger ant-table-filter-trigger"
+                          role="button"
+                          tabindex="-1"
+                        >
+                          <span
+                            aria-label="search"
+                            class="anticon anticon-search"
+                            role="img"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              data-icon="search"
+                              fill="currentColor"
+                              focusable="false"
+                              height="1em"
+                              viewBox="64 64 896 896"
+                              width="1em"
+                            >
+                              <path
+                                d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"
+                              />
+                            </svg>
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        class="c0 resize-handle"
+                      />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  class="ant-table-tbody"
+                >
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T17:58:00.262775497Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=511b9c91a92b9c5166ecb77235f5743b&timestamp=1744655277797616374"
+                      >
+                        *errors.errorString
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        redis timeout
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      2510
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:57:57
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:28:00
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      redis-manual
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T18:04:00.563597646Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=9ec1b0638aa561e3e10420697e0dff83&timestamp=1744653840563597646"
+                      >
+                        ConnectionError
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPSConnection object at 0x7f4f48578310&gt;: Failed to establish a new connection: [Errno -2] Name or service not known'))
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      1
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:34:00
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:34:00
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      sample-flask-service
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T18:07:39.483096283Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=ea15cf4b68f127f6136567e4e1b3452b&timestamp=1744654059483096283"
+                      >
+                        ConnectionError
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPSConnection object at 0x7f4f48539a00&gt;: Failed to establish a new connection: [Errno -2] Name or service not known'))
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      1
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:37:39
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:37:39
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      sample-flask-service
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="2025-04-14T18:01:34.966190542Z"
+                  >
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <a
+                        href="/error-detail?groupId=720704cceb2c7926154d7561a7013ab1&timestamp=1744653694966190542"
+                      >
+                        ConnectionError
+                      </a>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <div
+                        class="ant-typography ant-typography-ellipsis ant-typography-ellipsis-multiple-line css-dev-only-do-not-override-2i2tap"
+                      >
+                        HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('&lt;urllib3.connection.HTTPSConnection object at 0x7f4f490b61c0&gt;: Failed to establish a new connection: [Errno -2] Name or service not known'))
+                      </div>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      1
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:31:34
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      <article
+                        class="ant-typography css-dev-only-do-not-override-2i2tap"
+                      >
+                        14/04/2025 23:31:34
+                      </article>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                    >
+                      sample-flask-service
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ul
+          class="ant-pagination ant-table-pagination ant-table-pagination-left css-dev-only-do-not-override-2i2tap"
+        >
+          <li
+            aria-disabled="true"
+            class="ant-pagination-prev ant-pagination-disabled"
+            title="Previous Page"
+          >
+            <button
+              class="ant-pagination-item-link"
+              disabled=""
+              tabindex="-1"
+              type="button"
+            >
+              <span
+                aria-label="left"
+                class="anticon anticon-left"
+                role="img"
+              >
+                <svg
+                  aria-hidden="true"
+                  data-icon="left"
+                  fill="currentColor"
+                  focusable="false"
+                  height="1em"
+                  viewBox="64 64 896 896"
+                  width="1em"
+                >
+                  <path
+                    d="M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z"
+                  />
+                </svg>
+              </span>
+            </button>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-1 ant-pagination-item-active"
+            tabindex="0"
+            title="1"
+          >
+            <a
+              rel="nofollow"
+            >
+              1
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-2"
+            tabindex="0"
+            title="2"
+          >
+            <a
+              rel="nofollow"
+            >
+              2
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-3"
+            tabindex="0"
+            title="3"
+          >
+            <a
+              rel="nofollow"
+            >
+              3
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-4"
+            tabindex="0"
+            title="4"
+          >
+            <a
+              rel="nofollow"
+            >
+              4
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-5 ant-pagination-item-before-jump-next"
+            tabindex="0"
+            title="5"
+          >
+            <a
+              rel="nofollow"
+            >
+              5
+            </a>
+          </li>
+          <li
+            class="ant-pagination-jump-next ant-pagination-jump-next-custom-icon"
+            tabindex="0"
+            title="Next 5 Pages"
+          >
+            <a
+              class="ant-pagination-item-link"
+            >
+              <div
+                class="ant-pagination-item-container"
+              >
+                <span
+                  aria-label="double-right"
+                  class="anticon anticon-double-right ant-pagination-item-link-icon"
+                  role="img"
+                >
+                  <svg
+                    aria-hidden="true"
+                    data-icon="double-right"
+                    fill="currentColor"
+                    focusable="false"
+                    height="1em"
+                    viewBox="64 64 896 896"
+                    width="1em"
+                  >
+                    <path
+                      d="M533.2 492.3L277.9 166.1c-3-3.9-7.7-6.1-12.6-6.1H188c-6.7 0-10.4 7.7-6.3 12.9L447.1 512 181.7 851.1A7.98 7.98 0 00188 864h77.3c4.9 0 9.6-2.3 12.6-6.1l255.3-326.1c9.1-11.7 9.1-27.9 0-39.5zm304 0L581.9 166.1c-3-3.9-7.7-6.1-12.6-6.1H492c-6.7 0-10.4 7.7-6.3 12.9L751.1 512 485.7 851.1A7.98 7.98 0 00492 864h77.3c4.9 0 9.6-2.3 12.6-6.1l255.3-326.1c9.1-11.7 9.1-27.9 0-39.5z"
+                    />
+                  </svg>
+                </span>
+                <span
+                  class="ant-pagination-item-ellipsis"
+                >
+                  •••
+                </span>
+              </div>
+            </a>
+          </li>
+          <li
+            class="ant-pagination-item ant-pagination-item-53"
+            tabindex="0"
+            title="53"
+          >
+            <a
+              rel="nofollow"
+            >
+              53
+            </a>
+          </li>
+          <li
+            aria-disabled="false"
+            class="ant-pagination-next"
+            tabindex="0"
+            title="Next Page"
+          >
+            <button
+              class="ant-pagination-item-link"
+              tabindex="-1"
+              type="button"
+            >
+              <span
+                aria-label="right"
+                class="anticon anticon-right"
+                role="img"
+              >
+                <svg
+                  aria-hidden="true"
+                  data-icon="right"
+                  fill="currentColor"
+                  focusable="false"
+                  height="1em"
+                  viewBox="64 64 896 896"
+                  width="1em"
+                >
+                  <path
+                    d="M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z"
+                  />
+                </svg>
+              </span>
+            </button>
+          </li>
+          <li
+            class="ant-pagination-options"
+          >
+            <div
+              aria-label="Page Size"
+              class="ant-select ant-pagination-options-size-changer css-dev-only-do-not-override-2i2tap ant-select-single ant-select-show-arrow ant-select-show-search"
+            >
+              <div
+                class="ant-select-selector"
+              >
+                <span
+                  class="ant-select-selection-search"
+                >
+                  <input
+                    aria-autocomplete="list"
+                    aria-controls="rc_select_TEST_OR_SSR_list"
+                    aria-expanded="false"
+                    aria-haspopup="listbox"
+                    aria-label="Page Size"
+                    aria-owns="rc_select_TEST_OR_SSR_list"
+                    autocomplete="off"
+                    class="ant-select-selection-search-input"
+                    id="rc_select_TEST_OR_SSR"
+                    role="combobox"
+                    type="search"
+                    value=""
+                  />
+                </span>
+                <span
+                  class="ant-select-selection-item"
+                  title="10 / page"
+                >
+                  10 / page
+                </span>
+              </div>
+              <span
+                aria-hidden="true"
+                class="ant-select-arrow"
+                style="user-select: none;"
+                unselectable="on"
+              >
+                <span
+                  aria-label="down"
+                  class="anticon anticon-down ant-select-suffix"
+                  role="img"
+                >
+                  <svg
+                    aria-hidden="true"
+                    data-icon="down"
+                    fill="currentColor"
+                    focusable="false"
+                    height="1em"
+                    viewBox="64 64 896 896"
+                    width="1em"
+                  >
+                    <path
+                      d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"
+                    />
+                  </svg>
+                </span>
+              </span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+`;

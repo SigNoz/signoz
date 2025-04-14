@@ -1,10 +1,9 @@
 import '@testing-library/jest-dom';
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { AxiosError } from 'axios';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import QuickFilters from '../QuickFilters';
 import { QuickFiltersSource } from '../types';
@@ -23,32 +22,14 @@ const handleFilterVisibilityChange = jest.fn();
 const redirectWithQueryBuilderData = jest.fn();
 
 function TestQuickFilters(): JSX.Element {
-	const queryClient = new QueryClient({
-		defaultOptions: {
-			queries: {
-				refetchOnWindowFocus: false,
-				retry(failureCount, error): boolean {
-					if (
-						// in case of manually throwing errors please make sure to send error.response.status
-						error instanceof AxiosError &&
-						error.response?.status &&
-						(error.response?.status >= 400 || error.response?.status <= 499)
-					) {
-						return false;
-					}
-					return failureCount < 2;
-				},
-			},
-		},
-	});
 	return (
-		<QueryClientProvider client={queryClient}>
+		<MockQueryClientProvider>
 			<QuickFilters
 				source={QuickFiltersSource.EXCEPTIONS}
 				config={QuickFiltersConfig}
 				handleFilterVisibilityChange={handleFilterVisibilityChange}
 			/>
-		</QueryClientProvider>
+		</MockQueryClientProvider>
 	);
 }
 
