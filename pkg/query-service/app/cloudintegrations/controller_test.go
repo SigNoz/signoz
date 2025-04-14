@@ -76,8 +76,8 @@ func TestAgentCheckIns(t *testing.T) {
 	testCloudAccountId1 := "546311234"
 	resp1, apiErr := controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
-			AccountId:      testAccountId1,
-			CloudAccountId: testCloudAccountId1,
+			ID:        testAccountId1,
+			AccountID: testCloudAccountId1,
 		},
 	)
 	require.Nil(apiErr)
@@ -89,8 +89,8 @@ func TestAgentCheckIns(t *testing.T) {
 	testCloudAccountId2 := "99999999"
 	_, apiErr = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
-			AccountId:      testAccountId1,
-			CloudAccountId: testCloudAccountId2,
+			ID:        testAccountId1,
+			AccountID: testCloudAccountId2,
 		},
 	)
 	require.NotNil(apiErr)
@@ -110,8 +110,8 @@ func TestAgentCheckIns(t *testing.T) {
 	testAccountId2 := uuid.NewString()
 	_, apiErr = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
-			AccountId:      testAccountId2,
-			CloudAccountId: testCloudAccountId1,
+			ID:        testAccountId2,
+			AccountID: testCloudAccountId1,
 		},
 	)
 	require.NotNil(apiErr)
@@ -131,8 +131,8 @@ func TestAgentCheckIns(t *testing.T) {
 
 	_, apiErr = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
-			AccountId:      testAccountId2,
-			CloudAccountId: testCloudAccountId1,
+			ID:        testAccountId2,
+			AccountID: testCloudAccountId1,
 		},
 	)
 	require.Nil(apiErr)
@@ -140,8 +140,8 @@ func TestAgentCheckIns(t *testing.T) {
 	// should be able to keep checking in
 	_, apiErr = controller.CheckInAsAgent(
 		context.TODO(), user.OrgID, "aws", AgentCheckInRequest{
-			AccountId:      testAccountId2,
-			CloudAccountId: testCloudAccountId1,
+			ID:        testAccountId2,
+			AccountID: testCloudAccountId1,
 		},
 	)
 	require.Nil(apiErr)
@@ -174,7 +174,12 @@ func TestConfigureService(t *testing.T) {
 	user, apiErr := createTestUser()
 	require.Nil(apiErr)
 
+	// create a connected account
 	testCloudAccountId := "546311234"
+	testConnectedAccount := makeTestConnectedAccount(t, user.OrgID, controller, testCloudAccountId)
+	require.Nil(testConnectedAccount.RemovedAt)
+	require.NotEmpty(testConnectedAccount.AccountID)
+	require.Equal(testCloudAccountId, *testConnectedAccount.AccountID)
 
 	// should start out without any service config
 	svcListResp, apiErr := controller.ListServices(
@@ -193,11 +198,6 @@ func TestConfigureService(t *testing.T) {
 	require.Nil(svcDetails.Config)
 
 	// should be able to configure a service for a connected account
-	testConnectedAccount := makeTestConnectedAccount(t, user.OrgID, controller, testCloudAccountId)
-	require.Nil(testConnectedAccount.RemovedAt)
-	require.NotEmpty(testConnectedAccount.AccountID)
-	require.Equal(testCloudAccountId, *testConnectedAccount.AccountID)
-
 	testSvcConfig := types.CloudServiceConfig{
 		Metrics: &types.CloudServiceMetricsConfig{
 			Enabled: true,
@@ -273,8 +273,8 @@ func makeTestConnectedAccount(t *testing.T, orgId string, controller *Controller
 	testAccountId := uuid.NewString()
 	resp, apiErr := controller.CheckInAsAgent(
 		context.TODO(), orgId, "aws", AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: cloudAccountId,
+			ID:        testAccountId,
+			AccountID: cloudAccountId,
 		},
 	)
 	require.Nil(apiErr)

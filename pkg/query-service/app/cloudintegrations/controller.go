@@ -176,8 +176,8 @@ func (c *Controller) GetAccountStatus(
 }
 
 type AgentCheckInRequest struct {
-	AccountId      string `json:"account_id"`
-	CloudAccountId string `json:"cloud_account_id"`
+	ID        string `json:"account_id"`
+	AccountID string `json:"cloud_account_id"`
 	// Arbitrary cloud specific Agent data
 	Data map[string]any `json:"data,omitempty"`
 }
@@ -203,19 +203,19 @@ func (c *Controller) CheckInAsAgent(
 		return nil, apiErr
 	}
 
-	existingAccount, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, req.AccountId)
-	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.CloudAccountId {
+	existingAccount, apiErr := c.accountsRepo.get(ctx, orgId, cloudProvider, req.ID)
+	if existingAccount != nil && existingAccount.AccountID != nil && *existingAccount.AccountID != req.AccountID {
 		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in with new %s account id %s for account %s with existing %s id %s",
-			cloudProvider, req.CloudAccountId, existingAccount.ID.StringValue(), cloudProvider, *existingAccount.AccountID,
+			cloudProvider, req.AccountID, existingAccount.ID.StringValue(), cloudProvider, *existingAccount.AccountID,
 		))
 	}
 
-	existingAccount, apiErr = c.accountsRepo.getConnectedCloudAccount(ctx, orgId, cloudProvider, req.CloudAccountId)
-	if existingAccount != nil && existingAccount.ID.StringValue() != req.AccountId {
+	existingAccount, apiErr = c.accountsRepo.getConnectedCloudAccount(ctx, orgId, cloudProvider, req.AccountID)
+	if existingAccount != nil && existingAccount.ID.StringValue() != req.ID {
 		return nil, model.BadRequest(fmt.Errorf(
 			"can't check in to %s account %s with id %s. already connected with id %s",
-			cloudProvider, req.CloudAccountId, req.AccountId, existingAccount.ID.StringValue(),
+			cloudProvider, req.AccountID, req.ID, existingAccount.ID.StringValue(),
 		))
 	}
 
@@ -225,7 +225,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	account, apiErr := c.accountsRepo.upsert(
-		ctx, orgId, cloudProvider, &req.AccountId, nil, &req.CloudAccountId, &agentReport, nil,
+		ctx, orgId, cloudProvider, &req.ID, nil, &req.AccountID, &agentReport, nil,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't upsert cloud account")
@@ -258,7 +258,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
-		ctx, orgId, cloudProvider, *account.AccountID,
+		ctx, orgId, account.ID.StringValue(),
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -370,8 +370,14 @@ func (c *Controller) ListServices(
 
 	svcConfigs := map[string]*types.CloudServiceConfig{}
 	if cloudAccountId != nil {
-		svcConfigs, apiErr = c.serviceConfigRepo.getAllForAccount(
+		activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(
 			ctx, orgID, cloudProvider, *cloudAccountId,
+		)
+		if apiErr != nil {
+			return nil, model.WrapApiError(apiErr, "couldn't get active account")
+		}
+		svcConfigs, apiErr = c.serviceConfigRepo.getAllForAccount(
+			ctx, orgID, activeAccount.ID.StringValue(),
 		)
 		if apiErr != nil {
 			return nil, model.WrapApiError(
@@ -411,8 +417,16 @@ func (c *Controller) GetServiceDetails(
 	}
 
 	if cloudAccountId != nil {
+
+		activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(
+			ctx, orgID, cloudProvider, *cloudAccountId,
+		)
+		if apiErr != nil {
+			return nil, model.WrapApiError(apiErr, "couldn't get active account")
+		}
+
 		config, apiErr := c.serviceConfigRepo.get(
-			ctx, orgID, cloudProvider, *cloudAccountId, serviceId,
+			ctx, orgID, activeAccount.ID.StringValue(), serviceId,
 		)
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, model.WrapApiError(apiErr, "couldn't fetch service config")
@@ -523,7 +537,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 	for _, ar := range accountRecords {
 		if ar.AccountID != nil {
 			configsBySvcId, apiErr := c.serviceConfigRepo.getAllForAccount(
-				ctx, orgID, cloudProvider, *ar.AccountID,
+				ctx, orgID, ar.ID.StringValue(),
 			)
 			if apiErr != nil {
 				return nil, apiErr

@@ -74,7 +74,7 @@ type CloudIntegration struct {
 	Config          *AccountConfig `json:"config" bun:"config,type:text"`
 	AccountID       *string        `json:"account_id" bun:"account_id,type:text"`
 	LastAgentReport *AgentReport   `json:"last_agent_report" bun:"last_agent_report,type:text"`
-	RemovedAt       *time.Time     `json:"removed_at" bun:"removed_at,type:timestamp"`
+	RemovedAt       *time.Time     `json:"removed_at" bun:"removed_at,type:timestamp,nullzero"`
 	OrgID           string         `bun:"org_id,type:text,unique:provider_id"`
 }
 

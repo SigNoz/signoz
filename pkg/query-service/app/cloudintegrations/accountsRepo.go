@@ -14,20 +14,20 @@ import (
 )
 
 type cloudProviderAccountsRepository interface {
-	listConnected(ctx context.Context, orgId string, cloudProvider string) ([]types.CloudIntegration, *model.ApiError)
+	listConnected(ctx context.Context, orgId string, provider string) ([]types.CloudIntegration, *model.ApiError)
 
-	get(ctx context.Context, orgId string, cloudProvider string, id string) (*types.CloudIntegration, *model.ApiError)
+	get(ctx context.Context, orgId string, provider string, id string) (*types.CloudIntegration, *model.ApiError)
 
-	getConnectedCloudAccount(
-		ctx context.Context, orgId string, cloudProvider string, cloudAccountId string,
-	) (*types.CloudIntegration, *model.ApiError)
+	// getActiveAccount(ctx context.Context, orgId string, provider string, accountId string) (*types.CloudIntegration, *model.ApiError)
+
+	getConnectedCloudAccount(ctx context.Context, orgId string, provider string, accountID string) (*types.CloudIntegration, *model.ApiError)
 
 	// Insert an account or update it by (cloudProvider, id)
 	// for specified non-empty fields
 	upsert(
 		ctx context.Context,
 		orgId string,
-		cloudProvider string,
+		provider string,
 		id *string,
 		config *types.AccountConfig,
 		accountId *string,
@@ -73,14 +73,14 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 }
 
 func (r *cloudProviderAccountsSQLRepository) get(
-	ctx context.Context, orgId string, cloudProvider string, id string,
+	ctx context.Context, orgId string, provider string, id string,
 ) (*types.CloudIntegration, *model.ApiError) {
 	var result types.CloudIntegration
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
 		Where("org_id = ?", orgId).
-		Where("provider = ?", cloudProvider).
+		Where("provider = ?", provider).
 		Where("id = ?", id).
 		Scan(ctx)
 
@@ -97,23 +97,50 @@ func (r *cloudProviderAccountsSQLRepository) get(
 	return &result, nil
 }
 
+// get the latest active account for the given accountID
+// func (r *cloudProviderAccountsSQLRepository) getActiveAccount(
+// 	ctx context.Context, orgId string, provider string, accountId string,
+// ) (*types.CloudIntegration, *model.ApiError) {
+// 	var result types.CloudIntegration
+
+// 	err := r.store.BunDB().NewSelect().
+// 		Model(&result).
+// 		Where("org_id = ?", orgId).
+// 		Where("provider = ?", provider).
+// 		Where("account_id = ?", accountId).
+// 		Where("removed_at is NULL").
+// 		Scan(ctx)
+
+// 	if err == sql.ErrNoRows {
+// 		return nil, model.NotFoundError(fmt.Errorf(
+// 			"couldn't find connected cloud account %s", accountId,
+// 		))
+// 	} else if err != nil {
+// 		return nil, model.InternalError(fmt.Errorf(
+// 			"couldn't query cloud provider accounts: %w", err,
+// 		))
+// 	}
+
+// 	return &result, nil
+// }
+
 func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
-	ctx context.Context, orgId string, cloudProvider string, cloudAccountId string,
+	ctx context.Context, orgId string, provider string, accountId string,
 ) (*types.CloudIntegration, *model.ApiError) {
 	var result types.CloudIntegration
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
 		Where("org_id = ?", orgId).
-		Where("provider = ?", cloudProvider).
-		Where("account_id = ?", cloudAccountId).
+		Where("provider = ?", provider).
+		Where("account_id = ?", accountId).
 		Where("last_agent_report is not NULL").
 		Where("removed_at is NULL").
 		Scan(ctx)
 
 	if err == sql.ErrNoRows {
 		return nil, model.NotFoundError(fmt.Errorf(
-			"couldn't find connected cloud account %s", cloudAccountId,
+			"couldn't find connected cloud account %s", accountId,
 		))
 	} else if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -127,7 +154,7 @@ func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
 func (r *cloudProviderAccountsSQLRepository) upsert(
 	ctx context.Context,
 	orgId string,
-	cloudProvider string,
+	provider string,
 	id *string,
 	config *types.AccountConfig,
 	accountId *string,
@@ -185,7 +212,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 
 	integration := types.CloudIntegration{
 		OrgID:        orgId,
-		Provider:     cloudProvider,
+		Provider:     provider,
 		Identifiable: types.Identifiable{ID: valuer.MustNewUUID(*id)},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
@@ -208,7 +235,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		))
 	}
 
-	upsertedAccount, apiErr := r.get(ctx, orgId, cloudProvider, *id)
+	upsertedAccount, apiErr := r.get(ctx, orgId, provider, *id)
 	if apiErr != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't fetch upserted account by id: %w", apiErr.ToError(),

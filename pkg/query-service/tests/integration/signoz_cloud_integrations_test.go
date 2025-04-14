@@ -65,8 +65,8 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	testAWSAccountId := "4563215233"
 	agentCheckInResp := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp.AccountId)
@@ -103,8 +103,8 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// The agent should now receive latest account config.
 	agentCheckInResp1 := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp1.AccountId)
@@ -120,8 +120,8 @@ func TestAWSIntegrationAccountLifecycle(t *testing.T) {
 	// The agent should receive the disconnected status in account config post disconnection
 	agentCheckInResp2 := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, agentCheckInResp2.AccountId)
@@ -157,8 +157,8 @@ func TestAWSIntegrationServices(t *testing.T) {
 	testAWSAccountId := "389389489489"
 	testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 
@@ -218,8 +218,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 	testAWSAccountId := "389389489489"
 	checkinResp := testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 
@@ -262,8 +262,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	checkinResp = testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 
@@ -308,8 +308,8 @@ func TestConfigReturnedWhenAgentChecksIn(t *testing.T) {
 
 	checkinResp = testbed.CheckInAsAgentWithQS(
 		"aws", cloudintegrations.AgentCheckInRequest{
-			AccountId:      testAccountId,
-			CloudAccountId: testAWSAccountId,
+			ID:        testAccountId,
+			AccountID: testAWSAccountId,
 		},
 	)
 	require.Equal(testAccountId, checkinResp.AccountId)

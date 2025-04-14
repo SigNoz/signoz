@@ -16,9 +16,8 @@ type serviceConfigRepository interface {
 	get(
 		ctx context.Context,
 		orgID string,
-		cloudProvider string,
 		cloudAccountId string,
-		serviceId string,
+		serviceType string,
 	) (*types.CloudServiceConfig, *model.ApiError)
 
 	upsert(
@@ -33,7 +32,6 @@ type serviceConfigRepository interface {
 	getAllForAccount(
 		ctx context.Context,
 		orgID string,
-		cloudProvider string,
 		cloudAccountId string,
 	) (
 		configsBySvcId map[string]*types.CloudServiceConfig,
@@ -56,9 +54,8 @@ type serviceConfigSQLRepository struct {
 func (r *serviceConfigSQLRepository) get(
 	ctx context.Context,
 	orgID string,
-	cloudProvider string,
 	cloudAccountId string,
-	serviceId string,
+	serviceType string,
 ) (*types.CloudServiceConfig, *model.ApiError) {
 
 	var result types.CloudIntegrationService
@@ -66,18 +63,16 @@ func (r *serviceConfigSQLRepository) get(
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
 		Join("JOIN cloud_integration ci ON ci.id = cis.cloud_integration_id").
-		Where("ci.provider = ?", cloudProvider).
-		Where("ci.account_id = ?", cloudAccountId).
 		Where("ci.org_id = ?", orgID).
-		Where("cis.type = ?", serviceId).
+		Where("ci.id = ?", cloudAccountId).
+		Where("cis.type = ?", serviceType).
 		Scan(ctx)
 
 	if err == sql.ErrNoRows {
 		return nil, model.NotFoundError(fmt.Errorf(
-			"couldn't find %s %s config for %s",
-			cloudProvider, serviceId, cloudAccountId,
+			"couldn't find config for cloud account %s",
+			cloudAccountId,
 		))
-
 	} else if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't query cloud service config: %w", err,
@@ -98,6 +93,7 @@ func (r *serviceConfigSQLRepository) upsert(
 ) (*types.CloudServiceConfig, *model.ApiError) {
 
 	// get cloud integration id from account id
+	// if the account is not connected, we don't need to upsert the config
 	var cloudIntegrationId string
 	err := r.store.BunDB().NewSelect().
 		Model((*types.CloudIntegration)(nil)).
@@ -105,6 +101,8 @@ func (r *serviceConfigSQLRepository) upsert(
 		Where("provider = ?", cloudProvider).
 		Where("account_id = ?", cloudAccountId).
 		Where("org_id = ?", orgID).
+		Where("removed_at is NULL").
+		Where("last_agent_report is not NULL").
 		Scan(ctx, &cloudIntegrationId)
 
 	if err != nil {
@@ -140,7 +138,6 @@ func (r *serviceConfigSQLRepository) upsert(
 func (r *serviceConfigSQLRepository) getAllForAccount(
 	ctx context.Context,
 	orgID string,
-	cloudProvider string,
 	cloudAccountId string,
 ) (map[string]*types.CloudServiceConfig, *model.ApiError) {
 
@@ -149,8 +146,7 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 	err := r.store.BunDB().NewSelect().
 		Model(&serviceConfigs).
 		Join("JOIN cloud_integration ci ON ci.id = cis.cloud_integration_id").
-		Where("ci.provider = ?", cloudProvider).
-		Where("ci.account_id = ?", cloudAccountId).
+		Where("ci.id = ?", cloudAccountId).
 		Where("ci.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
