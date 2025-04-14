@@ -15,12 +15,11 @@ import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { routes } from './config';
 import { ExceptionsQuickFiltersConfig } from './utils';
-// import logEvent from 'api/common/logEvent';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
@@ -43,14 +42,6 @@ function AllErrors(): JSX.Element {
 		);
 		setShowFilters((prev) => !prev);
 	};
-
-	const handleStageAndRunQuery = useCallback((): void => {
-		handleRunQuery();
-		// logEvent(InfraMonitoringEvents.PageVisited, {
-		// 	entity: InfraMonitoringEvents.HostEntity,
-		// 	page: InfraMonitoringEvents.DetailedPage,
-		// });
-	}, [handleRunQuery]);
 
 	return (
 		<div className={cx('all-errors-page', showFilters ? 'filter-visible' : '')}>
@@ -80,9 +71,7 @@ function AllErrors(): JSX.Element {
 							</Tooltip>
 						) : undefined
 					}
-					rightActions={
-						<RightToolbarActions onStageRunQuery={handleStageAndRunQuery} />
-					}
+					rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
 				/>
 				<ResourceAttributesFilterV2 />
 				<RouteTab routes={routes} activeKey={pathname} history={history} />
