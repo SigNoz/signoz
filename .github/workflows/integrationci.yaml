@@ -35,4 +35,4 @@ jobs:
           cd tests/integration && poetry install --no-root
       - name: run
         run: |
-          cd tests/integration && poetry run pytest --basetemp=./tmp/ -vvv -s src/
+          cd tests/integration && poetry run pytest -r --basetemp=./tmp/ -vv --capture=no src/
