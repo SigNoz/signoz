@@ -27,6 +27,11 @@ def signoz(
         dockerfile_path="ee/query-service/Dockerfile.integration",
         tag="signoz:integration",
     )
+
+    arch = platform.machine()
+    if arch == 'x86_64':
+        arch = 'amd64'
+
     self.build(
         buildargs={
             "TARGETARCH": platform.machine(),
