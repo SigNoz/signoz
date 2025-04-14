@@ -12,7 +12,6 @@ jobs:
   test:
     strategy:
       matrix:
-        fail-fast: false
         include:
           - postgres-version: 15
             clickhouse-version: 24.1.2-alpine
