@@ -34,7 +34,7 @@ def signoz(
 
     self.build(
         buildargs={
-            "TARGETARCH": platform.machine(),
+            "TARGETARCH": arch,
             "ZEUSURL": zeus.container_config.base_url(),
         }
     )
