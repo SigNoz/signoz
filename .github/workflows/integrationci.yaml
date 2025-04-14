@@ -1,0 +1,35 @@
+name: integrationci
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - postgres-version: 15
+          - clickhouse-version: 24.1.2-alpine
+          - schema-migrator-version: v0.111.38
+          - python-version: 3.13
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{matrix.python-version}}
+      - name: poetry
+        run: |
+          python -m pip install poetry==2.1.2
+          python -m poetry config virtualenvs.in-project true
+          cd tests/integration && poetry install --no-root
+      - name: run
+        run: |
+          make py-test
