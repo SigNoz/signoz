@@ -1,6 +1,9 @@
 name: integrationci
 
 on:
+  pull_request:
+    types:
+      - labeled
   pull_request_target:
     types:
       - labeled
@@ -32,4 +35,4 @@ jobs:
           cd tests/integration && poetry install --no-root
       - name: run
         run: |
-          make py-test
+          cd tests/integration && poetry run pytest --basetemp=./tmp/ -vvv -s src/
