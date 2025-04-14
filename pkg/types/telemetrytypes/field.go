@@ -86,11 +86,11 @@ func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
 	return fieldKeySelector
 }
 
-func FieldKeyToMaterializedColumnName(key TelemetryFieldKey) string {
+func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
 	return fmt.Sprintf("%s_%s_%s", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
-func FieldKeyToMaterializedColumnNameForExists(key TelemetryFieldKey) string {
+func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
 	return fmt.Sprintf("%s_%s_%s_exists", key.FieldContext, key.FieldDataType.String, strings.ReplaceAll(key.Name, ".", "$$"))
 }
 
@@ -122,4 +122,53 @@ type FieldValueSelector struct {
 	ExistingQuery string `json:"existingQuery"`
 	Value         string `json:"value"`
 	Limit         int    `json:"limit"`
+}
+
+func DataTypeCollisionHandledFieldName(key *TelemetryFieldKey, value any, tblFieldName string) (string, any) {
+	// This block of code exists to handle the data type collisions
+	// We don't want to fail the requests when there is a key with more than one data type
+	// Let's take an example of `http.status_code`, and consider user sent a string value and number value
+	// When they search for `http.status_code=200`, we will search across both the number columns and string columns
+	// and return the results from both the columns
+	// While we expect user not to send the mixed data types, it inevitably happens
+	// So we handle the data type collisions here
+	switch key.FieldDataType {
+	case FieldDataTypeString:
+		switch value.(type) {
+		case float64:
+			// try to convert the string value to to number
+			tblFieldName = fmt.Sprintf(`toFloat64OrNull(%s)`, tblFieldName)
+		case []any:
+			areFloats := true
+			for _, v := range value.([]any) {
+				if _, ok := v.(float64); !ok {
+					areFloats = false
+					break
+				}
+			}
+			if areFloats {
+				tblFieldName = fmt.Sprintf(`toFloat64OrNull(%s)`, tblFieldName)
+			}
+		case bool:
+			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
+			value = fmt.Sprintf("%t", value)
+		case string:
+			// nothing to do
+		}
+	case FieldDataTypeFloat64, FieldDataTypeInt64, FieldDataTypeNumber:
+		switch value.(type) {
+		case string:
+			// try to convert the string value to to number
+			tblFieldName = fmt.Sprintf(`toString(%s)`, tblFieldName)
+		case float64:
+			// nothing to do
+		}
+	case FieldDataTypeBool:
+		switch value.(type) {
+		case string:
+			// try to convert the string value to to number
+			tblFieldName = fmt.Sprintf(`toString(%s)`, tblFieldName)
+		}
+	}
+	return tblFieldName, value
 }
