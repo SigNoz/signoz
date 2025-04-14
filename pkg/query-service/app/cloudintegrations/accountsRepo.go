@@ -18,8 +18,6 @@ type cloudProviderAccountsRepository interface {
 
 	get(ctx context.Context, orgId string, provider string, id string) (*types.CloudIntegration, *model.ApiError)
 
-	// getActiveAccount(ctx context.Context, orgId string, provider string, accountId string) (*types.CloudIntegration, *model.ApiError)
-
 	getConnectedCloudAccount(ctx context.Context, orgId string, provider string, accountID string) (*types.CloudIntegration, *model.ApiError)
 
 	// Insert an account or update it by (cloudProvider, id)
@@ -96,33 +94,6 @@ func (r *cloudProviderAccountsSQLRepository) get(
 
 	return &result, nil
 }
-
-// get the latest active account for the given accountID
-// func (r *cloudProviderAccountsSQLRepository) getActiveAccount(
-// 	ctx context.Context, orgId string, provider string, accountId string,
-// ) (*types.CloudIntegration, *model.ApiError) {
-// 	var result types.CloudIntegration
-
-// 	err := r.store.BunDB().NewSelect().
-// 		Model(&result).
-// 		Where("org_id = ?", orgId).
-// 		Where("provider = ?", provider).
-// 		Where("account_id = ?", accountId).
-// 		Where("removed_at is NULL").
-// 		Scan(ctx)
-
-// 	if err == sql.ErrNoRows {
-// 		return nil, model.NotFoundError(fmt.Errorf(
-// 			"couldn't find connected cloud account %s", accountId,
-// 		))
-// 	} else if err != nil {
-// 		return nil, model.InternalError(fmt.Errorf(
-// 			"couldn't query cloud provider accounts: %w", err,
-// 		))
-// 	}
-
-// 	return &result, nil
-// }
 
 func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
 	ctx context.Context, orgId string, provider string, accountId string,
