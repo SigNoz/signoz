@@ -151,7 +151,7 @@ function SpanOverview({
 	);
 }
 
-function SpanDuration({
+export function SpanDuration({
 	span,
 	traceMetadata,
 	setSelectedSpan,
