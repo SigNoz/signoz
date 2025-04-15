@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -81,9 +82,13 @@ func (c *conditionBuilder) GetColumn(ctx context.Context, key *telemetrytypes.Te
 		case telemetrytypes.FieldDataTypeBool:
 			return logsV2Columns["attributes_bool"], nil
 		}
-	case telemetrytypes.FieldContextLog:
+	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
 		col, ok := logsV2Columns[key.Name]
 		if !ok {
+			// check if the key has body JSON search
+			if strings.HasPrefix(key.Name, "body.") {
+				return logsV2Columns["body"], nil
+			}
 			return nil, qbtypes.ErrColumnNotFound
 		}
 		return col, nil

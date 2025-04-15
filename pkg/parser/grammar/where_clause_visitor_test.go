@@ -260,10 +260,30 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 			expectedSearchString: "WHERE (match(body, ?))",
 			expectedSearchArgs:   []any{"waiting for response"},
 		},
+		{
+			name:                 "full-text-search-with-word-and-not-word",
+			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                "error NOT buggy_app",
+			expectedSearchString: "WHERE ((match(body, ?)) AND NOT ((match(body, ?))))",
+			expectedSearchArgs:   []any{"error", "buggy_app"},
+		},
+		{
+			name:                 "full-text-search-with-word-and-not-word-and-not-word",
+			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                "error NOT buggy_app NOT redis",
+			expectedSearchString: "WHERE ((match(body, ?)) AND NOT ((match(body, ?))) AND NOT ((match(body, ?))))",
+			expectedSearchArgs:   []any{"error", "buggy_app", "redis"},
+		},
+		{
+			name:                 "full-text-search-with-word-and-not-word-and-not-word-tricky",
+			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                "error NOT buggy_app OR redis",
+			expectedSearchString: "WHERE (((match(body, ?)) AND NOT ((match(body, ?)))) OR (match(body, ?)))",
+			expectedSearchArgs:   []any{"error", "buggy_app", "redis"},
+		},
 	}
 
 	for _, c := range cases {
-		fmt.Println("c.name", c.name)
 		chQuery, chQueryArgs, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrylogs.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
 			Name:          "body",
 			Signal:        telemetrytypes.SignalLogs,
