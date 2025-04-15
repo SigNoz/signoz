@@ -240,16 +240,16 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 					RuleUUID: ruleUUID,
 				})
 			}
-			if len(ruleHistories) > 0 {
-				_, err = tx.
-					NewCreateTable().
-					IfNotExists().
-					Model(&ruleHistories).
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
 
+			_, err = tx.
+				NewCreateTable().
+				IfNotExists().
+				Model(&ruleHistories).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
+			if len(ruleHistories) > 0 {
 				_, err = tx.
 					NewInsert().
 					Model(&ruleHistories).
