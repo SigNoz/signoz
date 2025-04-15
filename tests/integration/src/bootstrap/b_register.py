@@ -20,7 +20,7 @@ def test_register(signoz: types.SigNoz) -> None:
             "email": "admin@admin.com",
             "password": "password",
         },
-        timeout=2
+        timeout=2,
     )
     assert response.status_code == HTTPStatus.OK
 

@@ -29,7 +29,7 @@ def migrator(
     result = container.wait()
 
     if result["StatusCode"] != 0:
-        logs = container.logs().decode(encoding='utf-8')
+        logs = container.logs().decode(encoding="utf-8")
         container.remove()
         print(logs)
         raise RuntimeError("failed to run migrations on clickhouse")
@@ -47,7 +47,7 @@ def migrator(
     result = container.wait()
 
     if result["StatusCode"] != 0:
-        logs = container.logs().decode(encoding='utf-8')
+        logs = container.logs().decode(encoding="utf-8")
         container.remove()
         print(logs)
         raise RuntimeError("failed to run migrations on clickhouse")

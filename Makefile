@@ -196,4 +196,4 @@ py-lint:
 
 .PHONY: py-test
 py-test:
-	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vvv src/
+	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --capture=no src/

@@ -32,6 +32,6 @@ def sqlite(
         conn=connection,
         env={
             "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
-            "SIGNOZ_SQLSTORE_SQLITE_PATH": path,
+            "SIGNOZ_SQLSTORE_SQLITE_PATH": str(path),
         },
     )

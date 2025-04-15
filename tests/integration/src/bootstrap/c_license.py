@@ -12,9 +12,7 @@ from wiremock.client import (
 from fixtures.types import SigNoz
 
 
-def test_apply_license(
-    signoz: SigNoz, make_http_mocks, get_jwt_token
-) -> None:
+def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
     make_http_mocks(
         signoz.zeus.container,
         [
@@ -59,15 +57,15 @@ def test_apply_license(
         url=signoz.self.host_config.get("/api/v3/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
-        timeout=5
+        timeout=5,
     )
 
     assert response.status_code == http.HTTPStatus.ACCEPTED
 
     response = requests.post(
         url=signoz.zeus.host_config.get("/__admin/requests/count"),
-        json={"method":"POST","url":"/v2/licenses/me"},
-        timeout=5
+        json={"method": "GET", "url": "/v2/licenses/me"},
+        timeout=5,
     )
 
     assert response.json()["count"] == 1

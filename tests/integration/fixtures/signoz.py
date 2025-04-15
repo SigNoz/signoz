@@ -43,17 +43,29 @@ def signoz(
         }
     )
 
-    env = {
-        "SIGNOZ_WEB_ENABLED": False,
-        "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
-        "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False
-        } | sqlstore.env | clickhouse.env
+    env = (
+        {
+            "SIGNOZ_WEB_ENABLED": False,
+            "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
+            "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False,
+        }
+        | sqlstore.env
+        | clickhouse.env
+    )
 
-    container = DockerContainer(self.tag)
+    container = DockerContainer("signoz:integration")
     for k, v in env.items():
         container.with_env(k, v)
     container.with_exposed_ports(8080)
     container.with_network(network=network)
+
+    provider = request.config.getoption("--sqlstore-provider")
+    if provider == "sqlite":
+        container.with_volume_mapping(
+            sqlstore.env["SIGNOZ_SQLSTORE_SQLITE_PATH"],
+            sqlstore.env["SIGNOZ_SQLSTORE_SQLITE_PATH"],
+            "rw",
+        )
 
     container.start()
 
@@ -61,11 +73,11 @@ def signoz(
         for attempt in range(30):
             try:
                 response = requests.get(
-                    f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health", # pylint: disable=line-too-long
+                    f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health",  # pylint: disable=line-too-long
                     timeout=2,
                 )
                 return response.status_code == HTTPStatus.OK
-            except Exception: #pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 print(f"attempt {attempt} at health check failed")
                 time.sleep(2)
         raise TimeoutError("timeout exceceded while waiting")
