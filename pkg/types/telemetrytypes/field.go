@@ -27,6 +27,18 @@ type TelemetryFieldKey struct {
 	Materialized  bool          `json:"materialized,omitempty"`
 }
 
+func (f TelemetryFieldKey) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("name=%s", f.Name))
+	if f.FieldContext != FieldContextUnspecified {
+		sb.WriteString(fmt.Sprintf(",context=%s", f.FieldContext.String))
+	}
+	if f.FieldDataType != FieldDataTypeUnspecified {
+		sb.WriteString(fmt.Sprintf(",type=%s", f.FieldDataType.StringValue()))
+	}
+	return sb.String()
+}
+
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
 // The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {

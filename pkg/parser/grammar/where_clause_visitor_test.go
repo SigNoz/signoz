@@ -300,14 +300,14 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 				},
 			},
 			query:                "has(service.name, 'redis')",
-			expectedSearchString: "WHERE ((has(resources_string['service.name'], ?)))",
+			expectedSearchString: "WHERE (has(resources_string['service.name'], ?))",
 			expectedSearchArgs:   []any{"redis"},
 		},
 		{
 			name:                 "has-from-list-of-values",
 			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
 			query:                "has(body.payload.user_ids[*], 'u1292')",
-			expectedSearchString: "WHERE ((has(JSONExtract(JSON_QUERY(body, '$.payload.user_ids[*]'), 'Array(String)'), ?)))",
+			expectedSearchString: "WHERE (has(JSONExtract(JSON_QUERY(body, '$.payload.user_ids[*]'), 'Array(String)'), ?))",
 			expectedSearchArgs:   []any{"u1292"},
 		},
 		{

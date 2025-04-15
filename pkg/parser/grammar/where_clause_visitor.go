@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -18,9 +19,9 @@ import (
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type WhereClauseVisitor struct {
 	conditionBuilder qbtypes.ConditionBuilder
-	warnings         []string
+	warnings         []error
 	fieldKeys        map[string][]telemetrytypes.TelemetryFieldKey
-	errors           []string
+	errors           []error
 	builder          *sqlbuilder.SelectBuilder
 	fullTextColumn   telemetrytypes.TelemetryFieldKey
 }
@@ -40,23 +41,32 @@ func NewWhereClauseVisitor(
 	}
 }
 
+type SyntaxError struct {
+	line, column int
+	msg          string
+}
+
+func (e *SyntaxError) Error() string {
+	return fmt.Sprintf("line %d:%d %s", e.line, e.column, e.msg)
+}
+
 // ErrorListener is a custom error listener to capture syntax errors
 type ErrorListener struct {
 	*antlr.DefaultErrorListener
-	Errors []string
+	Errors []error
 }
 
 // NewErrorListener creates a new error listener
 func NewErrorListener() *ErrorListener {
 	return &ErrorListener{
 		DefaultErrorListener: antlr.NewDefaultErrorListener(),
-		Errors:               []string{},
+		Errors:               []error{},
 	}
 }
 
 // SyntaxError captures syntax errors during parsing
 func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol any, line, column int, msg string, e antlr.RecognitionException) {
-	l.Errors = append(l.Errors, fmt.Sprintf("line %d:%d %s", line, column, msg))
+	l.Errors = append(l.Errors, &SyntaxError{line: line, column: column, msg: msg})
 }
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
@@ -75,21 +85,22 @@ func PrepareWhereClause(
 	visitor := NewWhereClauseVisitor(conditionBuilder, fieldKeys, sb, fullTextColumn)
 
 	// Set up error handling
-	errorListener := NewErrorListener()
+	lexerErrorListener := NewErrorListener()
 	lexer.RemoveErrorListeners()
-	lexer.AddErrorListener(errorListener)
+	lexer.AddErrorListener(lexerErrorListener)
 
 	tokens := antlr.NewCommonTokenStream(lexer, 0)
+	parserErrorListener := NewErrorListener()
 	parser := NewFilterQueryParser(tokens)
 	parser.RemoveErrorListeners()
-	parser.AddErrorListener(errorListener)
+	parser.AddErrorListener(parserErrorListener)
 
 	// Parse the query
 	tree := parser.Query()
 
 	// Handle syntax errors
-	if len(errorListener.Errors) > 0 {
-		return "", nil, fmt.Errorf("syntax error in filter query: %s", strings.Join(errorListener.Errors, "; "))
+	if len(parserErrorListener.Errors) > 0 {
+		return "", nil, errors.Wrapf(parserErrorListener.Errors[0], errors.TypeInvalidInput, errors.CodeInvalidInput, "syntax error in expression")
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
@@ -393,19 +404,34 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		functionName = "hasAll"
 	} else {
 		// Default fallback
-		v.errors = append(v.errors, fmt.Sprintf("unknown function %s", ctx.GetText()))
+		v.errors = append(v.errors, errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"unknown function %s",
+			ctx.GetText(),
+		))
 		return ""
 	}
 	params := v.Visit(ctx.FunctionParamList()).([]any)
 
 	if len(params) < 2 {
-		v.errors = append(v.errors, fmt.Sprintf("function %s expects key and value parameters", functionName))
+		v.errors = append(v.errors, errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"function %s expects key and value parameters",
+			functionName,
+		))
 		return ""
 	}
 
 	keys, ok := params[0].([]telemetrytypes.TelemetryFieldKey)
 	if !ok {
-		v.errors = append(v.errors, fmt.Sprintf("function %s expects key parameter to be a field key", functionName))
+		v.errors = append(v.errors, errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"function %s expects key parameter to be a field key",
+			functionName,
+		))
 		return ""
 	}
 	value := params[1:]
@@ -419,19 +445,17 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 			fieldName, _ = v.conditionBuilder.GetTableFieldName(context.Background(), &key)
 		}
 
+		var cond string
 		// Map our functions to ClickHouse equivalents
 		switch functionName {
 		case "has":
-			value := value[0]
-			cond := v.builder.And(fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value)))
-			conds = append(conds, cond)
+			cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
 		case "hasAny":
-			cond := v.builder.And(fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value)))
-			conds = append(conds, cond)
+			cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
 		case "hasAll":
-			cond := v.builder.And(fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value)))
-			conds = append(conds, cond)
+			cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
 		}
+		conds = append(conds, cond)
 	}
 
 	return v.builder.Or(conds...)
@@ -476,7 +500,12 @@ func (v *WhereClauseVisitor) VisitValue(ctx *ValueContext) any {
 	} else if ctx.NUMBER() != nil {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
-			v.errors = append(v.errors, fmt.Sprintf("failed to parse number %s", ctx.NUMBER().GetText()))
+			v.errors = append(v.errors, errors.Newf(
+				errors.TypeInvalidInput,
+				errors.CodeInvalidInput,
+				"failed to parse number %s",
+				ctx.NUMBER().GetText(),
+			))
 			return ""
 		}
 		return number
@@ -485,6 +514,10 @@ func (v *WhereClauseVisitor) VisitValue(ctx *ValueContext) any {
 		boolText := strings.ToLower(ctx.BOOL().GetText())
 		return boolText == "true"
 	} else if ctx.KEY() != nil {
+		// Why do we have a KEY context here?
+		// When the user writes an expression like `service.name=redis`
+		// The `redis` part is a VALUE context but parsed as a KEY token
+		// so we return the text as is
 		return ctx.KEY().GetText()
 	}
 
@@ -509,12 +542,24 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 	}
 
 	if len(fieldKeysForName) == 0 {
-		v.errors = append(v.errors, fmt.Sprintf("Key %s not found", fieldKey.Name))
+		v.errors = append(v.errors, errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"key %s not found",
+			fieldKey.Name,
+		))
 	}
 
 	if len(fieldKeysForName) > 1 {
 		// this is warning state, we must have a unambiguous key
-		v.warnings = append(v.warnings, fmt.Sprintf("Key %s is ambiguous, found %d different combinations of field context and data type", fieldKey.Name, len(fieldKeysForName)))
+		v.warnings = append(v.warnings, errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"key %s is ambiguous, found %d different combinations of field context and data type: %v",
+			fieldKey.Name,
+			len(fieldKeysForName),
+			fieldKeysForName,
+		))
 	}
 
 	return fieldKeysForName
