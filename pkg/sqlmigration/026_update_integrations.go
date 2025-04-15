@@ -238,12 +238,14 @@ func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
 			if err == nil && len(existingServices) > 0 {
 				newServices := migration.
 					CopyOldCloudIntegrationServicesToNewCloudIntegrationServices(tx, orgIDs[0], existingServices)
-				_, err = tx.
-					NewInsert().
-					Model(&newServices).
-					Exec(ctx)
-				if err != nil {
-					return err
+				if len(newServices) > 0 {
+					_, err = tx.
+						NewInsert().
+						Model(&newServices).
+						Exec(ctx)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			return nil
