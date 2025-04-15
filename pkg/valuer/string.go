@@ -35,10 +35,8 @@ func (enum String) MarshalJSON() ([]byte, error) {
 }
 
 func (enum *String) UnmarshalJSON(data []byte) error {
-	fmt.Println("data", string(data))
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
-		fmt.Println("error in unmarshal", err)
 		return err
 	}
 
