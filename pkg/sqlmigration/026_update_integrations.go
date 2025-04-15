@@ -375,6 +375,14 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	pat := &eeTypes.StorablePersonalAccessToken{}
 	err = tx.NewSelect().Model(pat).Where("user_id = ? and revoked = false", "aws-integration").Scan(context.Background())
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// delete the old user
+			_, err = tx.ExecContext(context.Background(), `DELETE FROM users WHERE id = ?`, user.ID)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
 		return err
 	}
 

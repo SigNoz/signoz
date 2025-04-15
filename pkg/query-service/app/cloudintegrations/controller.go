@@ -435,15 +435,22 @@ func (c *Controller) GetServiceDetails(
 		if config != nil {
 			service.Config = config
 
+			enabled := false
 			if config.Metrics != nil && config.Metrics.Enabled {
-				// add links to service dashboards, making them clickable.
-				for i, d := range service.Assets.Dashboards {
-					dashboardUuid := c.dashboardUuid(
-						cloudProvider, serviceId, d.Id,
-					)
+				enabled = true
+			}
+
+			// add links to service dashboards, making them clickable.
+			for i, d := range service.Assets.Dashboards {
+				dashboardUuid := c.dashboardUuid(
+					cloudProvider, serviceId, d.Id,
+				)
+				if enabled {
 					service.Assets.Dashboards[i].Url = fmt.Sprintf(
 						"/dashboard/%s", dashboardUuid,
 					)
+				} else {
+					service.Assets.Dashboards[i].Url = ""
 				}
 			}
 		}
