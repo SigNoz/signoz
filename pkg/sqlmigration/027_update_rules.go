@@ -242,6 +242,15 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 			}
 			if len(ruleHistories) > 0 {
 				_, err = tx.
+					NewCreateTable().
+					IfNotExists().
+					Model(&ruleHistories).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+
+				_, err = tx.
 					NewInsert().
 					Model(&ruleHistories).
 					Exec(ctx)
