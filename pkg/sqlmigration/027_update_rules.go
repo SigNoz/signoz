@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -86,6 +86,12 @@ type storablePlannedMaintenanceRule struct {
 	RuleID               valuer.UUID `bun:"rule_id,type:text"`
 }
 
+type ruleHistory struct {
+	bun.BaseModel `bun:"table:rule_history"`
+	RuleID        int         `bun:"rule_id"`
+	RuleUUID      valuer.UUID `bun:"rule_uuid"`
+}
+
 func NewUpdateRulesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.
 		NewProviderFactory(
@@ -117,7 +123,7 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 
 	defer tx.Rollback()
 
-	ruleIDToRuleUUIDMap := map[string]valuer.UUID{}
+	ruleIDToRuleUUIDMap := map[int]valuer.UUID{}
 	err = migration.
 		store.
 		Dialect().
@@ -195,7 +201,11 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 						}
 					}
 					if err == nil {
-						newMaintenances, newMaintenancesRules := migration.CopyExistingMaintenancesToNewMaintenancesAndRules(existingMaintenances, orgID, ruleIDToRuleUUIDMap)
+						newMaintenances, newMaintenancesRules, err := migration.CopyExistingMaintenancesToNewMaintenancesAndRules(existingMaintenances, orgID, ruleIDToRuleUUIDMap)
+						if err != nil {
+							return err
+						}
+
 						_, err = tx.
 							NewInsert().
 							Model(&newMaintenances).
@@ -223,6 +233,23 @@ func (migration *updateRules) Up(ctx context.Context, db *bun.DB) error {
 				return err
 			}
 
+			ruleHistories := make([]*ruleHistory, 0)
+			for ruleID, ruleUUID := range ruleIDToRuleUUIDMap {
+				ruleHistories = append(ruleHistories, &ruleHistory{
+					RuleID:   ruleID,
+					RuleUUID: ruleUUID,
+				})
+			}
+			if len(ruleHistories) > 0 {
+				_, err = tx.
+					NewInsert().
+					Model(&ruleHistories).
+					Exec(ctx)
+				if err != nil {
+					return err
+				}
+			}
+
 			return nil
 		})
 
@@ -242,12 +269,12 @@ func (migration *updateRules) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
-func (migration *updateRules) CopyExistingRulesToNewRules(existingRules []*existingRule, orgID string) ([]*newRule, map[string]valuer.UUID) {
+func (migration *updateRules) CopyExistingRulesToNewRules(existingRules []*existingRule, orgID string) ([]*newRule, map[int]valuer.UUID) {
 	newRules := make([]*newRule, 0)
-	idUUIDMap := map[string]valuer.UUID{}
+	idUUIDMap := map[int]valuer.UUID{}
 	for _, rule := range existingRules {
 		uuid := valuer.GenerateUUID()
-		idUUIDMap[fmt.Sprintf("%v", rule.ID)] = uuid
+		idUUIDMap[rule.ID] = uuid
 		newRules = append(newRules, &newRule{
 			Identifiable: types.Identifiable{
 				ID: uuid,
@@ -268,7 +295,7 @@ func (migration *updateRules) CopyExistingRulesToNewRules(existingRules []*exist
 	return newRules, idUUIDMap
 }
 
-func (migration *updateRules) CopyExistingMaintenancesToNewMaintenancesAndRules(existingMaintenances []*existingMaintenance, orgID string, ruleIDToRuleUUIDMap map[string]valuer.UUID) ([]*newMaintenance, []*storablePlannedMaintenanceRule) {
+func (migration *updateRules) CopyExistingMaintenancesToNewMaintenancesAndRules(existingMaintenances []*existingMaintenance, orgID string, ruleIDToRuleUUIDMap map[int]valuer.UUID) ([]*newMaintenance, []*storablePlannedMaintenanceRule, error) {
 	newMaintenances := make([]*newMaintenance, 0)
 	newMaintenanceRules := make([]*storablePlannedMaintenanceRule, 0)
 
@@ -293,7 +320,12 @@ func (migration *updateRules) CopyExistingMaintenancesToNewMaintenancesAndRules(
 			OrgID:       orgID,
 		}
 		newMaintenances = append(newMaintenances, &newMaintenance)
-		for _, ruleID := range *ruleIDs {
+		for _, ruleIDStr := range *ruleIDs {
+			ruleID, err := strconv.Atoi(ruleIDStr)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			newMaintenanceRules = append(newMaintenanceRules, &storablePlannedMaintenanceRule{
 				Identifiable: types.Identifiable{
 					ID: valuer.GenerateUUID(),
@@ -303,5 +335,5 @@ func (migration *updateRules) CopyExistingMaintenancesToNewMaintenancesAndRules(
 			})
 		}
 	}
-	return newMaintenances, newMaintenanceRules
+	return newMaintenances, newMaintenanceRules, nil
 }

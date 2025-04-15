@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -336,9 +337,18 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 		return errors.New("claims not found in context")
 	}
 
-	id, err := valuer.NewUUID(idStr)
+	ruleUUID, err := valuer.NewUUID(idStr)
 	if err != nil {
-		return err
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			return err
+		}
+		ruleHistory, err := m.ruleStore.GetRuleUUID(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		ruleUUID = ruleHistory.RuleUUID
 	}
 
 	parsedRule, err := ruletypes.ParsePostableRule([]byte(ruleStr))
@@ -346,7 +356,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 		return err
 	}
 
-	existingRule, err := m.ruleStore.GetStoredRule(ctx, id)
+	existingRule, err := m.ruleStore.GetStoredRule(ctx, ruleUUID)
 	if err != nil {
 		return err
 	}
@@ -375,7 +385,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, idStr string) er
 			preferredChannels = parsedRule.PreferredChannels
 		}
 
-		err = cfg.UpdateRuleIDMatcher(id.StringValue(), preferredChannels)
+		err = cfg.UpdateRuleIDMatcher(ruleUUID.StringValue(), preferredChannels)
 		if err != nil {
 			return err
 		}
@@ -835,12 +845,21 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 }
 
 func (m *Manager) GetRule(ctx context.Context, idStr string) (*ruletypes.GettableRule, error) {
-	id, err := valuer.NewUUID(idStr)
+	ruleUUID, err := valuer.NewUUID(idStr)
 	if err != nil {
-		return nil, err
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			return nil, err
+		}
+		ruleHistory, err := m.ruleStore.GetRuleUUID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		ruleUUID = ruleHistory.RuleUUID
 	}
 
-	s, err := m.ruleStore.GetStoredRule(ctx, id)
+	s, err := m.ruleStore.GetStoredRule(ctx, ruleUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -848,7 +867,7 @@ func (m *Manager) GetRule(ctx context.Context, idStr string) (*ruletypes.Gettabl
 	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
 		return nil, err
 	}
-	r.Id = id.StringValue()
+	r.Id = ruleUUID.StringValue()
 	// fetch state of rule from memory
 	if rm, ok := m.rules[r.Id]; !ok {
 		r.State = model.StateDisabled

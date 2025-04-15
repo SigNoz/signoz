@@ -113,6 +113,21 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 	return rule, nil
 }
 
+func (r *rule) GetRuleUUID(ctx context.Context, ruleID int) (*ruletypes.RuleHistory, error) {
+	ruleHistory := new(ruletypes.RuleHistory)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(ruleHistory).
+		Where("rule_id = ?", ruleID).
+		Scan(ctx)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, err
+	}
+	return ruleHistory, nil
+}
+
 func (r *rule) ListOrgs(ctx context.Context) ([]string, error) {
 	orgIDs := []string{}
 	err := r.sqlstore.
