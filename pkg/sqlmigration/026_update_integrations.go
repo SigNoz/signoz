@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -101,6 +100,21 @@ type newCloudIntegrationService struct {
 	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	Config             string `bun:"config,type:text"`
 	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type"`
+}
+
+type StorablePersonalAccessToken struct {
+	bun.BaseModel `bun:"table:personal_access_token"`
+	types.Identifiable
+	types.TimeAuditable
+	OrgID           string `json:"orgId" bun:"org_id,type:text,notnull"`
+	Role            string `json:"role" bun:"role,type:text,notnull,default:'ADMIN'"`
+	UserID          string `json:"userId" bun:"user_id,type:text,notnull"`
+	Token           string `json:"token" bun:"token,type:text,notnull,unique"`
+	Name            string `json:"name" bun:"name,type:text,notnull"`
+	ExpiresAt       int64  `json:"expiresAt" bun:"expires_at,notnull,default:0"`
+	LastUsed        int64  `json:"lastUsed" bun:"last_used,notnull,default:0"`
+	Revoked         bool   `json:"revoked" bun:"revoked,notnull,default:false"`
+	UpdatedByUserID string `json:"updatedByUserId" bun:"updated_by_user_id,type:text,notnull,default:''"`
 }
 
 func (migration *updateIntegrations) Up(ctx context.Context, db *bun.DB) error {
@@ -372,7 +386,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	}
 
 	// get the pat for old user
-	pat := &eeTypes.StorablePersonalAccessToken{}
+	pat := &StorablePersonalAccessToken{}
 	err = tx.NewSelect().Model(pat).Where("user_id = ? and revoked = false", "aws-integration").Scan(context.Background())
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -387,7 +401,7 @@ func (migration *updateIntegrations) copyOldAwsIntegrationUser(tx bun.IDB, orgID
 	}
 
 	// new pat
-	newPAT := &eeTypes.StorablePersonalAccessToken{
+	newPAT := &StorablePersonalAccessToken{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
