@@ -1,3 +1,4 @@
+// prettyr-ignore
 import '@testing-library/jest-dom';
 
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -16,11 +17,12 @@ import {
 
 const mockUseQueries = jest.fn();
 
+// prettier-ignore
 jest.mock('react-query', () => ({
 	...jest.requireActual('react-query'),
 	useQueries: mockUseQueries,
 }));
-
+// prettier-ignore
 jest.mock('hooks/useResourceAttribute', () =>
 	jest.fn(() => ({
 		queries: [],
