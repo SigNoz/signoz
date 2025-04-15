@@ -45,7 +45,7 @@ jobs:
             -vv \
             --capture=no \
             src/${{matrix.src}} \
-            --sqlstore-provider ${{matrix.sqlstore-provider}}
+            --sqlstore-provider ${{matrix.sqlstore-provider}} \
             --postgres-version ${{matrix.postgres-version}} \
             --clickhouse-version ${{matrix.clickhouse-version}} \
             --schema-migrator-version ${{matrix.schema-migrator-version}}
