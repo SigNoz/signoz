@@ -281,9 +281,56 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 			expectedSearchString: "WHERE (((match(body, ?)) AND NOT ((match(body, ?)))) OR (match(body, ?)))",
 			expectedSearchArgs:   []any{"error", "buggy_app", "redis"},
 		},
+		{
+			name: "has-function",
+			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+				"service.name": {
+					{
+						Name:         "service.name",
+						Signal:       telemetrytypes.SignalLogs,
+						FieldContext: telemetrytypes.FieldContextResource,
+					},
+				},
+				"payload.user_ids": {
+					{
+						Name:         "payload.user_ids",
+						Signal:       telemetrytypes.SignalLogs,
+						FieldContext: telemetrytypes.FieldContextAttribute,
+					},
+				},
+			},
+			query:                "has(service.name, 'redis')",
+			expectedSearchString: "WHERE ((has(resources_string['service.name'], ?)))",
+			expectedSearchArgs:   []any{"redis"},
+		},
+		{
+			name:                 "has-from-list-of-values",
+			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                "has(body.payload.user_ids[*], 'u1292')",
+			expectedSearchString: "WHERE ((has(JSONExtract(JSON_QUERY(body, '$.payload.user_ids[*]'), 'Array(String)'), ?)))",
+			expectedSearchArgs:   []any{"u1292"},
+		},
+		{
+			name: "body-json-search-that-also-has-attribute-with-same-name",
+			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+				"http.status_code": {
+					{
+						Name:          "http.status_code",
+						Signal:        telemetrytypes.SignalLogs,
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+						Materialized:  true,
+					},
+				},
+			},
+			query:                "body.http.status_code=200",
+			expectedSearchString: "WHERE (attribute_number_http$$status_code = ? OR JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Float64') = ?)",
+			expectedSearchArgs:   []any{float64(200), float64(200)},
+		},
 	}
 
 	for _, c := range cases {
+		t.Logf("running test %s", c.name)
 		chQuery, chQueryArgs, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrylogs.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
 			Name:          "body",
 			Signal:        telemetrytypes.SignalLogs,

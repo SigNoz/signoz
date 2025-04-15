@@ -51,6 +51,28 @@ func TestQueryToKeys(t *testing.T) {
 				},
 			},
 		},
+		{
+			query: `has(payload.user_ids, 123)`,
+			expectedKeys: []telemetrytypes.FieldKeySelector{
+				{
+					Name:          "payload.user_ids",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+			},
+		},
+		{
+			query: `body.user_ids[*] = 123`,
+			expectedKeys: []telemetrytypes.FieldKeySelector{
+				{
+					Name:          "body.user_ids[*]",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -387,41 +388,60 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 	if ctx.HAS() != nil {
 		functionName = "has"
 	} else if ctx.HASANY() != nil {
-		functionName = "hasany"
+		functionName = "hasAny"
 	} else if ctx.HASALL() != nil {
-		functionName = "hasall"
-	} else if ctx.HASNONE() != nil {
-		functionName = "hasnone"
+		functionName = "hasAll"
 	} else {
 		// Default fallback
-		functionName = "unknown_function"
+		v.errors = append(v.errors, fmt.Sprintf("unknown function %s", ctx.GetText()))
+		return ""
 	}
-	params := v.Visit(ctx.FunctionParamList()).(string)
+	params := v.Visit(ctx.FunctionParamList()).([]any)
 
-	// Map our functions to ClickHouse equivalents
-	switch functionName {
-	case "has":
-		return fmt.Sprintf("has(%s)", params)
-	case "hasany":
-		return fmt.Sprintf("hasAny(%s)", params)
-	case "hasall":
-		return fmt.Sprintf("hasAll(%s)", params)
-	case "hasnone":
-		// ClickHouse doesn't have hasNone directly, so we negate hasAny
-		return fmt.Sprintf("not hasAny(%s)", params)
-	default:
-		return fmt.Sprintf("%s(%s)", functionName, params)
+	if len(params) < 2 {
+		v.errors = append(v.errors, fmt.Sprintf("function %s expects key and value parameters", functionName))
+		return ""
 	}
+
+	keys, ok := params[0].([]telemetrytypes.TelemetryFieldKey)
+	if !ok {
+		v.errors = append(v.errors, fmt.Sprintf("function %s expects key parameter to be a field key", functionName))
+		return ""
+	}
+	value := params[1:]
+	var conds []string
+	for _, key := range keys {
+		var fieldName string
+
+		if strings.HasPrefix(key.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
+			fieldName, _ = telemetrylogs.GetBodyJSONKey(context.Background(), &key, qbtypes.FilterOperatorUnknown, value)
+		} else {
+			fieldName, _ = v.conditionBuilder.GetTableFieldName(context.Background(), &key)
+		}
+
+		// Map our functions to ClickHouse equivalents
+		switch functionName {
+		case "has":
+			value := value[0]
+			cond := v.builder.And(fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value)))
+			conds = append(conds, cond)
+		case "hasAny":
+			cond := v.builder.And(fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value)))
+			conds = append(conds, cond)
+		case "hasAll":
+			cond := v.builder.And(fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value)))
+			conds = append(conds, cond)
+		}
+	}
+
+	return v.builder.Or(conds...)
 }
 
 // VisitFunctionParamList handles the parameter list for function calls
 func (v *WhereClauseVisitor) VisitFunctionParamList(ctx *FunctionParamListContext) any {
 	params := ctx.AllFunctionParam()
-	if len(params) == 0 {
-		return ""
-	}
-
 	parts := make([]any, len(params))
+
 	for i, param := range params {
 		parts[i] = v.Visit(param)
 	}
@@ -476,7 +496,17 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.KEY().GetText())
 
-	fieldKeysForName := v.fieldKeys[fieldKey.Name]
+	keyName := strings.TrimPrefix(fieldKey.Name, telemetrylogs.BodyJSONStringSearchPrefix)
+
+	fieldKeysForName := v.fieldKeys[keyName]
+
+	// for the body json search, we need to add search on the body field even
+	// if there is a field with the same name as attribute/resource attribute
+	// Since it will ORed with the fieldKeysForName, it will not result empty
+	// when either of them have values
+	if strings.HasPrefix(fieldKey.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
+		fieldKeysForName = append(fieldKeysForName, fieldKey)
+	}
 
 	if len(fieldKeysForName) == 0 {
 		v.errors = append(v.errors, fmt.Sprintf("Key %s not found", fieldKey.Name))
