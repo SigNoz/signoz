@@ -185,15 +185,15 @@ docker-buildx-enterprise: go-build-enterprise js-build
 # python commands
 ##############################################################
 .PHONY: py-fmt
-py-fmt:
+py-fmt: ## Run black for integration tests
 	@cd tests/integration && poetry run black .
 
 .PHONY: py-lint
-py-lint:
+py-lint: ## Run lint for integration tests
 	@cd tests/integration && poetry run isort .
 	@cd tests/integration && poetry run autoflake .
 	@cd tests/integration && poetry run pylint .
 
 .PHONY: py-test
-py-test:
+py-test: ## Runs integration tests
 	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --capture=no src/
