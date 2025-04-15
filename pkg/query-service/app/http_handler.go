@@ -22,6 +22,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -37,7 +38,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
@@ -1110,14 +1110,14 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ic := aH.IntegrationsController
-	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context(), claims.OrgID)
 	if err != nil {
 		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
 	} else {
 		allDashboards = append(allDashboards, installedIntegrationDashboards...)
 	}
 
-	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context())
+	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context(), claims.OrgID)
 	if err != nil {
 		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
 	} else {
@@ -1295,7 +1295,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
 			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
-				r.Context(), uuid,
+				r.Context(), claims.OrgID, uuid,
 			)
 			if apiError != nil {
 				RespondError(w, apiError, nil)
@@ -1304,7 +1304,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 		} else {
 			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-				r.Context(), uuid,
+				r.Context(), claims.OrgID, uuid,
 			)
 			if apiError != nil {
 				RespondError(w, apiError, nil)
@@ -2235,6 +2235,11 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(old.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
+		return
+	}
+
 	_, apiErr = dao.DB().EditUser(ctx, &types.User{
 		ID:       old.ID,
 		Name:     old.Name,
@@ -2263,6 +2268,11 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
 		return
 	}
 
@@ -3525,9 +3535,14 @@ func (aH *APIHandler) ListIntegrations(
 	for k, values := range r.URL.Query() {
 		params[k] = values[0]
 	}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	resp, apiErr := aH.IntegrationsController.ListIntegrations(
-		r.Context(), params,
+		r.Context(), claims.OrgID, params,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integrations")
@@ -3540,8 +3555,13 @@ func (aH *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	integration, apiErr := aH.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integration details")
@@ -3555,8 +3575,13 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	isInstalled, apiErr := aH.IntegrationsController.IsIntegrationInstalled(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to check if integration is installed")
@@ -3570,7 +3595,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	}
 
 	connectionTests, apiErr := aH.IntegrationsController.GetIntegrationConnectionTests(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to fetch integration connection tests")
@@ -3769,8 +3794,14 @@ func (aH *APIHandler) InstallIntegration(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), &req,
+		r.Context(), claims.OrgID, &req,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3791,7 +3822,13 @@ func (aH *APIHandler) UninstallIntegration(
 		return
 	}
 
-	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), claims.OrgID, &req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3847,8 +3884,14 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
-		r.Context(), cloudProvider,
+		r.Context(), claims.OrgID, cloudProvider,
 	)
 
 	if apiErr != nil {
@@ -3869,8 +3912,14 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
-		r.Context(), cloudProvider, req,
+		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
 	if apiErr != nil {
@@ -3887,8 +3936,14 @@ func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	accountId := mux.Vars(r)["accountId"]
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
-		r.Context(), cloudProvider, accountId,
+		r.Context(), claims.OrgID, cloudProvider, accountId,
 	)
 
 	if apiErr != nil {
@@ -3909,8 +3964,14 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
-		r.Context(), cloudProvider, req,
+		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
 	if apiErr != nil {
@@ -3933,8 +3994,14 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
-		r.Context(), cloudProvider, accountId, req,
+		r.Context(), claims.OrgID, cloudProvider, accountId, req,
 	)
 
 	if apiErr != nil {
@@ -3951,8 +4018,14 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	accountId := mux.Vars(r)["accountId"]
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
-		r.Context(), cloudProvider, accountId,
+		r.Context(), claims.OrgID, cloudProvider, accountId,
 	)
 
 	if apiErr != nil {
@@ -3975,8 +4048,14 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListServices(
-		r.Context(), cloudProvider, cloudAccountId,
+		r.Context(), claims.OrgID, cloudProvider, cloudAccountId,
 	)
 
 	if apiErr != nil {
@@ -3999,8 +4078,14 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
-		r.Context(), cloudProvider, serviceId, cloudAccountId,
+		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -4239,8 +4324,14 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), cloudProvider, serviceId, req,
+		r.Context(), claims.OrgID, cloudProvider, serviceId, req,
 	)
 
 	if apiErr != nil {

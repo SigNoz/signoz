@@ -5,18 +5,22 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/query-service/auth"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/google/uuid"
 )
 
 func NewTestIntegrationsManager(t *testing.T) *Manager {
 	testDB := utils.NewQueryServiceDBForTests(t)
 
-	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB.SQLxDB())
+	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
 	if err != nil {
 		t.Fatalf("could not init sqlite DB for installed integrations: %v", err)
 	}
@@ -25,6 +29,38 @@ func NewTestIntegrationsManager(t *testing.T) *Manager {
 		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
 		installedIntegrationsRepo: installedIntegrationsRepo,
 	}
+}
+
+func createTestUser() (*types.User, *model.ApiError) {
+	// Create a test user for auth
+	ctx := context.Background()
+	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
+		Name: "test",
+	})
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	auth.InitAuthCache(ctx)
+
+	userId := uuid.NewString()
+	return dao.DB().CreateUser(
+		ctx,
+		&types.User{
+			ID:       userId,
+			Name:     "test",
+			Email:    userId[:8] + "test@test.com",
+			Password: "test",
+			OrgID:    org.ID,
+			GroupID:  group.ID,
+		},
+		true,
+	)
 }
 
 type TestAvailableIntegrationsRepo struct{}

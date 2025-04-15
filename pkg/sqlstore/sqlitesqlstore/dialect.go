@@ -17,13 +17,15 @@ var (
 )
 
 var (
-	Org  = "org"
-	User = "user"
+	Org              = "org"
+	User             = "user"
+	CloudIntegration = "cloud_integration"
 )
 
 var (
-	OrgReference  = `("org_id") REFERENCES "organizations" ("id")`
-	UserReference = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	OrgReference              = `("org_id") REFERENCES "organizations" ("id")`
+	UserReference             = `("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE`
+	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
 type dialect struct {
@@ -202,6 +204,8 @@ func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.I
 			fkReferences = append(fkReferences, OrgReference)
 		} else if reference == User && !slices.Contains(fkReferences, UserReference) {
 			fkReferences = append(fkReferences, UserReference)
+		} else if reference == CloudIntegration && !slices.Contains(fkReferences, CloudIntegrationReference) {
+			fkReferences = append(fkReferences, CloudIntegrationReference)
 		}
 	}
 
