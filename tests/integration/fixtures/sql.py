@@ -20,7 +20,7 @@ def sqlstore(
         return store
 
     raise pytest.FixtureLookupError(
-        argname="f{provider}",
+        argname=f"{provider}",
         request=request,
         msg=f"{provider} does not have a fixture",
     )

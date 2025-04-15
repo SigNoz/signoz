@@ -80,7 +80,7 @@ def signoz(
             except Exception:  # pylint: disable=broad-exception-caught
                 print(f"attempt {attempt} at health check failed")
                 time.sleep(2)
-        raise TimeoutError("timeout exceceded while waiting")
+        raise TimeoutError("timeout exceeded while waiting")
 
     ready(container=container)
 
