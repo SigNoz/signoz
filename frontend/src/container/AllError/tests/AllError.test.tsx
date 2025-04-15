@@ -1,33 +1,32 @@
-// prettyr-ignore
 import '@testing-library/jest-dom';
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import { ENVIRONMENT } from 'constants/env';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import TimezoneProvider from 'providers/Timezone';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';
 
 import AllErrors from '../index';
 import {
-	extractCompositeQueryObject,
 	INIT_URL_WITH_COMMON_QUERY,
-	MOCK_USE_QUERIES_DATA,
+	MOCK_ERROR_LIST,
+	TAG_FROM_QUERY,
 } from './constants';
 
-const mockUseQueries = jest.fn();
-
-// prettier-ignore
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueries: mockUseQueries,
-}));
-// prettier-ignore
 jest.mock('hooks/useResourceAttribute', () =>
 	jest.fn(() => ({
 		queries: [],
 	})),
 );
+
+jest.mock('react-redux', () => ({
+	...jest.requireActual('react-redux'),
+	useSelector: jest.fn(),
+}));
 
 function Exceptions({ initUrl }: { initUrl?: string[] }): JSX.Element {
 	return (
@@ -47,23 +46,43 @@ Exceptions.defaultProps = {
 	initUrl: ['/exceptions'],
 };
 
+const BASE_URL = ENVIRONMENT.baseURL;
+const listErrorsURL = `${BASE_URL}/api/v1/listErrors`;
+const countErrorsURL = `${BASE_URL}/api/v1/countErrors`;
+
+const postListErrorsSpy = jest.fn();
+
 describe('Exceptions - All Errors', () => {
 	beforeEach(() => {
-		mockUseQueries.mockReturnValue(MOCK_USE_QUERIES_DATA);
+		(useSelector as jest.Mock).mockReturnValue({
+			maxTime: 1000,
+			minTime: 0,
+			loading: false,
+		});
+		server.use(
+			rest.post(listErrorsURL, async (req, res, ctx) => {
+				const body = await req.json();
+				postListErrorsSpy(body);
+				return res(ctx.status(200), ctx.json(MOCK_ERROR_LIST));
+			}),
+		);
+		server.use(
+			rest.post(countErrorsURL, (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(540)),
+			),
+		);
 	});
 
-	afterEach(() => {
-		jest.clearAllMocks();
-	});
-
-	it('renders correctly with default props', () => {
-		const { container } = render(<Exceptions />);
-		screen.debug(undefined, Infinity);
-		expect(container).toMatchSnapshot();
-	});
-
-	it('should sort Error Message appropriately', () => {
+	it('renders correctly with default props', async () => {
 		render(<Exceptions />);
+		const item = await screen.findByText(/redis timeout/i);
+		expect(item).toBeInTheDocument();
+	});
+
+	it('should sort Error Message appropriately', async () => {
+		render(<Exceptions />);
+		await screen.findByText(/redis timeout/i);
+
 		const caretIconUp = screen.getAllByLabelText('caret-up')[0];
 		const caretIconDown = screen.getAllByLabelText('caret-down')[0];
 
@@ -74,7 +93,6 @@ describe('Exceptions - All Errors', () => {
 		let queryParams = new URLSearchParams(window.location.search);
 		expect(queryParams.get('order')).toBe('ascending');
 		expect(queryParams.get('orderParam')).toBe('exceptionType');
-		expect(mockUseQueries).toHaveBeenCalled();
 
 		// sort by descending
 		expect(caretIconDown.className).not.toContain('active');
@@ -82,22 +100,15 @@ describe('Exceptions - All Errors', () => {
 		expect(caretIconDown.className).toContain('active');
 		queryParams = new URLSearchParams(window.location.search);
 		expect(queryParams.get('order')).toBe('descending');
-		expect(mockUseQueries).toHaveBeenCalled();
 	});
 
-	it('should call useQueries with exact composite query object', () => {
+	it('should call useQueries with exact composite query object', async () => {
 		render(<Exceptions initUrl={[INIT_URL_WITH_COMMON_QUERY]} />);
-
-		expect(mockUseQueries).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({
-					queryKey: expect.arrayContaining([
-						expect.objectContaining(
-							extractCompositeQueryObject(INIT_URL_WITH_COMMON_QUERY),
-						),
-					]),
-				}),
-			]),
+		await screen.findByText(/redis timeout/i);
+		expect(postListErrorsSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				tags: TAG_FROM_QUERY,
+			}),
 		);
 	});
 });

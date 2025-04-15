@@ -69,3 +69,26 @@ export const extractCompositeQueryObject = (
 		return null;
 	}
 };
+
+export const TAG_FROM_QUERY = [
+	{
+		BoolValues: [],
+		Key: 'deployment.environment',
+		NumberValues: [],
+		Operator: 'In',
+		StringValues: ['mq-kafka'],
+		TagType: 'ResourceAttribute',
+	},
+];
+
+export const MOCK_ERROR_LIST = [
+	{
+		exceptionType: '*errors.errorString',
+		exceptionMessage: 'redis timeout',
+		exceptionCount: 2510,
+		lastSeen: '2025-04-14T18:27:57.797616374Z',
+		firstSeen: '2025-04-14T17:58:00.262775497Z',
+		serviceName: 'redis-manual',
+		groupID: '511b9c91a92b9c5166ecb77235f5743b',
+	},
+];

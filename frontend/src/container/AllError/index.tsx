@@ -28,7 +28,7 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -437,12 +437,8 @@ function AllErrors(): JSX.Element {
 		[pathname],
 	);
 
-	const logEventCalledRef = useRef(false);
 	useEffect(() => {
-		if (
-			!logEventCalledRef.current &&
-			!isUndefined(errorCountResponse.data?.payload)
-		) {
+		if (!isUndefined(errorCountResponse.data?.payload)) {
 			const selectedEnvironments = queries.find(
 				(val) => val.tagKey === 'resource_deployment_environment',
 			)?.tagValue;
@@ -450,9 +446,12 @@ function AllErrors(): JSX.Element {
 			logEvent('Exception: List page visited', {
 				numberOfExceptions: errorCountResponse?.data?.payload,
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries?.length,
+				resourceAttributeUsed: !!compositeData?.builder.queryData?.[0]?.filters
+					.items?.length,
+				tags: convertComposeQueryToTraceSelectedTags(
+					compositeData?.builder.queryData?.[0]?.filters.items,
+				),
 			});
-			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [errorCountResponse.data?.payload]);
