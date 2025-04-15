@@ -70,6 +70,7 @@ func NewSQLMigrationProviderFactories(sqlstore sqlstore.SQLStore) factory.NamedM
 		sqlmigration.NewUpdateApdexTtlFactory(sqlstore),
 		sqlmigration.NewUpdateResetPasswordFactory(sqlstore),
 		sqlmigration.NewUpdateRulesFactory(sqlstore),
+		sqlmigration.NewAddVirtualFieldsFactory(),
 	)
 }
 
