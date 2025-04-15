@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -247,14 +248,14 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 			expectedSearchArgs:   []any{"test", "redis"},
 		},
 		{
-			name:                 "full-text-search",
+			name:                 "full-text-search-multiple-words",
 			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
 			query:                "waiting for response",
 			expectedSearchString: "WHERE ((match(body, ?)) AND (match(body, ?)) AND (match(body, ?)))",
 			expectedSearchArgs:   []any{"waiting", "for", "response"},
 		},
 		{
-			name:                 "full-text-search-with-quoted-text",
+			name:                 "full-text-search-with-phrase-search",
 			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
 			query:                `"waiting for response"`,
 			expectedSearchString: "WHERE (match(body, ?))",
@@ -331,7 +332,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 
 	for _, c := range cases {
 		t.Logf("running test %s", c.name)
-		chQuery, chQueryArgs, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrylogs.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+		chQuery, chQueryArgs, _, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrylogs.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
 			Name:          "body",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
@@ -553,7 +554,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		chQuery, chQueryArgs, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+		chQuery, chQueryArgs, _, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
 			Name:          "dummy",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
@@ -570,6 +571,69 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 				fmt.Printf("Expected %v with type %T, got %v with type %T\n", c.expectedSearchArgs[i], c.expectedSearchArgs[i], arg, arg)
 			}
 			t.Errorf("Expected %v, got %v", c.expectedSearchArgs, chQueryArgs)
+		}
+	}
+}
+
+func TestConvertToClickHouseSpansQueryWithErrors(t *testing.T) {
+	cases := []struct {
+		name                   string
+		fieldKeys              map[string][]telemetrytypes.TelemetryFieldKey
+		query                  string
+		expectedSearchString   string
+		expectedSearchArgs     []any
+		expectedErrorSubString string
+		expectedWarnings       []error
+	}{
+		{
+			name:                   "has-function-with-multiple-values",
+			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                  "key.that.does.not.exist = 'redis'",
+			expectedSearchString:   "",
+			expectedSearchArgs:     []any{},
+			expectedErrorSubString: "key `key.that.does.not.exist` not found",
+			expectedWarnings:       []error{},
+		},
+		{
+			name:                   "unknown-function",
+			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                  "unknown.function()",
+			expectedSearchString:   "",
+			expectedSearchArgs:     []any{},
+			expectedErrorSubString: "expecting {'(', NOT, HAS, HASANY, HASALL, QUOTED_TEXT, KEY, FREETEXT}",
+			expectedWarnings:       []error{},
+		},
+		{
+			name:                   "has-function-not-enough-params",
+			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
+			query:                  "has(key.that.does.not.exist)",
+			expectedSearchString:   "",
+			expectedSearchArgs:     []any{},
+			expectedErrorSubString: "function `has` expects key and value parameters",
+			expectedWarnings:       []error{},
+		},
+	}
+
+	for _, c := range cases {
+		_, _, warnings, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+			Name:          "dummy",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		})
+		if err != nil {
+			if !strings.Contains(err.Error(), c.expectedErrorSubString) {
+				t.Errorf("Expected error %v, got %v", c.expectedErrorSubString, err)
+			}
+		}
+
+		if len(warnings) != len(c.expectedWarnings) {
+			t.Errorf("Expected %d warnings, got %d", len(c.expectedWarnings), len(warnings))
+		}
+		for i, warning := range warnings {
+			if warning.Error() != c.expectedWarnings[i].Error() {
+				t.Errorf("Expected warning %d to be %v, got %v", i, c.expectedWarnings[i], warning)
+			}
 		}
 	}
 }

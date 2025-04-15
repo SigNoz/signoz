@@ -75,7 +75,7 @@ func PrepareWhereClause(
 	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fullTextColumn telemetrytypes.TelemetryFieldKey,
-) (string, []any, error) {
+) (string, []any, []error, error) {
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
 	lexer := NewFilterQueryLexer(input)
@@ -100,15 +100,34 @@ func PrepareWhereClause(
 
 	// Handle syntax errors
 	if len(parserErrorListener.Errors) > 0 {
-		return "", nil, errors.Wrapf(parserErrorListener.Errors[0], errors.TypeInvalidInput, errors.CodeInvalidInput, "syntax error in expression")
+		combinedErrors := errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"found %d syntax errors while parsing the search expression: %v",
+			len(parserErrorListener.Errors),
+			parserErrorListener.Errors,
+		)
+		return "", nil, nil, combinedErrors
 	}
 
 	// Visit the parse tree with our ClickHouse visitor
 	cond := visitor.Visit(tree).(string)
 
+	if len(visitor.errors) > 0 {
+		// combine all errors into a single error
+		combinedErrors := errors.Newf(
+			errors.TypeInvalidInput,
+			errors.CodeInvalidInput,
+			"found %d errors while parsing the search expression: %v",
+			len(visitor.errors),
+			visitor.errors,
+		)
+		return "", nil, nil, combinedErrors
+	}
+
 	whereClause, args := visitor.builder.Where(cond).BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	return whereClause, args, nil
+	return whereClause, args, visitor.warnings, nil
 }
 
 // Visit dispatches to the specific visit method based on node type
@@ -407,7 +426,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		v.errors = append(v.errors, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"unknown function %s",
+			"unknown function `%s`",
 			ctx.GetText(),
 		))
 		return ""
@@ -418,7 +437,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		v.errors = append(v.errors, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"function %s expects key and value parameters",
+			"function `%s` expects key and value parameters",
 			functionName,
 		))
 		return ""
@@ -429,7 +448,7 @@ func (v *WhereClauseVisitor) VisitFunctionCall(ctx *FunctionCallContext) any {
 		v.errors = append(v.errors, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"function %s expects key parameter to be a field key",
+			"function `%s` expects key parameter to be a field key",
 			functionName,
 		))
 		return ""
@@ -541,11 +560,13 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 		fieldKeysForName = append(fieldKeysForName, fieldKey)
 	}
 
+	// TODO(srikanthccv): do we want to return an error here?
+	// should we infer the type and auto-magically build a key for expression?
 	if len(fieldKeysForName) == 0 {
 		v.errors = append(v.errors, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"key %s not found",
+			"key `%s` not found",
 			fieldKey.Name,
 		))
 	}
@@ -555,7 +576,7 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 		v.warnings = append(v.warnings, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"key %s is ambiguous, found %d different combinations of field context and data type: %v",
+			"key `%s` is ambiguous, found %d different combinations of field context and data type: %v",
 			fieldKey.Name,
 			len(fieldKeysForName),
 			fieldKeysForName,
