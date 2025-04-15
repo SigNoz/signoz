@@ -19,10 +19,10 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
-	"github.com/SigNoz/signoz/pkg/query-service/app/fields"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -142,11 +142,11 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	FieldsAPI *fields.API
+
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
-
-	FieldsResource *fields.FieldsResource
 }
 
 type APIHandlerOpts struct {
@@ -191,6 +191,8 @@ type APIHandlerOpts struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	FieldsAPI *fields.API
+
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
@@ -214,7 +216,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FluxInterval:      opts.FluxInterval,
 		UseLogsNewSchema:  opts.UseLogsNewSchema,
 		UseTraceNewSchema: opts.UseTraceNewSchema,
-		TelemetryStore:    opts.Signoz.TelemetryStore,
 	}
 
 	querier := querier.NewQuerier(querierOpts)
@@ -232,11 +233,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
-
-	fieldsResource, err := fields.NewFieldsResource(opts.Signoz.TelemetryStore)
-	if err != nil {
-		return nil, err
-	}
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -269,7 +265,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
 		Preference:                    opts.Preference,
-		FieldsResource:                fieldsResource,
+		FieldsAPI:                     opts.FieldsAPI,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -429,8 +425,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1").Subrouter()
 
-	subRouter.HandleFunc("/fields/keys", am.ViewAccess(aH.getFieldsKeys)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields/values", am.ViewAccess(aH.getFieldsValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields/keys", am.ViewAccess(aH.FieldsAPI.GetFieldsKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields/values", am.ViewAccess(aH.FieldsAPI.GetFieldsValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {

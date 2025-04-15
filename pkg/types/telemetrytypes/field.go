@@ -118,7 +118,7 @@ type FieldKeySelector struct {
 }
 
 type FieldValueSelector struct {
-	FieldKeySelector
+	*FieldKeySelector
 	ExistingQuery string `json:"existingQuery"`
 	Value         string `json:"value"`
 	Limit         int    `json:"limit"`

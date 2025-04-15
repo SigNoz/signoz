@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
@@ -302,9 +301,6 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 		AppDao:       dao.DB(),
 		FeatureFlags: fm,
 		JWT:          jwt,
-		Signoz: &signoz.SigNoz{
-			TelemetryStore: nil,
-		},
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
