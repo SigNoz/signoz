@@ -13,18 +13,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        src:
+          - bootstrap
         sqlstore-provider:
           - postgres
           - sqlite
-        src:
-          - bootstrap
-        include:
-          - postgres-version: 15
-            clickhouse-version: 24.1.2-alpine
-            schema-migrator-version: v0.111.38
-          - postgres-version: 15
-            clickhouse-version: 24.12-alpine
-            schema-migrator-version: v0.111.38
+        clickhouse-version:
+          - 24.1.2-alpine
+          - 24.12-alpine
+        schema-migrator-version:
+          - v0.111.38
+        postgres-version:
+          - 15
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
