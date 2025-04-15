@@ -3,13 +3,13 @@ import pytest
 from testcontainers.core.container import Network
 from testcontainers.postgres import PostgresContainer
 
-from fixtures.types import TestContainerConnection
+from fixtures import types
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture(name="postgres", scope="package")
 def postgres(
     network: Network, request: pytest.FixtureRequest
-) -> TestContainerConnection:
+) -> types.TestContainerSQL:
     """
     Package-scoped fixture for PostgreSQL TestContainer.
     """
@@ -40,12 +40,19 @@ def postgres(
 
     request.addfinalizer(stop)
 
-    return TestContainerConnection(
-        connection,
-        {
-            "dsn": f"postgresql://{container.username}:{container.password}@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/{container.dbname}"
-        },
-        {
-            "dsn": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}"
+    return types.TestContainerSQL(
+        container=container,
+        host_config=types.TestContainerUrlConfig(
+            "postgresql",
+            container.get_container_host_ip(),
+            container.get_exposed_port(5432),
+        ),
+        container_config=types.TestContainerUrlConfig(
+            "postgresql", container.get_wrapped_container().name, 5432
+        ),
+        conn=connection,
+        env={
+            "SIGNOZ_SQLSTORE_PROVIDER": "postgres",
+            "SIGNOZ_SQLSTORE_POSTGRES_DSN": f"postgresql://{container.username}:{container.password}@{container.get_wrapped_container().name}:{5432}/{container.dbname}"  # pylint: disable=line-too-long
         },
     )

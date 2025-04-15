@@ -1,26 +1,26 @@
 import pytest
-from dotenv import dotenv_values
+
+from fixtures import types
 
 
-@pytest.fixture(scope="package")
-def sqlstore(request: pytest.FixtureRequest):
+@pytest.fixture(name="sqlstore", scope="package")
+def sqlstore(
+    request: pytest.FixtureRequest,
+) -> types.TestContainerSQL:
     """
     Packaged-scoped fixture for creating sql store.
     """
-    config = request.config.getoption(name="--env")
-    env = dotenv_values(config)
+    provider = request.config.getoption("--sqlstore-provider")
 
-    sql_provider = env.get("SIGNOZ_SQLSTORE_PROVIDER", "sqlite")
-    if sql_provider == "postgres":
-        sqlstore = request.getfixturevalue("postgres")
-        env["SIGNOZ_SQLSTORE_POSTGRES_DSN"] = sqlstore.container_config["dsn"]
-    elif sql_provider == "sqlite":
-        path = env.get("SIGNOZ_SQLSTORE_SQLITE_PATH")
-        sqlstore = request.getfixturevalue("sqlite")(path)
-        env["SIGNOZ_SQLSTORE_SQLITE_PATH"] = sqlstore.config["path"]
-    else:
-        raise pytest.FixtureLookupError(
-            argname="f{provider}",
-            request=request,
-            msg=f"{sql_provider} does not have a fixture",
-        )
+    if provider == "postgres":
+        store = request.getfixturevalue("postgres")
+        return store
+    if provider == "sqlite":
+        store = request.getfixturevalue("sqlite")
+        return store
+
+    raise pytest.FixtureLookupError(
+        argname="f{provider}",
+        request=request,
+        msg=f"{provider} does not have a fixture",
+    )

@@ -12,9 +12,11 @@ jobs:
   test:
     strategy:
       matrix:
+        sqlstore-provider:
+          - postgres
+          - sqlite
         src:
-          - setup
-          - authentication
+          - bootstrap
         include:
           - postgres-version: 15
             clickhouse-version: 24.1.2-alpine
@@ -37,4 +39,13 @@ jobs:
           cd tests/integration && poetry install --no-root
       - name: run
         run: |
-          cd tests/integration && poetry run pytest -ra --basetemp=./tmp/ -vv --capture=no src/${{matrix.src}}
+          cd tests/integration && \
+            poetry run pytest -ra \
+            --basetemp=./tmp/ \
+            -vv \
+            --capture=no \
+            src/${{matrix.src}} \
+            --sqlstore-provider ${{matrix.sqlstore-provider}}
+            --postgres-version ${{matrix.postgres-version}} \
+            --clickhouse-version ${{matrix.clickhouse-version}} \
+            --schema-migrator-version ${{matrix.schema-migrator-version}}

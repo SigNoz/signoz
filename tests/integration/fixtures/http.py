@@ -12,7 +12,7 @@ from wiremock.testing.testcontainer import WireMockContainer
 from fixtures import types
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture(name="zeus", scope="package")
 def zeus(
     network: Network, request: pytest.FixtureRequest
 ) -> types.TestContainerWiremock:
@@ -31,16 +31,16 @@ def zeus(
 
     return types.TestContainerWiremock(
         container=container,
-        host_config=types.TestContainerConnectionConfig(
+        host_config=types.TestContainerUrlConfig(
             "http", container.get_container_host_ip(), container.get_exposed_port(8080)
         ),
-        container_config=types.TestContainerConnectionConfig(
+        container_config=types.TestContainerUrlConfig(
             "http", container.get_wrapped_container().name, 8080
         ),
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(name="make_http_mocks", scope="function")
 def make_http_mocks():
     def _make_http_mocks(container: WireMockContainer, mappings: List[Mapping]):
         Config.base_url = container.get_url("__admin")

@@ -4,17 +4,18 @@ from typing import Any, Generator
 
 import pytest
 
-from fixtures.fs import LEGACY_PATH
+from fixtures import types
 
 ConnectionTuple = namedtuple("ConnectionTuple", "connection config")
 
 
-@pytest.fixture(scope="package")
-def sqlite(tmpfs: Generator[LEGACY_PATH, Any, None], request: pytest.FixtureRequest):
+@pytest.fixture(name="sqlite", scope="package")
+def sqlite(
+    tmpfs: Generator[types.LegacyPath, Any, None], request: pytest.FixtureRequest
+) -> types.TestContainerSQL:
     """
     Package-scoped fixture for SQLite.
     """
-
     tmpdir = tmpfs("sqlite")
     path = tmpdir / "signoz.db"
     connection = sqlite3.connect(path, check_same_thread=False)
@@ -24,4 +25,13 @@ def sqlite(tmpfs: Generator[LEGACY_PATH, Any, None], request: pytest.FixtureRequ
 
     request.addfinalizer(stop)
 
-    return ConnectionTuple(connection, {"path": f"{path}"})
+    return types.TestContainerSQL(
+        None,
+        host_config=None,
+        container_config=None,
+        conn=connection,
+        env={
+            "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
+            "SIGNOZ_SQLSTORE_SQLITE_PATH": path,
+        },
+    )

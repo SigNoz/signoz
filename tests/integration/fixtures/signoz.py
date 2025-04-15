@@ -1,27 +1,31 @@
-import logging
 import platform
 import time
 from http import HTTPStatus
 
 import pytest
 import requests
-from dotenv import dotenv_values
 from testcontainers.core.container import DockerContainer, Network
 from testcontainers.core.image import DockerImage
 
 from fixtures import types
 
-LOGGER = logging.getLogger(__name__)
-
 
 @pytest.fixture(name="signoz", scope="package")
-def fsignoz(
+def signoz(
     network: Network,
     zeus: types.TestContainerWiremock,
+    sqlstore: types.TestContainerSQL,
+    clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
 ) -> types.SigNoz:
-    """Package-scoped fixture for setting up SigNoz"""
+    """
+    Package-scoped fixture for setting up SigNoz.
+    """
 
+    # Run the migrations for clickhouse
+    request.getfixturevalue("migrator")
+
+    # Build the image
     self = DockerImage(
         path="../../",
         dockerfile_path="ee/query-service/Dockerfile.integration",
@@ -29,38 +33,21 @@ def fsignoz(
     )
 
     arch = platform.machine()
-    if arch == 'x86_64':
-        arch = 'amd64'
+    if arch == "x86_64":
+        arch = "amd64"
 
     self.build(
         buildargs={
             "TARGETARCH": arch,
-            "ZEUSURL": zeus.container_config.base_url(),
+            "ZEUSURL": zeus.container_config.base(),
         }
     )
 
-    config = request.config.getoption(name="--env")
-    env = dotenv_values(config)
-
-    sql_provider = env.get("SIGNOZ_SQLSTORE_PROVIDER", "sqlite")
-    if sql_provider == "postgres":
-        sqlstore = request.getfixturevalue("postgres")
-        env["SIGNOZ_SQLSTORE_POSTGRES_DSN"] = sqlstore.container_config["dsn"]
-    elif sql_provider == "sqlite":
-        path = env.get("SIGNOZ_SQLSTORE_SQLITE_PATH")
-        sqlstore = request.getfixturevalue("sqlite")(path)
-        env["SIGNOZ_SQLSTORE_SQLITE_PATH"] = sqlstore.config["path"]
-    else:
-        raise pytest.FixtureLookupError(
-            argname="f{provider}",
-            request=request,
-            msg=f"{sql_provider} does not have a fixture",
-        )
-
-    telemetrystore = request.getfixturevalue("clickhouse")
-    env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"] = telemetrystore.container_config["dsn"]
-
-    request.getfixturevalue("migration")
+    env = {
+        "SIGNOZ_WEB_ENABLED": False,
+        "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
+        "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False
+        } | sqlstore.env | clickhouse.env
 
     container = DockerContainer(self.tag)
     for k, v in env.items():
@@ -71,15 +58,17 @@ def fsignoz(
     container.start()
 
     def ready(container: DockerContainer) -> None:
-        for attempt_no in range(30):
+        for attempt in range(30):
             try:
                 response = requests.get(
-                    f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health"
+                    f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health", # pylint: disable=line-too-long
+                    timeout=2,
                 )
                 return response.status_code == HTTPStatus.OK
-            except Exception:
+            except Exception: #pylint: disable=broad-exception-caught
+                print(f"attempt {attempt} at health check failed")
                 time.sleep(2)
-        raise TimeoutError(f"timeout exceceded while waiting")
+        raise TimeoutError("timeout exceceded while waiting")
 
     ready(container=container)
 
@@ -91,63 +80,20 @@ def fsignoz(
     request.addfinalizer(stop)
 
     return types.SigNoz(
-        self=types.TestContainerConfig(
+        self=types.TestContainerDocker(
             container=container,
-            host_config=types.TestContainerConnectionConfig(
+            host_config=types.TestContainerUrlConfig(
                 "http",
                 container.get_container_host_ip(),
                 container.get_exposed_port(8080),
             ),
-            container_config=types.TestContainerConnectionConfig(
-                "http", container.get_wrapped_container().name, 8080
+            container_config=types.TestContainerUrlConfig(
+                "http",
+                container.get_wrapped_container().name,
+                8080,
             ),
         ),
         sqlstore=sqlstore,
-        telemetrystore=telemetrystore,
+        telemetrystore=clickhouse,
         zeus=zeus,
     )
-
-
-@pytest.fixture(scope="function")
-def create_first_user(signoz: types.SigNoz) -> None:
-    def _create_user(name: str, email: str, password: str) -> None:
-        response = requests.get(signoz.self.host_config.get_url("/api/v1/version"))
-
-        assert response.status_code == HTTPStatus.OK
-        assert response.json()["setupCompleted"] == False
-
-        response = requests.post(
-            signoz.self.host_config.get_url("/api/v1/register"),
-            json={
-                "name": name,
-                "orgId": "",
-                "orgName": "",
-                "email": email,
-                "password": password,
-            },
-        )
-        assert response.status_code == HTTPStatus.OK
-
-        response = requests.get(signoz.self.host_config.get_url("/api/v1/version"))
-
-        assert response.status_code == HTTPStatus.OK
-        assert response.json()["setupCompleted"] == True
-
-    yield _create_user
-
-
-@pytest.fixture(scope="function")
-def jwt_token(signoz: types.SigNoz) -> str:
-    def _jwt_token(email: str, password: str) -> str:
-        response = requests.post(
-            signoz.self.host_config.get_url("/api/v1/login"),
-            json={
-                "email": email,
-                "password": password,
-            },
-        )
-        assert response.status_code == HTTPStatus.OK
-
-        return response.json()["accessJwt"]
-
-    return _jwt_token

@@ -1,32 +1,44 @@
 import pytest
 
 pytest_plugins = [
+    "fixtures.auth",
+    "fixtures.clickhouse",
     "fixtures.fs",
     "fixtures.http",
+    "fixtures.migrator",
     "fixtures.network",
-    "fixtures.sqlite",
     "fixtures.postgres",
     "fixtures.sql",
-    "fixtures.clickhouse",
+    "fixtures.sqlite",
+    "fixtures.zookeeper",
     "fixtures.signoz",
 ]
 
 
 def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
-        "--env",
+        "--sqlstore-provider",
         action="store",
-        default="conftest.env",
-        help="file containing env of signoz",
+        default="postgres",
+        help="sqlstore provider",
     )
     parser.addoption(
-        "--postgres-version", action="store", default="15", help="postgres version"
+        "--postgres-version",
+        action="store",
+        default="15",
+        help="postgres version",
     )
     parser.addoption(
         "--clickhouse-version",
         action="store",
         default="24.1.2-alpine",
         help="clickhouse version",
+    )
+    parser.addoption(
+        "--zookeeper-version",
+        action="store",
+        default="3.7.1",
+        help="zookeeper version",
     )
     parser.addoption(
         "--schema-migrator-version",

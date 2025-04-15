@@ -13,7 +13,7 @@ from fixtures.types import SigNoz
 
 
 def test_apply_license(
-    signoz: SigNoz, make_http_mocks, create_first_user, jwt_token
+    signoz: SigNoz, make_http_mocks, get_jwt_token
 ) -> None:
     make_http_mocks(
         signoz.zeus.container,
@@ -53,14 +53,21 @@ def test_apply_license(
         ],
     )
 
-    create_first_user("admin", "admin@test.com", "password")
-
-    access_token = jwt_token("admin@test.com", "password")
+    access_token = get_jwt_token("admin@admin.com", "password")
 
     response = requests.post(
-        url=signoz.self.host_config.get_url("/api/v3/licenses"),
+        url=signoz.self.host_config.get("/api/v3/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
+        timeout=5
     )
 
     assert response.status_code == http.HTTPStatus.ACCEPTED
+
+    response = requests.post(
+        url=signoz.zeus.host_config.get("/__admin/requests/count"),
+        json={"method":"POST","url":"/v2/licenses/me"},
+        timeout=5
+    )
+
+    assert response.json()["count"] == 1

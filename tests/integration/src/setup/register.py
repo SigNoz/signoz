@@ -1,8 +1,6 @@
-from http import HTTPStatus
-
-import requests
-
 from fixtures import types
+import requests
+from http import HTTPStatus
 
 
 def test_register(signoz: types.SigNoz) -> None:

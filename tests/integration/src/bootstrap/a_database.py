@@ -4,7 +4,7 @@ from fixtures import types
 
 
 def test_telemetry_databases(signoz: types.SigNoz) -> None:
-    cursor = signoz.telemetrystore.connection.cursor()
+    cursor = signoz.telemetrystore.conn.cursor()
     assert isinstance(cursor, Cursor)
 
     cursor.execute("SHOW DATABASES")
