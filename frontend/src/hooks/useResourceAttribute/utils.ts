@@ -60,13 +60,19 @@ export function convertOperatorLabelForExceptions(
 	)?.traceValue as OperatorValues;
 }
 
+export function formatStringValuesForTrace(
+	val: TagFilterItem['value'] = [],
+): string[] {
+	return !Array.isArray(val) ? [String(val)] : val;
+}
+
 export const convertComposeQueryToTraceSelectedTags = (
 	filterItems: TagFilterItem[] = [],
 ): Tags[] =>
 	filterItems.map((item) => ({
 		Key: item?.key?.key,
 		Operator: convertOperatorLabelForExceptions(item.op),
-		StringValues: typeof item.value === 'string' ? [item.value] : item.value,
+		StringValues: formatStringValuesForTrace(item?.value),
 		NumberValues: [],
 		BoolValues: [],
 		TagType: 'ResourceAttribute',
