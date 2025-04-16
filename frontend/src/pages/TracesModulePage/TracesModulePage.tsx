@@ -2,25 +2,18 @@ import './TracesModulePage.styles.scss';
 
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useAppContext } from 'providers/App/App';
 import { useLocation } from 'react-router-dom';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 
 function TracesModulePage(): JSX.Element {
 	const { pathname } = useLocation();
-	const { featureFlags } = useAppContext();
-
-	const isTraceFunnelsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.TRACE_FUNNELS)
-			?.active ?? false;
 
 	const routes: TabRoutes[] = [
 		tracesExplorer,
-		isTraceFunnelsEnabled ? tracesFunnel(pathname) : null,
+		process.env.NODE_ENV === 'development' ? tracesFunnel(pathname) : null,
 		tracesSaveView,
 	].filter(Boolean) as TabRoutes[];
 
