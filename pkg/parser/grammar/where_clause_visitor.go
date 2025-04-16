@@ -341,11 +341,11 @@ func (v *WhereClauseVisitor) VisitComparison(ctx *ComparisonContext) any {
 		} else if ctx.LT() != nil {
 			op = qbtypes.FilterOperatorLessThan
 		} else if ctx.LE() != nil {
-			op = qbtypes.FilterOperatorLessThan
+			op = qbtypes.FilterOperatorLessThanOrEq
 		} else if ctx.GT() != nil {
 			op = qbtypes.FilterOperatorGreaterThan
 		} else if ctx.GE() != nil {
-			op = qbtypes.FilterOperatorGreaterThan
+			op = qbtypes.FilterOperatorGreaterThanOrEq
 		} else if ctx.LIKE() != nil {
 			op = qbtypes.FilterOperatorLike
 		} else if ctx.ILIKE() != nil {
