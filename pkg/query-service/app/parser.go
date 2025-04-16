@@ -877,7 +877,7 @@ func chTransformQuery(query string, variables map[string]interface{}) {
 	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
 	transformedQuery, err := transformer.Transform()
 	if err != nil {
-		zap.L().Warn("failed to transform clickhouse query", zap.Error(err))
+		zap.L().Warn("failed to transform clickhouse query", zap.String("query", query), zap.Error(err))
 	}
 	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
 }
