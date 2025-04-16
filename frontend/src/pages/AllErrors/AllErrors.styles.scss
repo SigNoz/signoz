@@ -8,16 +8,19 @@
 	}
 
 	.all-errors-right-section {
-		padding: 0;
+		padding: 0 10px;
 	}
 	
+	.ant-tabs {
+		margin: 0 8px;
+	}
+
 	&.filter-visible {
 		.all-errors-quick-filter-section {
 			width: 260px;
 		}
 
 		.all-errors-right-section {
-			padding: 0 10px;
 			width: calc(100% - 260px);
 		}
 	}

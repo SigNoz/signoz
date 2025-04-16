@@ -6,6 +6,7 @@ import {
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
+import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -89,31 +90,33 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					</section>
 				)}
 
-			<section className="filters">
-				{config.map((filter) => {
-					switch (filter.type) {
-						case FiltersType.CHECKBOX:
-							return (
-								<Checkbox
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-								/>
-							);
-						case FiltersType.SLIDER:
-							return <Slider filter={filter} />;
-						// eslint-disable-next-line sonarjs/no-duplicated-branches
-						default:
-							return (
-								<Checkbox
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-								/>
-							);
-					}
-				})}
-			</section>
+			<TypicalOverlayScrollbar>
+				<section className="filters">
+					{config.map((filter) => {
+						switch (filter.type) {
+							case FiltersType.CHECKBOX:
+								return (
+									<Checkbox
+										source={source}
+										filter={filter}
+										onFilterChange={onFilterChange}
+									/>
+								);
+							case FiltersType.SLIDER:
+								return <Slider filter={filter} />;
+							// eslint-disable-next-line sonarjs/no-duplicated-branches
+							default:
+								return (
+									<Checkbox
+										source={source}
+										filter={filter}
+										onFilterChange={onFilterChange}
+									/>
+								);
+						}
+					})}
+				</section>
+			</TypicalOverlayScrollbar>
 		</div>
 	);
 }
