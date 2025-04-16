@@ -131,9 +131,11 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 					)
 				}
 				operator.If = fmt.Sprintf(
-					`%s && %s matches "^\\s*{.*}\\s*$"`, parseFromNotNilCheck, operator.ParseFrom,
+					`%s && (
+						(typeOf(%s) == "string" && %s matches "^\\s*{.*}\\s*$" ) || 
+						typeOf(%s) == "map[string]any"
+					)`, parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
 				)
-
 			} else if operator.Type == "add" {
 				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
 					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
