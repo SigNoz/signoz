@@ -1,16 +1,18 @@
 import './ResourceAttributesFilter.styles.scss';
 
-import { OperatorConfigKeys } from 'constants/queryBuilder';
+import { initialQueriesMap, OperatorConfigKeys } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useCallback } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 function ResourceAttributesFilter(): JSX.Element | null {
-	const { currentQuery, initQueryBuilderData } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
 	const query = currentQuery?.builder?.queryData[0] || null;
+	console.log('query', query);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -18,30 +20,24 @@ function ResourceAttributesFilter(): JSX.Element | null {
 		entityVersion: '',
 	});
 
-	const updatedCurrentQuery = useMemo(
-		() => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: [
-					{
-						...currentQuery.builder.queryData[0],
-						dataSource: DataSource.TRACES,
-						aggregateOperator: 'noop',
-						aggregateAttribute: {
-							...currentQuery.builder.queryData[0].aggregateAttribute,
-							type: 'resource',
-						},
+	// initialise tab with default query.
+	useShareBuilderUrl({
+		...initialQueriesMap.traces,
+		builder: {
+			...initialQueriesMap.traces.builder,
+			queryData: [
+				{
+					...initialQueriesMap.traces.builder.queryData[0],
+					dataSource: DataSource.TRACES,
+					aggregateOperator: 'noop',
+					aggregateAttribute: {
+						...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
+						type: 'resource',
 					},
-				],
-			},
-		}),
-		[currentQuery],
-	);
-
-	useEffect(() => {
-		initQueryBuilderData(updatedCurrentQuery, true);
-	}, [initQueryBuilderData, updatedCurrentQuery]);
+				},
+			],
+		},
+	});
 
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
@@ -53,7 +49,7 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	return (
 		<div className="resourceAttributesFilter-container-v2">
 			<QueryBuilderSearchV2
-				query={updatedCurrentQuery.builder.queryData[0]}
+				query={query}
 				onChange={handleChangeTagFilters}
 				operatorConfigKey={OperatorConfigKeys.EXCEPTIONS}
 			/>
