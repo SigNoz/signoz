@@ -1,28 +1,17 @@
-.resourceAttributesFilter-container {
-	margin: 8px 16px;
+.resourceAttributesFilter-container-v2 {
+	margin: 8px;
 
-	.resource-attributes-selector {
-		flex: 1;
-		border-radius: 3px;
+	.ant-select-selector {
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400) !important;
+		background-color: var(--bg-ink-300) !important;
 
-		background-color: var(--bg-ink-400);
-		border: 1px solid #454c58;
-	}
+		input {
+			font-size: 12px;
+		}
 
-	.environment-selector {
-		min-width: 200px;
-	}
-
-	.ant-form-item {
-		margin-bottom: 0;
-	}
-}
-
-.lightMode {
-	.resourceAttributesFilter-container {
-		.resource-attributes-selector {
-			border: 1px solid #d9d9d9;
-			background: var(--bg-vanilla-100);
+		.ant-tag .ant-typography {
+			font-size: 12px;
 		}
 	}
 }

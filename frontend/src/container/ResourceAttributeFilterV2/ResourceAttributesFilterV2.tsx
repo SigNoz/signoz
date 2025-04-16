@@ -8,8 +8,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { WrapperStyled } from './styles';
-
 function ResourceAttributesFilter(): JSX.Element | null {
 	const { currentQuery, initQueryBuilderData } = useQueryBuilder();
 	const query = currentQuery?.builder?.queryData[0] || null;
@@ -53,13 +51,13 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	);
 
 	return (
-		<WrapperStyled>
+		<div className="resourceAttributesFilter-container-v2">
 			<QueryBuilderSearchV2
 				query={updatedCurrentQuery.builder.queryData[0]}
 				onChange={handleChangeTagFilters}
 				operatorConfigKey={OperatorConfigKeys.EXCEPTIONS}
 			/>
-		</WrapperStyled>
+		</div>
 	);
 }
 
