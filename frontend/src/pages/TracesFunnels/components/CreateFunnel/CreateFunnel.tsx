@@ -1,6 +1,7 @@
 import '../RenameFunnel/RenameFunnel.styles.scss';
 
 import { Input } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { AxiosError } from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -11,7 +12,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { generatePath } from 'react-router-dom';
+import { generatePath, matchPath, useLocation } from 'react-router-dom';
 
 interface CreateFunnelProps {
 	isOpen: boolean;
@@ -29,6 +30,7 @@ function CreateFunnel({
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
 	const { safeNavigate } = useSafeNavigate();
+	const { pathname } = useLocation();
 
 	const handleCreate = (): void => {
 		createFunnelMutation.mutate(
@@ -41,6 +43,13 @@ function CreateFunnel({
 					notifications.success({
 						message: 'Funnel created successfully',
 					});
+
+					const eventMessage = matchPath(pathname, ROUTES.TRACE_DETAIL)
+						? 'Trace Funnels: Funnel created from trace details page'
+						: 'Trace Funnels: Funnel created from trace funnels list page';
+
+					logEvent(eventMessage, {});
+
 					setFunnelName('');
 					queryClient.invalidateQueries([REACT_QUERY_KEY.GET_FUNNELS_LIST]);
 					onClose(data?.payload?.funnel_id);
