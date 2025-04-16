@@ -123,10 +123,25 @@ function QueryBuilderSearchV2(
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const selectRef = useRef<BaseSelectRef>(null);
+	const [isMobile, setIsMobile] = useState<boolean>(false);
+
+	// Check if device is mobile
+	useEffect(() => {
+		const checkIsMobile = (): void => {
+			setIsMobile(window.innerWidth <= 768);
+		};
+
+		checkIsMobile();
+		window.addEventListener('resize', checkIsMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkIsMobile);
+		};
+	}, []);
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
-
-	const selectRef = useRef<BaseSelectRef>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -843,138 +858,91 @@ function QueryBuilderSearchV2(
 		closable,
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
-		const { tagOperator } = getTagToken(value);
-		const isInNin = isInNInOperator(tagOperator);
-		const chipValue = isInNin
-			? value?.trim()?.replace(/,\s*$/, '')
-			: value?.trim();
+		const tag = tags.find((tag) => tag.id === value);
 
-		const indexInQueryTags = queryTags.findIndex((qTag) => isEqual(qTag, value));
-		const tagDetails = tags[indexInQueryTags];
+		if (!tag) {
+			return <></>;
+		}
 
 		const onCloseHandler = (): void => {
 			onClose();
-			setSearchValue('');
-			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
 
 		const tagEditHandler = (value: string): void => {
-			setCurrentFilterItem(tagDetails);
-			setSearchValue(value);
-			setCurrentState(DropdownState.ATTRIBUTE_VALUE);
-			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
+			const tagToEdit = tags.find((tag) => tag.id === value);
+			if (tagToEdit) {
+				setCurrentFilterItem(tagToEdit);
+				setCurrentState(DropdownState.ATTRIBUTE_KEY);
+				setSearchValue('');
+				selectRef.current?.focus();
+			}
 		};
 
-		const isDisabled = !!searchValue;
-
 		return (
-			<span className="qb-search-bar-tokenised-tags">
-				<Tag
-					closable={!searchValue && closable}
-					onClose={onCloseHandler}
-					className={tagDetails?.key?.type || ''}
-				>
-					<Tooltip title={chipValue}>
-						<TypographyText
-							ellipsis
-							$isInNin={isInNin}
-							disabled={isDisabled}
-							$isEnabled={!!searchValue}
-							onClick={(): void => {
-								if (!isDisabled) tagEditHandler(value);
-							}}
-						>
-							{chipValue}
-						</TypographyText>
-					</Tooltip>
-				</Tag>
-			</span>
+			<Tag
+				closable={closable}
+				onClose={onCloseHandler}
+				style={{
+					padding: isMobile ? '4px 8px' : '2px 7px',
+					marginRight: '4px',
+					cursor: 'pointer',
+					maxWidth: isMobile ? 'calc(100% - 24px)' : 'auto',
+					whiteSpace: 'normal',
+					wordBreak: 'break-word',
+				}}
+				onClick={(): void => tagEditHandler(value)}
+			>
+				<TypographyText>
+					{tag.key.key} {tag.op} {isArray(tag.value) ? tag.value.join(', ') : tag.value}
+				</TypographyText>
+			</Tag>
 		);
 	};
 
 	return (
-		<div className="query-builder-search-v2">
+		<div className={cx('query-builder-search-v2', className)}>
 			<Select
 				ref={selectRef}
-				getPopupContainer={popupContainer}
-				key={queryTags.join('.')}
-				virtual={false}
-				showSearch
-				tagRender={onTagRender}
-				transitionName=""
-				choiceTransitionName=""
-				filterOption={false}
-				autoFocus={isOpen}
-				open={isOpen}
-				suffixIcon={
-					// eslint-disable-next-line no-nested-ternary
-					!isUndefined(suffixIcon) ? (
-						suffixIcon
-					) : isOpen ? (
-						<ChevronUp size={14} />
-					) : (
-						<ChevronDown size={14} />
-					)
-				}
-				onDropdownVisibleChange={setIsOpen}
-				autoClearSearchValue={false}
-				mode="multiple"
-				placeholder={placeholder}
-				value={queryTags}
-				searchValue={searchValue}
-				className={cx(
-					!currentFilterItem?.key && !showAllFilters && dropdownOptions.length > 3
-						? 'show-all-filters'
-						: '',
-					className,
-				)}
-				rootClassName="query-builder-search"
-				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-				style={selectStyle}
+				mode="tags"
+				style={{
+					width: isMobile ? '100%' : 'auto',
+					minWidth: isMobile ? 'auto' : '300px',
+				}}
+				placeholder={placeholder || PLACEHOLDER}
+				onChange={handleDropdownSelect}
 				onSearch={handleSearch}
-				onSelect={handleDropdownSelect}
-				onInputKeyDown={onInputKeyDownHandler}
-				notFoundContent={loading ? <Spin size="small" /> : null}
-				showAction={['focus']}
+				onKeyDown={onInputKeyDownHandler}
 				onBlur={handleOnBlur}
-				// eslint-disable-next-line react/no-unstable-nested-components
+				onFocus={handleOnBlur}
+				value={tags.map((tag) => tag.id)}
+				suffixIcon={suffixIcon}
+				tagRender={onTagRender}
 				dropdownRender={(menu): ReactElement => (
 					<QueryBuilderSearchDropdown
 						menu={menu}
-						options={dropdownOptions}
-						onChange={(val: TagFilter): void => {
-							setTags((prev) => [...prev, ...(val.items as ITag[])]);
-						}}
-						searchValue={searchValue}
-						exampleQueries={suggestionsData?.payload?.example_queries || []}
-						tags={tags}
+						currentState={currentState}
 						currentFilterItem={currentFilterItem}
+						showAllFilters={showAllFilters}
+						isMobile={isMobile}
 					/>
 				)}
-			>
-				{dropdownOptions.map((option) => {
-					let val = option.value;
-					try {
-						if (isObject(option.value)) {
-							val = JSON.stringify(option.value);
-						} else {
-							val = option.value;
-						}
-					} catch {
-						val = option.value;
-					}
-					return (
-						<Select.Option key={isObject(val) ? `select-option` : val} value={val}>
-							<Suggestions
-								label={option.label}
-								value={option.value}
-								option={currentState}
-								searchValue={searchValue}
-							/>
-						</Select.Option>
-					);
-				})}
-			</Select>
+				dropdownStyle={{
+					minWidth: isMobile ? 'calc(100vw - 32px)' : '300px',
+					maxWidth: isMobile ? 'none' : '600px',
+				}}
+				getPopupContainer={popupContainer}
+				options={dropdownOptions}
+				open={isOpen}
+				onDropdownVisibleChange={setIsOpen}
+				{...selectStyle}
+			/>
+			{!isMobile && (
+				<Suggestions
+					query={query}
+					onChange={onChange}
+					whereClauseConfig={whereClauseConfig}
+				/>
+			)}
 		</div>
 	);
 }

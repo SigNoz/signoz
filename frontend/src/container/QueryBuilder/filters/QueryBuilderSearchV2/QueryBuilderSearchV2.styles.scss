@@ -1,6 +1,30 @@
 .query-builder-search-v2 {
 	display: flex;
 	gap: 4px;
+	width: 100%;
+
+	@media screen and (max-width: 768px) {
+		flex-direction: column;
+		
+		.ant-select {
+			width: 100% !important;
+		}
+
+		.ant-select-selector {
+			min-height: 40px;
+			padding: 4px 8px !important;
+		}
+
+		.ant-select-selection-search {
+			width: 100% !important;
+		}
+
+		.ant-select-selection-item {
+			max-width: calc(100% - 24px);
+			white-space: normal;
+			word-break: break-word;
+		}
+	}
 
 	.ant-select-dropdown {
 		padding: 0px;
@@ -141,6 +165,29 @@
 				}
 			}
 		}
+
+		@media screen and (max-width: 768px) {
+			.suggested-filters {
+				padding: 8px 12px;
+			}
+
+			.operator-for,
+			.value-for {
+				padding: 8px 12px;
+			}
+
+			.example-queries {
+				.query-container {
+					padding: 8px;
+					
+					.example-query {
+						width: 100%;
+						padding: 8px;
+						font-size: 13px;
+					}
+				}
+			}
+		}
 	}
 
 	.keyboard-shortcuts {
@@ -195,6 +242,10 @@
 			align-items: center;
 			margin-left: 12px;
 			gap: 4px;
+		}
+
+		@media screen and (max-width: 768px) {
+			display: none; // Hide keyboard shortcuts on mobile
 		}
 	}
 
@@ -381,6 +432,19 @@
 					}
 				}
 			}
+		}
+	}
+}
+
+// Add styles for the dropdown in mobile view
+.ant-select-dropdown {
+	@media screen and (max-width: 768px) {
+		width: calc(100vw - 32px) !important;
+		max-width: none !important;
+		margin: 0 16px;
+
+		.rc-virtual-list {
+			max-height: 60vh !important;
 		}
 	}
 }

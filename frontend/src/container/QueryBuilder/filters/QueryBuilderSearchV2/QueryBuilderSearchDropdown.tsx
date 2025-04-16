@@ -17,98 +17,73 @@ import ExampleQueriesRendererForLogs from '../QueryBuilderSearch/ExampleQueriesR
 import { convertExampleQueriesToOptions } from '../QueryBuilderSearch/utils';
 import { ITag, Option } from './QueryBuilderSearchV2';
 
-interface ICustomDropdownProps {
+interface QueryBuilderSearchDropdownProps {
 	menu: React.ReactElement;
-	searchValue: string;
-	tags: ITag[];
-	options: Option[];
-	exampleQueries: TagFilter[];
-	onChange: (value: TagFilter) => void;
+	currentState: DropdownState;
 	currentFilterItem?: ITag;
+	showAllFilters: boolean;
+	isMobile?: boolean;
 }
 
-export default function QueryBuilderSearchDropdown(
-	props: ICustomDropdownProps,
-): React.ReactElement {
-	const {
-		menu,
-		currentFilterItem,
-		searchValue,
-		tags,
-		exampleQueries,
-		options,
-		onChange,
-	} = props;
-	const userOs = getUserOperatingSystem();
+function QueryBuilderSearchDropdown({
+	menu,
+	currentState,
+	currentFilterItem,
+	showAllFilters,
+	isMobile,
+}: QueryBuilderSearchDropdownProps): React.ReactElement {
 	return (
-		<>
-			<div className="content">
-				{!currentFilterItem?.key ? (
-					<div className="suggested-filters">Suggested Filters</div>
-				) : !currentFilterItem?.op ? (
-					<div className="operator-for">
-						<Typography.Text className="operator-for-text">
-							Operator for{' '}
-						</Typography.Text>
-						<Typography.Text className="operator-for-value">
-							{currentFilterItem?.key?.key}
-						</Typography.Text>
-					</div>
-				) : (
-					<div className="value-for">
-						<Typography.Text className="value-for-text">
-							Value(s) for{' '}
-						</Typography.Text>
-						<Typography.Text className="value-for-value">
-							{currentFilterItem?.key?.key} {currentFilterItem?.op}
-						</Typography.Text>
-					</div>
-				)}
-				{menu}
-				{!searchValue && tags.length === 0 && (
-					<div className="example-queries">
-						<div className="heading"> Example Queries </div>
-						<div className="query-container">
-							{convertExampleQueriesToOptions(exampleQueries).map((query) => (
-								<ExampleQueriesRendererForLogs
-									key={query.label}
-									label={query.label}
-									value={query.value}
-									handleAddTag={onChange}
-								/>
-							))}
-						</div>
-					</div>
-				)}
-			</div>
+		<div className="content">
+			{currentState === DropdownState.ATTRIBUTE_KEY && (
+				<div className="suggested-filters" style={{ fontSize: isMobile ? '12px' : '11px' }}>
+					{showAllFilters ? 'All Filters' : 'Suggested Filters'}
+				</div>
+			)}
 
-			<div className="keyboard-shortcuts">
-				<section className="navigate">
-					<ArrowDown size={10} className="icons" />
-					<ArrowUp size={10} className="icons" />
-					<span className="keyboard-text">to navigate</span>
-				</section>
-				<section className="update-query">
-					<CornerDownLeft size={10} className="icons" />
-					<span className="keyboard-text">to update query</span>
-				</section>
-				{!currentFilterItem?.key && options.length > 3 && (
-					<section className="show-all-filter-items">
-						{userOs === UserOperatingSystem.MACOS ? (
-							<Command size={14} className="icons" />
-						) : (
-							<ChevronUp size={14} className="icons" />
-						)}
-						+
-						<Slash size={14} className="icons" />
-						<span className="keyboard-text">Show all filter items</span>
-					</section>
-				)}
-			</div>
-		</>
+			{currentState === DropdownState.OPERATOR && currentFilterItem?.key && (
+				<div className="operator-for">
+					<span className="operator-for-text" style={{ fontSize: isMobile ? '12px' : '11px' }}>
+						Operator for
+					</span>
+					<span className="operator-for-value" style={{ padding: isMobile ? '4px 12px' : '0px 8px' }}>
+						{currentFilterItem.key.key}
+					</span>
+				</div>
+			)}
+
+			{currentState === DropdownState.ATTRIBUTE_VALUE && currentFilterItem?.key && (
+				<div className="value-for">
+					<span className="value-for-text" style={{ fontSize: isMobile ? '12px' : '11px' }}>
+						Value for
+					</span>
+					<span className="value-for-value" style={{ padding: isMobile ? '4px 12px' : '0px 8px' }}>
+						{currentFilterItem.key.key} {currentFilterItem.op}
+					</span>
+				</div>
+			)}
+
+			{menu}
+
+			{!isMobile && (
+				<div className="keyboard-shortcuts">
+					<div className="navigate">
+						<div className="icons">↑↓</div>
+						<div className="keyboard-text">to navigate</div>
+					</div>
+					<div className="update-query">
+						<div className="icons">↵</div>
+						<div className="keyboard-text">to update query</div>
+					</div>
+					{showAllFilters && (
+						<div className="show-all-filter-items">
+							<div className="icons">tab</div>
+							<div className="keyboard-text">to show all filter items</div>
+						</div>
+					)}
+				</div>
+			)}
+		</div>
 	);
 }
 
-QueryBuilderSearchDropdown.defaultProps = {
-	currentFilterItem: undefined,
-};
+export default QueryBuilderSearchDropdown;
