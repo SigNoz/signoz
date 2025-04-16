@@ -1,6 +1,7 @@
 import './StepsContent.styles.scss';
 
 import { Button, Steps } from 'antd';
+import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PlusIcon, Undo2 } from 'lucide-react';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
@@ -28,6 +29,10 @@ function StepsContent({
 		if (stepWasAdded) {
 			handleReplaceStep(steps.length, span.serviceName, span.name);
 		}
+		logEvent(
+			'Trace Funnels: span added for a new step from trace details page',
+			{},
+		);
 	}, [span, handleAddStep, handleReplaceStep, steps.length]);
 
 	return (

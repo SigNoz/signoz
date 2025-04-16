@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -147,6 +148,7 @@ export function FunnelProvider({
 				service_name: serviceName,
 				span_name: spanName,
 			});
+			logEvent('Trace Funnels: span added (replaced) from trace details page', {});
 		},
 		[handleStepUpdate],
 	);
