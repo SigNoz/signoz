@@ -10,7 +10,7 @@ COMMIT_SHORT_SHA        ?= $(shell git rev-parse --short HEAD)
 BRANCH_NAME             ?= $(subst /,-,$(shell git rev-parse --abbrev-ref HEAD))
 VERSION                 ?= $(BRANCH_NAME)-$(COMMIT_SHORT_SHA)
 TIMESTAMP               ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-ARCHS					= amd64 arm64
+ARCHS					?= amd64 arm64
 TARGET_DIR              ?= $(shell pwd)/target
 
 ZEUS_URL					   		?= https://api.signoz.cloud
@@ -23,6 +23,7 @@ GO_BUILD_ARCHS_COMMUNITY 		= $(addprefix go-build-community-,$(ARCHS))
 GO_BUILD_CONTEXT_COMMUNITY 		= $(SRC)/pkg/query-service
 GO_BUILD_LDFLAGS_COMMUNITY 		= $(GO_BUILD_VERSION_LDFLAGS) -X github.com/SigNoz/signoz/pkg/version.variant=community
 GO_BUILD_ARCHS_ENTERPRISE 		= $(addprefix go-build-enterprise-,$(ARCHS))
+GO_BUILD_ARCHS_ENTERPRISE_RACE  = $(addprefix go-build-enterprise-race-,$(ARCHS))
 GO_BUILD_CONTEXT_ENTERPRISE 	= $(SRC)/ee/query-service
 GO_BUILD_LDFLAGS_ENTERPRISE 	= $(GO_BUILD_VERSION_LDFLAGS) -X github.com/SigNoz/signoz/pkg/version.variant=enterprise $(GO_BUILD_LDFLAG_ZEUS_URL) $(GO_BUILD_LDFLAG_LICENSE_SIGNOZ_IO)
 
@@ -119,6 +120,18 @@ $(GO_BUILD_ARCHS_ENTERPRISE): go-build-enterprise-%: $(TARGET_DIR)
 		CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
 	fi
 
+.PHONY: go-build-enterprise-race $(GO_BUILD_ARCHS_ENTERPRISE_RACE)
+go-build-enterprise-race: ## Builds the go backend server for enterprise with race
+go-build-enterprise-race: $(GO_BUILD_ARCHS_ENTERPRISE_RACE)
+$(GO_BUILD_ARCHS_ENTERPRISE_RACE): go-build-enterprise-race-%: $(TARGET_DIR)
+	@mkdir -p $(TARGET_DIR)/$(OS)-$*
+	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)"
+	@if [ $* = "arm64" ]; then \
+		CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
+	else \
+		CGO_ENABLED=1 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-linkmode external -extldflags '-static' -s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
+	fi
+
 ##############################################################
 # js commands
 ##############################################################
@@ -167,3 +180,20 @@ docker-buildx-enterprise: go-build-enterprise js-build
 		--platform linux/arm64,linux/amd64 \
 		--push \
 		--tag $(DOCKER_REGISTRY_ENTERPRISE):$(VERSION) $(SRC)
+
+##############################################################
+# python commands
+##############################################################
+.PHONY: py-fmt
+py-fmt: ## Run black for integration tests
+	@cd tests/integration && poetry run black .
+
+.PHONY: py-lint
+py-lint: ## Run lint for integration tests
+	@cd tests/integration && poetry run isort .
+	@cd tests/integration && poetry run autoflake .
+	@cd tests/integration && poetry run pylint .
+
+.PHONY: py-test
+py-test: ## Runs integration tests
+	@cd tests/integration && poetry run pytest --basetemp=./tmp/ -vv --capture=no src/
