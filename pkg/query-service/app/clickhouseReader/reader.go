@@ -6898,7 +6898,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			item.Attributes_string[k] = fmt.Sprintf("%v", v)
 		}
 		for k, v := range item.Attributes_number {
-			item.Attributes_string[k] = fmt.Sprintf("%g", v)
+			item.Attributes_string[k] = formatFloat(v)
 		}
 		for k, v := range item.Resources_string {
 			item.Attributes_string[k] = v
