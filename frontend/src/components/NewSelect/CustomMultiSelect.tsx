@@ -469,14 +469,71 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	const handleSearch = useCallback(
 		(value: string): void => {
 			setActiveIndex(-1);
-			// Handle multiple comma-separated values
-			if (value.includes(',')) {
-				const values = value
-					.split(',')
-					.map((v) => v.trim())
-					.filter(Boolean)
-					// Filter out values that already exist in selectedValues
-					.filter((v) => !selectedValues.includes(v));
+
+			// Check if we have an unbalanced quote that needs to be preserved
+			const hasOpenQuote =
+				(value.match(/"/g) || []).length % 2 !== 0 ||
+				(value.match(/'/g) || []).length % 2 !== 0;
+
+			// Only process by comma if we don't have open quotes
+			if (value.includes(',') && !hasOpenQuote) {
+				const values: string[] = [];
+				let currentValue = '';
+				let inSingleQuotes = false;
+				let inDoubleQuotes = false;
+
+				for (let i = 0; i < value.length; i++) {
+					const char = value[i];
+
+					// Handle quote characters
+					if (char === '"' && !inSingleQuotes) {
+						inDoubleQuotes = !inDoubleQuotes;
+						currentValue += char;
+					} else if (char === "'" && !inDoubleQuotes) {
+						inSingleQuotes = !inSingleQuotes;
+						currentValue += char;
+					}
+					// Handle commas outside of quotes
+					else if (char === ',' && !inSingleQuotes && !inDoubleQuotes) {
+						// Comma outside quotes - end of value
+						if (currentValue.trim()) {
+							// Process the value to remove surrounding quotes if present
+							let processedValue = currentValue.trim();
+							if (
+								(processedValue.startsWith('"') && processedValue.endsWith('"')) ||
+								(processedValue.startsWith("'") && processedValue.endsWith("'"))
+							) {
+								// Remove surrounding quotes
+								processedValue = processedValue.substring(1, processedValue.length - 1);
+							}
+
+							if (!selectedValues.includes(processedValue)) {
+								values.push(processedValue);
+							}
+						}
+						currentValue = '';
+					}
+					// All other characters
+					else {
+						currentValue += char;
+					}
+				}
+
+				// Process the last value if there is one
+				if (currentValue.trim()) {
+					let processedValue = currentValue.trim();
+					if (
+						(processedValue.startsWith('"') && processedValue.endsWith('"')) ||
+						(processedValue.startsWith("'") && processedValue.endsWith("'"))
+					) {
+						// Remove surrounding quotes
+						processedValue = processedValue.substring(1, processedValue.length - 1);
+					}
+
+					if (!selectedValues.includes(processedValue)) {
+						values.push(processedValue);
+					}
+				}
 
 				if (values.length > 0) {
 					const newValues = [...selectedValues, ...values];
@@ -487,6 +544,35 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						);
 					}
 				}
+				setSearchText('');
+				return;
+			}
+			if (value.endsWith(',') && !hasOpenQuote) {
+				// Process a single value when comma is typed at the end (outside quotes)
+				const valueToProcess = value.slice(0, -1).trim();
+
+				if (valueToProcess) {
+					// Process the value to remove surrounding quotes if present
+					let processedValue = valueToProcess;
+					if (
+						(processedValue.startsWith('"') && processedValue.endsWith('"')) ||
+						(processedValue.startsWith("'") && processedValue.endsWith("'"))
+					) {
+						// Remove surrounding quotes
+						processedValue = processedValue.substring(1, processedValue.length - 1);
+					}
+
+					if (!selectedValues.includes(processedValue)) {
+						const newValues = [...selectedValues, processedValue];
+						if (onChange) {
+							onChange(
+								newValues as any,
+								newValues.map((v) => ({ label: v, value: v })),
+							);
+						}
+					}
+				}
+
 				setSearchText('');
 				return;
 			}
