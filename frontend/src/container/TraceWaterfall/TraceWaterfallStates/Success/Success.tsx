@@ -7,7 +7,6 @@ import { Virtualizer } from '@tanstack/react-virtual';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
-import { FeatureKeys } from 'constants/features';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import AddSpanToFunnelModal from 'container/TraceWaterfall/AddSpanToFunnelModal/AddSpanToFunnelModal';
@@ -23,7 +22,6 @@ import {
 	ChevronRight,
 	Leaf,
 } from 'lucide-react';
-import { useAppContext } from 'providers/App/App';
 import {
 	Dispatch,
 	SetStateAction,
@@ -66,14 +64,13 @@ function SpanOverview({
 	setSelectedSpan,
 	handleAddSpanToFunnel,
 	selectedSpan,
-	isTraceFunnelsEnabled,
 }: {
 	span: Span;
 	isSpanCollapsed: boolean;
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	isTraceFunnelsEnabled: boolean;
+
 	handleAddSpanToFunnel: (span: Span) => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
@@ -152,7 +149,7 @@ function SpanOverview({
 					<Typography.Text className="service-name">
 						{span.serviceName}
 					</Typography.Text>
-					{!!span.serviceName && !!span.name && isTraceFunnelsEnabled && (
+					{!!span.serviceName && !!span.name && (
 						<div className="add-funnel-button">
 							<span className="add-funnel-button__separator">·</span>
 							<Button
@@ -265,14 +262,13 @@ function getWaterfallColumns({
 	selectedSpan,
 	setSelectedSpan,
 	handleAddSpanToFunnel,
-	isTraceFunnelsEnabled,
 }: {
 	handleCollapseUncollapse: (id: string, collapse: boolean) => void;
 	uncollapsedNodes: string[];
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
 	setSelectedSpan: Dispatch<SetStateAction<Span | undefined>>;
-	isTraceFunnelsEnabled: boolean;
+
 	handleAddSpanToFunnel: (span: Span) => void;
 }): ColumnDef<Span, any>[] {
 	const waterfallColumns: ColumnDef<Span, any>[] = [
@@ -287,7 +283,6 @@ function getWaterfallColumns({
 					selectedSpan={selectedSpan}
 					setSelectedSpan={setSelectedSpan}
 					handleAddSpanToFunnel={handleAddSpanToFunnel}
-					isTraceFunnelsEnabled={isTraceFunnelsEnabled}
 				/>
 			),
 			size: 450,
@@ -322,11 +317,6 @@ function Success(props: ISuccessProps): JSX.Element {
 		selectedSpan,
 	} = props;
 	const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>();
-
-	const { featureFlags } = useAppContext();
-	const isTraceFunnelsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.TRACE_FUNNELS)
-			?.active ?? false;
 
 	const handleCollapseUncollapse = useCallback(
 		(spanId: string, collapse: boolean) => {
@@ -373,7 +363,6 @@ function Success(props: ISuccessProps): JSX.Element {
 	const columns = useMemo(
 		() =>
 			getWaterfallColumns({
-				isTraceFunnelsEnabled,
 				handleCollapseUncollapse,
 				uncollapsedNodes,
 				traceMetadata,
@@ -382,7 +371,6 @@ function Success(props: ISuccessProps): JSX.Element {
 				handleAddSpanToFunnel,
 			}),
 		[
-			isTraceFunnelsEnabled,
 			handleCollapseUncollapse,
 			uncollapsedNodes,
 			traceMetadata,
@@ -460,7 +448,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				virtualiserRef={virtualizerRef}
 				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
-			{selectedSpanToAddToFunnel && isTraceFunnelsEnabled && (
+			{selectedSpanToAddToFunnel && process.env.NODE_ENV === 'development' && (
 				<AddSpanToFunnelModal
 					span={selectedSpanToAddToFunnel}
 					isOpen={isAddSpanToFunnelModalOpen}
