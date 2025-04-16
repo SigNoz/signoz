@@ -1085,7 +1085,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				item.Attributes_string[k] = fmt.Sprintf("%v", v)
 			}
 			for k, v := range item.Attributes_number {
-				item.Attributes_string[k] = fmt.Sprintf("%v", v)
+				item.Attributes_string[k] = formatFloat(v)
 			}
 			for k, v := range item.Resources_string {
 				item.Attributes_string[k] = v
@@ -4191,6 +4191,13 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 }
 
+func formatFloat(f float64) string {
+	if f == math.Trunc(f) {
+		return fmt.Sprintf("%.0f", f)
+	}
+	return fmt.Sprintf("%g", f)
+}
+
 func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
@@ -4241,11 +4248,12 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
-				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
+				val := formatFloat(reflect.ValueOf(v).Elem().Float())
+				groupBy = append(groupBy, val)
 				if _, ok := groupAttributes[colName]; !ok {
-					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())})
+					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
 				}
-				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
+				groupAttributes[colName] = val
 			}
 		case **float64, **float32:
 			val := reflect.ValueOf(v)
@@ -4255,11 +4263,12 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					isValidPoint = true
 					point.Value = value
 				} else {
-					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					val := formatFloat(value)
+					groupBy = append(groupBy, val)
 					if _, ok := groupAttributes[colName]; !ok {
-						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
 					}
-					groupAttributes[colName] = fmt.Sprintf("%v", value)
+					groupAttributes[colName] = val
 				}
 			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
@@ -6889,7 +6898,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			item.Attributes_string[k] = fmt.Sprintf("%v", v)
 		}
 		for k, v := range item.Attributes_number {
-			item.Attributes_string[k] = fmt.Sprintf("%v", v)
+			item.Attributes_string[k] = fmt.Sprintf("%g", v)
 		}
 		for k, v := range item.Resources_string {
 			item.Attributes_string[k] = v
