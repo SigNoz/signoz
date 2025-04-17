@@ -115,6 +115,7 @@ export function MetricFilters({
 				}}
 				query={query}
 				hardcodedAttributeKeys={hardcodedAttributeKeys}
+				triggerOnChangeOnClose
 			/>
 		</div>
 	);
