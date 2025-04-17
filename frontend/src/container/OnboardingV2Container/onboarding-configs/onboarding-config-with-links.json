@@ -372,6 +372,8 @@
 			"nestjs",
 			"angular",
 			"nextjs",
+			"reactjs",
+			"nuxtjs",
 			"js",
 			"typescript",
 			"ts"
@@ -536,6 +538,68 @@
 								"link": "https://signoz.io/docs/instrumentation/opentelemetry-nextjs/"
 							}
 						]
+					}
+				},
+				{
+					"key": "reactjs",
+					"label": "ReactJS",
+					"imgUrl": "/Logos/reactjs.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/",
+					"question": {
+					  "desc": "What is your Environment?",
+					  "type": "select",
+					  "entityID": "environment",
+					  "options": [
+							{
+							"key": "vm",
+							"label": "VM",
+							"imgUrl": "/Logos/vm.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+							"key": "k8s",
+							"label": "Kubernetes",
+							"imgUrl": "/Logos/kubernetes.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							},
+							{
+							"key": "windows",
+							"label": "Windows",
+							"imgUrl": "/Logos/windows.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-reactjs/"
+							}
+					  	]
+					}
+				},
+				{
+					"key": "nuxtjs",
+					"label": "NuxtJS",
+					"imgUrl": "/Logos/nuxtjs.svg",
+					"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/",
+					"question": {
+					  "desc": "What is your Environment?",
+					  "type": "select",
+					  "entityID": "environment",
+					  "options": [
+							{
+							"key": "vm",
+							"label": "VM",
+							"imgUrl": "/Logos/vm.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
+							"key": "k8s",
+							"label": "Kubernetes",
+							"imgUrl": "/Logos/kubernetes.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+							},
+							{
+							"key": "windows",
+							"label": "Windows",
+							"imgUrl": "/Logos/windows.svg",
+							"link": "https://signoz.io/docs/instrumentation/opentelemetry-nuxtjs/"
+							}
+					  	]
 					}
 				}
 			]
@@ -2496,5 +2560,80 @@
 		"document load to signoz"
 		],
 		"link": "https://signoz.io/docs/frontend-monitoring/document-load/"
+	},
+	{
+		"dataSource": "self-hosted-kafka",
+		"label": "Self-Hosted Kafka",
+		"imgUrl": "/Logos/kafka.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"self hosted kafka",
+		"kafka setup",
+		"kafka open source",
+		"kafka observability",
+		"kafka integration"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/kafka/"
+	},
+	{
+		"dataSource": "amazon-msk",
+		"label": "Amazon MSK",
+		"imgUrl": "/Logos/amazon-msk.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"amazon msk",
+		"msk kafka",
+		"aws kafka",
+		"msk tracing",
+		"msk monitoring"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/msk/"
+	},
+	{
+		"dataSource": "confluent-kafka",
+		"label": "Confluent Kafka",
+		"imgUrl": "/Logos/confluent-kafka.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"confluent kafka",
+		"confluent cloud",
+		"kafka tracing",
+		"kafka cloud",
+		"kafka monitoring"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/confluent-kafka/"
+	},
+	{
+		"dataSource": "strimzi-kafka",
+		"label": "Strimzi Kafka",
+		"imgUrl": "/Logos/strimzi.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-kafka",
+		"relatedSearchKeywords": [
+		"strimzi kafka",
+		"kafka on kubernetes",
+		"strimzi operator",
+		"kafka helm chart",
+		"monitor kafka strimzi"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/strimzi/"
+	},
+	{
+		"dataSource": "celery",
+		"label": "Celery",
+		"imgUrl": "/Logos/celery.svg",
+		"tags": ["Messaging Queues"],
+		"module": "messaging-queues-celery",
+		"relatedSearchKeywords": [
+		"celery python",
+		"celery tracing",
+		"celery monitoring",
+		"task queue tracing",
+		"celery opentelemetry"
+		],
+		"link": "https://signoz.io/docs/messaging-queues/celery-setup/"
 	}
 ]

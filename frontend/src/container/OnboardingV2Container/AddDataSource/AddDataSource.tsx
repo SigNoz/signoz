@@ -431,6 +431,12 @@ function OnboardingAddDataSource(): JSX.Element {
 				case 'infra-monitoring-k8s':
 					history.push(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES);
 					break;
+				case 'messaging-queues-kafka':
+					history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+					break;
+				case 'messaging-queues-celery':
+					history.push(ROUTES.MESSAGING_QUEUES_CELERY_TASK);
+					break;
 				default:
 					history.push(ROUTES.APPLICATION);
 			}
