@@ -16,7 +16,11 @@ import {
 	MetricInspectionOptions,
 	UseInspectMetricsReturnData,
 } from './types';
-import { applySpaceAggregation, applyTimeAggregation } from './utils';
+import {
+	applyFilters,
+	applySpaceAggregation,
+	applyTimeAggregation,
+} from './utils';
 
 const metricInspectionReducer = (
 	state: MetricInspectionOptions,
@@ -142,6 +146,14 @@ export function useInspectMetrics(
 		const seriesValuesMap: Map<number, number | null>[] = [];
 
 		let timeSeries: InspectMetricsSeries[] = [...inspectMetricsTimeSeries];
+
+		// Apply filters
+		if (metricInspectionOptions.filters.items.length > 0) {
+			timeSeries = applyFilters(
+				inspectMetricsTimeSeries,
+				metricInspectionOptions.filters,
+			);
+		}
 
 		// Apply time aggregation once required options are set
 		if (

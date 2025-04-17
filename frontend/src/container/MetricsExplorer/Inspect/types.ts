@@ -60,6 +60,7 @@ export interface MetricFiltersProps {
 	metricType: MetricType | undefined;
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	spaceAggregationLabels: string[];
 }
 
 export interface MetricTimeAggregationProps {

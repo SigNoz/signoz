@@ -6,7 +6,11 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useMemo, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -68,6 +72,7 @@ export function MetricFilters({
 	metricName,
 	metricType,
 	dispatchMetricInspectionOptions,
+	spaceAggregationLabels,
 }: MetricFiltersProps): JSX.Element {
 	const query = useMemo(() => {
 		const initialQuery =
@@ -85,6 +90,19 @@ export function MetricFilters({
 		};
 	}, [metricName, metricType]);
 
+	const hardcodedAttributeKeys = useMemo(
+		() =>
+			spaceAggregationLabels.map((label) => ({
+				key: label,
+				id: label,
+				isColumn: true,
+				isJSON: false,
+				type: 'resource',
+				dataType: DataTypes.String,
+			})),
+		[spaceAggregationLabels],
+	);
+
 	return (
 		<div className="inspect-metrics-input-group metric-filters">
 			<Typography.Text>Where</Typography.Text>
@@ -96,6 +114,7 @@ export function MetricFilters({
 					});
 				}}
 				query={query}
+				hardcodedAttributeKeys={hardcodedAttributeKeys}
 			/>
 		</div>
 	);
@@ -186,6 +205,7 @@ export function MetricSpaceAggregation({
 							});
 						}}
 						style={{ width: 130 }}
+						disabled={inspectionStep === InspectionStep.TIME_AGGREGATION}
 					>
 						{/* eslint-disable-next-line sonarjs/no-identical-functions */}
 						{Object.entries(SPACE_AGGREGATION_OPTIONS).map(([key, value]) => (
@@ -206,6 +226,7 @@ export function MetricSpaceAggregation({
 							payload: value,
 						});
 					}}
+					disabled={inspectionStep === InspectionStep.TIME_AGGREGATION}
 				>
 					{spaceAggregationLabels.map((label) => (
 						<Select.Option key={label} value={label}>
@@ -215,6 +236,40 @@ export function MetricSpaceAggregation({
 				</Select>
 			</div>
 		</div>
+	);
+}
+
+export function applyFilters(
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+	filters: TagFilter,
+): InspectMetricsSeries[] {
+	return inspectMetricsTimeSeries.filter((series) =>
+		filters.items.every((filter) => {
+			if ((filter.key?.key || '') in series.labels) {
+				const value = series.labels[filter.key?.key ?? ''];
+				switch (filter.op) {
+					case '=':
+						return value === filter.value;
+					case '!=':
+						return value !== filter.value;
+					case 'in':
+						return (filter.value as string[]).includes(value as string);
+					case 'nin':
+						return !(filter.value as string[]).includes(value as string);
+					case 'like':
+						return value.includes(filter.value as string);
+					case 'nlike':
+						return !value.includes(filter.value as string);
+					case 'contains':
+						return value.includes(filter.value as string);
+					case 'ncontains':
+						return !value.includes(filter.value as string);
+					default:
+						return true;
+				}
+			}
+			return false;
+		}),
 	);
 }
 
