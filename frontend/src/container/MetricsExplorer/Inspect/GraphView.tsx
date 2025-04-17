@@ -4,7 +4,7 @@ import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { RefreshCcwIcon } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -42,6 +42,25 @@ function GraphView({
 	const [showGraphPopover, setShowGraphPopover] = useState(false);
 
 	const popoverRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent): void {
+			if (
+				popoverRef.current &&
+				!popoverRef.current.contains(event.target as Node) &&
+				graphRef.current &&
+				!graphRef.current.contains(event.target as Node)
+			) {
+				setShowGraphPopover(false);
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return (): void => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [popoverRef, graphRef]);
+
 	const options: uPlot.Options = useMemo(
 		() => ({
 			width: dimensions.width,
