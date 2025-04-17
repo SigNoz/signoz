@@ -430,36 +430,86 @@ export function applySpaceAggregation(
 	};
 }
 
+function getClosestIndex(arr: number[], target: number): number {
+	let low = 0;
+	let high = arr.length - 1;
+
+	while (low <= high) {
+		const mid = Math.floor((low + high) / 2);
+		if (arr[mid] === target) return mid;
+
+		if (arr[mid] < target) {
+			low = mid + 1;
+		} else {
+			high = mid - 1;
+		}
+	}
+
+	if (low >= arr.length) return arr.length - 1;
+	if (high < 0) return 0;
+
+	const lowDiff = Math.abs(arr[low] - target);
+	const highDiff = Math.abs(arr[high] - target);
+
+	return lowDiff < highDiff ? low : high;
+}
+
+function findClosestSeriesLabel(
+	u: uPlot,
+	mouseX: number,
+	mouseY: number,
+	xVals: number[],
+	idx: number,
+): string | undefined {
+	let minDist = Infinity;
+	let closestLabel: string | undefined;
+
+	const px = u.valToPos(xVals[idx], 'x');
+
+	// Iterate from the last series to the first (stacked series are on top)
+	for (let i = u.series.length - 1; i >= 1; i--) {
+		const ySeries = u.data[i] as number[];
+		const yVal = ySeries[idx];
+
+		// Validate y-value before processing
+		const isValid = yVal != null && Number.isFinite(yVal);
+
+		if (isValid) {
+			const py = u.valToPos(yVal, 'y');
+
+			// Calculate the distance in both x and y axes (Euclidean distance)
+			const dx = mouseX - px;
+			const dy = mouseY - py;
+			const dist = Math.sqrt(dx * dx + dy * dy); // Euclidean distance
+
+			// If we found a closer point, update the closest label
+			if (dist < minDist && dist <= 10) {
+				minDist = dist;
+				closestLabel = u.series[i].label; // Keep the label of the closest series
+			}
+		}
+	}
+
+	return closestLabel;
+}
+
 export function getSeriesLabelFromPixel(
 	e: MouseEvent,
 	u: uPlot,
 ): string | undefined {
 	const { left, top } = u.over.getBoundingClientRect();
-	const x = e.clientX - left;
-	const y = e.clientY - top;
+	const mouseX = e.clientX - left;
+	const mouseY = e.clientY - top;
 
-	const idx = u.posToIdx(x); // nearest index based on x pixel
+	const dataX = u.posToVal(mouseX, 'x');
+	const xVals = u.data[0] as number[];
 
-	let matchedSeriesLabel: string | undefined;
+	// Get the closest index based on the x-axis
+	const idx = getClosestIndex(xVals, dataX);
+	if (idx === -1) return undefined;
 
-	for (let i = 1; i < u.series.length; i++) {
-		const ySeries = u.data[i];
-		const yValue = ySeries[idx];
-
-		const isValueValid = yValue != null && Number.isFinite(yValue);
-
-		if (isValueValid) {
-			const yPx = u.valToPos(yValue, 'y'); // Convert y-value to canvas y pixel
-
-			const pixelDiff = Math.abs(yPx - y);
-			if (pixelDiff <= 50) {
-				// very tight match, acting like "direct hit"
-				matchedSeriesLabel = u.series[i].label;
-				break; // stop at first match
-			}
-		}
-	}
-	return matchedSeriesLabel;
+	// Find the closest series using both x and y distance
+	return findClosestSeriesLabel(u, mouseX, mouseY, xVals, idx);
 }
 
 export function onGraphClick(
