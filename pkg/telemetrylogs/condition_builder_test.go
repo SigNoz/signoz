@@ -618,3 +618,194 @@ func TestGetConditionMultiple(t *testing.T) {
 		})
 	}
 }
+
+func TestGetConditionJSONBodySearch(t *testing.T) {
+	ctx := context.Background()
+	conditionBuilder := NewConditionBuilder()
+
+	testCases := []struct {
+		name          string
+		key           telemetrytypes.TelemetryFieldKey
+		operator      qbtypes.FilterOperator
+		value         any
+		expectedSQL   string
+		expectedError error
+	}{
+		{
+			name: "Equal operator - int64",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         200,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') = ?",
+			expectedError: nil,
+		},
+		{
+			name: "Equal operator - float64",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.duration_ms",
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         405.5,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.duration_ms'), 'Float64') = ?",
+			expectedError: nil,
+		},
+		{
+			name: "Equal operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.method",
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         "GET",
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.method'), 'String') = ?",
+			expectedError: nil,
+		},
+		{
+			name: "Equal operator - bool",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.success",
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         true,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.success'), 'Bool') = ?",
+			expectedError: nil,
+		},
+		{
+			name: "Exists operator",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorExists,
+			value:         nil,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String') <> ?",
+			expectedError: nil,
+		},
+		{
+			name: "Not Exists operator",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorNotExists,
+			value:         nil,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String') = ?",
+			expectedError: nil,
+		},
+		{
+			name: "Greater than operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorGreaterThan,
+			value:         "200",
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') > ?",
+			expectedError: nil,
+		},
+		{
+			name: "Greater than operator - int64",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorGreaterThan,
+			value:         200,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') > ?",
+			expectedError: nil,
+		},
+		{
+			name: "Less than operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorLessThan,
+			value:         "300",
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') < ?",
+			expectedError: nil,
+		},
+		{
+			name: "Less than operator - int64",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorLessThan,
+			value:         300,
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') < ?",
+			expectedError: nil,
+		},
+		{
+			name: "Contains operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         "200",
+			expectedSQL:   "LOWER(JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String')) LIKE LOWER(?)",
+			expectedError: nil,
+		},
+		{
+			name: "Not Contains operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorNotContains,
+			value:         "200",
+			expectedSQL:   "LOWER(JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'String')) NOT LIKE LOWER(?)",
+			expectedError: nil,
+		},
+		{
+			name: "Between operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorBetween,
+			value:         []any{"200", "300"},
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') BETWEEN ? AND ?",
+			expectedError: nil,
+		},
+		{
+			name: "Between operator - int64",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorBetween,
+			value:         []any{400, 500},
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') BETWEEN ? AND ?",
+			expectedError: nil,
+		},
+		{
+			name: "In operator - string",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorIn,
+			value:         []any{"200", "300"},
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') IN (?, ?)",
+			expectedError: nil,
+		},
+		{
+			name: "In operator - int64",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name: "body.http.status_code",
+			},
+			operator:      qbtypes.FilterOperatorIn,
+			value:         []any{401, 404, 500},
+			expectedSQL:   "JSONExtract(JSON_VALUE(body, '$.http.status_code'), 'Int64') IN (?, ?, ?)",
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			cond, err := conditionBuilder.GetCondition(ctx, &tc.key, tc.operator, tc.value, sb)
+			sb.Where(cond)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				assert.Contains(t, sql, tc.expectedSQL)
+			}
+		})
+	}
+}
