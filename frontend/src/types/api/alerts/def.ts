@@ -17,7 +17,7 @@ export const defaultAlgorithm = 'standard';
 export const defaultSeasonality = 'hourly';
 
 export interface AlertDef {
-	id?: number;
+	id?: string;
 	alertType?: string;
 	alert: string;
 	ruleType?: string;

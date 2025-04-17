@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -34,7 +34,7 @@ type IntegrationAssets struct {
 	Logs       LogsAssets            `json:"logs"`
 	Dashboards []types.DashboardData `json:"dashboards"`
 
-	Alerts []rules.PostableRule `json:"alerts"`
+	Alerts []ruletypes.PostableRule `json:"alerts"`
 }
 
 type LogsAssets struct {
