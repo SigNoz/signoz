@@ -188,8 +188,6 @@ export function useInspectMetrics(
 		return [timestamps, ...formattedSeries];
 	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
 
-	console.log({ aggregatedTimeSeries, formattedInspectMetricsTimeSeries });
-
 	const spaceAggregationLabels = useMemo(() => {
 		const labels = new Set<string>();
 		inspectMetricsData?.payload?.data.series.forEach((series) => {

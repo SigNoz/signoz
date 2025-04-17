@@ -4,7 +4,7 @@ import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { RefreshCcwIcon } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -12,7 +12,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
-import { GraphPopoverOptions, GraphViewProps } from './types';
+import { GraphViewProps } from './types';
 import { onGraphClick } from './utils';
 
 function GraphView({
@@ -24,6 +24,10 @@ function GraphView({
 	metricType,
 	spaceAggregationSeriesMap,
 	inspectionStep,
+	setPopoverOptions,
+	popoverOptions,
+	setShowGraphPopover,
+	showGraphPopover,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -37,12 +41,6 @@ function GraphView({
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 
 	const popoverRef = useRef<HTMLDivElement>(null);
-
-	const [
-		popoverOptions,
-		setPopoverOptions,
-	] = useState<GraphPopoverOptions | null>(null);
-
 	const options: uPlot.Options = useMemo(
 		() => ({
 			width: dimensions.width,
@@ -101,6 +99,7 @@ function GraphView({
 				ready: [
 					(u: uPlot): void => {
 						u.over.addEventListener('click', (e) => {
+							setShowGraphPopover(true);
 							onGraphClick(
 								e,
 								u,
@@ -119,10 +118,12 @@ function GraphView({
 			isDarkMode,
 			metricUnit,
 			formattedInspectMetricsTimeSeries,
+			inspectMetricsTimeSeries,
 			start,
 			end,
+			setShowGraphPopover,
 			popoverOptions,
-			inspectMetricsTimeSeries,
+			setPopoverOptions,
 		],
 	);
 
@@ -162,13 +163,15 @@ function GraphView({
 				</Button>
 			</div>
 			<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
-			{popoverOptions && (
+			{popoverOptions && showGraphPopover && (
 				<GraphPopover
 					options={popoverOptions}
 					spaceAggregationSeriesMap={spaceAggregationSeriesMap}
 					popoverRef={popoverRef}
 					step={inspectionStep}
-					openInExpandedView={(): void => {}}
+					openInExpandedView={(): void => {
+						setShowGraphPopover(false);
+					}}
 				/>
 			)}
 		</div>

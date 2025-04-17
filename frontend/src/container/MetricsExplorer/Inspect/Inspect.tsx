@@ -9,10 +9,11 @@ import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ExpandedView from './ExpandedView';
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
 import Stepper from './Stepper';
-import { InspectProps } from './types';
+import { GraphPopoverOptions, InspectProps } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
 function Inspect({
@@ -22,6 +23,11 @@ function Inspect({
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [metricName, setMetricName] = useState<string | null>(defaultMetricName);
+	const [
+		popoverOptions,
+		setPopoverOptions,
+	] = useState<GraphPopoverOptions | null>(null);
+	const [showGraphPopover, setShowGraphPopover] = useState(false);
 
 	const { data: metricDetailsData } = useGetMetricDetails(metricName ?? '', {
 		enabled: !!metricName,
@@ -56,6 +62,8 @@ function Inspect({
 		dispatchMetricInspectionOptions({
 			type: 'RESET_INSPECTION',
 		});
+		setShowGraphPopover(false);
+		setPopoverOptions(null);
 	}, [dispatchMetricInspectionOptions]);
 
 	// Reset inspection when the selected metric changes
@@ -106,6 +114,10 @@ function Inspect({
 						metricType={selectedMetricType}
 						spaceAggregationSeriesMap={spaceAggregationSeriesMap}
 						inspectionStep={inspectionStep}
+						setPopoverOptions={setPopoverOptions}
+						popoverOptions={popoverOptions}
+						setShowGraphPopover={setShowGraphPopover}
+						showGraphPopover={showGraphPopover}
 					/>
 					<QueryBuilder
 						metricName={metricName}
@@ -122,6 +134,13 @@ function Inspect({
 						inspectionStep={inspectionStep}
 						resetInspection={resetInspection}
 					/>
+					{popoverOptions && !showGraphPopover && (
+						<ExpandedView
+							options={popoverOptions}
+							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+							step={inspectionStep}
+						/>
+					)}
 				</div>
 			</div>
 		);
@@ -130,7 +149,7 @@ function Inspect({
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
-		inspectMetricsTimeSeries,
+		inspectMetricsTimeSeries.length,
 		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
 		resetInspection,
@@ -139,6 +158,8 @@ function Inspect({
 		selectedMetricType,
 		spaceAggregationSeriesMap,
 		inspectionStep,
+		popoverOptions,
+		showGraphPopover,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,

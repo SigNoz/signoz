@@ -33,6 +33,10 @@ export interface GraphViewProps {
 	resetInspection: () => void;
 	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
 	inspectionStep: InspectionStep;
+	setPopoverOptions: (options: GraphPopoverOptions | null) => void;
+	popoverOptions: GraphPopoverOptions | null;
+	setShowGraphPopover: (showGraphPopover: boolean) => void;
+	showGraphPopover: boolean;
 }
 
 export interface QueryBuilderProps {
@@ -134,4 +138,11 @@ export interface GraphPopoverData {
 	value: string;
 	title?: string;
 	type: 'instance' | 'aggregated';
+	timeSeries?: InspectMetricsSeries;
+}
+
+export interface ExpandedViewProps {
+	options: GraphPopoverOptions | null;
+	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
+	step: InspectionStep;
 }

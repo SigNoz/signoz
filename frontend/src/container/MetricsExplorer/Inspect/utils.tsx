@@ -511,6 +511,7 @@ export function getSpaceAggregatedDataFromTimeSeries(
 			type: 'aggregated',
 			value: value ?? '-',
 			title: series.title,
+			timeSeries: series,
 		};
 	});
 }

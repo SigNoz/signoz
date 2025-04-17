@@ -1,4 +1,4 @@
-import { Button, Card, Col, Row, Typography } from 'antd';
+import { Button, Card, Typography } from 'antd';
 import { ArrowRight } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -65,8 +65,8 @@ function GraphPopover({
 				<Typography.Text className="graph-popover-header-text">
 					{formatTimestampToFullDateTime(timestamp)}
 				</Typography.Text>
-				<Row className="graph-popover-row" align="middle" justify="space-between">
-					<Row align="middle">
+				<div className="graph-popover-row">
+					<div className="graph-popover-inner-row">
 						<div
 							style={{
 								width: 10,
@@ -77,70 +77,56 @@ function GraphPopover({
 							}}
 						/>
 						<Typography.Text>{timeSeries?.title}</Typography.Text>
-					</Row>
+					</div>
 					<Typography.Text strong>
-						{Number(absoluteValue).toLocaleString()}
+						{Number(absoluteValue).toFixed(2)}
 					</Typography.Text>
-				</Row>
+				</div>
 
 				{/* Table */}
-				<Row className="graph-popover-row" gutter={[12, 12]} align="middle">
-					<Col>
-						<Typography.Text className="graph-popover-row-label">
-							{step === InspectionStep.TIME_AGGREGATION ? 'RAW VALUES' : 'VALUES'}
-						</Typography.Text>
-					</Col>
-					<Col>
-						<Row className="graph-popover-inner-row" gutter={[8, 8]}>
-							{data?.map(({ value }) => (
-								<Col key={value}>
-									<div className="graph-popover-cell">{value}</div>
-								</Col>
-							))}
-						</Row>
-					</Col>
-				</Row>
+				<div className="graph-popover-row">
+					<Typography.Text className="graph-popover-row-label">
+						{step === InspectionStep.TIME_AGGREGATION ? 'RAW VALUES' : 'VALUES'}
+					</Typography.Text>
+					<div className="graph-popover-inner-row">
+						{data?.map(({ value }) => (
+							<div key={value} className="graph-popover-cell">
+								{value}
+							</div>
+						))}
+					</div>
+				</div>
 				{step !== InspectionStep.COMPLETED && (
-					<Row className="graph-popover-row" gutter={[12, 12]} align="middle">
-						<Col>
-							<Typography.Text className="graph-popover-row-label">
-								TIMESTAMPS
-							</Typography.Text>
-						</Col>
-						<Col>
-							<Row className="graph-popover-inner-row" gutter={[8, 8]}>
-								{data?.map(({ timestamp }) => (
-									<Col key={timestamp}>
-										<div className="graph-popover-cell">
-											{formatTimestampToFullDateTime(timestamp ?? '', true)}
-										</div>
-									</Col>
-								))}
-							</Row>
-						</Col>
-					</Row>
+					<div className="graph-popover-row">
+						<Typography.Text className="graph-popover-row-label">
+							TIMESTAMPS
+						</Typography.Text>
+						<div className="graph-popover-inner-row">
+							{data?.map(({ timestamp }) => (
+								<div key={timestamp} className="graph-popover-cell">
+									{formatTimestampToFullDateTime(timestamp ?? '', true)}
+								</div>
+							))}
+						</div>
+					</div>
 				)}
 				{step === InspectionStep.COMPLETED && (
-					<Row className="graph-popover-row" gutter={[12, 12]} align="middle">
-						<Col>
-							<Typography.Text className="graph-popover-row-label">
-								TIME SERIES
-							</Typography.Text>
-						</Col>
-						<Col>
-							<Row className="graph-popover-inner-row" gutter={[8, 8]}>
-								{data?.map(({ title }) => (
-									<Col key={title}>
-										<div className="graph-popover-cell">{title}</div>
-									</Col>
-								))}
-							</Row>
-						</Col>
-					</Row>
+					<div className="graph-popover-row">
+						<Typography.Text className="graph-popover-row-label">
+							TIME SERIES
+						</Typography.Text>
+						<div className="graph-popover-inner-row">
+							{data?.map(({ title }) => (
+								<div key={title} className="graph-popover-cell">
+									{title}
+								</div>
+							))}
+						</div>
+					</div>
 				)}
 
 				{/* Footer */}
-				<Row align="middle" className="footer-row">
+				<div className="footer-row">
 					<Typography.Text className="footer-text">
 						Click to see more
 					</Typography.Text>
@@ -151,7 +137,7 @@ function GraphPopover({
 					<Button type="text" onClick={openInExpandedView}>
 						<ArrowRight size={14} />
 					</Button>
-				</Row>
+				</div>
 			</Card>
 		</div>
 	);

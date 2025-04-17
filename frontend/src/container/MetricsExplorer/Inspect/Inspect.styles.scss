@@ -217,6 +217,13 @@
 					}
 				}
 			}
+
+			.expanded-view {
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				padding-left: 40px;
+			}
 		}
 	}
 }
@@ -226,13 +233,34 @@
 	z-index: 1000;
 
 	.graph-popover-card {
-		width: 500px;
+		width: 550px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 16px;
 
 		.graph-popover-row {
 			margin-top: 12px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+
+			.graph-popover-row-label {
+				width: 100px;
+			}
 
 			.graph-popover-inner-row {
+				width: 400px;
 				margin-top: 4px;
+				align-items: center;
+				display: flex;
+				gap: 8px;
+				overflow-x: auto;
+				white-space: nowrap;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-width: thin;
+				scrollbar-color: #ccc transparent;
 			}
 		}
 
@@ -242,6 +270,7 @@
 
 		.graph-popover-row-label {
 			color: var(--bg-slate-50);
+			width: 10%;
 		}
 
 		.graph-popover-cell {
@@ -249,13 +278,18 @@
 			background-color: #1f1f1f;
 			border-radius: 4px;
 			color: #fff;
-			width: 50px;
+			min-width: 60px;
+			max-width: 60px;
+			text-overflow: ellipsis;
+			overflow: hidden;
+			white-space: nowrap;
 		}
 
 		.footer-row {
 			margin-top: 12px;
 			display: flex;
 			gap: 8px;
+			align-items: center;
 
 			.footer-text {
 				white-space: nowrap;
@@ -265,6 +299,59 @@
 				flex: 1;
 				border-top: 1px dashed #ccc;
 				margin: 0 8px;
+			}
+		}
+	}
+}
+
+.expanded-view {
+	.expanded-view-header {
+		.ant-typography {
+			display: flex;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 8px;
+		}
+	}
+
+	.graph-popover {
+		z-index: 2;
+		position: initial;
+
+		.graph-popover-card {
+			width: 100%;
+
+			.timeseries-cell {
+				cursor: pointer;
+				&:hover {
+					opacity: 80%;
+				}
+			}
+
+			.selected {
+				opacity: 90%;
+			}
+		}
+	}
+
+	.labels-table {
+		border: 1px solid var(--bg-slate-400);
+
+		.labels-key {
+			color: var(--bg-vanilla-400);
+			background-color: var(--bg-slate-500);
+			font-family: 'Geist Mono';
+		}
+
+		.labels-value {
+			background-color: var(--bg-slate-500);
+			opacity: 80%;
+			font-family: 'Geist Mono';
+
+			.field-renderer-container {
+				.label {
+					color: var(--bg-slate-400);
+				}
 			}
 		}
 	}
