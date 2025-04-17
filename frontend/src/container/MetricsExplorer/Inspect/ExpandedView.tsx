@@ -30,6 +30,8 @@ function ExpandedView({
 	useEffect(() => {
 		if (step !== InspectionStep.COMPLETED) {
 			setSelectedTimeSeries(options?.timeSeries ?? null);
+		} else {
+			setSelectedTimeSeries(null);
 		}
 	}, [step, options?.timeSeries]);
 
@@ -194,7 +196,7 @@ function ExpandedView({
 									selectedTimeSeries?.values.find(
 										(value) => value?.timestamp >= (options?.timestamp || 0),
 									)?.value ?? options?.value,
-								).toLocaleString()}
+								).toFixed(2)}
 							</Typography.Text>
 						</div>
 

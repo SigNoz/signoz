@@ -27,7 +27,7 @@ function Inspect({
 		popoverOptions,
 		setPopoverOptions,
 	] = useState<GraphPopoverOptions | null>(null);
-	const [showGraphPopover, setShowGraphPopover] = useState(false);
+	const [showExpandedView, setShowExpandedView] = useState(false);
 
 	const { data: metricDetailsData } = useGetMetricDetails(metricName ?? '', {
 		enabled: !!metricName,
@@ -62,7 +62,7 @@ function Inspect({
 		dispatchMetricInspectionOptions({
 			type: 'RESET_INSPECTION',
 		});
-		setShowGraphPopover(false);
+		setShowExpandedView(false);
 		setPopoverOptions(null);
 	}, [dispatchMetricInspectionOptions]);
 
@@ -116,8 +116,8 @@ function Inspect({
 						inspectionStep={inspectionStep}
 						setPopoverOptions={setPopoverOptions}
 						popoverOptions={popoverOptions}
-						setShowGraphPopover={setShowGraphPopover}
-						showGraphPopover={showGraphPopover}
+						setShowExpandedView={setShowExpandedView}
+						showExpandedView={showExpandedView}
 					/>
 					<QueryBuilder
 						metricName={metricName}
@@ -134,7 +134,7 @@ function Inspect({
 						inspectionStep={inspectionStep}
 						resetInspection={resetInspection}
 					/>
-					{popoverOptions && !showGraphPopover && (
+					{showExpandedView && (
 						<ExpandedView
 							options={popoverOptions}
 							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
@@ -159,7 +159,7 @@ function Inspect({
 		spaceAggregationSeriesMap,
 		inspectionStep,
 		popoverOptions,
-		showGraphPopover,
+		showExpandedView,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
