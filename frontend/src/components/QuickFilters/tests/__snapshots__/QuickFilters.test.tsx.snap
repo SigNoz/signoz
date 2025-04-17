@@ -90,284 +90,293 @@ exports[`Quick Filters renders correctly with default props 1`] = `
         </span>
       </section>
     </section>
-    <section
-      class="filters"
+    <div
+      class="overlay-scrollbar"
+      data-overlayscrollbars-initialize="true"
     >
       <div
-        class="checkbox-filter"
+        data-overlayscrollbars-contents=""
       >
         <section
-          class="filter-header-checkbox"
+          class="filters"
         >
-          <section
-            class="left-action"
+          <div
+            class="checkbox-filter"
           >
-            <svg
-              class="lucide lucide-chevron-down"
-              cursor="pointer"
-              fill="none"
-              height="13"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="13"
-              xmlns="http://www.w3.org/2000/svg"
+            <section
+              class="filter-header-checkbox"
             >
-              <path
-                d="m6 9 6 6 6-6"
+              <section
+                class="left-action"
+              >
+                <svg
+                  class="lucide lucide-chevron-down"
+                  cursor="pointer"
+                  fill="none"
+                  height="13"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="13"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m6 9 6 6 6-6"
+                  />
+                </svg>
+                <span
+                  class="ant-typography title css-dev-only-do-not-override-2i2tap"
+                >
+                  Environment
+                </span>
+              </section>
+              <section
+                class="right-action"
+              >
+                <span
+                  class="ant-typography clear-all css-dev-only-do-not-override-2i2tap"
+                >
+                  Clear All
+                </span>
+              </section>
+            </section>
+            <section
+              class="search"
+            >
+              <input
+                class="ant-input css-dev-only-do-not-override-2i2tap"
+                placeholder="Filter values"
+                type="text"
+                value=""
               />
-            </svg>
-            <span
-              class="ant-typography title css-dev-only-do-not-override-2i2tap"
+            </section>
+            <section
+              class="values"
             >
-              Environment
-            </span>
-          </section>
-          <section
-            class="right-action"
-          >
-            <span
-              class="ant-typography clear-all css-dev-only-do-not-override-2i2tap"
-            >
-              Clear All
-            </span>
-          </section>
-        </section>
-        <section
-          class="search"
-        >
-          <input
-            class="ant-input css-dev-only-do-not-override-2i2tap"
-            placeholder="Filter values"
-            type="text"
-            value=""
-          />
-        </section>
-        <section
-          class="values"
-        >
-          <div
-            class="value"
-          >
-            <label
-              class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
-            >
-              <span
-                class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
+              <div
+                class="value"
               >
-                <input
-                  checked=""
-                  class="ant-checkbox-input"
-                  type="checkbox"
-                />
-                <span
-                  class="ant-checkbox-inner"
-                />
-              </span>
-            </label>
-            <div
-              class="checkbox-value-section"
-            >
-              <span
-                class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
+                <label
+                  class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
+                >
+                  <span
+                    class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
+                  >
+                    <input
+                      checked=""
+                      class="ant-checkbox-input"
+                      type="checkbox"
+                    />
+                    <span
+                      class="ant-checkbox-inner"
+                    />
+                  </span>
+                </label>
+                <div
+                  class="checkbox-value-section"
+                >
+                  <span
+                    class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
+                  >
+                    mq-kafka
+                  </span>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
+                    type="button"
+                  >
+                    <span>
+                      Only
+                    </span>
+                  </button>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
+                    type="button"
+                  >
+                    <span>
+                      Toggle
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="value"
               >
-                mq-kafka
-              </span>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
-                type="button"
+                <label
+                  class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
+                >
+                  <span
+                    class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
+                  >
+                    <input
+                      checked=""
+                      class="ant-checkbox-input"
+                      type="checkbox"
+                    />
+                    <span
+                      class="ant-checkbox-inner"
+                    />
+                  </span>
+                </label>
+                <div
+                  class="checkbox-value-section"
+                >
+                  <span
+                    class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
+                  >
+                    otel-demo
+                  </span>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
+                    type="button"
+                  >
+                    <span>
+                      Only
+                    </span>
+                  </button>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
+                    type="button"
+                  >
+                    <span>
+                      Toggle
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="value"
               >
-                <span>
-                  Only
-                </span>
-              </button>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
-                type="button"
+                <label
+                  class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
+                >
+                  <span
+                    class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
+                  >
+                    <input
+                      checked=""
+                      class="ant-checkbox-input"
+                      type="checkbox"
+                    />
+                    <span
+                      class="ant-checkbox-inner"
+                    />
+                  </span>
+                </label>
+                <div
+                  class="checkbox-value-section"
+                >
+                  <span
+                    class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
+                  >
+                    otlp-python
+                  </span>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
+                    type="button"
+                  >
+                    <span>
+                      Only
+                    </span>
+                  </button>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
+                    type="button"
+                  >
+                    <span>
+                      Toggle
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="value"
               >
-                <span>
-                  Toggle
-                </span>
-              </button>
-            </div>
+                <label
+                  class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
+                >
+                  <span
+                    class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
+                  >
+                    <input
+                      checked=""
+                      class="ant-checkbox-input"
+                      type="checkbox"
+                    />
+                    <span
+                      class="ant-checkbox-inner"
+                    />
+                  </span>
+                </label>
+                <div
+                  class="checkbox-value-section"
+                >
+                  <span
+                    class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
+                  >
+                    sample-flask
+                  </span>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
+                    type="button"
+                  >
+                    <span>
+                      Only
+                    </span>
+                  </button>
+                  <button
+                    class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
+                    type="button"
+                  >
+                    <span>
+                      Toggle
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
           <div
-            class="value"
+            class="checkbox-filter"
           >
-            <label
-              class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
+            <section
+              class="filter-header-checkbox"
             >
-              <span
-                class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
+              <section
+                class="left-action"
               >
-                <input
-                  checked=""
-                  class="ant-checkbox-input"
-                  type="checkbox"
-                />
+                <svg
+                  class="lucide lucide-chevron-right"
+                  cursor="pointer"
+                  fill="none"
+                  height="13"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="13"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m9 18 6-6-6-6"
+                  />
+                </svg>
                 <span
-                  class="ant-checkbox-inner"
-                />
-              </span>
-            </label>
-            <div
-              class="checkbox-value-section"
-            >
-              <span
-                class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
-              >
-                otel-demo
-              </span>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
-                type="button"
-              >
-                <span>
-                  Only
+                  class="ant-typography title css-dev-only-do-not-override-2i2tap"
+                >
+                  Service Name
                 </span>
-              </button>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
-                type="button"
-              >
-                <span>
-                  Toggle
-                </span>
-              </button>
-            </div>
-          </div>
-          <div
-            class="value"
-          >
-            <label
-              class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
-            >
-              <span
-                class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
-              >
-                <input
-                  checked=""
-                  class="ant-checkbox-input"
-                  type="checkbox"
-                />
-                <span
-                  class="ant-checkbox-inner"
-                />
-              </span>
-            </label>
-            <div
-              class="checkbox-value-section"
-            >
-              <span
-                class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
-              >
-                otlp-python
-              </span>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
-                type="button"
-              >
-                <span>
-                  Only
-                </span>
-              </button>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
-                type="button"
-              >
-                <span>
-                  Toggle
-                </span>
-              </button>
-            </div>
-          </div>
-          <div
-            class="value"
-          >
-            <label
-              class="ant-checkbox-wrapper ant-checkbox-wrapper-checked check-box css-dev-only-do-not-override-2i2tap"
-            >
-              <span
-                class="ant-checkbox ant-wave-target css-dev-only-do-not-override-2i2tap ant-checkbox-checked"
-              >
-                <input
-                  checked=""
-                  class="ant-checkbox-input"
-                  type="checkbox"
-                />
-                <span
-                  class="ant-checkbox-inner"
-                />
-              </span>
-            </label>
-            <div
-              class="checkbox-value-section"
-            >
-              <span
-                class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line value-string css-dev-only-do-not-override-2i2tap"
-              >
-                sample-flask
-              </span>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text only-btn"
-                type="button"
-              >
-                <span>
-                  Only
-                </span>
-              </button>
-              <button
-                class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-text toggle-btn"
-                type="button"
-              >
-                <span>
-                  Toggle
-                </span>
-              </button>
-            </div>
+              </section>
+              <section
+                class="right-action"
+              />
+            </section>
           </div>
         </section>
       </div>
-      <div
-        class="checkbox-filter"
-      >
-        <section
-          class="filter-header-checkbox"
-        >
-          <section
-            class="left-action"
-          >
-            <svg
-              class="lucide lucide-chevron-right"
-              cursor="pointer"
-              fill="none"
-              height="13"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="13"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="m9 18 6-6-6-6"
-              />
-            </svg>
-            <span
-              class="ant-typography title css-dev-only-do-not-override-2i2tap"
-            >
-              Service Name
-            </span>
-          </section>
-          <section
-            class="right-action"
-          />
-        </section>
-      </div>
-    </section>
+    </div>
   </div>
 </div>
 `;

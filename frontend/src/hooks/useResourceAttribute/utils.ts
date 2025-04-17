@@ -66,7 +66,7 @@ export function formatStringValuesForTrace(
 	return !Array.isArray(val) ? [String(val)] : val;
 }
 
-export const convertComposeQueryToTraceSelectedTags = (
+export const convertCompositeQueryToTraceSelectedTags = (
 	filterItems: TagFilterItem[] = [],
 ): Tags[] =>
 	filterItems.map((item) => ({

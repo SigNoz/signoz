@@ -21,7 +21,7 @@ import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertComposeQueryToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { convertCompositeQueryToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
@@ -125,8 +125,7 @@ function AllErrors(): JSX.Element {
 					orderParam: getUpdatedParams,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					// tags: convertRawQueriesToTraceSelectedTags(queries),
-					tags: convertComposeQueryToTraceSelectedTags(
+					tags: convertCompositeQueryToTraceSelectedTags(
 						compositeData?.builder.queryData?.[0]?.filters.items,
 					),
 				}),
@@ -147,8 +146,7 @@ function AllErrors(): JSX.Element {
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					// tags: convertRawQueriesToTraceSelectedTags(queries),
-					tags: convertComposeQueryToTraceSelectedTags(
+					tags: convertCompositeQueryToTraceSelectedTags(
 						compositeData?.builder.queryData?.[0]?.filters.items,
 					),
 				}),
@@ -448,7 +446,7 @@ function AllErrors(): JSX.Element {
 				selectedEnvironments,
 				resourceAttributeUsed: !!compositeData?.builder.queryData?.[0]?.filters
 					.items?.length,
-				tags: convertComposeQueryToTraceSelectedTags(
+				tags: convertCompositeQueryToTraceSelectedTags(
 					compositeData?.builder.queryData?.[0]?.filters.items,
 				),
 			});

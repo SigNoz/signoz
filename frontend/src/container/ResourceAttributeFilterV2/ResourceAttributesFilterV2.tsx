@@ -12,7 +12,6 @@ import { DataSource } from 'types/common/queryBuilder';
 function ResourceAttributesFilter(): JSX.Element | null {
 	const { currentQuery } = useQueryBuilder();
 	const query = currentQuery?.builder?.queryData[0] || null;
-	console.log('query', query);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -58,4 +57,3 @@ function ResourceAttributesFilter(): JSX.Element | null {
 }
 
 export default ResourceAttributesFilter;
-// TODO: limit suggestion list
