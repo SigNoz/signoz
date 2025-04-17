@@ -73,7 +73,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/.env
-          key: dotenv-${{ github.sha }}
+          key: enterprise-dotenv-${{ github.sha }}
   js-build:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
@@ -81,10 +81,10 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      JS_INPUT_ARTIFACT_CACHE_KEY: dotenv-${{ github.sha }}
+      JS_INPUT_ARTIFACT_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
       JS_INPUT_ARTIFACT_PATH: frontend/.env
-      JS_OUTPUT_ARTIFACT_CACHE_KEY: jsbuild-${{ github.sha }}
-      JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build 
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:
@@ -93,7 +93,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_INPUT_ARTIFACT_CACHE_KEY: jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./ee/query-service
       GO_BUILD_FLAGS: >-
