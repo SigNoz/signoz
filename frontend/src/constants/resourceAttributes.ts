@@ -18,7 +18,11 @@ export const OperatorConversions: Array<{
 ];
 
 // mapping from qb to exceptions
-export const CompositeQueryOperatorsConfig = [
+export const CompositeQueryOperatorsConfig: Array<{
+	label: string;
+	metricValue: string;
+	traceValue: OperatorValues;
+}> = [
 	{
 		label: 'in',
 		metricValue: '=~',
