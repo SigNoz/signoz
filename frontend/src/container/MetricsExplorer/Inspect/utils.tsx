@@ -410,17 +410,18 @@ export function onGraphClick(
 	e: MouseEvent,
 	u: uPlot,
 	popoverRef: React.RefObject<HTMLDivElement>,
-	popoverOptions: GraphPopoverOptions | null,
 	setPopoverOptions: (options: GraphPopoverOptions | null) => void,
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
+	showPopover: boolean,
+	setShowPopover: (showPopover: boolean) => void,
 ): void {
 	if (popoverRef.current && popoverRef.current.contains(e.target as Node)) {
 		// Clicked inside the popover, don't close
 		return;
 	}
 	// If popover is already open, close it
-	if (popoverOptions) {
-		setPopoverOptions(null);
+	if (showPopover) {
+		setShowPopover(false);
 		return;
 	}
 	// Get which series the user clicked on
@@ -445,6 +446,7 @@ export function onGraphClick(
 		timestamp: xVal,
 		timeSeries: series,
 	});
+	setShowPopover(true);
 }
 
 export function getRawDataFromTimeSeries(

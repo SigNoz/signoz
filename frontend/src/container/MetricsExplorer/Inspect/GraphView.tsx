@@ -27,6 +27,7 @@ function GraphView({
 	setPopoverOptions,
 	popoverOptions,
 	setShowExpandedView,
+	setExpandedViewOptions,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -99,14 +100,14 @@ function GraphView({
 				ready: [
 					(u: uPlot): void => {
 						u.over.addEventListener('click', (e) => {
-							setShowGraphPopover(true);
 							onGraphClick(
 								e,
 								u,
 								popoverRef,
-								popoverOptions,
 								setPopoverOptions,
 								inspectMetricsTimeSeries,
+								showGraphPopover,
+								setShowGraphPopover,
 							);
 						});
 					},
@@ -121,9 +122,8 @@ function GraphView({
 			inspectMetricsTimeSeries,
 			start,
 			end,
-			setShowGraphPopover,
-			popoverOptions,
 			setPopoverOptions,
+			showGraphPopover,
 		],
 	);
 
@@ -172,6 +172,7 @@ function GraphView({
 					openInExpandedView={(): void => {
 						setShowGraphPopover(false);
 						setShowExpandedView(true);
+						setExpandedViewOptions(popoverOptions);
 					}}
 				/>
 			)}

@@ -37,6 +37,7 @@ export interface GraphViewProps {
 	popoverOptions: GraphPopoverOptions | null;
 	showExpandedView: boolean;
 	setShowExpandedView: (showExpandedView: boolean) => void;
+	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
 }
 
 export interface QueryBuilderProps {
