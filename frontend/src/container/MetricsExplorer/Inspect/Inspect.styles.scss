@@ -222,8 +222,27 @@
 }
 
 .graph-popover {
+	position: fixed;
+	z-index: 1000;
+
 	.graph-popover-card {
 		width: 500px;
+
+		.graph-popover-row {
+			margin-top: 12px;
+
+			.graph-popover-inner-row {
+				margin-top: 4px;
+			}
+		}
+
+		.graph-popover-header-text {
+			color: var(--text-vanilla-400);
+		}
+
+		.graph-popover-row-label {
+			color: var(--bg-slate-50);
+		}
 
 		.graph-popover-cell {
 			padding: 4px 8px;
@@ -231,6 +250,22 @@
 			border-radius: 4px;
 			color: #fff;
 			width: 50px;
+		}
+
+		.footer-row {
+			margin-top: 12px;
+			display: flex;
+			gap: 8px;
+
+			.footer-text {
+				white-space: nowrap;
+			}
+
+			.footer-divider {
+				flex: 1;
+				border-top: 1px dashed #ccc;
+				margin: 0 8px;
+			}
 		}
 	}
 }
