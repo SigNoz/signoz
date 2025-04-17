@@ -1,9 +1,9 @@
 name: prereleaser
 
 on:
-  # schedule every wednesday 9:30 AM UTC (3pm IST)
+  # schedule every wednesday 6:30 AM UTC (12:00 PM IST)
   schedule:
-    - cron: '30 9 * * 3'
+    - cron: '30 6 * * 3'
 
   # allow manual triggering of the workflow by a maintainer
   workflow_dispatch:
