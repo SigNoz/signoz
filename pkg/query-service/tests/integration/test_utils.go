@@ -166,6 +166,7 @@ func createTestUser() (*types.User, *model.ApiError) {
 	auth.InitAuthCache(ctx)
 
 	userId := uuid.NewString()
+
 	return dao.DB().CreateUser(
 		ctx,
 		&types.User{
