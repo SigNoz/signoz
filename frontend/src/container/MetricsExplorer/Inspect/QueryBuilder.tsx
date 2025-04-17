@@ -37,6 +37,7 @@ function QueryBuilder({
 					metricType={metricType}
 					metricInspectionOptions={metricInspectionOptions}
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
+					spaceAggregationLabels={spaceAggregationLabels}
 				/>
 				<MetricTimeAggregation
 					inspectionStep={inspectionStep}

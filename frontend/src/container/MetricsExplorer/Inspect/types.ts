@@ -20,6 +20,8 @@ export interface UseInspectMetricsReturnData {
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 	isInspectMetricsRefetching: boolean;
+	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
+	aggregatedTimeSeries: InspectMetricsSeries[];
 }
 
 export interface GraphViewProps {
@@ -29,6 +31,13 @@ export interface GraphViewProps {
 	metricType?: MetricType | undefined;
 	formattedInspectMetricsTimeSeries: AlignedData;
 	resetInspection: () => void;
+	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
+	inspectionStep: InspectionStep;
+	setPopoverOptions: (options: GraphPopoverOptions | null) => void;
+	popoverOptions: GraphPopoverOptions | null;
+	showExpandedView: boolean;
+	setShowExpandedView: (showExpandedView: boolean) => void;
+	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
 }
 
 export interface QueryBuilderProps {
@@ -51,6 +60,7 @@ export interface MetricFiltersProps {
 	metricType: MetricType | undefined;
 	metricInspectionOptions: MetricInspectionOptions;
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
+	spaceAggregationLabels: string[];
 }
 
 export interface MetricTimeAggregationProps {
@@ -107,4 +117,34 @@ export enum InspectionStep {
 export interface StepperProps {
 	inspectionStep: InspectionStep;
 	resetInspection: () => void;
+}
+
+export interface GraphPopoverOptions {
+	x: number;
+	y: number;
+	value: number;
+	timestamp: number;
+	timeSeries: InspectMetricsSeries;
+}
+
+export interface GraphPopoverProps {
+	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
+	options: GraphPopoverOptions | null;
+	popoverRef: React.RefObject<HTMLDivElement>;
+	step: InspectionStep;
+	openInExpandedView: () => void;
+}
+
+export interface GraphPopoverData {
+	timestamp?: number;
+	value: string;
+	title?: string;
+	type: 'instance' | 'aggregated';
+	timeSeries?: InspectMetricsSeries;
+}
+
+export interface ExpandedViewProps {
+	options: GraphPopoverOptions | null;
+	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
+	step: InspectionStep;
 }
