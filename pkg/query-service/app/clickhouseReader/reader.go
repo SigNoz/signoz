@@ -1085,7 +1085,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				item.Attributes_string[k] = fmt.Sprintf("%v", v)
 			}
 			for k, v := range item.Attributes_number {
-				item.Attributes_string[k] = formatFloat(v)
+				item.Attributes_string[k] = utils.FormatFloat(v)
 			}
 			for k, v := range item.Resources_string {
 				item.Attributes_string[k] = v
@@ -4191,13 +4191,6 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 }
 
-func formatFloat(f float64) string {
-	if f == math.Trunc(f) {
-		return fmt.Sprintf("%.0f", f)
-	}
-	return fmt.Sprintf("%g", f)
-}
-
 func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
@@ -4248,7 +4241,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
-				val := formatFloat(reflect.ValueOf(v).Elem().Float())
+				val := utils.FormatFloat(reflect.ValueOf(v).Elem().Float())
 				groupBy = append(groupBy, val)
 				if _, ok := groupAttributes[colName]; !ok {
 					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
@@ -4263,7 +4256,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					isValidPoint = true
 					point.Value = value
 				} else {
-					val := formatFloat(value)
+					val := utils.FormatFloat(value)
 					groupBy = append(groupBy, val)
 					if _, ok := groupAttributes[colName]; !ok {
 						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
@@ -6898,7 +6891,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			item.Attributes_string[k] = fmt.Sprintf("%v", v)
 		}
 		for k, v := range item.Attributes_number {
-			item.Attributes_string[k] = formatFloat(v)
+			item.Attributes_string[k] = utils.FormatFloat(v)
 		}
 		for k, v := range item.Resources_string {
 			item.Attributes_string[k] = v

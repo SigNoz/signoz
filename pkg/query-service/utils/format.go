@@ -389,3 +389,10 @@ func NormalizeMap(data map[string]uint64) map[string]float64 {
 
 	return normalized
 }
+
+func FormatFloat(f float64) string {
+	if f == math.Trunc(f) {
+		return fmt.Sprintf("%.0f", f)
+	}
+	return fmt.Sprintf("%g", f)
+}
