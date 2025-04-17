@@ -141,7 +141,6 @@ function QueryBuilderSearchV2(
 		};
 	}, []);
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
