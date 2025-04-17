@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -346,7 +345,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		}
 		if !reflect.DeepEqual(chQueryArgs, c.expectedSearchArgs) {
 			for i, arg := range chQueryArgs {
-				fmt.Printf("Expected %v with type %T, got %v with type %T\n", c.expectedSearchArgs[i], c.expectedSearchArgs[i], arg, arg)
+				t.Logf("Expected %v with type %T, got %v with type %T\n", c.expectedSearchArgs[i], c.expectedSearchArgs[i], arg, arg)
 			}
 			t.Errorf("Expected %v, got %v", c.expectedSearchArgs, chQueryArgs)
 		}
@@ -568,7 +567,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		}
 		if !reflect.DeepEqual(chQueryArgs, c.expectedSearchArgs) {
 			for i, arg := range chQueryArgs {
-				fmt.Printf("Expected %v with type %T, got %v with type %T\n", c.expectedSearchArgs[i], c.expectedSearchArgs[i], arg, arg)
+				t.Logf("Expected %v with type %T, got %v with type %T\n", c.expectedSearchArgs[i], c.expectedSearchArgs[i], arg, arg)
 			}
 			t.Errorf("Expected %v, got %v", c.expectedSearchArgs, chQueryArgs)
 		}
