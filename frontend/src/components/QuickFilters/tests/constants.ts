@@ -24,7 +24,6 @@ export const QuickFiltersConfig = [
 			type: 'resource',
 			isColumn: false,
 			isJSON: false,
-			id: 'service.name--string--resource--true',
 		},
 		defaultOpen: false,
 	},
