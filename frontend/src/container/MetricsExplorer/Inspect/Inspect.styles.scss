@@ -220,3 +220,17 @@
 		}
 	}
 }
+
+.graph-popover {
+	.graph-popover-card {
+		width: 500px;
+
+		.graph-popover-cell {
+			padding: 4px 8px;
+			background-color: #1f1f1f;
+			border-radius: 4px;
+			color: #fff;
+			width: 50px;
+		}
+	}
+}

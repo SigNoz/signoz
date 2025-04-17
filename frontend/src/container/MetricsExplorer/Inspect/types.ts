@@ -20,6 +20,8 @@ export interface UseInspectMetricsReturnData {
 	dispatchMetricInspectionOptions: (action: MetricInspectionAction) => void;
 	inspectionStep: InspectionStep;
 	isInspectMetricsRefetching: boolean;
+	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
+	aggregatedTimeSeries: InspectMetricsSeries[];
 }
 
 export interface GraphViewProps {
@@ -29,6 +31,8 @@ export interface GraphViewProps {
 	metricType?: MetricType | undefined;
 	formattedInspectMetricsTimeSeries: AlignedData;
 	resetInspection: () => void;
+	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
+	inspectionStep: InspectionStep;
 }
 
 export interface QueryBuilderProps {
@@ -107,4 +111,27 @@ export enum InspectionStep {
 export interface StepperProps {
 	inspectionStep: InspectionStep;
 	resetInspection: () => void;
+}
+
+export interface GraphPopoverOptions {
+	x: number;
+	y: number;
+	value: number;
+	timestamp: number;
+	timeSeries: InspectMetricsSeries;
+}
+
+export interface GraphPopoverProps {
+	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
+	options: GraphPopoverOptions | null;
+	popoverRef: React.RefObject<HTMLDivElement>;
+	step: InspectionStep;
+	openInExpandedView: () => void;
+}
+
+export interface GraphPopoverData {
+	timestamp?: number;
+	value: string;
+	title?: string;
+	type: 'instance' | 'aggregated';
 }

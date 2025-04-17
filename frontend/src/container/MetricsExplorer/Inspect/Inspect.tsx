@@ -38,6 +38,8 @@ function Inspect({
 		dispatchMetricInspectionOptions,
 		inspectionStep,
 		isInspectMetricsRefetching,
+		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
+		aggregatedTimeSeries,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -96,12 +98,14 @@ function Inspect({
 			<div className="inspect-metrics-content">
 				<div className="inspect-metrics-content-first-col">
 					<GraphView
-						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						inspectMetricsTimeSeries={aggregatedTimeSeries}
 						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
 						resetInspection={resetInspection}
 						metricName={metricName}
 						metricUnit={selectedMetricUnit}
 						metricType={selectedMetricType}
+						spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+						inspectionStep={inspectionStep}
 					/>
 					<QueryBuilder
 						metricName={metricName}
@@ -127,15 +131,17 @@ function Inspect({
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
 		inspectMetricsTimeSeries,
+		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
 		resetInspection,
 		metricName,
 		selectedMetricUnit,
 		selectedMetricType,
+		spaceAggregationSeriesMap,
+		inspectionStep,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
-		inspectionStep,
 	]);
 
 	return (

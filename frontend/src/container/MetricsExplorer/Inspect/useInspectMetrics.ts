@@ -1,6 +1,9 @@
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { themeColors } from 'constants/theme';
 import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
-import { useMemo, useReducer } from 'react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -75,14 +78,25 @@ export function useInspectMetrics(
 			keepPreviousData: true,
 		},
 	);
+	const isDarkMode = useIsDarkMode();
 
 	const inspectMetricsTimeSeries = useMemo(() => {
 		const series = inspectMetricsData?.payload?.data?.series ?? [];
-		return series.map((series) => ({
-			...series,
-			values: [...series.values].sort((a, b) => a.timestamp - b.timestamp),
-		}));
-	}, [inspectMetricsData]);
+
+		return series.map((series, index) => {
+			const title = `TS${index + 1}`;
+			const strokeColor = generateColor(
+				title,
+				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+			);
+			return {
+				...series,
+				values: [...series.values].sort((a, b) => a.timestamp - b.timestamp),
+				title,
+				strokeColor,
+			};
+		});
+	}, [inspectMetricsData, isDarkMode]);
 
 	const inspectMetricsStatusCode = useMemo(
 		() => inspectMetricsData?.statusCode || 200,
@@ -112,6 +126,17 @@ export function useInspectMetrics(
 		return InspectionStep.TIME_AGGREGATION;
 	}, [metricInspectionOptions]);
 
+	const [spaceAggregatedSeriesMap, setSpaceAggregatedSeriesMap] = useState<
+		Map<string, InspectMetricsSeries[]>
+	>(new Map());
+	const [aggregatedTimeSeries, setAggregatedTimeSeries] = useState<
+		InspectMetricsSeries[]
+	>(inspectMetricsTimeSeries);
+
+	useEffect(() => {
+		setAggregatedTimeSeries(inspectMetricsTimeSeries);
+	}, [inspectMetricsTimeSeries]);
+
 	const formattedInspectMetricsTimeSeries = useMemo(() => {
 		const allTimestamps = new Set<number>();
 		const seriesValuesMap: Map<number, number | null>[] = [];
@@ -128,14 +153,17 @@ export function useInspectMetrics(
 				inspectMetricsTimeSeries,
 				metricInspectionOptions,
 			);
+			setAggregatedTimeSeries(timeSeries);
 		}
-
 		// Apply space aggregation
 		if (inspectionStep === InspectionStep.COMPLETED) {
-			timeSeries = applySpaceAggregation(
+			const { aggregatedSeries, spaceAggregatedSeriesMap } = applySpaceAggregation(
 				inspectMetricsTimeSeries,
 				metricInspectionOptions,
 			);
+			timeSeries = aggregatedSeries;
+			setSpaceAggregatedSeriesMap(spaceAggregatedSeriesMap);
+			setAggregatedTimeSeries(aggregatedSeries);
 		}
 
 		// Collect timestamps and format into chart compatible format
@@ -160,6 +188,8 @@ export function useInspectMetrics(
 		return [timestamps, ...formattedSeries];
 	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
 
+	console.log({ aggregatedTimeSeries, formattedInspectMetricsTimeSeries });
+
 	const spaceAggregationLabels = useMemo(() => {
 		const labels = new Set<string>();
 		inspectMetricsData?.payload?.data.series.forEach((series) => {
@@ -181,5 +211,7 @@ export function useInspectMetrics(
 		dispatchMetricInspectionOptions,
 		inspectionStep,
 		isInspectMetricsRefetching,
+		spaceAggregatedSeriesMap,
+		aggregatedTimeSeries,
 	};
 }

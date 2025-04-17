@@ -15,6 +15,8 @@ import {
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
 import {
+	GraphPopoverData,
+	GraphPopoverOptions,
 	InspectionStep,
 	MetricFiltersProps,
 	MetricInspectionOptions,
@@ -289,7 +291,10 @@ export function applyTimeAggregation(
 export function applySpaceAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 	metricInspectionOptions: MetricInspectionOptions,
-): InspectMetricsSeries[] {
+): {
+	aggregatedSeries: InspectMetricsSeries[];
+	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
+} {
 	// Group series by selected space aggregation labels
 	const groupedSeries = new Map<string, InspectMetricsSeries[]>();
 
@@ -363,5 +368,175 @@ export function applySpaceAggregation(
 		});
 	});
 
-	return aggregatedSeries;
+	return {
+		aggregatedSeries,
+		spaceAggregatedSeriesMap: groupedSeries,
+	};
 }
+
+export function getSeriesLabelFromPixel(
+	e: MouseEvent,
+	u: uPlot,
+): string | undefined {
+	const { left, top } = u.over.getBoundingClientRect();
+	const x = e.clientX - left;
+	const y = e.clientY - top;
+
+	const idx = u.posToIdx(x); // nearest index based on x pixel
+
+	let matchedSeriesLabel: string | undefined;
+
+	for (let i = 1; i < u.series.length; i++) {
+		const ySeries = u.data[i];
+		const yValue = ySeries[idx];
+
+		const isValueValid = yValue != null && Number.isFinite(yValue);
+
+		if (isValueValid) {
+			const yPx = u.valToPos(yValue, 'y'); // Convert y-value to canvas y pixel
+
+			const pixelDiff = Math.abs(yPx - y);
+			if (pixelDiff <= 50) {
+				// very tight match, acting like "direct hit"
+				matchedSeriesLabel = u.series[i].label;
+				break; // stop at first match
+			}
+		}
+	}
+	return matchedSeriesLabel;
+}
+
+export function onGraphClick(
+	e: MouseEvent,
+	u: uPlot,
+	popoverRef: React.RefObject<HTMLDivElement>,
+	popoverOptions: GraphPopoverOptions | null,
+	setPopoverOptions: (options: GraphPopoverOptions | null) => void,
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+): void {
+	if (popoverRef.current && popoverRef.current.contains(e.target as Node)) {
+		// Clicked inside the popover, don't close
+		return;
+	}
+	// If popover is already open, close it
+	if (popoverOptions) {
+		setPopoverOptions(null);
+		return;
+	}
+	// Get which series the user clicked on
+	// If no series is clicked, return
+	const seriesLabel = getSeriesLabelFromPixel(e, u);
+	if (!seriesLabel) return;
+
+	// Get the series data
+	const seriesIndex = seriesLabel.charCodeAt(0) - 65;
+	const series = inspectMetricsTimeSeries[seriesIndex];
+
+	const { left, top } = u.over.getBoundingClientRect();
+	const x = e.clientX - left;
+	const y = e.clientY - top;
+	const xVal = u.posToVal(x, 'x'); // Get actual x-axis value
+	const yVal = u.posToVal(y, 'y'); // Get actual y-axis value value (metric value)
+
+	setPopoverOptions({
+		x: e.clientX,
+		y: e.clientY,
+		value: yVal,
+		timestamp: xVal,
+		timeSeries: series,
+	});
+}
+
+export function getRawDataFromTimeSeries(
+	timeSeries: InspectMetricsSeries,
+	timestamp: number,
+): GraphPopoverData[] {
+	const timestampIndex = timeSeries.values.findIndex(
+		(value) => value.timestamp >= timestamp,
+	);
+	const timestamps = [];
+	if (timestampIndex !== undefined) {
+		for (
+			let i = Math.max(0, timestampIndex - 2);
+			i <= Math.min((timeSeries?.values?.length ?? 0) - 1, timestampIndex + 2);
+			i++
+		) {
+			timestamps.push(timeSeries?.values?.[i]);
+		}
+	}
+	return timestamps.map((timestamp) => ({
+		timestamp: timestamp.timestamp,
+		type: 'instance',
+		value: timestamp.value,
+		title: timeSeries.title,
+	}));
+}
+
+export function getSpaceAggregatedDataFromTimeSeries(
+	timeSeries: InspectMetricsSeries,
+	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>,
+	timestamp: number,
+): GraphPopoverData[] {
+	if (spaceAggregatedSeriesMap.size === 0) {
+		return [];
+	}
+
+	const appliedLabels =
+		Array.from(spaceAggregatedSeriesMap.keys())[0]
+			?.split(',')
+			.map((label) => label.split(':')[0]) || [];
+
+	let matchingSeries: InspectMetricsSeries[] = [];
+	spaceAggregatedSeriesMap.forEach((series) => {
+		let isMatching = true;
+		appliedLabels.forEach((label) => {
+			if (timeSeries.labels[label] !== series[0].labels[label]) {
+				isMatching = false;
+			}
+		});
+		if (isMatching) {
+			matchingSeries = series;
+		}
+	});
+
+	return matchingSeries.map((series) => {
+		const timestampIndex = series.values.findIndex(
+			(value) => value.timestamp >= timestamp,
+		);
+		const value = series.values[timestampIndex]?.value;
+		return {
+			timeseries: Object.entries(series.labels)
+				.map(([key, value]) => `${key}:${value}`)
+				.join(','),
+			type: 'aggregated',
+			value: value ?? '-',
+			title: series.title,
+		};
+	});
+}
+
+export const formatTimestampToFullDateTime = (
+	timestamp: string | number,
+	returnOnlyTime = false,
+): string => {
+	const date = new Date(Number(timestamp));
+
+	const datePart = date.toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+	});
+
+	const timePart = date.toLocaleTimeString('en-US', {
+		hour12: false,
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+
+	if (returnOnlyTime) {
+		return timePart;
+	}
+
+	return `${datePart} ⎯ ${timePart}`;
+};
