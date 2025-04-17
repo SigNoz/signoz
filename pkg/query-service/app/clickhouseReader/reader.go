@@ -1085,7 +1085,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				item.Attributes_string[k] = fmt.Sprintf("%v", v)
 			}
 			for k, v := range item.Attributes_number {
-				item.Attributes_string[k] = utils.FormatFloat(v)
+				item.Attributes_string[k] = strconv.FormatFloat(v, 'f', -1, 64)
 			}
 			for k, v := range item.Resources_string {
 				item.Attributes_string[k] = v
@@ -4241,7 +4241,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
-				val := utils.FormatFloat(reflect.ValueOf(v).Elem().Float())
+				val := strconv.FormatFloat(reflect.ValueOf(v).Elem().Float(), 'f', -1, 64)
 				groupBy = append(groupBy, val)
 				if _, ok := groupAttributes[colName]; !ok {
 					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
@@ -4256,7 +4256,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					isValidPoint = true
 					point.Value = value
 				} else {
-					val := utils.FormatFloat(value)
+					val := strconv.FormatFloat(value, 'f', -1, 64)
 					groupBy = append(groupBy, val)
 					if _, ok := groupAttributes[colName]; !ok {
 						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
@@ -6891,7 +6891,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			item.Attributes_string[k] = fmt.Sprintf("%v", v)
 		}
 		for k, v := range item.Attributes_number {
-			item.Attributes_string[k] = utils.FormatFloat(v)
+			item.Attributes_string[k] = strconv.FormatFloat(v, 'f', -1, 64)
 		}
 		for k, v := range item.Resources_string {
 			item.Attributes_string[k] = v

@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"math"
 	"reflect"
 	"testing"
 
@@ -480,75 +479,6 @@ func TestGetEpochNanoSecs(t *testing.T) {
 			got := GetEpochNanoSecs(tt.Epoch)
 			if !reflect.DeepEqual(got, tt.Result) {
 				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.Result)
-			}
-		})
-	}
-}
-
-func TestFormatFloat(t *testing.T) {
-	type args struct {
-		f float64
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "Test 1",
-			args: args{f: 1.1},
-			want: "1.1",
-		},
-		{
-			name: "Test 2",
-			args: args{f: 1240000},
-			want: "1240000",
-		},
-		{
-			name: "Test 3",
-			args: args{f: -0},
-			want: "0",
-		},
-		{
-			name: "Test 4",
-			args: args{f: math.Inf(1)},
-			want: "+Inf",
-		},
-		{
-			name: "Test 5",
-			args: args{f: math.Inf(-1)},
-			want: "-Inf",
-		},
-		{
-			name: "Test 6: Zero",
-			args: args{f: 0},
-			want: "0",
-		},
-		{
-			name: "Test 7: Negative number",
-			args: args{f: -123.456},
-			want: "-123.456",
-		},
-		{
-			name: "Test 8: Very small number",
-			args: args{f: 1e-10},
-			want: "1e-10",
-		},
-		{
-			name: "Test 9: Very large number",
-			args: args{f: 1e10},
-			want: "10000000000",
-		},
-		{
-			name: "Test 10: NaN",
-			args: args{f: math.NaN()},
-			want: "NaN",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := FormatFloat(tt.args.f); got != tt.want {
-				t.Errorf("FormatFloat() = %v, want %v", got, tt.want)
 			}
 		})
 	}
