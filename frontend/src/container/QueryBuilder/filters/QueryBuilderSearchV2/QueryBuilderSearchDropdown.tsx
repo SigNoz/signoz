@@ -35,8 +35,21 @@ function QueryBuilderSearchDropdown({
 	return (
 		<div className="content">
 			{currentState === DropdownState.ATTRIBUTE_KEY && (
-				<div className="suggested-filters" style={{ fontSize: isMobile ? '12px' : '11px' }}>
-					{showAllFilters ? 'All Filters' : 'Suggested Filters'}
+				<div className={`suggested-filters ${isMobile ? 'mobile' : ''}`}>
+					{currentFilterItem?.key && (
+						<div className="operator-text">
+							<Typography.Text type="secondary">
+								{currentFilterItem?.operator}
+							</Typography.Text>
+						</div>
+					)}
+					{currentFilterItem?.key && (
+						<div className="value-text">
+							<Typography.Text type="secondary">
+								{currentFilterItem?.value}
+							</Typography.Text>
+						</div>
+					)}
 				</div>
 			)}
 
@@ -66,20 +79,21 @@ function QueryBuilderSearchDropdown({
 
 			{!isMobile && (
 				<div className="keyboard-shortcuts">
-					<div className="navigate">
-						<div className="icons">↑↓</div>
-						<div className="keyboard-text">to navigate</div>
+					<div className="shortcut-item">
+						<Keyboard size={12} />
+						<Typography.Text type="secondary">↑↓</Typography.Text>
+						<Typography.Text type="secondary">to navigate</Typography.Text>
 					</div>
-					<div className="update-query">
-						<div className="icons">↵</div>
-						<div className="keyboard-text">to update query</div>
+					<div className="shortcut-item">
+						<Keyboard size={12} />
+						<Typography.Text type="secondary">↵</Typography.Text>
+						<Typography.Text type="secondary">to select</Typography.Text>
 					</div>
-					{showAllFilters && (
-						<div className="show-all-filter-items">
-							<div className="icons">tab</div>
-							<div className="keyboard-text">to show all filter items</div>
-						</div>
-					)}
+					<div className="shortcut-item">
+						<Keyboard size={12} />
+						<Typography.Text type="secondary">esc</Typography.Text>
+						<Typography.Text type="secondary">to dismiss</Typography.Text>
+					</div>
 				</div>
 			)}
 		</div>
