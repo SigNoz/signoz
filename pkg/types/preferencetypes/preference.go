@@ -2,6 +2,7 @@ package preferencetypes
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -129,6 +130,15 @@ func NewDefaultPreferenceMap() map[string]Preference {
 			IsDiscreteValues: true,
 			AllowedScopes:    []string{"user"},
 		},
+		"QUICK_FILTERS_MAPPING": {
+			Key:              "QUICK_FILTERS_MAPPING",
+			Name:             "Quick Filters Mapping",
+			Description:      "Structured keys for Quick filters",
+			ValueType:        "json",
+			DefaultValue:     "[]",
+			IsDiscreteValues: false,
+			AllowedScopes:    []string{"org"},
+		},
 	}
 }
 
@@ -222,6 +232,27 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max))
 			}
 		}
+	case PreferenceValueTypeJSON:
+		strVal, ok := preferenceValue.(string)
+		if !ok {
+			return p.ErrorValueTypeMismatch()
+		}
+		var parsed []PreferenceKeyDefinition
+		if err := json.Unmarshal([]byte(strVal), &parsed); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid JSON format for structured preference: %v", err)
+		}
+
+		for _, def := range parsed {
+			if def.Key == "" || def.DataType == "" || def.Type == "" {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "each item must have non-empty key, datatype, and type")
+			}
+			if !isValidDataType(def.DataType) {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported datatype: %s", def.DataType)
+			}
+			if !isValidType(def.Type) {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported type: %s", def.Type)
+			}
+		}
 	case PreferenceValueTypeString:
 		_, ok := preferenceValue.(string)
 		if !ok {
@@ -267,6 +298,24 @@ func (p *Preference) IsEnabledForScope(scope string) bool {
 	return isPreferenceEnabledForGivenScope
 }
 
+func isValidDataType(dataType string) bool {
+	switch dataType {
+	case PreferenceValueTypeString, PreferenceValueTypeInteger, PreferenceValueTypeFloat, PreferenceValueTypeBoolean:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidType(t string) bool {
+	switch t {
+	case "resource", "tag":
+		return true
+	default:
+		return false
+	}
+}
+
 func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 	switch p.ValueType {
 	case PreferenceValueTypeBoolean:
@@ -274,6 +323,17 @@ func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 			return true
 		} else {
 			return false
+		}
+	case PreferenceValueTypeJSON:
+		switch val := preferenceValue.(type) {
+		case string:
+			var result interface{}
+			if err := json.Unmarshal([]byte(val), &result); err == nil {
+				return result
+			}
+			return []interface{}{}
+		default:
+			return []interface{}{}
 		}
 	default:
 		return preferenceValue

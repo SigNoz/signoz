@@ -5,6 +5,7 @@ const (
 	PreferenceValueTypeFloat   string = "float"
 	PreferenceValueTypeString  string = "string"
 	PreferenceValueTypeBoolean string = "boolean"
+	PreferenceValueTypeJSON    string = "json"
 )
 
 const (
@@ -20,4 +21,10 @@ type Range struct {
 type PreferenceWithValue struct {
 	Preference
 	Value interface{} `json:"value"`
+}
+
+type PreferenceKeyDefinition struct {
+	Key      string `json:"key"`
+	DataType string `json:"datatype"`
+	Type     string `json:"type"`
 }
