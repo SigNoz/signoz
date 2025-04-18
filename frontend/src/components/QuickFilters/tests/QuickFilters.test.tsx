@@ -87,6 +87,25 @@ describe('Quick Filters', () => {
 		render(<TestQuickFilters />);
 		const checkbox = screen.getByText('mq-kafka');
 		fireEvent.click(checkbox);
-		expect(redirectWithQueryBuilderData).toHaveBeenCalled(); // sets composite query param
+		expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				builder: {
+					queryData: expect.arrayContaining([
+						expect.objectContaining({
+							filters: expect.objectContaining({
+								items: expect.arrayContaining([
+									expect.objectContaining({
+										key: expect.objectContaining({
+											key: 'deployment.environment',
+										}),
+										value: 'mq-kafka',
+									}),
+								]),
+							}),
+						}),
+					]),
+				},
+			}),
+		); // sets composite query param
 	});
 });
