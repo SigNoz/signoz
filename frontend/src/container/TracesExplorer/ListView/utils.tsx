@@ -6,6 +6,7 @@ import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { isBoolean } from 'lodash-es';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { Link } from 'react-router-dom';
 import { ILog } from 'types/api/logs/log';
@@ -115,7 +116,10 @@ export const getListColumns = (
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 						<Typography data-testid={key}>
-							<LineClampedText text={value} lines={3} />
+							<LineClampedText
+								text={isBoolean(value) ? String(value) : value}
+								lines={3}
+							/>
 						</Typography>
 					</BlockLink>
 				);
