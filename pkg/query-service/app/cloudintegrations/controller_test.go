@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -296,13 +295,6 @@ func createTestUser() (*types.User, *model.ApiError) {
 		return nil, apiErr
 	}
 
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	auth.InitAuthCache(ctx)
-
 	userId := uuid.NewString()
 	return dao.DB().CreateUser(
 		ctx,
@@ -312,7 +304,7 @@ func createTestUser() (*types.User, *model.ApiError) {
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgID:    org.ID,
-			GroupID:  group.ID,
+			Role:     authtypes.RoleAdmin,
 		},
 		true,
 	)

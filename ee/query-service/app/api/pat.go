@@ -14,9 +14,9 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -61,7 +61,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 }
 
 func validatePATRequest(req eeTypes.GettablePAT) error {
-	if req.Role == "" || (req.Role != baseconstants.ViewerGroup && req.Role != baseconstants.EditorGroup && req.Role != baseconstants.AdminGroup) {
+	if req.Role == "" || (req.Role != authtypes.RoleViewer && req.Role != authtypes.RoleEditor && req.Role != authtypes.RoleAdmin) {
 		return fmt.Errorf("valid role is required")
 	}
 	if req.ExpiresAt < 0 {

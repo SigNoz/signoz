@@ -15,5 +15,4 @@ export interface PayloadProps {
 	profilePictureURL: string;
 	organization: string;
 	role: ROLES;
-	groupId: string;
 }

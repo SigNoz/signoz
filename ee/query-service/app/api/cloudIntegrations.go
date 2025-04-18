@@ -13,10 +13,9 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
-	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/dao"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -137,7 +136,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 
 	newPAT := eeTypes.NewGettablePAT(
 		integrationPATName,
-		baseconstants.ViewerGroup,
+		authtypes.RoleViewer,
 		integrationUser.ID,
 		0,
 	)
@@ -181,11 +180,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 		OrgID: orgId,
 	}
 
-	viewerGroup, apiErr := dao.DB().GetGroupByName(ctx, baseconstants.ViewerGroup)
-	if apiErr != nil {
-		return nil, basemodel.WrapApiError(apiErr, "couldn't get viewer group for creating integration user")
-	}
-	newUser.GroupID = viewerGroup.ID
+	newUser.Role = authtypes.RoleViewer
 
 	passwordHash, err := auth.PasswordHash(uuid.NewString())
 	if err != nil {
