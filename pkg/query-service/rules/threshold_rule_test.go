@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
@@ -27,13 +28,13 @@ import (
 )
 
 func TestThresholdRuleShouldAlert(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Tricky Condition Tests",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -796,8 +797,8 @@ func TestThresholdRuleShouldAlert(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
 		rule, err := NewThresholdRule("69", &postableRule, nil, true, true, WithEvalDelay(2*time.Minute))
@@ -859,13 +860,13 @@ func TestNormalizeLabelName(t *testing.T) {
 }
 
 func TestPrepareLinksToLogs(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Tricky Condition Tests",
-		AlertType:  AlertTypeLogs,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeLogs,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -900,13 +901,13 @@ func TestPrepareLinksToLogs(t *testing.T) {
 }
 
 func TestPrepareLinksToTraces(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Links to traces test",
-		AlertType:  AlertTypeTraces,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeTraces,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -941,13 +942,13 @@ func TestPrepareLinksToTraces(t *testing.T) {
 }
 
 func TestThresholdRuleLabelNormalization(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Tricky Condition Tests",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1000,8 +1001,8 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
 		rule, err := NewThresholdRule("69", &postableRule, nil, true, true, WithEvalDelay(2*time.Minute))
@@ -1024,13 +1025,13 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 }
 
 func TestThresholdRuleEvalDelay(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Test Eval Delay",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeClickHouseSQL,
 				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
@@ -1072,13 +1073,13 @@ func TestThresholdRuleEvalDelay(t *testing.T) {
 }
 
 func TestThresholdRuleClickHouseTmpl(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Tricky Condition Tests",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeClickHouseSQL,
 				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
@@ -1127,13 +1128,13 @@ func (m *queryMatcherAny) Match(x string, y string) error {
 }
 
 func TestThresholdRuleUnitCombinations(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Units test",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1230,8 +1231,8 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
 			WillReturnRows(rows)
-		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
@@ -1276,13 +1277,13 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 }
 
 func TestThresholdRuleNoData(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "No data test",
-		AlertType:  AlertTypeMetric,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeMetric,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1330,8 +1331,8 @@ func TestThresholdRuleNoData(t *testing.T) {
 			ExpectQuery(queryString).
 			WillReturnRows(rows)
 		var target float64 = 0
-		postableRule.RuleCondition.CompareOp = ValueIsEq
-		postableRule.RuleCondition.MatchType = AtleastOnce
+		postableRule.RuleCondition.CompareOp = ruletypes.ValueIsEq
+		postableRule.RuleCondition.MatchType = ruletypes.AtleastOnce
 		postableRule.RuleCondition.Target = &target
 		postableRule.Annotations = map[string]string{
 			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
@@ -1368,13 +1369,13 @@ func TestThresholdRuleNoData(t *testing.T) {
 }
 
 func TestThresholdRuleTracesLink(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Traces link test",
-		AlertType:  AlertTypeTraces,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeTraces,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1432,8 +1433,8 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
 			WillReturnRows(rows)
-		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
@@ -1477,13 +1478,13 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 }
 
 func TestThresholdRuleLogsLink(t *testing.T) {
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Logs link test",
-		AlertType:  AlertTypeLogs,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeLogs,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1553,8 +1554,8 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
 			WillReturnRows(rows)
-		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
@@ -1599,13 +1600,13 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 
 func TestThresholdRuleShiftBy(t *testing.T) {
 	target := float64(10)
-	postableRule := PostableRule{
+	postableRule := ruletypes.PostableRule{
 		AlertName:  "Logs link test",
-		AlertType:  AlertTypeLogs,
-		RuleType:   RuleTypeThreshold,
-		EvalWindow: Duration(5 * time.Minute),
-		Frequency:  Duration(1 * time.Minute),
-		RuleCondition: &RuleCondition{
+		AlertType:  ruletypes.AlertTypeLogs,
+		RuleType:   ruletypes.RuleTypeThreshold,
+		EvalWindow: ruletypes.Duration(5 * time.Minute),
+		Frequency:  ruletypes.Duration(1 * time.Minute),
+		RuleCondition: &ruletypes.RuleCondition{
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
@@ -1638,7 +1639,7 @@ func TestThresholdRuleShiftBy(t *testing.T) {
 				},
 			},
 			Target:    &target,
-			CompareOp: ValueAboveOrEq,
+			CompareOp: ruletypes.ValueAboveOrEq,
 		},
 	}
 
