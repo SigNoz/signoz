@@ -33,6 +33,7 @@ function ResourceAttributesFilter(): JSX.Element | null {
 						...initialQueriesMap.traces.builder.queryData[0].aggregateAttribute,
 						type: 'resource',
 					},
+					queryName: '',
 				},
 			],
 		},
