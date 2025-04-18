@@ -118,39 +118,13 @@ func (a *AccountRecord) account() Account {
 	return ca
 }
 
-type CloudServiceSummary struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
-	Icon  string `json:"icon"`
-
-	// Present only if the service has been configured in the
-	// context of a cloud provider account.
-	Config *CloudServiceConfig `json:"config,omitempty"`
+type ServiceConfig struct {
+	Logs    *LogsConfig    `json:"logs,omitempty"`
+	Metrics *MetricsConfig `json:"metrics,omitempty"`
 }
 
-type CloudServiceDetails struct {
-	CloudServiceSummary
-
-	Overview string `json:"overview"` // markdown
-
-	Assets CloudServiceAssets `json:"assets"`
-
-	SupportedSignals SupportedSignals `json:"supported_signals"`
-
-	DataCollected DataCollectedForService `json:"data_collected"`
-
-	ConnectionStatus *CloudServiceConnectionStatus `json:"status,omitempty"`
-
-	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry_collection_strategy"`
-}
-
-type CloudServiceConfig struct {
-	Logs    *CloudServiceLogsConfig    `json:"logs,omitempty"`
-	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
-}
-
-// For serializing from db
-func (c *CloudServiceConfig) Scan(src any) error {
+// Serialization from db
+func (c *ServiceConfig) Scan(src any) error {
 	data, ok := src.([]byte)
 	if !ok {
 		return fmt.Errorf("tried to scan from %T instead of bytes", src)
@@ -159,8 +133,8 @@ func (c *CloudServiceConfig) Scan(src any) error {
 	return json.Unmarshal(data, &c)
 }
 
-// For serializing to db
-func (c *CloudServiceConfig) Value() (driver.Value, error) {
+// Serializing to db
+func (c *ServiceConfig) Value() (driver.Value, error) {
 	if c == nil {
 		return nil, nil
 	}
@@ -175,15 +149,12 @@ func (c *CloudServiceConfig) Value() (driver.Value, error) {
 }
 
 type CloudServiceLogsConfig struct {
-	Enabled bool `json:"enabled"`
+	Enabled bool                `json:"enabled"`
+	S3Sync  map[string][]string `json:"s3sync,omitempty"`
 }
 
 type CloudServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
-}
-
-type CloudServiceAssets struct {
-	Dashboards []CloudServiceDashboard `json:"dashboards"`
 }
 
 type CloudServiceDashboard struct {
@@ -193,29 +164,6 @@ type CloudServiceDashboard struct {
 	Description string               `json:"description"`
 	Image       string               `json:"image"`
 	Definition  *types.DashboardData `json:"definition,omitempty"`
-}
-
-type SupportedSignals struct {
-	Logs    bool `json:"logs"`
-	Metrics bool `json:"metrics"`
-}
-
-type DataCollectedForService struct {
-	Logs    []CollectedLogAttribute `json:"logs"`
-	Metrics []CollectedMetric       `json:"metrics"`
-}
-
-type CollectedLogAttribute struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-type CollectedMetric struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Unit        string `json:"unit"`
-	Description string `json:"description"`
 }
 
 type CloudServiceConnectionStatus struct {

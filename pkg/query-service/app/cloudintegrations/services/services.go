@@ -1,4 +1,4 @@
-package cloudintegrations
+package services
 
 import (
 	"bytes"
@@ -15,10 +15,10 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func listCloudProviderServices(
+func List(
 	cloudProvider string,
-) ([]CloudServiceDetails, *model.ApiError) {
-	cloudServices := availableServices[cloudProvider]
+) ([]Definition, *model.ApiError) {
+	cloudServices := supportedServices[cloudProvider]
 	if cloudServices == nil {
 		return nil, model.NotFoundError(fmt.Errorf(
 			"unsupported cloud provider: %s", cloudProvider,
@@ -35,8 +35,8 @@ func listCloudProviderServices(
 
 func getCloudProviderService(
 	cloudProvider string, serviceId string,
-) (*CloudServiceDetails, *model.ApiError) {
-	cloudServices := availableServices[cloudProvider]
+) (*Definition, *model.ApiError) {
+	cloudServices := supportedServices[cloudProvider]
 	if cloudServices == nil {
 		return nil, model.NotFoundError(fmt.Errorf(
 			"unsupported cloud provider: %s", cloudProvider,
@@ -57,7 +57,7 @@ func getCloudProviderService(
 
 // Service details read from ./serviceDefinitions
 // { "providerName": { "service_id": {...}} }
-var availableServices map[string]map[string]CloudServiceDetails
+var supportedServices map[string]map[string]Definition
 
 func init() {
 	err := readAllServiceDefinitions()
@@ -68,15 +68,15 @@ func init() {
 	}
 }
 
-//go:embed serviceDefinitions/*
-var serviceDefinitionFiles embed.FS
+//go:embed definitions/*
+var definitionFiles embed.FS
 
 func readAllServiceDefinitions() error {
-	availableServices = map[string]map[string]CloudServiceDetails{}
+	supportedServices = map[string]map[string]Definition{}
 
-	rootDirName := "serviceDefinitions"
+	rootDirName := "definitions"
 
-	cloudProviderDirs, err := fs.ReadDir(serviceDefinitionFiles, rootDirName)
+	cloudProviderDirs, err := fs.ReadDir(definitionFiles, rootDirName)
 	if err != nil {
 		return fmt.Errorf("couldn't read dirs in %s: %w", rootDirName, err)
 	}
@@ -98,21 +98,21 @@ func readAllServiceDefinitions() error {
 			return fmt.Errorf("no %s services could be read", cloudProvider)
 		}
 
-		availableServices[cloudProvider] = cloudServices
+		supportedServices[cloudProvider] = cloudServices
 	}
 
 	return nil
 }
 
 func readServiceDefinitionsFromDir(cloudProvider string, cloudProviderDirPath string) (
-	map[string]CloudServiceDetails, error,
+	map[string]Definition, error,
 ) {
-	svcDefDirs, err := fs.ReadDir(serviceDefinitionFiles, cloudProviderDirPath)
+	svcDefDirs, err := fs.ReadDir(definitionFiles, cloudProviderDirPath)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't list integrations dirs: %w", err)
 	}
 
-	svcDefs := map[string]CloudServiceDetails{}
+	svcDefs := map[string]Definition{}
 
 	for _, d := range svcDefDirs {
 		if !d.IsDir() {
@@ -137,10 +137,10 @@ func readServiceDefinitionsFromDir(cloudProvider string, cloudProviderDirPath st
 	return svcDefs, nil
 }
 
-func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServiceDetails, error) {
+func readServiceDefinition(cloudProvider string, svcDirpath string) (*Definition, error) {
 	integrationJsonPath := path.Join(svcDirpath, "integration.json")
 
-	serializedSpec, err := serviceDefinitionFiles.ReadFile(integrationJsonPath)
+	serializedSpec, err := definitionFiles.ReadFile(integrationJsonPath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't find integration.json in %s: %w",
@@ -157,7 +157,7 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 	}
 
 	hydrated, err := integrations.HydrateFileUris(
-		integrationSpec, serviceDefinitionFiles, svcDirpath,
+		integrationSpec, definitionFiles, svcDirpath,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -167,7 +167,7 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 	}
 	hydratedSpec := hydrated.(map[string]any)
 
-	serviceDef, err := ParseStructWithJsonTagsFromMap[CloudServiceDetails](hydratedSpec)
+	serviceDef, err := ParseStructWithJsonTagsFromMap[Definition](hydratedSpec)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't parse hydrated JSON spec read from %s: %w",
@@ -186,7 +186,7 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*CloudServi
 
 }
 
-func validateServiceDefinition(s *CloudServiceDetails) error {
+func validateServiceDefinition(s *Definition) error {
 	// Validate dashboard data
 	seenDashboardIds := map[string]interface{}{}
 	for _, dd := range s.Assets.Dashboards {

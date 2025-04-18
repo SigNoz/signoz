@@ -9,28 +9,28 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type serviceConfigRepository interface {
+type DatabaseInterface interface {
 	get(
 		ctx context.Context,
 		cloudProvider string,
 		cloudAccountId string,
 		serviceId string,
-	) (*CloudServiceConfig, *model.ApiError)
+	) (*ServiceConfig, *model.ApiError)
 
 	upsert(
 		ctx context.Context,
 		cloudProvider string,
 		cloudAccountId string,
 		serviceId string,
-		config CloudServiceConfig,
-	) (*CloudServiceConfig, *model.ApiError)
+		config ServiceConfig,
+	) (*ServiceConfig, *model.ApiError)
 
 	getAllForAccount(
 		ctx context.Context,
 		cloudProvider string,
 		cloudAccountId string,
 	) (
-		configsBySvcId map[string]*CloudServiceConfig,
+		configsBySvcId map[string]*ServiceConfig,
 		apiErr *model.ApiError,
 	)
 }
@@ -52,9 +52,9 @@ func (r *serviceConfigSQLRepository) get(
 	cloudProvider string,
 	cloudAccountId string,
 	serviceId string,
-) (*CloudServiceConfig, *model.ApiError) {
+) (*ServiceConfig, *model.ApiError) {
 
-	var result CloudServiceConfig
+	var result ServiceConfig
 
 	err := r.db.GetContext(
 		ctx, &result, `
@@ -68,17 +68,13 @@ func (r *serviceConfigSQLRepository) get(
 		`,
 		cloudProvider, cloudAccountId, serviceId,
 	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, model.NotFoundError(
+				fmt.Errorf("couldn't find %s %s config for %s", cloudProvider, serviceId, cloudAccountId))
+		}
 
-	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"couldn't find %s %s config for %s",
-			cloudProvider, serviceId, cloudAccountId,
-		))
-
-	} else if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't query cloud service config: %w", err,
-		))
+		return nil, model.InternalError(fmt.Errorf("couldn't query cloud service config: %w", err))
 	}
 
 	return &result, nil

@@ -255,13 +255,13 @@ func (c *Controller) CheckInAsAgent(
 		agentConfig.EnabledRegions = account.Config.EnabledRegions
 	}
 
-	services, apiErr := listCloudProviderServices(cloudProvider)
+	svcs, apiErr := listServices(cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
-	svcDetailsById := map[string]*CloudServiceDetails{}
-	for _, svcDetails := range services {
-		svcDetailsById[svcDetails.Id] = &svcDetails
+	services := map[string]*CloudServiceDetails{}
+	for _, svc := range services {
+		services[svc.Id] = &svcs[]
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
@@ -363,7 +363,6 @@ func (c *Controller) ListServices(
 	cloudProvider string,
 	cloudAccountId *string,
 ) (*ListServicesResponse, *model.ApiError) {
-
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -458,7 +457,6 @@ func (c *Controller) UpdateServiceConfig(
 	serviceId string,
 	req UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, *model.ApiError) {
-
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
