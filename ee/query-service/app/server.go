@@ -367,6 +367,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
+	apiHandler.RegisterFieldsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
@@ -428,11 +429,11 @@ func (s *Server) initListeners() error {
 }
 
 // Start listening on http and private http port concurrently
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 
 	// initiate rule manager first
 	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start()
+		s.ruleManager.Start(ctx)
 	} else {
 		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
 	}
@@ -516,7 +517,7 @@ func (s *Server) Stop() error {
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
-		s.ruleManager.Stop()
+		s.ruleManager.Stop(context.Background())
 	}
 
 	// stop usage manager

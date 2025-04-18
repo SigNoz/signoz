@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/gosimple/slug"
 	"github.com/uptrace/bun"
@@ -66,32 +65,6 @@ func (c *DashboardData) Scan(src interface{}) error {
 		data = []byte(s)
 	}
 	return json.Unmarshal(data, c)
-}
-
-type Rule struct {
-	bun.BaseModel `bun:"table:rules"`
-
-	ID        int       `bun:"id,pk,autoincrement"`
-	CreatedAt time.Time `bun:"created_at,type:datetime,notnull"`
-	CreatedBy string    `bun:"created_by,type:text,notnull"`
-	UpdatedAt time.Time `bun:"updated_at,type:datetime,notnull"`
-	UpdatedBy string    `bun:"updated_by,type:text,notnull"`
-	Deleted   int       `bun:"deleted,notnull,default:0"`
-	Data      string    `bun:"data,type:text,notnull"`
-}
-
-type PlannedMaintenance struct {
-	bun.BaseModel `bun:"table:planned_maintenance"`
-
-	ID          int       `bun:"id,pk,autoincrement"`
-	Name        string    `bun:"name,type:text,notnull"`
-	Description string    `bun:"description,type:text"`
-	AlertIDs    string    `bun:"alert_ids,type:text"`
-	Schedule    string    `bun:"schedule,type:text,notnull"`
-	CreatedAt   time.Time `bun:"created_at,type:datetime,notnull"`
-	CreatedBy   string    `bun:"created_by,type:text,notnull"`
-	UpdatedAt   time.Time `bun:"updated_at,type:datetime,notnull"`
-	UpdatedBy   string    `bun:"updated_by,type:text,notnull"`
 }
 
 type TTLSetting struct {
