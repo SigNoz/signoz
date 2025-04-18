@@ -182,8 +182,8 @@ func TestConfigureService(t *testing.T) {
 	require.NotNil(testConnectedAccount.CloudAccountId)
 	require.Equal(testCloudAccountId, *testConnectedAccount.CloudAccountId)
 
-	testSvcConfig := CloudServiceConfig{
-		Metrics: &CloudServiceMetricsConfig{
+	testSvcConfig := ServiceConfig{
+		Metrics: &MetricsConfig{
 			Enabled: true,
 		},
 	}

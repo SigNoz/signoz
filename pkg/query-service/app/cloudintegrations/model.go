@@ -6,8 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 )
+
+type ServiceDetails struct {
+	services.Definition
+
+	ConnectionStatus *ConnectionStatus `json:"status,omitempty"`
+}
 
 // Represents a cloud provider account for cloud integrations
 type AccountRecord struct {
@@ -148,25 +154,16 @@ func (c *ServiceConfig) Value() (driver.Value, error) {
 	return serialized, nil
 }
 
-type CloudServiceLogsConfig struct {
-	Enabled bool                `json:"enabled"`
-	S3Sync  map[string][]string `json:"s3sync,omitempty"`
+type LogsConfig struct {
+	Enabled   bool                `json:"enabled"`
+	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
 }
 
-type CloudServiceMetricsConfig struct {
+type MetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-type CloudServiceDashboard struct {
-	Id          string               `json:"id"`
-	Url         string               `json:"url"`
-	Title       string               `json:"title"`
-	Description string               `json:"description"`
-	Image       string               `json:"image"`
-	Definition  *types.DashboardData `json:"definition,omitempty"`
-}
-
-type CloudServiceConnectionStatus struct {
+type ConnectionStatus struct {
 	Logs    *SignalConnectionStatus `json:"logs"`
 	Metrics *SignalConnectionStatus `json:"metrics"`
 }
@@ -176,23 +173,14 @@ type SignalConnectionStatus struct {
 	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
 }
 
-type CloudTelemetryCollectionStrategy struct {
-	Provider string `json:"provider"`
+type CompiledCollectionStrategy = services.CollectionStrategy
 
-	AWSMetrics *AWSMetricsCollectionStrategy `json:"aws_metrics,omitempty"`
-	AWSLogs    *AWSLogsCollectionStrategy    `json:"aws_logs,omitempty"`
-}
-
-func NewCloudTelemetryCollectionStrategy(provider string) (*CloudTelemetryCollectionStrategy, error) {
+func NewCompiledCollectionStrategy(provider string) (*CompiledCollectionStrategy, error) {
 	if provider == "aws" {
-		return &CloudTelemetryCollectionStrategy{
-			Provider: "aws",
-			AWSMetrics: &AWSMetricsCollectionStrategy{
-				CloudwatchMetricsStreamFilters: []CloudwatchMetricStreamFilter{},
-			},
-			AWSLogs: &AWSLogsCollectionStrategy{
-				CloudwatchLogsSubscriptions: []CloudwatchLogsSubscriptionConfig{},
-			},
+		return &CompiledCollectionStrategy{
+			Provider:   "aws",
+			AWSMetrics: &services.AWSMetricsStrategy{},
+			AWSLogs:    &services.AWSLogsStrategy{},
 		}, nil
 	}
 
@@ -200,82 +188,31 @@ func NewCloudTelemetryCollectionStrategy(provider string) (*CloudTelemetryCollec
 }
 
 // Helper for accumulating strategies for enabled services.
-func (cs *CloudTelemetryCollectionStrategy) AddServiceStrategy(
-	svcStrategy *CloudTelemetryCollectionStrategy,
-	logsEnabled bool,
-	metricsEnabled bool,
-) error {
-	if svcStrategy.Provider != cs.Provider {
+func AddServiceStrategy(cs *CompiledCollectionStrategy,
+	definitionStrat *services.CollectionStrategy, config *ServiceConfig) error {
+	if definitionStrat.Provider != cs.Provider {
 		return fmt.Errorf(
 			"can't add %s service strategy to strategy for %s",
-			svcStrategy.Provider, cs.Provider,
+			definitionStrat.Provider, cs.Provider,
 		)
 	}
 
 	if cs.Provider == "aws" {
-		if logsEnabled {
-			cs.AWSLogs.AddServiceStrategy(svcStrategy.AWSLogs)
+		if config.Logs != nil && config.Logs.Enabled && definitionStrat.AWSLogs != nil {
+			cs.AWSLogs.Subscriptions = append(
+				cs.AWSLogs.Subscriptions,
+				definitionStrat.AWSLogs.Subscriptions...,
+			)
 		}
-		if metricsEnabled {
-			cs.AWSMetrics.AddServiceStrategy(svcStrategy.AWSMetrics)
+		if config.Metrics != nil && config.Metrics.Enabled && definitionStrat.AWSMetrics != nil {
+			cs.AWSMetrics.StreamFilters = append(
+				cs.AWSMetrics.StreamFilters,
+				definitionStrat.AWSMetrics.StreamFilters...,
+			)
 		}
 		return nil
 	}
 
 	return fmt.Errorf("unsupported cloud provider: %s", cs.Provider)
 
-}
-
-type AWSMetricsCollectionStrategy struct {
-	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
-	CloudwatchMetricsStreamFilters []CloudwatchMetricStreamFilter `json:"cloudwatch_metric_stream_filters"`
-}
-
-type CloudwatchMetricStreamFilter struct {
-	// json tags here are in the shape expected by AWS API as detailed at
-	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
-	Namespace   string   `json:"Namespace"`
-	MetricNames []string `json:"MetricNames,omitempty"`
-}
-
-func (amc *AWSMetricsCollectionStrategy) AddServiceStrategy(
-	svcStrategy *AWSMetricsCollectionStrategy,
-) error {
-	if svcStrategy == nil {
-		return nil
-	}
-
-	amc.CloudwatchMetricsStreamFilters = append(
-		amc.CloudwatchMetricsStreamFilters,
-		svcStrategy.CloudwatchMetricsStreamFilters...,
-	)
-	return nil
-}
-
-type AWSLogsCollectionStrategy struct {
-	CloudwatchLogsSubscriptions []CloudwatchLogsSubscriptionConfig `json:"cloudwatch_logs_subscriptions"`
-}
-
-type CloudwatchLogsSubscriptionConfig struct {
-	// subscribe to all logs groups with specified prefix.
-	// eg: `/aws/rds/`
-	LogGroupNamePrefix string `json:"log_group_name_prefix"`
-
-	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
-	// "" implies no filtering is required.
-	FilterPattern string `json:"filter_pattern"`
-}
-
-func (alc *AWSLogsCollectionStrategy) AddServiceStrategy(
-	svcStrategy *AWSLogsCollectionStrategy,
-) error {
-	if svcStrategy == nil {
-		return nil
-	}
-
-	alc.CloudwatchLogsSubscriptions = append(
-		alc.CloudwatchLogsSubscriptions,
-		svcStrategy.CloudwatchLogsSubscriptions...,
-	)
-	return nil
 }

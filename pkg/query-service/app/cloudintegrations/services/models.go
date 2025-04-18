@@ -1,5 +1,9 @@
 package services
 
+import (
+	"github.com/SigNoz/signoz/pkg/types"
+)
+
 type Metadata struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
@@ -21,13 +25,11 @@ type Definition struct {
 
 	DataCollected DataCollected `json:"data_collected"`
 
-	ConnectionStatus *ConnectionStatus `json:"status,omitempty"`
-
-	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry_collection_strategy"`
+	Strategy *CollectionStrategy `json:"telemetry_collection_strategy"`
 }
 
 type Assets struct {
-	Dashboards []CloudServiceDashboard `json:"dashboards"`
+	Dashboards []Dashboard `json:"dashboards"`
 }
 
 type SupportedSignals struct {
@@ -51,4 +53,42 @@ type CollectedMetric struct {
 	Type        string `json:"type"`
 	Unit        string `json:"unit"`
 	Description string `json:"description"`
+}
+
+type CollectionStrategy struct {
+	Provider CloudProvider `json:"provider"`
+
+	AWSMetrics *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
+	AWSLogs    *AWSLogsStrategy    `json:"aws_logs,omitempty"`
+}
+
+type AWSMetricsStrategy struct {
+	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
+	StreamFilters []struct {
+		// json tags here are in the shape expected by AWS API as detailed at
+		// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
+		Namespace   string   `json:"Namespace"`
+		MetricNames []string `json:"MetricNames,omitempty"`
+	} `json:"cloudwatch_metric_stream_filters"`
+}
+
+type AWSLogsStrategy struct {
+	Subscriptions []struct {
+		// subscribe to all logs groups with specified prefix.
+		// eg: `/aws/rds/`
+		LogGroupNamePrefix string `json:"log_group_name_prefix"`
+
+		// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
+		// "" implies no filtering is required.
+		FilterPattern string `json:"filter_pattern"`
+	} `json:"cloudwatch_logs_subscriptions"`
+}
+
+type Dashboard struct {
+	Id          string               `json:"id"`
+	Url         string               `json:"url"`
+	Title       string               `json:"title"`
+	Description string               `json:"description"`
+	Image       string               `json:"image"`
+	Definition  *types.DashboardData `json:"definition,omitempty"`
 }

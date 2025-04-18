@@ -18,8 +18,8 @@ import (
 func List(
 	cloudProvider string,
 ) ([]Definition, *model.ApiError) {
-	cloudServices := supportedServices[cloudProvider]
-	if cloudServices == nil {
+	cloudServices, found := supportedServices[cloudProvider]
+	if !found || cloudServices == nil {
 		return nil, model.NotFoundError(fmt.Errorf(
 			"unsupported cloud provider: %s", cloudProvider,
 		))
@@ -31,6 +31,17 @@ func List(
 	})
 
 	return services, nil
+}
+
+func Map(cloudprovider string) (map[string]Definition, *model.ApiError) {
+	cloudServices, found := supportedServices[cloudprovider]
+	if !found || cloudServices == nil {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"unsupported cloud provider: %s", cloudprovider,
+		))
+	}
+
+	return cloudServices, nil
 }
 
 func getCloudProviderService(
@@ -180,7 +191,7 @@ func readServiceDefinition(cloudProvider string, svcDirpath string) (*Definition
 		return nil, fmt.Errorf("invalid service definition %s: %w", serviceDef.Id, err)
 	}
 
-	serviceDef.TelemetryCollectionStrategy.Provider = cloudProvider
+	serviceDef.Strategy.Provider = cloudProvider
 
 	return serviceDef, nil
 
@@ -196,7 +207,7 @@ func validateServiceDefinition(s *Definition) error {
 		seenDashboardIds[dd.Id] = nil
 	}
 
-	if s.TelemetryCollectionStrategy == nil {
+	if s.Strategy == nil {
 		return fmt.Errorf("telemetry_collection_strategy is required")
 	}
 

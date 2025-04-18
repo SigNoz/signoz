@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -200,7 +201,7 @@ type AgentCheckInResponse struct {
 type IntegrationConfigForAgent struct {
 	EnabledRegions []string `json:"enabled_regions"`
 
-	TelemetryCollectionStrategy *CloudTelemetryCollectionStrategy `json:"telemetry,omitempty"`
+	TelemetryCollectionStrategy *CompiledCollectionStrategy `json:"telemetry,omitempty"`
 }
 
 func (c *Controller) CheckInAsAgent(
@@ -239,7 +240,7 @@ func (c *Controller) CheckInAsAgent(
 	}
 
 	// prepare and return integration config to be consumed by agent
-	telemetryCollectionStrategy, err := NewCloudTelemetryCollectionStrategy(cloudProvider)
+	compliedStrategy, err := NewCompiledCollectionStrategy(cloudProvider)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't init telemetry collection strategy: %w", err,
@@ -248,20 +249,16 @@ func (c *Controller) CheckInAsAgent(
 
 	agentConfig := IntegrationConfigForAgent{
 		EnabledRegions:              []string{},
-		TelemetryCollectionStrategy: telemetryCollectionStrategy,
+		TelemetryCollectionStrategy: compliedStrategy,
 	}
 
 	if account.Config != nil && account.Config.EnabledRegions != nil {
 		agentConfig.EnabledRegions = account.Config.EnabledRegions
 	}
 
-	svcs, apiErr := listServices(cloudProvider)
+	services, apiErr := services.Map(services.CloudProvider(cloudProvider))
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
-	}
-	services := map[string]*CloudServiceDetails{}
-	for _, svc := range services {
-		services[svc.Id] = &svcs[]
 	}
 
 	svcConfigs, apiErr := c.serviceConfigRepo.getAllForAccount(
@@ -278,22 +275,16 @@ func (c *Controller) CheckInAsAgent(
 	slices.Sort(configuredSvcIds)
 
 	for _, svcId := range configuredSvcIds {
-		svcDetails := svcDetailsById[svcId]
-		svcConfig := svcConfigs[svcId]
+		definition, ok := services[svcId]
+		if !ok {
+			continue
+		}
+		config := svcConfigs[svcId]
 
-		if svcDetails != nil {
-			metricsEnabled := svcConfig.Metrics != nil && svcConfig.Metrics.Enabled
-			logsEnabled := svcConfig.Logs != nil && svcConfig.Logs.Enabled
-			if logsEnabled || metricsEnabled {
-				err := agentConfig.TelemetryCollectionStrategy.AddServiceStrategy(
-					svcDetails.TelemetryCollectionStrategy, logsEnabled, metricsEnabled,
-				)
-				if err != nil {
-					return nil, model.InternalError(fmt.Errorf(
-						"couldn't add service telemetry collection strategy: %w", err,
-					))
-				}
-			}
+		err := AddServiceStrategy(compliedStrategy, definition.Strategy, config)
+		if err != nil {
+			return nil, model.InternalError(
+				fmt.Errorf("couldn't add service telemetry collection strategy: %s", err))
 		}
 	}
 
