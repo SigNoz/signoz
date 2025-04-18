@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 type ModelDao interface {
@@ -22,13 +23,13 @@ type Queries interface {
 	GetUsers(ctx context.Context) ([]types.GettableUser, *model.ApiError)
 	GetUsersWithOpts(ctx context.Context, limit int) ([]types.GettableUser, *model.ApiError)
 
-	GetGroup(ctx context.Context, id string) (*types.Group, *model.ApiError)
-	GetGroupByName(ctx context.Context, name string) (*types.Group, *model.ApiError)
-	GetGroups(ctx context.Context) ([]types.Group, *model.ApiError)
+	GetOrgs(ctx context.Context) ([]types.Organization, *model.ApiError)
+	GetOrgByName(ctx context.Context, name string) (*types.Organization, *model.ApiError)
+	GetOrg(ctx context.Context, id string) (*types.Organization, *model.ApiError)
 
 	GetResetPasswordEntry(ctx context.Context, token string) (*types.ResetPasswordRequest, *model.ApiError)
 	GetUsersByOrg(ctx context.Context, orgId string) ([]types.GettableUser, *model.ApiError)
-	GetUsersByGroup(ctx context.Context, groupId string) ([]types.GettableUser, *model.ApiError)
+	GetUsersByRole(ctx context.Context, role authtypes.Role) ([]types.GettableUser, *model.ApiError)
 
 	GetApdexSettings(ctx context.Context, orgID string, services []string) ([]types.ApdexSettings, *model.ApiError)
 
@@ -43,14 +44,15 @@ type Mutations interface {
 	EditUser(ctx context.Context, update *types.User) (*types.User, *model.ApiError)
 	DeleteUser(ctx context.Context, id string) *model.ApiError
 
-	CreateGroup(ctx context.Context, group *types.Group) (*types.Group, *model.ApiError)
-	DeleteGroup(ctx context.Context, id string) *model.ApiError
+	CreateOrg(ctx context.Context, org *types.Organization) (*types.Organization, *model.ApiError)
+	EditOrg(ctx context.Context, org *types.Organization) *model.ApiError
+	DeleteOrg(ctx context.Context, id string) *model.ApiError
 
 	CreateResetPasswordEntry(ctx context.Context, req *types.ResetPasswordRequest) *model.ApiError
 	DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError
 
 	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
-	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
+	UpdateUserRole(ctx context.Context, userId string, role authtypes.Role) *model.ApiError
 
 	SetApdexSettings(ctx context.Context, orgID string, set *types.ApdexSettings) *model.ApiError
 }

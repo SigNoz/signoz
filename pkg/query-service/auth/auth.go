@@ -262,10 +262,6 @@ func inviteEmail(req *model.InviteRequest, au *types.GettableUser, token string)
 func RevokeInvite(ctx context.Context, email string) error {
 	zap.L().Debug("RevokeInvite method invoked for email", zap.String("email", email))
 
-	if !isValidEmail(email) {
-		return ErrorInvalidInviteToken
-	}
-
 	claims, ok := authtypes.ClaimsFromContext(ctx)
 	if !ok {
 		return errors.New("failed to org id from context")
@@ -414,17 +410,10 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationMo
 		return nil, model.BadRequest(model.ErrPasswordRequired{})
 	}
 
-	groupName := constants.AdminGroup
 	organization := types.NewOrganization(req.OrgDisplayName)
 	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)
-	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
-	if apiErr != nil {
-		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
-		return nil, apiErr
 	}
 
 	var hash string
@@ -443,7 +432,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationMo
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused
-		GroupID:           group.ID,
+		Role:              authtypes.RoleAdmin,
 		OrgID:             organization.ID.StringValue(),
 	}
 
@@ -488,13 +477,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	if invite.Role == "" {
 		// if role is not provided, default to viewer
-		invite.Role = constants.ViewerGroup
-	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, invite.Role)
-	if apiErr != nil {
-		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
-		return nil, model.InternalError(model.ErrSignupFailed{})
+		invite.Role = authtypes.RoleViewer
 	}
 
 	var hash string
@@ -523,12 +506,12 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused
-		GroupID:           group.ID,
+		Role:              invite.Role,
 		OrgID:             invite.OrgID,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
-	user, apiErr = dao.DB().CreateUser(ctx, user, false)
+	user, apiErr := dao.DB().CreateUser(ctx, user, false)
 	if apiErr != nil {
 		zap.L().Error("CreateUser failed", zap.Error(apiErr.Err))
 		return nil, apiErr
@@ -599,18 +582,6 @@ func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT)
 	}, nil
 }
 
-func claimsToUserPayload(claims authtypes.Claims) (*types.GettableUser, error) {
-	user := &types.GettableUser{
-		User: types.User{
-			ID:      claims.UserID,
-			GroupID: claims.GroupID,
-			Email:   claims.Email,
-			OrgID:   claims.OrgID,
-		},
-	}
-	return user, nil
-}
-
 // authenticateLogin is responsible for querying the DB and validating the credentials.
 func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authtypes.JWT) (*types.GettableUser, error) {
 	// If refresh token is valid, then simply authorize the login request.
@@ -625,9 +596,13 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authty
 			return nil, model.UnauthorizedError(errors.New("orgId is missing in the claims"))
 		}
 
-		user, err := claimsToUserPayload(claims)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to convert claims to user payload")
+		user := &types.GettableUser{
+			User: types.User{
+				ID:    claims.UserID,
+				Role:  claims.Role,
+				Email: claims.Email,
+				OrgID: claims.OrgID,
+			},
 		}
 		return user, nil
 	}
@@ -661,13 +636,13 @@ func GenerateJWTForUser(user *types.User, jwt *authtypes.JWT) (model.UserJwtObje
 	j := model.UserJwtObject{}
 	var err error
 	j.AccessJwtExpiry = time.Now().Add(jwt.JwtExpiry).Unix()
-	j.AccessJwt, err = jwt.AccessToken(user.OrgID, user.ID, user.GroupID, user.Email)
+	j.AccessJwt, err = jwt.AccessToken(user.OrgID, user.ID, user.Email, user.Role)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
 	j.RefreshJwtExpiry = time.Now().Add(jwt.JwtRefresh).Unix()
-	j.RefreshJwt, err = jwt.RefreshToken(user.OrgID, user.ID, user.GroupID, user.Email)
+	j.RefreshJwt, err = jwt.RefreshToken(user.OrgID, user.ID, user.Email, user.Role)
 	if err != nil {
 		return j, errors.Errorf("failed to encode jwt: %v", err)
 	}

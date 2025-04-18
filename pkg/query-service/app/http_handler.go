@@ -54,7 +54,6 @@ import (
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/contextlinks"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
@@ -2309,18 +2308,13 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get admin group")
-		return
-	}
-	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.ID)
+	adminUsers, apiErr := dao.DB().GetUsersByRole(ctx, authtypes.RoleAdmin)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to get admin group users")
 		return
 	}
 
-	if user.GroupID == adminGroup.ID && len(adminUsers) == 1 {
+	if user.Role == authtypes.RoleAdmin && len(adminUsers) == 1 {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("cannot delete the last admin user")}, nil)
@@ -2332,6 +2326,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, err, "Failed to delete user")
 		return
 	}
+
 	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
 }
 
@@ -2350,13 +2345,8 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	group, err := dao.DB().GetGroup(context.Background(), user.GroupID)
-	if err != nil {
-		RespondError(w, err, "Failed to get group")
-		return
-	}
 
-	aH.WriteJSON(w, r, &model.UserRole{UserId: id, GroupName: group.Name})
+	aH.WriteJSON(w, r, &model.UserRole{UserId: id, GroupName: user.Role})
 }
 
 func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
@@ -2368,14 +2358,8 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	newGroup, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get user's group")
-		return
-	}
-
-	if newGroup == nil {
-		RespondError(w, apiErr, "Specified group is not present")
+	if !isValidRole(req.GroupName) {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("invalid role")}, nil)
 		return
 	}
 
@@ -2386,8 +2370,8 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if user.GroupID == auth.AuthCacheObj.AdminGroupId {
-		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
+	if user.Role == authtypes.RoleAdmin {
+		adminUsers, apiErr := dao.DB().GetUsersByRole(ctx, authtypes.RoleAdmin)
 		if apiErr != nil {
 			RespondError(w, apiErr, "Failed to fetch adminUsers")
 			return
@@ -2401,7 +2385,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.ID, newGroup.ID)
+	apiErr = dao.DB().UpdateUserRole(context.Background(), user.ID, req.GroupName)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to add user to group")
 		return

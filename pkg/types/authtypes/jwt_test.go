@@ -10,7 +10,7 @@ import (
 
 func TestGetAccessJwt(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, err := jwtService.AccessToken("orgId", "userId", "groupId", "email@example.com")
+	token, err := jwtService.AccessToken("orgId", "userId", "email@example.com", RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -18,7 +18,7 @@ func TestGetAccessJwt(t *testing.T) {
 
 func TestGetRefreshJwt(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, err := jwtService.RefreshToken("orgId", "userId", "groupId", "email@example.com")
+	token, err := jwtService.RefreshToken("orgId", "userId", "email@example.com", RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -29,10 +29,10 @@ func TestGetJwtClaims(t *testing.T) {
 
 	// Create a valid token
 	claims := Claims{
-		UserID:  "userId",
-		GroupID: "groupId",
-		Email:   "email@example.com",
-		OrgID:   "orgId",
+		UserID: "userId",
+		Role:   RoleAdmin,
+		Email:  "email@example.com",
+		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -45,7 +45,7 @@ func TestGetJwtClaims(t *testing.T) {
 	retrievedClaims, err := jwtService.Claims(tokenString)
 	assert.NoError(t, err)
 	assert.Equal(t, claims.UserID, retrievedClaims.UserID)
-	assert.Equal(t, claims.GroupID, retrievedClaims.GroupID)
+	assert.Equal(t, claims.Role, retrievedClaims.Role)
 	assert.Equal(t, claims.Email, retrievedClaims.Email)
 	assert.Equal(t, claims.OrgID, retrievedClaims.OrgID)
 }
@@ -64,10 +64,10 @@ func TestGetJwtClaimsExpiredToken(t *testing.T) {
 
 	// Create an expired token
 	claims := Claims{
-		UserID:  "userId",
-		GroupID: "groupId",
-		Email:   "email@example.com",
-		OrgID:   "orgId",
+		UserID: "userId",
+		Role:   RoleAdmin,
+		Email:  "email@example.com",
+		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -86,10 +86,10 @@ func TestGetJwtClaimsInvalidSignature(t *testing.T) {
 
 	// Create a valid token
 	claims := Claims{
-		UserID:  "userId",
-		GroupID: "groupId",
-		Email:   "email@example.com",
-		OrgID:   "orgId",
+		UserID: "userId",
+		Role:   RoleAdmin,
+		Email:  "email@example.com",
+		OrgID:  "orgId",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 		},

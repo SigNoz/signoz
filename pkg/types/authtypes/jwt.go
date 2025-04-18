@@ -14,10 +14,10 @@ type jwtClaimsKey struct{}
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID  string `json:"id"`
-	GroupID string `json:"gid"`
-	Email   string `json:"email"`
-	OrgID   string `json:"orgId"`
+	UserID string `json:"id"`
+	Email  string `json:"email"`
+	Role   Role   `json:"role"`
+	OrgID  string `json:"orgId"`
 }
 
 type JWT struct {
@@ -106,12 +106,12 @@ func (j *JWT) signToken(claims Claims) (string, error) {
 }
 
 // AccessToken creates an access token with the provided claims
-func (j *JWT) AccessToken(orgId, userId, groupId, email string) (string, error) {
+func (j *JWT) AccessToken(orgId, userId, email string, role Role) (string, error) {
 	claims := Claims{
-		UserID:  userId,
-		GroupID: groupId,
-		Email:   email,
-		OrgID:   orgId,
+		UserID: userId,
+		Role:   role,
+		Email:  email,
+		OrgID:  orgId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.JwtExpiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -121,12 +121,12 @@ func (j *JWT) AccessToken(orgId, userId, groupId, email string) (string, error) 
 }
 
 // RefreshToken creates a refresh token with the provided claims
-func (j *JWT) RefreshToken(orgId, userId, groupId, email string) (string, error) {
+func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, error) {
 	claims := Claims{
-		UserID:  userId,
-		GroupID: groupId,
-		Email:   email,
-		OrgID:   orgId,
+		UserID: userId,
+		Role:   role,
+		Email:  email,
+		OrgID:  orgId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.JwtRefresh)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

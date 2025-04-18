@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 
 	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
@@ -27,7 +28,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	baseconstants "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -494,7 +494,7 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 
 func isValidRole(role string) bool {
 	switch role {
-	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
+	case authtypes.RoleAdmin, authtypes.RoleEditor, authtypes.RoleViewer:
 		return true
 	}
 	return false
