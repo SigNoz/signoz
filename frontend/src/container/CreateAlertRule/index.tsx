@@ -121,7 +121,7 @@ function CreateRules(): JSX.Element {
 			alertType={alertType}
 			formInstance={formInstance}
 			initialValue={initValues}
-			ruleId={0}
+			ruleId=""
 		/>
 	);
 }
