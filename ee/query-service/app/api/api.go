@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -74,6 +75,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		UseLogsNewSchema:              opts.UseLogsNewSchema,
 		UseTraceNewSchema:             opts.UseTraceNewSchema,
 		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
+		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
 		Preference:                    preference,
 	})
