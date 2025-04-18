@@ -14,11 +14,6 @@ type String struct {
 	val string
 }
 
-// Not to be used. Only exception is authtypes.Group.
-func NewUpperString(val string) String {
-	return String{val: strings.ToUpper(strings.TrimSpace(val))}
-}
-
 func NewString(val string) String {
 	return String{val: strings.ToLower(strings.TrimSpace(val))}
 }
