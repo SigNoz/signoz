@@ -30,24 +30,24 @@ func (am *AuthMiddleware) OpenAccess(f func(http.ResponseWriter, *http.Request))
 
 func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// user, err := am.GetUserFromRequest(r.Context())
-		// if err != nil {
-		// 	RespondError(w, &model.ApiError{
-		// 		Typ: model.ErrorUnauthorized,
-		// 		Err: err,
-		// 	}, nil)
-		// 	return
-		// }
+		user, err := am.GetUserFromRequest(r.Context())
+		if err != nil {
+			RespondError(w, &model.ApiError{
+				Typ: model.ErrorUnauthorized,
+				Err: err,
+			}, nil)
+			return
+		}
 
-		// if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
-		// 	RespondError(w, &model.ApiError{
-		// 		Typ: model.ErrorForbidden,
-		// 		Err: errors.New("API is accessible to viewers/editors/admins"),
-		// 	}, nil)
-		// 	return
-		// }
-		// ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
-		// r = r.WithContext(ctx)
+		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
+			RespondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is accessible to viewers/editors/admins"),
+			}, nil)
+			return
+		}
+		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		r = r.WithContext(ctx)
 		f(w, r)
 	}
 }
