@@ -1,4 +1,5 @@
 import { rest } from 'msw';
+import { FunnelData } from 'types/api/traceFunnels';
 
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
@@ -15,6 +16,7 @@ import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
+import { mockSingleFunnelData } from './__mockdata__/trace_funnels';
 import { traceDetailResponse } from './__mockdata__/tracedetail';
 
 export const handlers = [
@@ -262,5 +264,21 @@ export const handlers = [
 	),
 	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(commonEnTranslation)),
+	rest.get(
+		'http://localhost/api/v1/trace-funnels/get/:funnelId',
+		(req, res, ctx) => {
+			const { funnelId } = req.params;
+			// Return mock details, potentially customizing based on funnelId if needed
+			// Ensure this mock data has properties the FunnelContext might use
+			// e.g., steps array if context validates based on it
+			return res(
+				ctx.status(200),
+				ctx.json({
+					...mockSingleFunnelData, // Use your existing mock
+					id: funnelId, // Use the actual requested ID
+					// Ensure steps are present if needed for 'Run' button logic
+				} as FunnelData),
+			);
+		},
 	),
 ];
