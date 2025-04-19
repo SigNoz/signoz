@@ -62,10 +62,10 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 		}
 
 		jwt := authtypes.Claims{
-			UserID:  user.ID,
-			GroupID: user.GroupID,
-			Email:   user.Email,
-			OrgID:   user.OrgID,
+			UserID: user.ID,
+			Role:   user.Role,
+			Email:  user.Email,
+			OrgID:  user.OrgID,
 		}
 
 		ctx = authtypes.NewContextWithClaims(ctx, jwt)

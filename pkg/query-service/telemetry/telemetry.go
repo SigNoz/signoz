@@ -206,7 +206,6 @@ type Telemetry struct {
 
 	alertsInfoCallback     func(ctx context.Context) (*model.AlertsInfo, error)
 	userCountCallback      func(ctx context.Context) (int, error)
-	userRoleCallback       func(ctx context.Context, groupId string) (string, error)
 	getUsersCallback       func(ctx context.Context) ([]types.GettableUser, *model.ApiError)
 	dashboardsInfoCallback func(ctx context.Context) (*model.DashboardsInfo, error)
 	savedViewsInfoCallback func(ctx context.Context) (*model.SavedViewsInfo, error)
@@ -218,10 +217,6 @@ func (a *Telemetry) SetAlertsInfoCallback(callback func(ctx context.Context) (*m
 
 func (a *Telemetry) SetUserCountCallback(callback func(ctx context.Context) (int, error)) {
 	a.userCountCallback = callback
-}
-
-func (a *Telemetry) SetUserRoleCallback(callback func(ctx context.Context, groupId string) (string, error)) {
-	a.userRoleCallback = callback
 }
 
 func (a *Telemetry) SetGetUsersCallback(callback func(ctx context.Context) ([]types.GettableUser, *model.ApiError)) {
@@ -555,21 +550,12 @@ func (a *Telemetry) IdentifyUser(user *types.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	// extract user group from user.groupId
-	role, _ := a.userRoleCallback(context.Background(), user.GroupID)
 
 	if a.saasOperator != nil {
-		if role != "" {
-			_ = a.saasOperator.Enqueue(analytics.Identify{
-				UserId: a.userEmail,
-				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", role),
-			})
-		} else {
-			_ = a.saasOperator.Enqueue(analytics.Identify{
-				UserId: a.userEmail,
-				Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
-			})
-		}
+		_ = a.saasOperator.Enqueue(analytics.Identify{
+			UserId: a.userEmail,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("role", user.Role),
+		})
 
 		_ = a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,

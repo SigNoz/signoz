@@ -1,14 +1,13 @@
 package auth
 
 import (
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/pkg/errors"
 )
 
 var (
 	ErrorEmptyRequest = errors.New("Empty request")
-	ErrorInvalidEmail = errors.New("Invalid email")
 	ErrorInvalidRole  = errors.New("Invalid role")
 
 	ErrorInvalidInviteToken = errors.New("Invalid invite token")
@@ -17,7 +16,7 @@ var (
 
 func isValidRole(role string) bool {
 	switch role {
-	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
+	case authtypes.RoleAdmin, authtypes.RoleEditor, authtypes.RoleViewer:
 		return true
 	}
 	return false
@@ -27,17 +26,10 @@ func validateInviteRequest(req *model.InviteRequest) error {
 	if req == nil {
 		return ErrorEmptyRequest
 	}
-	if !isValidEmail(req.Email) {
-		return ErrorInvalidEmail
-	}
 
 	if !isValidRole(req.Role) {
 		return ErrorInvalidRole
 	}
-	return nil
-}
 
-// TODO(Ahsan): Implement check on email semantic.
-func isValidEmail(email string) bool {
-	return true
+	return nil
 }

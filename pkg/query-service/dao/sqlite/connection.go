@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	"go.uber.org/zap"
 )
 
 type ModelDaoSqlite struct {
@@ -24,12 +23,8 @@ func InitDB(sqlStore sqlstore.SQLStore) (*ModelDaoSqlite, error) {
 	if err := mds.initializeOrgPreferences(ctx); err != nil {
 		return nil, err
 	}
-	if err := mds.initializeRBAC(ctx); err != nil {
-		return nil, err
-	}
 
 	telemetry.GetInstance().SetUserCountCallback(mds.GetUserCount)
-	telemetry.GetInstance().SetUserRoleCallback(mds.GetUserRole)
 	telemetry.GetInstance().SetGetUsersCallback(mds.GetUsers)
 
 	return mds, nil
@@ -75,43 +70,4 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// initializeRBAC creates the ADMIN, EDITOR and VIEWER groups if they are not present.
-func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
-	f := func(groupName string) error {
-		_, err := mds.createGroupIfNotPresent(ctx, groupName)
-		return errors.Wrap(err, "Failed to create group")
-	}
-
-	if err := f(constants.AdminGroup); err != nil {
-		return err
-	}
-	if err := f(constants.EditorGroup); err != nil {
-		return err
-	}
-	if err := f(constants.ViewerGroup); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
-	name string) (*types.Group, error) {
-
-	group, err := mds.GetGroupByName(ctx, name)
-	if err != nil {
-		return nil, errors.Wrap(err.Err, "Failed to query for root group")
-	}
-	if group != nil {
-		return group, nil
-	}
-
-	zap.L().Debug("group is not found, creating it", zap.String("group_name", name))
-	group, cErr := mds.CreateGroup(ctx, &types.Group{Name: name})
-	if cErr != nil {
-		return nil, cErr.Err
-	}
-	return group, nil
 }

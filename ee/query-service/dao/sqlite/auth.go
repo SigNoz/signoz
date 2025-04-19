@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
-	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -36,12 +35,6 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 		return nil, model.InternalErrorStr("failed to generate password hash")
 	}
 
-	group, apiErr := m.GetGroupByName(ctx, baseconst.ViewerGroup)
-	if apiErr != nil {
-		zap.L().Error("GetGroupByName failed", zap.Error(apiErr))
-		return nil, apiErr
-	}
-
 	user := &types.User{
 		ID:       uuid.New().String(),
 		Name:     "",
@@ -51,11 +44,11 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused
-		GroupID:           group.ID,
+		Role:              authtypes.RoleViewer,
 		OrgID:             domain.OrgID,
 	}
 
-	user, apiErr = m.CreateUser(ctx, user, false)
+	user, apiErr := m.CreateUser(ctx, user, false)
 	if apiErr != nil {
 		zap.L().Error("CreateUser failed", zap.Error(apiErr))
 		return nil, apiErr
@@ -115,7 +108,7 @@ func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, base
 			return false, baseapierr
 		}
 
-		if userPayload.Role != baseconst.AdminGroup {
+		if userPayload.Role != authtypes.RoleAdmin {
 			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
 		}
 
