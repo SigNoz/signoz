@@ -2,7 +2,7 @@
 import './Home.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover } from 'antd';
+import { Alert, Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
@@ -644,6 +644,16 @@ export default function Home(): JSX.Element {
 				</div>
 
 				<div className="home-right-content">
+					<div className="home-notifications-container">
+						<div className="notification">
+							<Alert
+								message="We’ve updated alert rule IDs from integers to UUIDs. Notifications fired before April 23, 2025, will continue to work seamlessly, and future notifications will use the new UUID-based rule IDs."
+								type="info"
+								showIcon
+							/>
+						</div>
+					</div>
+
 					{!isWelcomeChecklistSkipped && !loadingUserPreferences && (
 						<AnimatePresence initial={false}>
 							<Card className="checklist-card">
