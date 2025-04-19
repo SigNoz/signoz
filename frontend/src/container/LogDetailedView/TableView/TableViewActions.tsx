@@ -9,6 +9,7 @@ import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import dompurify from 'dompurify';
 import { isEmpty } from 'lodash-es';
 import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
@@ -142,7 +143,7 @@ export function TableViewActions(
 			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
 				{renderFieldContent()}
 			</CopyClipboardHOC>
-			{!isListViewPanel && (
+			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 				<span className="action-btn">
 					<Tooltip title="Filter for value">
 						<Button
