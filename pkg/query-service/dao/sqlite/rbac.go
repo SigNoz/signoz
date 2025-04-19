@@ -221,7 +221,6 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 			Err: errors.New("Found multiple users with same ID"),
 		}
 	}
-	fmt.Println("users", users)
 
 	if len(users) == 0 {
 		return nil, nil
@@ -258,7 +257,6 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 			Err: errors.New("Found multiple users with same ID."),
 		}
 	}
-	fmt.Println("usersbyemail", users)
 
 	if len(users) == 0 {
 		return nil, nil
