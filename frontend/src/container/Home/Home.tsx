@@ -647,7 +647,7 @@ export default function Home(): JSX.Element {
 					<div className="home-notifications-container">
 						<div className="notification">
 							<Alert
-								message="We’ve updated alert rule IDs from integers to UUIDs. Notifications fired before April 23, 2025, will continue to work seamlessly, and future notifications will use the new UUID-based rule IDs."
+								message="We're transitioning alert rule IDs from integers to UUIDs on April 23, 2025. Both old and new alert links will continue to work after this change - existing notifications using integer IDs will remain functional while new alerts will use the UUID format."
 								type="info"
 								showIcon
 							/>
