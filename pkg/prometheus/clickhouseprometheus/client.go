@@ -3,6 +3,8 @@ package clickhouseprometheus
 import (
 	"context"
 	"fmt"
+	value2 "github.com/SigNoz/signoz/pkg/query-service/utils/value"
+	"math"
 	"strconv"
 	"strings"
 
@@ -181,9 +183,10 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 	var fingerprint, prevFingerprint uint64
 	var timestampMs int64
 	var value float64
+	var flags uint32
 
 	for rows.Next() {
-		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value); err != nil {
+		if err := rows.Scan(&metricName, &fingerprint, &timestampMs, &value, &flags); err != nil {
 			return nil, err
 		}
 
@@ -199,6 +202,10 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 			ts = &prompb.TimeSeries{
 				Labels: labels,
 			}
+		}
+
+		if flags&1 == 1 {
+			value = math.Float64frombits(value2.StaleNaN)
 		}
 
 		// add samples to current time series
