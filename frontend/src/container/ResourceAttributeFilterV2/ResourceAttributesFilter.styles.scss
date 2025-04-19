@@ -1,0 +1,17 @@
+.resourceAttributesFilter-container-v2 {
+	margin: 8px;
+
+	.ant-select-selector {
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400) !important;
+		background-color: var(--bg-ink-300) !important;
+
+		input {
+			font-size: 12px;
+		}
+
+		.ant-tag .ant-typography {
+			font-size: 12px;
+		}
+	}
+}

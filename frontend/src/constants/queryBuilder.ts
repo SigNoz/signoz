@@ -398,6 +398,23 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 	],
 };
 
+export enum OperatorConfigKeys {
+	'EXCEPTIONS' = 'EXCEPTIONS',
+}
+
+export const OPERATORS_CONFIG = {
+	[OperatorConfigKeys.EXCEPTIONS]: [
+		OPERATORS['='],
+		OPERATORS['!='],
+		OPERATORS.IN,
+		OPERATORS.NIN,
+		OPERATORS.EXISTS,
+		OPERATORS.NOT_EXISTS,
+		OPERATORS.CONTAINS,
+		OPERATORS.NOT_CONTAINS,
+	],
+};
+
 export const HAVING_OPERATORS: string[] = [
 	OPERATORS['='],
 	OPERATORS['!='],

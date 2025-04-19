@@ -1,4 +1,5 @@
 import { AttributeValuesMap } from 'components/ClientSideQBSearch/ClientSideQBSearch';
+import { OperatorConfigKeys, OPERATORS_CONFIG } from 'constants/queryBuilder';
 import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import uniqWith from 'lodash-es/unionWith';
@@ -110,3 +111,13 @@ export const transformKeyValuesToAttributeValuesMap = (
 			},
 		]),
 	);
+
+export const filterByOperatorConfig = (
+	options: IOption[],
+	key?: OperatorConfigKeys,
+): IOption[] => {
+	if (!key || !OPERATORS_CONFIG[key]) return options;
+	return options.filter((option) =>
+		OPERATORS_CONFIG[key].includes(option.label),
+	);
+};
