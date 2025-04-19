@@ -116,7 +116,7 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 		return "", err
 	}
 
-	samplesTableFilter := fmt.Sprintf("metric_name IN %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name IN %s AND unix_milli >= %d AND unix_milli < %d AND bitAnd(flags, 1) = 0", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key), start, end)
 
 	tableName := helpers.WhichSamplesTableToUse(start, end, mq)
 
