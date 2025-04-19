@@ -85,10 +85,6 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
 	}
 
-	if _, err := tx.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
-		return err
-	}
-
 	migration.sqlstore.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingUser), new(newUser), []string{OrgReference}, func(ctx context.Context) error {
 		var existingUsers []*existingUser
 		if err := tx.NewSelect().Model(&existingUsers).Scan(ctx); err != nil {
@@ -126,10 +122,6 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		Table("groups").
 		IfExists().
 		Exec(ctx); err != nil {
-		return err
-	}
-
-	if _, err := tx.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
 		return err
 	}
 
