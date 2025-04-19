@@ -87,7 +87,7 @@ func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (st
 	}
 }
 
-func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
+func buildTracesFilterQuery(fs *v3.FilterSet, isEscaped bool) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
@@ -111,13 +111,21 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 				}
 			}
 			if val != nil {
-				fmtVal = utils.ClickHouseFormattedValue(val)
+				fmtVal = utils.ClickHouseFormattedValue(val, isEscaped)
 			}
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					// we also want to treat %, _ as literals for contains
-					val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
+					var val string
+					if !isEscaped {
+						val = utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
+					} else {
+						val = fmt.Sprintf("%s", item.Value)
+					}
+
+					// we want to treat %, _ as literals for contains
+					val = utils.EscapedStringForContains(val, false)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val))
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
@@ -148,7 +156,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
 	return queryString, nil
 }
 
-func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
+func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey, isEscaped bool) (string, error) {
 	// TODO(nitya): in future when we support user based mat column handle them
 	// skipping now as we don't support creating them
 	filterItems := []v3.FilterItem{}
@@ -167,7 +175,7 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 			Operator: "AND",
 			Items:    filterItems,
 		}
-		return buildTracesFilterQuery(&filterSet)
+		return buildTracesFilterQuery(&filterSet, isEscaped)
 	}
 	return "", nil
 }
@@ -248,7 +256,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	timeFilter := fmt.Sprintf("(timestamp >= '%d' AND timestamp <= '%d') AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", tracesStart, tracesEnd, bucketStart, bucketEnd)
 
-	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
+	filterSubQuery, err := buildTracesFilterQuery(mq.Filters, options.ValuesEscaped)
 	if err != nil {
 		return "", err
 	}
@@ -256,7 +264,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		filterSubQuery = " AND " + filterSubQuery
 	}
 
-	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy)
+	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(mq.GroupBy, options.ValuesEscaped)
 	if err != nil {
 		return "", err
 	}
@@ -264,7 +272,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		filterSubQuery = filterSubQuery + " AND " + emptyValuesInGroupByFilter
 	}
 
-	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false)
+	resourceSubQuery, err := resource.BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", bucketStart, bucketEnd, mq.Filters, mq.GroupBy, mq.AggregateAttribute, false, options.ValuesEscaped)
 	if err != nil {
 		return "", err
 	}

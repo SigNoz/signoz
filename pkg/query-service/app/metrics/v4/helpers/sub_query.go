@@ -282,7 +282,7 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 			}
 			var fmtVal string
 			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
-				fmtVal = utils.ClickHouseFormattedValue(toFormat)
+				fmtVal = utils.ClickHouseFormattedValue(toFormat, false)
 			}
 			switch op {
 			case v3.FilterOperatorEqual:
@@ -364,7 +364,7 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
 				toFormat = fmt.Sprintf("%%%s%%", toFormat)
 			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
+			fmtVal := utils.ClickHouseFormattedValue(toFormat, false)
 			switch op {
 			case v3.FilterOperatorEqual:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
