@@ -62,13 +62,7 @@ var BasicPlan = basemodel.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.TraceFunnels,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
+	
 }
 
 var EnterprisePlan = basemodel.FeatureSet{
@@ -121,11 +115,5 @@ var EnterprisePlan = basemodel.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
-	basemodel.Feature{
-		Name:       basemodel.TraceFunnels,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
+	
 }
