@@ -80,6 +80,8 @@ func (c *conditionBuilder) GetCondition(
 		return "", nil
 	}
 
+	tblFieldName, value = telemetrytypes.DataTypeCollisionHandledFieldName(key, value, tblFieldName)
+
 	// key must exists to apply main filter
 	containsExp := fmt.Sprintf("mapContains(%s, %s)", column.Name, sb.Var(key.Name))
 
