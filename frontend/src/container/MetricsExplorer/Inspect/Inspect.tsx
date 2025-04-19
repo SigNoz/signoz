@@ -2,15 +2,87 @@ import './Inspect.styles.scss';
 
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Drawer, Typography } from 'antd';
+import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { useMemo } from 'react';
 
+import GraphView from './GraphView';
 import { InspectProps } from './types';
+import { useInspectMetrics } from './useInspectMetrics';
 
-function Inspect({ metricName, isOpen, onClose }: InspectProps): JSX.Element {
+function Inspect({
+	metricName,
+	metricUnit,
+	metricType,
+	isOpen,
+	onClose,
+}: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+
+	const {
+		inspectMetricsTimeSeries,
+		inspectMetricsStatusCode,
+		isInspectMetricsLoading,
+		isInspectMetricsError,
+		formattedInspectMetricsTimeSeries,
+	} = useInspectMetrics(metricName);
+
+	const content = useMemo(() => {
+		if (isInspectMetricsLoading) {
+			return (
+				<div className="inspect-metrics-fallback">
+					<Skeleton active />
+				</div>
+			);
+		}
+
+		if (isInspectMetricsError || inspectMetricsStatusCode !== 200) {
+			const errorMessage =
+				inspectMetricsStatusCode === 400
+					? 'The time range is too large. Please modify it to be within 30 minutes.'
+					: 'Error loading inspect metrics.';
+
+			return (
+				<div className="inspect-metrics-fallback">
+					<Empty description={errorMessage} />
+				</div>
+			);
+		}
+
+		if (!inspectMetricsTimeSeries.length) {
+			return (
+				<div className="inspect-metrics-fallback">
+					<Empty description="No time series found for this metric to inspect." />
+				</div>
+			);
+		}
+
+		return (
+			<div className="inspect-metrics-content">
+				<div className="inspect-metrics-content-first-col">
+					<GraphView
+						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
+						resetInspection={(): void => {}}
+						metricUnit={metricUnit}
+						metricName={metricName}
+						metricType={metricType}
+					/>
+				</div>
+			</div>
+		);
+	}, [
+		isInspectMetricsLoading,
+		isInspectMetricsError,
+		inspectMetricsStatusCode,
+		inspectMetricsTimeSeries,
+		formattedInspectMetricsTimeSeries,
+		metricUnit,
+		metricName,
+		metricType,
+	]);
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -38,8 +110,7 @@ function Inspect({ metricName, isOpen, onClose }: InspectProps): JSX.Element {
 				className="inspect-metrics-modal"
 				destroyOnClose
 			>
-				<div>Inspect</div>
-				<div>{metricName}</div>
+				{content}
 			</Drawer>
 		</Sentry.ErrorBoundary>
 	);

@@ -154,12 +154,17 @@ function ValidateRowValueWrapper({
 	return <div>{children}</div>;
 }
 
-export const formatNumberIntoHumanReadableFormat = (num: number): string => {
+export const formatNumberIntoHumanReadableFormat = (
+	num: number,
+	addPlusSign = true,
+): string => {
 	function format(num: number, divisor: number, suffix: string): string {
 		const value = num / divisor;
 		return value % 1 === 0
-			? `${value}${suffix}+`
-			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}+`;
+			? `${value}${suffix}${addPlusSign ? '+' : ''}`
+			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}${
+					addPlusSign ? '+' : ''
+			  }`;
 	}
 
 	if (num >= 1_000_000_000) {
