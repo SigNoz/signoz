@@ -16,12 +16,32 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/tidwall/gjson"
 )
 
 type postableAlert struct {
 	*alertmanagertypes.PostableAlert
 	Receivers []string `json:"receivers"`
+}
+
+func (pa *postableAlert) MarshalJSON() ([]byte, error) {
+	// Marshal the embedded PostableAlert to get its JSON representation.
+	alertJSON, err := json.Marshal(pa.PostableAlert)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal that JSON into a map so we can add extra fields.
+	var m map[string]interface{}
+	if err := json.Unmarshal(alertJSON, &m); err != nil {
+		return nil, err
+	}
+
+	// Add the Receivers field.
+	m["receivers"] = pa.Receivers
+
+	return json.Marshal(m)
 }
 
 const (
@@ -269,11 +289,11 @@ func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagert
 	return channels, nil
 }
 
-func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID int) (*alertmanagertypes.Channel, error) {
+func (provider *provider) GetChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) (*alertmanagertypes.Channel, error) {
 	return provider.configStore.GetChannelByID(ctx, orgID, channelID)
 }
 
-func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id int) error {
+func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver, id valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -378,7 +398,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}))
 }
 
-func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID int) error {
+func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err

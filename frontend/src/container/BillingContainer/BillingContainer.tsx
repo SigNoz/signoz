@@ -333,7 +333,7 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			updateCreditCard({
-				url: window.location.href,
+				url: window.location.origin,
 			});
 		} else {
 			logEvent('Billing : Manage Billing', {
@@ -342,7 +342,7 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			manageCreditCard({
-				url: window.location.href,
+				url: window.location.origin,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps

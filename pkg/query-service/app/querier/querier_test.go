@@ -5,19 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/cache/inmemory"
-	"github.com/SigNoz/signoz/pkg/query-service/featureManager"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 )
@@ -1131,20 +1135,6 @@ func TestQueryRangeValueTypePromQL(t *testing.T) {
 	}
 }
 
-type regexMatcher struct {
-}
-
-func (m *regexMatcher) Match(expectedSQL, actualSQL string) error {
-	re, err := regexp.Compile(expectedSQL)
-	if err != nil {
-		return err
-	}
-	if !re.MatchString(actualSQL) {
-		return fmt.Errorf("expected query to contain %s, got %s", expectedSQL, actualSQL)
-	}
-	return nil
-}
-
 func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	params := &v3.QueryRangeParamsV3{
 		Start: 1722171576000000000, // July 28, 2024 6:29:36 PM
@@ -1358,8 +1348,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup mock
-			mock, err := cmock.NewClickHouseWithQueryMatcher(nil, &regexMatcher{})
-			require.NoError(t, err, "Failed to create ClickHouse mock")
+			telemetryStore := telemetrystoretest.New(telemetrystore.Config{Provider: "clickhouse"}, sqlmock.QueryMatcherRegexp)
 
 			// Configure mock responses
 			for _, response := range tc.queryResponses {
@@ -1368,7 +1357,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					values = append(values, []any{&ts, &testName})
 				}
 				// if len(values) > 0 {
-				mock.ExpectQuery(response.expectedQuery).WillReturnRows(
+				telemetryStore.Mock().ExpectQuery(response.expectedQuery).WillReturnRows(
 					cmock.NewRows(cols, values),
 				)
 				// }
@@ -1376,11 +1365,10 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReaderFromClickhouseConnection(
-				mock,
 				options,
 				nil,
-				"",
-				featureManager.StartManager(),
+				telemetryStore,
+				prometheustest.New(instrumentationtest.New().Logger(), prometheus.Config{}),
 				"",
 				true,
 				true,
@@ -1394,7 +1382,6 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 					queryBuilder.QueryBuilderOptions{
 						BuildTraceQuery: tracesV3.PrepareTracesQuery,
 					},
-					featureManager.StartManager(),
 				),
 			}
 			// Update query parameters
@@ -1429,7 +1416,7 @@ func Test_querier_runWindowBasedListQuery(t *testing.T) {
 			}
 
 			// Verify mock expectations
-			err = mock.ExpectationsWereMet()
+			err = telemetryStore.Mock().ExpectationsWereMet()
 			require.NoError(t, err, "Mock expectations were not met")
 		})
 	}

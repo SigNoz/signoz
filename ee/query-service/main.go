@@ -18,8 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 
-	prommodel "github.com/prometheus/common/model"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -30,10 +28,6 @@ func initZapLog() *zap.Logger {
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	return logger
-}
-
-func init() {
-	prommodel.NameValidationScheme = prommodel.UTF8Validation
 }
 
 func main() {
@@ -89,6 +83,7 @@ func main() {
 		MaxIdleConns: maxIdleConns,
 		MaxOpenConns: maxOpenConns,
 		DialTimeout:  dialTimeout,
+		Config:       promConfigPath,
 	})
 	if err != nil {
 		zap.L().Fatal("Failed to create config", zap.Error(err))
@@ -110,7 +105,7 @@ func main() {
 		signoz.NewTelemetryStoreProviderFactories(),
 	)
 	if err != nil {
-		zap.L().Fatal("Failed to create signoz struct", zap.Error(err))
+		zap.L().Fatal("Failed to create signoz", zap.Error(err))
 	}
 
 	jwtSecret := os.Getenv("SIGNOZ_JWT_SECRET")
@@ -148,7 +143,7 @@ func main() {
 		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
 
-	if err := server.Start(); err != nil {
+	if err := server.Start(context.Background()); err != nil {
 		zap.L().Fatal("Could not start server", zap.Error(err))
 	}
 

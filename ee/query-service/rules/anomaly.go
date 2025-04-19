@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/cache"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -52,8 +53,7 @@ type AnomalyRule struct {
 
 func NewAnomalyRule(
 	id string,
-	p *baserules.PostableRule,
-	featureFlags interfaces.FeatureLookup,
+	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
 	cache cache.Cache,
 	opts ...baserules.RuleOption,
@@ -61,7 +61,7 @@ func NewAnomalyRule(
 
 	zap.L().Info("creating new AnomalyRule", zap.String("id", id), zap.Any("opts", opts))
 
-	if p.RuleCondition.CompareOp == baserules.ValueIsBelow {
+	if p.RuleCondition.CompareOp == ruletypes.ValueIsBelow {
 		target := -1 * *p.RuleCondition.Target
 		p.RuleCondition.Target = &target
 	}
@@ -89,10 +89,9 @@ func NewAnomalyRule(
 	zap.L().Info("using seasonality", zap.String("seasonality", t.seasonality.String()))
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:        reader,
-		Cache:         cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FeatureLookup: featureFlags,
+		Reader:       reader,
+		Cache:        cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
@@ -102,27 +101,24 @@ func NewAnomalyRule(
 			anomaly.WithCache[*anomaly.HourlyProvider](cache),
 			anomaly.WithKeyGenerator[*anomaly.HourlyProvider](queryBuilder.NewKeyGenerator()),
 			anomaly.WithReader[*anomaly.HourlyProvider](reader),
-			anomaly.WithFeatureLookup[*anomaly.HourlyProvider](featureFlags),
 		)
 	} else if t.seasonality == anomaly.SeasonalityDaily {
 		t.provider = anomaly.NewDailyProvider(
 			anomaly.WithCache[*anomaly.DailyProvider](cache),
 			anomaly.WithKeyGenerator[*anomaly.DailyProvider](queryBuilder.NewKeyGenerator()),
 			anomaly.WithReader[*anomaly.DailyProvider](reader),
-			anomaly.WithFeatureLookup[*anomaly.DailyProvider](featureFlags),
 		)
 	} else if t.seasonality == anomaly.SeasonalityWeekly {
 		t.provider = anomaly.NewWeeklyProvider(
 			anomaly.WithCache[*anomaly.WeeklyProvider](cache),
 			anomaly.WithKeyGenerator[*anomaly.WeeklyProvider](queryBuilder.NewKeyGenerator()),
 			anomaly.WithReader[*anomaly.WeeklyProvider](reader),
-			anomaly.WithFeatureLookup[*anomaly.WeeklyProvider](featureFlags),
 		)
 	}
 	return &t, nil
 }
 
-func (r *AnomalyRule) Type() baserules.RuleType {
+func (r *AnomalyRule) Type() ruletypes.RuleType {
 	return RuleTypeAnomaly
 }
 
@@ -162,7 +158,7 @@ func (r *AnomalyRule) GetSelectedQuery() string {
 	return r.Condition().GetSelectedQueryName()
 }
 
-func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baserules.Vector, error) {
+func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 
 	params, err := r.prepareQueryRange(ts)
 	if err != nil {
@@ -189,7 +185,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, ts time.Time) (baser
 		}
 	}
 
-	var resultVector baserules.Vector
+	var resultVector ruletypes.Vector
 
 	scoresJSON, _ := json.Marshal(queryResult.AnomalyScores)
 	zap.L().Info("anomaly scores", zap.String("scores", string(scoresJSON)))
@@ -218,7 +214,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var alerts = make(map[uint64]*baserules.Alert, len(res))
+	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
@@ -230,7 +226,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		threshold := valueFormatter.Format(r.TargetVal(), r.Unit())
 		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
-		tmplData := baserules.AlertTemplateData(l, value, threshold)
+		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -238,7 +234,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
 
-			tmpl := baserules.NewTemplateExpander(
+			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
 				"__alert_"+r.Name(),
@@ -283,7 +279,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 			return nil, err
 		}
 
-		alerts[h] = &baserules.Alert{
+		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
@@ -324,7 +320,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > baserules.ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
@@ -380,10 +376,10 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (interface{}, erro
 
 func (r *AnomalyRule) String() string {
 
-	ar := baserules.PostableRule{
+	ar := ruletypes.PostableRule{
 		AlertName:         r.Name(),
 		RuleCondition:     r.Condition(),
-		EvalWindow:        baserules.Duration(r.EvalWindow()),
+		EvalWindow:        ruletypes.Duration(r.EvalWindow()),
 		Labels:            r.Labels().Map(),
 		Annotations:       r.Annotations().Map(),
 		PreferredChannels: r.PreferredChannels(),

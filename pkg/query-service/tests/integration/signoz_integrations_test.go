@@ -557,7 +557,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	}
 
 	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB.SQLxDB(), fm)
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB)
 	mockClickhouse.MatchExpectationsInOrder(false)
 
 	cloudIntegrationsController, err := cloudintegrations.NewController(testDB)
@@ -601,7 +601,7 @@ func postableFromPipelines(gettablePipelines []pipelinetypes.GettablePipeline) p
 
 	for _, p := range gettablePipelines {
 		postable := pipelinetypes.PostablePipeline{
-			ID:      p.ID,
+			ID:      p.ID.StringValue(),
 			OrderID: p.OrderID,
 			Name:    p.Name,
 			Alias:   p.Alias,

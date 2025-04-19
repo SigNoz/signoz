@@ -19,8 +19,8 @@ type StoreablePipeline struct {
 
 	types.UserAuditable
 	types.TimeAuditable
+	types.Identifiable
 	OrgID        string `json:"-" bun:"org_id,notnull"`
-	ID           string `json:"id" bun:"id,pk,type:text"`
 	OrderID      int    `json:"orderId" bun:"order_id"`
 	Enabled      bool   `json:"enabled" bun:"enabled"`
 	Name         string `json:"name" bun:"name,type:varchar(400),notnull"`

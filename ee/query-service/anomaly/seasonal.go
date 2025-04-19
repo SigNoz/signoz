@@ -38,12 +38,6 @@ func WithKeyGenerator[T BaseProvider](keyGenerator cache.KeyGenerator) GenericPr
 	}
 }
 
-func WithFeatureLookup[T BaseProvider](ff interfaces.FeatureLookup) GenericProviderOption[T] {
-	return func(p T) {
-		p.GetBaseSeasonalProvider().ff = ff
-	}
-}
-
 func WithReader[T BaseProvider](reader interfaces.Reader) GenericProviderOption[T] {
 	return func(p T) {
 		p.GetBaseSeasonalProvider().reader = reader
@@ -56,7 +50,6 @@ type BaseSeasonalProvider struct {
 	fluxInterval time.Duration
 	cache        cache.Cache
 	keyGenerator cache.KeyGenerator
-	ff           interfaces.FeatureLookup
 }
 
 func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomalyQueryParams {

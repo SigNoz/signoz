@@ -46,7 +46,7 @@ type User struct {
 
 type ResetPasswordRequest struct {
 	bun.BaseModel `bun:"table:reset_password_request"`
-	ID            int    `bun:"id,pk,autoincrement" json:"id"`
-	Token         string `bun:"token,type:text,notnull" json:"token"`
-	UserID        string `bun:"user_id,type:text,notnull" json:"userId"`
+	Identifiable
+	Token  string `bun:"token,type:text,notnull" json:"token"`
+	UserID string `bun:"user_id,type:text,notnull" json:"userId"`
 }

@@ -69,6 +69,12 @@
 				opacity: 1;
 				transition: all 0.2s;
 			}
+
+			&.community-enterprise-user {
+				color: var(--bg-sakura-500);
+				background: rgba(255, 113, 113, 0.1);
+				border: 1px solid var(--bg-sakura-500);
+			}
 		}
 
 		.dockBtn {

@@ -352,7 +352,6 @@ var testBuildLogsQueryData = []struct {
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
 	Type              int
-	PreferRPM         bool
 }{
 	{
 		Name:      "Test aggregate count on select field",
@@ -698,9 +697,8 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		PreferRPM: true,
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
-			", sum(`attribute_float64_bytes`)/1.000000 as value from signoz_logs.distributed_logs " +
+			", sum(`attribute_float64_bytes`)/60.000000 as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND has(attributes_string_key, 'method') " +
 			"AND `attribute_float64_bytes_exists`=true " +
@@ -722,7 +720,6 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		PreferRPM: false,
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`" +
 			", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60.000000 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
@@ -747,10 +744,9 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		PreferRPM: true,
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
 			"attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, " +
-			"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/1.000000 as value " +
+			"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60.000000 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND has(attributes_string_key, 'method') " +
 			"AND has(attributes_float64_key, 'bytes') " +
@@ -1061,7 +1057,7 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, "", tt.PreferRPM)
+			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, "")
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
@@ -1238,7 +1234,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value DESC) LIMIT 10",
-		Options:       v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+		Options:       v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by value",
@@ -1261,7 +1257,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by value ASC) LIMIT 10",
-		Options:       v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+		Options:       v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by attribute",
@@ -1284,7 +1280,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT `method` from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as `method`, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726000000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND has(attributes_string_key, 'method') AND has(attributes_string_key, 'name') group by `method` order by `method` ASC) LIMIT 10",
-		Options:       v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
+		Options:       v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- second",
