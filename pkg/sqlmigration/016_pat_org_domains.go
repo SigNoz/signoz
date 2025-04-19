@@ -72,10 +72,10 @@ func (migration *updatePatAndOrgDomains) Up(ctx context.Context, db *bun.DB) err
 
 	// change created_at and updated_at from integer to timestamp
 	for _, table := range []string{"personal_access_tokens", "org_domains"} {
-		if err := migration.store.Dialect().MigrateIntToTimestamp(ctx, tx, table, "created_at"); err != nil {
+		if err := migration.store.Dialect().IntToTimestamp(ctx, tx, table, "created_at"); err != nil {
 			return err
 		}
-		if err := migration.store.Dialect().MigrateIntToTimestamp(ctx, tx, table, "updated_at"); err != nil {
+		if err := migration.store.Dialect().IntToTimestamp(ctx, tx, table, "updated_at"); err != nil {
 			return err
 		}
 	}

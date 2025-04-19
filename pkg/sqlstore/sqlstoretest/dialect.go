@@ -9,11 +9,11 @@ import (
 type dialect struct {
 }
 
-func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	return nil
 }
 
-func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
 	return nil
 }
 

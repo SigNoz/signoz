@@ -28,10 +28,9 @@ var (
 	CloudIntegrationReference = `("cloud_integration_id") REFERENCES "cloud_integration" ("id") ON DELETE CASCADE`
 )
 
-type dialect struct {
-}
+type dialect struct{}
 
-func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToTimestamp(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -78,7 +77,7 @@ func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, 
 	return nil
 }
 
-func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+func (dialect *dialect) IntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
 	columnExists, err := dialect.ColumnExists(ctx, bun, table, column)
 	if err != nil {
 		return err
