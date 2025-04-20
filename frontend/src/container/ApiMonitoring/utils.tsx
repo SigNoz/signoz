@@ -512,6 +512,7 @@ export interface EndPointsTableRowData {
 	endpointName: string;
 	callCount: number | string;
 	latency: number | string;
+	errorRate: number | string;
 	lastUsed: string;
 	groupedByMeta?: Record<string, string | number>;
 }
@@ -539,6 +540,7 @@ export const extractPortAndEndpoint = (
 export const getEndPointsColumnsConfig = (
 	isGroupedByAttribute: boolean,
 	expandedRowKeys: React.Key[],
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): ColumnType<EndPointsTableRowData>[] => [
 	{
 		title: (
@@ -601,9 +603,66 @@ export const getEndPointsColumnsConfig = (
 		key: 'callCount',
 		width: 180,
 		ellipsis: true,
-		sorter: false,
+		sorter: (
+			rowA: EndPointsTableRowData,
+			rowB: EndPointsTableRowData,
+		): number => {
+			const callCountA =
+				rowA.callCount === '-' || rowA.callCount === 'n/a' ? 0 : rowA.callCount;
+			const callCountB =
+				rowB.callCount === '-' || rowB.callCount === 'n/a' ? 0 : rowB.callCount;
+			return Number(callCountA) - Number(callCountB);
+		},
 		align: 'right',
 		className: `column`,
+	},
+	{
+		title: (
+			<div>
+				Error rate <span className="round-metric-tag">%</span>
+			</div>
+		),
+		dataIndex: 'errorRate',
+		key: 'errorRate',
+		width: 120,
+		sorter: (
+			rowA: EndPointsTableRowData,
+			rowB: EndPointsTableRowData,
+			// eslint-disable-next-line sonarjs/no-identical-functions
+		): number => {
+			const errorRateA =
+				rowA.errorRate === '-' || rowA.errorRate === 'n/a' ? 0 : rowA.errorRate;
+			const errorRateB =
+				rowB.errorRate === '-' || rowB.errorRate === 'n/a' ? 0 : rowB.errorRate;
+
+			return Number(errorRateA) - Number(errorRateB);
+		},
+		align: 'right',
+		className: `column`,
+		render: (
+			errorRate: number | string,
+			// eslint-disable-next-line sonarjs/no-identical-functions
+		): React.ReactNode => {
+			if (errorRate === 'n/a' || errorRate === '-') {
+				return '-';
+			}
+			return (
+				<Progress
+					status="active"
+					percent={Number(((errorRate as number) * 100).toFixed(1))}
+					strokeLinecap="butt"
+					size="small"
+					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
+					string => {
+						const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
+						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+						return Color.BG_FOREST_500;
+					})()}
+					className="progress-bar error-rate"
+				/>
+			);
+		},
 	},
 	{
 		title: (
@@ -614,7 +673,17 @@ export const getEndPointsColumnsConfig = (
 		dataIndex: 'latency',
 		key: 'latency',
 		width: 120,
-		sorter: false,
+		sorter: (
+			rowA: EndPointsTableRowData,
+			rowB: EndPointsTableRowData,
+			// eslint-disable-next-line sonarjs/no-identical-functions
+		): number => {
+			const latencyA =
+				rowA.latency === '-' || rowA.latency === 'n/a' ? 0 : rowA.latency;
+			const latencyB =
+				rowB.latency === '-' || rowB.latency === 'n/a' ? 0 : rowB.latency;
+			return Number(latencyA) - Number(latencyB);
+		},
 		align: 'right',
 		className: `column`,
 	},
@@ -623,7 +692,22 @@ export const getEndPointsColumnsConfig = (
 		dataIndex: 'lastUsed',
 		key: 'lastUsed',
 		width: 120,
-		sorter: false,
+		sorter: (
+			rowA: EndPointsTableRowData,
+			rowB: EndPointsTableRowData,
+			// eslint-disable-next-line sonarjs/no-identical-functions
+		): number => {
+			const dateA =
+				rowA.lastUsed === '-' || rowA.lastUsed === 'n/a'
+					? new Date(0).toISOString()
+					: rowA.lastUsed;
+			const dateB =
+				rowB.lastUsed === '-' || rowB.lastUsed === 'n/a'
+					? new Date(0).toISOString()
+					: rowB.lastUsed;
+
+			return new Date(dateB).getTime() - new Date(dateA).getTime();
+		},
 		align: 'right',
 		className: `column`,
 	},
@@ -654,6 +738,7 @@ export const formatEndPointsDataForTable = (
 					endpoint.data.C === 'n/a'
 						? '-'
 						: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
+				errorRate: endpoint.data.D || '-',
 			};
 		});
 	}
@@ -676,6 +761,7 @@ export const formatEndPointsDataForTable = (
 				endpoint.data.C === 'n/a'
 					? '-'
 					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
+			errorRate: endpoint.data.D || '-',
 			groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
 				acc[attribute] = endpoint.data[attribute] || '';
 				return acc;
