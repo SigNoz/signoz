@@ -28,7 +28,7 @@ import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
-interface FunnelContextType {
+export interface FunnelContextType {
 	startTime: number;
 	endTime: number;
 	selectedTime: CustomTimeType | Time | TimeV2;

@@ -62,7 +62,7 @@ function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
 	} = useFunnelContext();
 
 	return (
-		<div className="steps-footer">
+		<div className="steps-footer" data-testid="steps-footer">
 			<div className="steps-footer__left">
 				<Cone className="funnel-icon" size={14} />
 				<span>{stepsCount} steps</span>

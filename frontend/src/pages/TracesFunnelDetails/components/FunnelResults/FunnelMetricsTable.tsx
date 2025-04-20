@@ -18,6 +18,7 @@ interface FunnelMetricsTableProps {
 	isLoading?: boolean;
 	isError?: boolean;
 	emptyState?: JSX.Element;
+	testId: string;
 }
 
 function FunnelMetricsContentRenderer({
@@ -71,9 +72,10 @@ function FunnelMetricsTable({
 	isLoading,
 	isError,
 	emptyState,
+	testId,
 }: FunnelMetricsTableProps): JSX.Element {
 	return (
-		<div className="funnel-metrics">
+		<div className="funnel-metrics" data-testid={testId}>
 			<div className="funnel-metrics__header">
 				<div className="funnel-metrics__title">{title}</div>
 				{subtitle && (
