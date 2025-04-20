@@ -35,6 +35,7 @@ function StepsTransitionMetrics({
 	return (
 		<FunnelMetricsTable
 			title={currentTransition.label}
+			testId="step-transition-metrics"
 			subtitle={{
 				label: 'Conversion rate',
 				value: `${conversionRate.toFixed(2)}%`,
