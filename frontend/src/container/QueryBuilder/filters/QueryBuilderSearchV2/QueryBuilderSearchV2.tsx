@@ -63,6 +63,7 @@ import {
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
+import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
 export interface ITag {
@@ -276,6 +277,18 @@ function QueryBuilderSearchV2(
 		},
 	);
 
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const attributeValuesPayload = useMemo(() => attributeValues?.payload, [
+		attributeValues?.payload?.stringAttributeValues?.length,
+		attributeValues?.payload?.boolAttributeValues?.length,
+		attributeValues?.payload?.stringAttributeValues?.length,
+	]);
+
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const attributeKeysPayload = useMemo(() => data?.payload?.attributeKeys, [
+		data?.payload?.attributeKeys?.length,
+	]);
+
 	const handleDropdownSelect = useCallback(
 		(value: string) => {
 			let parsedValue: BaseAutocompleteData | string;
@@ -290,7 +303,8 @@ function QueryBuilderSearchV2(
 				if (
 					isObject(parsedValue) &&
 					parsedValue?.key &&
-					parsedValue?.key?.split(' ').length > 1
+					parsedValue?.key?.split(' ').length > 1 &&
+					isLogsDataSource
 				) {
 					setTags((prev) => [
 						...prev,
@@ -405,7 +419,13 @@ function QueryBuilderSearchV2(
 				}
 			}
 		},
-		[currentFilterItem?.key, currentFilterItem?.op, currentState, searchValue],
+		[
+			currentFilterItem?.key,
+			currentFilterItem?.op,
+			currentState,
+			isLogsDataSource,
+			searchValue,
+		],
 	);
 
 	const handleSearch = useCallback((value: string) => {
@@ -689,12 +709,29 @@ function QueryBuilderSearchV2(
 					})),
 				);
 			} else {
-				setDropdownOptions(
-					data?.payload?.attributeKeys?.map((key) => ({
+				setDropdownOptions([
+					// Add user typed option if it doesn't exist in the payload
+					...(tagKey.trim().length > 0 &&
+					!attributeKeysPayload?.some((val) => val.key === tagKey)
+						? [
+								{
+									label: tagKey,
+									value: {
+										key: tagKey,
+										dataType: DataTypes.EMPTY,
+										type: '',
+										isColumn: false,
+										isJSON: false,
+									},
+								},
+						  ]
+						: []),
+					// Map existing attribute keys from payload
+					...(attributeKeysPayload?.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || [],
-				);
+					})) || []),
+				]);
 			}
 		}
 		if (currentState === DropdownState.OPERATOR) {
@@ -752,10 +789,10 @@ function QueryBuilderSearchV2(
 					values.push(tagValue[tagValue.length - 1]);
 			} else if (!isEmpty(tagValue)) values.push(tagValue);
 
-			if (attributeValues?.payload) {
+			if (attributeValuesPayload) {
 				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
 				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
-				values.push(...(attributeValues?.payload?.[key] || []));
+				values.push(...(attributeValuesPayload?.[key] || []));
 			}
 
 			setDropdownOptions(
@@ -767,10 +804,10 @@ function QueryBuilderSearchV2(
 		}
 	}, [
 		hardcodedAttributeKeys,
-		attributeValues?.payload,
+		attributeValuesPayload,
 		currentFilterItem?.key?.dataType,
 		currentState,
-		data?.payload?.attributeKeys,
+		attributeKeysPayload,
 		isLogsDataSource,
 		searchValue,
 		suggestionsData?.payload?.attributes,
@@ -907,6 +944,11 @@ function QueryBuilderSearchV2(
 		);
 	};
 
+	const isTracesDataSource = useMemo(
+		() => query.dataSource === DataSource.TRACES,
+		[query.dataSource],
+	);
+
 	return (
 		<div className="query-builder-search-v2">
 			<Select
@@ -964,6 +1006,7 @@ function QueryBuilderSearchV2(
 						exampleQueries={suggestionsData?.payload?.example_queries || []}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
+						isLogsDataSource={isLogsDataSource}
 					/>
 				)}
 			>
@@ -990,6 +1033,7 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
+			{isTracesDataSource && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }
