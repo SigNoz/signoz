@@ -457,7 +457,6 @@ export const SUPPORT_ROUTE: AppRoutes = {
 
 export const LIST_LICENSES: AppRoutes = {
 	path: ROUTES.LIST_LICENSES,
-
 	element: <LicensePage />,
 	isPrivate: true,
 	key: 'LIST_LICENSES',

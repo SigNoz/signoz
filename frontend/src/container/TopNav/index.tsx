@@ -1,7 +1,8 @@
 import { Col, Row, Space } from 'antd';
 import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
-import { matchPath, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
+import { matchPath } from 'react-router-dom-v5-compat';
 
 import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';
@@ -13,7 +14,7 @@ function TopNav(): JSX.Element | null {
 	const isRouteToSkip = useMemo(
 		() =>
 			routesToSkip.some((route) =>
-				matchPath(location.pathname, { path: route, exact: true }),
+				matchPath({ path: route, end: true }, location.pathname),
 			),
 		[location.pathname],
 	);
@@ -21,19 +22,19 @@ function TopNav(): JSX.Element | null {
 	const isDisabled = useMemo(
 		() =>
 			routesToDisable.some((route) =>
-				matchPath(location.pathname, { path: route, exact: true }),
+				matchPath({ path: route, end: true }, location.pathname),
 			),
 		[location.pathname],
 	);
 
 	const isSignUpPage = useMemo(
-		() => matchPath(location.pathname, { path: ROUTES.SIGN_UP, exact: true }),
+		() => matchPath({ path: ROUTES.SIGN_UP, end: true }, location.pathname),
 		[location.pathname],
 	);
 
 	const isNewAlertsLandingPage = useMemo(
 		() =>
-			matchPath(location.pathname, { path: ROUTES.ALERTS_NEW, exact: true }) &&
+			matchPath({ path: ROUTES.ALERTS_NEW, end: true }, location.pathname) &&
 			!location.search,
 		[location.pathname, location.search],
 	);
