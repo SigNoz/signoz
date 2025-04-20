@@ -20,7 +20,7 @@ import (
 type WhereClauseVisitor struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	warnings         []error
-	fieldKeys        map[string][]telemetrytypes.TelemetryFieldKey
+	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
 	errors           []error
 	builder          *sqlbuilder.SelectBuilder
 	fullTextColumn   telemetrytypes.TelemetryFieldKey
@@ -29,7 +29,7 @@ type WhereClauseVisitor struct {
 // NewWhereClauseVisitor creates a new WhereClauseVisitor
 func NewWhereClauseVisitor(
 	conditionBuilder qbtypes.ConditionBuilder,
-	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	builder *sqlbuilder.SelectBuilder,
 	fullTextColumn telemetrytypes.TelemetryFieldKey,
 ) *WhereClauseVisitor {
@@ -72,7 +72,7 @@ func (l *ErrorListener) SyntaxError(recognizer antlr.Recognizer, offendingSymbol
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
 func PrepareWhereClause(
 	query string,
-	fieldKeys map[string][]telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fullTextColumn telemetrytypes.TelemetryFieldKey,
 ) (string, []any, []error, error) {
@@ -557,7 +557,7 @@ func (v *WhereClauseVisitor) VisitKey(ctx *KeyContext) any {
 	// Since it will ORed with the fieldKeysForName, it will not result empty
 	// when either of them have values
 	if strings.HasPrefix(fieldKey.Name, telemetrylogs.BodyJSONStringSearchPrefix) {
-		fieldKeysForName = append(fieldKeysForName, fieldKey)
+		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 
 	// TODO(srikanthccv): do we want to return an error here?

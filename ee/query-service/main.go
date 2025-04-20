@@ -51,8 +51,8 @@ func main() {
 	var gatewayUrl string
 	var useLicensesV3 bool
 
-	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", false, "use logs_v2 schema for logs")
-	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", false, "use new schema for traces")
+	flag.BoolVar(&useLogsNewSchema, "use-logs-new-schema", true, "use logs_v2 schema for logs")
+	flag.BoolVar(&useTraceNewSchema, "use-trace-new-schema", true, "use new schema for traces")
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")

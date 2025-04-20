@@ -27,7 +27,7 @@ func NewLogging(ctx context.Context, providerSettings factory.ProviderSettings, 
 	}, nil
 }
 
-func (logging) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
+func (hook *logging) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
 	return ctx
 }
 
