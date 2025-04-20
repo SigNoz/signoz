@@ -437,6 +437,9 @@ function OnboardingAddDataSource(): JSX.Element {
 				case 'messaging-queues-celery':
 					history.push(ROUTES.MESSAGING_QUEUES_CELERY_TASK);
 					break;
+				case 'integrations':
+					history.push(ROUTES.INTEGRATIONS);
+					break;
 				default:
 					history.push(ROUTES.APPLICATION);
 			}

@@ -1767,7 +1767,8 @@
 		"rds logs to signoz"
 		],
 		"imgUrl": "/Logos/rds.svg",
-		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/"
+		"link": "https://signoz.io/docs/aws-monitoring/rds-logs/",
+		"internalRedirect": true
 	},
 	{
 		"dataSource": "aws-lambda",
@@ -1778,7 +1779,6 @@
 		"aws lambda logs",
 		"lambda observability",
 		"lambda monitoring otel",
-		"lambda metrics collection",
 		"opentelemetry aws lambda",
 		"collect lambda telemetry",
 		"serverless monitoring",
@@ -2635,5 +2635,231 @@
 		"celery opentelemetry"
 		],
 		"link": "https://signoz.io/docs/messaging-queues/celery-setup/"
+	},
+	{
+		"dataSource": "redis",
+		"label": "Redis",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+		"redis",
+		"redis logs",
+		"redis metrics",
+		"database"
+		],
+		"imgUrl": "/Logos/redis.svg",
+		"link": "/integrations?integration=builtin-redis",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "postgresql",
+		"label": "PostgreSQL",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+		"postgresql",
+		"postgresql logs",
+		"postgresql metrics",
+		"database"
+		],
+		"imgUrl": "/Logos/postgresql.svg",
+		"link": "/integrations?integration=builtin-postgres",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "nginx",
+		"label": "Nginx",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+		"nginx",
+		"nginx logs",
+		"nginx metrics",
+		"proxy"
+		],
+		"imgUrl": "/Logos/nginx.svg",
+		"link": "/integrations?integration=builtin-nginx",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "mongo",
+		"label": "Mongo",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"mongodb",
+			"mongo logs",
+			"mongo metrics",
+			"nosql database",
+			"database"
+		],
+		"imgUrl": "/Logos/mongo.svg",
+		"link": "/integrations?integration=builtin-mongo",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "clickhouse",
+		"label": "ClickHouse",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"clickhouse",
+			"clickhouse logs",
+			"clickhouse metrics",
+			"olap database",
+			"columnar database",
+			"database"
+		],
+		"imgUrl": "/Logos/clickhouse.svg",
+		"link": "/integrations?integration=builtin-clickhouse",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-rds-postgresql",
+		"label": "AWS RDS (PostgreSQL)",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws rds postgresql",
+			"postgresql",
+			"rds logs",
+			"rds metrics",
+			"aws database",
+			"database"
+		],
+		"imgUrl": "/Logos/rds.svg",
+		"link": "/integrations?integration=builtin-aws_rds_postgresql",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-rds-mysql",
+		"label": "AWS RDS (MySQL)",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws rds mysql",
+			"mysql",
+			"rds logs",
+			"rds metrics",
+			"aws database",
+			"database"
+		],
+		"imgUrl": "/Logos/rds.svg",
+		"link": "/integrations?integration=builtin-aws_rds_mysql",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-elasticache-redis",
+		"label": "AWS ElastiCache (redis)",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws elasticache redis",
+			"elasticache",
+			"redis",
+			"cache metrics",
+			"aws cache",
+			"redis"
+		],
+		"imgUrl": "/Logos/elasticache.svg",
+		"link": "/integrations?integration=builtin-aws_elasticache_redis",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-alb",
+		"label": "AWS ALB - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"alb",
+			"aws alb",
+			"application load balancer",
+			"alb logs",
+			"alb metrics",
+			"load balancer"
+		],
+		"imgUrl": "/Logos/aws-alb.svg",
+		"link": "/integrations?integration=aws-integration&service=alb",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "api-gateway",
+		"label": "AWS API Gateway - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"api gateway",
+			"aws api gateway",
+			"apigateway logs",
+			"apigateway metrics",
+			"api monitoring"
+		],
+		"imgUrl": "/Logos/api-gateway.svg",
+		"link": "/integrations?integration=aws-integration&service=api-gateway",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "ec2",
+		"label": "EC2 - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"ec2",
+			"aws ec2",
+			"ec2 logs",
+			"ec2 metrics",
+			"compute instance"
+		],
+		"imgUrl": "/Logos/ec2.svg",
+		"link": "/integrations?integration=aws-integration&service=ec2",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "aws-lambda",
+		"label": "AWS Lambda - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"aws lambda",
+			"lambda logs",
+			"lambda metrics",
+			"serverless monitoring",
+			"function logs"
+		],
+		"imgUrl": "/Logos/lambda.svg",
+		"link": "/integrations?integration=aws-integration&service=lambda",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "amazon-msk",
+		"label": "Amazon MSK - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"amazon msk",
+			"aws msk",
+			"msk logs",
+			"msk metrics",
+			"kafka"
+		],
+		"imgUrl": "/Logos/amazon-msk.svg",
+		"link": "/integrations?integration=aws-integration&service=msk",
+		"internalRedirect": true
+	},
+	{
+		"dataSource": "amazon-rds",
+		"label": "Amazon RDS - One Click",
+		"tags": ["integrations"],
+		"module": "integrations",
+		"relatedSearchKeywords": [
+			"amazon rds",
+			"aws rds",
+			"rds logs",
+			"rds metrics",
+			"database"
+		],
+		"imgUrl": "/Logos/rds.svg",
+		"link": "/integrations?integration=aws-integration&service=rds",
+		"internalRedirect": true
 	}
 ]
