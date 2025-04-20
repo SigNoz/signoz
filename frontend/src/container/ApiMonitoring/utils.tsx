@@ -123,7 +123,23 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		key: 'endpointCount',
 		width: '14.2%',
 		ellipsis: true,
-		sorter: false,
+		sorter: (rowA: APIDomainsRowData, rowB: APIDomainsRowData): number => {
+			const endpointA =
+				rowA.endpointCount === '-' || rowA.endpointCount === 'n/a'
+					? ''
+					: rowA.endpointCount;
+			const endpointB =
+				rowB.endpointCount === '-' || rowB.endpointCount === 'n/a'
+					? ''
+					: rowB.endpointCount;
+
+			// Handle cases where one or both values are empty
+			if (!endpointA && !endpointB) return 0;
+			if (!endpointA) return 1;
+			if (!endpointB) return -1;
+
+			return Number(endpointA) - Number(endpointB);
+		},
 		align: 'right',
 		className: `column`,
 	},
@@ -132,13 +148,24 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		dataIndex: 'lastUsed',
 		key: 'lastUsed',
 		width: '14.2%',
-		sorter: false,
 		align: 'right',
 		className: `column`,
-		render: (lastUsed: number | string): string =>
+		sorter: (rowA: APIDomainsRowData, rowB: APIDomainsRowData): number => {
+			const dateA =
+				rowA.lastUsed === '-' || rowA.lastUsed === 'n/a'
+					? new Date(0).toISOString()
+					: rowA.lastUsed;
+			const dateB =
+				rowB.lastUsed === '-' || rowB.lastUsed === 'n/a'
+					? new Date(0).toISOString()
+					: rowB.lastUsed;
+
+			return new Date(dateB).getTime() - new Date(dateA).getTime();
+		},
+		render: (lastUsed: string): string =>
 			lastUsed === 'n/a' || lastUsed === '-'
 				? '-'
-				: getLastUsedRelativeTime(lastUsed as number),
+				: getLastUsedRelativeTime(new Date(lastUsed).getTime()),
 	},
 	{
 		title: (
@@ -149,7 +176,11 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		dataIndex: 'rate',
 		key: 'rate',
 		width: '14.2%',
-		sorter: false,
+		sorter: (rowA: APIDomainsRowData, rowB: APIDomainsRowData): number => {
+			const rateA = rowA.rate === '-' || rowA.rate === 'n/a' ? 0 : rowA.rate;
+			const rateB = rowB.rate === '-' || rowB.rate === 'n/a' ? 0 : rowB.rate;
+			return Number(rateA) - Number(rateB);
+		},
 		align: 'right',
 		className: `column`,
 	},
@@ -162,7 +193,14 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		dataIndex: 'errorRate',
 		key: 'errorRate',
 		width: '14.2%',
-		sorter: false,
+		sorter: (rowA: APIDomainsRowData, rowB: APIDomainsRowData): number => {
+			const errorRateA =
+				rowA.errorRate === '-' || rowA.errorRate === 'n/a' ? 0 : rowA.errorRate;
+			const errorRateB =
+				rowB.errorRate === '-' || rowB.errorRate === 'n/a' ? 0 : rowB.errorRate;
+
+			return Number(errorRateA) - Number(errorRateB);
+		},
 		align: 'right',
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => {
@@ -195,7 +233,14 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 		dataIndex: 'latency',
 		key: 'latency',
 		width: '14.2%',
-		sorter: false,
+		sorter: (rowA: APIDomainsRowData, rowB: APIDomainsRowData): number => {
+			const latencyA =
+				rowA.latency === '-' || rowA.latency === 'n/a' ? 0 : rowA.latency;
+			const latencyB =
+				rowB.latency === '-' || rowB.latency === 'n/a' ? 0 : rowB.latency;
+
+			return Number(latencyA) - Number(latencyB);
+		},
 		align: 'right',
 		className: `column`,
 	},
