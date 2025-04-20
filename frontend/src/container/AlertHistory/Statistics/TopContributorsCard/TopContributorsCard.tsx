@@ -6,7 +6,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';

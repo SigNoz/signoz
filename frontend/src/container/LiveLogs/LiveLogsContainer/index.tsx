@@ -14,7 +14,7 @@ import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload
 import { useEventSource } from 'providers/EventSource';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';

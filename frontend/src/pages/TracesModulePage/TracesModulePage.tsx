@@ -5,7 +5,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import { FeatureKeys } from 'constants/features';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 

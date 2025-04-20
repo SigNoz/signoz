@@ -3,7 +3,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import { memo, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { TitleContainer, ValueContainer } from './styles';
 import { GridValueComponentProps } from './types';

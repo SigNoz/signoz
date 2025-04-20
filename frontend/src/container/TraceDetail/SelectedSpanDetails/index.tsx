@@ -9,7 +9,7 @@ import history from 'lib/history';
 import { PanelRight } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { GlobalReducer } from 'types/reducer/globalTime';

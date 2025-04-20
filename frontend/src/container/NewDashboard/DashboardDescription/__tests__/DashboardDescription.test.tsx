@@ -2,7 +2,8 @@ import { getNonIntegrationDashboardById } from 'mocks-server/__mockdata__/dashbo
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import DashboardDescription from '..';

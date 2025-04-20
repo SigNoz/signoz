@@ -6,7 +6,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ListMinus, Rows3 } from 'lucide-react';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';
 import MessagingQueues from './MessagingQueues';

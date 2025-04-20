@@ -6,7 +6,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { CreditCard, X } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 

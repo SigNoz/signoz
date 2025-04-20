@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DraftingCompass } from 'lucide-react';
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 
 type Props = {
 	children: React.ReactNode;

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import styled from 'styled-components';
 
 export const Button = styled(Link)`

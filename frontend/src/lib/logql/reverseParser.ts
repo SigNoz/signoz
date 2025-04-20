@@ -18,8 +18,7 @@ export const reverseParser = (
 			// if the values are array type, here we spread them in
 			// ('a', 'b') format
 			queryString += `(${query.value.map((val) => `'${val}'`).join(',')})`;
-		} else {
-			if (
+		} else if (
 				query.type === QueryTypes.QUERY_VALUE &&
 				lastToken.type === QueryTypes.QUERY_OPERATOR &&
 				Object.values(StringTypeQueryOperators).includes(lastToken.value)
@@ -30,7 +29,6 @@ export const reverseParser = (
 			} else {
 				queryString += query.value;
 			}
-		}
 		lastToken = query;
 	});
 

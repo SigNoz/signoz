@@ -6,7 +6,7 @@ import history from 'lib/history';
 import { Info } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 function ComingSoon(): JSX.Element {
 	return (

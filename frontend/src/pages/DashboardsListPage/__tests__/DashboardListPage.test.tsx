@@ -9,7 +9,8 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
 jest.mock('container/NewDashboard/DashboardDescription', () => ({

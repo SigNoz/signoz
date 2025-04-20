@@ -1,7 +1,8 @@
 import { TableProps } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import { useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 const useSortableTable = <T>(
 	initialOrder: 'ascend' | 'descend' | null,
