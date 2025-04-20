@@ -43,6 +43,7 @@ function FunnelTable({
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 				}
+				rowKey={(record): string => record.id || JSON.stringify(record)}
 			/>
 		</div>
 	);
