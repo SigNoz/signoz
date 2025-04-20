@@ -19,7 +19,8 @@ import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -40,7 +41,10 @@ import {
 } from './util';
 
 function DBCall(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 
 	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);

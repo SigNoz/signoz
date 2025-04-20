@@ -12,7 +12,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -24,7 +24,10 @@ import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 
 	const { notifications } = useNotifications();

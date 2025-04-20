@@ -23,7 +23,8 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -58,7 +59,10 @@ import {
 } from './util';
 
 function Application(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(

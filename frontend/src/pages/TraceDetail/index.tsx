@@ -10,13 +10,14 @@ import { Undo } from 'lucide-react';
 import TraceDetailsPage from 'pages/TraceDetailV2';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
 
 import { noEventMessage } from './constants';
 
 function TraceDetail(): JSX.Element {
-	const { id } = useParams<TraceDetailProps>();
+	// Temp: Hard type casting for string | undefined
+	const { id } = (useParams() as unknown) as TraceDetailProps;
 	const [showNewTraceDetails, setShowNewTraceDetails] = useState<boolean>(false);
 	const urlQuery = useUrlQuery();
 	const { spanId, levelUp, levelDown } = useMemo(

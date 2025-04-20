@@ -34,7 +34,8 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		setCollapsed,
 	} = props;
 
-	const { id: traceId } = useParams<Params>();
+	// Temp: Hard type casting for string | undefined
+	const { id: traceId } = (useParams() as unknown) as Params;
 
 	const isDarkMode = useIsDarkMode();
 

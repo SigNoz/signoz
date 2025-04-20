@@ -9,7 +9,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';
 
@@ -34,7 +34,10 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		traceFlamegraphStatsWidth,
 		selectedSpan,
 	} = props;
-	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		id: traceId,
+	} = (useParams() as unknown) as TraceDetailFlamegraphURLProps;
 	const urlQuery = useUrlQuery();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',

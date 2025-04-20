@@ -8,7 +8,7 @@ import {
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { QueryTableProps } from './QueryTable.intefaces';
 import { createDownloadableData } from './utils';
@@ -28,7 +28,10 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { loading } = props;
 	const { columns: newColumns, dataSource: newDataSource } = useMemo(() => {

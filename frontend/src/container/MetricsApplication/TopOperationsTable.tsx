@@ -11,7 +11,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -31,7 +31,10 @@ function TopOperationsTable({
 	isLoading,
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const { safeNavigate } = useSafeNavigate();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -45,7 +48,8 @@ function TopOperationsTable({
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
-	const params = useParams<{ servicename: string }>();
+	// Temp: Hard type casting for string | undefined
+	const params = (useParams() as unknown) as { servicename: string };
 
 	const handleOnClick = (operation: string): void => {
 		const { servicename: encodedServiceName } = params;

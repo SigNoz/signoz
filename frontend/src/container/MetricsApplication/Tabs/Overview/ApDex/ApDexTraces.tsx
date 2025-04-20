@@ -7,7 +7,7 @@ import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -21,7 +21,10 @@ function ApDexTraces({
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 
 	const apDexTracesWidget = useMemo(

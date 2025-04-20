@@ -8,12 +8,14 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { generatePath, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
 	const { search } = useLocation();
-	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	// Temp: Hard type casting for string | undefined
+	const { dashboardId } = (useParams() as unknown) as DashboardWidgetPageParams;
 	const { safeNavigate } = useSafeNavigate();
 
 	const [selectedGraph, setSelectedGraph] = useState<PANEL_TYPES>();

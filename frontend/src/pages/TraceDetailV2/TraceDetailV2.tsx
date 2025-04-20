@@ -12,13 +12,14 @@ import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 import NoData from './NoData/NoData';
 
 function TraceDetailsV2(): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV2URLProps>();
+	// Temp: Hard type casting for string | undefined
+	const { id: traceId } = (useParams() as unknown) as TraceDetailV2URLProps;
 	const urlQuery = useUrlQuery();
 	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
 		() => ({

@@ -1,7 +1,7 @@
 import Spinner from 'components/Spinner';
 import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import useErrorNotification from 'hooks/useErrorNotification';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { IServiceName } from '../../types';
 import ApDexMetrics from './ApDexMetrics';
@@ -15,7 +15,10 @@ function ApDexMetricsApplication({
 	thresholdValue,
 	topLevelOperationsRoute,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 
 	const { data, isLoading, error } = useGetMetricMeta(metricMeta, servicename);

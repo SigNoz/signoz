@@ -11,13 +11,17 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { BarChart2 } from 'lucide-react';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
 export default function ServiceTopLevelOperations(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer

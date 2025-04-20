@@ -12,10 +12,11 @@ import {
 import EditAlertChannels from 'container/EditAlertChannels';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 function ChannelsEdit(): JSX.Element {
-	const { id } = useParams<Params>();
+	// Temp: Hard type casting for string | undefined
+	const { id } = (useParams() as unknown) as Params;
 	const { t } = useTranslation();
 
 	const { isFetching, isError, data } = useQuery(['getChannel', id], {

@@ -3499,10 +3499,10 @@
   resolved "https://registry.yarnpkg.com/@react-dnd/shallowequal/-/shallowequal-4.0.2.tgz#d1b4befa423f692fa4abf1c79209702e7d8ae4b4"
   integrity sha512-/RVXdLvJxLg4QKvMoM5WlwNR9ViO9z8B/qPcc+C0Sa/teJY7QG7kJ441DwzOjMYEY7GmU4dj5EcGHIkKZiQZCA==
 
-"@remix-run/router@1.20.0":
-  version "1.20.0"
-  resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.20.0.tgz#03554155b45d8b529adf635b2f6ad1165d70d8b4"
-  integrity sha512-mUnk8rPJBI9loFDZ+YzPGdeniYK+FTmRD1TMCz7ev2SNIozyKKpnGgsxO34u6Z4z/t0ITuu7voi/AshfsGsgFg==
+"@remix-run/router@1.23.0":
+  version "1.23.0"
+  resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.23.0.tgz#35390d0e7779626c026b11376da6789eb8389242"
+  integrity sha512-O3rHJzAQKamUz1fvE0Qaw0xSFqsA/yafi2iqeE0pvdFtCO1viYx8QL6f3Ln/aCCTLxs68SLf0KPM9eSeM8yBnA==
 
 "@sentry-internal/browser-utils@8.41.0":
   version "8.41.0"
@@ -15019,14 +15019,14 @@ react-resizable@^3.0.4:
     prop-types "15.x"
     react-draggable "^4.0.3"
 
-react-router-dom-v5-compat@6.27.0:
-  version "6.27.0"
-  resolved "https://registry.yarnpkg.com/react-router-dom-v5-compat/-/react-router-dom-v5-compat-6.27.0.tgz#19429aefa130ee151e6f4487d073d919ec22d458"
-  integrity sha512-hq5yCVoW73mljLhRjyzpYmooLNPR/xb17S3CTz9fe2/P7q821ivMEa9c8OtrAk2Bs83PcNAtst5okT/aUhJtgg==
+react-router-dom-v5-compat@6.30.0:
+  version "6.30.0"
+  resolved "https://registry.yarnpkg.com/react-router-dom-v5-compat/-/react-router-dom-v5-compat-6.30.0.tgz#d089e7b8dc964ade2480467aa77381647b10a78b"
+  integrity sha512-MAVRASbdQ3+ZOTPPjAa7jKcF0F9LkHWKB/iib3hf+jzzIazL4GEpMDDdTswCsqRQNU+zNnT3qD0WiNbzJ6ncPw==
   dependencies:
-    "@remix-run/router" "1.20.0"
+    "@remix-run/router" "1.23.0"
     history "^5.3.0"
-    react-router "6.27.0"
+    react-router "6.30.0"
 
 react-router-dom@^5.2.0:
   version "5.3.4"
@@ -15056,12 +15056,12 @@ react-router@5.3.4:
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
 
-react-router@6.27.0:
-  version "6.27.0"
-  resolved "https://registry.yarnpkg.com/react-router/-/react-router-6.27.0.tgz#db292474926c814c996c0ff3ef0162d1f9f60ed4"
-  integrity sha512-YA+HGZXz4jaAkVoYBE98VQl+nVzI+cVI2Oj/06F5ZM+0u3TgedN9Y9kmMRo2mnkSK2nCpNQn0DVob4HCsY/WLw==
+react-router@6.30.0:
+  version "6.30.0"
+  resolved "https://registry.yarnpkg.com/react-router/-/react-router-6.30.0.tgz#9789d775e63bc0df60f39ced77c8c41f1e01ff90"
+  integrity sha512-D3X8FyH9nBcTSHGdEKurK7r8OYE1kKFn3d/CF+CoxbSHkxU7o37+Uh7eAHRXr6k2tSExXYO++07PeXJtA/dEhQ==
   dependencies:
-    "@remix-run/router" "1.20.0"
+    "@remix-run/router" "1.23.0"
 
 react-syntax-highlighter@15.5.0:
   version "15.5.0"

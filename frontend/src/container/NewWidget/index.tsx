@@ -101,7 +101,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const query = useUrlQuery();
 
-	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	// Temp: Hard type casting for string | undefined
+	const { dashboardId } = (useParams() as unknown) as DashboardWidgetPageParams;
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
 

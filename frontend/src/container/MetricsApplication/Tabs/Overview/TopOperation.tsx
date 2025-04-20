@@ -5,7 +5,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/metrics/getTopOperations';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -15,9 +15,10 @@ function TopOperation(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { servicename: encodedServiceName } = useParams<{
+	// Temp: Hard type casting for string | undefined
+	const { servicename: encodedServiceName } = (useParams() as unknown) as {
 		servicename?: string;
-	}>();
+	};
 	const servicename = decodeURIComponent(encodedServiceName || '');
 
 	const { queries } = useResourceAttribute();

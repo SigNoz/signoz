@@ -24,8 +24,8 @@ import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { Router, Switch } from 'react-router-dom';
-import { CompatRoute, CompatRouter } from 'react-router-dom-v5-compat';
+import { Router } from 'react-router-dom';
+import { CompatRouter, Route, Routes } from 'react-router-dom-v5-compat';
 import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
@@ -339,18 +339,13 @@ function App(): JSX.Element {
 												<AlertRuleProvider>
 													<AppLayout>
 														<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-															<Switch>
-																{routes.map(({ path, component, exact }) => (
-																	<CompatRoute
-																		key={`${path}`}
-																		exact={exact}
-																		path={path}
-																		component={component}
-																	/>
+															<Routes>
+																{routes.map(({ path, element }) => (
+																	<Route key={`${path}`} path={path} element={element} />
 																))}
-																<CompatRoute exact path="/" component={Home} />
-																<CompatRoute path="*" component={NotFound} />
-															</Switch>
+																<Route path="/" element={<Home />} />
+																<Route path="*" element={<NotFound />} />
+															</Routes>
 														</Suspense>
 													</AppLayout>
 												</AlertRuleProvider>

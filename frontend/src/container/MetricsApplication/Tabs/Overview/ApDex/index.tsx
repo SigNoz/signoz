@@ -3,7 +3,7 @@ import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { memo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { IServiceName } from '../../types';
 import ApDexMetricsApplication from './ApDexMetricsApplication';
@@ -15,7 +15,10 @@ function ApDexApplication({
 	topLevelOperationsRoute,
 	tagFilterItems,
 }: ApDexApplicationProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 
 	const { data, isLoading, error, isRefetching } = useGetApDexSettings(

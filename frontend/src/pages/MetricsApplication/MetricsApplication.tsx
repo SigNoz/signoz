@@ -7,16 +7,18 @@ import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useCallback, useMemo } from 'react';
-import { generatePath, useParams } from 'react-router-dom';
+import { generatePath } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import ApDexApplication from './ApDex/ApDexApplication';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
 import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
 function MetricsApplication(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<{
+	// Temp: Hard type casting for string | undefined
+	const { servicename: encodedServiceName } = (useParams() as unknown) as {
 		servicename: string;
-	}>();
+	};
 
 	const servicename = decodeURIComponent(encodedServiceName);
 

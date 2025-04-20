@@ -4,13 +4,16 @@ import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { Button } from '../styles';
 import ApDexSettings from './ApDexSettings';
 
 function ApDexApplication(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	// Temp: Hard type casting for string | undefined
+	const {
+		servicename: encodedServiceName,
+	} = (useParams() as unknown) as IServiceName;
 	const servicename = decodeURIComponent(encodedServiceName);
 
 	const {

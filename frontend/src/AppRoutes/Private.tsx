@@ -5,12 +5,12 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { matchPath, useLocation } from 'react-router-dom';
+import { matchPath } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
@@ -26,6 +26,7 @@ import routes, {
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
+	const navigate = useNavigate();
 	const { pathname } = location;
 	const {
 		org,
@@ -101,7 +102,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				// if the current route is allowed to be overriden by org onboarding then only do the same
 				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname)
 			) {
-				history.push(ROUTES.ONBOARDING);
+				navigate(ROUTES.ONBOARDING);
 			}
 		}
 	}, [
@@ -112,33 +113,40 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		orgPreferences,
 		orgUsers,
 		pathname,
+		navigate,
 	]);
 
-	const navigateToWorkSpaceBlocked = (route: any): void => {
-		const { path } = route;
+	const navigateToWorkSpaceBlocked = useCallback(
+		(route: any): void => {
+			const { path } = route;
 
-		const isRouteEnabledForWorkspaceBlockedState =
-			isAdmin &&
-			(path === ROUTES.ORG_SETTINGS ||
-				path === ROUTES.BILLING ||
-				path === ROUTES.MY_SETTINGS);
+			const isRouteEnabledForWorkspaceBlockedState =
+				isAdmin &&
+				(path === ROUTES.ORG_SETTINGS ||
+					path === ROUTES.BILLING ||
+					path === ROUTES.MY_SETTINGS);
 
-		if (
-			path &&
-			path !== ROUTES.WORKSPACE_LOCKED &&
-			!isRouteEnabledForWorkspaceBlockedState
-		) {
-			history.push(ROUTES.WORKSPACE_LOCKED);
-		}
-	};
+			if (
+				path &&
+				path !== ROUTES.WORKSPACE_LOCKED &&
+				!isRouteEnabledForWorkspaceBlockedState
+			) {
+				navigate(ROUTES.WORKSPACE_LOCKED);
+			}
+		},
+		[isAdmin, navigate],
+	);
 
-	const navigateToWorkSpaceAccessRestricted = (route: any): void => {
-		const { path } = route;
+	const navigateToWorkSpaceAccessRestricted = useCallback(
+		(route: any): void => {
+			const { path } = route;
 
-		if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
-			history.push(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
-		}
-	};
+			if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
+				navigate(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
+			}
+		},
+		[navigate],
+	);
 
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
@@ -160,7 +168,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				navigateToWorkSpaceAccessRestricted(currentRoute);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
+	}, [
+		isFetchingActiveLicenseV3,
+		activeLicenseV3,
+		mapRoutes,
+		pathname,
+		navigateToWorkSpaceAccessRestricted,
+	]);
 
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3) {
@@ -182,15 +196,19 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicenseV3?.platform,
 		mapRoutes,
 		pathname,
+		navigateToWorkSpaceBlocked,
 	]);
 
-	const navigateToWorkSpaceSuspended = (route: any): void => {
-		const { path } = route;
+	const navigateToWorkSpaceSuspended = useCallback(
+		(route: any): void => {
+			const { path } = route;
 
-		if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
-			history.push(ROUTES.WORKSPACE_SUSPENDED);
-		}
-	};
+			if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
+				navigate(ROUTES.WORKSPACE_SUSPENDED);
+			}
+		},
+		[navigate],
+	);
 
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
@@ -206,7 +224,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				navigateToWorkSpaceSuspended(currentRoute);
 			}
 		}
-	}, [isFetchingActiveLicenseV3, activeLicenseV3, mapRoutes, pathname]);
+	}, [
+		isFetchingActiveLicenseV3,
+		activeLicenseV3,
+		mapRoutes,
+		pathname,
+		navigateToWorkSpaceSuspended,
+	]);
 
 	useEffect(() => {
 		if (org && org.length > 0 && org[0].id !== undefined) {
@@ -220,9 +244,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			currentRoute?.path === ROUTES.GET_STARTED &&
 			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
 		) {
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
-	}, [currentRoute, featureFlags]);
+	}, [currentRoute, featureFlags, navigate]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -234,7 +258,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				...location,
 				pathname: redirectUrl,
 			};
-			history.replace(newLocation);
+			// TODO: Smit test
+			navigate(newLocation, { replace: true });
 			return;
 		}
 		// if the current route
@@ -244,21 +269,21 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				if (isLoggedInState) {
 					const route = routePermission[key];
 					if (route && route.find((e) => e === user.role) === undefined) {
-						history.push(ROUTES.UN_AUTHORIZED);
+						navigate(ROUTES.UN_AUTHORIZED);
 					}
 				} else {
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
-					history.push(ROUTES.LOGIN);
+					navigate(ROUTES.LOGIN);
 				}
 			} else if (isLoggedInState) {
 				const fromPathname = getLocalStorageApi(
 					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 				);
 				if (fromPathname) {
-					history.push(fromPathname);
+					navigate(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-					history.push(ROUTES.HOME);
+					navigate(ROUTES.HOME);
 				}
 			} else {
 				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
@@ -269,16 +294,24 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 			);
 			if (fromPathname) {
-				history.push(fromPathname);
+				navigate(fromPathname);
 				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 			} else {
-				history.push(ROUTES.HOME);
+				navigate(ROUTES.HOME);
 			}
 		} else {
 			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
-			history.push(ROUTES.LOGIN);
+			navigate(ROUTES.LOGIN);
 		}
-	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
+	}, [
+		isLoggedInState,
+		pathname,
+		user,
+		isOldRoute,
+		currentRoute,
+		location,
+		navigate,
+	]);
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment

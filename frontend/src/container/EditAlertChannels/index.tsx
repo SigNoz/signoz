@@ -28,7 +28,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 function EditAlertChannels({
 	initialValue,
@@ -52,7 +52,8 @@ function EditAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
-	const { id } = useParams<{ id: string }>();
+	// Temp: Hard type casting for string | undefined
+	const { id } = useParams() as { id: string };
 
 	const [type, setType] = useState<ChannelType>(
 		initialValue?.type ? (initialValue.type as ChannelType) : ChannelType.Slack,
