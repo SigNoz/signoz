@@ -8,6 +8,27 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
+type SetupPaginationQueryDataParamsV2 = {
+	page: number;
+	pageSize: number;
+};
+
+type SetupPaginationQueryDataV2 = (
+	params: SetupPaginationQueryDataParamsV2,
+) => Partial<IBuilderQuery>;
+
+export const getPaginationQueryDataV2: SetupPaginationQueryDataV2 = ({
+	page,
+	pageSize,
+}) => {
+	const offset = (page - 1) * pageSize;
+
+	return {
+		offset,
+		pageSize,
+	};
+};
+
 type SetupPaginationQueryDataParams = {
 	filters: IBuilderQuery['filters'];
 	listItemId: string | null;
