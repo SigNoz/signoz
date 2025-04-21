@@ -45,6 +45,7 @@ export default function useFunnelConfiguration({
 		initialSteps,
 		setHasIncompleteStepFields,
 		setHasAllEmptyStepFields,
+		handleRestoreSteps,
 	} = useFunnelContext();
 
 	// State management
@@ -141,6 +142,20 @@ export default function useFunnelConfiguration({
 						queryClient.refetchQueries(validateStepsQueryKey);
 						setLastValidatedSteps(debouncedSteps);
 					}
+				},
+
+				onError: () => {
+					handleRestoreSteps(lastSavedStepsStateRef.current);
+					queryClient.setQueryData(
+						[REACT_QUERY_KEY.GET_FUNNEL_DETAILS, funnel.id],
+						(oldData: any) => ({
+							...oldData,
+							payload: {
+								...oldData.payload,
+								steps: lastSavedStepsStateRef.current,
+							},
+						}),
+					);
 				},
 			});
 		}
