@@ -7,27 +7,22 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-function DisplayName({
-	index,
-	id: orgId,
-	isAnonymous,
-}: DisplayNameProps): JSX.Element {
+function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
-	const orgName = Form.useWatch('name', form);
+	const orgName = Form.useWatch('hName', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org, updateOrg } = useAppContext();
-	const { name } = (org || [])[index];
+	const { hName } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { notifications } = useNotifications();
 
 	const onSubmit = async (values: FormValues): Promise<void> => {
 		try {
 			setIsLoading(true);
-			const { name } = values;
+			const { hName } = values;
 			const { statusCode, error } = await editOrg({
-				isAnonymous,
-				name,
+				hName,
 				orgId,
 			});
 			if (statusCode === 200) {
@@ -36,7 +31,7 @@ function DisplayName({
 						ns: 'common',
 					}),
 				});
-				updateOrg(orgId, name);
+				updateOrg(orgId, hName);
 			} else {
 				notifications.error({
 					message:
@@ -61,18 +56,18 @@ function DisplayName({
 		return <div />;
 	}
 
-	const isDisabled = isLoading || orgName === name || !orgName;
+	const isDisabled = isLoading || orgName === hName || !orgName;
 
 	return (
 		<Form
-			initialValues={{ name }}
+			initialValues={{ hName }}
 			form={form}
 			layout="vertical"
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
 			<Form.Item
-				name="name"
+				name="hName"
 				label="Display name"
 				rules={[{ required: true, message: requireErrorMessage('Display name') }]}
 			>
@@ -95,11 +90,10 @@ function DisplayName({
 interface DisplayNameProps {
 	index: number;
 	id: IUser['id'];
-	isAnonymous: boolean;
 }
 
 interface FormValues {
-	name: string;
+	hName: string;
 }
 
 export default DisplayName;

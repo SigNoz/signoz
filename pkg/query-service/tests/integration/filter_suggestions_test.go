@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/organization/core"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -313,7 +314,8 @@ func NewFilterSuggestionsTestBed(t *testing.T) *FilterSuggestionsTestBed {
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterQueryRangeV3Routes(router, am)
 
-	user, apiErr := createTestUser()
+	organizationUsecase := core.NewUsecase(core.NewStore(testDB))
+	user, apiErr := createTestUser(organizationUsecase)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}

@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 
 export interface OrgData {
 	id: string;
-	isAnonymous: boolean;
 	name: string;
 }
 
@@ -110,8 +109,7 @@ function OrgQuestions({
 		try {
 			setIsLoading(true);
 			const { statusCode, error } = await editOrg({
-				isAnonymous: currentOrgData.isAnonymous,
-				name: organisationName,
+				hName: organisationName,
 				orgId: currentOrgData.id,
 			});
 			if (statusCode === 200) {

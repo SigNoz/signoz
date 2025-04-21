@@ -82,9 +82,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					return [
 						{
 							createdAt: 0,
-							hasOptedUpdates: false,
 							id: userData.payload.orgId,
-							isAnonymous: false,
+							hName: userData.payload.organization,
 							name: userData.payload.organization,
 						},
 					];
@@ -95,9 +94,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...prev.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						hasOptedUpdates: false,
 						id: userData.payload.orgId,
-						isAnonymous: false,
+						hName: userData.payload.organization,
 						name: userData.payload.organization,
 					},
 					...prev.slice(orgIndex + 1, prev.length),
@@ -209,9 +207,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...org.slice(0, orgIndex),
 					{
 						createdAt: 0,
-						hasOptedUpdates: false,
 						id: orgId,
-						isAnonymous: false,
+						hName: updatedOrgName,
 						name: updatedOrgName,
 					},
 					...org.slice(orgIndex + 1, org.length),

@@ -1,8 +1,7 @@
 export interface Organization {
 	createdAt: number;
-	hasOptedUpdates: boolean;
 	id: string;
-	isAnonymous: boolean;
+	hName: string;
 	name: string;
 }
 

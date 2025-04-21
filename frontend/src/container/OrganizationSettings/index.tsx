@@ -23,12 +23,7 @@ function OrganizationSettings(): JSX.Element {
 		<>
 			<Space direction="vertical">
 				{org.map((e, index) => (
-					<DisplayName
-						isAnonymous={e.isAnonymous}
-						key={e.id}
-						id={e.id}
-						index={index}
-					/>
+					<DisplayName key={e.id} id={e.id} index={index} />
 				))}
 			</Space>
 			<Divider />

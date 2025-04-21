@@ -1,17 +1,34 @@
 package types
 
 import (
+	"context"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
-// TODO: check constraints are not working
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations"`
 	TimeAuditable
-	ID              string `bun:"id,pk,type:text" json:"id"`
-	Name            string `bun:"name,type:text,notnull" json:"name"`
-	IsAnonymous     bool   `bun:"is_anonymous,notnull,default:0,CHECK(is_anonymous IN (0,1))" json:"isAnonymous"`
-	HasOptedUpdates bool   `bun:"has_opted_updates,notnull,default:1,CHECK(has_opted_updates IN (0,1))" json:"hasOptedUpdates"`
+	Identifiable
+	Name  string `bun:"name,type:text,nullzero" json:"name"`
+	Alias string `bun:"alias,type:text,nullzero" json:"alias"`
+	HName string `bun:"h_name,type:text,notnull" json:"h_name"`
+}
+
+func NewDefaultOrganization(hName string) *Organization {
+	return &Organization{
+		Identifiable: Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		// Name: "default/main", TODO: take the call and uncomment this later
+		HName: hName,
+	}
 }
 
 type ApdexSettings struct {
@@ -21,4 +38,12 @@ type ApdexSettings struct {
 	ServiceName        string  `bun:"service_name,type:text" json:"serviceName"`
 	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
 	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`
+}
+
+type OrganizationStore interface {
+	Create(context.Context, *Organization) error
+	Get(context.Context, valuer.UUID) (*Organization, error)
+	GetAll(context.Context) ([]*Organization, error)
+	Update(context.Context, *Organization) error
+	Delete(context.Context, valuer.UUID) error
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
@@ -148,6 +149,9 @@ type APIHandler struct {
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
+
+	Organization        organization.API
+	OrganizationUsecase organization.Usecase
 }
 
 type APIHandlerOpts struct {
@@ -196,7 +200,9 @@ type APIHandlerOpts struct {
 
 	Signoz *signoz.SigNoz
 
-	Preference preference.API
+	Preference          preference.API
+	Organization        organization.API
+	OrganizationUsecase organization.Usecase
 }
 
 // NewAPIHandler returns an APIHandler
@@ -267,6 +273,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		Preference:                    opts.Preference,
 		FieldsAPI:                     opts.FieldsAPI,
+		Organization:                  opts.Organization,
+		OrganizationUsecase:           opts.OrganizationUsecase,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -625,7 +633,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/org", am.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.editOrg)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.updateOrg)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/orgUsers/{id}", am.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
@@ -2058,7 +2066,7 @@ func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 
-	resp, err := auth.GetInvite(context.Background(), token)
+	resp, err := auth.GetInvite(context.Background(), token, aH.OrganizationUsecase)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
 		return
@@ -2096,10 +2104,13 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 	// we should include org name field in the invite table, or do a join query.
 	var resp []*model.InvitationResponseObject
 	for _, inv := range invites {
-
-		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgID)
-		if apiErr != nil {
-			RespondError(w, apiErr, nil)
+		orgID, err := valuer.NewUUID(inv.OrgID)
+		if err != nil {
+			render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid org_id in the invite"))
+		}
+		org, err := aH.OrganizationUsecase.Get(ctx, orgID)
+		if err != nil {
+			render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, err.Error()))
 		}
 		resp = append(resp, &model.InvitationResponseObject{
 			Name:         inv.Name,
@@ -2124,7 +2135,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.OrganizationUsecase)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2398,49 +2409,15 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
-	orgs, apiErr := dao.DB().GetOrgs(context.Background())
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch orgs from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, orgs)
+	aH.Organization.GetAll(w, r)
 }
 
 func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	org, apiErr := dao.DB().GetOrg(context.Background(), id)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch org from the DB")
-		return
-	}
-	aH.WriteJSON(w, r, org)
+	aH.Organization.Get(w, r)
 }
 
-func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	req, err := parseEditOrgRequest(r)
-	if aH.HandleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	req.ID = id
-	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, "Failed to update org in the DB")
-		return
-	}
-
-	data := map[string]interface{}{
-		"hasOptedUpdates":  req.HasOptedUpdates,
-		"isAnonymous":      req.IsAnonymous,
-		"organizationName": req.Name,
-	}
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
-		zap.L().Error("failed to get user email from jwt")
-	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, claims.Email, true, false)
-
-	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
+func (aH *APIHandler) updateOrg(w http.ResponseWriter, r *http.Request) {
+	aH.Organization.Update(w, r)
 }
 
 func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
@@ -5600,7 +5577,12 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+	result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
 
 	if !thirdPartyQueryRequest.ShowIp {
 		result = thirdPartyApi.FilterResponse(result)

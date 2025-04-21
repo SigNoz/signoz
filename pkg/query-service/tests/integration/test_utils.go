@@ -14,6 +14,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -148,19 +149,18 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser() (*types.User, *model.ApiError) {
+func createTestUser(organizationUsecase organization.Usecase) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &types.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
+	organization := types.NewDefaultOrganization("test")
+	err := organizationUsecase.Create(ctx, organization)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
 	if apiErr != nil {
-		return nil, apiErr
+		return nil, model.InternalError(apiErr)
 	}
 
 	auth.InitAuthCache(ctx)
@@ -174,7 +174,7 @@ func createTestUser() (*types.User, *model.ApiError) {
 			Name:     "test",
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
-			OrgID:    org.ID,
+			OrgID:    organization.ID.StringValue(),
 			GroupID:  group.ID,
 		},
 		true,

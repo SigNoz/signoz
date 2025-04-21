@@ -1,4 +1,4 @@
-import { Button, Form, Input, Space, Switch, Typography } from 'antd';
+import { Button, Form, Input, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
@@ -14,13 +14,7 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
-import {
-	ButtonContainer,
-	FormContainer,
-	FormWrapper,
-	Label,
-	MarginTop,
-} from './styles';
+import { ButtonContainer, FormContainer, FormWrapper, Label } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 const { Title } = Typography;
@@ -111,24 +105,16 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const isPreferenceVisible = token === null;
 
-	const commonHandler = async (
-		values: FormValues,
-		isPreferenceVisible: boolean,
-	): Promise<void> => {
+	const commonHandler = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
 			const response = await signUpApi({
 				email,
 				name: firstName,
+				orgHName: organizationName,
 				orgName: organizationName,
 				password,
 				token: params.get('token') || undefined,
-				...(isPreferenceVisible
-					? {
-							isAnonymous: values.isAnonymous,
-							hasOptedUpdates: values.hasOptedUpdates,
-					  }
-					: {}),
 			});
 
 			if (response.statusCode === 200) {
@@ -172,6 +158,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				email: values.email,
 				name: values.firstName,
 				orgName: values.organizationName,
+				orgHName: values.organizationName,
 				password: values.password,
 				token: params.get('token') || undefined,
 				sourceUrl: encodeURIComponent(window.location.href),
@@ -221,14 +208,14 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 
 				if (isPreferenceVisible) {
-					await commonHandler(values, true);
+					await commonHandler(values);
 				} else {
 					logEvent('Account Created Successfully', {
 						email: values.email,
 						name: values.firstName,
 					});
 
-					await commonHandler(values, false);
+					await commonHandler(values);
 				}
 
 				setLoading(false);
@@ -278,7 +265,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				<FormContainer
 					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
 					onValuesChange={handleValuesChange}
-					initialValues={{ hasOptedUpdates: true, isAnonymous: false }}
 					form={form}
 				>
 					<Title level={4}>Create your account</Title>
@@ -359,34 +345,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							)}
 						</div>
 					)}
-
-					{isPreferenceVisible && (
-						<>
-							<MarginTop marginTop="2.4375rem">
-								<Space>
-									<FormContainer.Item
-										noStyle
-										name="hasOptedUpdates"
-										valuePropName="checked"
-									>
-										<Switch />
-									</FormContainer.Item>
-
-									<Typography>{t('prompt_keepme_posted')} </Typography>
-								</Space>
-							</MarginTop>
-
-							<MarginTop marginTop="0.5rem">
-								<Space>
-									<FormContainer.Item noStyle name="isAnonymous" valuePropName="checked">
-										<Switch />
-									</FormContainer.Item>
-									<Typography>{t('prompt_anonymise')}</Typography>
-								</Space>
-							</MarginTop>
-						</>
-					)}
-
 					{isPreferenceVisible && (
 						<Typography.Paragraph
 							italic
