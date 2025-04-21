@@ -1,6 +1,7 @@
 import './LineClampedText.styles.scss';
 
 import { Tooltip, TooltipProps } from 'antd';
+import { isBoolean } from 'lodash-es';
 import { useEffect, useRef, useState } from 'react';
 
 function LineClampedText({
@@ -40,7 +41,7 @@ function LineClampedText({
 				WebkitLineClamp: lines,
 			}}
 		>
-			{text}
+			{isBoolean(text) ? String(text) : text}
 		</div>
 	);
 
