@@ -3,9 +3,9 @@
  */
 export interface FieldKeyResponse {
 	/** List of field keys returned */
-	keys: FieldKey[];
+	keys?: Record<string, FieldKey[]>;
 	/** Indicates if the returned list is complete */
-	complete: boolean;
+	complete?: boolean;
 }
 
 /**
@@ -13,9 +13,11 @@ export interface FieldKeyResponse {
  */
 export interface FieldKey {
 	/** Key name */
-	key: string;
+	name?: string;
 	/** Data type of the field */
-	dataType: string;
-	/** Type of the field */
-	type: string;
+	fieldDataType?: string;
+	/** Signal type */
+	signal?: string;
+	/** Field context */
+	fieldContext?: string;
 }
