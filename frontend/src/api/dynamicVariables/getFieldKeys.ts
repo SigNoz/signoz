@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { ApiBaseInstance } from 'api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 
@@ -17,13 +17,13 @@ export const getFieldKeys = async (
 		params.name = name;
 	}
 
-	const response = await axios.get('/fields/keys', { params });
+	const response = await ApiBaseInstance.get('/fields/keys', { params });
 
 	return {
 		statusCode: 200,
 		error: null,
 		message: response.data.status,
-		payload: response.data,
+		payload: response.data.data,
 	};
 };
 
