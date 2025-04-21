@@ -19,9 +19,11 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -37,7 +39,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
 	"github.com/SigNoz/signoz/pkg/query-service/app/explorer"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
-	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/thirdPartyApi"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
@@ -59,6 +60,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 
 	"go.uber.org/zap"
 
@@ -141,6 +143,8 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	FieldsAPI *fields.API
+
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
@@ -187,6 +191,8 @@ type APIHandlerOpts struct {
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
+
+	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
 
@@ -260,6 +266,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
 		Preference:                    opts.Preference,
+		FieldsAPI:                     opts.FieldsAPI,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -414,6 +421,13 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1").Subrouter()
+
+	subRouter.HandleFunc("/fields/keys", am.ViewAccess(aH.FieldsAPI.GetFieldsKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields/values", am.ViewAccess(aH.FieldsAPI.GetFieldsValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
@@ -734,9 +748,15 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, qp *v3.QueryRange
 }
 
 func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
-	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	schedules, err := aH.ruleManager.MaintenanceStore().GetAllPlannedMaintenance(r.Context(), claims.OrgID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
@@ -744,7 +764,7 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 	// Since the number of schedules is expected to be small, this should be fine
 
 	if r.URL.Query().Get("active") != "" {
-		activeSchedules := make([]rules.PlannedMaintenance, 0)
+		activeSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
 		active, _ := strconv.ParseBool(r.URL.Query().Get("active"))
 		for _, schedule := range schedules {
 			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
@@ -756,7 +776,7 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 	}
 
 	if r.URL.Query().Get("recurring") != "" {
-		recurringSchedules := make([]rules.PlannedMaintenance, 0)
+		recurringSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
 		recurring, _ := strconv.ParseBool(r.URL.Query().Get("recurring"))
 		for _, schedule := range schedules {
 			if schedule.IsRecurring() == recurring {
@@ -770,62 +790,83 @@ func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Reque
 }
 
 func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
+
+	schedule, err := aH.ruleManager.MaintenanceStore().GetPlannedMaintenanceByID(r.Context(), id)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 	aH.Respond(w, schedule)
 }
 
 func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	var schedule rules.PlannedMaintenance
+	var schedule ruletypes.GettablePlannedMaintenance
 	err := json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 
-	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	_, err = aH.ruleManager.MaintenanceStore().CreatePlannedMaintenance(r.Context(), schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
 	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	var schedule rules.PlannedMaintenance
-	err := json.NewDecoder(r.Body).Decode(&schedule)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		return
+	}
+
+	var schedule ruletypes.GettablePlannedMaintenance
+	err = json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		render.Error(w, err)
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
-	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+
+	err = aH.ruleManager.MaintenanceStore().EditPlannedMaintenance(r.Context(), schedule, id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, err)
 		return
 	}
+
 	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	idStr := mux.Vars(r)["id"]
+	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
 		return
 	}
+
+	err = aH.ruleManager.MaintenanceStore().DeletePlannedMaintenance(r.Context(), id)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	aH.Respond(w, nil)
 }
 
@@ -929,12 +970,12 @@ func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.
 	aH.Respond(w, stateItems)
 }
 
-func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
+func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.GettableRule) ([]v3.FilterItem, []v3.AttributeKey, map[string]v3.AttributeKey) {
 	filterItems := []v3.FilterItem{}
 	groupBy := []v3.AttributeKey{}
 	keys := make(map[string]v3.AttributeKey)
 
-	if rule.AlertType == rules.AlertTypeLogs {
+	if rule.AlertType == ruletypes.AlertTypeLogs {
 		logFields, err := aH.reader.GetLogFields(ctx)
 		if err == nil {
 			params := &v3.QueryRangeParamsV3{
@@ -944,7 +985,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 		} else {
 			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(err))
 		}
-	} else if rule.AlertType == rules.AlertTypeTraces {
+	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeys(ctx)
 		if err == nil {
 			keys = traceFields
@@ -953,7 +994,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *rules.GettableRule
 		}
 	}
 
-	if rule.AlertType == rules.AlertTypeLogs || rule.AlertType == rules.AlertTypeTraces {
+	if rule.AlertType == ruletypes.AlertTypeLogs || rule.AlertType == ruletypes.AlertTypeTraces {
 		if rule.RuleCondition.CompositeQuery != nil {
 			if rule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
 				selectedQuery := rule.RuleCondition.GetSelectedQueryName()
@@ -1006,9 +1047,9 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
 			// to get the correct query range
 			start := end.Add(-time.Duration(rule.EvalWindow)).Add(-3 * time.Minute)
-			if rule.AlertType == rules.AlertTypeLogs {
+			if rule.AlertType == ruletypes.AlertTypeLogs {
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
-			} else if rule.AlertType == rules.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
@@ -1044,9 +1085,9 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 			newFilters := contextlinks.PrepareFilters(lbls, filterItems, groupBy, keys)
 			end := time.Unix(params.End/1000, 0)
 			start := time.Unix(params.Start/1000, 0)
-			if rule.AlertType == rules.AlertTypeLogs {
+			if rule.AlertType == ruletypes.AlertTypeLogs {
 				res[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogs(start, end, newFilters)
-			} else if rule.AlertType == rules.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				res[idx].RelatedTracesLink = contextlinks.PrepareLinksToTraces(start, end, newFilters)
 			}
 		}
@@ -1082,14 +1123,14 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ic := aH.IntegrationsController
-	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context(), claims.OrgID)
 	if err != nil {
 		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(err))
 	} else {
 		allDashboards = append(allDashboards, installedIntegrationDashboards...)
 	}
 
-	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context())
+	cloudIntegrationDashboards, err := aH.CloudIntegrationsController.AvailableDashboards(r.Context(), claims.OrgID)
 	if err != nil {
 		zap.L().Error("failed to get cloud dashboards", zap.Error(err))
 	} else {
@@ -1267,7 +1308,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 		if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(uuid) {
 			dashboard, apiError = aH.CloudIntegrationsController.GetDashboardById(
-				r.Context(), uuid,
+				r.Context(), claims.OrgID, uuid,
 			)
 			if apiError != nil {
 				RespondError(w, apiError, nil)
@@ -1276,7 +1317,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 		} else {
 			dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
-				r.Context(), uuid,
+				r.Context(), claims.OrgID, uuid,
 			)
 			if apiError != nil {
 				RespondError(w, apiError, nil)
@@ -2207,6 +2248,11 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(old.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
+		return
+	}
+
 	_, apiErr = dao.DB().EditUser(ctx, &types.User{
 		ID:       old.ID,
 		Name:     old.Name,
@@ -2235,6 +2281,11 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+
+	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email)) {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "integration user cannot be updated"))
 		return
 	}
 
@@ -3497,9 +3548,14 @@ func (aH *APIHandler) ListIntegrations(
 	for k, values := range r.URL.Query() {
 		params[k] = values[0]
 	}
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 
 	resp, apiErr := aH.IntegrationsController.ListIntegrations(
-		r.Context(), params,
+		r.Context(), claims.OrgID, params,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integrations")
@@ -3512,8 +3568,13 @@ func (aH *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	integration, apiErr := aH.IntegrationsController.GetIntegration(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integration details")
@@ -3527,8 +3588,13 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
 	isInstalled, apiErr := aH.IntegrationsController.IsIntegrationInstalled(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to check if integration is installed")
@@ -3542,7 +3608,7 @@ func (aH *APIHandler) GetIntegrationConnectionStatus(
 	}
 
 	connectionTests, apiErr := aH.IntegrationsController.GetIntegrationConnectionTests(
-		r.Context(), integrationId,
+		r.Context(), claims.OrgID, integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "failed to fetch integration connection tests")
@@ -3741,8 +3807,14 @@ func (aH *APIHandler) InstallIntegration(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), &req,
+		r.Context(), claims.OrgID, &req,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3763,7 +3835,13 @@ func (aH *APIHandler) UninstallIntegration(
 		return
 	}
 
-	apiErr := aH.IntegrationsController.Uninstall(r.Context(), &req)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
+	apiErr := aH.IntegrationsController.Uninstall(r.Context(), claims.OrgID, &req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3819,8 +3897,14 @@ func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
 ) {
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
-		r.Context(), cloudProvider,
+		r.Context(), claims.OrgID, cloudProvider,
 	)
 
 	if apiErr != nil {
@@ -3841,8 +3925,14 @@ func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
-		r.Context(), cloudProvider, req,
+		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
 	if apiErr != nil {
@@ -3859,8 +3949,14 @@ func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	accountId := mux.Vars(r)["accountId"]
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
-		r.Context(), cloudProvider, accountId,
+		r.Context(), claims.OrgID, cloudProvider, accountId,
 	)
 
 	if apiErr != nil {
@@ -3881,8 +3977,14 @@ func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.CheckInAsAgent(
-		r.Context(), cloudProvider, req,
+		r.Context(), claims.OrgID, cloudProvider, req,
 	)
 
 	if apiErr != nil {
@@ -3905,8 +4007,14 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
-		r.Context(), cloudProvider, accountId, req,
+		r.Context(), claims.OrgID, cloudProvider, accountId, req,
 	)
 
 	if apiErr != nil {
@@ -3923,8 +4031,14 @@ func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
 	cloudProvider := mux.Vars(r)["cloudProvider"]
 	accountId := mux.Vars(r)["accountId"]
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
-		r.Context(), cloudProvider, accountId,
+		r.Context(), claims.OrgID, cloudProvider, accountId,
 	)
 
 	if apiErr != nil {
@@ -3947,8 +4061,14 @@ func (aH *APIHandler) CloudIntegrationsListServices(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.ListServices(
-		r.Context(), cloudProvider, cloudAccountId,
+		r.Context(), claims.OrgID, cloudProvider, cloudAccountId,
 	)
 
 	if apiErr != nil {
@@ -3971,8 +4091,14 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
 		cloudAccountId = &cloudAccountIdQP
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	resp, apiErr := aH.CloudIntegrationsController.GetServiceDetails(
-		r.Context(), cloudProvider, serviceId, cloudAccountId,
+		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -4211,8 +4337,14 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 		return
 	}
 
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, errorsV2.Newf(errorsV2.TypeUnauthenticated, errorsV2.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+
 	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), cloudProvider, serviceId, req,
+		r.Context(), claims.OrgID, cloudProvider, serviceId, req,
 	)
 
 	if apiErr != nil {

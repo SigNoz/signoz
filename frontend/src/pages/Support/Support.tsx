@@ -143,7 +143,7 @@ export default function Support(): JSX.Element {
 		});
 
 		updateCreditCard({
-			url: window.location.href,
+			url: window.location.origin,
 		});
 	};
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
@@ -44,7 +43,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 	}
 
 	user := &types.User{
-		ID:       uuid.NewString(),
+		ID:       uuid.New().String(),
 		Name:     "",
 		Email:    email,
 		Password: hash,
@@ -162,12 +161,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 		// find domain from email
 		orgDomain, apierr := m.GetDomainByEmail(ctx, email)
 		if apierr != nil {
-			var emailDomain string
-			emailComponents := strings.Split(email, "@")
-			if len(emailComponents) > 0 {
-				emailDomain = emailComponents[1]
-			}
-			zap.L().Error("failed to get org domain from email", zap.String("emailDomain", emailDomain), zap.Error(apierr.ToError()))
+			zap.L().Error("failed to get org domain from email", zap.String("email", email), zap.Error(apierr.ToError()))
 			return resp, apierr
 		}
 

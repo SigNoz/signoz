@@ -1085,7 +1085,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				item.Attributes_string[k] = fmt.Sprintf("%v", v)
 			}
 			for k, v := range item.Attributes_number {
-				item.Attributes_string[k] = fmt.Sprintf("%v", v)
+				item.Attributes_string[k] = strconv.FormatFloat(v, 'f', -1, 64)
 			}
 			for k, v := range item.Resources_string {
 				item.Attributes_string[k] = v
@@ -3928,11 +3928,16 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
+	tagTypeFilter := `tag_type != 'logfield'`
+	if req.TagType != "" {
+		tagTypeFilter = fmt.Sprintf(`tag_type != 'logfield' and tag_type = '%s'`, req.TagType)
+	}
+
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where tag_type != 'logfield' and tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from  %s.%s where %s and tag_key ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTableV2, tagTypeFilter)
 		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from %s.%s where tag_type != 'logfield' limit $1", r.logsDB, r.logsTagAttributeTableV2)
+		query = fmt.Sprintf("select distinct tag_key, tag_type, tag_data_type from %s.%s where %s limit $1", r.logsDB, r.logsTagAttributeTableV2, tagTypeFilter)
 		rows, err = r.db.Query(ctx, query, req.Limit)
 	}
 
@@ -3967,13 +3972,16 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
-	// add other attributes
-	for _, f := range constants.StaticFieldsLogsV3 {
-		if (v3.AttributeKey{} == f) {
-			continue
-		}
-		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			response.AttributeKeys = append(response.AttributeKeys, f)
+	// add other attributes only when the tagType is not specified
+	// i.e retrieve all attributes
+	if req.TagType == "" {
+		for _, f := range constants.StaticFieldsLogsV3 {
+			if (v3.AttributeKey{} == f) {
+				continue
+			}
+			if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+				response.AttributeKeys = append(response.AttributeKeys, f)
+			}
 		}
 	}
 
@@ -4233,11 +4241,12 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				isValidPoint = true
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
-				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
+				val := strconv.FormatFloat(reflect.ValueOf(v).Elem().Float(), 'f', -1, 64)
+				groupBy = append(groupBy, val)
 				if _, ok := groupAttributes[colName]; !ok {
-					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())})
+					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
 				}
-				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
+				groupAttributes[colName] = val
 			}
 		case **float64, **float32:
 			val := reflect.ValueOf(v)
@@ -4247,11 +4256,12 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 					isValidPoint = true
 					point.Value = value
 				} else {
-					groupBy = append(groupBy, fmt.Sprintf("%v", value))
+					val := strconv.FormatFloat(value, 'f', -1, 64)
+					groupBy = append(groupBy, val)
 					if _, ok := groupAttributes[colName]; !ok {
-						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", value)})
+						groupAttributesArray = append(groupAttributesArray, map[string]string{colName: val})
 					}
-					groupAttributes[colName] = fmt.Sprintf("%v", value)
+					groupAttributes[colName] = val
 				}
 			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
@@ -4715,7 +4725,12 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 and tag_type != 'spanfield' LIMIT $2", r.TraceDB, r.spanAttributeTableV2)
+	tagTypeFilter := `tag_type != 'spanfield'`
+	if req.TagType != "" {
+		tagTypeFilter = fmt.Sprintf(`tag_type != 'spanfield' and tag_type = '%s'`, req.TagType)
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type FROM %s.%s WHERE tag_key ILIKE $1 and %s LIMIT $2", r.TraceDB, r.spanAttributeTableV2, tagTypeFilter)
 
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 
@@ -4760,13 +4775,16 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		fields = constants.DeprecatedStaticFieldsTraces
 	}
 
-	// add the new static fields
-	for _, f := range fields {
-		if (v3.AttributeKey{} == f) {
-			continue
-		}
-		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			response.AttributeKeys = append(response.AttributeKeys, f)
+	// add the new static fields only when the tagType is not specified
+	// i.e retrieve all attributes
+	if req.TagType == "" {
+		for _, f := range fields {
+			if (v3.AttributeKey{} == f) {
+				continue
+			}
+			if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+				response.AttributeKeys = append(response.AttributeKeys, f)
+			}
 		}
 	}
 
@@ -6873,7 +6891,7 @@ func (r *ClickHouseReader) SearchTracesV2(ctx context.Context, params *model.Sea
 			item.Attributes_string[k] = fmt.Sprintf("%v", v)
 		}
 		for k, v := range item.Attributes_number {
-			item.Attributes_string[k] = fmt.Sprintf("%v", v)
+			item.Attributes_string[k] = strconv.FormatFloat(v, 'f', -1, 64)
 		}
 		for k, v := range item.Resources_string {
 			item.Attributes_string[k] = v

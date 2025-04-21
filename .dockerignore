@@ -1,6 +1,7 @@
 .git
 .github
 .vscode
+.devenv
 README.md
 deploy
 sample-apps

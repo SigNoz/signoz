@@ -13,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
@@ -201,6 +202,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		UseTraceNewSchema:             serverOptions.UseTraceNewSchema,
 		JWT:                           serverOptions.Jwt,
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
+		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
 		Preference:                    preferenceModule,
 	})
@@ -321,6 +323,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterCloudIntegrationsRoutes(r, am)
+	api.RegisterFieldsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)
@@ -382,11 +385,11 @@ func (s *Server) initListeners() error {
 }
 
 // Start listening on http and private http port concurrently
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 
 	// initiate rule manager first
 	if !s.serverOptions.DisableRules {
-		s.ruleManager.Start()
+		s.ruleManager.Start(ctx)
 	} else {
 		zap.L().Info("msg: Rules disabled as rules.disable is set to TRUE")
 	}
@@ -454,7 +457,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) Stop() error {
+func (s *Server) Stop(ctx context.Context) error {
 	if s.httpServer != nil {
 		if err := s.httpServer.Shutdown(context.Background()); err != nil {
 			return err
@@ -470,7 +473,7 @@ func (s *Server) Stop() error {
 	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
-		s.ruleManager.Stop()
+		s.ruleManager.Stop(ctx)
 	}
 
 	return nil
