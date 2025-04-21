@@ -210,7 +210,11 @@ function useFunnelGraph({
 			const totalSpans = successSpans + errorSpans;
 
 			return (
-				<div key={step} className="funnel-graph__legend-column">
+				<div
+					key={step}
+					className="funnel-graph__legend-column"
+					data-testid="funnel-graph-legend-column"
+				>
 					<div
 						className="legend-item"
 						onMouseEnter={legendHoverHandlers?.onTotalHover}

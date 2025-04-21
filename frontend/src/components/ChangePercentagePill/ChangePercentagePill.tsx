@@ -22,6 +22,7 @@ function ChangePercentagePill({
 				'change-percentage-pill--positive': isPositive,
 				'change-percentage-pill--negative': !isPositive,
 			})}
+			data-testid="change-percentage-pill"
 		>
 			<div className="change-percentage-pill__icon">
 				{isPositive ? (
