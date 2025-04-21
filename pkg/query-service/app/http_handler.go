@@ -4213,7 +4213,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
 	}
 
 	result, apiErr := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), cloudProvider, serviceId, req,
+		r.Context(), cloudProvider, serviceId, &req,
 	)
 
 	if apiErr != nil {

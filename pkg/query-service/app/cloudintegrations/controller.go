@@ -443,6 +443,14 @@ type UpdateServiceConfigRequest struct {
 	Config         ServiceConfig `json:"config"`
 }
 
+func (u *UpdateServiceConfigRequest) Validate(serviceType string) error {
+	if serviceType != services.S3Sync && len(u.Config.Logs.S3Buckets) > 0 {
+		return fmt.Errorf("s3 buckets can only be added to service-type[%s]", services.S3Sync)
+	}
+
+	return nil
+}
+
 type UpdateServiceConfigResponse struct {
 	Id     string        `json:"id"`
 	Config ServiceConfig `json:"config"`
@@ -452,7 +460,7 @@ func (c *Controller) UpdateServiceConfig(
 	ctx context.Context,
 	cloudProvider string,
 	serviceId string,
-	req UpdateServiceConfigRequest,
+	req *UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr

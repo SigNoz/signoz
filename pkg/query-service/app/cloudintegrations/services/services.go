@@ -15,9 +15,11 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func List(
-	cloudProvider string,
-) ([]Definition, *model.ApiError) {
+const (
+	S3Sync = "s3sync"
+)
+
+func List(cloudProvider string) ([]Definition, *model.ApiError) {
 	cloudServices, found := supportedServices[cloudProvider]
 	if !found || cloudServices == nil {
 		return nil, model.NotFoundError(fmt.Errorf(
