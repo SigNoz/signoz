@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -246,20 +247,15 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 		if !ok {
 			return p.ErrorValueTypeMismatch()
 		}
-		var parsed []PreferenceKeyDefinition
+
+		var parsed []v3.AttributeKey
 		if err := json.Unmarshal([]byte(strVal), &parsed); err != nil {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid JSON format for structured preference: %v", err)
 		}
 
-		for _, def := range parsed {
-			if def.Key == "" || def.DataType == "" || def.Type == "" {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "each item must have non-empty key, datatype, and type")
-			}
-			if !isValidDataType(def.DataType) {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported datatype: %s", def.DataType)
-			}
-			if !isValidType(def.Type) {
-				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported type: %s", def.Type)
+		for _, attr := range parsed {
+			if err := attr.Validate(); err != nil {
+				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid attribute key: %v", err)
 			}
 		}
 	case PreferenceValueTypeString:
