@@ -45,7 +45,9 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 					<Button className="previous-btn">
 						<ArrowLeft
 							size={14}
-							onClick={(): void => safeNavigate(ROUTES.TRACES_EXPLORER)}
+							onClick={(): void | Promise<void> =>
+								safeNavigate(ROUTES.TRACES_EXPLORER)
+							}
 						/>
 					</Button>
 					<div className="trace-name">

@@ -3,7 +3,7 @@ import './Header.styles.scss';
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
 import { Blocks, LifeBuoy } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 function Header(): JSX.Element {
 	return (

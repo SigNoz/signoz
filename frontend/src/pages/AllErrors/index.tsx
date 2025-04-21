@@ -1,6 +1,6 @@
 import RouteTab from 'components/RouteTab';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import { routes } from './config';
 

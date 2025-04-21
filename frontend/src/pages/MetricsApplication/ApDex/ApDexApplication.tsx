@@ -4,7 +4,7 @@ import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 import { Button } from '../styles';
 import ApDexSettings from './ApDexSettings';

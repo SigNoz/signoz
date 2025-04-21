@@ -10,8 +10,8 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, Share2 } from 'lucide-react';
 import { useState } from 'react';
-import type { Location, NavigateFunction } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import type { Location, NavigateFunction } from 'react-router';
+import { useLocation } from 'react-router';
 import { useCopyToClipboard } from 'react-use';
 
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';

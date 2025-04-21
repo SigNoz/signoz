@@ -31,8 +31,8 @@ import {
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import type { NavigateFunction } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router';
+import { useLocation } from 'react-router';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';

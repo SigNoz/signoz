@@ -6,7 +6,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Info } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 function ComingSoon(): JSX.Element {
 	return (

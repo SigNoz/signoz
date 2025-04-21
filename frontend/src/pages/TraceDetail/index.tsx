@@ -10,7 +10,7 @@ import { Undo } from 'lucide-react';
 import TraceDetailsPage from 'pages/TraceDetailV2';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
 
 import { noEventMessage } from './constants';

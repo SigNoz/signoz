@@ -23,7 +23,7 @@ import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { extractDomain } from 'utils/app';
 import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
@@ -327,7 +327,6 @@ function App(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<ConfigProvider theme={themeConfig}>
-				{/* // Ultimately use createBrowserRouter */}
 				<BrowserRouter>
 					<NotificationProvider>
 						<PrivateRoute>

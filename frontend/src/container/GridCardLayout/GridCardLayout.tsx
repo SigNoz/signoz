@@ -34,7 +34,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { UpdateTimeInterval } from 'store/actions';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { ROLES, USER_ROLES } from 'types/roles';

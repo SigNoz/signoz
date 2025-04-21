@@ -1,6 +1,6 @@
 import { ResizeTable } from 'components/ResizeTable';
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import { getColumns } from './Columns/ServiceColumn';
 import { Container } from './styles';

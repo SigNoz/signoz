@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { Info } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ServicesList } from 'types/api/metrics/getService';
 import { safeNavigateNonComponentMemo } from 'utils/navigate';
 

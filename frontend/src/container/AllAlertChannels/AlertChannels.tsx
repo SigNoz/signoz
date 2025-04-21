@@ -9,7 +9,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
+import { generatePath } from 'react-router';
 import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
 import Delete from './Delete';

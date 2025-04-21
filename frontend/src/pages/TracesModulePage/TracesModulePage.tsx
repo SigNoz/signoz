@@ -4,7 +4,7 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 

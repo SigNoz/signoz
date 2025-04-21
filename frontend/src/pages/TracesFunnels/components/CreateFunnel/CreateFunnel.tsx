@@ -10,7 +10,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { generatePath } from 'react-router-dom';
+import { generatePath } from 'react-router';
 
 interface CreateFunnelProps {
 	isOpen: boolean;

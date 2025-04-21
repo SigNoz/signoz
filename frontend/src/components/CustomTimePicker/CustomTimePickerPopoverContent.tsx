@@ -14,7 +14,7 @@ import {
 import { Clock, PenLine } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { Dispatch, SetStateAction, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import RangePickerModal from './RangePickerModal';
 import TimezonePicker from './TimezonePicker';

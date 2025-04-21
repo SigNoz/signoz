@@ -9,7 +9,7 @@ import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { UpdateTimeInterval } from 'store/actions';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';

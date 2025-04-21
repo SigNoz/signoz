@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { CalendarClock } from 'lucide-react';
 import { useState } from 'react';
-import { generatePath, Link } from 'react-router-dom';
+import { generatePath, Link } from 'react-router';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import FunnelItemPopover from './FunnelItemPopover';

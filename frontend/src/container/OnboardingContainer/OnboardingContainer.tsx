@@ -18,7 +18,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { useEffectOnce } from 'react-use';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';

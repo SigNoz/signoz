@@ -11,7 +11,6 @@ import {
 	IResourceAttributeProps,
 } from 'hooks/useResourceAttribute/types';
 import { decode } from 'js-base64';
-import history from 'lib/history';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { OperatorValues, Tags } from 'types/reducer/trace';
@@ -221,7 +220,9 @@ export const updateQuery = (
 
 export function getResourceAttributeQueriesFromURL(): IResourceAttribute[] {
 	const resourceAttributeQuery = new URLSearchParams(
-		history.location.search,
+		// history.location.search,
+		// TODO: Smit test, ask reviewer
+		window.location.search,
 	).get('resourceAttribute');
 
 	try {

@@ -2,7 +2,7 @@ import { TableProps } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 const useSortableTable = <T>(
 	initialOrder: 'ascend' | 'descend' | null,

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import { useSafeNavigate } from './useSafeNavigate';
 import useUrlQuery from './useUrlQuery';

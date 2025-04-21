@@ -9,7 +9,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import {
 	MessagingQueuesViewType,

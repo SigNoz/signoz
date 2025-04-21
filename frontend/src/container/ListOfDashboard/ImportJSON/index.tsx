@@ -25,7 +25,7 @@ import { ExternalLink, Github, MonitorDot, MoveRight, X } from 'lucide-react';
 // See more: https://github.com/lucide-icons/lucide/issues/94
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
+import { generatePath } from 'react-router';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
 function ImportJSON({

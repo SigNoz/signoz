@@ -1,5 +1,5 @@
 import RouteTab from 'components/RouteTab';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import { alertsRoutesConfig } from './config';
 

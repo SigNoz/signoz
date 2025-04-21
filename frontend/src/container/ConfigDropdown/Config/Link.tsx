@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 function LinkContainer({ children, href }: LinkContainerProps): JSX.Element {
 	const isInternalLink = href.startsWith('/');

@@ -5,7 +5,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { ListMinus, Rows3 } from 'lucide-react';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';
 import MessagingQueues from './MessagingQueues';

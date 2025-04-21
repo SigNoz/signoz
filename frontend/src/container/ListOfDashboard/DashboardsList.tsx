@@ -75,7 +75,7 @@ import {
 } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
+import { generatePath } from 'react-router';
 import { useCopyToClipboard } from 'react-use';
 import {
 	Dashboard,

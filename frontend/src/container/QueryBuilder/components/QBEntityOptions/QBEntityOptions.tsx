@@ -15,7 +15,7 @@ import {
 	EyeOff,
 	Trash2,
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import {
 	IBuilderQuery,
 	QueryFunctionProps,

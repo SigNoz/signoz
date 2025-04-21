@@ -1,7 +1,7 @@
 import Spinner from 'components/Spinner';
 import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import useErrorNotification from 'hooks/useErrorNotification';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 import { IServiceName } from '../../types';
 import ApDexMetrics from './ApDexMetrics';

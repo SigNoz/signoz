@@ -1,5 +1,5 @@
 import { TabsProps } from 'antd';
-// import type { NavigateFunction } from 'react-router-dom';
+// import type { NavigateFunction } from 'react-router';
 
 export type TabRoutes = {
 	name: React.ReactNode;

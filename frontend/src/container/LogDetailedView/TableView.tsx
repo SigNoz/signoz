@@ -21,7 +21,7 @@ import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { Pin } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { generatePath } from 'react-router-dom';
+import { generatePath } from 'react-router';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';

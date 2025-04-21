@@ -1,5 +1,5 @@
 import { useFunnelDetails } from 'hooks/TracesFunnels/useFunnels';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 function TracesFunnelDetails(): JSX.Element {
 	// Temp: Hard type casting for string | undefined

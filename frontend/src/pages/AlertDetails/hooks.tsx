@@ -32,7 +32,7 @@ import PaginationInfoText from 'periscope/components/PaginationInfoText/Paginati
 import { useAlertRule } from 'providers/Alert';
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { generatePath, useLocation } from 'react-router-dom';
+import { generatePath, useLocation } from 'react-router';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertDef,

@@ -12,7 +12,7 @@ import {
 import EditAlertChannels from 'container/EditAlertChannels';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 function ChannelsEdit(): JSX.Element {
 	// Temp: Hard type casting for string | undefined

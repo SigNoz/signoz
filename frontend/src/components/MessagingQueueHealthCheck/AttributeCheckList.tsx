@@ -23,7 +23,7 @@ import {
 	MessagingQueueHealthCheckService,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ReactNode, useEffect, useState } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router';
 import { v4 as uuid } from 'uuid';
 
 interface AttributeCheckListProps {

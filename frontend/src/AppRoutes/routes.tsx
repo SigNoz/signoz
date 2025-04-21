@@ -1,6 +1,6 @@
 import ROUTES from 'constants/routes';
 import MessagingQueues from 'pages/MessagingQueues';
-import { RouteProps } from 'react-router-dom';
+import { RouteProps } from 'react-router';
 
 import {
 	AlertHistory,
@@ -63,7 +63,6 @@ import {
 	WorkspaceSuspended,
 } from './pageComponents';
 
-// Note: react-router-v6 -> all routes are exact by default
 const routes: AppRoutes[] = [
 	{
 		path: ROUTES.SIGN_UP,

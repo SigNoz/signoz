@@ -7,7 +7,7 @@ import NewWidget from 'container/NewWidget';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { generatePath, useLocation, useParams } from 'react-router';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {

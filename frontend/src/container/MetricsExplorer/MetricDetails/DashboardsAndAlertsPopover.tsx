@@ -6,7 +6,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Bell, Grid } from 'lucide-react';
 import { useMemo } from 'react';
-import { generatePath } from 'react-router-dom';
+import { generatePath } from 'react-router';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 
