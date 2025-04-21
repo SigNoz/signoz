@@ -9,7 +9,7 @@ function LineClampedText({
 	lines,
 	tooltipProps,
 }: {
-	text: string;
+	text: string | boolean;
 	lines?: number;
 	tooltipProps?: TooltipProps;
 }): JSX.Element {
