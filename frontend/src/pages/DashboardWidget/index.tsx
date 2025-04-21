@@ -5,26 +5,23 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
-import { generatePath, useLocation } from 'react-router-dom';
-import { useParams } from 'react-router-dom-v5-compat';
+import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
 	const { search } = useLocation();
 	// Temp: Hard type casting for string | undefined
-	const { dashboardId } = (useParams() as unknown) as DashboardWidgetPageParams;
+	const {
+		dashboardId,
+		widgetId,
+	} = (useParams() as unknown) as DashboardWidgetPageParams;
 	const { safeNavigate } = useSafeNavigate();
 
 	const [selectedGraph, setSelectedGraph] = useState<PANEL_TYPES>();
 
 	const { selectedDashboard, dashboardResponse } = useDashboard();
-
-	const params = useUrlQuery();
-
-	const widgetId = params.get('widgetId');
 	const { data } = selectedDashboard || {};
 	const { widgets } = data || {};
 
@@ -64,6 +61,7 @@ function DashboardWidget(): JSX.Element | null {
 
 export interface DashboardWidgetPageParams {
 	dashboardId: string;
+	widgetId: string;
 }
 
 export default DashboardWidget;

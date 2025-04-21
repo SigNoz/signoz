@@ -33,8 +33,7 @@ import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigationType } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -66,7 +65,6 @@ function DateTimeSelection({
 	showAutoRefresh,
 	showRefreshText = true,
 	hideShareModal = false,
-	location,
 	updateTimeInterval,
 	globalTimeLoading,
 	showResetButton = false,
@@ -80,6 +78,7 @@ function DateTimeSelection({
 	const { safeNavigate } = useSafeNavigate();
 	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
+	const location = useLocation();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -914,6 +913,6 @@ const mapDispatchToProps = (
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
-type Props = DateTimeSelectionV2Props & DispatchProps & RouteComponentProps;
+type Props = DateTimeSelectionV2Props & DispatchProps;
 
-export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
+export default connect(null, mapDispatchToProps)(DateTimeSelection);

@@ -13,7 +13,7 @@ import { CreditCard, HelpCircle, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 

@@ -1,4 +1,4 @@
-import type { NavigateOptions, To } from 'react-router-dom-v5-compat';
+import type { NavigateOptions, To } from 'react-router-dom';
 
 /*
     Use case:

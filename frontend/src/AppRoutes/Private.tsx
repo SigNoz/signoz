@@ -11,7 +11,7 @@ import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { matchPath, useLocation } from 'react-router-dom-v5-compat';
+import { matchPath, useLocation } from 'react-router-dom';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';

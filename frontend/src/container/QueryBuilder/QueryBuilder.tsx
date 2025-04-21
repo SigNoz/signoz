@@ -14,7 +14,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
 // ** Constants
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 // ** Components

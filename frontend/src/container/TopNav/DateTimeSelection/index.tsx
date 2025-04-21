@@ -19,7 +19,7 @@ import getTimeString from 'lib/getTimeString';
 import { isObject } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
@@ -41,7 +41,6 @@ import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
-	location,
 	updateTimeInterval,
 	globalTimeLoading,
 }: Props): JSX.Element {
@@ -49,7 +48,7 @@ function DateTimeSelection({
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-
+	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
 
 	const urlQuery = useUrlQuery();
@@ -422,6 +421,6 @@ const mapDispatchToProps = (
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
-type Props = DispatchProps & RouteComponentProps;
+type Props = DispatchProps;
 
-export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
+export default connect(null, mapDispatchToProps)(DateTimeSelection);

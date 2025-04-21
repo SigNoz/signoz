@@ -12,7 +12,7 @@ import useGetTraceV2 from 'hooks/trace/useGetTraceV2';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 
 import NoData from './NoData/NoData';

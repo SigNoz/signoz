@@ -12,7 +12,7 @@ import LogsTable from 'container/LogsTable';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

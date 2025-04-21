@@ -1,6 +1,6 @@
 import { QueryParams } from 'constants/query';
 import getRenderer from 'lib/uPlotLib/utils/getRenderer';
-import type { Location, NavigateFunction } from 'react-router-dom-v5-compat';
+import type { Location, NavigateFunction } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';

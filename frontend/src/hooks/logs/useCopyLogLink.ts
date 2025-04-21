@@ -11,7 +11,7 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';

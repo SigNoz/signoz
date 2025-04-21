@@ -12,7 +12,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';

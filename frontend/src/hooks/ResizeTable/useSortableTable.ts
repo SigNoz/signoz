@@ -1,8 +1,8 @@
 import { TableProps } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 const useSortableTable = <T>(
 	initialOrder: 'ascend' | 'descend' | null,
@@ -12,14 +12,14 @@ const useSortableTable = <T>(
 	sortedInfo: SorterResult<T>;
 	handleChange: TableProps<T>['onChange'];
 } => {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const { search } = useLocation();
 
 	useEffect(() => {
 		const searchParams = new URLSearchParams(search);
 		searchParams.set('search', searchString);
-		history.replace({ search: searchParams.toString() });
-	}, [history, search, searchString]);
+		safeNavigate({ search: searchParams.toString() }, { replace: true });
+	}, [search, searchString, safeNavigate]);
 
 	const [sortedInfo, setSortedInfo] = useState<SorterResult<T>>({
 		order: initialOrder,
@@ -36,7 +36,7 @@ const useSortableTable = <T>(
 			'page',
 			pagination.current ? pagination.current.toString() : '1',
 		);
-		history.replace({ search: searchParams.toString() });
+		safeNavigate({ search: searchParams.toString() }, { replace: true });
 	};
 
 	return { sortedInfo, handleChange };

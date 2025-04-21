@@ -15,7 +15,6 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
-import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import AlertRuleProvider from 'providers/Alert';
@@ -24,8 +23,7 @@ import { IUser } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
-import { Router } from 'react-router-dom';
-import { CompatRouter, Route, Routes } from 'react-router-dom-v5-compat';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { extractDomain } from 'utils/app';
 import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
@@ -330,35 +328,33 @@ function App(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<ConfigProvider theme={themeConfig}>
 				{/* // Ultimately use createBrowserRouter */}
-				<Router history={history}>
-					<CompatRouter>
-						<NotificationProvider>
-							<PrivateRoute>
-								<ResourceProvider>
-									<QueryBuilderProvider>
-										<DashboardProvider>
-											<KeyboardHotkeysProvider>
-												<AlertRuleProvider>
-													<AppLayout>
-														<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-															<Routes>
-																{routes.map(({ path, element }) => (
-																	<Route key={`${path}`} path={path} element={element} />
-																))}
-																<Route path="/" element={<Home />} />
-																<Route path="*" element={<NotFound />} />
-															</Routes>
-														</Suspense>
-													</AppLayout>
-												</AlertRuleProvider>
-											</KeyboardHotkeysProvider>
-										</DashboardProvider>
-									</QueryBuilderProvider>
-								</ResourceProvider>
-							</PrivateRoute>
-						</NotificationProvider>
-					</CompatRouter>
-				</Router>
+				<BrowserRouter>
+					<NotificationProvider>
+						<PrivateRoute>
+							<ResourceProvider>
+								<QueryBuilderProvider>
+									<DashboardProvider>
+										<KeyboardHotkeysProvider>
+											<AlertRuleProvider>
+												<AppLayout>
+													<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+														<Routes>
+															{routes.map(({ path, element }) => (
+																<Route key={`${path}`} path={path} element={element} />
+															))}
+															<Route path="/" element={<Home />} />
+															<Route path="*" element={<NotFound />} />
+														</Routes>
+													</Suspense>
+												</AppLayout>
+											</AlertRuleProvider>
+										</KeyboardHotkeysProvider>
+									</DashboardProvider>
+								</QueryBuilderProvider>
+							</ResourceProvider>
+						</PrivateRoute>
+					</NotificationProvider>
+				</BrowserRouter>
 			</ConfigProvider>
 		</Sentry.ErrorBoundary>
 	);

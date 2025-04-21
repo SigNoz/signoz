@@ -9,7 +9,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
 import AlertDetails from 'pages/AlertDetails';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();

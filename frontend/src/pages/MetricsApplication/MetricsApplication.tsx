@@ -6,8 +6,7 @@ import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useMemo } from 'react';
-import { generatePath } from 'react-router-dom';
-import { useParams } from 'react-router-dom-v5-compat';
+import { generatePath, useParams } from 'react-router-dom';
 
 import ApDexApplication from './ApDex/ApDexApplication';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';

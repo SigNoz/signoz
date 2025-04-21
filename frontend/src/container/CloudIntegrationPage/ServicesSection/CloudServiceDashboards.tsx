@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom-v5-compat';
+import { Link } from 'react-router-dom';
 
 import { ServiceData } from './types';
 

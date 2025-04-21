@@ -11,7 +11,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { PayloadProps } from 'types/api/user/getPendingInvites';
 import { ROLES } from 'types/roles';

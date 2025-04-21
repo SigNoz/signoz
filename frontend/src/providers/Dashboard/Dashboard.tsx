@@ -31,7 +31,7 @@ import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router-dom';
+import { useMatch } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -82,15 +82,12 @@ const DashboardContext = createContext<IDashboardContext>({
 	setColumnWidths: () => {},
 });
 
-interface Props {
-	dashboardId: string;
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
@@ -106,15 +103,9 @@ export function DashboardProvider({
 		setDashboardQueryRangeCalled,
 	] = useState<boolean>(false);
 
-	const isDashboardPage = useRouteMatch<Props>({
-		path: ROUTES.DASHBOARD,
-		exact: true,
-	});
-
-	const isDashboardListPage = useRouteMatch<Props>({
-		path: ROUTES.ALL_DASHBOARD,
-		exact: true,
-	});
+	const isDashboardPage = useMatch(ROUTES.DASHBOARD);
+	const isDashboardListPage = useMatch(ROUTES.ALL_DASHBOARD);
+	const isDashboardWidgetPage = useMatch(ROUTES.DASHBOARD_WIDGET);
 
 	// added extra checks here in case wrong values appear use the default values rather than empty dashboards
 	const supportedOrderColumnKeys = ['createdAt', 'updatedAt'];
@@ -162,11 +153,6 @@ export function DashboardProvider({
 	);
 
 	const [onModal, Content] = Modal.useModal();
-
-	const isDashboardWidgetPage = useRouteMatch<Props>({
-		path: ROUTES.DASHBOARD_WIDGET,
-		exact: true,
-	});
 
 	const [variablesToGetUpdated, setVariablesToGetUpdated] = useState<string[]>(
 		[],

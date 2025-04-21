@@ -1,6 +1,6 @@
 import ROUTES from 'constants/routes';
 import MessagingQueues from 'pages/MessagingQueues';
-import { RouteProps } from 'react-router-dom-v5-compat';
+import { RouteProps } from 'react-router-dom';
 
 import {
 	AlertHistory,

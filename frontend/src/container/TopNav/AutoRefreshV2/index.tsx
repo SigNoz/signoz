@@ -11,7 +11,7 @@ import _omit from 'lodash-es/omit';
 import { Check } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';

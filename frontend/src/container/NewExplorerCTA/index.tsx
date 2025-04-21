@@ -3,7 +3,7 @@ import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import { buttonText, RIBBON_STYLES } from './config';
 

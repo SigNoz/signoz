@@ -17,7 +17,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 import { Span } from 'types/api/trace/getTraceV2';

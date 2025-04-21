@@ -16,7 +16,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 

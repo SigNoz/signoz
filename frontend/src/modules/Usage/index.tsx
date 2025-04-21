@@ -1,4 +1,4 @@
-import { UsageExplorer } from './UsageExplorer';
+import UsageExplorer from './UsageExplorer';
 
 function UsageExplorerContainer(): JSX.Element {
 	return <UsageExplorer />;

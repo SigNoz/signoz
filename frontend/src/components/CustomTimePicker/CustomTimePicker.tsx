@@ -26,7 +26,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';

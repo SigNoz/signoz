@@ -1,11 +1,7 @@
 import { cloneDeep, isEqual } from 'lodash-es';
 import { useCallback } from 'react';
-import type {
-	NavigateFunction,
-	NavigateOptions,
-	To,
-} from 'react-router-dom-v5-compat';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import type { NavigateFunction, NavigateOptions, To } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface UseSafeNavigateProps {
 	preventSameUrlNavigation?: boolean;

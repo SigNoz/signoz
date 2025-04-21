@@ -4,9 +4,8 @@
 import { Select, Space, Typography } from 'antd';
 import Graph from 'components/Graph';
 import { useEffect, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { withRouter } from 'react-router-dom';
-import { GetService, getUsageData, UsageDataItem } from 'store/actions';
+import { connect, useDispatch, useSelector, createSelectorHook } from 'react-redux';
+import { GetService as getServicesList, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -17,23 +16,13 @@ import { Card } from './styles';
 
 const { Option } = Select;
 
-interface UsageExplorerProps {
+interface UsageExplorerData {
 	usageData: UsageDataItem[];
-	getUsageData: (
-		minTime: number,
-		maxTime: number,
-		selectedInterval: number,
-		selectedService: string,
-	) => void;
-	getServicesList: ({
-		selectedTimeInterval,
-	}: {
-		selectedTimeInterval: GlobalReducer['selectedTime'];
-	}) => void;
 	globalTime: GlobalTime;
-	servicesList: servicesListItem[];
+	// servicesList: servicesListItem[];
 	totalCount: number;
 }
+
 const timeDaysOptions = [
 	{ value: 30, label: 'Last 30 Days' },
 	{ value: 7, label: 'Last week' },
@@ -61,21 +50,31 @@ const interval = [
 	},
 ];
 
-function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
+
+const usageDataSelector = (
+	state: AppState,
+): UsageExplorerData => {
+	let totalCount = 0;
+	for (const item of state.usageDate) {
+		totalCount += item.count;
+	}
+	return {
+		totalCount,
+		usageData: state.usageDate,
+		globalTime: state.globalTime,
+	};
+};
+
+function UsageExplorer(props: UsageExplorerProps): JSX.Element {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
-	const { selectedTime: globalSelectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-	const {
-		getServicesList,
-		getUsageData,
-		globalTime,
-		totalCount,
-		usageData,
-	} = props;
+	const { selectedTime: globalSelectedTime } = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
+	
+	const { globalTime, totalCount, usageData } = useSelector<AppState, UsageExplorerData>(usageDataSelector);
+
+	const dispatch = useDispatch();
+
 	const { services } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
@@ -85,15 +84,15 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 			const maxTime = new Date().getTime() * 1000000;
 			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
 
-			getUsageData(minTime, maxTime, selectedInterval.value, selectedService);
+			dispatch(getUsageData(minTime, maxTime, selectedInterval.value, selectedService));
 		}
-	}, [selectedTime, selectedInterval, selectedService, getUsageData]);
+	}, [selectedTime, selectedInterval, selectedService, dispatch]);
 
 	useEffect(() => {
-		getServicesList({
+		dispatch(getServicesList({
 			selectedTimeInterval: globalSelectedTime,
-		});
-	}, [globalTime, getServicesList, globalSelectedTime]);
+		}));
+	}, [globalTime, dispatch, globalSelectedTime]);
 
 	const data = {
 		labels: usageData.map((s) => new Date(s.timestamp / 1000000)),
@@ -198,27 +197,4 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 	);
 }
 
-const mapStateToProps = (
-	state: AppState,
-): {
-	totalCount: number;
-	globalTime: GlobalTime;
-	usageData: UsageDataItem[];
-} => {
-	let totalCount = 0;
-	for (const item of state.usageDate) {
-		totalCount += item.count;
-	}
-	return {
-		totalCount,
-		usageData: state.usageDate,
-		globalTime: state.globalTime,
-	};
-};
-
-export const UsageExplorer = withRouter(
-	connect(mapStateToProps, {
-		getUsageData,
-		getServicesList: GetService,
-	})(_UsageExplorer),
-);
+export default UsageExplorer;

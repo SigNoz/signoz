@@ -10,7 +10,7 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';

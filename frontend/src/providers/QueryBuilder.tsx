@@ -40,7 +40,7 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 // ** Types
 import {

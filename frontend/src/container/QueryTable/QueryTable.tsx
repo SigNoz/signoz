@@ -8,7 +8,7 @@ import {
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import { QueryTableProps } from './QueryTable.intefaces';
 import { createDownloadableData } from './utils';

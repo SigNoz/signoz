@@ -1,7 +1,7 @@
 import { Col, Row, Space } from 'antd';
 import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
-import { matchPath, useLocation } from 'react-router-dom-v5-compat';
+import { matchPath, useLocation } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';

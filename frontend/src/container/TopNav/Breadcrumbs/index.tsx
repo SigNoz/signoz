@@ -1,6 +1,6 @@
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
-import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.APPLICATION]: 'Services',
@@ -35,8 +35,8 @@ const breadcrumbNameMap: Record<string, string> = {
 	[ROUTES.MESSAGING_QUEUES_OVERVIEW]: 'Messaging Queues',
 };
 
-function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
-	const { location } = props;
+function ShowBreadcrumbs(): JSX.Element {
+	const location = useLocation();
 
 	const pathArray = location.pathname.split('/').filter((i) => i);
 
@@ -66,4 +66,4 @@ function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
 	return <Breadcrumb>{breadcrumbItems}</Breadcrumb>;
 }
 
-export default withRouter(ShowBreadcrumbs);
+export default ShowBreadcrumbs;

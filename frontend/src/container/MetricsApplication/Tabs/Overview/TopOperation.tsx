@@ -5,7 +5,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/metrics/getTopOperations';
 import { GlobalReducer } from 'types/reducer/globalTime';
