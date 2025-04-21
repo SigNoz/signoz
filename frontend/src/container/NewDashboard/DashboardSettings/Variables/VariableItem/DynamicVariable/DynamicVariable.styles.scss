@@ -1,5 +1,6 @@
 .dynamic-variable-container {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr 32px 200px;
 	gap: 32px;
 	align-items: center;
 	width: 100%;
@@ -9,7 +10,6 @@
 		.ant-select-selector {
 			border-radius: 4px;
 			border: 1px solid var(--bg-slate-400);
-			width: 150px;
 		}
 	}
 
