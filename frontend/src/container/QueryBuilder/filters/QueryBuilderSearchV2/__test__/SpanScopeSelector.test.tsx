@@ -37,7 +37,7 @@ const defaultQuery = {
 };
 
 // Helper to create query with filters
-const createQueryWithFilters = (filters: any[]): Query => ({
+const createQueryWithFilters = (filters: TagFilterItem[]): Query => ({
 	...defaultQuery,
 	builder: {
 		...defaultQuery.builder,
@@ -63,6 +63,7 @@ const renderWithContext = (
 				{
 					currentQuery: initialQuery,
 					redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any
 			}
 		>
@@ -88,7 +89,10 @@ describe('SpanScopeSelector', () => {
 			fireEvent.click(option);
 		};
 
-		const assertFilterAdded = (updatedQuery: any, expectedKey: string): void => {
+		const assertFilterAdded = (
+			updatedQuery: Query,
+			expectedKey: string,
+		): void => {
 			const filters = updatedQuery.builder.queryData[0].filters.items;
 			expect(filters).toContainEqual(
 				expect.objectContaining({
