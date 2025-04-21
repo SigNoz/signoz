@@ -103,10 +103,13 @@ function FunnelGraph(): JSX.Element {
 	return (
 		<Spin spinning={isFetching} indicator={<LoadingOutlined spin />}>
 			<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
-				<div className="funnel-graph__chart-container">
+				<div
+					className="funnel-graph__chart-container"
+					data-testid="funnel-graph-canvas"
+				>
 					<canvas ref={canvasRef} />
 				</div>
-				<div className="funnel-graph__legends">
+				<div className="funnel-graph__legends" data-testid="funnel-graph-legend">
 					{Array.from({ length: totalSteps }, (_, index) => {
 						const prevTotalSpans =
 							index > 0

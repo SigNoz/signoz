@@ -1,5 +1,8 @@
+import 'jest-canvas-mock';
+
 import { screen, waitFor, within } from '@testing-library/react';
 import ROUTES from 'constants/routes';
+import * as FunnelsHooksModule from 'hooks/TracesFunnels/useFunnels';
 import { mockSingleFunnelData } from 'mocks-server/__mockdata__/trace_funnels';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -7,7 +10,7 @@ import * as FunnelContextModule from 'pages/TracesFunnels/FunnelContext';
 import { act } from 'react-dom/test-utils';
 
 import { renderTraceFunnelRoutes } from './CreateFunnel.test';
-import { defaultMockFunnelContext } from './mockFunnelsData';
+import { defaultMockFunnelContext, mockStepsData } from './mockFunnelsData';
 
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
@@ -27,6 +30,14 @@ const renderFunnelDetailsWithAct = async (): Promise<void> => {
 		]);
 	});
 };
+
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
 
 describe('Viewing Funnel Details', () => {
 	beforeEach(() => {
@@ -85,18 +96,20 @@ describe('Viewing Funnel Details', () => {
 	// Nested describe for tests requiring FunnelContext mocks
 	describe('when FunnelContext state is mocked', () => {
 		let useFunnelsContextSpy: jest.SpyInstance;
+		let useFunnelStepsGraphDataSpy: jest.SpyInstance;
 
 		beforeEach(() => {
 			useFunnelsContextSpy = jest.spyOn(FunnelContextModule, 'useFunnelContext');
+			useFunnelStepsGraphDataSpy = jest.spyOn(
+				FunnelsHooksModule,
+				'useFunnelStepsGraphData',
+			);
 
 			server.use(
 				rest.post(
 					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}/analytics/validate`,
 					(_, res, ctx) => res(ctx.status(200), ctx.json({ data: [] })),
 				),
-			);
-
-			server.use(
 				rest.get(
 					`http://localhost/api/v1/trace-funnels/${mockSingleFunnelData.id}`,
 					(_, res, ctx) => res(ctx.status(200), ctx.json(mockSingleFunnelData)),
@@ -106,6 +119,7 @@ describe('Viewing Funnel Details', () => {
 
 		afterEach(() => {
 			useFunnelsContextSpy.mockRestore();
+			useFunnelStepsGraphDataSpy.mockRestore();
 		});
 
 		it('should show empty state UI when no services or spans are selected in steps', async () => {
@@ -165,7 +179,6 @@ describe('Viewing Funnel Details', () => {
 
 		// Describe block for tests when valid traces exist based on context
 		describe('when valid traces exist', () => {
-			// Setup and render once for all tests in this block
 			beforeEach(async () => {
 				// Apply the common context mock for this scenario
 				useFunnelsContextSpy.mockReturnValue({
@@ -174,7 +187,6 @@ describe('Viewing Funnel Details', () => {
 					isValidateStepsLoading: false,
 				});
 
-				// Render *after* setting the context mock
 				await act(async () => {
 					renderTraceFunnelRoutes([
 						ROUTES.TRACES_FUNNELS_DETAIL.replace(
@@ -279,6 +291,76 @@ describe('Viewing Funnel Details', () => {
 					expectedTexts.forEach((text) => {
 						expect(within(errorTracesTable).getByText(text)).toBeInTheDocument();
 					});
+				});
+			});
+
+			// Updated test for Funnel Graph elements
+			it('should display the funnel graph and legend based on mocked graph data', async () => {
+				await waitFor(() => {
+					// Check for the canvas element (assuming data-testid="funnel-graph-canvas" exists)
+					expect(screen.getByTestId('funnel-graph-canvas')).toBeInTheDocument();
+
+					// Check for the legend container (assuming data-testid="funnel-graph-legend" exists)
+					const legendContainer = screen.getByTestId('funnel-graph-legend');
+					expect(legendContainer).toBeInTheDocument();
+
+					// Get the actual graph data from our mock
+					const graphMetrics = mockStepsData.data[0].data;
+					const successSteps: number[] = [];
+					const errorSteps: number[] = [];
+					let stepCount = 1;
+					while (
+						graphMetrics?.[`total_s${stepCount}_spans`] !== undefined &&
+						graphMetrics?.[`total_s${stepCount}_errored_spans`] !== undefined
+					) {
+						const total = graphMetrics[`total_s${stepCount}_spans`];
+						const errors = graphMetrics[`total_s${stepCount}_errored_spans`];
+						successSteps.push(total - errors);
+						errorSteps.push(errors);
+						stepCount += 1;
+					}
+					const totalSteps = stepCount - 1;
+
+					// Assert number of legend columns based on calculated totalSteps
+					const legendColumns = within(legendContainer).getAllByTestId(
+						'funnel-graph-legend-column',
+					);
+					expect(legendColumns).toHaveLength(totalSteps); // Should be 2 based on mock data
+
+					// Check content of the first legend column (Step 1)
+					const step1Total = successSteps[0] + errorSteps[0];
+					expect(
+						within(legendColumns[0]).getByText('Total spans'),
+					).toBeInTheDocument();
+					expect(
+						within(legendColumns[0]).getByText(step1Total.toString()),
+					).toBeInTheDocument(); // 100
+					expect(
+						within(legendColumns[0]).getByText('Error spans'),
+					).toBeInTheDocument();
+					expect(
+						within(legendColumns[0]).getByText(errorSteps[0].toString()),
+					).toBeInTheDocument(); // 10
+
+					// Check content of the second legend column (Step 2)
+					const step2Total = successSteps[1] + errorSteps[1];
+					expect(
+						within(legendColumns[1]).getByText('Total spans'),
+					).toBeInTheDocument();
+					expect(
+						within(legendColumns[1]).getByText(step2Total.toString()),
+					).toBeInTheDocument(); // 80
+					expect(
+						within(legendColumns[1]).getByText('Error spans'),
+					).toBeInTheDocument();
+					expect(
+						within(legendColumns[1]).getByText(errorSteps[1].toString()),
+					).toBeInTheDocument(); // 8
+
+					// Check for the percentage change pill in the second column
+					expect(
+						within(legendColumns[1]).getByTestId('change-percentage-pill'),
+					).toBeInTheDocument();
 				});
 			});
 		});
