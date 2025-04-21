@@ -3,23 +3,39 @@ import './Inspect.styles.scss';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
+import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ExpandedView from './ExpandedView';
 import GraphView from './GraphView';
-import { InspectProps } from './types';
+import QueryBuilder from './QueryBuilder';
+import Stepper from './Stepper';
+import { GraphPopoverOptions, InspectProps } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
 function Inspect({
-	metricName,
-	metricUnit,
-	metricType,
+	metricName: defaultMetricName,
 	isOpen,
 	onClose,
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const [metricName, setMetricName] = useState<string | null>(defaultMetricName);
+	const [
+		popoverOptions,
+		setPopoverOptions,
+	] = useState<GraphPopoverOptions | null>(null);
+	const [
+		expandedViewOptions,
+		setExpandedViewOptions,
+	] = useState<GraphPopoverOptions | null>(null);
+	const [showExpandedView, setShowExpandedView] = useState(false);
+
+	const { data: metricDetailsData } = useGetMetricDetails(metricName ?? '', {
+		enabled: !!metricName,
+	});
 
 	const {
 		inspectMetricsTimeSeries,
@@ -27,10 +43,42 @@ function Inspect({
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,
+		spaceAggregationLabels,
+		metricInspectionOptions,
+		dispatchMetricInspectionOptions,
+		inspectionStep,
+		isInspectMetricsRefetching,
+		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
+		aggregatedTimeSeries,
 	} = useInspectMetrics(metricName);
 
+	const selectedMetricType = useMemo(
+		() => metricDetailsData?.payload?.data?.metadata?.metric_type,
+		[metricDetailsData],
+	);
+
+	const selectedMetricUnit = useMemo(
+		() => metricDetailsData?.payload?.data?.metadata?.unit,
+		[metricDetailsData],
+	);
+
+	const resetInspection = useCallback(() => {
+		dispatchMetricInspectionOptions({
+			type: 'RESET_INSPECTION',
+		});
+		setShowExpandedView(false);
+		setPopoverOptions(null);
+		setExpandedViewOptions(null);
+	}, [dispatchMetricInspectionOptions]);
+
+	// Reset inspection when the selected metric changes
+	useEffect(() => {
+		resetInspection();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [metricName]);
+
 	const content = useMemo(() => {
-		if (isInspectMetricsLoading) {
+		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
 			return (
 				<div className="inspect-metrics-fallback">
 					<Skeleton active />
@@ -63,25 +111,65 @@ function Inspect({
 			<div className="inspect-metrics-content">
 				<div className="inspect-metrics-content-first-col">
 					<GraphView
-						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						inspectMetricsTimeSeries={aggregatedTimeSeries}
 						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
-						resetInspection={(): void => {}}
-						metricUnit={metricUnit}
+						resetInspection={resetInspection}
 						metricName={metricName}
-						metricType={metricType}
+						metricUnit={selectedMetricUnit}
+						metricType={selectedMetricType}
+						spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+						inspectionStep={inspectionStep}
+						setPopoverOptions={setPopoverOptions}
+						setShowExpandedView={setShowExpandedView}
+						showExpandedView={showExpandedView}
+						setExpandedViewOptions={setExpandedViewOptions}
+						popoverOptions={popoverOptions}
 					/>
+					<QueryBuilder
+						metricName={metricName}
+						metricType={selectedMetricType}
+						setMetricName={setMetricName}
+						spaceAggregationLabels={spaceAggregationLabels}
+						metricInspectionOptions={metricInspectionOptions}
+						dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
+						inspectionStep={inspectionStep}
+					/>
+				</div>
+				<div className="inspect-metrics-content-second-col">
+					<Stepper
+						inspectionStep={inspectionStep}
+						resetInspection={resetInspection}
+					/>
+					{showExpandedView && (
+						<ExpandedView
+							options={expandedViewOptions}
+							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+							step={inspectionStep}
+						/>
+					)}
 				</div>
 			</div>
 		);
 	}, [
 		isInspectMetricsLoading,
+		isInspectMetricsRefetching,
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
-		inspectMetricsTimeSeries,
+		inspectMetricsTimeSeries.length,
+		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
-		metricUnit,
+		resetInspection,
 		metricName,
-		metricType,
+		selectedMetricUnit,
+		selectedMetricType,
+		spaceAggregationSeriesMap,
+		inspectionStep,
+		popoverOptions,
+		showExpandedView,
+		expandedViewOptions,
+		spaceAggregationLabels,
+		metricInspectionOptions,
+		dispatchMetricInspectionOptions,
 	]);
 
 	return (

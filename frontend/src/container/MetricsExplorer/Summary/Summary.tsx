@@ -171,22 +171,6 @@ function Summary(): JSX.Element {
 		[metricsData],
 	);
 
-	const selectedMetricType = useMemo(
-		() =>
-			metricsData?.payload?.data?.metrics.find(
-				(metric) => metric.metric_name === selectedMetricName,
-			)?.type,
-		[metricsData, selectedMetricName],
-	);
-
-	const selectedMetricUnit = useMemo(
-		() =>
-			metricsData?.payload?.data?.metrics.find(
-				(metric) => metric.metric_name === selectedMetricName,
-			)?.unit,
-		[metricsData, selectedMetricName],
-	);
-
 	const openMetricDetails = (metricName: string): void => {
 		setSelectedMetricName(metricName);
 		setIsMetricDetailsOpen(true);
@@ -250,8 +234,6 @@ function Summary(): JSX.Element {
 					isOpen={isInspectModalOpen}
 					onClose={closeInspectModal}
 					metricName={selectedMetricName}
-					metricType={selectedMetricType}
-					metricUnit={selectedMetricUnit}
 				/>
 			)}
 		</Sentry.ErrorBoundary>

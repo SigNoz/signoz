@@ -93,6 +93,8 @@ interface QueryBuilderSearchV2Props {
 	hardcodedAttributeKeys?: BaseAutocompleteData[];
 	operatorConfigKey?: OperatorConfigKeys;
 	hideSpanScopeSelector?: boolean;
+	// Determines whether to call onChange when a tag is closed
+	triggerOnChangeOnClose?: boolean;
 }
 
 export interface Option {
@@ -128,6 +130,7 @@ function QueryBuilderSearchV2(
 		hardcodedAttributeKeys,
 		operatorConfigKey,
 		hideSpanScopeSelector,
+		triggerOnChangeOnClose,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -902,6 +905,9 @@ function QueryBuilderSearchV2(
 			onClose();
 			setSearchValue('');
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
+			if (triggerOnChangeOnClose) {
+				onChange(query.filters);
+			}
 		};
 
 		const tagEditHandler = (value: string): void => {
@@ -1035,6 +1041,7 @@ QueryBuilderSearchV2.defaultProps = {
 	hardcodedAttributeKeys: undefined,
 	operatorConfigKey: undefined,
 	hideSpanScopeSelector: true,
+	triggerOnChangeOnClose: false,
 };
 
 export default QueryBuilderSearchV2;
