@@ -52,6 +52,7 @@ interface FunnelContextType {
 		serviceName: string,
 		spanName: string,
 	) => void;
+	handleRestoreSteps: (oldSteps: FunnelStepData[]) => void;
 }
 
 const FunnelContext = createContext<FunnelContextType | undefined>(undefined);
@@ -141,6 +142,10 @@ export function FunnelProvider({
 		);
 	}, []);
 
+	const handleRestoreSteps = useCallback((oldSteps: FunnelStepData[]) => {
+		setSteps(oldSteps);
+	}, []);
+
 	const handleReplaceStep = useCallback(
 		(index: number, serviceName: string, spanName: string) => {
 			handleStepUpdate(index, {
@@ -199,6 +204,7 @@ export function FunnelProvider({
 			hasAllEmptyStepFields,
 			setHasAllEmptyStepFields,
 			handleReplaceStep,
+			handleRestoreSteps,
 		}),
 		[
 			funnelId,
@@ -220,6 +226,7 @@ export function FunnelProvider({
 			hasAllEmptyStepFields,
 			setHasAllEmptyStepFields,
 			handleReplaceStep,
+			handleRestoreSteps,
 		],
 	);
 
