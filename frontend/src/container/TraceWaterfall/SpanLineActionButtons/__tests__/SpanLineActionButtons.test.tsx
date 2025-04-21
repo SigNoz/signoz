@@ -87,4 +87,48 @@ describe('SpanLineActionButtons', () => {
 		const copyButton = screen.getByRole('button');
 		expect(copyButton).toHaveClass('copy-span-btn');
 	});
+
+	it('copies span link to clipboard when copy button is clicked', () => {
+		const mockSetCopy = jest.fn();
+		const mockUrlQuery = {
+			delete: jest.fn(),
+			set: jest.fn(),
+			toString: jest.fn().mockReturnValue('spanId=test-span-id'),
+		};
+		const mockPathname = '/test-path';
+		const mockLocation = {
+			origin: 'http://localhost:3000',
+		};
+
+		// Mock window.location
+		Object.defineProperty(window, 'location', {
+			value: mockLocation,
+			writable: true,
+		});
+
+		// Mock useCopySpanLink hook
+		(useCopySpanLink as jest.Mock).mockReturnValue({
+			onSpanCopy: (event: React.MouseEvent) => {
+				event.preventDefault();
+				event.stopPropagation();
+				mockUrlQuery.delete('spanId');
+				mockUrlQuery.set('spanId', mockSpan.spanId);
+				const link = `${
+					window.location.origin
+				}${mockPathname}?${mockUrlQuery.toString()}`;
+				mockSetCopy(link);
+			},
+		});
+
+		render(<SpanLineActionButtons span={mockSpan} />);
+
+		// Click the copy button
+		const copyButton = screen.getByRole('button');
+		fireEvent.click(copyButton);
+
+		// Verify the copy function was called with correct link
+		expect(mockSetCopy).toHaveBeenCalledWith(
+			'http://localhost:3000/test-path?spanId=test-span-id',
+		);
+	});
 });
