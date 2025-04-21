@@ -2,7 +2,7 @@ import './TraceDetailV2.styles.scss';
 
 import { Button, Tabs } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Compass, TowerControl, Undo } from 'lucide-react';
 import TraceDetail from 'pages/TraceDetail';
 import { useCallback, useState } from 'react';
@@ -20,6 +20,7 @@ interface INewTraceDetailProps {
 
 function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 	const { items, handleOldTraceDetails } = props;
+	const { safeNavigate } = useSafeNavigate();
 	return (
 		<div className="traces-module-container">
 			<Tabs
@@ -28,10 +29,10 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 				className="trace-module"
 				onTabClick={(activeKey): void => {
 					if (activeKey === 'saved-views') {
-						history.push(ROUTES.TRACES_SAVE_VIEWS);
+						safeNavigate(ROUTES.TRACES_SAVE_VIEWS);
 					}
 					if (activeKey === 'trace-details') {
-						history.push(ROUTES.TRACES_EXPLORER);
+						safeNavigate(ROUTES.TRACES_EXPLORER);
 					}
 				}}
 				tabBarExtraContent={

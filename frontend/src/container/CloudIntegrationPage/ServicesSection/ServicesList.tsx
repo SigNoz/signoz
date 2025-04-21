@@ -1,8 +1,8 @@
 import Spinner from 'components/Spinner';
 import { useGetAccountServices } from 'hooks/integration/aws/useGetAccountServices';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import ServiceItem from './ServiceItem';
 
@@ -16,7 +16,7 @@ function ServicesList({
 	filter,
 }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
+	const { safeNavigate } = useSafeNavigate();
 	const { data: services = [], isLoading } = useGetAccountServices(
 		cloudAccountId,
 	);
@@ -26,9 +26,9 @@ function ServicesList({
 		(serviceId: string): void => {
 			const latestUrlQuery = new URLSearchParams(window.location.search);
 			latestUrlQuery.set('service', serviceId);
-			navigate({ search: latestUrlQuery.toString() });
+			safeNavigate({ search: latestUrlQuery.toString() });
 		},
-		[navigate],
+		[safeNavigate],
 	);
 
 	const filteredServices = useMemo(() => {

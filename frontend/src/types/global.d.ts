@@ -19,4 +19,5 @@ declare module '*.module.scss' {
 declare interface WindowEventMap {
 	AFTER_LOGIN: CustomEvent;
 	LOGOUT: CustomEvent;
+	NAVIGATE: CustomEvent;
 }

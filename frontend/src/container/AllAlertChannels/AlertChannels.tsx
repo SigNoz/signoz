@@ -5,7 +5,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,17 +17,22 @@ import Delete from './Delete';
 function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
 	const { user } = useAppContext();
 	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
-	const onClickEditHandler = useCallback((id: string) => {
-		history.replace(
-			generatePath(ROUTES.CHANNELS_EDIT, {
-				id,
-			}),
-		);
-	}, []);
+	const onClickEditHandler = useCallback(
+		(id: string) => {
+			safeNavigate(
+				generatePath(ROUTES.CHANNELS_EDIT, {
+					id,
+				}),
+				{ replace: true },
+			);
+		},
+		[safeNavigate],
+	);
 
 	const columns: ColumnsType<Channels> = [
 		{

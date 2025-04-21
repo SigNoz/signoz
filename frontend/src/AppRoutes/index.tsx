@@ -27,6 +27,7 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter, Route, Routes } from 'react-router-dom-v5-compat';
 import { extractDomain } from 'utils/app';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -316,7 +317,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			history.replace(ROUTES.SOMETHING_WENT_WRONG);
+			safeNavigateNonComponentMemo(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
@@ -328,6 +329,7 @@ function App(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<ConfigProvider theme={themeConfig}>
+				{/* // Ultimately use createBrowserRouter */}
 				<Router history={history}>
 					<CompatRouter>
 						<NotificationProvider>

@@ -8,8 +8,8 @@ import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
@@ -44,6 +44,7 @@ function Trace({
 	);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [isChanged, setIsChanged] = useState<boolean>(true);
 
@@ -134,7 +135,7 @@ function Trace({
 			e.preventDefault();
 			e.stopPropagation();
 
-			history.replace(ROUTES.TRACE);
+			safeNavigate(ROUTES.TRACE, { replace: true });
 
 			dispatch({
 				type: RESET_TRACE_FILTER,
@@ -142,7 +143,7 @@ function Trace({
 
 			setIsChanged((state) => !state);
 		},
-		[dispatch],
+		[dispatch, safeNavigate],
 	);
 
 	return (

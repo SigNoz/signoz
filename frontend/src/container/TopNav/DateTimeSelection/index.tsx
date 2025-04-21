@@ -12,10 +12,10 @@ import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
 import { isObject } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -49,6 +49,8 @@ function DateTimeSelection({
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
@@ -244,7 +246,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		}
 
 		if (!stagedQuery) {
@@ -279,7 +281,7 @@ function DateTimeSelection({
 						endTimeMoment?.toDate().getTime().toString(),
 					);
 					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-					history.push(generatedUrl);
+					safeNavigate(generatedUrl);
 				}
 			}
 		}
@@ -335,10 +337,10 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.endTime, preEndTime.toString());
 		}
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-		history.replace(generatedUrl);
+		safeNavigate(generatedUrl, { replace: true });
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
+	}, [location.pathname, updateTimeInterval, globalTimeLoading, safeNavigate]);
 
 	return (
 		<div className="date-time-selection-container">

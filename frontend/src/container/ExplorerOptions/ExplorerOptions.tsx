@@ -39,6 +39,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { cloneDeep, isEqual, omit } from 'lodash-es';
 import {
@@ -60,7 +61,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -96,7 +96,7 @@ function ExplorerOptions({
 	const [newViewName, setNewViewName] = useState<string>('');
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const { notifications } = useNotifications();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
@@ -181,13 +181,13 @@ function ExplorerOptions({
 
 		const stringifiedQuery = handleConditionalQueryModification();
 
-		history.push(
+		safeNavigate(
 			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 				stringifiedQuery,
 			)}`,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleConditionalQueryModification, history]);
+	}, [handleConditionalQueryModification, safeNavigate]);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
@@ -461,7 +461,7 @@ function ExplorerOptions({
 					: defaultLogsSelectedColumns,
 		});
 
-		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
+		safeNavigate(DATASOURCE_VS_ROUTES[sourcepage], { replace: true });
 	};
 
 	const isQueryUpdated = isStagedQueryUpdated(

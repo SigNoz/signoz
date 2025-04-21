@@ -4,7 +4,6 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import CloudIntegrationPage from 'container/CloudIntegrationPage/CloudIntegrationPage';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
 import { useLocation } from 'react-use';
 
@@ -21,7 +20,7 @@ function IntegrationsModulePage(): JSX.Element {
 			{selectedIntegration === INTEGRATION_TYPES.AWS_INTEGRATION ? (
 				<CloudIntegrationPage />
 			) : (
-				<RouteTab routes={routes} activeKey={pathname} history={history} />
+				<RouteTab routes={routes} activeKey={pathname} />
 			)}
 		</div>
 	);

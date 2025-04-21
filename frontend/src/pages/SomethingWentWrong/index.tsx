@@ -2,9 +2,10 @@ import { Button, Typography } from 'antd';
 import SomethingWentWrongAsset from 'assets/SomethingWentWrong';
 import { Container } from 'components/NotFound/styles';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 function SomethingWentWrong(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	return (
 		<Container>
 			<SomethingWentWrongAsset />
@@ -12,7 +13,7 @@ function SomethingWentWrong(): JSX.Element {
 			<Button
 				type="primary"
 				onClick={(): void => {
-					history.push(ROUTES.APPLICATION);
+					safeNavigate(ROUTES.APPLICATION);
 				}}
 			>
 				Return to Services page

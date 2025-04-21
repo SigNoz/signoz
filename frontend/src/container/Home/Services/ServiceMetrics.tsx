@@ -11,7 +11,6 @@ import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -29,6 +28,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
@@ -72,7 +72,7 @@ const EmptyState = memo(
 									activeLicenseV3 &&
 									activeLicenseV3.platform === LicensePlatform.CLOUD
 								) {
-									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									safeNavigateNonComponentMemo(ROUTES.GET_STARTED_WITH_CLOUD);
 								} else {
 									window?.open(
 										DOCS_LINKS.ADD_DATA_SOURCE,

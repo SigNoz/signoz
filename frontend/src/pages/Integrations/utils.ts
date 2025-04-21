@@ -1,8 +1,9 @@
-import history from 'lib/history';
+import ROUTES from 'constants/routes';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 export const handleContactSupport = (isCloudUser: boolean): void => {
 	if (isCloudUser) {
-		history.push('/support');
+		safeNavigateNonComponentMemo(ROUTES.SUPPORT);
 	} else {
 		window.open('https://signoz.io/slack', '_blank');
 	}

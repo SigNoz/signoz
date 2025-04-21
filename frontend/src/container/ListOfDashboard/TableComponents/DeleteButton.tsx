@@ -6,7 +6,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +36,7 @@ export function DeleteButton({
 	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { notifications } = useNotifications();
 
@@ -68,7 +69,7 @@ export function DeleteButton({
 							});
 							queryClient.invalidateQueries([REACT_QUERY_KEY.GET_ALL_DASHBOARDS]);
 							if (routeToListPage) {
-								history.replace(ROUTES.ALL_DASHBOARD);
+								safeNavigate(ROUTES.ALL_DASHBOARD);
 							}
 							destroy();
 						},
@@ -86,6 +87,7 @@ export function DeleteButton({
 		t,
 		queryClient,
 		routeToListPage,
+		safeNavigate,
 	]);
 
 	const getDeleteTooltipContent = (): string => {

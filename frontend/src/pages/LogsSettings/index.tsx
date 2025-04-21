@@ -1,5 +1,4 @@
 import RouteTab from 'components/RouteTab';
-import history from 'lib/history';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -12,7 +11,7 @@ function LogsSettings(): JSX.Element {
 
 	const routes = useMemo(() => getLogsSettingsRoute(t), [t]);
 
-	return <RouteTab activeKey={pathname} routes={routes} history={history} />;
+	return <RouteTab activeKey={pathname} routes={routes} />;
 }
 
 export default LogsSettings;

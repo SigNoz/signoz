@@ -17,7 +17,7 @@ import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty, isNull } from 'lodash-es';
 import { UserPlus } from 'lucide-react';
 import { SetStateAction, useState } from 'react';
@@ -82,6 +82,8 @@ export default function ModuleStepsContainer({
 	const [current, setCurrent] = useState(0);
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
+
+	const { safeNavigate } = useSafeNavigate();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const isValidForm = (): boolean => {
@@ -153,15 +155,15 @@ export default function ModuleStepsContainer({
 		});
 
 		if (selectedModule.id === ModulesMap.APM) {
-			history.push(ROUTES.APPLICATION);
+			safeNavigate(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
-			history.push(ROUTES.LOGS_EXPLORER);
+			safeNavigate(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
-			history.push(ROUTES.APPLICATION);
+			safeNavigate(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.AwsMonitoring) {
-			history.push(ROUTES.APPLICATION);
+			safeNavigate(ROUTES.APPLICATION);
 		} else {
-			history.push(ROUTES.APPLICATION);
+			safeNavigate(ROUTES.APPLICATION);
 		}
 	};
 
@@ -380,7 +382,7 @@ export default function ModuleStepsContainer({
 	};
 
 	const handleLogoClick = (): void => {
-		history.push('/home');
+		safeNavigate('/home');
 	};
 
 	return (

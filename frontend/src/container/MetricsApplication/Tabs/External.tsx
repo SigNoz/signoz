@@ -18,7 +18,6 @@ import {
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -51,6 +50,7 @@ function External(): JSX.Element {
 
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { queries } = useResourceAttribute();
+	const { safeNavigate } = useSafeNavigate();
 
 	const urlQuery = useUrlQuery();
 	const { pathname } = useLocation();
@@ -64,13 +64,13 @@ function External(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, pathname, urlQuery],
+		[dispatch, pathname, urlQuery, safeNavigate],
 	);
 
 	const tagFilterItems = useMemo(
@@ -224,8 +224,6 @@ function External(): JSX.Element {
 		servicename,
 		isExternalCall: true,
 	});
-
-	const { safeNavigate } = useSafeNavigate();
 
 	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
 

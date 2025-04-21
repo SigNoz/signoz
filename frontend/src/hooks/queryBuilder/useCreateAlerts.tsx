@@ -6,9 +6,9 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
-import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
@@ -21,6 +21,8 @@ import { getGraphType } from 'utils/getGraphType';
 
 const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	const queryRangeMutation = useMutation(getQueryRangeFormat);
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -66,7 +68,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 					widget?.query,
 				);
 
-				history.push(
+				safeNavigate(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 						JSON.stringify(updatedQuery),
 					)}&${QueryParams.panelTypes}=${widget.panelTypes}&version=${

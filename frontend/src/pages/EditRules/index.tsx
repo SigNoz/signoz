@@ -10,7 +10,6 @@ import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -49,7 +48,7 @@ function EditRules(): JSX.Element {
 		params.delete(QueryParams.panelTypes);
 		params.delete(QueryParams.ruleId);
 		params.delete(QueryParams.relativeTime);
-		history.push(`${ROUTES.LIST_ALL_ALERT}?${params.toString()}`);
+		safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${params.toString()}`);
 	};
 
 	useEffect(() => {

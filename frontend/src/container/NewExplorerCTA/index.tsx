@@ -1,7 +1,7 @@
 import { CompassOutlined } from '@ant-design/icons';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -9,6 +9,7 @@ import { buttonText, RIBBON_STYLES } from './config';
 
 function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 
 	const isTraceOrLogsExplorerPage = useMemo(
 		() =>
@@ -21,15 +22,15 @@ function NewExplorerCTA(): JSX.Element | null {
 
 	const onClickHandler = useCallback((): void => {
 		if (location.pathname === ROUTES.LOGS_EXPLORER) {
-			history.push(ROUTES.OLD_LOGS_EXPLORER);
+			safeNavigate(ROUTES.OLD_LOGS_EXPLORER);
 		} else if (location.pathname === ROUTES.TRACE) {
-			history.push(ROUTES.TRACES_EXPLORER);
+			safeNavigate(ROUTES.TRACES_EXPLORER);
 		} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
-			history.push(ROUTES.LOGS_EXPLORER);
+			safeNavigate(ROUTES.LOGS_EXPLORER);
 		} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
-			history.push(ROUTES.TRACE);
+			safeNavigate(ROUTES.TRACE);
 		}
-	}, [location.pathname]);
+	}, [location.pathname, safeNavigate]);
 
 	const button = useMemo(
 		() => (

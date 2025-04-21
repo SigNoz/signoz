@@ -4,7 +4,6 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import history from 'lib/history';
 import { useLayoutEffect, useMemo } from 'react';
 import { useLocation } from 'react-use';
 import { DataSource } from 'types/common/queryBuilder';
@@ -26,7 +25,7 @@ function MetricsExplorerPage(): JSX.Element {
 
 	return (
 		<div className="metrics-explorer-page">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
+			<RouteTab routes={routes} activeKey={pathname} />
 		</div>
 	);
 }

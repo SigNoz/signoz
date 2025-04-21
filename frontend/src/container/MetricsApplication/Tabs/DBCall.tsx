@@ -16,7 +16,6 @@ import {
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -51,6 +50,7 @@ function DBCall(): JSX.Element {
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 	const dispatch = useDispatch();
 
 	const onDragSelect = useCallback(
@@ -61,13 +61,13 @@ function DBCall(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, pathname, urlQuery],
+		[dispatch, pathname, urlQuery, safeNavigate],
 	);
 
 	const tagFilterItems: TagFilterItem[] = useMemo(
@@ -162,7 +162,6 @@ function DBCall(): JSX.Element {
 		servicename,
 		isDBCall: true,
 	});
-	const { safeNavigate } = useSafeNavigate();
 
 	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
 

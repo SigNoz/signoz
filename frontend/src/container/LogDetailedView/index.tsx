@@ -2,12 +2,12 @@ import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ROUTES from 'constants/routes';
 import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import getStep from 'lib/getStep';
 import { getIdConditions } from 'pages/Logs/utils';
 import { memo, useCallback } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
@@ -33,7 +33,7 @@ function LogDetailedView({
 	getLogs,
 	getLogsAggregate,
 }: LogDetailedViewProps): JSX.Element {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		detailedLog,
 		searchFilter: { queryString },
@@ -66,9 +66,11 @@ function LogDetailedView({
 				queryString,
 			);
 
-			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
+			safeNavigate(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`, {
+				replace: true,
+			});
 		},
-		[history, queryString],
+		[safeNavigate, queryString],
 	);
 
 	const handleClickActionItem = useCallback(

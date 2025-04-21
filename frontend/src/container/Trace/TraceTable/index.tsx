@@ -10,7 +10,7 @@ import {
 import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import omit from 'lodash-es/omit';
 import { HTMLAttributes } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -45,6 +45,8 @@ function TraceTable(): JSX.Element {
 	const selectedStatusFilter = selectedFilter.get('status');
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const { loading, order: spansAggregateOrder } = spansAggregate;
 
@@ -210,7 +212,7 @@ function TraceTable(): JSX.Element {
 					if (event.metaKey || event.ctrlKey) {
 						window.open(getLink(record), '_blank');
 					} else {
-						history.push(getLink(record));
+						safeNavigate(getLink(record));
 					}
 				},
 			})}

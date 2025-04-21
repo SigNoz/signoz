@@ -5,7 +5,7 @@ import { Button, Divider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -33,13 +33,14 @@ export function AlertsEmptyState(): JSX.Element {
 		['add_new_alert', 'action'],
 		user.role,
 	);
+	const { safeNavigate } = useSafeNavigate();
 
 	const [loading, setLoading] = useState(false);
 
 	const onClickNewAlertHandler = useCallback(() => {
 		setLoading(false);
-		history.push(ROUTES.ALERTS_NEW);
-	}, []);
+		safeNavigate(ROUTES.ALERTS_NEW);
+	}, [safeNavigate]);
 
 	return (
 		<div className="alert-list-container">

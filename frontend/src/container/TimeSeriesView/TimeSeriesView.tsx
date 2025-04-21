@@ -13,10 +13,10 @@ import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
@@ -48,6 +48,7 @@ function TimeSeriesView({
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 
 	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
 		data?.payload,
@@ -89,9 +90,9 @@ function TimeSeriesView({
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			urlQuery.delete(QueryParams.relativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, urlQuery, safeNavigate],
 	);
 
 	const handleBackNavigation = (): void => {

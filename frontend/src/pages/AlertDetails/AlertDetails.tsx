@@ -7,7 +7,7 @@ import NotFound from 'components/NotFound';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -45,6 +45,8 @@ function BreadCrumbItem({
 	isLast?: boolean;
 	route?: string;
 }): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+
 	if (isLast) {
 		return <div className="breadcrumb-item breadcrumb-item--last">{title}</div>;
 	}
@@ -52,7 +54,7 @@ function BreadCrumbItem({
 		if (!route) {
 			return;
 		}
-		history.push(ROUTES.LIST_ALL_ALERT);
+		safeNavigate(ROUTES.LIST_ALL_ALERT);
 	};
 
 	return (
@@ -124,7 +126,6 @@ function AlertDetails(): JSX.Element {
 				<RouteTab
 					routes={routes}
 					activeKey={pathname}
-					history={history}
 					onChangeHandler={handleTabChange}
 					tabBarExtraContent={<Filters />}
 				/>

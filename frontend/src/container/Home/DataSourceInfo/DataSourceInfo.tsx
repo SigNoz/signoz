@@ -3,7 +3,7 @@ import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetDeploymentsData } from 'hooks/CustomDomain/useGetDeploymentsData';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Globe, Link2 } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -20,6 +20,7 @@ function DataSourceInfo({
 	isLoading: boolean;
 }): JSX.Element {
 	const { activeLicenseV3 } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const notSendingData = !dataSentToSigNoz;
 
@@ -91,7 +92,7 @@ function DataSourceInfo({
 										activeLicenseV3 &&
 										activeLicenseV3.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
 										window?.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,
@@ -108,7 +109,7 @@ function DataSourceInfo({
 											activeLicenseV3 &&
 											activeLicenseV3.platform === LicensePlatform.CLOUD
 										) {
-											history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+											safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD);
 										} else {
 											window?.open(
 												DOCS_LINKS.ADD_DATA_SOURCE,

@@ -3,7 +3,6 @@ import './TracesModulePage.styles.scss';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import { FeatureKeys } from 'constants/features';
-import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -25,7 +24,7 @@ function TracesModulePage(): JSX.Element {
 
 	return (
 		<div className="traces-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
+			<RouteTab routes={routes} activeKey={pathname} />
 		</div>
 	);
 }

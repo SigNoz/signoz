@@ -20,8 +20,8 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useState } from 'react';
@@ -61,6 +61,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		const filteredData = filterAlerts(allAlertRules, value);
 		return filteredData || [];
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	// Type asuring
 	const sortingOrder: 'ascend' | 'descend' | null =
@@ -102,7 +103,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		logEvent('Alert: New alert button clicked', {
 			number: allAlertRules?.length,
 		});
-		history.push(ROUTES.ALERTS_NEW);
+		safeNavigate(ROUTES.ALERTS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
@@ -118,7 +119,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		params.set(QueryParams.ruleId, record.id.toString());
 
 		setEditLoader(false);
-		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+		safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
 	const onCloneHandler = (
@@ -146,7 +147,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					setTimeout(() => {
 						const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
 						params.set(QueryParams.ruleId, String(clonedAlert.id));
-						history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+						safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 					}, 2000);
 				}
 				if (status === 'error') {

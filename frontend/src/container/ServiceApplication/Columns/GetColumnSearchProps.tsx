@@ -6,10 +6,10 @@ import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import history from 'lib/history';
 import { Info } from 'lucide-react';
 import { Link } from 'react-router-dom-v5-compat';
 import { ServicesList } from 'types/api/metrics/getService';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
 
@@ -50,7 +50,7 @@ export const getColumnSearchProps = (
 		const topLevelOperations = record?.dataWarning?.topLevelOps || [];
 
 		const handleShowTopLevelOperations: PopconfirmProps['onConfirm'] = () => {
-			history.push(
+			safeNavigateNonComponentMemo(
 				`${ROUTES.APPLICATION}/${encodeURIComponent(metrics)}/top-level-operations`,
 			);
 		};

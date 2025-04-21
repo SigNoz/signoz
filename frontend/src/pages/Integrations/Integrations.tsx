@@ -1,9 +1,9 @@
 import './Integrations.styles.scss';
 
 import logEvent from 'api/common/logEvent';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import Header from './Header';
@@ -14,7 +14,7 @@ import { INTEGRATION_TELEMETRY_EVENTS } from './utils';
 
 function Integrations(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const location = useLocation();
 
 	const selectedIntegration = useMemo(() => urlQuery.get('integration'), [
@@ -32,9 +32,9 @@ function Integrations(): JSX.Element {
 				urlQuery.set('integration', '');
 			}
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[history, location.pathname, urlQuery],
+		[safeNavigate, location.pathname, urlQuery],
 	);
 
 	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(

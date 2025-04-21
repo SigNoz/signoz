@@ -12,12 +12,13 @@ import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useEffectOnce } from 'react-use';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
@@ -105,8 +106,9 @@ export default function Onboarding(): JSX.Element {
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const { location } = history;
+	const location = useLocation();
 	const { t } = useTranslation(['onboarding']);
+	const { safeNavigate } = useSafeNavigate();
 
 	const { featureFlags } = useAppContext();
 	const isOnboardingV3Enabled = featureFlags?.find(
@@ -254,7 +256,7 @@ export default function Onboarding(): JSX.Element {
 
 	const handleNext = (): void => {
 		if (activeStep <= 3) {
-			history.push(moduleRouteMap[selectedModule.id as ModulesMap]);
+			safeNavigate(moduleRouteMap[selectedModule.id as ModulesMap]);
 		}
 	};
 
@@ -319,7 +321,7 @@ export default function Onboarding(): JSX.Element {
 					<div
 						onClick={(): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push(ROUTES.APPLICATION);
+							safeNavigate(ROUTES.APPLICATION);
 						}}
 						className="skip-to-console"
 					>
@@ -393,9 +395,9 @@ export default function Onboarding(): JSX.Element {
 							resetProgress();
 
 							if (isOnboardingV3Enabled) {
-								history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+								safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD);
 							} else {
-								history.push(ROUTES.GET_STARTED);
+								safeNavigate(ROUTES.GET_STARTED);
 							}
 						}}
 						selectedModule={selectedModule}

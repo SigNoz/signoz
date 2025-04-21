@@ -25,7 +25,7 @@ import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { INTEGRATION_TYPES } from 'pages/Integrations/utils';
@@ -121,6 +121,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	});
 
 	const isDarkMode = useIsDarkMode();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
@@ -319,9 +320,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const handleUpgrade = useCallback((): void => {
 		if (user.role === USER_ROLES.ADMIN) {
-			history.push(ROUTES.BILLING);
+			safeNavigate(ROUTES.BILLING);
 		}
-	}, [user.role]);
+	}, [user.role, safeNavigate]);
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({

@@ -9,7 +9,7 @@ import {
 	SlackChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,6 +35,7 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const { safeNavigate } = useSafeNavigate();
 
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
@@ -147,7 +148,7 @@ function FormAlertChannels({
 					</Button>
 					<Button
 						onClick={(): void => {
-							history.replace(ROUTES.SETTINGS);
+							safeNavigate(ROUTES.SETTINGS);
 						}}
 					>
 						{t('button_return')}

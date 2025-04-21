@@ -3,7 +3,6 @@ import './MessagingQueuesMainPage.styles.scss';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import { ListMinus, Rows3 } from 'lucide-react';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -69,7 +68,7 @@ export default function MessagingQueuesMainPage(): JSX.Element {
 
 	return (
 		<div className="messaging-queues-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
+			<RouteTab routes={routes} activeKey={pathname} />
 		</div>
 	);
 }

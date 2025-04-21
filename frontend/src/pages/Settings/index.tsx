@@ -2,7 +2,6 @@ import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -49,7 +48,7 @@ function SettingsPage(): JSX.Element {
 		],
 	);
 
-	return <RouteTab routes={routes} activeKey={pathname} history={history} />;
+	return <RouteTab routes={routes} activeKey={pathname} />;
 }
 
 export default SettingsPage;

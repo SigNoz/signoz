@@ -13,7 +13,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import {
 	AlertTriangle,
 	CheckSquare,
@@ -87,6 +87,8 @@ function SideNav(): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
+	const { safeNavigate } = useSafeNavigate();
+
 	const {
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
@@ -127,7 +129,7 @@ function SideNav(): JSX.Element {
 		if (isCtrlMetaKey(e)) {
 			openInNewTab('/shortcuts');
 		} else {
-			history.push(`/shortcuts`);
+			safeNavigate(`/shortcuts`);
 		}
 	};
 
@@ -144,17 +146,20 @@ function SideNav(): JSX.Element {
 		if (isCtrlMetaKey(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
-			history.push(onboaringRoute);
+			safeNavigate(onboaringRoute);
 		}
 	};
 
-	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
-		if (isCtrlMetaKey(event)) {
-			openInNewTab(ROUTES.VERSION);
-		} else {
-			history.push(ROUTES.VERSION);
-		}
-	}, []);
+	const onClickVersionHandler = useCallback(
+		(event: MouseEvent): void => {
+			if (isCtrlMetaKey(event)) {
+				openInNewTab(ROUTES.VERSION);
+			} else {
+				safeNavigate(ROUTES.VERSION);
+			}
+		},
+		[safeNavigate],
+	);
 
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
@@ -167,13 +172,14 @@ function SideNav(): JSX.Element {
 				if (event && isCtrlMetaKey(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`, {
-						from: pathname,
+					safeNavigate(`${key}?${queryString.join('&')}`, {
+						// TODO: SMIT Research history
+						// from: pathname,
 					});
 				}
 			}
 		},
-		[pathname, search],
+		[pathname, search, safeNavigate],
 	);
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
@@ -228,7 +234,7 @@ function SideNav(): JSX.Element {
 			if (isCtrlMetaKey(event)) {
 				openInNewTab(settingsRoute);
 			} else {
-				history.push(settingsRoute);
+				safeNavigate(settingsRoute);
 			}
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
@@ -481,7 +487,7 @@ function SideNav(): JSX.Element {
 									if (isCtrlMetaKey(event)) {
 										openInNewTab(`${inviteMemberMenuItem.key}`);
 									} else {
-										history.push(`${inviteMemberMenuItem.key}`);
+										safeNavigate(`${inviteMemberMenuItem.key}`);
 									}
 									logEvent('Sidebar: Menu clicked', {
 										menuRoute: inviteMemberMenuItem?.key,

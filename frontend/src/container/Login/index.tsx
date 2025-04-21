@@ -8,12 +8,13 @@ import afterLogin from 'AppRoutes/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
@@ -39,6 +40,7 @@ function Login({
 	const { t } = useTranslation(['login']);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [precheckResult, setPrecheckResult] = useState<PrecheckResultType>({
 		sso: false,
@@ -67,7 +69,7 @@ function Login({
 			const { setupCompleted } = getUserVersionResponse.data.payload;
 			if (!setupCompleted) {
 				// no org account registered yet, re-route user to sign up first
-				history.push(ROUTES.SIGN_UP);
+				safeNavigateNonComponentMemo(ROUTES.SIGN_UP);
 			}
 		}
 	}, [getUserVersionResponse]);
@@ -90,10 +92,10 @@ function Login({
 					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 				);
 				if (fromPathname) {
-					history.push(fromPathname);
+					safeNavigateNonComponentMemo(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 				} else {
-					history.push(ROUTES.APPLICATION);
+					safeNavigateNonComponentMemo(ROUTES.APPLICATION);
 				}
 			}
 		}
@@ -287,7 +289,7 @@ function Login({
 							{t('prompt_if_admin')}{' '}
 							<Typography.Link
 								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
+									safeNavigate(ROUTES.SIGN_UP);
 								}}
 								style={{ fontWeight: 700 }}
 							>

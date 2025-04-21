@@ -2,7 +2,7 @@ import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { filter, map } from 'lodash-es';
 import {
 	MutableRefObject,
@@ -11,6 +11,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -41,13 +42,15 @@ function SearchFilter({
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[] | string[][] | unknown[]>([]);
 	const [queries, setQueries] = useState<IQueryStructure[]>([]);
+	const { safeNavigate } = useSafeNavigate();
+	const { pathname, search } = useLocation();
 
 	useEffect(() => {
-		const searchQueryString = new URLSearchParams(history.location.search).get(
-			'search',
-		);
+		const searchQueryString = new URLSearchParams(search).get('search');
 		if (searchQueryString)
 			setQueries(convertURLQueryStringToQuery(searchQueryString) || []);
+		// TODO: SMIT Bug no search in deps?
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 	useEffect(() => {
 		filterDashboards(executeSearchQueries(queries, searchData));
@@ -56,15 +59,15 @@ function SearchFilter({
 
 	const updateURLWithQuery = useCallback(
 		(inputQueries?: IQueryStructure[]): void => {
-			history.push({
-				pathname: history.location.pathname,
+			safeNavigate({
+				pathname,
 				search:
 					inputQueries || queries
 						? `?search=${convertQueriesToURLQuery(inputQueries || queries)}`
 						: '',
 			});
 		},
-		[queries],
+		[queries, pathname, safeNavigate],
 	);
 
 	useEffect(() => {
@@ -149,8 +152,8 @@ function SearchFilter({
 
 	const clearQueries = (): void => {
 		setQueries([]);
-		history.push({
-			pathname: history.location.pathname,
+		safeNavigate({
+			pathname,
 			search: ``,
 		});
 	};

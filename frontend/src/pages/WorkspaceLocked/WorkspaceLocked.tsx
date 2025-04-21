@@ -20,13 +20,14 @@ import updateCreditCardApi from 'api/billing/checkout';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { CircleArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -47,6 +48,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	} = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { t } = useTranslation(['workspaceLocked']);
 
@@ -77,7 +79,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				!shouldBlockWorkspace ||
 				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				safeNavigateNonComponentMemo(ROUTES.HOME);
 			}
 		}
 	}, [
@@ -132,8 +134,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 
 	const handleViewBilling = (): void => {
 		logEvent('Workspace Blocked: User Clicked View Billing', {});
-
-		history.push(ROUTES.BILLING);
+		safeNavigate(ROUTES.BILLING);
 	};
 
 	const renderCustomerStories = (

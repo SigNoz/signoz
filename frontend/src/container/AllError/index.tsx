@@ -21,10 +21,10 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -66,6 +66,7 @@ function AllErrors(): JSX.Element {
 		(state) => state.globalTime,
 	);
 	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 	const params = useUrlQuery();
 	const { t } = useTranslation(['common']);
 	const {
@@ -202,7 +203,9 @@ function AllErrors(): JSX.Element {
 				queryParams.serviceName = serviceFilterValue;
 			}
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+			safeNavigate(`${pathname}?${createQueryParams(queryParams)}`, {
+				replace: true,
+			});
 			confirm();
 		},
 		[
@@ -213,6 +216,7 @@ function AllErrors(): JSX.Element {
 			getUpdatedServiceName,
 			pathname,
 			updatedOrder,
+			safeNavigate,
 		],
 	);
 
@@ -414,7 +418,7 @@ function AllErrors(): JSX.Element {
 					serviceName: getFilterString(params.get(urlKey.serviceName)),
 					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
 				});
-				history.replace(
+				safeNavigate(
 					`${pathname}?${createQueryParams({
 						order: updatedOrder,
 						offset: (current - 1) * pageSize,
@@ -423,10 +427,11 @@ function AllErrors(): JSX.Element {
 						exceptionType,
 						serviceName,
 					})}`,
+					{ replace: true },
 				);
 			}
 		},
-		[pathname],
+		[pathname, safeNavigate],
 	);
 
 	const logEventCalledRef = useRef(false);

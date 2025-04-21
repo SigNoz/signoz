@@ -5,10 +5,10 @@ import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLag
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -32,12 +32,12 @@ function ProducerLatencyTabs({
 }): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<Radio.Group
 			onChange={(e): void => {
-				setConfigDetail(urlQuery, location, history, {});
+				setConfigDetail(urlQuery, location, safeNavigate, {});
 				setOption(e.target.value);
 			}}
 			value={option}

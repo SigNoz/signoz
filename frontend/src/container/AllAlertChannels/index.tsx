@@ -7,7 +7,7 @@ import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
@@ -21,13 +21,14 @@ const { Paragraph } = Typography;
 function AlertChannels(): JSX.Element {
 	const { t } = useTranslation(['channels']);
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
 		user.role,
 	);
 	const onToggleHandler = useCallback(() => {
-		history.push(ROUTES.CHANNELS_NEW);
-	}, []);
+		safeNavigate(ROUTES.CHANNELS_NEW);
+	}, [safeNavigate]);
 
 	const { loading, payload, error, errorMessage } = useFetch(getAll);
 

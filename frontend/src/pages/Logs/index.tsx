@@ -9,7 +9,7 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -34,6 +34,7 @@ function OldLogsExplorer(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { order } = useSelector<AppState, ILogsReducer>((store) => store.logs);
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 
 	const {
 		viewModeOptionList,
@@ -78,7 +79,7 @@ function OldLogsExplorer(): JSX.Element {
 		});
 		const params = new URLSearchParams(location.search);
 		params.set(QueryParams.order, value);
-		history.push({ search: params.toString() });
+		safeNavigate({ search: params.toString() });
 	};
 
 	return (

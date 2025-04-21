@@ -7,9 +7,9 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -69,7 +69,7 @@ function Filters({
 	};
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
 	const { search } = useLocation();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	const handlePrevNext = useCallback(
 		(index: number, spanId?: string): void => {
@@ -80,9 +80,9 @@ function Filters({
 				searchParams.set('spanId', filteredSpanIds[index]);
 			}
 
-			history.replace({ search: searchParams.toString() });
+			safeNavigate({ search: searchParams.toString() }, { replace: true });
 		},
-		[filteredSpanIds, history, search],
+		[filteredSpanIds, search, safeNavigate],
 	);
 
 	const { isFetching, error } = useGetQueryRange(

@@ -7,7 +7,7 @@ import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -38,6 +38,7 @@ type FormValues = {
 function SignUp({ version }: SignUpProps): JSX.Element {
 	const { t } = useTranslation(['signup']);
 	const [loading, setLoading] = useState(false);
+	const { safeNavigate } = useSafeNavigate();
 
 	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
 		sso: false,
@@ -186,7 +187,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							message: t('failed_to_initiate_login'),
 						});
 						// take user to login page as there is nothing to do here
-						history.push(ROUTES.LOGIN);
+						safeNavigate(ROUTES.LOGIN);
 					}
 				}
 			} else {

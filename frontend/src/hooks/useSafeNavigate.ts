@@ -1,16 +1,11 @@
 import { cloneDeep, isEqual } from 'lodash-es';
 import { useCallback } from 'react';
+import type {
+	NavigateFunction,
+	NavigateOptions,
+	To,
+} from 'react-router-dom-v5-compat';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
-
-interface NavigateOptions {
-	replace?: boolean;
-	state?: any;
-}
-
-interface SafeNavigateParams {
-	pathname?: string;
-	search?: string;
-}
 
 interface UseSafeNavigateProps {
 	preventSameUrlNavigation?: boolean;
@@ -62,6 +57,7 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
  * 2. Either:
  *    - Current URL has no params and target URL has params, or
  *    - Target URL has new params that didn't exist in current URL
+ * TODO: SMIT Share callback function with multiple instances of this hook
  */
 const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	// Different pathnames means it's not a default navigation
@@ -82,21 +78,26 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 
 	return newKeys.length > 0;
 };
+
 export const useSafeNavigate = (
 	{ preventSameUrlNavigation }: UseSafeNavigateProps = {
 		preventSameUrlNavigation: true,
 	},
 ): {
-	safeNavigate: (
-		to: string | SafeNavigateParams,
-		options?: NavigateOptions,
-	) => void;
+	safeNavigate: NavigateFunction;
 } => {
 	const navigate = useNavigate();
 	const location = useLocation();
 
 	const safeNavigate = useCallback(
-		(to: string | SafeNavigateParams, options?: NavigateOptions) => {
+		(to: To | number, options?: NavigateOptions) => {
+			if (typeof to === 'number') {
+				// Not short circuiting navigate(0) == Refresh current page
+				// Should we respect preventSameUrlNavigation though here?
+				navigate(to);
+				return;
+			}
+
 			const currentUrl = new URL(
 				`${location.pathname}${location.search}`,
 				window.location.origin,
@@ -108,7 +109,7 @@ export const useSafeNavigate = (
 				targetUrl = new URL(to, window.location.origin);
 			} else {
 				targetUrl = new URL(
-					`${to.pathname || location.pathname}${to.search || ''}`,
+					`${to.pathname ?? location.pathname}${to.search ?? ''}`,
 					window.location.origin,
 				);
 			}
@@ -125,17 +126,8 @@ export const useSafeNavigate = (
 				replace: isDefaultParamsNavigation || options?.replace,
 			};
 
-			if (typeof to === 'string') {
-				navigate(to, navigationOptions);
-			} else {
-				navigate(
-					{
-						pathname: to.pathname || location.pathname,
-						search: to.search,
-					},
-					navigationOptions,
-				);
-			}
+			// Previous checks are handled by the library now
+			navigate(to, navigationOptions);
 		},
 		[navigate, location.pathname, location.search, preventSameUrlNavigation],
 	);

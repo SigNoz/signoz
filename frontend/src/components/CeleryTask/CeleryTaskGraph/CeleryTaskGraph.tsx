@@ -5,12 +5,12 @@ import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -54,7 +54,7 @@ function CeleryTaskGraph({
 	checkIfDataExists?: (isDataAvailable: boolean) => void;
 	analyticsEvent?: string;
 }): JSX.Element {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -83,13 +83,13 @@ function CeleryTaskGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery, safeNavigate],
 	);
 
 	return (

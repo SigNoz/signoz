@@ -15,7 +15,7 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -86,6 +86,7 @@ function CreateAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [type, setType] = useState<ChannelType>(preType);
 	const onTypeChangeHandler = useCallback(
@@ -143,7 +144,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				history.replace(ROUTES.ALL_CHANNELS);
+				safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
@@ -163,7 +164,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareSlackRequest, t, notifications]);
+	}, [prepareSlackRequest, t, notifications, safeNavigate]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
@@ -210,7 +211,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				history.replace(ROUTES.ALL_CHANNELS);
+				safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
@@ -230,7 +231,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareWebhookRequest, t, notifications]);
+	}, [prepareWebhookRequest, t, notifications, safeNavigate]);
 
 	const preparePagerRequest = useCallback(() => {
 		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
@@ -271,7 +272,7 @@ function CreateAlertChannels({
 						message: 'Success',
 						description: t('channel_creation_done'),
 					});
-					history.replace(ROUTES.ALL_CHANNELS);
+					safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 					return { status: 'success', statusMessage: t('channel_creation_done') };
 				}
 				notifications.error({
@@ -297,7 +298,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [t, notifications, preparePagerRequest]);
+	}, [t, notifications, preparePagerRequest, safeNavigate]);
 
 	const prepareOpsgenieRequest = useCallback(
 		() => ({
@@ -322,7 +323,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				history.replace(ROUTES.ALL_CHANNELS);
+				safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
@@ -342,7 +343,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareOpsgenieRequest, t, notifications]);
+	}, [prepareOpsgenieRequest, t, notifications, safeNavigate]);
 
 	const prepareEmailRequest = useCallback(
 		() => ({
@@ -365,7 +366,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				history.replace(ROUTES.ALL_CHANNELS);
+				safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
@@ -385,7 +386,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareEmailRequest, t, notifications]);
+	}, [prepareEmailRequest, t, notifications, safeNavigate]);
 
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
@@ -409,7 +410,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				history.replace(ROUTES.ALL_CHANNELS);
+				safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			notifications.error({
@@ -429,7 +430,7 @@ function CreateAlertChannels({
 		} finally {
 			setSavingState(false);
 		}
-	}, [prepareMsTeamsRequest, t, notifications]);
+	}, [prepareMsTeamsRequest, t, notifications, safeNavigate]);
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {

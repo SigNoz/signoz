@@ -4,15 +4,15 @@ import './LogsError.styles.scss';
 
 import { Typography } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from 'lucide-react';
 
 export default function LogsError(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-
+	const { safeNavigate } = useSafeNavigate();
 	const handleContactSupport = (): void => {
 		if (isCloudUserVal) {
-			history.push('/support');
+			safeNavigate('/support');
 		} else {
 			window.open('https://signoz.io/slack', '_blank');
 		}

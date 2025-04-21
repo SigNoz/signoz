@@ -7,6 +7,7 @@ import Color from 'color';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	Dispatch,
@@ -16,7 +17,6 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { ListRange, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
@@ -44,7 +44,7 @@ function Success(props: ISuccessProps): JSX.Element {
 		selectedSpan,
 	} = props;
 	const { search } = useLocation();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const isDarkMode = useIsDarkMode();
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 	const [hoveredSpanId, setHoveredSpanId] = useState<string>('');
@@ -90,7 +90,7 @@ function Success(props: ISuccessProps): JSX.Element {
 									event.stopPropagation();
 									event.preventDefault();
 									searchParams.set('spanId', span.spanId);
-									history.replace({ search: searchParams.toString() });
+									safeNavigate({ search: searchParams.toString() }, { replace: true });
 								}}
 							/>
 						</Tooltip>

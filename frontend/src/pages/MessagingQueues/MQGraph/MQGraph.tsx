@@ -6,10 +6,10 @@ import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { UpdateTimeInterval } from 'store/actions';
 
@@ -37,7 +37,7 @@ function MessagingQueuesGraph(): JSX.Element {
 		[filterItems],
 	);
 
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const location = useLocation();
 	const isLogEventCalled = useRef<boolean>(false);
 
@@ -61,13 +61,12 @@ function MessagingQueuesGraph(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
-
+			safeNavigate(generatedUrl);
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, safeNavigate, pathname, urlQuery],
 	);
 
 	const checkIfDataExists = (isDataAvailable: boolean): void => {
@@ -88,7 +87,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
-					setSelectedTimelineQuery(urlQuery, xValue, location, history, data);
+					setSelectedTimelineQuery(urlQuery, xValue, location, safeNavigate, data);
 				}}
 				onDragSelect={onDragSelect}
 				customTooltipElement={messagingQueueCustomTooltipText()}

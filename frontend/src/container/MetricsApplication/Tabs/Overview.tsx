@@ -16,7 +16,6 @@ import {
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -73,6 +72,7 @@ function Application(): JSX.Element {
 	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { featureFlags } = useAppContext();
 	const isSpanMetricEnabled =
@@ -212,13 +212,13 @@ function Application(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, pathname, urlQuery],
+		[dispatch, pathname, urlQuery, safeNavigate],
 	);
 
 	/**
@@ -257,7 +257,7 @@ function Application(): JSX.Element {
 				queryString,
 			);
 
-			history.push(newPath);
+			safeNavigate(newPath);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],
@@ -299,7 +299,6 @@ function Application(): JSX.Element {
 			},
 		],
 	});
-	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>

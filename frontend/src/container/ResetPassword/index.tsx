@@ -5,7 +5,7 @@ import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Label } from 'pages/SignUp/styles';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,12 +29,12 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [form] = Form.useForm<FormValues>();
 	useEffect(() => {
 		if (!token) {
 			Logout();
-			history.push(ROUTES.LOGIN);
 		}
 	}, [token]);
 
@@ -54,7 +54,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						ns: 'common',
 					}),
 				});
-				history.push(ROUTES.LOGIN);
+				safeNavigate(ROUTES.LOGIN);
 			} else {
 				notifications.error({
 					message:

@@ -2,10 +2,10 @@ import './WorkspaceAccessRestricted.styles.scss';
 
 import { Button, Col, Modal, Row, Skeleton, Space, Typography } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useEffect } from 'react';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 function WorkspaceAccessRestricted(): JSX.Element {
 	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
@@ -22,7 +22,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 				!isWorkspaceAccessRestricted ||
 				activeLicenseV3.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				safeNavigateNonComponentMemo(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);

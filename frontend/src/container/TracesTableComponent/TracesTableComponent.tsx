@@ -14,7 +14,6 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -87,11 +86,11 @@ function TracesTableComponent({
 				if (event.metaKey || event.ctrlKey) {
 					window.open(getTraceLink(record), '_blank');
 				} else {
-					history.push(getTraceLink(record));
+					safeNavigate(getTraceLink(record));
 				}
 			},
 		}),
-		[],
+		[safeNavigate],
 	);
 
 	const handlePaginationChange = useCallback(

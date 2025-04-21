@@ -3,7 +3,7 @@ import './TraceMetadata.styles.scss';
 import { Button, Tooltip, Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import {
 	ArrowLeft,
 	BetweenHorizonalStart,
@@ -35,6 +35,9 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 		totalSpans,
 		notFound,
 	} = props;
+
+	const { safeNavigate } = useSafeNavigate();
+
 	return (
 		<div className="trace-metadata">
 			<section className="metadata-info">
@@ -42,7 +45,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 					<Button className="previous-btn">
 						<ArrowLeft
 							size={14}
-							onClick={(): void => history.push(ROUTES.TRACES_EXPLORER)}
+							onClick={(): void => safeNavigate(ROUTES.TRACES_EXPLORER)}
 						/>
 					</Button>
 					<div className="trace-name">

@@ -5,10 +5,10 @@ import { Button, Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { CloudAccount } from '../../ServicesSection/types';
 import AccountSettingsModal from './AccountSettingsModal';
@@ -140,7 +140,7 @@ function AccountActionsRenderer({
 
 function AccountActions(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
+	const { safeNavigate } = useSafeNavigate();
 	const { data: accounts, isLoading } = useAwsAccounts();
 
 	const initialAccount = useMemo(
@@ -162,7 +162,7 @@ function AccountActions(): JSX.Element {
 			setActiveAccount(initialAccount);
 			const latestUrlQuery = new URLSearchParams(window.location.search);
 			latestUrlQuery.set('cloudAccountId', initialAccount.cloud_account_id);
-			navigate({ search: latestUrlQuery.toString() });
+			safeNavigate({ search: latestUrlQuery.toString() });
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialAccount]);
@@ -216,7 +216,7 @@ function AccountActions(): JSX.Element {
 					if (accounts) {
 						setActiveAccount(getAccountById(accounts, value));
 						urlQuery.set('cloudAccountId', value);
-						navigate({ search: urlQuery.toString() });
+						safeNavigate({ search: urlQuery.toString() });
 					}
 				}}
 				onIntegrationModalOpen={startAccountConnectionAttempt}

@@ -13,16 +13,16 @@ import {
 import { QueryHistoryState } from 'container/LiveLogs/types';
 import LocalTopNav from 'container/LocalTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { useHistory } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { LiveButtonStyled } from './styles';
 
 function LogsTopNav(): JSX.Element {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const queryClient = useQueryClient();
 
 	const { stagedQuery, panelType } = useQueryBuilder();
@@ -65,8 +65,9 @@ function LogsTopNav(): JSX.Element {
 
 		const path = `${ROUTES.LIVE_LOGS}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
 
-		history.push(path, queryHistoryState);
-	}, [history, panelType, queryClient, stagedQuery]);
+		// TODO: SMIT Discuss with reviewer
+		safeNavigate(path, { state: queryHistoryState });
+	}, [safeNavigate, panelType, queryClient, stagedQuery]);
 
 	const liveButton = useMemo(
 		() => (

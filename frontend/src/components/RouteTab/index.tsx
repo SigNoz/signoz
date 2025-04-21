@@ -1,4 +1,5 @@
 import { Tabs, TabsProps } from 'antd';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { RouteTabProps } from './types';
 
@@ -6,9 +7,10 @@ function RouteTab({
 	routes,
 	activeKey,
 	onChangeHandler,
-	history,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+
 	const onChange = (activeRoute: string): void => {
 		if (onChangeHandler) {
 			onChangeHandler(activeRoute);
@@ -17,7 +19,7 @@ function RouteTab({
 		const selectedRoute = routes.find((e) => e.key === activeRoute);
 
 		if (selectedRoute) {
-			history.push(selectedRoute.route);
+			safeNavigate(selectedRoute.route);
 		}
 	};
 

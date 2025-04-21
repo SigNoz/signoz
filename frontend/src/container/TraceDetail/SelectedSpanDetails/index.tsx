@@ -4,8 +4,8 @@ import { StyledSpace } from 'components/Styled';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { PanelRight } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -45,6 +45,8 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		text: '',
 		subText: '',
 	});
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const onToggleHandler = (state: boolean): void => {
 		setIsOpen(state);
@@ -86,7 +88,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const onLogsHandler = (): void => {
 		const query = getTraceToLogsQuery(traceId, traceStartTime, traceEndTime);
 
-		history.push(
+		safeNavigate(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
 				// we subtract 5 minutes from the start time to handle the cases when the trace duration is in nanoseconds

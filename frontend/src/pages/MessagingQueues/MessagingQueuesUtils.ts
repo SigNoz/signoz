@@ -9,8 +9,8 @@ import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnbo
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
-import { History, Location } from 'history';
 import { isEmpty } from 'lodash-es';
+import type { Location, NavigateFunction } from 'react-router-dom-v5-compat';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -201,7 +201,7 @@ export function setSelectedTimelineQuery(
 	urlQuery: URLSearchParams,
 	timestamp: number,
 	location: Location<unknown>,
-	history: History<unknown>,
+	safeNavigate: NavigateFunction,
 	data?: {
 		[key: string]: string;
 	},
@@ -217,7 +217,7 @@ export function setSelectedTimelineQuery(
 		encodeURIComponent(JSON.stringify(selectedTimelineQuery)),
 	);
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	history.replace(generatedUrl);
+	safeNavigate(generatedUrl, { replace: true });
 }
 
 export enum MessagingQueuesViewTypeOptions {
@@ -254,7 +254,7 @@ export const MessagingQueuesViewType = {
 export function setConfigDetail(
 	urlQuery: URLSearchParams,
 	location: Location<unknown>,
-	history: History<unknown>,
+	safeNavigate: NavigateFunction,
 	paramsToSet?: {
 		[key: string]: string;
 	},
@@ -274,7 +274,7 @@ export function setConfigDetail(
 		urlQuery.delete(QueryParams.configDetail);
 	}
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	history.replace(generatedUrl);
+	safeNavigate(generatedUrl, { replace: true });
 }
 
 export enum ProducerLatencyOptions {

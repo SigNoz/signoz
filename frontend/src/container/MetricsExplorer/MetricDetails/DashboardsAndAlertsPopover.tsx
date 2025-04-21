@@ -4,7 +4,6 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { Bell, Grid } from 'lucide-react';
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
@@ -27,7 +26,7 @@ function DashboardsAndAlertsPopover({
 						key={alert.alert_id}
 						onClick={(): void => {
 							params.set(QueryParams.ruleId, alert.alert_id);
-							history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+							safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 						}}
 						className="dashboards-popover-content-item"
 					>
@@ -37,7 +36,7 @@ function DashboardsAndAlertsPopover({
 			}));
 		}
 		return null;
-	}, [alerts, params]);
+	}, [alerts, params, safeNavigate]);
 
 	const uniqueDashboards = useMemo(
 		() =>

@@ -2,7 +2,7 @@ import './TabsAndFilters.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Info } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useMemo } from 'react';
@@ -41,6 +41,8 @@ function TimelineTabs(): JSX.Element {
 
 function TimelineFilters(): JSX.Element {
 	const { search } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	const initialSelectedTab = useMemo(
@@ -50,7 +52,7 @@ function TimelineFilters(): JSX.Element {
 
 	const handleFilter = (value: TimelineFilter): void => {
 		searchParams.set('timelineFilter', value);
-		history.push({ search: searchParams.toString() });
+		safeNavigate({ search: searchParams.toString() });
 	};
 
 	const tabs = [

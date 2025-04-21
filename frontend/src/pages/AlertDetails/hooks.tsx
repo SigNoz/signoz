@@ -24,7 +24,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
-import history from 'lib/history';
 import { History, Table } from 'lucide-react';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
@@ -430,6 +429,7 @@ export const useAlertRuleDuplicate = ({
 	const { notifications } = useNotifications();
 
 	const params = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { refetch } = useQuery(REACT_QUERY_KEY.GET_ALL_ALLERTS, {
 		queryFn: getAll,
@@ -455,7 +455,7 @@ export const useAlertRuleDuplicate = ({
 					const clonedAlert =
 						allAlertsData.payload[allAlertsData.payload.length - 1];
 					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+					safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 				}
 			},
 			onError: handleError,
@@ -519,6 +519,7 @@ export const useAlertRuleDelete = ({
 } => {
 	const { notifications } = useNotifications();
 	const handleError = useAxiosError();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { mutate: deleteAlert } = useMutation(
 		[REACT_QUERY_KEY.REMOVE_ALERT_RULE, ruleId],
@@ -529,7 +530,7 @@ export const useAlertRuleDelete = ({
 					message: `Success`,
 				});
 
-				history.push(ROUTES.LIST_ALL_ALERT);
+				safeNavigate(ROUTES.LIST_ALL_ALERT);
 			},
 			onError: handleError,
 		},

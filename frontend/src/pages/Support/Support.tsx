@@ -17,7 +17,6 @@ import {
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
@@ -78,22 +77,22 @@ const supportChannels = [
 ];
 
 export default function Support(): JSX.Element {
-	const history = useHistory();
 	const { notifications } = useNotifications();
 	const { trialInfo, featureFlags } = useAppContext();
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
 		false,
 	);
 
-	const { pathname } = useLocation();
+	const { pathname, state } = useLocation();
 	const handleChannelWithRedirects = (url: string): void => {
 		window.open(url, '_blank');
 	};
 
 	useEffect(() => {
-		if (history?.location?.state) {
-			const histroyState = history?.location?.state as any;
+		if (state) {
+			const histroyState = state as any;
 
+			// TODO: SMIT How to test this?
 			if (histroyState && histroyState?.from) {
 				logEvent(`Support : From URL : ${histroyState.from}`, {});
 			}

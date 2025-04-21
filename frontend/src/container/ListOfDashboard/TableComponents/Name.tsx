@@ -1,12 +1,13 @@
 import { LockFilled } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
 
 function Name(name: Data['name'], data: Data): JSX.Element {
 	const { id: DashboardId, isLocked } = data;
+	const { safeNavigate } = useSafeNavigate();
 
 	const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${DashboardId}`;
 
@@ -14,7 +15,7 @@ function Name(name: Data['name'], data: Data): JSX.Element {
 		if (event.metaKey || event.ctrlKey) {
 			window.open(getLink(), '_blank');
 		} else {
-			history.push(getLink());
+			safeNavigate(getLink());
 		}
 	};
 

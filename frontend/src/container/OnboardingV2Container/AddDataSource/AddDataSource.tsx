@@ -16,7 +16,7 @@ import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -120,6 +120,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	const question2Ref = useRef<HTMLDivElement | null>(null);
 	const question3Ref = useRef<HTMLDivElement | null>(null);
 	const configureProdRef = useRef<HTMLDivElement | null>(null);
+	const { safeNavigate } = useSafeNavigate();
 
 	const [showConfigureProduct, setShowConfigureProduct] = useState<boolean>(
 		false,
@@ -417,22 +418,22 @@ function OnboardingAddDataSource(): JSX.Element {
 		} else if (step === 3) {
 			switch (selectedDataSource?.module) {
 				case 'apm':
-					history.push(ROUTES.APPLICATION);
+					safeNavigate(ROUTES.APPLICATION);
 					break;
 				case 'logs':
-					history.push(ROUTES.LOGS);
+					safeNavigate(ROUTES.LOGS);
 					break;
 				case 'metrics':
-					history.push(ROUTES.ALL_DASHBOARD);
+					safeNavigate(ROUTES.ALL_DASHBOARD);
 					break;
 				case 'infra-monitoring-hosts':
-					history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
+					safeNavigate(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 					break;
 				case 'infra-monitoring-k8s':
-					history.push(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES);
+					safeNavigate(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES);
 					break;
 				default:
-					history.push(ROUTES.APPLICATION);
+					safeNavigate(ROUTES.APPLICATION);
 			}
 		}
 	};
@@ -590,7 +591,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										},
 									);
 
-									history.push(ROUTES.HOME);
+									safeNavigate(ROUTES.HOME);
 								}}
 							/>
 							<Typography.Text>Get Started (2/4)</Typography.Text>

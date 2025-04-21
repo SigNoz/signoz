@@ -8,8 +8,8 @@ import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
@@ -77,6 +77,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	);
 
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const onClickErrorIdHandler = async (
 		id: string,
@@ -96,7 +97,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				errorId: id,
 			};
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+			safeNavigate(`${pathname}?${createQueryParams(queryParams)}`, {
+				replace: true,
+			});
 		} catch (error) {
 			notifications.error({
 				message: t('something_went_wrong'),
@@ -118,7 +121,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			traceId: errorDetail.traceID,
 			exceptionId: errorDetail?.errorId,
 		});
-		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+		safeNavigate(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
 	};
 
 	const logEventCalledRef = useRef(false);

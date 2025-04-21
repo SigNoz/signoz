@@ -4,7 +4,7 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import FormAlertRules, { AlertDetectionTypes } from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -24,6 +24,7 @@ function CreateRules(): JSX.Element {
 	const [initValues, setInitValues] = useState<AlertDef | null>(null);
 
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 	const queryParams = new URLSearchParams(location.search);
 	const alertTypeFromURL = queryParams.get(QueryParams.ruleType);
 	const version = queryParams.get('version');
@@ -96,7 +97,7 @@ function CreateRules(): JSX.Element {
 		}
 
 		const generatedUrl = `${location.pathname}?${queryParams.toString()}`;
-		history.replace(generatedUrl);
+		safeNavigate(generatedUrl, { replace: true });
 	};
 
 	useEffect(() => {

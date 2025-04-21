@@ -1,7 +1,7 @@
 import deleteLocalStorageKey from 'api/browser/localstorage/remove';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 export const Logout = (): void => {
 	deleteLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN);
@@ -23,5 +23,5 @@ export const Logout = (): void => {
 		window.Intercom('shutdown');
 	}
 
-	history.push(ROUTES.LOGIN);
+	safeNavigateNonComponentMemo(ROUTES.LOGIN);
 };

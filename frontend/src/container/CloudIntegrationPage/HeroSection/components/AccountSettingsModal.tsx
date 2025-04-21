@@ -7,8 +7,8 @@ import {
 	getRegionPreviewText,
 	useAccountSettingsModal,
 } from 'hooks/integration/aws/useAccountSettingsModal';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 
@@ -45,12 +45,13 @@ function AccountSettingsModal({
 
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
 
 	const handleRemoveIntegrationAccountSuccess = (): void => {
 		queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
 		urlQuery.delete('cloudAccountId');
 		handleClose();
-		history.replace({ search: urlQuery.toString() });
+		safeNavigate({ search: urlQuery.toString() });
 
 		logEvent('AWS Integration: Account removed', {
 			id: account?.id,

@@ -8,8 +8,8 @@ import {
 import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOptions';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 interface SelectOptionConfig {
@@ -28,7 +28,7 @@ function FilterSelect({
 	);
 
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const location = useLocation();
 
 	return (
@@ -56,7 +56,13 @@ function FilterSelect({
 			}
 			onChange={(value): void => {
 				handleSearch('');
-				setQueryParamsFromOptions(value, urlQuery, history, location, queryParam);
+				setQueryParamsFromOptions(
+					value,
+					urlQuery,
+					safeNavigate,
+					location,
+					queryParam,
+				);
 			}}
 		/>
 	);

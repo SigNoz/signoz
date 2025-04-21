@@ -20,11 +20,11 @@ import {
 	messagingQueueKakfaSupportedDataSources,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Blocks, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
@@ -37,7 +37,7 @@ export interface DataSourceType {
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common']);
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	const getStartedSource = useUrlQuery().get(QueryParams.getStartedSource);
 
@@ -147,7 +147,7 @@ export default function DataSource(): JSX.Element {
 			dataSource: selectedDataSource?.name,
 			framework: selectedFramework,
 		});
-		history.push(ROUTES.INTEGRATIONS);
+		safeNavigate(ROUTES.INTEGRATIONS);
 	};
 
 	return (

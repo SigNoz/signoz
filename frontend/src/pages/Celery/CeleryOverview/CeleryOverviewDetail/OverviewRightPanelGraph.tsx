@@ -8,11 +8,11 @@ import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -35,7 +35,7 @@ export default function OverviewRightPanelGraph({
 	groupByFilter?: BaseAutocompleteData;
 	filters?: TagFilterItem[];
 }): JSX.Element {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -48,13 +48,13 @@ export default function OverviewRightPanelGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, safeNavigate, pathname, urlQuery],
 	);
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(

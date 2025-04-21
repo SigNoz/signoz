@@ -1,7 +1,7 @@
 import { QueryParams } from 'constants/query';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { parseQuery } from 'lib/logql';
 import isEqual from 'lodash-es/isEqual';
 import { useCallback, useEffect } from 'react';
@@ -24,6 +24,7 @@ export function useSearchParser(): {
 	updateQueryString: (arg0: string) => void;
 } {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		searchFilter: { parsedQuery, queryString },
 		order,
@@ -39,10 +40,16 @@ export function useSearchParser(): {
 
 	const updateQueryString = useCallback(
 		(updatedQueryString: string) => {
-			history.replace({
-				pathname: history.location.pathname,
-				search: `?${QueryParams.q}=${updatedQueryString}&${QueryParams.order}=${order}`,
-			});
+			// Defaults to the current URL
+			safeNavigate(
+				{
+					// No need to prepend '?'
+					search: `${QueryParams.q}=${updatedQueryString}&${QueryParams.order}=${order}`,
+				},
+				{
+					replace: true,
+				},
+			);
 
 			const globalTime = getMinMax(selectedTime, minTime, maxTime);
 
@@ -64,7 +71,7 @@ export function useSearchParser(): {
 		},
 		// need to hide this warning as we don't want to update the query string on every change
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[dispatch, parsedQuery, selectedTime, queryString],
+		[dispatch, parsedQuery, selectedTime, queryString, safeNavigate],
 	);
 
 	useEffect(() => {

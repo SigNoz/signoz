@@ -15,15 +15,15 @@ import {
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { History } from 'history';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Bolt, Check, OctagonAlert, X } from 'lucide-react';
 import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ReactNode, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router-dom-v5-compat';
 import { v4 as uuid } from 'uuid';
 
 interface AttributeCheckListProps {
@@ -46,7 +46,7 @@ export enum AttributesFilters {
 function ErrorTitleAndKey({
 	title,
 	parentTitle,
-	history,
+	safeNavigate,
 	isCloudUserVal,
 	errorMsg,
 	isLeaf,
@@ -54,7 +54,7 @@ function ErrorTitleAndKey({
 	title: string;
 	parentTitle: string;
 	isCloudUserVal: boolean;
-	history: History<unknown>;
+	safeNavigate: NavigateFunction;
 	errorMsg?: string;
 	isLeaf?: boolean;
 }): TreeDataNode {
@@ -76,7 +76,7 @@ function ErrorTitleAndKey({
 		}
 
 		if (isCloudUserVal && !!link) {
-			history.push(link);
+			safeNavigate(link);
 		} else {
 			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
 		}
@@ -146,7 +146,7 @@ function generateTreeDataNodes(
 	response: OnboardingStatusResponse['data'],
 	parentTitle: string,
 	isCloudUserVal: boolean,
-	history: History<unknown>,
+	safeNavigate: NavigateFunction,
 ): TreeDataNode[] {
 	return response
 		.map((item) => {
@@ -159,7 +159,7 @@ function generateTreeDataNodes(
 						title: item.attribute,
 						errorMsg: item.error_message || '',
 						parentTitle,
-						history,
+						safeNavigate,
 						isCloudUserVal,
 					});
 				}
@@ -182,7 +182,7 @@ function AttributeCheckList({
 		setFilter(value);
 	};
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	useEffect(() => {
 		const filteredData = onboardingStatusResponses.map((response) => {
@@ -192,7 +192,7 @@ function AttributeCheckList({
 					errorMsg: response.errorMsg,
 					isLeaf: true,
 					parentTitle: response.title,
-					history,
+					safeNavigate,
 					isCloudUserVal,
 				});
 			}
@@ -210,7 +210,7 @@ function AttributeCheckList({
 					filteredData,
 					response.title,
 					isCloudUserVal,
-					history,
+					safeNavigate,
 				),
 			};
 		});

@@ -21,14 +21,15 @@ import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import history from 'lib/history';
 import { map } from 'lodash-es';
 import { PanelRight } from 'lucide-react';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import { useTimezone } from 'providers/Timezone';
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
 import MissingSpansMessage from './Missingtrace';
@@ -60,6 +61,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const urlQuery = useUrlQuery();
 	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
+	const location = useLocation();
 
 	const [intervalUnit, setIntervalUnit] = useState<IIntervalUnit>(
 		INTERVAL_UNITS[0],
@@ -100,16 +102,21 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	useEffect(() => {
 		if (activeSelectedId) {
-			history.replace({
-				pathname: history.location.pathname,
-				search: `${formUrlParams({
-					spanId: activeSelectedId,
-					levelUp,
-					levelDown,
-				})}`,
-			});
+			safeNavigateNonComponentMemo(
+				{
+					pathname: location.pathname,
+					search: `${formUrlParams({
+						spanId: activeSelectedId,
+						levelUp,
+						levelDown,
+					})}`,
+				},
+				{
+					replace: true,
+				},
+			);
 		}
-	}, [activeSelectedId, levelDown, levelUp]);
+	}, [activeSelectedId, levelDown, levelUp, location.pathname]);
 
 	const getSelectedNode = useMemo(
 		() => getNodeById(activeSelectedId, treesData),

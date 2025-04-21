@@ -15,7 +15,7 @@ import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { Pin } from 'lucide-react';
@@ -68,6 +68,7 @@ function TableView({
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 	const isDarkMode = useIsDarkMode();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [pinnedAttributes, setPinnedAttributes] = useState<
 		Record<string, boolean>
@@ -170,7 +171,7 @@ function TableView({
 				// open the trace in new tab
 				window.open(route, '_blank');
 			} else {
-				history.push(route);
+				safeNavigate(route);
 			}
 		}
 	};

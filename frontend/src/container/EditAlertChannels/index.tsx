@@ -25,7 +25,7 @@ import {
 } from 'container/CreateAlertChannels/config';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom-v5-compat';
@@ -52,6 +52,7 @@ function EditAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 	// Temp: Hard type casting for string | undefined
 	const { id } = useParams() as { id: string };
 
@@ -102,7 +103,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
@@ -114,7 +115,7 @@ function EditAlertChannels({
 			status: 'failed',
 			statusMessage: response.error || t('channel_edit_failed'),
 		};
-	}, [prepareSlackRequest, t, notifications, selectedConfig]);
+	}, [prepareSlackRequest, t, notifications, selectedConfig, safeNavigate]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		const { name, username, password } = selectedConfig;
@@ -159,7 +160,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		showError(response.error || t('channel_edit_failed'));
@@ -169,7 +170,7 @@ function EditAlertChannels({
 			status: 'failed',
 			statusMessage: response.error || t('channel_edit_failed'),
 		};
-	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
+	}, [prepareWebhookRequest, t, notifications, selectedConfig, safeNavigate]);
 
 	const prepareEmailRequest = useCallback(
 		() => ({
@@ -192,7 +193,7 @@ function EditAlertChannels({
 				message: 'Success',
 				description: t('channel_edit_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
@@ -205,7 +206,7 @@ function EditAlertChannels({
 			status: 'failed',
 			statusMessage: response.error || t('channel_edit_failed'),
 		};
-	}, [prepareEmailRequest, t, notifications]);
+	}, [prepareEmailRequest, t, notifications, safeNavigate]);
 
 	const preparePagerRequest = useCallback(
 		() => ({
@@ -246,7 +247,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
@@ -259,7 +260,7 @@ function EditAlertChannels({
 			status: 'failed',
 			statusMessage: response.error || t('channel_edit_failed'),
 		};
-	}, [preparePagerRequest, notifications, selectedConfig, t]);
+	}, [preparePagerRequest, notifications, selectedConfig, t, safeNavigate]);
 
 	const prepareOpsgenieRequest = useCallback(
 		() => ({
@@ -294,7 +295,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
@@ -307,7 +308,7 @@ function EditAlertChannels({
 			status: 'failed',
 			statusMessage: response.error || t('channel_edit_failed'),
 		};
-	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
+	}, [prepareOpsgenieRequest, t, notifications, selectedConfig, safeNavigate]);
 
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
@@ -341,7 +342,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			history.replace(ROUTES.ALL_CHANNELS);
+			safeNavigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_edit_done') };
 		}
 		notifications.error({
@@ -354,7 +355,7 @@ function EditAlertChannels({
 			status: 'failed',
 			statusMessage: response.error || t('channel_edit_failed'),
 		};
-	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
+	}, [prepareMsTeamsRequest, t, notifications, selectedConfig, safeNavigate]);
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {

@@ -18,10 +18,10 @@ import {
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useAppContext } from 'providers/App/App';
@@ -85,6 +85,7 @@ function ChartPreview({
 	>((state) => state.globalTime);
 
 	const { featureFlags } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -200,9 +201,9 @@ function ChartPreview({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 		},
-		[dispatch, location.pathname, urlQuery],
+		[dispatch, location.pathname, urlQuery, safeNavigate],
 	);
 
 	const { timezone } = useTimezone();

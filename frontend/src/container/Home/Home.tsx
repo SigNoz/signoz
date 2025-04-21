@@ -17,7 +17,7 @@ import { getHostListsQuery } from 'container/InfraMonitoringHosts/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
@@ -45,6 +45,7 @@ const homeInterval = 30 * 60 * 1000;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [startTime, setStartTime] = useState<number | null>(null);
 	const [endTime, setEndTime] = useState<number | null>(null);
@@ -382,14 +383,14 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												history.push(ROUTES.LOGS_EXPLORER);
+												safeNavigate(ROUTES.LOGS_EXPLORER);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
 													logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													safeNavigate(ROUTES.LOGS_EXPLORER);
 												}
 											}}
 										>
@@ -423,14 +424,14 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												history.push(ROUTES.TRACES_EXPLORER);
+												safeNavigate(ROUTES.TRACES_EXPLORER);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
 													logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													safeNavigate(ROUTES.TRACES_EXPLORER);
 												}
 											}}
 										>
@@ -464,14 +465,14 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
+												safeNavigate(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
 													logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
+													safeNavigate(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
 												}
 											}}
 										>
@@ -518,7 +519,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													safeNavigate(ROUTES.LOGS_EXPLORER);
 												}}
 											>
 												Open Logs Explorer
@@ -532,7 +533,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													safeNavigate(ROUTES.TRACES_EXPLORER);
 												}}
 											>
 												Open Traces Explorer
@@ -573,7 +574,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													safeNavigate(ROUTES.ALL_DASHBOARD);
 												}}
 											>
 												Create dashboard
@@ -615,7 +616,7 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													safeNavigate(ROUTES.ALERTS_NEW);
 												}}
 											>
 												Create an alert

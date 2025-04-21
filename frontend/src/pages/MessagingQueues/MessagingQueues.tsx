@@ -9,9 +9,9 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 
 import {
 	KAFKA_SETUP_DOC_LINK,
@@ -20,8 +20,8 @@ import {
 } from './MessagingQueuesUtils';
 
 function MessagingQueues(): JSX.Element {
-	const history = useHistory();
 	const { t } = useTranslation('messagingQueuesKafkaOverview');
+	const { safeNavigate } = useSafeNavigate();
 
 	const redirectToDetailsPage = (callerView?: string): void => {
 		logEvent('Messaging Queues: View details clicked', {
@@ -29,7 +29,7 @@ function MessagingQueues(): JSX.Element {
 			source: callerView,
 		});
 
-		history.push(
+		safeNavigate(
 			`${ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL}?${QueryParams.mqServiceView}=${callerView}`,
 		);
 	};
@@ -42,7 +42,7 @@ function MessagingQueues(): JSX.Element {
 			link: isCloudUserVal ? link : KAFKA_SETUP_DOC_LINK,
 		});
 		if (isCloudUserVal) {
-			history.push(link);
+			safeNavigate(link);
 		} else {
 			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
 		}

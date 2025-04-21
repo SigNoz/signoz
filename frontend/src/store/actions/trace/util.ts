@@ -1,8 +1,8 @@
 import { AllTraceFilterEnum } from 'container/Trace/Filters';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { PayloadProps as GetFilterPayload } from 'types/api/trace/getFilters';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 
 export * from './parseFilter';
 export interface ParsedUrl<T> {
@@ -69,8 +69,9 @@ export const updateURL = (
 		isFilterExclude: JSON.stringify(Object.fromEntries(isFilterExclude)),
 		userSelectedFilter: JSON.stringify(Object.fromEntries(userSelectedFilter)),
 	};
-	history.replace(
+	safeNavigateNonComponentMemo(
 		`${window.location.pathname}?${createQueryParams(queryParams)}`,
+		{ replace: true },
 	);
 };
 

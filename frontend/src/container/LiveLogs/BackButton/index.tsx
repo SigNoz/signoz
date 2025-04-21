@@ -8,14 +8,14 @@ import {
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { constructCompositeQuery } from '../constants';
 
 function BackButton(): JSX.Element {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
@@ -40,8 +40,8 @@ function BackButton(): JSX.Element {
 
 		const path = `${ROUTES.LOGS_EXPLORER}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
 
-		history.push(path);
-	}, [history, compositeQuery, updateAllQueriesOperators]);
+		safeNavigate(path);
+	}, [safeNavigate, compositeQuery, updateAllQueriesOperators]);
 
 	return (
 		<Button icon={<ArrowLeftOutlined />} onClick={handleBack}>

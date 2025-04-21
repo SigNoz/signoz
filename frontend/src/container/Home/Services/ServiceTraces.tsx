@@ -3,7 +3,6 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -127,7 +126,7 @@ export default function ServiceTraces({
 										activeLicenseV3 &&
 										activeLicenseV3.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
 										window?.open(
 											DOCS_LINKS.ADD_DATA_SOURCE,
@@ -160,7 +159,7 @@ export default function ServiceTraces({
 				</div>
 			</div>
 		),
-		[user?.role, activeLicenseV3],
+		[user?.role, activeLicenseV3, safeNavigate],
 	);
 
 	const renderDashboardsList = useCallback(

@@ -6,9 +6,10 @@ import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import {
 	MessagingQueuesViewType,
@@ -23,7 +24,8 @@ import MessagingQueuesConfigOptions from '../MQGraph/MQConfigOptions';
 import MessagingQueuesGraph from '../MQGraph/MQGraph';
 
 function MQDetailPage(): JSX.Element {
-	const history = useHistory();
+	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 	const [
 		selectedView,
 		setSelectedView,
@@ -51,11 +53,11 @@ function MQDetailPage(): JSX.Element {
 	}, [mqServiceView]);
 
 	const updateUrlQuery = (query: Record<string, string | number>): void => {
-		const searchParams = new URLSearchParams(history.location.search);
+		const searchParams = new URLSearchParams(location.search);
 		Object.keys(query).forEach((key) => {
 			searchParams.set(key, query[key].toString());
 		});
-		history.push({
+		safeNavigate({
 			search: searchParams.toString(),
 		});
 	};
@@ -65,7 +67,7 @@ function MQDetailPage(): JSX.Element {
 		selectedView !== MessagingQueuesViewType.metricPage.value;
 
 	const handleBackClick = (): void => {
-		history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+		safeNavigate(ROUTES.MESSAGING_QUEUES_KAFKA);
 	};
 
 	return (

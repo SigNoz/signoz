@@ -5,12 +5,12 @@ import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
@@ -43,7 +43,7 @@ export const useActiveLog = (): UseActiveLog => {
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const queryClient = useQueryClient();
 	const { pathname } = useLocation();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { notifications } = useNotifications();
 
@@ -196,10 +196,17 @@ export const useActiveLog = (): UseActiveLog => {
 				newOperator,
 				queryString,
 			);
-
-			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
+			safeNavigate(
+				{
+					pathname: ROUTES.OLD_LOGS_EXPLORER,
+					search: `q=${updatedQueryString}`,
+				},
+				{
+					replace: true,
+				},
+			);
 		},
-		[history, queryString],
+		[safeNavigate, queryString],
 	);
 
 	return {

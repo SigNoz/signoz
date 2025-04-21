@@ -4,9 +4,10 @@ import { Card, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -16,7 +17,8 @@ import { Text } from './styles';
 
 function DashboardGraphSlider(): JSX.Element {
 	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();
-
+	const { safeNavigate } = useSafeNavigate();
+	const location = useLocation();
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
@@ -56,13 +58,11 @@ function DashboardGraphSlider(): JSX.Element {
 			),
 		};
 		if (name === PANEL_TYPES.LIST) {
-			history.push(
-				`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,
+			safeNavigate(
+				`${location.pathname}/new?${createQueryParams(queryParamsLog)}`,
 			);
 		} else {
-			history.push(
-				`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-			);
+			safeNavigate(`${location.pathname}/new?${createQueryParams(queryParams)}`);
 		}
 	};
 

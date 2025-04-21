@@ -5,7 +5,6 @@ import External from 'container/MetricsApplication/Tabs/External';
 import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { useCallback, useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { useParams } from 'react-router-dom-v5-compat';
@@ -64,7 +63,7 @@ function MetricsApplication(): JSX.Element {
 		<>
 			<ResourceAttributesFilter />
 			<ApDexApplication />
-			<RouteTab routes={routes} history={history} activeKey={activeKey} />
+			<RouteTab routes={routes} activeKey={activeKey} />
 		</>
 	);
 }

@@ -4,7 +4,7 @@ import './HomeChecklist.styles.scss';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
@@ -41,6 +41,7 @@ function HomeChecklist({
 	const [whatsNextChecklistItems, setWhatsNextChecklistItems] = useState<
 		ChecklistItem[]
 	>([]);
+	const { safeNavigate } = useSafeNavigate();
 
 	useEffect(() => {
 		setCompletedChecklistItems(checklistItems.filter((item) => item.completed));
@@ -92,12 +93,12 @@ function HomeChecklist({
 														});
 
 														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
-															history.push(item.toRoute || '');
+															safeNavigate(item.toRoute || '');
 														} else if (
 															activeLicenseV3 &&
 															activeLicenseV3.platform === LicensePlatform.CLOUD
 														) {
-															history.push(item.toRoute || '');
+															safeNavigate(item.toRoute || '');
 														} else {
 															window?.open(
 																item.docsLink || '',

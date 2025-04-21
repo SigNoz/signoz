@@ -3,8 +3,8 @@ import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
@@ -28,6 +28,8 @@ function HorizontalTimelineGraph({
 	isDarkMode: boolean;
 	data: AlertRuleTimelineGraphResponse[];
 }): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
+
 	const transformedData: AlignedData = useMemo(() => {
 		if (!data?.length) {
 			return [[], []];
@@ -102,7 +104,7 @@ function HorizontalTimelineGraph({
 								urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 								urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 
-								history.push({
+								safeNavigate({
 									search: urlQuery.toString(),
 								});
 							}
@@ -131,6 +133,7 @@ function HorizontalTimelineGraph({
 			urlQuery,
 			dispatch,
 			timezone.value,
+			safeNavigate,
 		],
 	);
 	return <Uplot data={transformedData} options={options} />;

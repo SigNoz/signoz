@@ -11,7 +11,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
@@ -72,6 +72,7 @@ function OnboardingQuestionaire(): JSX.Element {
 	const [signozDetails, setSignozDetails] = useState<SignozDetails>(
 		INITIAL_SIGNOZ_DETAILS,
 	);
+	const { safeNavigate } = useSafeNavigate();
 
 	const [
 		optimiseSignozDetails,
@@ -122,9 +123,9 @@ function OnboardingQuestionaire(): JSX.Element {
 			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
 			if (isOnboardingV3Enabled) {
-				history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+				safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD);
 			} else {
-				history.push(ROUTES.GET_STARTED);
+				safeNavigate(ROUTES.GET_STARTED);
 			}
 		},
 		onError: () => {

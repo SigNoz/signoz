@@ -3,7 +3,7 @@ import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
@@ -28,6 +28,7 @@ export default function AlertRules({
 
 	const location = useLocation();
 	const params = new URLSearchParams(location.search);
+	const { safeNavigate } = useSafeNavigate();
 
 	// Fetch Alerts
 	const { data: alerts, isError, isLoading } = useQuery('allAlerts', {
@@ -131,7 +132,7 @@ export default function AlertRules({
 
 		params.set(QueryParams.ruleId, record.id.toString());
 
-		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+		safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
 	const renderAlertRules = (): JSX.Element => (

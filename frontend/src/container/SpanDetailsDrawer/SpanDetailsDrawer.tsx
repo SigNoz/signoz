@@ -7,8 +7,8 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { themeColors } from 'constants/theme';
 import { getTraceToLogsQuery } from 'container/TraceDetail/SelectedSpanDetails/config';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { Anvil, Bookmark, PanelRight, Search } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
@@ -43,6 +43,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		selectedSpan?.serviceName || '',
 		themeColors.traceDetailColors,
 	);
+
+	const { safeNavigate } = useSafeNavigate();
 
 	function getItems(span: Span, startTime: number): TabsProps['items'] {
 		return [
@@ -79,7 +81,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	const onLogsHandler = (): void => {
 		const query = getTraceToLogsQuery(traceID, traceStartTime, traceEndTime);
 
-		history.push(
+		safeNavigate(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
 				// we subtract 5 minutes from the start time to handle the cases when the trace duration is in nanoseconds

@@ -3,8 +3,8 @@ import './CeleryTaskConfigOptions.styles.scss';
 import { Select, Spin, Typography } from 'antd';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import {
@@ -17,7 +17,7 @@ function CeleryTaskConfigOptions(): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		'celery.task_name',
 	);
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const location = useLocation();
 
 	const urlQuery = useUrlQuery();
@@ -53,7 +53,7 @@ function CeleryTaskConfigOptions(): JSX.Element {
 						setQueryParamsFromOptions(
 							value,
 							urlQuery,
-							history,
+							safeNavigate,
 							location,
 							QueryParams.taskName,
 						);

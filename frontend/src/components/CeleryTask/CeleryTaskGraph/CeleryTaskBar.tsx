@@ -7,12 +7,12 @@ import { ViewMenuAction } from 'container/GridCardLayout/config';
 import GridCard from 'container/GridCardLayout/GridCard';
 import { Card } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -50,7 +50,7 @@ function CeleryTaskBar({
 	queryEnabled: boolean;
 	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
@@ -68,13 +68,13 @@ function CeleryTaskBar({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			safeNavigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery, safeNavigate],
 	);
 
 	const [barState, setBarState] = useState<CeleryTaskState>(CeleryTaskState.All);

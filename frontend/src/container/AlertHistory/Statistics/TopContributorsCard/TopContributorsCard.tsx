@@ -3,7 +3,7 @@ import './TopContributorsCard.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -17,6 +17,7 @@ function TopContributorsCard({
 	totalCurrentTriggers,
 }: TopContributorsCardProps): JSX.Element {
 	const { search } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	const viewAllTopContributorsParam = searchParams.get('viewAllTopContributors');
@@ -43,7 +44,7 @@ function TopContributorsCard({
 
 			return newState;
 		});
-		history.push({ search: searchParams.toString() });
+		safeNavigate({ search: searchParams.toString() });
 	};
 
 	return (

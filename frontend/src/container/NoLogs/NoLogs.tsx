@@ -4,7 +4,7 @@ import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
@@ -15,6 +15,7 @@ export default function NoLogs({
 	dataSource: DataSource;
 }): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+	const { safeNavigate } = useSafeNavigate();
 
 	const handleLinkClick = (
 		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -28,7 +29,7 @@ export default function NoLogs({
 			} else if (dataSource === DataSource.LOGS) {
 				logEvent('Logs Explorer: Navigate to onboarding', {});
 			}
-			history.push(
+			safeNavigate(
 				dataSource === 'traces'
 					? ROUTES.GET_STARTED_APPLICATION_MONITORING
 					: ROUTES.GET_STARTED_LOGS_MANAGEMENT,

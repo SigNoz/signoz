@@ -1,6 +1,6 @@
 import { QueryParams } from 'constants/query';
-import { History, Location } from 'history';
 import getRenderer from 'lib/uPlotLib/utils/getRenderer';
+import type { Location, NavigateFunction } from 'react-router-dom-v5-compat';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -17,13 +17,13 @@ export function getValuesFromQueryParams(
 export function setQueryParamsFromOptions(
 	value: string[],
 	urlQuery: URLSearchParams,
-	history: History<unknown>,
+	safeNavigate: NavigateFunction,
 	location: Location<unknown>,
 	queryParams: QueryParams,
 ): void {
 	urlQuery.set(queryParams, value.join(','));
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	history.replace(generatedUrl);
+	safeNavigate(generatedUrl, { replace: true });
 }
 
 export function getFiltersFromQueryParams(

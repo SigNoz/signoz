@@ -14,12 +14,12 @@ import manageCreditCardApi from 'api/billing/manage';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { safeNavigateNonComponentMemo } from 'utils/navigate';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 function WorkspaceSuspended(): JSX.Element {
@@ -64,7 +64,7 @@ function WorkspaceSuspended(): JSX.Element {
 				!shouldSuspendWorkspace ||
 				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				safeNavigateNonComponentMemo(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);
