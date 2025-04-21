@@ -89,43 +89,42 @@ const renderWithContext = (props = {}): RenderResult => {
 	);
 };
 
+const mockAggregateKeysData = {
+	payload: {
+		attributeKeys: [
+			{
+				// eslint-disable-next-line sonarjs/no-duplicate-string
+				key: 'http.status',
+				dataType: DataTypes.String,
+				type: 'tag',
+				isColumn: false,
+				isJSON: false,
+				id: 'http.status--string--tag--false',
+			},
+		],
+	},
+};
+
 jest.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
 	useGetAggregateKeys: jest.fn(() => ({
-		data: {
-			payload: {
-				attributeKeys: [
-					{
-						// eslint-disable-next-line sonarjs/no-duplicate-string
-						key: 'http.status',
-						dataType: DataTypes.String,
-						type: 'tag',
-						isColumn: false,
-						isJSON: false,
-						id: 'http.status--string--tag--false',
-					},
-				],
-			},
-		},
+		data: mockAggregateKeysData,
 		isFetching: false,
 	})),
 }));
+
+const mockAggregateValuesData = {
+	payload: {
+		stringAttributeValues: ['200', '404', '500'],
+		numberAttributeValues: [200, 404, 500],
+	},
+};
 
 jest.mock('hooks/queryBuilder/useGetAggregateValues', () => ({
 	useGetAggregateValues: jest.fn(() => ({
-		data: {
-			payload: {
-				stringAttributeValues: ['200', '404', '500'],
-				numberAttributeValues: [200, 404, 500],
-			},
-		},
+		data: mockAggregateValuesData,
 		isFetching: false,
 	})),
 }));
-
-// jest.mock('hooks/useUrlQuery', () => ({
-// 	__esModule: true,
-// 	default: jest.fn(() => new URLSearchParams()),
-// }));
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
