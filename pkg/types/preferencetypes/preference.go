@@ -242,7 +242,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 				return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("the preference value is not in the range specified, min: %v , max:%v", p.Range.Min, p.Range.Max))
 			}
 		}
-	case PreferenceValueTypeJSON:
+	case PreferenceValueTypeAttributeKeys:
 		strVal, ok := preferenceValue.(string)
 		if !ok {
 			return p.ErrorValueTypeMismatch()
@@ -250,7 +250,7 @@ func (p *Preference) IsValidValue(preferenceValue interface{}) error {
 
 		var parsed []v3.AttributeKey
 		if err := json.Unmarshal([]byte(strVal), &parsed); err != nil {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid JSON format for structured preference: %v", err)
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid attribute_keys JSON format: %v", err)
 		}
 
 		for _, attr := range parsed {
@@ -329,7 +329,7 @@ func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 		} else {
 			return false
 		}
-	case PreferenceValueTypeJSON:
+	case PreferenceValueTypeAttributeKeys:
 		switch val := preferenceValue.(type) {
 		case string:
 			var result interface{}

@@ -1,11 +1,11 @@
 package preferencetypes
 
 const (
-	PreferenceValueTypeInteger string = "integer"
-	PreferenceValueTypeFloat   string = "float"
-	PreferenceValueTypeString  string = "string"
-	PreferenceValueTypeBoolean string = "boolean"
-	PreferenceValueTypeJSON    string = "json"
+	PreferenceValueTypeInteger       string = "integer"
+	PreferenceValueTypeFloat         string = "float"
+	PreferenceValueTypeString        string = "string"
+	PreferenceValueTypeBoolean       string = "boolean"
+	PreferenceValueTypeAttributeKeys string = "json"
 )
 
 const (
