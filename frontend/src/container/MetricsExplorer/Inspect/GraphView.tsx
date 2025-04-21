@@ -131,6 +131,7 @@ function GraphView({
 								inspectMetricsTimeSeries,
 								showGraphPopover,
 								setShowGraphPopover,
+								formattedInspectMetricsTimeSeries,
 							);
 						});
 					},

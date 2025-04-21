@@ -20,6 +20,7 @@ import {
 	applyFilters,
 	applySpaceAggregation,
 	applyTimeAggregation,
+	getAllTimestampsOfMetrics,
 } from './utils';
 
 const metricInspectionReducer = (
@@ -142,9 +143,6 @@ export function useInspectMetrics(
 	}, [inspectMetricsTimeSeries]);
 
 	const formattedInspectMetricsTimeSeries = useMemo(() => {
-		const allTimestamps = new Set<number>();
-		const seriesValuesMap: Map<number, number | null>[] = [];
-
 		let timeSeries: InspectMetricsSeries[] = [...inspectMetricsTimeSeries];
 
 		// Apply filters
@@ -178,26 +176,20 @@ export function useInspectMetrics(
 			setAggregatedTimeSeries(aggregatedSeries);
 		}
 
-		// Collect timestamps and format into chart compatible format
-		timeSeries.forEach((series, idx) => {
-			seriesValuesMap[idx] = new Map();
+		const timestamps = getAllTimestampsOfMetrics(timeSeries);
+
+		const timeseriesArray = timeSeries.map((series) => {
+			const valuesMap = new Map<number, number>();
+
 			series.values.forEach(({ timestamp, value }) => {
-				allTimestamps.add(timestamp);
-				seriesValuesMap[idx].set(timestamp, parseFloat(value));
+				valuesMap.set(timestamp, parseFloat(value));
 			});
+
+			return timestamps.map((timestamp) => valuesMap.get(timestamp) ?? NaN);
 		});
 
-		// Convert timestamps to sorted array
-		const timestamps = Float64Array.from(
-			[...allTimestamps].sort((a, b) => a - b),
-		);
-
-		// Map values to corresponding timestamps, filling missing ones with `0`
-		const formattedSeries = timeSeries.map((_, idx) =>
-			timestamps.map((t) => seriesValuesMap[idx].get(t) ?? 0),
-		);
-
-		return [timestamps, ...formattedSeries];
+		const rawData = [timestamps, ...timeseriesArray];
+		return rawData.map((series) => new Float64Array(series));
 	}, [inspectMetricsTimeSeries, inspectionStep, metricInspectionOptions]);
 
 	const spaceAggregationLabels = useMemo(() => {

@@ -14,6 +14,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	GRAPH_CLICK_PIXEL_TOLERANCE,
 	INSPECT_FEATURE_FLAG_KEY,
 	SPACE_AGGREGATION_OPTIONS,
 	TIME_AGGREGATION_OPTIONS,
@@ -39,6 +40,18 @@ import {
 export function isInspectEnabled(): boolean {
 	const featureFlag = localStorage.getItem(INSPECT_FEATURE_FLAG_KEY);
 	return featureFlag === 'true';
+}
+
+export function getAllTimestampsOfMetrics(
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+): number[] {
+	return Array.from(
+		new Set(
+			inspectMetricsTimeSeries
+				.flatMap((series) => series.values.map((value) => value.timestamp))
+				.sort((a, b) => a - b),
+		),
+	);
 }
 
 export function MetricNameSearch({
@@ -430,86 +443,40 @@ export function applySpaceAggregation(
 	};
 }
 
-function getClosestIndex(arr: number[], target: number): number {
-	let low = 0;
-	let high = arr.length - 1;
-
-	while (low <= high) {
-		const mid = Math.floor((low + high) / 2);
-		if (arr[mid] === target) return mid;
-
-		if (arr[mid] < target) {
-			low = mid + 1;
-		} else {
-			high = mid - 1;
-		}
-	}
-
-	if (low >= arr.length) return arr.length - 1;
-	if (high < 0) return 0;
-
-	const lowDiff = Math.abs(arr[low] - target);
-	const highDiff = Math.abs(arr[high] - target);
-
-	return lowDiff < highDiff ? low : high;
-}
-
-function findClosestSeriesLabel(
+export function getSeriesIndexFromPixel(
+	e: MouseEvent,
 	u: uPlot,
-	mouseX: number,
-	mouseY: number,
-	xVals: number[],
-	idx: number,
-): string | undefined {
-	let minDist = Infinity;
-	let closestLabel: string | undefined;
+	formattedInspectMetricsTimeSeries: uPlot.AlignedData,
+): number {
+	const bbox = u.over.getBoundingClientRect(); // plot area only
+	const left = e.clientX - bbox.left;
+	const top = e.clientY - bbox.top;
 
-	const px = u.valToPos(xVals[idx], 'x');
+	const timestampIndex = u.posToIdx(left);
+	let seriesIndex = -1;
+	let closestPixelDiff = Infinity;
 
-	// Iterate from the last series to the first (stacked series are on top)
-	for (let i = u.series.length - 1; i >= 1; i--) {
-		const ySeries = u.data[i] as number[];
-		const yVal = ySeries[idx];
+	for (let i = 1; i < formattedInspectMetricsTimeSeries.length; i++) {
+		const series = formattedInspectMetricsTimeSeries[i];
+		const seriesValue = series[timestampIndex];
 
-		// Validate y-value before processing
-		const isValid = yVal != null && Number.isFinite(yVal);
+		if (seriesValue && !Number.isNaN(seriesValue)) {
+			const seriesYPx = u.valToPos(seriesValue, 'y');
+			const pixelDiff = Math.abs(seriesYPx - top);
 
-		if (isValid) {
-			const py = u.valToPos(yVal, 'y');
+			console.log('pixelDiff', pixelDiff);
 
-			// Calculate the distance in both x and y axes (Euclidean distance)
-			const dx = mouseX - px;
-			const dy = mouseY - py;
-			const dist = Math.sqrt(dx * dx + dy * dy); // Euclidean distance
-
-			// If we found a closer point, update the closest label
-			if (dist < minDist && dist <= 10) {
-				minDist = dist;
-				closestLabel = u.series[i].label; // Keep the label of the closest series
+			if (
+				pixelDiff < GRAPH_CLICK_PIXEL_TOLERANCE &&
+				pixelDiff < closestPixelDiff
+			) {
+				closestPixelDiff = pixelDiff;
+				seriesIndex = i;
 			}
 		}
 	}
 
-	return closestLabel;
-}
-
-export function getSeriesLabelFromPixel(
-	e: MouseEvent,
-	u: uPlot,
-): string | undefined {
-	const { left, top } = u.over.getBoundingClientRect();
-	const mouseX = e.clientX - left;
-	const mouseY = e.clientY - top;
-
-	const dataX = u.posToVal(mouseX, 'x');
-	const xVals = u.data[0] as number[];
-
-	// Get the closest index based on the x-axis
-	const idx = getClosestIndex(xVals, dataX);
-	if (idx === -1) return undefined;
-
-	// Find the closest series using both x and y distance
-	return findClosestSeriesLabel(u, mouseX, mouseY, xVals, idx);
+	return seriesIndex;
 }
 
 export function onGraphClick(
@@ -520,6 +487,7 @@ export function onGraphClick(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 	showPopover: boolean,
 	setShowPopover: (showPopover: boolean) => void,
+	formattedInspectMetricsTimeSeries: uPlot.AlignedData,
 ): void {
 	if (popoverRef.current && popoverRef.current.contains(e.target as Node)) {
 		// Clicked inside the popover, don't close
@@ -532,11 +500,13 @@ export function onGraphClick(
 	}
 	// Get which series the user clicked on
 	// If no series is clicked, return
-	const seriesLabel = getSeriesLabelFromPixel(e, u);
-	if (!seriesLabel) return;
+	const seriesIndex = getSeriesIndexFromPixel(
+		e,
+		u,
+		formattedInspectMetricsTimeSeries,
+	);
+	if (seriesIndex === -1) return;
 
-	// Get the series data
-	const seriesIndex = seriesLabel.charCodeAt(0) - 65;
 	const series = inspectMetricsTimeSeries[seriesIndex];
 
 	const { left, top } = u.over.getBoundingClientRect();
