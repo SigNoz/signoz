@@ -27,12 +27,15 @@
 	.inspect-metrics-content {
 		display: flex;
 		flex-direction: row;
-		gap: 16px;
+		justify-content: space-between;
 
 		.inspect-metrics-content-first-col {
 			display: flex;
 			flex-direction: column;
-			width: 75%;
+			flex: 2;
+			gap: 16px;
+			padding-right: 24px;
+			border-right: 1px solid var(--bg-slate-400);
 
 			.inspect-metrics-graph-view {
 				display: flex;
@@ -57,6 +60,297 @@
 							}
 						}
 					}
+				}
+			}
+
+			.inspect-metrics-query-builder {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+
+				.inspect-metrics-query-builder-header {
+					.query-builder-button-label {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						cursor: default;
+
+						span {
+							color: var(--text-vanilla-100);
+						}
+					}
+				}
+
+				.inspect-metrics-query-builder-content {
+					.ant-card-body {
+						display: flex;
+						flex-direction: column;
+						gap: 16px;
+
+						.selected-step {
+							color: var(--bg-sakura-500);
+
+							.ant-typography {
+								color: var(--bg-sakura-500);
+							}
+						}
+
+						.inspect-metrics-input-group {
+							display: flex;
+							align-items: center;
+							justify-content: space-between;
+							gap: 4px;
+
+							.ant-typography {
+								min-width: 130px;
+							}
+
+							.ant-select {
+								flex-grow: 1;
+							}
+
+							.no-arrows-input input[type='number']::-webkit-inner-spin-button,
+							.no-arrows-input input[type='number']::-webkit-outer-spin-button {
+								-webkit-appearance: none;
+								margin: 0;
+							}
+
+							/* Hide number input arrows (Firefox) */
+							.no-arrows-input input[type='number'] {
+								appearance: none;
+								-moz-appearance: textfield;
+							}
+						}
+
+						.metric-time-aggregation {
+							display: flex;
+							flex-direction: column;
+							gap: 16px;
+
+							.metric-time-aggregation-header {
+								display: flex;
+								gap: 8px;
+							}
+
+							.metric-time-aggregation-content {
+								display: flex;
+								gap: 24px;
+								width: 100%;
+
+								.inspect-metrics-input-group {
+									width: 50%;
+								}
+							}
+						}
+
+						.metric-space-aggregation {
+							display: flex;
+							flex-direction: column;
+							gap: 16px;
+
+							.metric-space-aggregation-header {
+								display: flex;
+								gap: 8px;
+							}
+
+							.metric-space-aggregation-content {
+								display: flex;
+								gap: 8px;
+								width: 100%;
+
+								.metric-space-aggregation-content-left {
+									width: 130px;
+								}
+							}
+						}
+					}
+				}
+
+				.metric-filters {
+					.query-builder-search-v2 {
+						width: 100%;
+
+						.ant-select {
+							.ant-select-selector {
+								background-color: var(--bg-ink-400);
+								color: var(--text-vanilla-100);
+								border-color: var(--bg-slate-400);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.inspect-metrics-content-second-col {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			flex: 1;
+
+			.home-checklist-container {
+				padding-left: 40px;
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				padding-bottom: 32px;
+				border-bottom: 1px solid var(--bg-slate-400);
+
+				.home-checklist-title {
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+				}
+
+				.completed-checklist-container {
+					margin-left: 20px;
+				}
+
+				.completed-message-container {
+					display: flex;
+					flex-direction: column;
+					gap: 16px;
+					height: 100px;
+
+					.ant-btn {
+						width: fit-content;
+					}
+				}
+			}
+
+			.expanded-view {
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				padding-left: 40px;
+			}
+		}
+	}
+}
+
+.graph-popover {
+	position: fixed;
+	z-index: 1000;
+
+	.graph-popover-card {
+		width: 550px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 16px;
+
+		.graph-popover-row {
+			margin-top: 12px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+
+			.graph-popover-row-label {
+				width: 100px;
+			}
+
+			.graph-popover-inner-row {
+				width: 400px;
+				margin-top: 4px;
+				align-items: center;
+				display: flex;
+				gap: 8px;
+				overflow-x: auto;
+				white-space: nowrap;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-width: thin;
+				scrollbar-color: #ccc transparent;
+			}
+		}
+
+		.graph-popover-header-text {
+			color: var(--text-vanilla-400);
+		}
+
+		.graph-popover-row-label {
+			color: var(--bg-slate-50);
+			width: 10%;
+		}
+
+		.graph-popover-cell {
+			padding: 4px 8px;
+			background-color: #1f1f1f;
+			border-radius: 4px;
+			color: #fff;
+			min-width: 60px;
+			max-width: 60px;
+			text-overflow: ellipsis;
+			overflow: hidden;
+			white-space: nowrap;
+		}
+
+		.footer-row {
+			margin-top: 12px;
+			display: flex;
+			gap: 8px;
+			align-items: center;
+
+			.footer-text {
+				white-space: nowrap;
+			}
+
+			.footer-divider {
+				flex: 1;
+				border-top: 1px dashed #ccc;
+				margin: 0 8px;
+			}
+		}
+	}
+}
+
+.expanded-view {
+	.expanded-view-header {
+		.ant-typography {
+			display: flex;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 8px;
+		}
+	}
+
+	.graph-popover {
+		z-index: 2;
+		position: initial;
+
+		.graph-popover-card {
+			width: 100%;
+
+			.timeseries-cell {
+				cursor: pointer;
+				&:hover {
+					opacity: 80%;
+				}
+			}
+
+			.selected {
+				opacity: 90%;
+			}
+		}
+	}
+
+	.labels-table {
+		border: 1px solid var(--bg-slate-400);
+
+		.labels-key {
+			color: var(--bg-vanilla-400);
+			background-color: var(--bg-slate-500);
+			font-family: 'Geist Mono';
+		}
+
+		.labels-value {
+			background-color: var(--bg-slate-500);
+			opacity: 80%;
+			font-family: 'Geist Mono';
+
+			.field-renderer-container {
+				.label {
+					color: var(--bg-slate-400);
 				}
 			}
 		}
