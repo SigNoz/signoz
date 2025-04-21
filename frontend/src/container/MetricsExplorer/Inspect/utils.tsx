@@ -460,11 +460,13 @@ export function getSeriesIndexFromPixel(
 		const series = formattedInspectMetricsTimeSeries[i];
 		const seriesValue = series[timestampIndex];
 
-		if (seriesValue && !Number.isNaN(seriesValue)) {
+		if (
+			seriesValue !== undefined &&
+			seriesValue !== null &&
+			!Number.isNaN(seriesValue)
+		) {
 			const seriesYPx = u.valToPos(seriesValue, 'y');
 			const pixelDiff = Math.abs(seriesYPx - top);
-
-			console.log('pixelDiff', pixelDiff);
 
 			if (
 				pixelDiff < GRAPH_CLICK_PIXEL_TOLERANCE &&
@@ -619,3 +621,9 @@ export const formatTimestampToFullDateTime = (
 
 	return `${datePart} ⎯ ${timePart}`;
 };
+
+export function getTimeSeriesLabel(
+	timeSeries: InspectMetricsSeries | null,
+): string {
+	return `${timeSeries?.title}: ${JSON.stringify(timeSeries?.labels)}`;
+}
