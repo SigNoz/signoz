@@ -18,16 +18,17 @@ import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { convertCompositeQueryToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -117,10 +118,11 @@ function AllErrors(): JSX.Element {
 	);
 
 	const { queries } = useResourceAttribute();
+	const compositeData = useGetCompositeQueryParam();
 
 	const [{ isLoading, data }, errorCountResponse] = useQueries([
 		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, queries],
+			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
 			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
 				getAll({
 					end: maxTime,
@@ -131,7 +133,9 @@ function AllErrors(): JSX.Element {
 					orderParam: getUpdatedParams,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					tags: convertRawQueriesToTraceSelectedTags(queries),
+					tags: convertCompositeQueryToTraceSelectedTags(
+						compositeData?.builder.queryData?.[0]?.filters.items,
+					),
 				}),
 			enabled: !loading,
 		},
@@ -142,7 +146,7 @@ function AllErrors(): JSX.Element {
 				minTime,
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
-				queries,
+				compositeData,
 			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
@@ -150,7 +154,9 @@ function AllErrors(): JSX.Element {
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					tags: convertRawQueriesToTraceSelectedTags(queries),
+					tags: convertCompositeQueryToTraceSelectedTags(
+						compositeData?.builder.queryData?.[0]?.filters.items,
+					),
 				}),
 			enabled: !loading,
 		},
@@ -440,12 +446,8 @@ function AllErrors(): JSX.Element {
 		[pathname, getResourceAttribute],
 	);
 
-	const logEventCalledRef = useRef(false);
 	useEffect(() => {
-		if (
-			!logEventCalledRef.current &&
-			!isUndefined(errorCountResponse.data?.payload)
-		) {
+		if (!isUndefined(errorCountResponse.data?.payload)) {
 			const selectedEnvironments = queries.find(
 				(val) => val.tagKey === 'resource_deployment_environment',
 			)?.tagValue;
@@ -453,9 +455,12 @@ function AllErrors(): JSX.Element {
 			logEvent('Exception: List page visited', {
 				numberOfExceptions: errorCountResponse?.data?.payload,
 				selectedEnvironments,
-				resourceAttributeUsed: !!queries?.length,
+				resourceAttributeUsed: !!compositeData?.builder.queryData?.[0]?.filters
+					.items?.length,
+				tags: convertCompositeQueryToTraceSelectedTags(
+					compositeData?.builder.queryData?.[0]?.filters.items,
+				),
 			});
-			logEventCalledRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [errorCountResponse.data?.payload]);

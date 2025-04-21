@@ -51,7 +51,7 @@ func NewTelemetryMetaStore(
 	logsFieldsTblName string,
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
-) (telemetrytypes.MetadataStore, error) {
+) telemetrytypes.MetadataStore {
 	return &telemetryMetaStore{
 		telemetrystore:         telemetrystore,
 		tracesDBName:           tracesDBName,
@@ -67,7 +67,7 @@ func NewTelemetryMetaStore(
 		relatedMetadataTblName: relatedMetadataTblName,
 
 		conditionBuilder: NewConditionBuilder(),
-	}, nil
+	}
 }
 
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table

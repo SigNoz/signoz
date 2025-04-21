@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/apis/fields"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -142,6 +143,8 @@ type APIHandler struct {
 
 	AlertmanagerAPI *alertmanager.API
 
+	FieldsAPI *fields.API
+
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
@@ -188,6 +191,8 @@ type APIHandlerOpts struct {
 	JWT *authtypes.JWT
 
 	AlertmanagerAPI *alertmanager.API
+
+	FieldsAPI *fields.API
 
 	Signoz *signoz.SigNoz
 
@@ -261,6 +266,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		Signoz:                        opts.Signoz,
 		Preference:                    opts.Preference,
+		FieldsAPI:                     opts.FieldsAPI,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -415,6 +421,13 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterFieldsRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1").Subrouter()
+
+	subRouter.HandleFunc("/fields/keys", am.ViewAccess(aH.FieldsAPI.GetFieldsKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields/values", am.ViewAccess(aH.FieldsAPI.GetFieldsValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
