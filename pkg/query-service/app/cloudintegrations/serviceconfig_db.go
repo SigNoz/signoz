@@ -9,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type DatabaseInterface interface {
+type ServiceConfigDatabase interface {
 	get(
 		ctx context.Context,
 		cloudProvider string,
@@ -86,8 +86,8 @@ func (r *serviceConfigSQLRepository) upsert(
 	cloudProvider string,
 	cloudAccountId string,
 	serviceId string,
-	config CloudServiceConfig,
-) (*CloudServiceConfig, *model.ApiError) {
+	config ServiceConfig,
+) (*ServiceConfig, *model.ApiError) {
 
 	query := `
 		INSERT INTO cloud_integrations_service_configs (
@@ -124,11 +124,11 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 	ctx context.Context,
 	cloudProvider string,
 	cloudAccountId string,
-) (map[string]*CloudServiceConfig, *model.ApiError) {
+) (map[string]*ServiceConfig, *model.ApiError) {
 
 	type ScannedServiceConfigRecord struct {
-		ServiceId string             `db:"service_id"`
-		Config    CloudServiceConfig `db:"config_json"`
+		ServiceId string        `db:"service_id"`
+		Config    ServiceConfig `db:"config_json"`
 	}
 
 	records := []ScannedServiceConfigRecord{}
@@ -151,7 +151,7 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 		))
 	}
 
-	result := map[string]*CloudServiceConfig{}
+	result := map[string]*ServiceConfig{}
 
 	for _, r := range records {
 		result[r.ServiceId] = &r.Config

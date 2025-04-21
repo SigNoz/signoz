@@ -44,7 +44,7 @@ func Map(cloudprovider string) (map[string]Definition, *model.ApiError) {
 	return cloudServices, nil
 }
 
-func getCloudProviderService(
+func GetServiceDefinition(
 	cloudProvider string, serviceId string,
 ) (*Definition, *model.ApiError) {
 	cloudServices := supportedServices[cloudProvider]

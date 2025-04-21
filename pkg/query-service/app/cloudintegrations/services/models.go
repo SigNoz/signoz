@@ -56,7 +56,7 @@ type CollectedMetric struct {
 }
 
 type CollectionStrategy struct {
-	Provider CloudProvider `json:"provider"`
+	Provider string `json:"provider"`
 
 	AWSMetrics *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
 	AWSLogs    *AWSLogsStrategy    `json:"aws_logs,omitempty"`

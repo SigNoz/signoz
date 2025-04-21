@@ -9,10 +9,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 )
 
+type ServiceSummary struct {
+	services.Metadata
+
+	Config *ServiceConfig `json:"config"`
+}
+
 type ServiceDetails struct {
 	services.Definition
 
-	ConnectionStatus *ConnectionStatus `json:"status,omitempty"`
+	Config           *ServiceConfig           `json:"config"`
+	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
 }
 
 // Represents a cloud provider account for cloud integrations
@@ -163,7 +170,7 @@ type MetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-type ConnectionStatus struct {
+type ServiceConnectionStatus struct {
 	Logs    *SignalConnectionStatus `json:"logs"`
 	Metrics *SignalConnectionStatus `json:"metrics"`
 }

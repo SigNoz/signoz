@@ -28,7 +28,7 @@ func validateCloudProviderName(name string) *model.ApiError {
 
 type Controller struct {
 	accountsRepo      cloudProviderAccountsRepository
-	serviceConfigRepo serviceConfigRepository
+	serviceConfigRepo ServiceConfigDatabase
 }
 
 func NewController(sqlStore sqlstore.SQLStore) (
@@ -256,7 +256,7 @@ func (c *Controller) CheckInAsAgent(
 		agentConfig.EnabledRegions = account.Config.EnabledRegions
 	}
 
-	services, apiErr := services.Map(services.CloudProvider(cloudProvider))
+	services, apiErr := services.Map(cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
@@ -346,7 +346,7 @@ func (c *Controller) DisconnectAccount(
 }
 
 type ListServicesResponse struct {
-	Services []CloudServiceSummary `json:"services"`
+	Services []ServiceSummary `json:"services"`
 }
 
 func (c *Controller) ListServices(
@@ -358,12 +358,12 @@ func (c *Controller) ListServices(
 		return nil, apiErr
 	}
 
-	services, apiErr := listCloudProviderServices(cloudProvider)
+	definitions, apiErr := services.List(cloudProvider)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
 
-	svcConfigs := map[string]*CloudServiceConfig{}
+	svcConfigs := map[string]*ServiceConfig{}
 	if cloudAccountId != nil {
 		svcConfigs, apiErr = c.serviceConfigRepo.getAllForAccount(
 			ctx, cloudProvider, *cloudAccountId,
@@ -375,9 +375,11 @@ func (c *Controller) ListServices(
 		}
 	}
 
-	summaries := []CloudServiceSummary{}
-	for _, s := range services {
-		summary := s.CloudServiceSummary
+	summaries := []ServiceSummary{}
+	for _, def := range definitions {
+		summary := ServiceSummary{
+			Metadata: def.Metadata,
+		}
 		summary.Config = svcConfigs[summary.Id]
 
 		summaries = append(summaries, summary)
@@ -393,15 +395,19 @@ func (c *Controller) GetServiceDetails(
 	cloudProvider string,
 	serviceId string,
 	cloudAccountId *string,
-) (*CloudServiceDetails, *model.ApiError) {
+) (*ServiceDetails, *model.ApiError) {
 
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
 
-	service, apiErr := getCloudProviderService(cloudProvider, serviceId)
+	definition, apiErr := services.GetServiceDefinition(cloudProvider, serviceId)
 	if apiErr != nil {
 		return nil, apiErr
+	}
+
+	details := ServiceDetails{
+		Definition: *definition,
 	}
 
 	if cloudAccountId != nil {
@@ -413,15 +419,15 @@ func (c *Controller) GetServiceDetails(
 		}
 
 		if config != nil {
-			service.Config = config
+			details.Config = config
 
 			if config.Metrics != nil && config.Metrics.Enabled {
 				// add links to service dashboards, making them clickable.
-				for i, d := range service.Assets.Dashboards {
+				for i, d := range details.Assets.Dashboards {
 					dashboardUuid := c.dashboardUuid(
 						cloudProvider, serviceId, d.Id,
 					)
-					service.Assets.Dashboards[i].Url = fmt.Sprintf(
+					details.Assets.Dashboards[i].Url = fmt.Sprintf(
 						"/dashboard/%s", dashboardUuid,
 					)
 				}
@@ -429,17 +435,17 @@ func (c *Controller) GetServiceDetails(
 		}
 	}
 
-	return service, nil
+	return &details, nil
 }
 
 type UpdateServiceConfigRequest struct {
-	CloudAccountId string             `json:"cloud_account_id"`
-	Config         CloudServiceConfig `json:"config"`
+	CloudAccountId string        `json:"cloud_account_id"`
+	Config         ServiceConfig `json:"config"`
 }
 
 type UpdateServiceConfigResponse struct {
-	Id     string             `json:"id"`
-	Config CloudServiceConfig `json:"config"`
+	Id     string        `json:"id"`
+	Config ServiceConfig `json:"config"`
 }
 
 func (c *Controller) UpdateServiceConfig(
@@ -461,7 +467,7 @@ func (c *Controller) UpdateServiceConfig(
 	}
 
 	// can only update config for a valid service.
-	_, apiErr = getCloudProviderService(cloudProvider, serviceId)
+	_, apiErr = services.GetServiceDefinition(cloudProvider, serviceId)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "unsupported service")
 	}
@@ -529,7 +535,7 @@ func (c *Controller) AvailableDashboardsForCloudProvider(
 		}
 	}
 
-	allServices, apiErr := listCloudProviderServices(cloudProvider)
+	allServices, apiErr := services.List(cloudProvider)
 	if apiErr != nil {
 		return nil, apiErr
 	}
