@@ -22,9 +22,3 @@ type PreferenceWithValue struct {
 	Preference
 	Value interface{} `json:"value"`
 }
-
-type PreferenceKeyDefinition struct {
-	Key      string `json:"key"`
-	DataType string `json:"datatype"`
-	Type     string `json:"type"`
-}
