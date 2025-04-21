@@ -303,24 +303,6 @@ func (p *Preference) IsEnabledForScope(scope string) bool {
 	return isPreferenceEnabledForGivenScope
 }
 
-func isValidDataType(dataType string) bool {
-	switch dataType {
-	case PreferenceValueTypeString, PreferenceValueTypeInteger, PreferenceValueTypeFloat, PreferenceValueTypeBoolean:
-		return true
-	default:
-		return false
-	}
-}
-
-func isValidType(t string) bool {
-	switch t {
-	case "resource", "tag":
-		return true
-	default:
-		return false
-	}
-}
-
 func (p *Preference) SanitizeValue(preferenceValue interface{}) interface{} {
 	switch p.ValueType {
 	case PreferenceValueTypeBoolean:
