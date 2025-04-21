@@ -1,26 +1,33 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import Uplot from 'components/Uplot';
-import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { RefreshCcwIcon } from 'lucide-react';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
+import GraphPopover from './GraphPopover';
 import { GraphViewProps } from './types';
+import { onGraphClick } from './utils';
 
 function GraphView({
+	inspectMetricsTimeSeries,
 	formattedInspectMetricsTimeSeries,
 	resetInspection,
 	metricUnit,
 	metricName,
 	metricType,
+	spaceAggregationSeriesMap,
+	inspectionStep,
+	setPopoverOptions,
+	popoverOptions,
+	setShowExpandedView,
+	setExpandedViewOptions,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -32,6 +39,27 @@ function GraphView({
 		minTime,
 	]);
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
+	const [showGraphPopover, setShowGraphPopover] = useState(false);
+
+	const popoverRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent): void {
+			if (
+				popoverRef.current &&
+				!popoverRef.current.contains(event.target as Node) &&
+				graphRef.current &&
+				!graphRef.current.contains(event.target as Node)
+			) {
+				setShowGraphPopover(false);
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return (): void => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [popoverRef, graphRef]);
 
 	const options: uPlot.Options = useMemo(
 		() => ({
@@ -48,10 +76,14 @@ function GraphView({
 					},
 					values: (_, vals): string[] =>
 						vals.map((v) => {
-							const d = new Date(v * 1000);
-							const day = String(d.getDate()).padStart(2, '0');
-							const month = String(d.getMonth() + 1).padStart(2, '0');
-							return `${day}/${month}`;
+							const d = new Date(v);
+							const date = `${String(d.getDate()).padStart(2, '0')}/${String(
+								d.getMonth() + 1,
+							).padStart(2, '0')}`;
+							const time = `${String(d.getHours()).padStart(2, '0')}:${String(
+								d.getMinutes(),
+							).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+							return `${date}\n${time}`; // two-line label
 						}),
 				},
 				{
@@ -66,42 +98,55 @@ function GraphView({
 				},
 			],
 			series: [
-				...formattedInspectMetricsTimeSeries.map((_, index) => {
-					const label = String.fromCharCode(65 + (index % 26));
-					const strokeColor = generateColor(
-						label,
-						isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
-					);
-					return {
-						drawStyle: 'line',
-						lineInterpolation: 'spline',
-						show: true,
-						label,
-						stroke: strokeColor,
-						width: 2,
-						spanGaps: true,
-						points: {
-							size: 5,
-							show: false,
-							stroke: strokeColor,
+				...formattedInspectMetricsTimeSeries.map((_, index) => ({
+					drawStyle: 'line',
+					lineInterpolation: 'spline',
+					show: true,
+					label: String.fromCharCode(65 + (index % 26)),
+					stroke: inspectMetricsTimeSeries[index]?.strokeColor,
+					width: 2,
+					spanGaps: true,
+					points: {
+						size: 5,
+						show: false,
+						stroke: inspectMetricsTimeSeries[index]?.strokeColor,
+					},
+					scales: {
+						x: {
+							min: start,
+							max: end,
 						},
-						scales: {
-							x: {
-								min: start,
-								max: end,
-							},
-						},
-					};
-				}),
+					},
+				})),
 			],
+			hooks: {
+				ready: [
+					(u: uPlot): void => {
+						u.over.addEventListener('click', (e) => {
+							onGraphClick(
+								e,
+								u,
+								popoverRef,
+								setPopoverOptions,
+								inspectMetricsTimeSeries,
+								showGraphPopover,
+								setShowGraphPopover,
+							);
+						});
+					},
+				],
+			},
 		}),
 		[
 			dimensions.width,
 			isDarkMode,
 			metricUnit,
 			formattedInspectMetricsTimeSeries,
+			inspectMetricsTimeSeries,
 			start,
 			end,
+			setPopoverOptions,
+			showGraphPopover,
 		],
 	);
 
@@ -141,6 +186,19 @@ function GraphView({
 				</Button>
 			</div>
 			<Uplot data={formattedInspectMetricsTimeSeries} options={options} />
+			{showGraphPopover && (
+				<GraphPopover
+					options={popoverOptions}
+					spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+					popoverRef={popoverRef}
+					step={inspectionStep}
+					openInExpandedView={(): void => {
+						setShowGraphPopover(false);
+						setShowExpandedView(true);
+						setExpandedViewOptions(popoverOptions);
+					}}
+				/>
+			)}
 		</div>
 	);
 }

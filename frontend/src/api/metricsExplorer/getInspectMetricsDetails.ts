@@ -17,6 +17,8 @@ export interface InspectMetricsResponse {
 }
 
 export interface InspectMetricsSeries {
+	title?: string;
+	strokeColor?: string;
 	labels: Record<string, string>;
 	labelsArray: Array<Record<string, string>>;
 	values: InspectMetricsTimestampValue[];

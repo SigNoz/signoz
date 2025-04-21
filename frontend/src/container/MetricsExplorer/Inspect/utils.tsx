@@ -6,7 +6,11 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useMemo, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -15,6 +19,8 @@ import {
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
 import {
+	GraphPopoverData,
+	GraphPopoverOptions,
 	InspectionStep,
 	MetricFiltersProps,
 	MetricInspectionOptions,
@@ -66,6 +72,7 @@ export function MetricFilters({
 	metricName,
 	metricType,
 	dispatchMetricInspectionOptions,
+	spaceAggregationLabels,
 }: MetricFiltersProps): JSX.Element {
 	const query = useMemo(() => {
 		const initialQuery =
@@ -83,6 +90,19 @@ export function MetricFilters({
 		};
 	}, [metricName, metricType]);
 
+	const hardcodedAttributeKeys = useMemo(
+		() =>
+			spaceAggregationLabels.map((label) => ({
+				key: label,
+				id: label,
+				isColumn: true,
+				isJSON: false,
+				type: 'resource',
+				dataType: DataTypes.String,
+			})),
+		[spaceAggregationLabels],
+	);
+
 	return (
 		<div className="inspect-metrics-input-group metric-filters">
 			<Typography.Text>Where</Typography.Text>
@@ -94,6 +114,8 @@ export function MetricFilters({
 					});
 				}}
 				query={query}
+				hardcodedAttributeKeys={hardcodedAttributeKeys}
+				triggerOnChangeOnClose
 			/>
 		</div>
 	);
@@ -184,6 +206,7 @@ export function MetricSpaceAggregation({
 							});
 						}}
 						style={{ width: 130 }}
+						disabled={inspectionStep === InspectionStep.TIME_AGGREGATION}
 					>
 						{/* eslint-disable-next-line sonarjs/no-identical-functions */}
 						{Object.entries(SPACE_AGGREGATION_OPTIONS).map(([key, value]) => (
@@ -204,6 +227,7 @@ export function MetricSpaceAggregation({
 							payload: value,
 						});
 					}}
+					disabled={inspectionStep === InspectionStep.TIME_AGGREGATION}
 				>
 					{spaceAggregationLabels.map((label) => (
 						<Select.Option key={label} value={label}>
@@ -213,6 +237,40 @@ export function MetricSpaceAggregation({
 				</Select>
 			</div>
 		</div>
+	);
+}
+
+export function applyFilters(
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+	filters: TagFilter,
+): InspectMetricsSeries[] {
+	return inspectMetricsTimeSeries.filter((series) =>
+		filters.items.every((filter) => {
+			if ((filter.key?.key || '') in series.labels) {
+				const value = series.labels[filter.key?.key ?? ''];
+				switch (filter.op) {
+					case '=':
+						return value === filter.value;
+					case '!=':
+						return value !== filter.value;
+					case 'in':
+						return (filter.value as string[]).includes(value as string);
+					case 'nin':
+						return !(filter.value as string[]).includes(value as string);
+					case 'like':
+						return value.includes(filter.value as string);
+					case 'nlike':
+						return !value.includes(filter.value as string);
+					case 'contains':
+						return value.includes(filter.value as string);
+					case 'ncontains':
+						return !value.includes(filter.value as string);
+					default:
+						return true;
+				}
+			}
+			return false;
+		}),
 	);
 }
 
@@ -289,7 +347,10 @@ export function applyTimeAggregation(
 export function applySpaceAggregation(
 	inspectMetricsTimeSeries: InspectMetricsSeries[],
 	metricInspectionOptions: MetricInspectionOptions,
-): InspectMetricsSeries[] {
+): {
+	aggregatedSeries: InspectMetricsSeries[];
+	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>;
+} {
 	// Group series by selected space aggregation labels
 	const groupedSeries = new Map<string, InspectMetricsSeries[]>();
 
@@ -363,5 +424,228 @@ export function applySpaceAggregation(
 		});
 	});
 
-	return aggregatedSeries;
+	return {
+		aggregatedSeries,
+		spaceAggregatedSeriesMap: groupedSeries,
+	};
 }
+
+function getClosestIndex(arr: number[], target: number): number {
+	let low = 0;
+	let high = arr.length - 1;
+
+	while (low <= high) {
+		const mid = Math.floor((low + high) / 2);
+		if (arr[mid] === target) return mid;
+
+		if (arr[mid] < target) {
+			low = mid + 1;
+		} else {
+			high = mid - 1;
+		}
+	}
+
+	if (low >= arr.length) return arr.length - 1;
+	if (high < 0) return 0;
+
+	const lowDiff = Math.abs(arr[low] - target);
+	const highDiff = Math.abs(arr[high] - target);
+
+	return lowDiff < highDiff ? low : high;
+}
+
+function findClosestSeriesLabel(
+	u: uPlot,
+	mouseX: number,
+	mouseY: number,
+	xVals: number[],
+	idx: number,
+): string | undefined {
+	let minDist = Infinity;
+	let closestLabel: string | undefined;
+
+	const px = u.valToPos(xVals[idx], 'x');
+
+	// Iterate from the last series to the first (stacked series are on top)
+	for (let i = u.series.length - 1; i >= 1; i--) {
+		const ySeries = u.data[i] as number[];
+		const yVal = ySeries[idx];
+
+		// Validate y-value before processing
+		const isValid = yVal != null && Number.isFinite(yVal);
+
+		if (isValid) {
+			const py = u.valToPos(yVal, 'y');
+
+			// Calculate the distance in both x and y axes (Euclidean distance)
+			const dx = mouseX - px;
+			const dy = mouseY - py;
+			const dist = Math.sqrt(dx * dx + dy * dy); // Euclidean distance
+
+			// If we found a closer point, update the closest label
+			if (dist < minDist && dist <= 10) {
+				minDist = dist;
+				closestLabel = u.series[i].label; // Keep the label of the closest series
+			}
+		}
+	}
+
+	return closestLabel;
+}
+
+export function getSeriesLabelFromPixel(
+	e: MouseEvent,
+	u: uPlot,
+): string | undefined {
+	const { left, top } = u.over.getBoundingClientRect();
+	const mouseX = e.clientX - left;
+	const mouseY = e.clientY - top;
+
+	const dataX = u.posToVal(mouseX, 'x');
+	const xVals = u.data[0] as number[];
+
+	// Get the closest index based on the x-axis
+	const idx = getClosestIndex(xVals, dataX);
+	if (idx === -1) return undefined;
+
+	// Find the closest series using both x and y distance
+	return findClosestSeriesLabel(u, mouseX, mouseY, xVals, idx);
+}
+
+export function onGraphClick(
+	e: MouseEvent,
+	u: uPlot,
+	popoverRef: React.RefObject<HTMLDivElement>,
+	setPopoverOptions: (options: GraphPopoverOptions | null) => void,
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+	showPopover: boolean,
+	setShowPopover: (showPopover: boolean) => void,
+): void {
+	if (popoverRef.current && popoverRef.current.contains(e.target as Node)) {
+		// Clicked inside the popover, don't close
+		return;
+	}
+	// If popover is already open, close it
+	if (showPopover) {
+		setShowPopover(false);
+		return;
+	}
+	// Get which series the user clicked on
+	// If no series is clicked, return
+	const seriesLabel = getSeriesLabelFromPixel(e, u);
+	if (!seriesLabel) return;
+
+	// Get the series data
+	const seriesIndex = seriesLabel.charCodeAt(0) - 65;
+	const series = inspectMetricsTimeSeries[seriesIndex];
+
+	const { left, top } = u.over.getBoundingClientRect();
+	const x = e.clientX - left;
+	const y = e.clientY - top;
+	const xVal = u.posToVal(x, 'x'); // Get actual x-axis value
+	const yVal = u.posToVal(y, 'y'); // Get actual y-axis value value (metric value)
+
+	setPopoverOptions({
+		x: e.clientX,
+		y: e.clientY,
+		value: yVal,
+		timestamp: xVal,
+		timeSeries: series,
+	});
+	setShowPopover(true);
+}
+
+export function getRawDataFromTimeSeries(
+	timeSeries: InspectMetricsSeries,
+	timestamp: number,
+): GraphPopoverData[] {
+	const timestampIndex = timeSeries.values.findIndex(
+		(value) => value.timestamp >= timestamp,
+	);
+	const timestamps = [];
+	if (timestampIndex !== undefined) {
+		for (
+			let i = Math.max(0, timestampIndex - 2);
+			i <= Math.min((timeSeries?.values?.length ?? 0) - 1, timestampIndex + 2);
+			i++
+		) {
+			timestamps.push(timeSeries?.values?.[i]);
+		}
+	}
+	return timestamps.map((timestamp) => ({
+		timestamp: timestamp.timestamp,
+		type: 'instance',
+		value: timestamp.value,
+		title: timeSeries.title,
+	}));
+}
+
+export function getSpaceAggregatedDataFromTimeSeries(
+	timeSeries: InspectMetricsSeries,
+	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>,
+	timestamp: number,
+): GraphPopoverData[] {
+	if (spaceAggregatedSeriesMap.size === 0) {
+		return [];
+	}
+
+	const appliedLabels =
+		Array.from(spaceAggregatedSeriesMap.keys())[0]
+			?.split(',')
+			.map((label) => label.split(':')[0]) || [];
+
+	let matchingSeries: InspectMetricsSeries[] = [];
+	spaceAggregatedSeriesMap.forEach((series) => {
+		let isMatching = true;
+		appliedLabels.forEach((label) => {
+			if (timeSeries.labels[label] !== series[0].labels[label]) {
+				isMatching = false;
+			}
+		});
+		if (isMatching) {
+			matchingSeries = series;
+		}
+	});
+
+	return matchingSeries.map((series) => {
+		const timestampIndex = series.values.findIndex(
+			(value) => value.timestamp >= timestamp,
+		);
+		const value = series.values[timestampIndex]?.value;
+		return {
+			timeseries: Object.entries(series.labels)
+				.map(([key, value]) => `${key}:${value}`)
+				.join(','),
+			type: 'aggregated',
+			value: value ?? '-',
+			title: series.title,
+			timeSeries: series,
+		};
+	});
+}
+
+export const formatTimestampToFullDateTime = (
+	timestamp: string | number,
+	returnOnlyTime = false,
+): string => {
+	const date = new Date(Number(timestamp));
+
+	const datePart = date.toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+	});
+
+	const timePart = date.toLocaleTimeString('en-US', {
+		hour12: false,
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+
+	if (returnOnlyTime) {
+		return timePart;
+	}
+
+	return `${datePart} ⎯ ${timePart}`;
+};

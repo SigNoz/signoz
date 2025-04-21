@@ -9,10 +9,11 @@ import { Compass } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ExpandedView from './ExpandedView';
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
 import Stepper from './Stepper';
-import { InspectProps } from './types';
+import { GraphPopoverOptions, InspectProps } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
 function Inspect({
@@ -22,6 +23,15 @@ function Inspect({
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [metricName, setMetricName] = useState<string | null>(defaultMetricName);
+	const [
+		popoverOptions,
+		setPopoverOptions,
+	] = useState<GraphPopoverOptions | null>(null);
+	const [
+		expandedViewOptions,
+		setExpandedViewOptions,
+	] = useState<GraphPopoverOptions | null>(null);
+	const [showExpandedView, setShowExpandedView] = useState(false);
 
 	const { data: metricDetailsData } = useGetMetricDetails(metricName ?? '', {
 		enabled: !!metricName,
@@ -38,6 +48,8 @@ function Inspect({
 		dispatchMetricInspectionOptions,
 		inspectionStep,
 		isInspectMetricsRefetching,
+		spaceAggregatedSeriesMap: spaceAggregationSeriesMap,
+		aggregatedTimeSeries,
 	} = useInspectMetrics(metricName);
 
 	const selectedMetricType = useMemo(
@@ -54,6 +66,9 @@ function Inspect({
 		dispatchMetricInspectionOptions({
 			type: 'RESET_INSPECTION',
 		});
+		setShowExpandedView(false);
+		setPopoverOptions(null);
+		setExpandedViewOptions(null);
 	}, [dispatchMetricInspectionOptions]);
 
 	// Reset inspection when the selected metric changes
@@ -96,12 +111,19 @@ function Inspect({
 			<div className="inspect-metrics-content">
 				<div className="inspect-metrics-content-first-col">
 					<GraphView
-						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+						inspectMetricsTimeSeries={aggregatedTimeSeries}
 						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
 						resetInspection={resetInspection}
 						metricName={metricName}
 						metricUnit={selectedMetricUnit}
 						metricType={selectedMetricType}
+						spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+						inspectionStep={inspectionStep}
+						setPopoverOptions={setPopoverOptions}
+						setShowExpandedView={setShowExpandedView}
+						showExpandedView={showExpandedView}
+						setExpandedViewOptions={setExpandedViewOptions}
+						popoverOptions={popoverOptions}
 					/>
 					<QueryBuilder
 						metricName={metricName}
@@ -118,6 +140,13 @@ function Inspect({
 						inspectionStep={inspectionStep}
 						resetInspection={resetInspection}
 					/>
+					{showExpandedView && (
+						<ExpandedView
+							options={expandedViewOptions}
+							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+							step={inspectionStep}
+						/>
+					)}
 				</div>
 			</div>
 		);
@@ -126,16 +155,21 @@ function Inspect({
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
 		inspectMetricsStatusCode,
-		inspectMetricsTimeSeries,
+		inspectMetricsTimeSeries.length,
+		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
 		resetInspection,
 		metricName,
 		selectedMetricUnit,
 		selectedMetricType,
+		spaceAggregationSeriesMap,
+		inspectionStep,
+		popoverOptions,
+		showExpandedView,
+		expandedViewOptions,
 		spaceAggregationLabels,
 		metricInspectionOptions,
 		dispatchMetricInspectionOptions,
-		inspectionStep,
 	]);
 
 	return (
