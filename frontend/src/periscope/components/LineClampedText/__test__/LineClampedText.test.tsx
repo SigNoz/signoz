@@ -2,22 +2,6 @@ import { render, screen } from '@testing-library/react';
 
 import LineClampedText from '../LineClampedText';
 
-// Mock the useRef and useState hooks for overflow testing
-jest.mock('react', () => {
-	const originalReact = jest.requireActual('react');
-	return {
-		...originalReact,
-		useRef: jest.fn(() => ({
-			current: {
-				scrollHeight: 100,
-				clientHeight: 50, // This will simulate overflow
-			},
-		})),
-		useState: jest.fn((initialValue) => [initialValue, jest.fn()]),
-		useEffect: jest.fn((cb) => cb()),
-	};
-});
-
 describe('LineClampedText', () => {
 	// Reset all mocks after each test
 	afterEach(() => {
@@ -61,7 +45,9 @@ describe('LineClampedText', () => {
 		expect(screen.getByText(text)).toBeInTheDocument();
 
 		// Verify the component received the correct props
-		expect(LineClampedText.defaultProps?.lines).toBe(1);
+		expect((screen.getByText(text).style as any).WebkitLineClamp).toBe(
+			String(lines),
+		);
 	});
 
 	it('uses default line count of 1 when lines prop is not provided', () => {
