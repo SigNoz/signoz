@@ -130,9 +130,18 @@ func NewDefaultPreferenceMap() map[string]Preference {
 			IsDiscreteValues: true,
 			AllowedScopes:    []string{"user"},
 		},
-		"QUICK_FILTERS_MAPPING": {
-			Key:              "QUICK_FILTERS_MAPPING",
-			Name:             "Quick Filters Mapping",
+		"TRACES_QUICK_FILTERS_MAPPING": {
+			Key:              "TRACES_QUICK_FILTERS_MAPPING",
+			Name:             "Quick Filters Mapping for traces",
+			Description:      "Structured keys for Quick filters",
+			ValueType:        "json",
+			DefaultValue:     "[]",
+			IsDiscreteValues: false,
+			AllowedScopes:    []string{"org"},
+		},
+		"LOGS_QUICK_FILTERS_MAPPING": {
+			Key:              "LOGS_QUICK_FILTERS_MAPPING",
+			Name:             "Quick Filters Mapping for logs",
 			Description:      "Structured keys for Quick filters",
 			ValueType:        "json",
 			DefaultValue:     "[]",
