@@ -89,12 +89,14 @@ function EndPointMetrics({
 						) : (
 							<Tooltip title={metricsData?.errorRate}>
 								<Progress
-									percent={Number((metricsData?.errorRate ?? 0 * 100).toFixed(1))}
+									percent={Number(
+										(Number(metricsData?.errorRate ?? 0) * 100).toFixed(1),
+									)}
 									strokeLinecap="butt"
 									size="small"
 									strokeColor={((): string => {
 										const errorRatePercent = Number(
-											(metricsData?.errorRate ?? 0 * 100).toFixed(1),
+											(Number(metricsData?.errorRate ?? 0) * 100).toFixed(1),
 										);
 										if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 										if (errorRatePercent >= 60) return Color.BG_AMBER_500;
