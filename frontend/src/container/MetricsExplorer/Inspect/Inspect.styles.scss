@@ -251,16 +251,23 @@
 			}
 
 			.graph-popover-inner-row {
-				width: 400px;
-				margin-top: 4px;
-				align-items: center;
 				display: flex;
+				align-items: center;
 				gap: 8px;
-				overflow-x: auto;
-				white-space: nowrap;
-				-webkit-overflow-scrolling: touch;
-				scrollbar-width: thin;
-				scrollbar-color: #ccc transparent;
+
+				.ant-typography {
+					width: 400px;
+					margin-top: 4px;
+					align-items: center;
+					display: flex;
+					gap: 8px;
+					overflow-x: auto;
+					white-space: nowrap;
+					-webkit-overflow-scrolling: touch;
+					scrollbar-width: thin;
+					scrollbar-color: #ccc transparent;
+					text-overflow: ellipsis;
+				}
 			}
 		}
 
@@ -354,5 +361,21 @@
 				}
 			}
 		}
+	}
+}
+
+.hover-popover-card {
+	position: fixed;
+	z-index: 500;
+	max-width: 700px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	.hover-popover-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
 	}
 }

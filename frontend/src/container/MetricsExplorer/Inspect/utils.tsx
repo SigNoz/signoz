@@ -1,5 +1,5 @@
 import { InfoCircleFilled } from '@ant-design/icons';
-import { Input, Select, Typography } from 'antd';
+import { Card, Input, Select, Typography } from 'antd';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -626,4 +626,77 @@ export function getTimeSeriesLabel(
 	timeSeries: InspectMetricsSeries | null,
 ): string {
 	return `${timeSeries?.title}: ${JSON.stringify(timeSeries?.labels)}`;
+}
+
+export function HoverPopover({
+	options,
+}: {
+	options: GraphPopoverOptions;
+}): JSX.Element {
+	return (
+		<Card
+			className="hover-popover-card"
+			style={{
+				top: options.y + 10,
+				left: options.x + 10,
+			}}
+		>
+			<div className="hover-popover-row">
+				<Typography.Text>
+					{formatTimestampToFullDateTime(options.timestamp)}
+				</Typography.Text>
+				<Typography.Text>{options.value.toFixed(0)}</Typography.Text>
+			</div>
+			{options.timeSeries && (
+				<Typography.Text
+					style={{
+						color: options.timeSeries?.strokeColor,
+						fontWeight: 600,
+					}}
+				>
+					{getTimeSeriesLabel(options.timeSeries)}
+				</Typography.Text>
+			)}
+		</Card>
+	);
+}
+
+export function onGraphHover(
+	e: MouseEvent,
+	u: uPlot,
+	setPopoverOptions: (options: GraphPopoverOptions | null) => void,
+	inspectMetricsTimeSeries: InspectMetricsSeries[],
+	formattedInspectMetricsTimeSeries: uPlot.AlignedData,
+): void {
+	const { left, top } = u.over.getBoundingClientRect();
+	const x = e.clientX - left;
+	const y = e.clientY - top;
+	const xVal = u.posToVal(x, 'x'); // Get actual x-axis value
+	const yVal = u.posToVal(y, 'y'); // Get actual y-axis value value (metric value)
+
+	// Get which series the user clicked on
+	const seriesIndex = getSeriesIndexFromPixel(
+		e,
+		u,
+		formattedInspectMetricsTimeSeries,
+	);
+	if (seriesIndex === -1) {
+		setPopoverOptions({
+			x: e.clientX,
+			y: e.clientY,
+			value: yVal,
+			timestamp: xVal,
+			timeSeries: undefined,
+		});
+	}
+
+	const series = inspectMetricsTimeSeries[seriesIndex];
+
+	setPopoverOptions({
+		x: e.clientX,
+		y: e.clientY,
+		value: yVal,
+		timestamp: xVal,
+		timeSeries: series,
+	});
 }

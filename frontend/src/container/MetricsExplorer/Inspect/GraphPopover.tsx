@@ -7,6 +7,7 @@ import {
 	formatTimestampToFullDateTime,
 	getRawDataFromTimeSeries,
 	getSpaceAggregatedDataFromTimeSeries,
+	getTimeSeriesLabel,
 } from './utils';
 
 function GraphPopover({
@@ -26,7 +27,7 @@ function GraphPopover({
 
 	const absoluteValue = useMemo(
 		() =>
-			options?.timeSeries.values.find(
+			options?.timeSeries?.values.find(
 				(value) => value.timestamp >= options?.timestamp,
 			)?.value ?? options?.value,
 		[options],
@@ -76,10 +77,12 @@ function GraphPopover({
 								marginRight: 8,
 							}}
 						/>
-						<Typography.Text>{timeSeries?.title}</Typography.Text>
+						{timeSeries && (
+							<Typography.Text>{getTimeSeriesLabel(timeSeries)}</Typography.Text>
+						)}
 					</div>
 					<Typography.Text strong>
-						{Number(absoluteValue).toFixed(2)}
+						{Number(absoluteValue).toFixed(0)}
 					</Typography.Text>
 				</div>
 

@@ -124,7 +124,7 @@ export interface GraphPopoverOptions {
 	y: number;
 	value: number;
 	timestamp: number;
-	timeSeries: InspectMetricsSeries;
+	timeSeries: InspectMetricsSeries | undefined;
 }
 
 export interface GraphPopoverProps {

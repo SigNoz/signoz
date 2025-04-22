@@ -12,8 +12,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
-import { GraphViewProps } from './types';
-import { onGraphClick } from './utils';
+import { GraphPopoverOptions, GraphViewProps } from './types';
+import { HoverPopover, onGraphClick, onGraphHover } from './utils';
 
 function GraphView({
 	inspectMetricsTimeSeries,
@@ -40,6 +40,11 @@ function GraphView({
 	]);
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 	const [showGraphPopover, setShowGraphPopover] = useState(false);
+	const [showHoverPopover, setShowHoverPopover] = useState(false);
+	const [
+		hoverPopoverOptions,
+		setHoverPopoverOptions,
+	] = useState<GraphPopoverOptions | null>(null);
 
 	const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +139,21 @@ function GraphView({
 								formattedInspectMetricsTimeSeries,
 							);
 						});
+						u.over.addEventListener('mousemove', (e) => {
+							onGraphHover(
+								e,
+								u,
+								setHoverPopoverOptions,
+								inspectMetricsTimeSeries,
+								formattedInspectMetricsTimeSeries,
+							);
+						});
+						u.over.addEventListener('mouseenter', () => {
+							setShowHoverPopover(true);
+						});
+						u.over.addEventListener('mouseleave', () => {
+							setShowHoverPopover(false);
+						});
 					},
 				],
 			},
@@ -199,6 +219,9 @@ function GraphView({
 						setExpandedViewOptions(popoverOptions);
 					}}
 				/>
+			)}
+			{showHoverPopover && !showGraphPopover && hoverPopoverOptions && (
+				<HoverPopover options={hoverPopoverOptions} />
 			)}
 		</div>
 	);
