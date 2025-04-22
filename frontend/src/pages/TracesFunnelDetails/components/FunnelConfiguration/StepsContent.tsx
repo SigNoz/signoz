@@ -28,7 +28,6 @@ function StepsContent({
 		}
 	}, [span, handleAddStep, handleReplaceStep, steps.length]);
 
-	// Generate the items array for the Steps component
 	const stepItems = useMemo(
 		() =>
 			steps.map((step, index) => ({
@@ -67,9 +66,8 @@ function StepsContent({
 		<div className="steps-content">
 			<OverlayScrollbar>
 				<>
-					{/* Use the items prop instead of rendering Step components directly */}
 					<Steps direction="vertical" items={stepItems} />
-					{/* Move the Add Step button outside the Steps component */}
+
 					{/* For now we are only supporting 3 steps */}
 					{steps.length < 3 && (
 						<div className="steps-content__add-step">
