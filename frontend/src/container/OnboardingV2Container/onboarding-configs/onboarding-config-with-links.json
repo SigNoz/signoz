@@ -1,5 +1,19 @@
 [
 	{
+		"dataSource": "quickstart",
+		"label": "Start with Demo Data in <5 minutes",
+		"tags": ["quickstart"],
+		"module": "apm",
+		"relatedSearchKeywords": [
+		"send data",
+		"demo",
+		"quickstart"
+		],
+		"imgUrl": "/Logos/quickstart.svg",
+		"link": "https://signoz.io/docs/cloud/quickstart/",
+		"internalRedirect": true
+	},
+	{
 		"dataSource": "java",
 		"entityID": "dataSource",
 		"label": "Java",
@@ -1961,7 +1975,7 @@
 	{
 		"dataSource": "sql-database-metrics",
 		"label": "Azure SQL Database Metrics",
-		"tags": ["Azure"],
+		"tags": ["Azure","database"],
 		"module": "metrics",
 		"relatedSearchKeywords": [
 		"azure sql database metrics",
@@ -2639,7 +2653,7 @@
 	{
 		"dataSource": "redis",
 		"label": "Redis",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 		"redis",
@@ -2654,7 +2668,7 @@
 	{
 		"dataSource": "postgresql",
 		"label": "PostgreSQL",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 		"postgresql",
@@ -2684,7 +2698,7 @@
 	{
 		"dataSource": "mongo",
 		"label": "Mongo",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"mongodb",
@@ -2700,7 +2714,7 @@
 	{
 		"dataSource": "clickhouse",
 		"label": "ClickHouse",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"clickhouse",
@@ -2717,7 +2731,7 @@
 	{
 		"dataSource": "aws-rds-postgresql",
 		"label": "AWS RDS (PostgreSQL)",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"aws rds postgresql",
@@ -2734,7 +2748,7 @@
 	{
 		"dataSource": "aws-rds-mysql",
 		"label": "AWS RDS (MySQL)",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"aws rds mysql",
@@ -2849,7 +2863,7 @@
 	{
 		"dataSource": "amazon-rds",
 		"label": "Amazon RDS - One Click",
-		"tags": ["integrations"],
+		"tags": ["integrations", "database"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"amazon rds",
