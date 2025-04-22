@@ -92,7 +92,6 @@ export default function Support(): JSX.Element {
 		if (state) {
 			const histroyState = state as any;
 
-			// TODO: SMIT How to test this?
 			if (histroyState && histroyState?.from) {
 				logEvent(`Support : From URL : ${histroyState.from}`, {});
 			}

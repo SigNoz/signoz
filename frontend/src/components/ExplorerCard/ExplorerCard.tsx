@@ -194,7 +194,7 @@ function ExplorerCard({
 											showSearch
 											placeholder="Select a view"
 											dropdownStyle={DropDownOverlay}
-											dropdownMatchSelectWidth={false}
+											popupMatchSelectWidth={false}
 											optionLabelProp="value"
 											value={viewName || undefined}
 										>

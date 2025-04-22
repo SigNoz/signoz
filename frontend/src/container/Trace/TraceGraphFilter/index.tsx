@@ -65,7 +65,7 @@ function TraceGraphFilter(): JSX.Element {
 
 			<SelectComponent
 				getPopupContainer={popupContainer}
-				dropdownMatchSelectWidth
+				popupMatchSelectWidth
 				data-testid="selectedFunction"
 				id="selectedFunction"
 				value={getSelectedValue(selectedFunction)}
@@ -81,7 +81,7 @@ function TraceGraphFilter(): JSX.Element {
 			<label htmlFor="selectedGroupBy">Group By</label>
 			<AutoComplete
 				getPopupContainer={popupContainer}
-				dropdownMatchSelectWidth
+				popupMatchSelectWidth
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
 				options={options}

@@ -13,7 +13,6 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import {
 	AlertTriangle,
 	CheckSquare,
@@ -30,6 +29,7 @@ import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
@@ -87,8 +87,6 @@ function SideNav(): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { safeNavigate } = useSafeNavigate();
-
 	const {
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
@@ -129,7 +127,7 @@ function SideNav(): JSX.Element {
 		if (isCtrlMetaKey(e)) {
 			openInNewTab('/shortcuts');
 		} else {
-			safeNavigate(`/shortcuts`);
+			safeNavigateNoSameURLMemo(`/shortcuts`);
 		}
 	};
 
@@ -146,20 +144,17 @@ function SideNav(): JSX.Element {
 		if (isCtrlMetaKey(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
-			safeNavigate(onboaringRoute);
+			safeNavigateNoSameURLMemo(onboaringRoute);
 		}
 	};
 
-	const onClickVersionHandler = useCallback(
-		(event: MouseEvent): void => {
-			if (isCtrlMetaKey(event)) {
-				openInNewTab(ROUTES.VERSION);
-			} else {
-				safeNavigate(ROUTES.VERSION);
-			}
-		},
-		[safeNavigate],
-	);
+	const onClickVersionHandler = useCallback((event: MouseEvent): void => {
+		if (isCtrlMetaKey(event)) {
+			openInNewTab(ROUTES.VERSION);
+		} else {
+			safeNavigateNoSameURLMemo(ROUTES.VERSION);
+		}
+	}, []);
 
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
@@ -172,14 +167,13 @@ function SideNav(): JSX.Element {
 				if (event && isCtrlMetaKey(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
-					safeNavigate(`${key}?${queryString.join('&')}`, {
-						// TODO: SMIT Research history
-						// from: pathname,
+					safeNavigateNoSameURLMemo(`${key}?${queryString.join('&')}`, {
+						state: { from: pathname },
 					});
 				}
 			}
 		},
-		[pathname, search, safeNavigate],
+		[pathname, search],
 	);
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
@@ -234,7 +228,7 @@ function SideNav(): JSX.Element {
 			if (isCtrlMetaKey(event)) {
 				openInNewTab(settingsRoute);
 			} else {
-				safeNavigate(settingsRoute);
+				safeNavigateNoSameURLMemo(settingsRoute);
 			}
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
@@ -487,7 +481,7 @@ function SideNav(): JSX.Element {
 									if (isCtrlMetaKey(event)) {
 										openInNewTab(`${inviteMemberMenuItem.key}`);
 									} else {
-										safeNavigate(`${inviteMemberMenuItem.key}`);
+										safeNavigateNoSameURLMemo(`${inviteMemberMenuItem.key}`);
 									}
 									logEvent('Sidebar: Menu clicked', {
 										menuRoute: inviteMemberMenuItem?.key,

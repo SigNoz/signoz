@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import { useAppContext } from 'providers/App/App';
 import { useEffect } from 'react';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 function WorkspaceAccessRestricted(): JSX.Element {
 	const { activeLicenseV3, isFetchingActiveLicenseV3 } = useAppContext();
@@ -22,7 +22,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 				!isWorkspaceAccessRestricted ||
 				activeLicenseV3.platform === LicensePlatform.SELF_HOSTED
 			) {
-				safeNavigateNonComponentMemo(ROUTES.HOME);
+				safeNavigateNoSameURLMemo(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);

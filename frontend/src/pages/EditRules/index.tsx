@@ -13,6 +13,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import {
 	errorMessageReceivedFromBackend,
@@ -56,9 +57,9 @@ function EditRules(): JSX.Element {
 			notifications.error({
 				message: 'Rule Id is required',
 			});
-			safeNavigate(ROUTES.LIST_ALL_ALERT);
+			safeNavigateNoSameURLMemo(ROUTES.LIST_ALL_ALERT);
 		}
-	}, [isValidRuleId, ruleId, notifications, safeNavigate]);
+	}, [isValidRuleId, ruleId, notifications]);
 
 	if (
 		(isError && !isValidRuleId) ||

@@ -1,5 +1,5 @@
 import { Tabs, TabsProps } from 'antd';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import { RouteTabProps } from './types';
 
@@ -9,8 +9,6 @@ function RouteTab({
 	onChangeHandler,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
-
 	const onChange = (activeRoute: string): void => {
 		if (onChangeHandler) {
 			onChangeHandler(activeRoute);
@@ -19,7 +17,7 @@ function RouteTab({
 		const selectedRoute = routes.find((e) => e.key === activeRoute);
 
 		if (selectedRoute) {
-			safeNavigate(selectedRoute.route);
+			safeNavigateNoSameURLMemo(selectedRoute.route);
 		}
 	};
 

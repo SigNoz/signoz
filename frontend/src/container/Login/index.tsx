@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
@@ -69,7 +69,7 @@ function Login({
 			const { setupCompleted } = getUserVersionResponse.data.payload;
 			if (!setupCompleted) {
 				// no org account registered yet, re-route user to sign up first
-				safeNavigateNonComponentMemo(ROUTES.SIGN_UP);
+				safeNavigateNoSameURLMemo(ROUTES.SIGN_UP);
 			}
 		}
 	}, [getUserVersionResponse]);
@@ -92,10 +92,10 @@ function Login({
 					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 				);
 				if (fromPathname) {
-					safeNavigateNonComponentMemo(fromPathname);
+					safeNavigateNoSameURLMemo(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 				} else {
-					safeNavigateNonComponentMemo(ROUTES.APPLICATION);
+					safeNavigateNoSameURLMemo(ROUTES.APPLICATION);
 				}
 			}
 		}

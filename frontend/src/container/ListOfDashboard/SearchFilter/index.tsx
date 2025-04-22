@@ -49,7 +49,7 @@ function SearchFilter({
 		const searchQueryString = new URLSearchParams(search).get('search');
 		if (searchQueryString)
 			setQueries(convertURLQueryStringToQuery(searchQueryString) || []);
-		// TODO: SMIT Bug no search in deps?
+		// TODO: SMIT is this a bug no search in deps?
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 	useEffect(() => {

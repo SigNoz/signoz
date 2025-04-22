@@ -1,18 +1,14 @@
-import type { NavigateOptions, To } from 'react-router';
+import type { NavigateFunction, NavigateOptions, To } from 'react-router';
 
-/*
-    Use case:
-        1. Navigate from outside a component
-        2. Inside useEffect without adding to deps
-    TODO: Smit need a better name for this
-*/
-export const safeNavigateNonComponentMemo = (
+const navigate = (
+	eventName: 'SAFE_NAVIGATE' | 'UNSAFE_NAVIGATE',
 	to: To | number,
 	options?: NavigateOptions,
 ): void => {
-	if (window) {
+	if (window !== undefined) {
+		console.log(`🚀 ~ window:${eventName} -> dispatch`, to, options);
 		window.dispatchEvent(
-			new CustomEvent('NAVIGATE', {
+			new CustomEvent(eventName, {
 				detail: {
 					to,
 					options,
@@ -22,4 +18,24 @@ export const safeNavigateNonComponentMemo = (
 	} else {
 		throw new Error('Failed navigation from non-compnent: window is undefined');
 	}
+};
+
+/*
+    Use case:
+        1. Navigate from outside a component
+        2. Inside useEffect, useCallbacks or useMemo to avoid rerendering
+    TODO: Smit need a better name for this
+*/
+export const safeNavigateNoSameURLMemo: NavigateFunction = (
+	to: To | number,
+	options?: NavigateOptions,
+) => {
+	navigate('SAFE_NAVIGATE', to, options);
+};
+
+export const unsafeNavigateSameURLMemo: NavigateFunction = (
+	to: To | number,
+	options?: NavigateOptions,
+) => {
+	navigate('UNSAFE_NAVIGATE', to, options);
 };

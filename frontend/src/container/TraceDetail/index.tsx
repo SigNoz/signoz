@@ -29,7 +29,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
 import MissingSpansMessage from './Missingtrace';
@@ -102,7 +102,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	useEffect(() => {
 		if (activeSelectedId) {
-			safeNavigateNonComponentMemo(
+			safeNavigateNoSameURLMemo(
 				{
 					pathname: location.pathname,
 					search: `${formUrlParams({

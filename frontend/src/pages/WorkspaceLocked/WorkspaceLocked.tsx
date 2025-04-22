@@ -27,7 +27,7 @@ import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -79,7 +79,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				!shouldBlockWorkspace ||
 				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				safeNavigateNonComponentMemo(ROUTES.HOME);
+				safeNavigateNoSameURLMemo(ROUTES.HOME);
 			}
 		}
 	}, [

@@ -19,7 +19,7 @@ import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 function WorkspaceSuspended(): JSX.Element {
@@ -64,7 +64,7 @@ function WorkspaceSuspended(): JSX.Element {
 				!shouldSuspendWorkspace ||
 				activeLicenseV3?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				safeNavigateNonComponentMemo(ROUTES.HOME);
+				safeNavigateNoSameURLMemo(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicenseV3, activeLicenseV3]);

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
-import { useSafeNavigate } from './useSafeNavigate';
 import useUrlQuery from './useUrlQuery';
 
 const useUrlQueryData = <T>(
@@ -10,7 +10,6 @@ const useUrlQueryData = <T>(
 ): UseUrlQueryData<T> => {
 	const location = useLocation();
 	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
 
 	const query = useMemo(() => urlQuery.get(queryKey), [urlQuery, queryKey]);
 
@@ -33,9 +32,9 @@ const useUrlQueryData = <T>(
 			// Construct the new URL by combining the current pathname with the updated query string
 			const generatedUrl = `${location.pathname}?${currentUrlQuery.toString()}`;
 
-			safeNavigate(generatedUrl);
+			safeNavigateNoSameURLMemo(generatedUrl);
 		},
-		[location.pathname, queryKey, safeNavigate],
+		[location.pathname, queryKey],
 	);
 
 	return {

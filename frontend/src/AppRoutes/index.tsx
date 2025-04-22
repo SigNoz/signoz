@@ -25,7 +25,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { extractDomain } from 'utils/app';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -315,7 +315,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			safeNavigateNonComponentMemo(ROUTES.SOMETHING_WENT_WRONG);
+			safeNavigateNoSameURLMemo(ROUTES.SOMETHING_WENT_WRONG);
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting

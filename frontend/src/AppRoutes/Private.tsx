@@ -15,6 +15,7 @@ import { matchPath, useLocation } from 'react-router';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { Organization } from 'types/api/user/getOrganization';
 import { USER_ROLES } from 'types/roles';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 import { routePermission } from 'utils/permission';
 
 import routes, {
@@ -28,6 +29,9 @@ import routes, {
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+	const { safeNavigate: unsafeNavigate } = useSafeNavigate({
+		preventSameUrlNavigation: false,
+	});
 	const { pathname } = location;
 	const {
 		org,
@@ -107,7 +111,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				// if the current route is allowed to be overriden by org onboarding then only do the same
 				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname)
 			) {
-				safeNavigate(ROUTES.ONBOARDING);
+				safeNavigateNoSameURLMemo(ROUTES.ONBOARDING);
 			}
 		}
 	}, [
@@ -118,7 +122,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		orgPreferences,
 		orgUsers,
 		pathname,
-		safeNavigate,
 	]);
 
 	const safeNavigateToWorkSpaceBlocked = useCallback(
@@ -136,10 +139,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				path !== ROUTES.WORKSPACE_LOCKED &&
 				!isRouteEnabledForWorkspaceBlockedState
 			) {
-				safeNavigate(ROUTES.WORKSPACE_LOCKED);
+				safeNavigateNoSameURLMemo(ROUTES.WORKSPACE_LOCKED);
 			}
 		},
-		[isAdmin, safeNavigate],
+		[isAdmin],
 	);
 
 	const safeNavigateToWorkSpaceAccessRestricted = useCallback(
@@ -147,10 +150,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			const { path } = route;
 
 			if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
-				safeNavigate(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
+				safeNavigateNoSameURLMemo(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
 			}
 		},
-		[safeNavigate],
+		[],
 	);
 
 	useEffect(() => {
@@ -204,16 +207,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		safeNavigateToWorkSpaceBlocked,
 	]);
 
-	const safeNavigateToWorkSpaceSuspended = useCallback(
-		(route: any): void => {
-			const { path } = route;
+	const safeNavigateToWorkSpaceSuspended = useCallback((route: any): void => {
+		const { path } = route;
 
-			if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
-				safeNavigate(ROUTES.WORKSPACE_SUSPENDED);
-			}
-		},
-		[safeNavigate],
-	);
+		if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
+			safeNavigateNoSameURLMemo(ROUTES.WORKSPACE_SUSPENDED);
+		}
+	}, []);
 
 	useEffect(() => {
 		if (!isFetchingActiveLicenseV3 && activeLicenseV3) {
@@ -249,9 +249,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			currentRoute?.path === ROUTES.GET_STARTED &&
 			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
 		) {
-			safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD);
+			safeNavigateNoSameURLMemo(ROUTES.GET_STARTED_WITH_CLOUD);
 		}
-	}, [currentRoute, featureFlags, safeNavigate]);
+	}, [currentRoute, featureFlags]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -263,8 +263,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				...location,
 				pathname: redirectUrl,
 			};
-			// TODO: Smit test
-			safeNavigate(newLocation, { replace: true });
+
+			safeNavigateNoSameURLMemo(newLocation, { replace: true });
 			return;
 		}
 		// if the current route
@@ -274,21 +274,21 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				if (isLoggedInState) {
 					const route = routePermission[key];
 					if (route && route.find((e) => e === user.role) === undefined) {
-						safeNavigate(ROUTES.UN_AUTHORIZED);
+						safeNavigateNoSameURLMemo(ROUTES.UN_AUTHORIZED);
 					}
 				} else {
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
-					safeNavigate(ROUTES.LOGIN);
+					safeNavigateNoSameURLMemo(ROUTES.LOGIN);
 				}
 			} else if (isLoggedInState) {
 				const fromPathname = getLocalStorageApi(
 					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 				);
 				if (fromPathname) {
-					safeNavigate(fromPathname);
+					safeNavigateNoSameURLMemo(fromPathname);
 					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-					safeNavigate(ROUTES.HOME);
+					safeNavigateNoSameURLMemo(ROUTES.HOME);
 				}
 			} else {
 				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
@@ -299,31 +299,32 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 			);
 			if (fromPathname) {
-				safeNavigate(fromPathname);
+				safeNavigateNoSameURLMemo(fromPathname);
 				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
 			} else {
-				safeNavigate(ROUTES.HOME);
+				safeNavigateNoSameURLMemo(ROUTES.HOME);
 			}
 		} else {
 			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
-			safeNavigate(ROUTES.LOGIN);
+			safeNavigateNoSameURLMemo(ROUTES.LOGIN);
 		}
-	}, [
-		isLoggedInState,
-		pathname,
-		user,
-		isOldRoute,
-		currentRoute,
-		location,
-		safeNavigate,
-	]);
+	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
 
 	// global event listener for NAVIGATE event
 	// This will provide access to useNavigation hook from outside of components
-	useGlobalEventListener('NAVIGATE', (event: CustomEvent) => {
+	useGlobalEventListener('SAFE_NAVIGATE', (event: CustomEvent) => {
 		const { to, options } = event.detail;
+		console.log('🚀 ~ useGlobalEventListener ~ SAFE_NAVIGATE:', to, options);
 		if (to) {
 			safeNavigate(to, options);
+		}
+	});
+
+	useGlobalEventListener('UNSAFE_NAVIGATE', (event: CustomEvent) => {
+		const { to, options } = event.detail;
+		console.log('🚀 ~ useGlobalEventListener ~ UNSAFE_NAVIGATE:', to, options);
+		if (to) {
+			unsafeNavigate(to, options);
 		}
 	});
 

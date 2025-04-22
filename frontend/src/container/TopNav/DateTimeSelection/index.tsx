@@ -26,6 +26,7 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -336,10 +337,10 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.endTime, preEndTime.toString());
 		}
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-		safeNavigate(generatedUrl, { replace: true });
+		safeNavigateNoSameURLMemo(generatedUrl, { replace: true });
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.pathname, updateTimeInterval, globalTimeLoading, safeNavigate]);
+	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	return (
 		<div className="date-time-selection-container">

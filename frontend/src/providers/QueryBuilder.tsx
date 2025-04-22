@@ -23,7 +23,6 @@ import {
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -60,6 +59,7 @@ import {
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { unsafeNavigateSameURLMemo } from 'utils/navigate';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -763,10 +763,6 @@ export function QueryBuilderProvider({
 		[panelType, stagedQuery],
 	);
 
-	const { safeNavigate } = useSafeNavigate({
-		preventSameUrlNavigation: false,
-	});
-
 	const redirectWithQueryBuilderData = useCallback(
 		(
 			query: Partial<Query>,
@@ -837,9 +833,9 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl);
+			unsafeNavigateSameURLMemo(generatedUrl);
 		},
-		[location.pathname, safeNavigate, urlQuery],
+		[location.pathname, urlQuery],
 	);
 
 	const handleSetConfig = useCallback(

@@ -1,9 +1,9 @@
 import ROUTES from 'constants/routes';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 export const handleContactSupport = (isCloudUser: boolean): void => {
 	if (isCloudUser) {
-		safeNavigateNonComponentMemo(ROUTES.SUPPORT);
+		safeNavigateNoSameURLMemo(ROUTES.SUPPORT);
 	} else {
 		window.open('https://signoz.io/slack', '_blank');
 	}

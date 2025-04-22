@@ -9,7 +9,7 @@ import { getQueryString } from 'container/SideNav/helper';
 import { Info } from 'lucide-react';
 import { Link } from 'react-router';
 import { ServicesList } from 'types/api/metrics/getService';
-import { safeNavigateNonComponentMemo } from 'utils/navigate';
+import { safeNavigateNoSameURLMemo } from 'utils/navigate';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
 
@@ -50,7 +50,7 @@ export const getColumnSearchProps = (
 		const topLevelOperations = record?.dataWarning?.topLevelOps || [];
 
 		const handleShowTopLevelOperations: PopconfirmProps['onConfirm'] = () => {
-			safeNavigateNonComponentMemo(
+			safeNavigateNoSameURLMemo(
 				`${ROUTES.APPLICATION}/${encodeURIComponent(metrics)}/top-level-operations`,
 			);
 		};
