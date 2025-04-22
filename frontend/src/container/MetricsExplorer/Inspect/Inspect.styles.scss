@@ -342,6 +342,28 @@
 			.selected {
 				opacity: 90%;
 			}
+
+			.graph-popover-section {
+				width: 500px;
+				overflow-x: scroll;
+				white-space: nowrap;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-width: thin;
+				scrollbar-color: #ccc transparent;
+				text-overflow: ellipsis;
+
+				.graph-popover-row {
+					.graph-popover-row-label {
+						min-width: 100px;
+					}
+
+					.graph-popover-inner-row {
+						display: flex;
+						align-items: center;
+						gap: 8px;
+					}
+				}
+			}
 		}
 	}
 

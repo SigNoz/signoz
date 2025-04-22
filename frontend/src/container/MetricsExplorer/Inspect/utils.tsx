@@ -530,7 +530,17 @@ export function onGraphClick(
 export function getRawDataFromTimeSeries(
 	timeSeries: InspectMetricsSeries,
 	timestamp: number,
+	showAll = false,
 ): GraphPopoverData[] {
+	if (showAll) {
+		return timeSeries.values.map((value) => ({
+			timestamp: value.timestamp,
+			type: 'instance',
+			value: value.value,
+			title: timeSeries.title,
+		}));
+	}
+
 	const timestampIndex = timeSeries.values.findIndex(
 		(value) => value.timestamp >= timestamp,
 	);
@@ -556,6 +566,7 @@ export function getSpaceAggregatedDataFromTimeSeries(
 	timeSeries: InspectMetricsSeries,
 	spaceAggregatedSeriesMap: Map<string, InspectMetricsSeries[]>,
 	timestamp: number,
+	showAll = false,
 ): GraphPopoverData[] {
 	if (spaceAggregatedSeriesMap.size === 0) {
 		return [];
@@ -579,21 +590,23 @@ export function getSpaceAggregatedDataFromTimeSeries(
 		}
 	});
 
-	return matchingSeries.slice(0, 5).map((series) => {
-		const timestampIndex = series.values.findIndex(
-			(value) => value.timestamp >= timestamp,
-		);
-		const value = series.values[timestampIndex]?.value;
-		return {
-			timeseries: Object.entries(series.labels)
-				.map(([key, value]) => `${key}:${value}`)
-				.join(','),
-			type: 'aggregated',
-			value: value ?? '-',
-			title: series.title,
-			timeSeries: series,
-		};
-	});
+	return matchingSeries
+		.slice(0, showAll ? matchingSeries.length : 5)
+		.map((series) => {
+			const timestampIndex = series.values.findIndex(
+				(value) => value.timestamp >= timestamp,
+			);
+			const value = series.values[timestampIndex]?.value;
+			return {
+				timeseries: Object.entries(series.labels)
+					.map(([key, value]) => `${key}:${value}`)
+					.join(','),
+				type: 'aggregated',
+				value: value ?? '-',
+				title: series.title,
+				timeSeries: series,
+			};
+		});
 }
 
 export const formatTimestampToFullDateTime = (

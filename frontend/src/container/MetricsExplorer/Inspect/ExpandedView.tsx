@@ -47,6 +47,7 @@ function ExpandedView({
 			options?.timeSeries,
 			spaceAggregationSeriesMap,
 			options?.timestamp,
+			true,
 		);
 	}, [options?.timeSeries, options?.timestamp, spaceAggregationSeriesMap, step]);
 
@@ -54,12 +55,12 @@ function ExpandedView({
 		if (!selectedTimeSeries || !options?.timestamp) {
 			return [];
 		}
-		return getRawDataFromTimeSeries(selectedTimeSeries, options?.timestamp);
+		return getRawDataFromTimeSeries(selectedTimeSeries, options?.timestamp, true);
 	}, [selectedTimeSeries, options?.timestamp]);
 
 	const absoluteValue = useMemo(
 		() =>
-			options?.timeSeries.values.find(
+			options?.timeSeries?.values.find(
 				(value) => value.timestamp >= options?.timestamp,
 			)?.value ?? options?.value,
 		[options],
@@ -127,42 +128,44 @@ function ExpandedView({
 								<Typography.Text>{options?.timeSeries?.title}</Typography.Text>
 							</div>
 							<Typography.Text strong>
-								{Number(absoluteValue).toFixed(2)}
+								{Number(absoluteValue).toFixed(0)}
 							</Typography.Text>
 						</div>
 
 						{/* Table */}
-						<div className="graph-popover-row">
-							<Typography.Text className="graph-popover-row-label">
-								VALUES
-							</Typography.Text>
-							<div className="graph-popover-inner-row">
-								{spaceAggregatedData?.map(({ value }) => (
-									<Tooltip key={value} title={value}>
-										<div className="graph-popover-cell">{value}</div>
-									</Tooltip>
-								))}
+						<div className="graph-popover-section">
+							<div className="graph-popover-row">
+								<Typography.Text className="graph-popover-row-label">
+									VALUES
+								</Typography.Text>
+								<div className="graph-popover-inner-row">
+									{spaceAggregatedData?.map(({ value }) => (
+										<Tooltip key={value} title={value}>
+											<div className="graph-popover-cell">{value}</div>
+										</Tooltip>
+									))}
+								</div>
 							</div>
-						</div>
-						<div className="graph-popover-row">
-							<Typography.Text className="graph-popover-row-label">
-								TIME SERIES
-							</Typography.Text>
-							<div className="graph-popover-inner-row">
-								{spaceAggregatedData?.map(({ title, timeSeries }) => (
-									<Tooltip key={title} title={title}>
-										<div
-											className={classNames('graph-popover-cell', 'timeseries-cell', {
-												selected: title === selectedTimeSeries?.title,
-											})}
-											onClick={(): void => {
-												setSelectedTimeSeries(timeSeries ?? null);
-											}}
-										>
-											{title}
-										</div>
-									</Tooltip>
-								))}
+							<div className="graph-popover-row">
+								<Typography.Text className="graph-popover-row-label">
+									TIME SERIES
+								</Typography.Text>
+								<div className="graph-popover-inner-row">
+									{spaceAggregatedData?.map(({ title, timeSeries }) => (
+										<Tooltip key={title} title={title}>
+											<div
+												className={classNames('graph-popover-cell', 'timeseries-cell', {
+													selected: title === selectedTimeSeries?.title,
+												})}
+												onClick={(): void => {
+													setSelectedTimeSeries(timeSeries ?? null);
+												}}
+											>
+												{title}
+											</div>
+										</Tooltip>
+									))}
+								</div>
 							</div>
 						</div>
 					</Card>
@@ -196,38 +199,40 @@ function ExpandedView({
 									selectedTimeSeries?.values.find(
 										(value) => value?.timestamp >= (options?.timestamp || 0),
 									)?.value ?? options?.value,
-								).toFixed(2)}
+								).toFixed(0)}
 							</Typography.Text>
 						</div>
 
 						{/* Table */}
-						<div className="graph-popover-row">
-							<Typography.Text className="graph-popover-row-label">
-								RAW VALUES
-							</Typography.Text>
-							<div className="graph-popover-inner-row">
-								{rawData?.map(({ value: rawValue }) => (
-									<Tooltip key={rawValue} title={rawValue}>
-										<div className="graph-popover-cell">{rawValue}</div>
-									</Tooltip>
-								))}
+						<div className="graph-popover-section">
+							<div className="graph-popover-row">
+								<Typography.Text className="graph-popover-row-label">
+									RAW VALUES
+								</Typography.Text>
+								<div className="graph-popover-inner-row">
+									{rawData?.map(({ value: rawValue }) => (
+										<Tooltip key={rawValue} title={rawValue}>
+											<div className="graph-popover-cell">{rawValue}</div>
+										</Tooltip>
+									))}
+								</div>
 							</div>
-						</div>
-						<div className="graph-popover-row">
-							<Typography.Text className="graph-popover-row-label">
-								TIMESTAMPS
-							</Typography.Text>
-							<div className="graph-popover-inner-row">
-								{rawData?.map(({ timestamp }) => (
-									<Tooltip
-										key={timestamp}
-										title={formatTimestampToFullDateTime(timestamp ?? '', true)}
-									>
-										<div className="graph-popover-cell">
-											{formatTimestampToFullDateTime(timestamp ?? '', true)}
-										</div>
-									</Tooltip>
-								))}
+							<div className="graph-popover-row">
+								<Typography.Text className="graph-popover-row-label">
+									TIMESTAMPS
+								</Typography.Text>
+								<div className="graph-popover-inner-row">
+									{rawData?.map(({ timestamp }) => (
+										<Tooltip
+											key={timestamp}
+											title={formatTimestampToFullDateTime(timestamp ?? '', true)}
+										>
+											<div className="graph-popover-cell">
+												{formatTimestampToFullDateTime(timestamp ?? '', true)}
+											</div>
+										</Tooltip>
+									))}
+								</div>
 							</div>
 						</div>
 					</Card>
