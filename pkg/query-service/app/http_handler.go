@@ -5600,7 +5600,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result = postprocess.TransformToTableForBuilderQueries(result, queryRangeParams)
+	result, err = postprocess.PostProcessResult(result, queryRangeParams)
 
 	if !thirdPartyQueryRequest.ShowIp {
 		result = thirdPartyApi.FilterResponse(result)
