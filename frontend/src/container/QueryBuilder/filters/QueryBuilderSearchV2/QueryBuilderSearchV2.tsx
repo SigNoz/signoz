@@ -5,6 +5,7 @@ import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
 	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
+	OperatorConfigKeys,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
@@ -62,6 +63,7 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from '../QueryBuilderSearch/utils';
+import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
@@ -89,6 +91,7 @@ interface QueryBuilderSearchV2Props {
 	className?: string;
 	suffixIcon?: React.ReactNode;
 	hardcodedAttributeKeys?: BaseAutocompleteData[];
+	operatorConfigKey?: OperatorConfigKeys;
 }
 
 export interface Option {
@@ -122,6 +125,7 @@ function QueryBuilderSearchV2(
 		suffixIcon,
 		whereClauseConfig,
 		hardcodedAttributeKeys,
+		operatorConfigKey,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -742,15 +746,11 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			} else if (strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')) {
 				operatorOptions = [OPERATORS.HAS, OPERATORS.NHAS].map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			} else {
 				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES.universal.map(
 					(operator) => ({
@@ -764,9 +764,12 @@ function QueryBuilderSearchV2(
 						op.label.startsWith(partialOperator.toLocaleUpperCase()),
 					);
 				}
-				operatorOptions = [{ label: '', value: '' }, ...operatorOptions];
-				setDropdownOptions(operatorOptions);
 			}
+			const filterOperatorOptions = filterByOperatorConfig(
+				operatorOptions,
+				operatorConfigKey,
+			);
+			setDropdownOptions([{ label: '', value: '' }, ...filterOperatorOptions]);
 		}
 
 		if (currentState === DropdownState.ATTRIBUTE_VALUE) {
@@ -799,6 +802,7 @@ function QueryBuilderSearchV2(
 		isLogsDataSource,
 		searchValue,
 		suggestionsData?.payload?.attributes,
+		operatorConfigKey,
 	]);
 
 	// keep the query in sync with the selected tags in logs explorer page
@@ -1032,6 +1036,7 @@ QueryBuilderSearchV2.defaultProps = {
 	suffixIcon: null,
 	whereClauseConfig: {},
 	hardcodedAttributeKeys: undefined,
+	operatorConfigKey: undefined,
 };
 
 export default QueryBuilderSearchV2;
