@@ -1,0 +1,356 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable react/jsx-props-no-spreading */
+import {
+	fireEvent,
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
+import ROUTES from 'constants/routes';
+import Success, {
+	ISuccessProps,
+} from 'container/TraceWaterfall/TraceWaterfallStates/Success/Success';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { act } from 'react-dom/test-utils';
+import { MemoryRouter } from 'react-router-dom';
+
+import { FunnelProvider } from '../FunnelContext';
+import {
+	mockFunnelsListData,
+	mockSpanSuccessComponentProps,
+} from './mockFunnelsData';
+
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
+const firstFunnel = mockFunnelsListData[0];
+const secondFunnel = mockFunnelsListData[1];
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { search: string } => ({
+		search: '',
+	}),
+}));
+
+const renderTraceWaterfallSuccess = (
+	props: Partial<ISuccessProps> = {},
+): RenderResult =>
+	render(
+		<MockQueryClientProvider>
+			<FunnelProvider funnelId={firstFunnel.id}>
+				<MemoryRouter initialEntries={[ROUTES.TRACES_FUNNELS_DETAIL]}>
+					<Success {...mockSpanSuccessComponentProps} {...props} />
+				</MemoryRouter>
+			</FunnelProvider>
+		</MockQueryClientProvider>,
+	);
+
+window.Element.prototype.getBoundingClientRect = jest
+	.fn()
+	.mockReturnValue({ height: 1000, width: 1000 });
+
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
+
+jest.mock('react-redux', () => ({
+	...jest.requireActual('react-redux'),
+	useSelector: (): any => ({
+		selectedTime: '1h',
+		loading: false,
+	}),
+}));
+
+const mockUseFunnelsList = jest.fn();
+const mockUseValidateFunnelSteps = jest.fn(() => ({
+	data: { payload: { data: [] } },
+	isLoading: false,
+	isFetching: false,
+}));
+
+jest.mock('hooks/TracesFunnels/useFunnels', () => ({
+	...jest.requireActual('hooks/TracesFunnels/useFunnels'),
+	useFunnelsList: (): void => mockUseFunnelsList(),
+	useValidateFunnelSteps: (): any => mockUseValidateFunnelSteps(),
+}));
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useHistory: jest.fn(() => ({
+		location: {
+			pathname: '',
+			search: '',
+		},
+	})),
+	useLocation: jest.fn(() => ({
+		pathname: '',
+		search: '',
+	})),
+}));
+
+jest.mock(
+	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
+	() =>
+		function MockQueryBuilderSearchV2(): JSX.Element {
+			return <div>MockQueryBuilderSearchV2</div>;
+		},
+);
+
+jest.mock(
+	'components/OverlayScrollbar/OverlayScrollbar',
+	() =>
+		function MockOverlayScrollbar({
+			children,
+		}: {
+			children: React.ReactNode;
+		}): React.ReactNode {
+			return children;
+		},
+);
+
+describe('Add span to funnel from trace details page', () => {
+	it('displays add to funnel icon for spans with valid service and span names', async () => {
+		act(() => renderTraceWaterfallSuccess());
+		expect(await screen.findByTestId('add-to-funnel-button')).toBeInTheDocument();
+	});
+
+	it("doesn't display add to funnel icon for spans with invalid service and span names", async () => {
+		act(() =>
+			renderTraceWaterfallSuccess({
+				spans: [
+					{
+						...mockSpanSuccessComponentProps.spans[0],
+						serviceName: '',
+						name: '',
+					},
+				],
+			}),
+		);
+
+		await waitFor(() => {
+			expect(screen.queryByTestId('add-to-funnel-button')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('add span to funnel modal tests', () => {
+		beforeEach(async () => {
+			mockUseFunnelsList.mockReturnValue({
+				data: { payload: mockFunnelsListData },
+				isLoading: false,
+				isError: false,
+			});
+
+			act(() => renderTraceWaterfallSuccess());
+
+			const addFunnelButton = await screen.findByTestId('add-to-funnel-button');
+			act(() => {
+				fireEvent.click(addFunnelButton);
+			});
+
+			await screen.findByRole('dialog');
+			await screen.findByText(firstFunnel.funnel_name);
+		});
+
+		it('should display the add to funnel modal when the add to funnel icon is clicked', async () => {
+			const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+			expect(
+				within(addSpanToFunnelModal).getByText('Add span to funnel'),
+			).toBeInTheDocument();
+
+			expect(
+				within(addSpanToFunnelModal).getByPlaceholderText(
+					'Search by name, description, or tags...',
+				),
+			).toBeInTheDocument();
+
+			expect(
+				within(addSpanToFunnelModal).getByText('Create new funnel'),
+			).toBeInTheDocument();
+
+			expect(
+				within(addSpanToFunnelModal).getByText(firstFunnel.funnel_name),
+			).toBeInTheDocument();
+			expect(
+				within(addSpanToFunnelModal).getByText(secondFunnel.funnel_name),
+			).toBeInTheDocument();
+			expect(
+				within(addSpanToFunnelModal).getByText(firstFunnel.user),
+			).toBeInTheDocument();
+			expect(
+				within(addSpanToFunnelModal).getByText(secondFunnel.user),
+			).toBeInTheDocument();
+		});
+
+		it('should search / filter when the user types in the search input', async () => {
+			const addSpanToFunnelModal = await screen.findByRole('dialog');
+			const searchInput = within(addSpanToFunnelModal).getByPlaceholderText(
+				'Search by name, description, or tags...',
+			);
+			act(() =>
+				fireEvent.change(searchInput, {
+					target: { value: firstFunnel.funnel_name },
+				}),
+			);
+
+			await waitFor(() => {
+				expect(searchInput).toHaveValue(firstFunnel.funnel_name);
+				expect(
+					within(addSpanToFunnelModal).getByText(firstFunnel.funnel_name),
+				).toBeInTheDocument();
+				expect(
+					within(addSpanToFunnelModal).queryByText(secondFunnel.funnel_name),
+				).not.toBeInTheDocument();
+			});
+		});
+		describe('funnel details view tests', () => {
+			beforeEach(async () => {
+				const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+				const firstFunnelButton = await within(addSpanToFunnelModal).findByText(
+					firstFunnel.funnel_name,
+				);
+				act(() => {
+					fireEvent.click(firstFunnelButton);
+				});
+
+				await within(addSpanToFunnelModal).findByRole('button', {
+					name: 'All funnels',
+				});
+			});
+			it('should go to funnels details view of modal when a funnel is clicked, and go back to list view on clicking all funnels button', async () => {
+				const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+				expect(
+					within(addSpanToFunnelModal).getByRole('button', {
+						name: 'All funnels',
+					}),
+				).toBeInTheDocument();
+				expect(
+					within(addSpanToFunnelModal).queryByRole('button', {
+						name: 'Create new funnel',
+					}),
+				).not.toBeInTheDocument();
+
+				const allFunnelsButton = await within(addSpanToFunnelModal).findByRole(
+					'button',
+					{
+						name: 'All funnels',
+					},
+				);
+				act(() => {
+					fireEvent.click(allFunnelsButton);
+				});
+
+				await within(addSpanToFunnelModal).findByRole('button', {
+					name: 'Create new funnel',
+				});
+
+				expect(
+					within(addSpanToFunnelModal).getByRole('button', {
+						name: 'Create new funnel',
+					}),
+				).toBeInTheDocument();
+				expect(
+					within(addSpanToFunnelModal).queryByRole('button', {
+						name: 'All funnels',
+					}),
+				).not.toBeInTheDocument();
+			});
+
+			it('should render the funnel preview card correctly', async () => {
+				const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+				expect(
+					within(addSpanToFunnelModal).getByText(firstFunnel.funnel_name),
+				).toBeInTheDocument();
+				expect(
+					within(addSpanToFunnelModal).getByText(firstFunnel.user),
+				).toBeInTheDocument();
+			});
+			it('should render the funnel steps correctly', async () => {
+				const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+				const expectTextWithCount = async (
+					text: string,
+					count: number,
+				): Promise<void> => {
+					expect(
+						await within(addSpanToFunnelModal).findAllByText(text),
+					).toHaveLength(count);
+				};
+
+				await expectTextWithCount('Step 1', 1);
+				await expectTextWithCount('Step 2', 1);
+				await expectTextWithCount('ServiceA', 1);
+				await expectTextWithCount('SpanA', 1);
+				await expectTextWithCount('ServiceB', 1);
+				await expectTextWithCount('SpanB', 1);
+				await expectTextWithCount('Where', 2);
+				await expectTextWithCount('Errors', 2);
+				await expectTextWithCount('Latency pointer', 2);
+				await expectTextWithCount('P99', 1);
+				await expectTextWithCount('P95', 1);
+				await expectTextWithCount('P90', 1);
+				await expectTextWithCount('Start of span', 2);
+				await expectTextWithCount('Replace', 2);
+			});
+			it('should replace the selected span and service names on clicking the replace button', async () => {
+				const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+				expect(within(addSpanToFunnelModal).getByText('SpanA')).toBeInTheDocument();
+				expect(
+					within(addSpanToFunnelModal).getByText('ServiceA'),
+				).toBeInTheDocument();
+
+				const replaceButtons = await within(
+					addSpanToFunnelModal,
+				).findAllByRole('button', { name: /replace/i });
+				expect(replaceButtons[0]).toBeEnabled();
+				act(() => {
+					fireEvent.click(replaceButtons[0]);
+				});
+
+				expect(
+					within(addSpanToFunnelModal).getByText('producer-svc-3'),
+				).toBeInTheDocument();
+				expect(
+					within(addSpanToFunnelModal).getByText('topic2 publish'),
+				).toBeInTheDocument();
+				expect(replaceButtons[0]).toBeDisabled();
+			});
+			it('should add the span as a new step on clicking the add for a new step button', async () => {
+				const addSpanToFunnelModal = await screen.findByRole('dialog');
+
+				const addNewStepButton = await within(
+					addSpanToFunnelModal,
+				).findByRole('button', { name: /add for new step/i });
+				act(() => {
+					fireEvent.click(addNewStepButton);
+				});
+				expect(
+					await within(addSpanToFunnelModal).queryByText('Add for new Step'),
+				).not.toBeInTheDocument();
+				expect(
+					await within(addSpanToFunnelModal).findAllByText('Where'),
+				).toHaveLength(3);
+			});
+		});
+	});
+});

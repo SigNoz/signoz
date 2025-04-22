@@ -47,7 +47,7 @@ export const createMockFunnel = (id: string, name: string): FunnelData => ({
 			description: 'Second step',
 		},
 	],
-	user: `user-${id}@example.com`,
+	user: `user-${id}`,
 	description: `Description for ${name}`,
 });
 
@@ -140,4 +140,50 @@ export const mockErrorTracesData: ErrorTraceData = {
 			},
 		},
 	],
+};
+
+export const mockSpanSuccessComponentProps = {
+	spans: [
+		{
+			timestamp: 1683245912789,
+			durationNano: 28934567,
+			spanId: 'c84bb52145b55f85',
+			rootSpanId: '',
+			traceId: '29fe8bbf8515f9fc4dd2g917c97c2b16',
+			hasError: false,
+			kind: 2,
+
+			event: [],
+			rootName: '',
+			statusMessage: '',
+			statusCodeString: 'Unset',
+			spanKind: 'Producer',
+			serviceName: 'producer-svc-3',
+			name: 'topic2 publish',
+			children: [],
+			subTreeNodeCount: 3,
+			hasChildren: false,
+			hasSiblings: false,
+			level: 0,
+			parentSpanId: '',
+			references: [],
+			tagMap: { 'http.method': 'POST' },
+			hasSibling: false,
+		},
+	],
+	traceMetadata: {
+		traceId: '29fe8bbf8515f9fc4dd2g917c97c2b16',
+		startTime: 1683245912789,
+		endTime: 1683245912817,
+		hasMissingSpans: false,
+	},
+	interestedSpanId: {
+		spanId: 'c84bb52145b55f85',
+		isUncollapsed: true,
+	},
+	uncollapsedNodes: [],
+	setInterestedSpanId: jest.fn(),
+	setTraceFlamegraphStatsWidth: jest.fn(),
+	selectedSpan: undefined,
+	setSelectedSpan: jest.fn(),
 };
