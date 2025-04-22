@@ -3,7 +3,7 @@ package clickhouseprometheus
 import (
 	"context"
 	"fmt"
-	value2 "github.com/SigNoz/signoz/pkg/query-service/utils/value"
+	value2 "github.com/prometheus/prometheus/model/value"
 	"math"
 	"strconv"
 	"strings"
