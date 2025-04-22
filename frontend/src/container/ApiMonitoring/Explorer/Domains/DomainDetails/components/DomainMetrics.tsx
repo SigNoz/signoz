@@ -23,7 +23,7 @@ function DomainMetrics({ domainData }: { domainData: any }): JSX.Element {
 						type="secondary"
 						className="domain-details-metadata-label"
 					>
-						ERROR RATE
+						ERROR %
 					</Typography.Text>
 					<Typography.Text
 						type="secondary"

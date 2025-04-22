@@ -54,7 +54,7 @@ function EndPointMetrics({
 						type="secondary"
 						className="domain-details-metadata-label"
 					>
-						ERROR RATE
+						ERROR %
 					</Typography.Text>
 					<Typography.Text
 						type="secondary"
