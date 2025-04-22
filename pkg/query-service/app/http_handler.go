@@ -5601,6 +5601,11 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err = postprocess.PostProcessResult(result, queryRangeParams)
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
 
 	if !thirdPartyQueryRequest.ShowIp {
 		result = thirdPartyApi.FilterResponse(result)
