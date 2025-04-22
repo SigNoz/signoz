@@ -305,7 +305,10 @@ func generateAggregateClause(panelType v3.PanelType, start, end int64, aggOp v3.
 		rate := float64(step)
 		if panelType == v3.PanelTypeTable {
 			// if the panel type is table the denominator will be the total time range
-			rate = float64(end-start) / NANOSECOND
+			duration := end - start
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
 		}
 
 		op := fmt.Sprintf("%s(%s)/%f", logsV3.AggregateOperatorToSQLFunc[aggOp], aggKey, rate)
