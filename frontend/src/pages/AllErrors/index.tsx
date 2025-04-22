@@ -8,6 +8,7 @@ import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
+import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/ResourceAttributesFilterV2';
@@ -60,21 +61,25 @@ function AllErrors(): JSX.Element {
 					showFilters ? 'filter-visible' : '',
 				)}
 			>
-				<Toolbar
-					showAutoRefresh={false}
-					leftActions={
-						!showFilters ? (
-							<Tooltip title="Show Filters">
-								<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-									<FilterOutlined />
-								</Button>
-							</Tooltip>
-						) : undefined
-					}
-					rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
-				/>
-				<ResourceAttributesFilterV2 />
-				<RouteTab routes={routes} activeKey={pathname} history={history} />
+				<TypicalOverlayScrollbar>
+					<div>
+						<Toolbar
+							showAutoRefresh={false}
+							leftActions={
+								!showFilters ? (
+									<Tooltip title="Show Filters">
+										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
+											<FilterOutlined />
+										</Button>
+									</Tooltip>
+								) : undefined
+							}
+							rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+						/>
+						<ResourceAttributesFilterV2 />
+						<RouteTab routes={routes} activeKey={pathname} history={history} />
+					</div>
+				</TypicalOverlayScrollbar>
 			</section>
 		</div>
 	);
