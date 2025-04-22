@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -99,7 +100,6 @@ func (c *SQLClient) SaveFunnel(funnel *Funnel, userID, orgID string, tags, extra
 			},
 			OrgID:      orgID,
 			Name:       funnel.Name,
-			Category:   "funnel",
 			SourcePage: "trace-funnels",
 			Tags:       tags,
 			Data:       string(funnelData),
@@ -169,34 +169,6 @@ func (c *SQLClient) ListFunnelsFromDB(orgID string) ([]*Funnel, error) {
 	return funnels, nil
 }
 
-// ListAllFunnelsFromDB lists all funnels from the database without org_id filter
-func (c *SQLClient) ListAllFunnelsFromDB() ([]*Funnel, error) {
-	ctx := context.Background()
-	db := c.funnels.BunDB()
-
-	var savedViews []types.TraceFunnels
-	err := db.NewSelect().
-		Model(&savedViews).
-		Where("\"category\" = 'funnel'").
-		Scan(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to list all funnels: %v", err)
-	}
-
-	var funnels []*Funnel
-	for _, view := range savedViews {
-		var funnel Funnel
-		if err := json.Unmarshal([]byte(view.Data), &funnel); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal funnel data: %v", err)
-		}
-
-		funnels = append(funnels, &funnel)
-	}
-
-	return funnels, nil
-}
-
 // DeleteFunnelFromDB deletes a funnel from the database
 func (c *SQLClient) DeleteFunnelFromDB(funnelID string) error {
 	ctx := context.Background()
@@ -230,14 +202,24 @@ func (c *SQLClient) CheckFunnelNameCollision(name, userID string) (bool, error) 
 }
 
 // CreateFunnel creates a new funnel in the database
-func (c *SQLClient) CreateFunnel(funnel *Funnel, userID, orgID string) error {
+func (c *SQLClient) CreateFunnel(timestamp int64, funnelName, userID, orgID string) (*Funnel, error) {
+
+	funnel := &Funnel{
+		ID:        uuid.New().String(),
+		Name:      funnelName,
+		CreatedAt: timestamp * 1000000, // Convert milliseconds to nanoseconds for internal storage
+		CreatedBy: userID,
+		OrgID:     orgID,
+		Steps:     make([]FunnelStep, 0),
+	}
+
 	ctx := context.Background()
 	db := c.funnels.BunDB()
 
 	// Convert funnel to JSON for storage
 	funnelData, err := json.Marshal(funnel)
 	if err != nil {
-		return fmt.Errorf("failed to marshal funnel data: %v", err)
+		return nil, fmt.Errorf("failed to marshal funnel data: %v", err)
 	}
 
 	// Format timestamps as RFC3339
@@ -250,10 +232,10 @@ func (c *SQLClient) CreateFunnel(funnel *Funnel, userID, orgID string) error {
 	).Exec(ctx)
 
 	if err != nil {
-		return fmt.Errorf("failed to save funnel to database: %v", err)
+		return nil, fmt.Errorf("failed to save funnel to database: %v", err)
 	}
 
-	return nil
+	return funnel, nil
 }
 
 // UpdateFunnel updates an existing funnel in the database

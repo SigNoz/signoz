@@ -29,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
@@ -5719,17 +5718,8 @@ func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel := &traceFunnels.Funnel{
-		ID:        uuid.New().String(),
-		Name:      req.Name,
-		CreatedAt: req.Timestamp * 1000000, // Convert milliseconds to nanoseconds for internal storage
-		CreatedBy: userID,
-		OrgID:     orgID,
-		Steps:     make([]traceFunnels.FunnelStep, 0),
-	}
-
 	// Create new funnel in database
-	err = aH.TraceFunnels.CreateFunnel(funnel, userID, orgID)
+	funnel, err := aH.TraceFunnels.CreateFunnel(req.Timestamp, req.Name, userID, orgID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to save funnel to database: %v", err), http.StatusInternalServerError)
 		return
@@ -5742,7 +5732,7 @@ func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 		CreatedBy: funnel.CreatedBy,
 		OrgID:     orgID,
 	}
-	json.NewEncoder(w).Encode(response)
+	aH.Respond(w, response)
 }
 
 // handleUpdateFunnelStep adds or updates steps for an existing funnel
@@ -5766,10 +5756,7 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	//aH.Signoz.SQLStore.SQLxDB()
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-
-	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(req.FunnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
 		return
@@ -5813,7 +5800,7 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 		UpdatedBy: userID,
 	}
 
-	json.NewEncoder(w).Encode(response)
+	aH.Respond(w, response)
 }
 
 func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
@@ -5827,13 +5814,7 @@ func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) 
 	var dbFunnels []*traceFunnels.Funnel
 	var err error
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-
-	if orgID != "" {
-		dbFunnels, err = dbClient.ListFunnelsFromDB(orgID)
-	} else {
-		dbFunnels, err = dbClient.ListAllFunnelsFromDB()
-	}
+	dbFunnels, err = aH.TraceFunnels.ListFunnelsFromDB(orgID)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error fetching funnels from database: %v", err), http.StatusInternalServerError)
@@ -5880,15 +5861,14 @@ func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	aH.Respond(w, response)
 }
 
 func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
 		return
@@ -5936,22 +5916,22 @@ func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json.NewEncoder(w).Encode(fullResponse)
+	//json.NewEncoder(w).Encode(fullResponse)
+	aH.Respond(w, fullResponse)
 }
 
 func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	err := dbClient.DeleteFunnelFromDB(funnelID)
+	err := aH.TraceFunnels.DeleteFunnelFromDB(funnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to delete funnel: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	aH.Respond(w, map[string]string{"status": "success"})
 }
 
 // handleSaveFunnel saves a funnel to the SQLite database
@@ -5971,8 +5951,7 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 	orgID := claims.OrgID
 	usrID := claims.UserID
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(req.FunnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(req.FunnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
 		return
@@ -6005,7 +5984,7 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 		orgID = funnel.OrgID
 	}
 
-	if err := dbClient.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
+	if err := aH.TraceFunnels.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -6034,15 +6013,14 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	aH.Respond(w, resp)
 }
 
 func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
 		return
@@ -6081,9 +6059,7 @@ func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Reque
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
 		return
@@ -6116,8 +6092,7 @@ func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request
 	funnelID := vars["funnel_id"]
 
 	// Get funnel directly from SQLite database
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
 		return
@@ -6189,8 +6164,7 @@ func (aH *APIHandler) validateTracesRequest(r *http.Request) (*traceFunnels.Funn
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	dbClient, _ := traceFunnels.NewSQLClient(aH.Signoz.SQLStore)
-	funnel, err := dbClient.GetFunnelFromDB(funnelID)
+	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("funnel not found: %v", err)
 	}
