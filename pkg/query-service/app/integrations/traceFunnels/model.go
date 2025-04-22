@@ -3,14 +3,18 @@ package traceFunnels
 import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 
 type Funnel struct {
-	ID        string       `json:"id"`
-	Name      string       `json:"funnel_name"`
-	CreatedAt int64        `json:"creation_timestamp"`
-	CreatedBy string       `json:"user_id"`
-	OrgID     string       `json:"org_id"`
-	UpdatedAt int64        `json:"updated_timestamp,omitempty"`
-	UpdatedBy string       `json:"updated_by,omitempty"`
-	Steps     []FunnelStep `json:"steps"`
+	ID          string       `json:"id"`
+	Name        string       `json:"funnel_name"`
+	Description string       `json:"description,omitempty"`
+	CreatedAt   int64        `json:"creation_timestamp"`
+	CreatedBy   string       `json:"user_id"`
+	OrgID       string       `json:"org_id"`
+	UpdatedAt   int64        `json:"updated_timestamp,omitempty"`
+	UpdatedBy   string       `json:"updated_by,omitempty"`
+	Steps       []FunnelStep `json:"steps"`
+	ExtraData   string       `json:"extra_data,omitempty"`
+	Category    string       `json:"category,omitempty"`
+	Tags        string       `json:"tags,omitempty"`
 }
 
 // FunnelStep Models
@@ -74,19 +78,19 @@ type FunnelInfoResponse struct {
 	OrgID       string `json:"org_id"`
 	UpdatedAt   int64  `json:"updated_timestamp,omitempty"`
 	UpdatedBy   string `json:"updated_by,omitempty"`
-	Tags        string `json:"tags,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
 type FunnelDetailResponse struct {
-	ID        string       `json:"id"`
-	Name      string       `json:"funnel_name"`
-	CreatedAt int64        `json:"creation_timestamp"`
-	CreatedBy string       `json:"user_id"`
-	OrgID     string       `json:"org_id"`
-	Steps     []FunnelStep `json:"steps"`
-	UpdatedAt int64        `json:"updated_timestamp,omitempty"`
-	UpdatedBy string       `json:"updated_by,omitempty"`
+	ID          string       `json:"id"`
+	Name        string       `json:"funnel_name"`
+	CreatedAt   int64        `json:"creation_timestamp"`
+	CreatedBy   string       `json:"user_id"`
+	OrgID       string       `json:"org_id"`
+	Steps       []FunnelStep `json:"steps"`
+	UpdatedAt   int64        `json:"updated_timestamp,omitempty"`
+	UpdatedBy   string       `json:"updated_by,omitempty"`
+	Description string       `json:"description,omitempty"`
 }
 
 type SaveFunnelResponse struct {
@@ -98,7 +102,6 @@ type SaveFunnelResponse struct {
 	CreatedBy   string `json:"created_by,omitempty"`
 	UpdatedBy   string `json:"updated_by,omitempty"`
 	OrgID       string `json:"org_id,omitempty"`
-	Tags        string `json:"tags,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
@@ -116,6 +119,15 @@ type StepTransitionRequest struct {
 
 type ValidTracesResponse struct {
 	TraceIDs []string `json:"trace_ids"`
+}
+
+// SaveFunnelRequest is used to save a funnel to the database
+type SaveFunnelRequest struct {
+	FunnelID    string `json:"funnel_id"`             // Required: ID of the funnel to save
+	UserID      string `json:"user_id,omitempty"`     // Optional: will use existing user ID if not provided
+	OrgID       string `json:"org_id,omitempty"`      // Optional: will use existing org ID if not provided
+	Description string `json:"description,omitempty"` // Optional: human-readable description
+	Timestamp   int64  `json:"timestamp,omitempty"`   // Optional: timestamp for update in milliseconds (uses current time if not provided)
 }
 
 type FunnelAnalytics struct {

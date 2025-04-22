@@ -33,15 +33,12 @@ func (migration *addTraceFunnels) Up(ctx context.Context, db *bun.DB) error {
 		Model(&struct {
 			bun.BaseModel `bun:"table:trace_funnel"`
 			types.Identifiable
-			OrgID    string `bun:"org_id,notnull"`
-			Name     string `bun:"name,type:text,notnull"`
-			Category string `bun:"category,type:text,notnull"`
+			OrgID string `bun:"org_id,notnull"`
+			Name  string `bun:"name,type:text,notnull"`
 			types.TimeAuditable
 			types.UserAuditable
-			SourcePage string `bun:"source_page,type:text"`
-			Tags       string `bun:"tags,type:text"`
-			Data       string `bun:"data,type:text,notnull"`
-			ExtraData  string `bun:"extra_data,type:text"`
+			Data        string `bun:"data,type:text,notnull"`
+			Description string `bun:"description,type:text"`
 		}{}).
 		ForeignKey(`("org_id") REFERENCES "organizations" ("id") ON DELETE CASCADE`).
 		IfNotExists().

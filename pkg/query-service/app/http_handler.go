@@ -5684,54 +5684,46 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *AuthMid
 
 }
 
-// handleNewFunnel creates a new funnel without steps
-// Steps should be added separately using the update endpoint
+// handleNewFunnel handles the creation of a new funnel
 func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 	var req traceFunnels.NewFunnelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding new funnel: %v", err)}, nil)
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: fmt.Errorf("failed to decode request: %v", err),
+		}, nil)
 		return
 	}
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: fmt.Errorf("unauthenticated"),
+		}, nil)
 		return
 	}
+
 	userID := claims.UserID
 	orgID := claims.OrgID
 
-	// Validate timestamp is provided and in milliseconds format
-	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "creation_timestamp"); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	// Check for name collision in the SQLite database
-	exists, err := aH.TraceFunnels.CheckFunnelNameCollision(req.Name, userID)
-	if err != nil {
-		zap.L().Error("Error checking for funnel name collision: %v", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to check funnel name collision: %v", err)}, nil)
-		return
-	} else if exists {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("funnel with name '%s' already exists for user '%s' in the database", req.Name, userID)}, nil)
-		return
-	}
-
-	// Create new funnel in database
 	funnel, err := aH.TraceFunnels.CreateFunnel(req.Timestamp, req.Name, userID, orgID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to save funnel to database: %v", err)}, nil)
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("failed to create funnel: %v", err),
+		}, nil)
 		return
 	}
 
 	response := traceFunnels.NewFunnelResponse{
 		ID:        funnel.ID,
 		Name:      funnel.Name,
-		CreatedAt: funnel.CreatedAt / 1000000,
+		CreatedAt: funnel.CreatedAt,
 		CreatedBy: funnel.CreatedBy,
-		OrgID:     orgID,
+		OrgID:     funnel.OrgID,
 	}
+
 	aH.Respond(w, response)
 }
 
@@ -5803,58 +5795,46 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 	aH.Respond(w, response)
 }
 
+// handleListFunnels handles listing all funnels for a user
 func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: fmt.Errorf("unauthenticated"),
+		}, nil)
 		return
 	}
+
 	orgID := claims.OrgID
-
-	var dbFunnels []*traceFunnels.Funnel
-	var err error
-
-	dbFunnels, err = aH.TraceFunnels.ListFunnelsFromDB(orgID)
-
+	funnels, err := aH.TraceFunnels.ListFunnelsFromDB(orgID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error fetching funnels from database: %v", err)}, nil)
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("failed to list funnels: %v", err),
+		}, nil)
 		return
 	}
 
-	// Convert to response format with additional metadata
-	response := make([]traceFunnels.FunnelInfoResponse, 0, len(dbFunnels))
-
-	for _, f := range dbFunnels {
+	var response []traceFunnels.FunnelInfoResponse
+	for _, f := range funnels {
 		var updatedAt int64
 		if f.UpdatedAt > 0 {
 			t := f.UpdatedAt / 1000000
-			updatedAt = t
+			if t > 0 {
+				updatedAt = t
+			}
 		}
 
 		funnelResp := traceFunnels.FunnelInfoResponse{
-			ID:        f.ID,
-			Name:      f.Name,
-			CreatedAt: f.CreatedAt / 1000000,
-			CreatedBy: f.CreatedBy,
-			OrgID:     f.OrgID,
-			UpdatedAt: updatedAt,
-			UpdatedBy: f.UpdatedBy, // will be omitted if empty
-		}
-
-		// Add extra data and tags
-		extraData, tags, err := aH.TraceFunnels.GetFunnelExtraDataAndTags(f.ID)
-		if err == nil {
-			if tags != "" {
-				funnelResp.Tags = tags
-			}
-			if extraData != "" {
-				var extraDataMap map[string]interface{}
-				if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
-					if description, ok := extraDataMap["description"].(string); ok {
-						funnelResp.Description = description
-					}
-				}
-			}
+			ID:          f.ID,
+			Name:        f.Name,
+			CreatedAt:   f.CreatedAt / 1000000,
+			CreatedBy:   f.CreatedBy,
+			OrgID:       f.OrgID,
+			UpdatedAt:   updatedAt,
+			UpdatedBy:   f.UpdatedBy,
+			Description: f.Description,
 		}
 
 		response = append(response, funnelResp)
@@ -5873,21 +5853,15 @@ func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get funnel extra data and tags
-	extraData, tags, extraErr := aH.TraceFunnels.GetFunnelExtraData(funnelID)
-	if extraErr != nil {
-		// Log error but continue with response since we already have the main funnel data
-		zap.L().Error("Failed to get funnel extra data", zap.Error(extraErr))
-	}
-
 	// Create the response struct
 	response := traceFunnels.FunnelDetailResponse{
-		ID:        funnel.ID,
-		Name:      funnel.Name,
-		CreatedAt: funnel.CreatedAt / 1000000,
-		CreatedBy: funnel.CreatedBy,
-		OrgID:     funnel.OrgID,
-		Steps:     funnel.Steps,
+		ID:          funnel.ID,
+		Name:        funnel.Name,
+		CreatedAt:   funnel.CreatedAt / 1000000,
+		CreatedBy:   funnel.CreatedBy,
+		OrgID:       funnel.OrgID,
+		Steps:       funnel.Steps,
+		Description: funnel.Description,
 	}
 
 	if funnel.UpdatedAt > 0 {
@@ -5900,19 +5874,6 @@ func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
 	// Wrap extra fields in a response envelope
 	fullResponse := map[string]interface{}{
 		"funnel": response,
-	}
-
-	if extraErr == nil && tags != "" {
-		fullResponse["tags"] = tags
-	}
-
-	if extraErr == nil && extraData != "" {
-		var extraDataMap map[string]interface{}
-		if err := json.Unmarshal([]byte(extraData), &extraDataMap); err == nil {
-			if description, ok := extraDataMap["description"].(string); ok {
-				fullResponse["description"] = description
-			}
-		}
 	}
 
 	aH.Respond(w, fullResponse)
@@ -5967,42 +5928,23 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 		funnel.UpdatedBy = usrID
 	}
 
-	extraData := ""
-	if req.Description != "" {
-		descJSON, err := json.Marshal(map[string]string{"description": req.Description})
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to marshal description: %v", err)}, nil)
-			return
-		}
-		extraData = string(descJSON)
-	}
-
-	if err := aH.TraceFunnels.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
+	if err := aH.TraceFunnels.SaveFunnel(funnel, funnel.UpdatedBy, orgID); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to save funnel: %v", err)}, nil)
 		return
 	}
 
 	// Try to fetch metadata from DB
-	createdAt, updatedAt, tags, extraDataFromDB, err := aH.TraceFunnels.GetFunnelMetadata(funnel.ID)
+	createdAt, updatedAt, extraDataFromDB, err := aH.TraceFunnels.GetFunnelMetadata(funnel.ID)
 	resp := traceFunnels.SaveFunnelResponse{
-		Status:    "success",
-		ID:        funnel.ID,
-		Name:      funnel.Name,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-		CreatedBy: funnel.CreatedBy,
-		UpdatedBy: funnel.UpdatedBy,
-		OrgID:     funnel.OrgID,
-		Tags:      tags,
-	}
-
-	if err == nil && extraDataFromDB != "" {
-		var extraDataMap map[string]interface{}
-		if err := json.Unmarshal([]byte(extraDataFromDB), &extraDataMap); err == nil {
-			if description, ok := extraDataMap["description"].(string); ok {
-				resp.Description = description
-			}
-		}
+		Status:      "success",
+		ID:          funnel.ID,
+		Name:        funnel.Name,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
+		CreatedBy:   funnel.CreatedBy,
+		UpdatedBy:   funnel.UpdatedBy,
+		OrgID:       funnel.OrgID,
+		Description: extraDataFromDB,
 	}
 
 	aH.Respond(w, resp)
