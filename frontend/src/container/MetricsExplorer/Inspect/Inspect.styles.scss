@@ -239,6 +239,10 @@
 		align-items: flex-start;
 		gap: 16px;
 
+		.ant-card-body {
+			width: 100%;
+		}
+
 		.graph-popover-row {
 			margin-top: 12px;
 			display: flex;

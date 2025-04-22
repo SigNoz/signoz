@@ -34,10 +34,10 @@ function GraphPopover({
 	);
 
 	const data = useMemo(() => {
-		if (
-			step === InspectionStep.TIME_AGGREGATION ||
-			step === InspectionStep.SPACE_AGGREGATION
-		) {
+		if (step === InspectionStep.TIME_AGGREGATION) {
+			return null;
+		}
+		if (step === InspectionStep.SPACE_AGGREGATION) {
 			if (!timeSeries || !timestamp) return [];
 			return getRawDataFromTimeSeries(timeSeries, timestamp);
 		}
@@ -51,6 +51,70 @@ function GraphPopover({
 		}
 		return null;
 	}, [spaceAggregationSeriesMap, step, timeSeries, timestamp]);
+
+	const timeAggregationDisplay = useMemo(() => {
+		if (step !== InspectionStep.SPACE_AGGREGATION) return null;
+		return (
+			<>
+				<div className="graph-popover-row">
+					<Typography.Text className="graph-popover-row-label">
+						RAW VALUES
+					</Typography.Text>
+					<div className="graph-popover-inner-row">
+						{data?.map(({ value: rawValue }) => (
+							<div key={rawValue} className="graph-popover-cell">
+								{rawValue}
+							</div>
+						))}
+					</div>
+				</div>
+				<div className="graph-popover-row">
+					<Typography.Text className="graph-popover-row-label">
+						TIMESTAMPS
+					</Typography.Text>
+					<div className="graph-popover-inner-row">
+						{data?.map(({ timestamp }) => (
+							<div key={timestamp} className="graph-popover-cell">
+								{formatTimestampToFullDateTime(timestamp ?? '', true)}
+							</div>
+						))}
+					</div>
+				</div>
+			</>
+		);
+	}, [data, step]);
+
+	const spaceAggregationDisplay = useMemo(() => {
+		if (step !== InspectionStep.COMPLETED) return null;
+		return (
+			<>
+				<div className="graph-popover-row">
+					<Typography.Text className="graph-popover-row-label">
+						VALUES
+					</Typography.Text>
+					<div className="graph-popover-inner-row">
+						{data?.map(({ value }) => (
+							<div key={value} className="graph-popover-cell">
+								{value}
+							</div>
+						))}
+					</div>
+				</div>
+				<div className="graph-popover-row">
+					<Typography.Text className="graph-popover-row-label">
+						TIME SERIES
+					</Typography.Text>
+					<div className="graph-popover-inner-row">
+						{data?.map(({ title }) => (
+							<div key={title} className="graph-popover-cell">
+								{title}
+							</div>
+						))}
+					</div>
+				</div>
+			</>
+		);
+	}, [data, step]);
 
 	return (
 		<div
@@ -87,47 +151,8 @@ function GraphPopover({
 				</div>
 
 				{/* Table */}
-				<div className="graph-popover-row">
-					<Typography.Text className="graph-popover-row-label">
-						{step === InspectionStep.TIME_AGGREGATION ? 'RAW VALUES' : 'VALUES'}
-					</Typography.Text>
-					<div className="graph-popover-inner-row">
-						{data?.map(({ value }) => (
-							<div key={value} className="graph-popover-cell">
-								{value}
-							</div>
-						))}
-					</div>
-				</div>
-				{step !== InspectionStep.COMPLETED && (
-					<div className="graph-popover-row">
-						<Typography.Text className="graph-popover-row-label">
-							TIMESTAMPS
-						</Typography.Text>
-						<div className="graph-popover-inner-row">
-							{data?.map(({ timestamp }) => (
-								<div key={timestamp} className="graph-popover-cell">
-									{formatTimestampToFullDateTime(timestamp ?? '', true)}
-								</div>
-							))}
-						</div>
-					</div>
-				)}
-				{step === InspectionStep.COMPLETED && (
-					<div className="graph-popover-row">
-						<Typography.Text className="graph-popover-row-label">
-							TIME SERIES
-						</Typography.Text>
-						<div className="graph-popover-inner-row">
-							{data?.map(({ title }) => (
-								<div key={title} className="graph-popover-cell">
-									{title}
-								</div>
-							))}
-						</div>
-					</div>
-				)}
-
+				{timeAggregationDisplay}
+				{spaceAggregationDisplay}
 				{/* Footer */}
 				<div className="footer-row">
 					<Typography.Text className="footer-text">
