@@ -11,6 +11,7 @@ import {
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
@@ -41,6 +42,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -55,6 +57,7 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
+import SpanScopeSelector from '../QueryBuilderSearch/SpanScopeSelector';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import {
 	checkCommaInValue,
@@ -126,6 +129,8 @@ function QueryBuilderSearchV2(
 		hardcodedAttributeKeys,
 		operatorConfigKey,
 	} = props;
+
+	const { pathname } = useLocation();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -911,6 +916,11 @@ function QueryBuilderSearchV2(
 		);
 	};
 
+	const isTracesExplorerPage = useMemo(
+		() => pathname === ROUTES.TRACES_EXPLORER,
+		[pathname],
+	);
+
 	return (
 		<div className="query-builder-search-v2">
 			<Select
@@ -994,6 +1004,7 @@ function QueryBuilderSearchV2(
 					);
 				})}
 			</Select>
+			{isTracesExplorerPage && <SpanScopeSelector queryName={query.queryName} />}
 		</div>
 	);
 }
