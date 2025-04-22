@@ -1,6 +1,12 @@
-import { Typography } from 'antd';
+import '../DomainDetails.styles.scss';
+
+import { Table, TablePaginationConfig, Typography } from 'antd';
 import Skeleton from 'antd/lib/skeleton';
-import { getFormattedDependentServicesData } from 'container/ApiMonitoring/utils';
+import {
+	dependentServicesColumns,
+	DependentServicesData,
+	getFormattedDependentServicesData,
+} from 'container/ApiMonitoring/utils';
 import { UnfoldVertical } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -23,19 +29,25 @@ function DependentServices({
 		isRefetching,
 	} = dependentServicesQuery;
 
-	const [currentRenderCount, setCurrentRenderCount] = useState(0);
+	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-	const dependentServicesData = useMemo(() => {
-		const formattedDependentServicesData = getFormattedDependentServicesData(
-			data?.payload?.data?.result[0].table.rows,
-		);
-		setCurrentRenderCount(Math.min(formattedDependentServicesData.length, 5));
-		return formattedDependentServicesData;
-	}, [data]);
+	const handleShowMoreClick = (): void => {
+		setIsExpanded((prev) => !prev);
+	};
 
-	const renderItems = useMemo(
-		() => dependentServicesData.slice(0, currentRenderCount),
-		[currentRenderCount, dependentServicesData],
+	const dependentServicesData = useMemo(
+		(): DependentServicesData[] =>
+			getFormattedDependentServicesData(data?.payload?.data?.result[0].table.rows),
+		[data],
+	);
+
+	const paginationConfig = useMemo(
+		(): TablePaginationConfig => ({
+			pageSize: isExpanded ? dependentServicesData.length : 5,
+			hideOnSinglePage: true,
+			position: ['none', 'none'],
+		}),
+		[isExpanded, dependentServicesData.length],
 	);
 
 	if (isLoading || isRefetching) {
@@ -48,56 +60,47 @@ function DependentServices({
 
 	return (
 		<div className="top-services-content">
-			<div className="top-services-title">
-				<span className="title-wrapper">Dependent Services</span>
-			</div>
 			<div className="dependent-services-container">
-				{renderItems.length === 0 ? (
-					<div className="no-dependent-services-message-container">
-						<div className="no-dependent-services-message-content">
-							<img
-								src="/Icons/emptyState.svg"
-								alt="thinking-emoji"
-								className="empty-state-svg"
-							/>
+				<Table
+					loading={isLoading || isRefetching}
+					dataSource={dependentServicesData || []}
+					columns={dependentServicesColumns}
+					rowClassName="table-row-dark"
+					pagination={paginationConfig}
+					locale={{
+						emptyText:
+							isLoading || isRefetching ? null : (
+								<div className="no-status-code-data-message-container">
+									<div className="no-status-code-data-message-content">
+										<img
+											src="/Icons/emptyState.svg"
+											alt="thinking-emoji"
+											className="empty-state-svg"
+										/>
 
-							<Typography.Text className="no-dependent-services-message">
-								This query had no results. Edit your query and try again!
-							</Typography.Text>
-						</div>
-					</div>
-				) : (
-					renderItems.map((item) => (
-						<div className="top-services-item" key={item.key}>
-							<div className="top-services-item-progress">
-								<div className="top-services-item-key">{item.serviceName}</div>
-								<div className="top-services-item-count">{item.count}</div>
-								<div
-									className="top-services-item-progress-bar"
-									style={{ width: `${item.percentage}%` }}
-								/>
-							</div>
-							<div className="top-services-item-percentage">
-								{item.percentage.toFixed(2)}%
-							</div>
-						</div>
-					))
-				)}
+										<Typography.Text className="no-status-code-data-message">
+											This query had no results. Edit your query and try again!
+										</Typography.Text>
+									</div>
+								</div>
+							),
+					}}
+				/>
 
-				{currentRenderCount < dependentServicesData.length && (
+				{dependentServicesData.length > 5 && (
 					<div
 						className="top-services-load-more"
-						onClick={(): void => setCurrentRenderCount(dependentServicesData.length)}
+						onClick={handleShowMoreClick}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {
-								setCurrentRenderCount(dependentServicesData.length);
+								handleShowMoreClick();
 							}
 						}}
 						role="button"
 						tabIndex={0}
 					>
 						<UnfoldVertical size={14} />
-						Show more...
+						{isExpanded ? 'Show less...' : 'Show more...'}
 					</div>
 				)}
 			</div>
