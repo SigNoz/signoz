@@ -188,7 +188,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 	{
 		title: (
 			<div>
-				Error rate <span className="round-metric-tag">%</span>
+				Error <span className="round-metric-tag">%</span>
 			</div>
 		),
 		dataIndex: 'errorRate',
@@ -276,12 +276,12 @@ const domainNameKey = 'net.peer.name';
 
 interface APIMonitoringResponseRow {
 	data: {
-		endpoints: number;
-		error_rate: number;
+		endpoints: number | string;
+		error_rate: number | string;
 		lastseen: number | string;
 		[domainNameKey]: string;
 		p99: number | string;
-		rps: number;
+		rps: number | string;
 	};
 }
 
@@ -308,18 +308,27 @@ export const formatDataForTable = (
 	data?.map((domain) => ({
 		key: v4(),
 		domainName: domain?.data[domainNameKey] || '-',
-		endpointCount: domain?.data?.endpoints || '-',
-		rate: domain.data.rps || '-',
-		errorRate: domain.data.error_rate || '-',
-		latency:
-			domain.data.p99 === 'n/a'
+		endpointCount:
+			domain?.data?.endpoints === 'n/a' || domain?.data?.endpoints === undefined
+				? 0
+				: domain?.data?.endpoints,
+		rate:
+			domain?.data?.rps === 'n/a' || domain?.data?.rps === undefined
 				? '-'
-				: Math.round(Number(domain.data.p99) / 1000000), // Convert from nanoseconds to milliseconds
+				: domain?.data?.rps,
+		errorRate:
+			domain?.data?.error_rate === 'n/a' || domain?.data?.error_rate === undefined
+				? 0
+				: domain?.data?.error_rate,
+		latency:
+			domain?.data?.p99 === 'n/a' || domain?.data?.p99 === undefined
+				? '-'
+				: Math.round(Number(domain?.data?.p99) / 1000000), // Convert from nanoseconds to milliseconds
 		lastUsed:
-			domain.data.lastseen === 'n/a'
+			domain?.data?.lastseen === 'n/a' || domain?.data?.lastseen === undefined
 				? '-'
 				: new Date(
-						Math.floor(Number(domain.data.lastseen) / 1000000),
+						Math.floor(Number(domain?.data?.lastseen) / 1000000),
 				  ).toISOString(), // Convert from nanoseconds to milliseconds
 	}));
 
@@ -683,7 +692,7 @@ export const getEndPointsColumnsConfig = (
 	{
 		title: (
 			<div>
-				Error rate <span className="round-metric-tag">%</span>
+				Error <span className="round-metric-tag">%</span>
 			</div>
 		),
 		dataIndex: 'errorRate',
@@ -706,27 +715,27 @@ export const getEndPointsColumnsConfig = (
 		render: (
 			errorRate: number | string,
 			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode => {
-			if (errorRate === 'n/a' || errorRate === '-') {
-				return '-';
-			}
-			return (
-				<Progress
-					status="active"
-					percent={Number(((errorRate as number) * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-					string => {
-						const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
-						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
-						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar error-rate"
-				/>
-			);
-		},
+		): React.ReactNode => (
+			<Progress
+				status="active"
+				percent={Number(
+					(
+						((errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number) *
+						100
+					).toFixed(1),
+				)}
+				strokeLinecap="butt"
+				size="small"
+				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
+				string => {
+					const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
+					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
+					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
+					return Color.BG_FOREST_500;
+				})()}
+				className="progress-bar error-rate"
+			/>
+		),
 	},
 	{
 		title: (
@@ -793,16 +802,22 @@ export const formatEndPointsDataForTable = (
 				key: v4(),
 				endpointName: (endpoint.data['http.url'] as string) || '-',
 				port,
-				callCount: endpoint.data.A || '-',
+				callCount:
+					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
+						? '-'
+						: endpoint.data.A,
 				latency:
-					endpoint.data.B === 'n/a'
+					endpoint.data.B === 'n/a' || endpoint.data.B === undefined
 						? '-'
 						: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
 				lastUsed:
-					endpoint.data.C === 'n/a'
+					endpoint.data.C === 'n/a' || endpoint.data.C === undefined
 						? '-'
 						: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
-				errorRate: endpoint.data.F1 === undefined ? '-' : Number(endpoint.data.F1),
+				errorRate:
+					endpoint.data.F1 === undefined || endpoint.data.F1 === 'n/a'
+						? 0
+						: Number(endpoint.data.F1),
 			};
 		});
 	}
@@ -816,16 +831,22 @@ export const formatEndPointsDataForTable = (
 		return {
 			key: v4(),
 			endpointName: newEndpointName,
-			callCount: endpoint.data.A || '-',
+			callCount:
+				endpoint.data.A === 'n/a' || endpoint.data.A === undefined
+					? '-'
+					: endpoint.data.A,
 			latency:
-				endpoint.data.B === 'n/a'
+				endpoint.data.B === 'n/a' || endpoint.data.B === undefined
 					? '-'
 					: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
 			lastUsed:
-				endpoint.data.C === 'n/a'
+				endpoint.data.C === 'n/a' || endpoint.data.C === undefined
 					? '-'
 					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
-			errorRate: endpoint.data.D || '-',
+			errorRate:
+				endpoint.data.D === 'n/a' || endpoint.data.D === undefined
+					? 0
+					: Number(endpoint.data.D),
 			groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
 				acc[attribute] = endpoint.data[attribute] || '';
 				return acc;
@@ -2078,7 +2099,7 @@ interface EndPointMetricsResponseRow {
 interface EndPointStatusCodeResponseRow {
 	data: {
 		response_status_code: string;
-		A: number;
+		A: number | string;
 		B: number | string;
 	};
 }
@@ -2104,9 +2125,11 @@ export const getFormattedEndPointMetricsData = (
 	key: v4(),
 	rate: data[0].data.A === 'n/a' || !data[0].data.A ? '-' : data[0].data.A,
 	latency:
-		data[0].data.B === 'n/a' ? '-' : Math.round(Number(data[0].data.B) / 1000000),
+		data[0].data.B === 'n/a' || data[0].data.B === undefined
+			? '-'
+			: Math.round(Number(data[0].data.B) / 1000000),
 	errorRate:
-		data[0].data.F1 === 'n/a' || !data[0].data.F1 ? '-' : Number(data[0].data.F1),
+		data[0].data.F1 === 'n/a' || !data[0].data.F1 ? 0 : Number(data[0].data.F1),
 	lastUsed:
 		data[0].data.D === 'n/a' || !data[0].data.D
 			? '-'
@@ -2118,10 +2141,16 @@ export const getFormattedEndPointStatusCodeData = (
 ): EndPointStatusCodeData[] =>
 	data?.map((row) => ({
 		key: v4(),
-		statusCode: row.data.response_status_code || '-',
-		count: row.data.A || '-',
+		statusCode:
+			row.data.response_status_code === 'n/a' ||
+			row.data.response_status_code === undefined
+				? '-'
+				: row.data.response_status_code,
+		count: row.data.A === 'n/a' || row.data.A === undefined ? '-' : row.data.A,
 		p99Latency:
-			row.data.B === 'n/a' ? '-' : Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
+			row.data.B === 'n/a' || row.data.B === undefined
+				? '-'
+				: Math.round(Number(row.data.B) / 1000000), // Convert from nanoseconds to milliseconds,
 	}));
 
 export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
@@ -2132,6 +2161,13 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 		render: (text): JSX.Element => (
 			<div className="status-code-value">{text}</div>
 		),
+		sorter: (a: EndPointStatusCodeData, b: EndPointStatusCodeData): number => {
+			const statusCodeA =
+				a.statusCode === '-' || a.statusCode === 'n/a' ? 0 : Number(a.statusCode);
+			const statusCodeB =
+				b.statusCode === '-' || b.statusCode === 'n/a' ? 0 : Number(b.statusCode);
+			return statusCodeA - statusCodeB;
+		},
 	},
 	{
 		title: (
@@ -2142,12 +2178,24 @@ export const endPointStatusCodeColumns: ColumnType<EndPointStatusCodeData>[] = [
 		dataIndex: 'count',
 		key: 'count',
 		align: 'right',
+		sorter: (a: EndPointStatusCodeData, b: EndPointStatusCodeData): number => {
+			const countA = a.count === '-' || a.count === 'n/a' ? 0 : Number(a.count);
+			const countB = b.count === '-' || b.count === 'n/a' ? 0 : Number(b.count);
+			return countA - countB;
+		},
 	},
 	{
 		title: 'P99',
 		dataIndex: 'p99Latency',
 		key: 'p99Latency',
 		align: 'right',
+		sorter: (a: EndPointStatusCodeData, b: EndPointStatusCodeData): number => {
+			const p99LatencyA =
+				a.p99Latency === '-' || a.p99Latency === 'n/a' ? 0 : Number(a.p99Latency);
+			const p99LatencyB =
+				b.p99Latency === '-' || b.p99Latency === 'n/a' ? 0 : Number(b.p99Latency);
+			return p99LatencyA - p99LatencyB;
+		},
 	},
 ];
 
@@ -2214,29 +2262,19 @@ export const getFormattedDependentServicesData = (
 		serviceData: {
 			serviceName: row.data['service.name'] || '-',
 			count:
-				row.data.A !== undefined && row.data.A !== '-' && row.data.A !== 'n/a'
-					? Number(row.data.A)
-					: '-',
+				row.data.A !== undefined && row.data.A !== 'n/a' ? Number(row.data.A) : '-',
 			percentage:
-				totalCount > 0 &&
-				row.data.A !== undefined &&
-				row.data.A !== '-' &&
-				row.data.A !== 'n/a'
+				totalCount > 0 && row.data.A !== undefined && row.data.A !== 'n/a'
 					? Number(((Number(row.data.A) / totalCount) * 100).toFixed(2))
 					: 0,
 		},
 		latency:
-			row.data.B !== undefined && row.data.B !== '-' && row.data.B !== 'n/a'
+			row.data.B !== undefined && row.data.B !== 'n/a'
 				? Math.round(Number(row.data.B) / 1000000)
 				: '-',
-		rate:
-			row.data.C !== undefined && row.data.C !== '-' && row.data.C !== 'n/a'
-				? row.data.C
-				: '-',
+		rate: row.data.C !== undefined && row.data.C !== 'n/a' ? row.data.C : '-',
 		errorPercentage:
-			row.data.F1 !== undefined && row.data.F1 !== '-' && row.data.F1 !== 'n/a'
-				? row.data.F1
-				: 0,
+			row.data.F1 !== undefined && row.data.F1 !== 'n/a' ? row.data.F1 : 0,
 	}));
 };
 
@@ -2263,8 +2301,17 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 				</div>
 			</div>
 		),
-		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
-			Number(a.serviceData.count) - Number(b.serviceData.count),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
+			const countA =
+				a.serviceData.count === '-' || a.serviceData.count === 'n/a'
+					? 0
+					: Number(a.serviceData.count);
+			const countB =
+				b.serviceData.count === '-' || b.serviceData.count === 'n/a'
+					? 0
+					: Number(b.serviceData.count);
+			return countA - countB;
+		},
 	},
 	{
 		title: (
@@ -2277,8 +2324,13 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (latency: number): ReactNode => (
 			<div className="top-services-item-latency">{latency || '-'}ms</div>
 		),
-		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
-			Number(a.latency) - Number(b.latency),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
+			const latencyA =
+				a.latency === '-' || a.latency === 'n/a' ? 0 : Number(a.latency);
+			const latencyB =
+				b.latency === '-' || b.latency === 'n/a' ? 0 : Number(b.latency);
+			return latencyA - latencyB;
+		},
 	},
 	{
 		title: (
@@ -2289,11 +2341,44 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		dataIndex: 'errorPercentage',
 		key: 'errorPercentage',
 		align: 'center',
-		render: (errorPercentage: number): ReactNode => (
-			<div className="top-services-item-error-percentage">{errorPercentage}%</div>
+		render: (
+			errorPercentage: number | string,
+			// eslint-disable-next-line sonarjs/no-identical-functions
+		): React.ReactNode => (
+			<Progress
+				status="active"
+				percent={Number(
+					(
+						((errorPercentage === 'n/a' || errorPercentage === '-'
+							? 0
+							: errorPercentage) as number) * 100
+					).toFixed(1),
+				)}
+				strokeLinecap="butt"
+				size="small"
+				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
+				string => {
+					const errorPercentagePercent = Number(
+						((errorPercentage as number) * 100).toFixed(1),
+					);
+					if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
+					if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;
+					return Color.BG_FOREST_500;
+				})()}
+				className="progress-bar error-rate"
+			/>
 		),
-		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
-			Number(a.errorPercentage) - Number(b.errorPercentage),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
+			const errorPercentageA =
+				a.errorPercentage === '-' || a.errorPercentage === 'n/a'
+					? 0
+					: Number(a.errorPercentage);
+			const errorPercentageB =
+				b.errorPercentage === '-' || b.errorPercentage === 'n/a'
+					? 0
+					: Number(b.errorPercentage);
+			return errorPercentageA - errorPercentageB;
+		},
 	},
 	{
 		title: (
@@ -2305,8 +2390,11 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (rate: number): ReactNode => (
 			<div className="top-services-item-rate">{rate || '-'} ops/sec</div>
 		),
-		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
-			Number(a.rate) - Number(b.rate),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number => {
+			const rateA = a.rate === '-' || a.rate === 'n/a' ? 0 : Number(a.rate);
+			const rateB = b.rate === '-' || b.rate === 'n/a' ? 0 : Number(b.rate);
+			return rateA - rateB;
+		},
 	},
 ];
 
