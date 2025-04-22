@@ -198,7 +198,7 @@
 		"autoprefixer": "10.4.19",
 		"babel-plugin-styled-components": "^1.12.0",
 		"compression-webpack-plugin": "9.0.0",
-		"copy-webpack-plugin": "^8.1.0",
+		"copy-webpack-plugin": "^11.0.0",
 		"critters-webpack-plugin": "^3.0.1",
 		"eslint": "^7.32.0",
 		"eslint-config-airbnb": "^19.0.4",
@@ -255,6 +255,7 @@
 		"body-parser": "1.20.3",
 		"http-proxy-middleware": "3.0.3",
 		"cross-spawn": "7.0.5",
-		"cookie": "^0.7.1"
+		"cookie": "^0.7.1",
+		"serialize-javascript": "6.0.2"
 	}
 }
