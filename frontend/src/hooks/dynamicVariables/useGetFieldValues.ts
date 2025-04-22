@@ -5,7 +5,7 @@ import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 
 interface UseGetFieldValuesProps {
 	/** Type of signal (traces, logs, metrics) */
-	signal: 'traces' | 'logs' | 'metrics';
+	signal?: 'traces' | 'logs' | 'metrics';
 	/** Name of the attribute for which values are being fetched */
 	name: string;
 	/** Optional search text */

@@ -3,7 +3,7 @@
  */
 export interface FieldValueResponse {
 	/** List of field values returned */
-	values: string[];
+	values: { stringValues: string[] };
 	/** Indicates if the returned list is complete */
 	complete: boolean;
 }

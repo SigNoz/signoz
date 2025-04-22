@@ -5,7 +5,7 @@ import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 
 interface UseGetFieldKeysProps {
 	/** Type of signal (traces, logs, metrics) */
-	signal: 'traces' | 'logs' | 'metrics';
+	signal?: 'traces' | 'logs' | 'metrics';
 	/** Optional search text */
 	name?: string;
 	/** Whether the query should be enabled */

@@ -7,6 +7,7 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import cx from 'classnames';
 import Editor from 'components/Editor';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useGetFieldValues } from 'hooks/dynamicVariables/useGetFieldValues';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
@@ -84,9 +85,25 @@ function VariableItem({
 	);
 	const [previewValues, setPreviewValues] = useState<string[]>([]);
 
+	const [
+		dynamicVariablesSelectedValue,
+		setDynamicVariablesSelectedValue,
+	] = useState<{ name: string; value: string }>();
+
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
+
+	const { data: fieldValues } = useGetFieldValues({
+		signal:
+			dynamicVariablesSelectedValue?.value === 'All Sources'
+				? undefined
+				: (dynamicVariablesSelectedValue?.value as 'traces' | 'logs' | 'metrics'),
+		name: dynamicVariablesSelectedValue?.name || '',
+		enabled:
+			!!dynamicVariablesSelectedValue?.name &&
+			!!dynamicVariablesSelectedValue?.value,
+	});
 
 	useEffect(() => {
 		if (queryType === 'CUSTOM') {
@@ -107,6 +124,17 @@ function VariableItem({
 		variableData.type,
 		variableSortType,
 	]);
+
+	useEffect(() => {
+		if (fieldValues) {
+			setPreviewValues(
+				sortValues(
+					fieldValues.payload?.values?.stringValues || [],
+					variableSortType,
+				) as never,
+			);
+		}
+	}, [fieldValues, variableSortType, queryType]);
 
 	const handleSave = (): void => {
 		const variable: IDashboardVariable = {
@@ -301,7 +329,9 @@ function VariableItem({
 					</VariableItemRow>
 					{queryType === 'DYNAMIC' && (
 						<div className="variable-dynamic-section">
-							<DynamicVariable />
+							<DynamicVariable
+								setDynamicVariablesSelectedValue={setDynamicVariablesSelectedValue}
+							/>
 						</div>
 					)}
 					{queryType === 'QUERY' && (

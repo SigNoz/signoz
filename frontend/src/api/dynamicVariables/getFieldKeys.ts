@@ -8,10 +8,14 @@ import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
  * @param name Optional search text
  */
 export const getFieldKeys = async (
-	signal: 'traces' | 'logs' | 'metrics',
+	signal?: 'traces' | 'logs' | 'metrics',
 	name?: string,
 ): Promise<SuccessResponse<FieldKeyResponse> | ErrorResponse> => {
-	const params: Record<string, string> = { signal };
+	const params: Record<string, string> = {};
+
+	if (signal) {
+		params.signal = signal;
+	}
 
 	if (name) {
 		params.name = name;

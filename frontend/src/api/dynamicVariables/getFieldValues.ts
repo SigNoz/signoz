@@ -9,11 +9,19 @@ import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
  * @param value Optional search text
  */
 export const getFieldValues = async (
-	signal: 'traces' | 'logs' | 'metrics',
-	name: string,
+	signal?: 'traces' | 'logs' | 'metrics',
+	name?: string,
 	value?: string,
 ): Promise<SuccessResponse<FieldValueResponse> | ErrorResponse> => {
-	const params: Record<string, string> = { signal, name };
+	const params: Record<string, string> = {};
+
+	if (signal) {
+		params.signal = signal;
+	}
+
+	if (name) {
+		params.name = name;
+	}
 
 	if (value) {
 		params.value = value;
