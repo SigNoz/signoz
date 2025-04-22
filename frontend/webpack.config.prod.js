@@ -3,7 +3,7 @@
 // shared config (dev and prod)
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { default: CopyPlugin } = require('copy-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const dotenv = require('dotenv');
