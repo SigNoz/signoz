@@ -7,7 +7,6 @@ import (
 // TODO: check constraints are not working
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations"`
-
 	TimeAuditable
 	ID              string `bun:"id,pk,type:text" json:"id"`
 	Name            string `bun:"name,type:text,notnull" json:"name"`
@@ -16,8 +15,10 @@ type Organization struct {
 }
 
 type ApdexSettings struct {
-	OrgID              string  `bun:"org_id,pk,type:text" json:"orgId"`
-	ServiceName        string  `bun:"service_name,pk,type:text" json:"serviceName"`
+	bun.BaseModel `bun:"table:apdex_setting"`
+	Identifiable
+	OrgID              string  `bun:"org_id,type:text" json:"orgId"`
+	ServiceName        string  `bun:"service_name,type:text" json:"serviceName"`
 	Threshold          float64 `bun:"threshold,type:float,notnull" json:"threshold"`
 	ExcludeStatusCodes string  `bun:"exclude_status_codes,type:text,notnull" json:"excludeStatusCodes"`
 }

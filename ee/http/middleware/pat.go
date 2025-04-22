@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	eeTypes "github.com/SigNoz/signoz/ee/types"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -24,7 +25,7 @@ func (p *Pat) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var values []string
 		var patToken string
-		var pat types.StorablePersonalAccessToken
+		var pat eeTypes.StorablePersonalAccessToken
 
 		for _, header := range p.headers {
 			values = append(values, r.Header.Get(header))

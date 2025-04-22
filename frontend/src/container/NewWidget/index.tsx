@@ -5,7 +5,6 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
@@ -27,7 +26,6 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -74,11 +72,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 		selectedRowWidgetId,
 		setSelectedRowWidgetId,
+		columnWidths,
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
-
-	const { featureFlags } = useAppContext();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -238,8 +235,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				selectedLogFields,
 				selectedTracesFields,
 				isLogScale,
+				columnWidths: columnWidths?.[selectedWidget?.id],
 			};
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		columnUnits,
 		currentQuery,
@@ -260,6 +259,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		combineHistogram,
 		stackedBarChart,
 		isLogScale,
+		columnWidths,
 	]);
 
 	const closeModal = (): void => {
@@ -562,12 +562,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const isQueryBuilderActive =
-		!featureFlags?.find((flag) => flag.name === FeatureKeys.QUERY_BUILDER_PANELS)
-			?.active || false;
-
 	const isNewTraceLogsAvailable =
-		isQueryBuilderActive &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		currentQuery.builder.queryData.find(
 			(query) => query.dataSource !== DataSource.METRICS,

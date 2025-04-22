@@ -248,6 +248,7 @@ func (q TagType) Validate() error {
 type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
+	TagType            TagType           `json:"tagType"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
@@ -1475,5 +1476,4 @@ type URLShareableOptions struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
-	PreferRPM       bool
 }

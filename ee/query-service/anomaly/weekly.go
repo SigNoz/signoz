@@ -27,11 +27,10 @@ func NewWeeklyProvider(opts ...GenericProviderOption[*WeeklyProvider]) *WeeklyPr
 	}
 
 	wp.querierV2 = querierV2.NewQuerier(querierV2.QuerierOptions{
-		Reader:        wp.reader,
-		Cache:         wp.cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  wp.fluxInterval,
-		FeatureLookup: wp.ff,
+		Reader:       wp.reader,
+		Cache:        wp.cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: wp.fluxInterval,
 	})
 
 	return wp

@@ -8,29 +8,30 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	pqle "github.com/SigNoz/signoz/pkg/query-service/pqlEngine"
 	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/prometheus/promql"
 	yaml "gopkg.in/yaml.v2"
 )
 
 type PromRule struct {
 	*BaseRule
-	pqlEngine *pqle.PqlEngine
+	prometheus prometheus.Prometheus
 }
 
 func NewPromRule(
 	id string,
-	postableRule *PostableRule,
+	postableRule *ruletypes.PostableRule,
 	logger *zap.Logger,
 	reader interfaces.Reader,
-	pqlEngine *pqle.PqlEngine,
+	prometheus prometheus.Prometheus,
 	opts ...RuleOption,
 ) (*PromRule, error) {
 
@@ -40,8 +41,8 @@ func NewPromRule(
 	}
 
 	p := PromRule{
-		BaseRule:  baseRule,
-		pqlEngine: pqlEngine,
+		BaseRule:   baseRule,
+		prometheus: prometheus,
 	}
 	p.logger = logger
 
@@ -55,8 +56,8 @@ func NewPromRule(
 	return &p, nil
 }
 
-func (r *PromRule) Type() RuleType {
-	return RuleTypeProm
+func (r *PromRule) Type() ruletypes.RuleType {
+	return ruletypes.RuleTypeProm
 }
 
 func (r *PromRule) GetSelectedQuery() string {
@@ -108,9 +109,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		return nil, err
 	}
 	zap.L().Info("evaluating promql query", zap.String("name", r.Name()), zap.String("query", q))
-	res, err := r.pqlEngine.RunAlertQuery(ctx, q, start, end, interval)
+	res, err := r.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
-		r.SetHealth(HealthBad)
+		r.SetHealth(ruletypes.HealthBad)
 		r.SetLastError(err)
 		return nil, err
 	}
@@ -120,7 +121,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 	resultFPs := map[uint64]struct{}{}
 
-	var alerts = make(map[uint64]*Alert, len(res))
+	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
 
 	for _, series := range res {
 		l := make(map[string]string, len(series.Metric))
@@ -140,14 +141,14 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
+		tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(alertSmpl.V, r.Unit()), threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
 		expand := func(text string) string {
 
-			tmpl := NewTemplateExpander(
+			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
 				"__alert_"+r.Name(),
@@ -187,12 +188,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
 			// We have already acquired the lock above hence using SetHealth and
 			// SetLastError will deadlock.
-			r.health = HealthBad
+			r.health = ruletypes.HealthBad
 			r.lastError = err
 			return nil, err
 		}
 
-		alerts[h] = &Alert{
+		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
@@ -231,7 +232,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
@@ -270,7 +271,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 		}
 
 	}
-	r.health = HealthGood
+	r.health = ruletypes.HealthGood
 	r.lastError = err
 
 	currentState := r.State()
@@ -289,10 +290,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) 
 
 func (r *PromRule) String() string {
 
-	ar := PostableRule{
+	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        Duration(r.evalWindow),
+		EvalWindow:        ruletypes.Duration(r.evalWindow),
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,
@@ -304,6 +305,43 @@ func (r *PromRule) String() string {
 	}
 
 	return string(byt)
+}
+
+func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (promql.Matrix, error) {
+	q, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, qs, start, end, interval)
+	if err != nil {
+		return nil, err
+	}
+
+	res := q.Exec(ctx)
+
+	if res.Err != nil {
+		return nil, res.Err
+	}
+
+	switch typ := res.Value.(type) {
+	case promql.Vector:
+		series := make([]promql.Series, 0, len(typ))
+		value := res.Value.(promql.Vector)
+		for _, smpl := range value {
+			series = append(series, promql.Series{
+				Metric: smpl.Metric,
+				Floats: []promql.FPoint{{T: smpl.T, F: smpl.F}},
+			})
+		}
+		return series, nil
+	case promql.Scalar:
+		value := res.Value.(promql.Scalar)
+		series := make([]promql.Series, 0, 1)
+		series = append(series, promql.Series{
+			Floats: []promql.FPoint{{T: value.T, F: value.V}},
+		})
+		return series, nil
+	case promql.Matrix:
+		return res.Value.(promql.Matrix), nil
+	default:
+		return nil, fmt.Errorf("rule result is not a vector or scalar")
+	}
 }
 
 func toCommonSeries(series promql.Series) v3.Series {

@@ -317,9 +317,10 @@ func createTelemetry() {
 
 		getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(ctx, HEART_BEAT_DURATION)
 
-		traceTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.TraceTTL})
-		metricsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.MetricsTTL})
-		logsTTL, _ := telemetry.reader.GetTTL(ctx, &model.GetTTLParams{Type: constants.LogsTTL})
+		// TODO update this post bootstrap decision
+		traceTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.TraceTTL})
+		metricsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.MetricsTTL})
+		logsTTL, _ := telemetry.reader.GetTTL(ctx, "", &model.GetTTLParams{Type: constants.LogsTTL})
 
 		userCount, _ := telemetry.userCountCallback(ctx)
 
@@ -740,7 +741,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	// zap.L().Info(data)
 	properties := analytics.NewProperties()
-	properties.Set("version", version.Info.Version)
+	properties.Set("version", version.Info.Version())
 	properties.Set("deploymentType", getDeploymentType())
 	properties.Set("companyDomain", a.getCompanyDomain())
 

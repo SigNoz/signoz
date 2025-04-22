@@ -25,6 +25,12 @@ var (
 	ErrNoExecute = errors.New("no execute")
 )
 
+var (
+	OrgReference              = "org"
+	UserReference             = "user"
+	CloudIntegrationReference = "cloud_integration"
+)
+
 func New(
 	ctx context.Context,
 	settings factory.ProviderSettings,

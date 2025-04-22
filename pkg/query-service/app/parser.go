@@ -21,6 +21,7 @@ import (
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -34,6 +35,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
 	"github.com/SigNoz/signoz/pkg/types"
+	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -717,6 +719,21 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
+	// empty string is a valid tagType
+	// i.e retrieve all attributes
+	if tagType != "" {
+		// what is happening here?
+		// if tagType is undefined(uh oh javascript) or any invalid value, set it to empty string
+		// instead of failing the request. Ideally, we should fail the request.
+		// but we are not doing that to maintain backward compatibility.
+		if err := tagType.Validate(); err != nil {
+			// if the tagType is invalid, set it to empty string
+			tagType = ""
+		}
+	}
+
 	if err != nil {
 		limit = 50
 	}
@@ -737,6 +754,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		AggregateAttribute: aggregateAttribute,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
+		TagType:            tagType,
 	}
 	return &req, nil
 }
@@ -839,6 +857,29 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 		}
 	}
 	return errs
+}
+
+// chTransformQuery transforms the clickhouse query with the given variables
+// it is used to check what would be the query if variables are selected as __all__.
+// for now, this is just a pass through, but in the future, we will use it to
+// dashboard variables
+// TODO(srikanthccv): version based query replacement
+func chTransformQuery(query string, variables map[string]interface{}) {
+	varsForTransform := make([]chVariables.VariableValue, 0, len(variables))
+	for name := range variables {
+		varsForTransform = append(varsForTransform, chVariables.VariableValue{
+			Name:        name,
+			Values:      []string{"__all__"},
+			IsSelectAll: true,
+			FieldType:   "scalar",
+		})
+	}
+	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
+	transformedQuery, err := transformer.Transform()
+	if err != nil {
+		zap.L().Warn("failed to transform clickhouse query", zap.String("query", query), zap.Error(err))
+	}
+	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
 }
 
 func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
@@ -979,6 +1020,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				continue
 			}
 
+			chTransformQuery(chQuery.Query, queryRangeParams.Variables)
 			for name, value := range queryRangeParams.Variables {
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
 				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)

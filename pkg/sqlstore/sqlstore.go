@@ -39,8 +39,11 @@ type SQLStoreHook interface {
 type SQLDialect interface {
 	MigrateIntToTimestamp(context.Context, bun.IDB, string, string) error
 	MigrateIntToBoolean(context.Context, bun.IDB, string, string) error
+	AddNotNullDefaultToColumn(context.Context, bun.IDB, string, string, string, string) error
 	GetColumnType(context.Context, bun.IDB, string, string) (string, error)
 	ColumnExists(context.Context, bun.IDB, string, string) (bool, error)
 	RenameColumn(context.Context, bun.IDB, string, string, string) (bool, error)
-	RenameTableAndModifyModel(context.Context, bun.IDB, interface{}, interface{}, func(context.Context) error) error
+	RenameTableAndModifyModel(context.Context, bun.IDB, interface{}, interface{}, []string, func(context.Context) error) error
+	UpdatePrimaryKey(context.Context, bun.IDB, interface{}, interface{}, string, func(context.Context) error) error
+	AddPrimaryKey(context.Context, bun.IDB, interface{}, interface{}, string, func(context.Context) error) error
 }

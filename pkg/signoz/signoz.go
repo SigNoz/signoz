@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -22,6 +23,7 @@ type SigNoz struct {
 	Web            web.Web
 	SQLStore       sqlstore.SQLStore
 	TelemetryStore telemetrystore.TelemetryStore
+	Prometheus     prometheus.Prometheus
 	Alertmanager   alertmanager.Alertmanager
 }
 
@@ -93,6 +95,18 @@ func New(
 		return nil, err
 	}
 
+	// Initialize prometheus from the available prometheus provider factories
+	prometheus, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.Prometheus,
+		NewPrometheusProviderFactories(telemetrystore),
+		config.Prometheus.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
@@ -135,6 +149,7 @@ func New(
 		Web:            web,
 		SQLStore:       sqlstore,
 		TelemetryStore: telemetrystore,
+		Prometheus:     prometheus,
 		Alertmanager:   alertmanager,
 	}, nil
 }
