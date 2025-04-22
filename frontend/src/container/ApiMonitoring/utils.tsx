@@ -15,6 +15,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
+import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
@@ -1472,14 +1473,14 @@ export const getEndPointDetailsQueryPayload = (
 							key: 'span_id',
 							type: '',
 						},
-						aggregateOperator: 'count',
+						aggregateOperator: 'count_distinct',
 						dataSource: DataSource.TRACES,
 						disabled: false,
 						expression: 'A',
 						filters: {
 							items: [
 								{
-									id: 'a32988a4',
+									id: 'bdac4904',
 									key: {
 										dataType: DataTypes.String,
 										id: 'http.url--string--tag--false',
@@ -1492,7 +1493,7 @@ export const getEndPointDetailsQueryPayload = (
 									value: endPointName,
 								},
 								{
-									id: '5a15032f',
+									id: 'b78ff216',
 									key: {
 										dataType: DataTypes.String,
 										id: 'net.peer.name--string--tag--false',
@@ -1527,10 +1528,227 @@ export const getEndPointDetailsQueryPayload = (
 						reduceTo: 'avg',
 						spaceAggregation: 'sum',
 						stepInterval: 60,
-						timeAggregation: 'count',
+						timeAggregation: 'count_distinct',
+					},
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'duration_nano--float64----true',
+							isColumn: true,
+							isJSON: false,
+							key: 'duration_nano',
+							type: '',
+						},
+						aggregateOperator: 'p99',
+						dataSource: DataSource.TRACES,
+						disabled: false,
+						expression: 'B',
+						filters: {
+							items: [
+								{
+									id: '74f9d185',
+									key: {
+										dataType: DataTypes.String,
+										id: 'http.url--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'http.url',
+										type: 'tag',
+									},
+									op: '=',
+									value: endPointName,
+								},
+								{
+									id: 'a9024472',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+								...filters.items,
+							],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'service.name--string--resource--true',
+								isColumn: true,
+								isJSON: false,
+								key: 'service.name',
+								type: 'resource',
+							},
+						],
+						having: [],
+						legend: 'p99 latency',
+						limit: null,
+						orderBy: [],
+						queryName: 'B',
+						reduceTo: 'avg',
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'p99',
+					},
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							id: '------false',
+							isColumn: false,
+							key: '',
+							type: '',
+						},
+						aggregateOperator: 'rate',
+						dataSource: DataSource.TRACES,
+						disabled: false,
+						expression: 'C',
+						filters: {
+							items: [
+								{
+									id: 'b7e36a72',
+									key: {
+										dataType: DataTypes.String,
+										id: 'http.url--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'http.url',
+										type: 'tag',
+									},
+									op: '=',
+									value: endPointName,
+								},
+								{
+									id: '1b6c062d',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+								...filters.items,
+							],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'service.name--string--resource--true',
+								isColumn: true,
+								isJSON: false,
+								key: 'service.name',
+								type: 'resource',
+							},
+						],
+						having: [],
+						legend: 'request per second',
+						limit: null,
+						orderBy: [],
+						queryName: 'C',
+						reduceTo: 'avg',
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'rate',
+					},
+					{
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							id: 'span_id--string----true',
+							isColumn: true,
+							isJSON: false,
+							key: 'span_id',
+							type: '',
+						},
+						aggregateOperator: 'count_distinct',
+						dataSource: DataSource.TRACES,
+						disabled: true,
+						expression: 'D',
+						filters: {
+							items: [
+								{
+									id: 'ede7cbfe',
+									key: {
+										dataType: DataTypes.String,
+										id: 'http.url--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'http.url',
+										type: 'tag',
+									},
+									op: '=',
+									value: endPointName,
+								},
+								{
+									id: 'd14792a8',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+								{
+									id: '3212bf1a',
+									key: {
+										dataType: DataTypes.bool,
+										id: 'has_error--bool----true',
+										isColumn: true,
+										isJSON: false,
+										key: 'has_error',
+										type: '',
+									},
+									op: '=',
+									value: 'true',
+								},
+								...filters.items,
+							],
+							op: 'AND',
+						},
+						functions: [],
+						groupBy: [
+							{
+								dataType: DataTypes.String,
+								id: 'service.name--string--resource--true',
+								isColumn: true,
+								isJSON: false,
+								key: 'service.name',
+								type: 'resource',
+							},
+						],
+						having: [],
+						legend: 'count',
+						limit: null,
+						orderBy: [],
+						queryName: 'D',
+						reduceTo: 'avg',
+						spaceAggregation: 'sum',
+						stepInterval: 60,
+						timeAggregation: 'count_distinct',
 					},
 				],
-				queryFormulas: [],
+				queryFormulas: [
+					{
+						queryName: 'F1',
+						expression: '(D/A)*100',
+						disabled: false,
+						legend: 'error percentage',
+					},
+				],
 			},
 			clickhouse_sql: [
 				{
@@ -1963,30 +2181,134 @@ export const getFormattedEndPointDropDownData = (
 interface DependentServicesResponseRow {
 	data: {
 		['service.name']: string;
-		A: number;
+		A: number | string;
+		B: number | string;
+		C: number | string;
+		F1: number | string;
 	};
 }
 
-interface DependentServicesData {
-	key: string;
+export interface ServiceData {
 	serviceName: string;
-	count: number;
-	percentage: number;
+	count: number | string;
+	percentage: number | string;
+}
+
+export interface DependentServicesData {
+	key: string;
+	serviceData: ServiceData;
+	latency: number | string;
+	rate: number | string;
+	errorPercentage: number | string;
 }
 
 // Discuss once about type safety of this function
 export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): DependentServicesData[] => {
 	if (!data) return [];
-	const totalCount = data?.reduce((acc, row) => acc + row.data.A, 0);
+	const totalCount = data?.reduce((acc, row) => acc + Number(row.data.A), 0);
 	return data?.map((row) => ({
 		key: v4(),
-		serviceName: row.data['service.name'],
-		count: row.data.A,
-		percentage: Number(((row.data.A / totalCount) * 100).toFixed(2)),
+		serviceData: {
+			serviceName: row.data['service.name'] || '-',
+			count:
+				row.data.A !== undefined && row.data.A !== '-' && row.data.A !== 'n/a'
+					? Number(row.data.A)
+					: '-',
+			percentage:
+				totalCount > 0 &&
+				row.data.A !== undefined &&
+				row.data.A !== '-' &&
+				row.data.A !== 'n/a'
+					? Number(((Number(row.data.A) / totalCount) * 100).toFixed(2))
+					: 0,
+		},
+		latency:
+			row.data.B !== undefined && row.data.B !== '-' && row.data.B !== 'n/a'
+				? Math.round(Number(row.data.B) / 1000000)
+				: '-',
+		rate:
+			row.data.C !== undefined && row.data.C !== '-' && row.data.C !== 'n/a'
+				? row.data.C
+				: '-',
+		errorPercentage:
+			row.data.F1 !== undefined && row.data.F1 !== '-' && row.data.F1 !== 'n/a'
+				? row.data.F1
+				: 0,
 	}));
 };
+
+export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
+	{
+		title: <span className="title-wrapper col-title">Dependent Services</span>,
+		dataIndex: 'serviceData',
+		key: 'serviceData',
+		render: (serviceData: ServiceData): ReactNode => (
+			<div className="top-services-item">
+				<div className="top-services-item-progress">
+					<div className="top-services-item-key">{serviceData.serviceName}</div>
+					<div className="top-services-item-count">{serviceData.count}</div>
+					<div
+						className="top-services-item-progress-bar"
+						style={{ width: `${serviceData.percentage}%` }}
+					/>
+				</div>
+				<div className="top-services-item-percentage">
+					{typeof serviceData.percentage === 'number'
+						? serviceData.percentage.toFixed(2)
+						: serviceData.percentage}
+					%
+				</div>
+			</div>
+		),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
+			Number(a.serviceData.count) - Number(b.serviceData.count),
+	},
+	{
+		title: (
+			<span className="top-services-item-latency-title col-title">
+				AVG. LATENCY
+			</span>
+		),
+		dataIndex: 'latency',
+		key: 'latency',
+		render: (latency: number): ReactNode => (
+			<div className="top-services-item-latency">{latency || '-'}ms</div>
+		),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
+			Number(a.latency) - Number(b.latency),
+	},
+	{
+		title: (
+			<span className="top-services-item-error-percentage-title col-title">
+				ERROR %
+			</span>
+		),
+		dataIndex: 'errorPercentage',
+		key: 'errorPercentage',
+		align: 'center',
+		render: (errorPercentage: number): ReactNode => (
+			<div className="top-services-item-error-percentage">{errorPercentage}%</div>
+		),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
+			Number(a.errorPercentage) - Number(b.errorPercentage),
+	},
+	{
+		title: (
+			<span className="top-services-item-rate-title col-title">AVG. RATE</span>
+		),
+		dataIndex: 'rate',
+		key: 'rate',
+		align: 'right',
+		render: (rate: number): ReactNode => (
+			<div className="top-services-item-rate">{rate || '-'} ops/sec</div>
+		),
+		sorter: (a: DependentServicesData, b: DependentServicesData): number =>
+			Number(a.rate) - Number(b.rate),
+	},
+];
 
 export const getFormattedChartData = (
 	data: MetricRangePayloadProps,
