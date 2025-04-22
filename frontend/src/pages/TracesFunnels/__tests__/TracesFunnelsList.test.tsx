@@ -4,34 +4,14 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import { UseMutationResult } from 'react-query';
 import { MemoryRouter, Route } from 'react-router-dom';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { FunnelData } from 'types/api/traceFunnels';
 
 import TracesFunnels from '..';
 import { mockFunnelsListData, mockSingleFunnelData } from './mockFunnelsData';
 
 const mockUseFunnelsList = jest.fn();
-
-type MockMutationResult = Partial<
-	UseMutationResult<
-		SuccessResponse<FunnelData> | ErrorResponse,
-		Error,
-		{ id: string }
-	>
->;
-
-const mockMutate = jest.fn();
-
-const mockMutationState: MockMutationResult = {
-	mutate: mockMutate,
-	isLoading: false,
-	isError: false,
-	isSuccess: false,
-};
-
 jest.mock('hooks/TracesFunnels/useFunnels', () => ({
+	...jest.requireActual('hooks/TracesFunnels/useFunnels'),
 	useFunnelsList: (): void => mockUseFunnelsList(),
 	useFunnelDetails: jest.fn(() => ({
 		// Mock for details page test
@@ -39,9 +19,6 @@ jest.mock('hooks/TracesFunnels/useFunnels', () => ({
 		isLoading: false,
 		isError: false,
 	})),
-	useDeleteFunnel: (): MockMutationResult => mockMutationState,
-	useRenameFunnel: (): MockMutationResult => mockMutationState,
-	useCreateFunnel: (): MockMutationResult => mockMutationState,
 }));
 
 jest.mock('hooks/useSafeNavigate', () => ({

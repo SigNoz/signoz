@@ -106,16 +106,6 @@ jest.mock(
 		},
 );
 
-jest.mock('hooks/TracesFunnels/useFunnels', () => ({
-	__esModule: true,
-	...jest.requireActual('hooks/TracesFunnels/useFunnels'),
-	useValidateFunnelSteps: jest.fn(() => ({
-		data: { payload: { data: [] } },
-		isLoading: false,
-		isFetching: false,
-	})),
-}));
-
 const queryClient = new QueryClient({
 	defaultOptions: { queries: { retry: false } },
 });
