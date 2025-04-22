@@ -62,7 +62,7 @@ function AllErrors(): JSX.Element {
 				)}
 			>
 				<TypicalOverlayScrollbar>
-					<div>
+					<>
 						<Toolbar
 							showAutoRefresh={false}
 							leftActions={
@@ -78,7 +78,7 @@ function AllErrors(): JSX.Element {
 						/>
 						<ResourceAttributesFilterV2 />
 						<RouteTab routes={routes} activeKey={pathname} history={history} />
-					</div>
+					</>
 				</TypicalOverlayScrollbar>
 			</section>
 		</div>
