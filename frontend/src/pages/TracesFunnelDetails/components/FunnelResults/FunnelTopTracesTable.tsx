@@ -1,12 +1,11 @@
 import { ErrorTraceData, SlowTraceData } from 'api/traceFunnels';
-import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Link } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import FunnelTable from './FunnelTable';
+import { topTracesTableColumns } from './utils';
 
 interface FunnelTopTracesTableProps {
 	funnelId: string;
@@ -61,39 +60,11 @@ function FunnelTopTracesTable({
 		}));
 	}, [response]);
 
-	const columns = useMemo(
-		() => [
-			{
-				title: 'TRACE ID',
-				dataIndex: 'trace_id',
-				key: 'trace_id',
-				render: (traceId: string): JSX.Element => (
-					<Link to={`/trace/${traceId}`} className="trace-id-cell">
-						{traceId}
-					</Link>
-				),
-			},
-			{
-				title: 'DURATION',
-				dataIndex: 'duration_ms',
-				key: 'duration_ms',
-				render: (value: string): string => getYAxisFormattedValue(value, 'ms'),
-			},
-			{
-				title: 'SPAN COUNT',
-				dataIndex: 'span_count',
-				key: 'span_count',
-				render: (value: number): string => value.toString(),
-			},
-		],
-		[],
-	);
-
 	return (
 		<FunnelTable
 			title={title}
 			tooltip={tooltip}
-			columns={columns}
+			columns={topTracesTableColumns}
 			data={data}
 			loading={isLoading || isFetching}
 		/>
