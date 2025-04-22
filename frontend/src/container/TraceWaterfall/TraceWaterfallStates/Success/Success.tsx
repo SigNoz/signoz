@@ -46,7 +46,7 @@ interface ITraceMetadata {
 	endTime: number;
 	hasMissingSpans: boolean;
 }
-interface ISuccessProps {
+export interface ISuccessProps {
 	spans: Span[];
 	traceMetadata: ITraceMetadata;
 	interestedSpanId: IInterestedSpan;
@@ -158,6 +158,7 @@ function SpanOverview({
 									type="text"
 									size="small"
 									className="add-funnel-button__button"
+									data-testid="add-to-funnel-button"
 									onClick={(e): void => {
 										e.preventDefault();
 										e.stopPropagation();
@@ -450,7 +451,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				virtualiserRef={virtualizerRef}
 				setColumnWidths={setTraceFlamegraphStatsWidth}
 			/>
-			{selectedSpanToAddToFunnel && process.env.NODE_ENV === 'development' && (
+			{selectedSpanToAddToFunnel && (
 				<AddSpanToFunnelModal
 					span={selectedSpanToAddToFunnel}
 					isOpen={isAddSpanToFunnelModalOpen}
