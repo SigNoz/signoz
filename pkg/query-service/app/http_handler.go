@@ -5689,13 +5689,13 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *AuthMid
 func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 	var req traceFunnels.NewFunnelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding new funnel: %v", err)}, nil)
 		return
 	}
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
 		return
 	}
 	userID := claims.UserID
@@ -5703,7 +5703,7 @@ func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 
 	// Validate timestamp is provided and in milliseconds format
 	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "creation_timestamp"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
@@ -5711,17 +5711,17 @@ func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 	exists, err := aH.TraceFunnels.CheckFunnelNameCollision(req.Name, userID)
 	if err != nil {
 		zap.L().Error("Error checking for funnel name collision: %v", zap.Error(err))
-		http.Error(w, fmt.Sprintf("failed to check funnel name collision: %v", err), http.StatusInternalServerError)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to check funnel name collision: %v", err)}, nil)
 		return
 	} else if exists {
-		http.Error(w, fmt.Sprintf("funnel with name '%s' already exists for user '%s' in the database", req.Name, userID), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("funnel with name '%s' already exists for user '%s' in the database", req.Name, userID)}, nil)
 		return
 	}
 
 	// Create new funnel in database
 	funnel, err := aH.TraceFunnels.CreateFunnel(req.Timestamp, req.Name, userID, orgID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to save funnel to database: %v", err), http.StatusInternalServerError)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to save funnel to database: %v", err)}, nil)
 		return
 	}
 
@@ -5740,25 +5740,25 @@ func (aH *APIHandler) handleNewFunnel(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Request) {
 	var req traceFunnels.FunnelStepRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding funnel step request: %v", err)}, nil)
 		return
 	}
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
 		return
 	}
 	userID := claims.UserID
 
 	if err := traceFunnels.ValidateTimestamp(req.Timestamp, "updated_timestamp"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	funnel, err := aH.TraceFunnels.GetFunnelFromDB(req.FunnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
 		return
 	}
 
@@ -5770,7 +5770,7 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := traceFunnels.ValidateFunnelSteps(req.Steps); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid funnel steps: %v", err)}, nil)
 		return
 	}
 
@@ -5785,7 +5785,7 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 	// Update funnel in database
 	err = aH.TraceFunnels.UpdateFunnel(funnel, userID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to update funnel in database: %v", err), http.StatusInternalServerError)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to update funnel in database: %v", err)}, nil)
 		return
 	}
 
@@ -5806,7 +5806,7 @@ func (aH *APIHandler) handleUpdateFunnelStep(w http.ResponseWriter, r *http.Requ
 func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) {
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
 		return
 	}
 	orgID := claims.OrgID
@@ -5817,7 +5817,7 @@ func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) 
 	dbFunnels, err = aH.TraceFunnels.ListFunnelsFromDB(orgID)
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error fetching funnels from database: %v", err), http.StatusInternalServerError)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error fetching funnels from database: %v", err)}, nil)
 		return
 	}
 
@@ -5860,7 +5860,6 @@ func (aH *APIHandler) handleListFunnels(w http.ResponseWriter, r *http.Request) 
 		response = append(response, funnelResp)
 	}
 
-	w.WriteHeader(http.StatusOK)
 	aH.Respond(w, response)
 }
 
@@ -5870,7 +5869,7 @@ func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
 
 	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
 		return
 	}
 
@@ -5916,7 +5915,6 @@ func (aH *APIHandler) handleGetFunnel(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//json.NewEncoder(w).Encode(fullResponse)
 	aH.Respond(w, fullResponse)
 }
 
@@ -5926,11 +5924,10 @@ func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request)
 
 	err := aH.TraceFunnels.DeleteFunnelFromDB(funnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to delete funnel: %v", err), http.StatusInternalServerError)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to delete funnel: %v", err)}, nil)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	aH.Respond(w, map[string]string{"status": "success"})
 }
 
@@ -5939,13 +5936,13 @@ func (aH *APIHandler) handleDeleteFunnel(w http.ResponseWriter, r *http.Request)
 func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 	var req traceFunnels.SaveFunnelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding save funnel request: %v", err)}, nil)
 		return
 	}
 
 	claims, ok := authtypes.ClaimsFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		RespondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: fmt.Errorf("unauthenticated")}, nil)
 		return
 	}
 	orgID := claims.OrgID
@@ -5953,7 +5950,7 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 
 	funnel, err := aH.TraceFunnels.GetFunnelFromDB(req.FunnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
 		return
 	}
 
@@ -5961,7 +5958,7 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 	if updateTimestamp == 0 {
 		updateTimestamp = time.Now().UnixMilli()
 	} else if !traceFunnels.ValidateTimestampIsMilliseconds(updateTimestamp) {
-		http.Error(w, "timestamp must be in milliseconds format (13 digits)", http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("timestamp must be in milliseconds format (13 digits)")}, nil)
 		return
 	}
 	funnel.UpdatedAt = updateTimestamp * 1000000 // ms to ns
@@ -5974,18 +5971,14 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 	if req.Description != "" {
 		descJSON, err := json.Marshal(map[string]string{"description": req.Description})
 		if err != nil {
-			http.Error(w, "failed to marshal description: "+err.Error(), http.StatusInternalServerError)
+			RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to marshal description: %v", err)}, nil)
 			return
 		}
 		extraData = string(descJSON)
 	}
 
-	if orgID == "" {
-		orgID = funnel.OrgID
-	}
-
 	if err := aH.TraceFunnels.SaveFunnel(funnel, funnel.UpdatedBy, orgID, req.Tags, extraData); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("failed to save funnel: %v", err)}, nil)
 		return
 	}
 
@@ -6012,7 +6005,6 @@ func (aH *APIHandler) handleSaveFunnel(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
 	aH.Respond(w, resp)
 }
 
@@ -6022,32 +6014,29 @@ func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Reques
 
 	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
 		return
 	}
 
 	var timeRange traceFunnels.TimeRange
 	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
 		return
 	}
 
 	if len(funnel.Steps) < 2 {
-		http.Error(w, "funnel must have at least 2 steps", http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("funnel must have at least 2 steps")}, nil)
 		return
 	}
 
 	chq, err := traceFunnels.ValidateTraces(funnel, timeRange)
-
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 
 	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
 		return
 	}
@@ -6061,26 +6050,24 @@ func (aH *APIHandler) handleFunnelAnalytics(w http.ResponseWriter, r *http.Reque
 
 	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
 		return
 	}
 
 	var timeRange traceFunnels.TimeRange
 	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
 		return
 	}
 
 	chq, err := traceFunnels.ValidateTracesWithLatency(funnel, timeRange)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 
 	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
 		return
 	}
@@ -6091,29 +6078,26 @@ func (aH *APIHandler) handleStepAnalytics(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
-	// Get funnel directly from SQLite database
 	funnel, err := aH.TraceFunnels.GetFunnelFromDB(funnelID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("funnel not found: %v", err), http.StatusNotFound)
+		RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("funnel not found: %v", err)}, nil)
 		return
 	}
 
 	var timeRange traceFunnels.TimeRange
 	if err := json.NewDecoder(r.Body).Decode(&timeRange); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("error decoding time range: %v", err)}, nil)
 		return
 	}
 
 	chq, err := traceFunnels.GetStepAnalytics(funnel, timeRange)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 
 	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
 		return
 	}
@@ -6134,25 +6118,23 @@ func (aH *APIHandler) handleFunnelErrorTraces(w http.ResponseWriter, r *http.Req
 func (aH *APIHandler) handleTracesWithLatency(w http.ResponseWriter, r *http.Request, isError bool) {
 	funnel, req, err := aH.validateTracesRequest(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	if err := aH.validateSteps(funnel, req.StepAOrder, req.StepBOrder); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	chq, err := traceFunnels.GetSlowestTraces(funnel, req.StepAOrder, req.StepBOrder, req.TimeRange, isError)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
 
 	results, err := aH.reader.GetListResultV3(r.Context(), chq.Query)
 	if err != nil {
-		zap.L().Error(err.Error())
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error converting clickhouse results to list: %v", err)}, nil)
 		return
 	}
