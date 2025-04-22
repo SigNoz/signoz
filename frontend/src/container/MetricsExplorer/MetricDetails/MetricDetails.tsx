@@ -130,7 +130,11 @@ function MetricDetails({
 			destroyOnClose
 			closeIcon={<X size={16} />}
 		>
-			{isMetricDetailsLoading && <Skeleton active />}
+			{isMetricDetailsLoading && (
+				<div data-testid="metric-details-skeleton">
+					<Skeleton active />
+				</div>
+			)}
 			{isMetricDetailsError && !isMetricDetailsLoading && (
 				<Empty description="Error fetching metric details" />
 			)}
@@ -171,7 +175,9 @@ function MetricDetails({
 						metadata={metric.metadata}
 						refetchMetricDetails={refetchMetricDetails}
 					/>
-					<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+					{metric.attributes && (
+						<AllAttributes metricName={metric?.name} attributes={metric.attributes} />
+					)}
 				</div>
 			)}
 		</Drawer>
