@@ -58,7 +58,7 @@ export const getFunnelById = async (
 	funnelId?: string,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.get(
-		`${FUNNELS_BASE_PATH}/get/${funnelId}`,
+		`${FUNNELS_BASE_PATH}/${funnelId}`,
 	);
 
 	return {
@@ -98,7 +98,7 @@ export const deleteFunnel = async (
 	payload: DeleteFunnelPayload,
 ): Promise<SuccessResponse<FunnelData> | ErrorResponse> => {
 	const response: AxiosResponse = await axios.delete(
-		`${FUNNELS_BASE_PATH}/delete/${payload.id}`,
+		`${FUNNELS_BASE_PATH}/${payload.id}`,
 	);
 
 	return {
