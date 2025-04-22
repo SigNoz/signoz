@@ -586,7 +586,7 @@ export interface EndPointsTableRowData {
 	callCount: number | string;
 	latency: number | string;
 	errorRate: number | string;
-	lastUsed: string;
+	lastUsed: string | number;
 	groupedByMeta?: Record<string, string | number>;
 }
 
@@ -783,6 +783,11 @@ export const getEndPointsColumnsConfig = (
 		},
 		align: 'right',
 		className: `column`,
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		render: (lastUsed: string): string =>
+			lastUsed === 'n/a' || lastUsed === '-'
+				? '-'
+				: getLastUsedRelativeTime(new Date(lastUsed).getTime()),
 	},
 ];
 
@@ -813,7 +818,8 @@ export const formatEndPointsDataForTable = (
 				lastUsed:
 					endpoint.data.C === 'n/a' || endpoint.data.C === undefined
 						? '-'
-						: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
+						: new Date(Math.floor(Number(endpoint.data.C) / 1000000)).toISOString(), // Convert from nanoseconds to milliseconds
+
 				errorRate:
 					endpoint.data.F1 === undefined || endpoint.data.F1 === 'n/a'
 						? 0
