@@ -103,7 +103,8 @@ function GraphView({
 				},
 			],
 			series: [
-				...formattedInspectMetricsTimeSeries.map((_, index) => ({
+				{ label: 'Time' }, // This config is required as a placeholder for x-axis,
+				...formattedInspectMetricsTimeSeries.slice(1).map((_, index) => ({
 					drawStyle: 'line',
 					lineInterpolation: 'spline',
 					show: true,

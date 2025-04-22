@@ -507,9 +507,9 @@ export function onGraphClick(
 		u,
 		formattedInspectMetricsTimeSeries,
 	);
-	if (seriesIndex === -1) return;
+	if (seriesIndex <= 0) return;
 
-	const series = inspectMetricsTimeSeries[seriesIndex];
+	const series = inspectMetricsTimeSeries[seriesIndex - 1];
 
 	const { left, top } = u.over.getBoundingClientRect();
 	const x = e.clientX - left;
@@ -579,7 +579,7 @@ export function getSpaceAggregatedDataFromTimeSeries(
 		}
 	});
 
-	return matchingSeries.map((series) => {
+	return matchingSeries.slice(0, 5).map((series) => {
 		const timestampIndex = series.values.findIndex(
 			(value) => value.timestamp >= timestamp,
 		);
@@ -690,7 +690,7 @@ export function onGraphHover(
 		});
 	}
 
-	const series = inspectMetricsTimeSeries[seriesIndex];
+	const series = inspectMetricsTimeSeries[seriesIndex - 1];
 
 	setPopoverOptions({
 		x: e.clientX,
