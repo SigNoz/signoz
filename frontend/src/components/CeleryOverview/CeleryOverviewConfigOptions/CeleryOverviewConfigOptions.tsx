@@ -9,6 +9,7 @@ import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOpt
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 export interface SelectOptionConfig {
@@ -38,6 +39,37 @@ export function FilterSelect({
 	const history = useHistory();
 	const location = useLocation();
 
+	// Use externally provided `values` if `shouldSetQueryParams` is false, otherwise get from URL params.
+	const selectValue =
+		!shouldSetQueryParams && !!values?.length
+			? values
+			: getValuesFromQueryParams(queryParam, urlQuery) || [];
+
+	const handleSelectChange = useCallback(
+		(value: string | string[]): void => {
+			handleSearch('');
+			if (shouldSetQueryParams) {
+				setQueryParamsFromOptions(
+					value as string[],
+					urlQuery,
+					history,
+					location,
+					queryParam,
+				);
+			}
+			onChange?.(value);
+		},
+		[
+			handleSearch,
+			shouldSetQueryParams,
+			urlQuery,
+			history,
+			location,
+			queryParam,
+			onChange,
+		],
+	);
+
 	return (
 		<Select
 			key={filterType.toString()}
@@ -52,11 +84,7 @@ export function FilterSelect({
 			maxTagCount={4}
 			allowClear
 			maxTagPlaceholder={SelectMaxTagPlaceholder}
-			value={
-				!shouldSetQueryParams && !!values?.length
-					? values
-					: getValuesFromQueryParams(queryParam, urlQuery) || []
-			}
+			value={selectValue}
 			notFoundContent={
 				isFetching ? (
 					<span>
@@ -66,19 +94,7 @@ export function FilterSelect({
 					<span>No {placeholder} found</span>
 				)
 			}
-			onChange={(value): void => {
-				handleSearch('');
-				if (shouldSetQueryParams) {
-					setQueryParamsFromOptions(
-						value as string[],
-						urlQuery,
-						history,
-						location,
-						queryParam,
-					);
-				}
-				onChange?.(value);
-			}}
+			onChange={handleSelectChange}
 		/>
 	);
 }
