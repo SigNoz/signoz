@@ -1,5 +1,13 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Select, Spin, Table, Typography } from 'antd';
+import {
+	Select,
+	Spin,
+	Table,
+	TablePaginationConfig,
+	TableProps,
+	Typography,
+} from 'antd';
+import { SorterResult } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -52,6 +60,11 @@ function AllEndPoints({
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
 	>([]);
+
+	const [orderBy, setOrderBy] = useState<{
+		columnName: string;
+		order: 'asc' | 'desc';
+	} | null>(null);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
 
@@ -137,6 +150,7 @@ function AllEndPoints({
 			selectedRowData={record}
 			setSelectedEndPointName={setSelectedEndPointName}
 			setSelectedView={setSelectedView}
+			orderBy={orderBy}
 		/>
 	);
 
@@ -158,13 +172,34 @@ function AllEndPoints({
 		}
 	};
 
+	const handleTableChange: TableProps<EndPointsTableRowData>['onChange'] = useCallback(
+		(
+			_pagination: TablePaginationConfig,
+			_filters: Record<string, (string | number | boolean)[] | null>,
+			sorter:
+				| SorterResult<EndPointsTableRowData>
+				| SorterResult<EndPointsTableRowData>[],
+		): void => {
+			if ('field' in sorter && sorter.order) {
+				setOrderBy({
+					columnName: sorter.field as string,
+					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+				});
+			} else {
+				setOrderBy(null);
+			}
+		},
+		[],
+	);
+
 	const formattedEndPointsData = useMemo(
 		() =>
 			formatEndPointsDataForTable(
 				allEndPointsData?.payload?.data?.result[0]?.table?.rows,
 				groupBy,
+				orderBy,
 			),
-		[groupBy, allEndPointsData],
+		[groupBy, allEndPointsData, orderBy],
 	);
 
 	if (isError) {
@@ -232,6 +267,7 @@ function AllEndPoints({
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 					}
+					onChange={handleTableChange}
 				/>
 			</div>
 		</div>

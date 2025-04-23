@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { VIEW_TYPES, VIEWS } from '../constants';
@@ -28,11 +29,13 @@ function ExpandedRow({
 	selectedRowData,
 	setSelectedEndPointName,
 	setSelectedView,
+	orderBy,
 }: {
 	domainName: string;
 	selectedRowData: EndPointsTableRowData;
 	setSelectedEndPointName: (name: string) => void;
 	setSelectedView: (view: VIEWS) => void;
+	orderBy: OrderByPayload | null;
 }): JSX.Element {
 	const nestedColumns = useMemo(() => getEndPointsColumnsConfig(false, []), []);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -100,6 +103,7 @@ function ExpandedRow({
 								? formatEndPointsDataForTable(
 										groupedByRowQuery.data?.payload.data.result[0].table?.rows,
 										[],
+										orderBy,
 								  )
 								: []
 						}
