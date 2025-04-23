@@ -72,4 +72,7 @@ type SQLDialect interface {
 	// Adds a primary key to the given table, old model, new model, reference and callback. The old model and new model
 	// must inherit bun.BaseModel.
 	AddPrimaryKey(context.Context, bun.IDB, interface{}, interface{}, string, func(context.Context) error) error
+
+	// Drops the column and the associated foreign key constraint for the given table and column.
+	DropColumnWithForeignKeyConstraint(context.Context, bun.IDB, interface{}, string) error
 }

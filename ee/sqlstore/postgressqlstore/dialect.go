@@ -419,3 +419,17 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 
 	return nil
 }
+
+func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bun bun.IDB, model interface{}, column string) error {
+	table := bun.Dialect().Tables().Get(reflect.TypeOf(model))
+	if !table.HasField(column) {
+		return nil
+	}
+
+	_, err := bun.NewDropColumn().Model(model).Column(column).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

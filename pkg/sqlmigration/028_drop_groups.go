@@ -49,16 +49,6 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		Name  string `bun:"name,type:text,notnull,unique" json:"name"`
 	}
 
-	var groups []*Group
-	if err := tx.NewSelect().Model(&groups).Scan(ctx); err != nil {
-		return err
-	}
-
-	groupIDToRoleMap := make(map[string]string)
-	for _, group := range groups {
-		groupIDToRoleMap[group.ID] = group.Name
-	}
-
 	type existingUser struct {
 		bun.BaseModel `bun:"table:users"`
 
@@ -72,49 +62,38 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
 	}
 
-	type newUser struct {
-		bun.BaseModel `bun:"table:new_users"`
-
-		types.TimeAuditable
-		ID                string `bun:"id,pk,type:text" json:"id"`
-		Name              string `bun:"name,type:text,notnull" json:"name"`
-		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
-		Password          string `bun:"password,type:text,notnull" json:"-"`
-		ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
-		Role              string `bun:"role,type:text,notnull" json:"role"`
-		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
+	var existingUsers []*existingUser
+	if err := tx.NewSelect().Model(&existingUsers).Scan(ctx); err != nil {
+		return err
 	}
 
-	migration.sqlstore.Dialect().RenameTableAndModifyModel(ctx, tx, new(existingUser), new(newUser), []string{OrgReference}, func(ctx context.Context) error {
-		var existingUsers []*existingUser
-		if err := tx.NewSelect().Model(&existingUsers).Scan(ctx); err != nil {
+	var groups []*Group
+	if err := tx.NewSelect().Model(&groups).Scan(ctx); err != nil {
+		return err
+	}
+
+	groupIDToRoleMap := make(map[string]string)
+	for _, group := range groups {
+		groupIDToRoleMap[group.ID] = group.Name
+	}
+
+	roleToUserIDMap := make(map[string][]string)
+	for _, user := range existingUsers {
+		roleToUserIDMap[groupIDToRoleMap[user.GroupID]] = append(roleToUserIDMap[groupIDToRoleMap[user.GroupID]], user.ID)
+	}
+
+	if err := migration.sqlstore.Dialect().DropColumnWithForeignKeyConstraint(ctx, tx, new(existingUser), "group_id"); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewAddColumn().IfNotExists().Table("users").ColumnExpr("role TEXT").Exec(ctx); err != nil {
+		return err
+	}
+
+	for role, userIDs := range roleToUserIDMap {
+		if _, err := tx.NewUpdate().Table("users").Set("role = ?", role).Where("id IN (?)", bun.In(userIDs)).Exec(ctx); err != nil {
 			return err
 		}
-
-		newUsers := make([]*newUser, 0)
-		for _, user := range existingUsers {
-			newUsers = append(newUsers, &newUser{
-				ID:                user.ID,
-				Name:              user.Name,
-				Email:             user.Email,
-				Password:          user.Password,
-				ProfilePictureURL: user.ProfilePictureURL,
-				Role:              groupIDToRoleMap[user.GroupID],
-				OrgID:             user.OrgID,
-			})
-		}
-
-		if len(newUsers) > 0 {
-			if _, err := tx.NewInsert().Model(&newUsers).Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-
-	if _, err := tx.ExecContext(ctx, "ALTER TABLE new_users RENAME TO users"); err != nil {
-		return err
 	}
 
 	if _, err := tx.
