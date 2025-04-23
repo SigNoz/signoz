@@ -459,11 +459,14 @@ type UpdateServiceConfigResponse struct {
 func (c *Controller) UpdateServiceConfig(
 	ctx context.Context,
 	cloudProvider string,
-	serviceId string,
+	serviceType string,
 	req *UpdateServiceConfigRequest,
 ) (*UpdateServiceConfigResponse, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
+	}
+	if err := req.Validate(serviceType); err != nil {
+		return nil, model.BadRequest(err)
 	}
 
 	// can only update config for a connected cloud account id
@@ -475,20 +478,20 @@ func (c *Controller) UpdateServiceConfig(
 	}
 
 	// can only update config for a valid service.
-	_, apiErr = services.GetServiceDefinition(cloudProvider, serviceId)
+	_, apiErr = services.GetServiceDefinition(cloudProvider, serviceType)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "unsupported service")
 	}
 
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
-		ctx, cloudProvider, req.CloudAccountId, serviceId, req.Config,
+		ctx, cloudProvider, req.CloudAccountId, serviceType, req.Config,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't update service config")
 	}
 
 	return &UpdateServiceConfigResponse{
-		Id:     serviceId,
+		Id:     serviceType,
 		Config: *updatedConfig,
 	}, nil
 }

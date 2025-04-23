@@ -60,6 +60,7 @@ type CollectionStrategy struct {
 
 	AWSMetrics *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
 	AWSLogs    *AWSLogsStrategy    `json:"aws_logs,omitempty"`
+	S3Buckets  map[string][]string `json:"s3_buckets,omitempty"` // Only available in S3 Sync Service Type
 }
 
 type AWSMetricsStrategy struct {

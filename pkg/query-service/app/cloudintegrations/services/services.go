@@ -47,7 +47,7 @@ func Map(cloudprovider string) (map[string]Definition, *model.ApiError) {
 }
 
 func GetServiceDefinition(
-	cloudProvider string, serviceId string,
+	cloudProvider string, serviceType string,
 ) (*Definition, *model.ApiError) {
 	cloudServices := supportedServices[cloudProvider]
 	if cloudServices == nil {
@@ -56,10 +56,10 @@ func GetServiceDefinition(
 		))
 	}
 
-	svc, exists := cloudServices[serviceId]
+	svc, exists := cloudServices[serviceType]
 	if !exists {
 		return nil, model.NotFoundError(fmt.Errorf(
-			"%s service not found: %s", cloudProvider, serviceId,
+			"%s service not found: %s", cloudProvider, serviceType,
 		))
 	}
 

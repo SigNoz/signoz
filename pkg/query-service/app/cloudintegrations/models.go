@@ -205,11 +205,16 @@ func AddServiceStrategy(cs *CompiledCollectionStrategy,
 	}
 
 	if cs.Provider == "aws" {
-		if config.Logs != nil && config.Logs.Enabled && definitionStrat.AWSLogs != nil {
-			cs.AWSLogs.Subscriptions = append(
-				cs.AWSLogs.Subscriptions,
-				definitionStrat.AWSLogs.Subscriptions...,
-			)
+		if config.Logs != nil && config.Logs.Enabled {
+			// services that includes a logs subscription
+			if definitionStrat.AWSLogs != nil {
+				cs.AWSLogs.Subscriptions = append(
+					cs.AWSLogs.Subscriptions,
+					definitionStrat.AWSLogs.Subscriptions...,
+				)
+			} else if len(config.Logs.S3Buckets) > 0 { // S3 bucket sync
+				cs.S3Buckets = config.Logs.S3Buckets
+			}
 		}
 		if config.Metrics != nil && config.Metrics.Enabled && definitionStrat.AWSMetrics != nil {
 			cs.AWSMetrics.StreamFilters = append(
@@ -217,9 +222,9 @@ func AddServiceStrategy(cs *CompiledCollectionStrategy,
 				definitionStrat.AWSMetrics.StreamFilters...,
 			)
 		}
+
 		return nil
 	}
 
 	return fmt.Errorf("unsupported cloud provider: %s", cs.Provider)
-
 }
