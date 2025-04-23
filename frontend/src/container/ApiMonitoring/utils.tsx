@@ -24,6 +24,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
+	OrderByPayload,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -676,16 +677,6 @@ export const getEndPointsColumnsConfig = (
 		key: 'callCount',
 		width: 180,
 		ellipsis: true,
-		sorter: (
-			rowA: EndPointsTableRowData,
-			rowB: EndPointsTableRowData,
-		): number => {
-			const callCountA =
-				rowA.callCount === '-' || rowA.callCount === 'n/a' ? 0 : rowA.callCount;
-			const callCountB =
-				rowB.callCount === '-' || rowB.callCount === 'n/a' ? 0 : rowB.callCount;
-			return Number(callCountA) - Number(callCountB);
-		},
 		align: 'right',
 		className: `column`,
 	},
@@ -698,18 +689,7 @@ export const getEndPointsColumnsConfig = (
 		dataIndex: 'errorRate',
 		key: 'errorRate',
 		width: 120,
-		sorter: (
-			rowA: EndPointsTableRowData,
-			rowB: EndPointsTableRowData,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): number => {
-			const errorRateA =
-				rowA.errorRate === '-' || rowA.errorRate === 'n/a' ? 0 : rowA.errorRate;
-			const errorRateB =
-				rowB.errorRate === '-' || rowB.errorRate === 'n/a' ? 0 : rowB.errorRate;
-
-			return Number(errorRateA) - Number(errorRateB);
-		},
+		sorter: true,
 		align: 'right',
 		className: `column`,
 		render: (
@@ -746,17 +726,7 @@ export const getEndPointsColumnsConfig = (
 		dataIndex: 'latency',
 		key: 'latency',
 		width: 120,
-		sorter: (
-			rowA: EndPointsTableRowData,
-			rowB: EndPointsTableRowData,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): number => {
-			const latencyA =
-				rowA.latency === '-' || rowA.latency === 'n/a' ? 0 : rowA.latency;
-			const latencyB =
-				rowB.latency === '-' || rowB.latency === 'n/a' ? 0 : rowB.latency;
-			return Number(latencyA) - Number(latencyB);
-		},
+		sorter: true,
 		align: 'right',
 		className: `column`,
 	},
@@ -765,22 +735,7 @@ export const getEndPointsColumnsConfig = (
 		dataIndex: 'lastUsed',
 		key: 'lastUsed',
 		width: 120,
-		sorter: (
-			rowA: EndPointsTableRowData,
-			rowB: EndPointsTableRowData,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): number => {
-			const dateA =
-				rowA.lastUsed === '-' || rowA.lastUsed === 'n/a'
-					? new Date(0).toISOString()
-					: rowA.lastUsed;
-			const dateB =
-				rowB.lastUsed === '-' || rowB.lastUsed === 'n/a'
-					? new Date(0).toISOString()
-					: rowB.lastUsed;
-
-			return new Date(dateB).getTime() - new Date(dateA).getTime();
-		},
+		sorter: true,
 		align: 'right',
 		className: `column`,
 		// eslint-disable-next-line sonarjs/no-identical-functions
@@ -794,12 +749,16 @@ export const getEndPointsColumnsConfig = (
 export const formatEndPointsDataForTable = (
 	data: EndPointsResponseRow[] | undefined,
 	groupBy: BaseAutocompleteData[],
+	orderBy?: OrderByPayload | null,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): EndPointsTableRowData[] => {
 	if (!data) return [];
 	const isGroupedByAttribute = groupBy.length > 0;
+
+	let formattedData: EndPointsTableRowData[] = [];
+
 	if (!isGroupedByAttribute) {
-		return data?.map((endpoint) => {
+		formattedData = data?.map((endpoint) => {
 			const { port } = extractPortAndEndpoint(
 				(endpoint.data['http.url'] as string) || '',
 			);
@@ -826,39 +785,79 @@ export const formatEndPointsDataForTable = (
 						: Number(endpoint.data.F1),
 			};
 		});
+	} else {
+		const groupedByAttributeData = groupBy.map((attribute) => attribute.key);
+
+		formattedData = data?.map((endpoint) => {
+			const newEndpointName = groupedByAttributeData
+				.map((attribute) => endpoint.data[attribute])
+				.join(',');
+			return {
+				key: v4(),
+				endpointName: newEndpointName,
+				callCount:
+					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
+						? '-'
+						: endpoint.data.A,
+				latency:
+					endpoint.data.B === 'n/a' || endpoint.data.B === undefined
+						? '-'
+						: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
+				lastUsed:
+					endpoint.data.C === 'n/a' || endpoint.data.C === undefined
+						? '-'
+						: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
+				errorRate:
+					endpoint.data.D === 'n/a' || endpoint.data.D === undefined
+						? 0
+						: Number(endpoint.data.D),
+				groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
+					acc[attribute] = endpoint.data[attribute] || '';
+					return acc;
+				}, {} as Record<string, string | number>),
+			};
+		});
 	}
 
-	const groupedByAttributeData = groupBy.map((attribute) => attribute.key);
+	// Apply sorting if orderBy is provided
+	if (orderBy) {
+		formattedData.sort((a, b) => {
+			let valueA: number | string = a[
+				orderBy.columnName as keyof EndPointsTableRowData
+			] as number | string;
+			let valueB: number | string = b[
+				orderBy.columnName as keyof EndPointsTableRowData
+			] as number | string;
 
-	return data?.map((endpoint) => {
-		const newEndpointName = groupedByAttributeData
-			.map((attribute) => endpoint.data[attribute])
-			.join(',');
-		return {
-			key: v4(),
-			endpointName: newEndpointName,
-			callCount:
-				endpoint.data.A === 'n/a' || endpoint.data.A === undefined
-					? '-'
-					: endpoint.data.A,
-			latency:
-				endpoint.data.B === 'n/a' || endpoint.data.B === undefined
-					? '-'
-					: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
-			lastUsed:
-				endpoint.data.C === 'n/a' || endpoint.data.C === undefined
-					? '-'
-					: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
-			errorRate:
-				endpoint.data.D === 'n/a' || endpoint.data.D === undefined
-					? 0
-					: Number(endpoint.data.D),
-			groupedByMeta: groupedByAttributeData.reduce((acc, attribute) => {
-				acc[attribute] = endpoint.data[attribute] || '';
-				return acc;
-			}, {} as Record<string, string | number>),
-		};
-	});
+			// Handle special cases for each column type
+			if (
+				orderBy.columnName === 'callCount' ||
+				orderBy.columnName === 'latency' ||
+				orderBy.columnName === 'errorRate'
+			) {
+				valueA = valueA === '-' || valueA === 'n/a' ? 0 : Number(valueA);
+				valueB = valueB === '-' || valueB === 'n/a' ? 0 : Number(valueB);
+			} else if (orderBy.columnName === 'lastUsed') {
+				// confirm once the implication of this
+				valueA =
+					valueA === '-' || valueA === 'n/a'
+						? new Date(0).getTime()
+						: new Date(valueA as string).getTime();
+				valueB =
+					valueB === '-' || valueB === 'n/a'
+						? new Date(0).getTime()
+						: new Date(valueB as string).getTime();
+			}
+
+			// Apply sort direction
+			if (orderBy.order === 'asc') {
+				return valueA > valueB ? 1 : -1;
+			}
+			return valueA < valueB ? 1 : -1;
+		});
+	}
+
+	return formattedData;
 };
 
 export const createFiltersForSelectedRowData = (
