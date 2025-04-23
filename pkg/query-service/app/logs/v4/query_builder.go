@@ -282,7 +282,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
-func generateAggregateClause(aggOp v3.AggregateOperator,
+func generateAggregateClause(panelType v3.PanelType, start, end int64, aggOp v3.AggregateOperator,
 	aggKey string,
 	step int64,
 	timeFilter string,
@@ -296,18 +296,20 @@ func generateAggregateClause(aggOp v3.AggregateOperator,
 		"%s%s" +
 		"%s"
 	switch aggOp {
-	case v3.AggregateOperatorRate:
-		rate := float64(step)
-
-		op := fmt.Sprintf("count(%s)/%f", aggKey, rate)
-		query := fmt.Sprintf(queryTmpl, op, whereClause, groupBy, having, orderBy)
-		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
-		v3.AggregateOperatorRateMin:
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorRate:
 		rate := float64(step)
+		if panelType == v3.PanelTypeTable {
+			// if the panel type is table the denominator will be the total time range
+			duration := end - start
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
+		}
 
 		op := fmt.Sprintf("%s(%s)/%f", logsV3.AggregateOperatorToSQLFunc[aggOp], aggKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, whereClause, groupBy, having, orderBy)
@@ -418,7 +420,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
-	aggClause, err := generateAggregateClause(mq.AggregateOperator, aggregationKey, step, timeFilter, filterSubQuery, groupBy, having, orderBy)
+	aggClause, err := generateAggregateClause(panelType, logsStart, logsEnd, mq.AggregateOperator, aggregationKey, step, timeFilter, filterSubQuery, groupBy, having, orderBy)
 	if err != nil {
 		return "", err
 	}
