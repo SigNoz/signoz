@@ -2862,7 +2862,7 @@
 	{
 		"dataSource": "amazon-rds",
 		"label": "Amazon RDS - One Click",
-		"tags": ["integrations", "database"],
+		"tags": ["integrations"],
 		"module": "integrations",
 		"relatedSearchKeywords": [
 			"amazon rds",
