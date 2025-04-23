@@ -150,7 +150,7 @@ type APIHandler struct {
 
 	Preference preference.API
 
-	Organization        organization.API
+	OrganizationAPI     organization.API
 	OrganizationUsecase organization.Usecase
 }
 
@@ -201,7 +201,7 @@ type APIHandlerOpts struct {
 	Signoz *signoz.SigNoz
 
 	Preference          preference.API
-	Organization        organization.API
+	OrganizationAPI     organization.API
 	OrganizationUsecase organization.Usecase
 }
 
@@ -273,7 +273,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		Preference:                    opts.Preference,
 		FieldsAPI:                     opts.FieldsAPI,
-		Organization:                  opts.Organization,
+		OrganizationAPI:               opts.OrganizationAPI,
 		OrganizationUsecase:           opts.OrganizationUsecase,
 	}
 
@@ -2409,15 +2409,15 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
-	aH.Organization.GetAll(w, r)
+	aH.OrganizationAPI.GetAll(w, r)
 }
 
 func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
-	aH.Organization.Get(w, r)
+	aH.OrganizationAPI.Get(w, r)
 }
 
 func (aH *APIHandler) updateOrg(w http.ResponseWriter, r *http.Request) {
-	aH.Organization.Update(w, r)
+	aH.OrganizationAPI.Update(w, r)
 }
 
 func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {

@@ -61,7 +61,7 @@ type APIHandler struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	organization := organization.NewAPI(organizationcore.NewUsecase(organizationcore.NewStore(signoz.SQLStore)))
+	organizationAPI := organization.NewAPI(organizationcore.NewUsecase(organizationcore.NewStore(signoz.SQLStore)))
 	organizationUsecase := organizationcore.NewUsecase(organizationcore.NewStore(signoz.SQLStore))
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
@@ -82,7 +82,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		FieldsAPI:                     fields.NewAPI(signoz.TelemetryStore),
 		Signoz:                        signoz,
 		Preference:                    preference,
-		Organization:                  organization,
+		OrganizationAPI:               organizationAPI,
 		OrganizationUsecase:           organizationUsecase,
 	})
 

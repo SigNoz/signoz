@@ -187,8 +187,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	preferenceModule := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	organizationModule := organization.NewAPI(organizationcore.NewUsecase(organizationcore.NewStore(serverOptions.SigNoz.SQLStore)))
+	preferenceAPI := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
+	organizationAPI := organization.NewAPI(organizationcore.NewUsecase(organizationcore.NewStore(serverOptions.SigNoz.SQLStore)))
 	organizationUsecase := organizationcore.NewUsecase(organizationcore.NewStore(serverOptions.SigNoz.SQLStore))
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
@@ -208,8 +208,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		AlertmanagerAPI:               alertmanager.NewAPI(serverOptions.SigNoz.Alertmanager),
 		FieldsAPI:                     fields.NewAPI(serverOptions.SigNoz.TelemetryStore),
 		Signoz:                        serverOptions.SigNoz,
-		Preference:                    preferenceModule,
-		Organization:                  organizationModule,
+		Preference:                    preferenceAPI,
+		OrganizationAPI:               organizationAPI,
 		OrganizationUsecase:           organizationUsecase,
 	})
 	if err != nil {
