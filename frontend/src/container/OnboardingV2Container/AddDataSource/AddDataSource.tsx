@@ -71,6 +71,7 @@ interface Entity {
 	tags: string[];
 	relatedSearchKeywords?: string[];
 	link?: string;
+	internalRedirect?: boolean;
 }
 
 const setupStepItemsBase = [
@@ -203,29 +204,39 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectDataSource = (dataSource: Entity): void => {
-		setSelectedDataSource(dataSource);
-		setSelectedFramework(null);
-		setSelectedEnvironment(null);
-
-		logEvent(
-			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
-			{
-				dataSource: dataSource.label,
-			},
-		);
-
-		if (dataSource.question) {
-			setHasMoreQuestions(true);
-
-			setTimeout(() => {
-				handleScrollToStep(question2Ref);
-			}, 100);
+		if (dataSource && dataSource.internalRedirect && dataSource.link) {
+			logEvent(
+				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+				{
+					dataSource: dataSource.label,
+				},
+			);
+			history.push(dataSource.link);
 		} else {
-			setHasMoreQuestions(false);
+			setSelectedDataSource(dataSource);
+			setSelectedFramework(null);
+			setSelectedEnvironment(null);
 
-			updateUrl(dataSource?.link || '', null);
+			logEvent(
+				`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
+				{
+					dataSource: dataSource.label,
+				},
+			);
 
-			setShowConfigureProduct(true);
+			if (dataSource.question) {
+				setHasMoreQuestions(true);
+
+				setTimeout(() => {
+					handleScrollToStep(question2Ref);
+				}, 100);
+			} else {
+				setHasMoreQuestions(false);
+
+				updateUrl(dataSource?.link || '', null);
+
+				setShowConfigureProduct(true);
+			}
 		}
 	};
 
