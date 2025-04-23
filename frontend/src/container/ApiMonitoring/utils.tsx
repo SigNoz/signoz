@@ -212,11 +212,11 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 			return (
 				<Progress
 					status="active"
-					percent={Number(((errorRate as number) * 100).toFixed(1))}
+					percent={Number((errorRate as number).toFixed(1))}
 					strokeLinecap="butt"
 					size="small"
 					strokeColor={((): string => {
-						const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
+						const errorRatePercent = Number((errorRate as number).toFixed(1));
 						if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 						if (errorRatePercent >= 60) return Color.BG_AMBER_500;
 						return Color.BG_FOREST_500;
@@ -699,16 +699,15 @@ export const getEndPointsColumnsConfig = (
 			<Progress
 				status="active"
 				percent={Number(
-					(
-						((errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number) *
-						100
-					).toFixed(1),
+					((errorRate === 'n/a' || errorRate === '-'
+						? 0
+						: errorRate) as number).toFixed(1),
 				)}
 				strokeLinecap="butt"
 				size="small"
 				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
 				string => {
-					const errorRatePercent = Number(((errorRate as number) * 100).toFixed(1));
+					const errorRatePercent = Number((errorRate as number).toFixed(1));
 					if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 					if (errorRatePercent >= 60) return Color.BG_AMBER_500;
 					return Color.BG_FOREST_500;
