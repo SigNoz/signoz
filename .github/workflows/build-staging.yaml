@@ -64,22 +64,13 @@ jobs:
         run: |
           mkdir -p frontend
           echo 'CI=1' > frontend/.env
-          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' >> frontend/.env
-          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
-          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
-          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
-          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
-          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
-          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
-          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
-          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> frontend/.env
-          echo 'CUSTOMERIO_ID="${{ secrets.CUSTOMERIO_ID }}"' >> frontend/.env
-          echo 'CUSTOMERIO_SITE_ID="${{ secrets.CUSTOMERIO_SITE_ID }}"' >> frontend/.env
+          echo 'TUNNEL_URL=https://telemetry.staging.signoz.cloud/tunnel' >> frontend/.env
+          echo 'TUNNEL_DOMAIN=https://telemetry.staging.signoz.cloud' >> frontend/.env
       - name: cache-dotenv
         uses: actions/cache@v4
         with:
           path: frontend/.env
-          key: dotenv-${{ github.sha }}
+          key: staging-dotenv-${{ github.sha }}
   js-build:
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
@@ -87,9 +78,9 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-      JS_INPUT_ARTIFACT_CACHE_KEY: dotenv-${{ github.sha }}
+      JS_INPUT_ARTIFACT_CACHE_KEY: staging-dotenv-${{ github.sha }}
       JS_INPUT_ARTIFACT_PATH: frontend/.env
-      JS_OUTPUT_ARTIFACT_CACHE_KEY: jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: staging-jsbuild-${{ github.sha }}
       JS_OUTPUT_ARTIFACT_PATH: frontend/build
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
@@ -99,7 +90,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_INPUT_ARTIFACT_CACHE_KEY: jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_CACHE_KEY: staging-jsbuild-${{ github.sha }}
       GO_INPUT_ARTIFACT_PATH: frontend/build
       GO_BUILD_CONTEXT: ./ee/query-service
       GO_BUILD_FLAGS: >-
