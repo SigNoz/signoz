@@ -571,6 +571,9 @@ func Test_orderByAttributeKeyTags(t *testing.T) {
 
 func Test_generateAggregateClause(t *testing.T) {
 	type args struct {
+		panelType   v3.PanelType
+		start       int64
+		end         int64
 		op          v3.AggregateOperator
 		aggKey      string
 		step        int64
@@ -590,6 +593,7 @@ func Test_generateAggregateClause(t *testing.T) {
 			name: "test rate",
 			args: args{
 				op:          v3.AggregateOperatorRate,
+				panelType:   v3.PanelTypeGraph,
 				aggKey:      "test",
 				step:        60,
 				timeFilter:  "(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)",
@@ -606,6 +610,7 @@ func Test_generateAggregateClause(t *testing.T) {
 			name: "test P10 with all args",
 			args: args{
 				op:          v3.AggregateOperatorRate,
+				panelType:   v3.PanelTypeGraph,
 				aggKey:      "test",
 				step:        60,
 				timeFilter:  "(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)",
@@ -618,10 +623,29 @@ func Test_generateAggregateClause(t *testing.T) {
 				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['service.name'] = 'test' group by `user_name` having value > 10 order by " +
 				"`user_name` desc",
 		},
+		{
+			name: "test rate for table panel",
+			args: args{
+				op:          v3.AggregateOperatorRate,
+				panelType:   v3.PanelTypeTable,
+				start:       1745315470000000000,
+				end:         1745319070000000000,
+				aggKey:      "test",
+				step:        60,
+				timeFilter:  "(timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND (ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458)",
+				whereClause: " AND attributes_string['service.name'] = 'test'",
+				groupBy:     " group by `user_name`",
+				having:      "",
+				orderBy:     " order by `user_name` desc",
+			},
+			want: " count(test)/3600.000000 as value from signoz_logs.distributed_logs_v2 where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND " +
+				"(ts_bucket_start >= 1680064560 AND ts_bucket_start <= 1680066458) AND attributes_string['service.name'] = 'test' " +
+				"group by `user_name` order by `user_name` desc",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := generateAggregateClause(tt.args.op, tt.args.aggKey, tt.args.step, tt.args.timeFilter, tt.args.whereClause, tt.args.groupBy, tt.args.having, tt.args.orderBy)
+			got, err := generateAggregateClause(tt.args.panelType, tt.args.start, tt.args.end, tt.args.op, tt.args.aggKey, tt.args.step, tt.args.timeFilter, tt.args.whereClause, tt.args.groupBy, tt.args.having, tt.args.orderBy)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("generateAggreagteClause() error = %v, wantErr %v", err, tt.wantErr)
 				return
