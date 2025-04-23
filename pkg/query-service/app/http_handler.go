@@ -23,6 +23,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
+	"github.com/SigNoz/signoz/pkg/modules/quickFilters"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -148,6 +149,8 @@ type APIHandler struct {
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
+
+	QuickFilters quickFilters.API
 }
 
 type APIHandlerOpts struct {
@@ -197,6 +200,8 @@ type APIHandlerOpts struct {
 	Signoz *signoz.SigNoz
 
 	Preference preference.API
+
+	QuickFilters quickFilters.API
 }
 
 // NewAPIHandler returns an APIHandler
@@ -267,6 +272,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Signoz:                        opts.Signoz,
 		Preference:                    opts.Preference,
 		FieldsAPI:                     opts.FieldsAPI,
+		QuickFilters:                  opts.QuickFilters,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -603,6 +609,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.getOrgPreference)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/org/preferences/{preferenceId}", am.AdminAccess(aH.updateOrgPreference)).Methods(http.MethodPut)
+
+	// Quick Filters
+	router.HandleFunc("/api/v1/org/filters", am.AdminAccess(aH.getAllQuickFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/filters/{signal}", am.AdminAccess(aH.getSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/filters", am.AdminAccess(aH.updateQuickFilters)).Methods(http.MethodPut)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
@@ -3513,6 +3524,25 @@ func (aH *APIHandler) getAllOrgPreferences(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	aH.Preference.GetAllOrgPreferences(w, r)
+}
+
+// Quick Filters - Registers/Upserts all Quick Filters based on Signals
+func (aH *APIHandler) getAllQuickFilters(
+	w http.ResponseWriter, r *http.Request,
+) {
+	aH.QuickFilters.GetOrgQuickFilters(w, r)
+}
+
+func (aH *APIHandler) getSignalFilters(
+	w http.ResponseWriter, r *http.Request,
+) {
+	aH.QuickFilters.GetSignalFilters(w, r)
+}
+
+func (aH *APIHandler) updateQuickFilters(
+	w http.ResponseWriter, r *http.Request,
+) {
+	aH.QuickFilters.UpdateOrgQuickFilters(w, r)
 }
 
 // RegisterIntegrationRoutes Registers all Integrations
