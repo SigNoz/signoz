@@ -10,8 +10,7 @@
 		"quickstart"
 		],
 		"imgUrl": "/Logos/quickstart.svg",
-		"link": "https://signoz.io/docs/cloud/quickstart/",
-		"internalRedirect": true
+		"link": "https://signoz.io/docs/cloud/quickstart/"
 	},
 	{
 		"dataSource": "java",
