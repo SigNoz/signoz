@@ -443,8 +443,16 @@ type UpdateServiceConfigRequest struct {
 	Config         ServiceConfig `json:"config"`
 }
 
-func (u *UpdateServiceConfigRequest) Validate(serviceType string) error {
-	if serviceType != services.S3Sync && len(u.Config.Logs.S3Buckets) > 0 {
+func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
+	if !def.SupportedSignals.Logs && u.Config.Logs != nil && u.Config.Logs.Enabled {
+		return fmt.Errorf("logs are not supported in service-type[%s]", def.Id)
+	}
+
+	if !def.SupportedSignals.Metrics && u.Config.Metrics != nil && u.Config.Metrics.Enabled {
+		return fmt.Errorf("metrics are not supported in service-type[%s]", def.Id)
+	}
+
+	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
 		return fmt.Errorf("s3 buckets can only be added to service-type[%s]", services.S3Sync)
 	}
 
@@ -465,22 +473,23 @@ func (c *Controller) UpdateServiceConfig(
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
-	if err := req.Validate(serviceType); err != nil {
+
+	// can only update config for a valid service.
+	definition, apiErr := services.GetServiceDefinition(cloudProvider, serviceType)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "unsupported service")
+	}
+
+	if err := req.Validate(definition); err != nil {
 		return nil, model.BadRequest(err)
 	}
 
 	// can only update config for a connected cloud account id
-	_, apiErr := c.accountsRepo.getConnectedCloudAccount(
+	_, apiErr = c.accountsRepo.getConnectedCloudAccount(
 		ctx, cloudProvider, req.CloudAccountId,
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "couldn't find connected cloud account")
-	}
-
-	// can only update config for a valid service.
-	_, apiErr = services.GetServiceDefinition(cloudProvider, serviceType)
-	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "unsupported service")
 	}
 
 	updatedConfig, apiErr := c.serviceConfigRepo.upsert(
