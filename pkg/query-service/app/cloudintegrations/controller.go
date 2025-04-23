@@ -444,14 +444,6 @@ type UpdateServiceConfigRequest struct {
 }
 
 func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
-	if !def.SupportedSignals.Logs && u.Config.Logs != nil && u.Config.Logs.Enabled {
-		return fmt.Errorf("logs are not supported in service-type[%s]", def.Id)
-	}
-
-	if !def.SupportedSignals.Metrics && u.Config.Metrics != nil && u.Config.Metrics.Enabled {
-		return fmt.Errorf("metrics are not supported in service-type[%s]", def.Id)
-	}
-
 	if def.Id != services.S3Sync && u.Config.Logs != nil && u.Config.Logs.S3Buckets != nil {
 		return fmt.Errorf("s3 buckets can only be added to service-type[%s]", services.S3Sync)
 	}

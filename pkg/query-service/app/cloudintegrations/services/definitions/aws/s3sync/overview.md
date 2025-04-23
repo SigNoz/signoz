@@ -1,3 +1,3 @@
-### Sync logs stored in AWS S3 with SigNoz
+### Sync logs stored in S3 Object Store with SigNoz
 
-Collect logs stored by AWS Services in S3 and explore them in Signoz.
+Collect logs stored by AWS Services in S3 Object Store and explore them in Signoz.
