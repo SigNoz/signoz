@@ -80,6 +80,7 @@ function DynamicVariable({
 				onChange={(value): void => {
 					setSelectedAttribute(value);
 				}}
+				showSearch
 			/>
 			<Typography className="dynamic-variable-from-text">from</Typography>
 			<Select

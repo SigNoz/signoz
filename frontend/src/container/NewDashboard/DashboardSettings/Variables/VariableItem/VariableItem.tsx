@@ -126,7 +126,7 @@ function VariableItem({
 	]);
 
 	useEffect(() => {
-		if (fieldValues) {
+		if (queryType === 'DYNAMIC' && fieldValues) {
 			setPreviewValues(
 				sortValues(
 					fieldValues.payload?.values?.stringValues || [],
@@ -134,7 +134,7 @@ function VariableItem({
 				) as never,
 			);
 		}
-	}, [fieldValues, variableSortType, queryType]);
+	}, [fieldValues, variableSortType, queryType, dynamicVariablesSelectedValue]);
 
 	const handleSave = (): void => {
 		const variable: IDashboardVariable = {
