@@ -179,13 +179,13 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		QueryName:         "error",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
-		AggregateOperator: v3.AggregateOperatorCountDistinct,
+		AggregateOperator: v3.AggregateOperatorCount,
 		AggregateAttribute: v3.AttributeKey{
 			Key:      "span_id",
 			DataType: v3.AttributeKeyDataTypeString,
 			IsColumn: true,
 		},
-		TimeAggregation:  v3.TimeAggregationCountDistinct,
+		TimeAggregation:  v3.TimeAggregationCount,
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
@@ -229,13 +229,13 @@ func BuildDomainList(thirdPartyApis *ThirdPartyApis) (*v3.QueryRangeParamsV3, er
 		QueryName:         "total_span",
 		DataSource:        v3.DataSourceTraces,
 		StepInterval:      defaultStepInterval,
-		AggregateOperator: v3.AggregateOperatorCountDistinct,
+		AggregateOperator: v3.AggregateOperatorCount,
 		AggregateAttribute: v3.AttributeKey{
 			Key:      "span_id",
 			DataType: v3.AttributeKeyDataTypeString,
 			IsColumn: true,
 		},
-		TimeAggregation:  v3.TimeAggregationCountDistinct,
+		TimeAggregation:  v3.TimeAggregationCount,
 		SpaceAggregation: v3.SpaceAggregationSum,
 		Filters: &v3.FilterSet{
 			Operator: "AND",
