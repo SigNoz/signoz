@@ -82,11 +82,22 @@ func (migration *dropGroups) Up(ctx context.Context, db *bun.DB) error {
 		roleToUserIDMap[groupIDToRoleMap[user.GroupID]] = append(roleToUserIDMap[groupIDToRoleMap[user.GroupID]], user.ID)
 	}
 
-	if err := migration.sqlstore.Dialect().DropColumnWithForeignKeyConstraint(ctx, tx, new(existingUser), "group_id"); err != nil {
+	if err := migration.sqlstore.Dialect().DropColumnWithForeignKeyConstraint(ctx, tx, new(struct {
+		bun.BaseModel `bun:"table:users"`
+
+		types.TimeAuditable
+		ID                string `bun:"id,pk,type:text" json:"id"`
+		Name              string `bun:"name,type:text,notnull" json:"name"`
+		Email             string `bun:"email,type:text,notnull,unique" json:"email"`
+		Password          string `bun:"password,type:text,notnull" json:"-"`
+		ProfilePictureURL string `bun:"profile_picture_url,type:text" json:"profilePictureURL"`
+		OrgID             string `bun:"org_id,type:text,notnull" json:"orgId"`
+	}), "group_id"); err != nil {
 		return err
 	}
 
-	if _, err := tx.NewAddColumn().IfNotExists().Table("users").ColumnExpr("role TEXT").Exec(ctx); err != nil {
+	//IfNotExists()
+	if _, err := tx.NewAddColumn().Table("users").ColumnExpr("role TEXT").Exec(ctx); err != nil {
 		return err
 	}
 

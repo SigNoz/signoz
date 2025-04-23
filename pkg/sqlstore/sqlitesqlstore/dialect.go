@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/schema"
 )
 
 var (
@@ -426,21 +425,19 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 
 func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
 	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
-	ok := existingTable.HasField(column)
-	if !ok {
-		return nil
+	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
+	if err != nil {
+		return err
 	}
 
-	// Create a new temporary model for the table
-	newTable := &schema.Table{
-		Name: existingTable.Name + "_tmp",
+	if !columnExists {
+		return nil
 	}
 
 	var columnNames []string
 
 	for _, field := range existingTable.Fields {
-		if field.SQLName != bun.Safe(column) {
-			newTable.Fields = append(newTable.Fields, field)
+		if field.Name != column {
 			columnNames = append(columnNames, string(field.SQLName))
 		}
 	}
@@ -450,8 +447,10 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		return err
 	}
 
+	newTableName := existingTable.Name + "_tmp"
+
 	// Create the schema query
-	_, err := bunIDB.NewCreateTable().Model(newTable).Exec(ctx)
+	_, err = bunIDB.NewCreateTable().Model(model).ModelTableExpr(newTableName).Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -459,7 +458,7 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 	// Copy data from old table to new table
 	if _, err := bunIDB.ExecContext(ctx, fmt.Sprintf(
 		"INSERT INTO %s SELECT %s FROM %s",
-		newTable.Name,
+		newTableName,
 		strings.Join(columnNames, ", "),
 		existingTable.Name,
 	)); err != nil {
@@ -471,7 +470,7 @@ func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, 
 		return err
 	}
 
-	_, err = bunIDB.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTable.Name, existingTable.Name))
+	_, err = bunIDB.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s", newTableName, existingTable.Name))
 	if err != nil {
 		return err
 	}
