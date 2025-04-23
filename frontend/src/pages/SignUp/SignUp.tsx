@@ -112,7 +112,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				email,
 				name: firstName,
 				orgHName: organizationName,
-				orgName: organizationName,
 				password,
 				token: params.get('token') || undefined,
 			});
@@ -157,7 +156,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			const response = await signUpApi({
 				email: values.email,
 				name: values.firstName,
-				orgName: values.organizationName,
 				orgHName: values.organizationName,
 				password: values.password,
 				token: params.get('token') || undefined,

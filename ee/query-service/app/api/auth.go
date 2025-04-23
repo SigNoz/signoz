@@ -14,7 +14,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	organizationcore "github.com/SigNoz/signoz/pkg/modules/organization/core"
 	baseauth "github.com/SigNoz/signoz/pkg/query-service/auth"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
@@ -135,8 +134,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		organizationUsecase := organizationcore.NewUsecase(organizationcore.NewStore(ah.Signoz.SQLStore))
-		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, organizationUsecase)
+		_, registerError := baseauth.Register(ctx, req, ah.Signoz.Alertmanager, ah.OrganizationUsecase)
 		if !registerError.IsNil() {
 			RespondError(w, apierr, nil)
 			return

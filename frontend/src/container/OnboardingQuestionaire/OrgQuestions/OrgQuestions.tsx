@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 export interface OrgData {
 	id: string;
-	name: string;
+	hName: string;
 }
 
 export interface OrgDetails {
