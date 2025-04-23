@@ -7,12 +7,8 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo, useState } from 'react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { useEffect, useState } from 'react';
 
 import { ApiMonitoringQuickFiltersConfig } from '../utils';
 import DomainList from './Domains/DomainList';
@@ -20,38 +16,9 @@ import DomainList from './Domains/DomainList';
 function Explorer(): JSX.Element {
 	const [showIP, setShowIP] = useState<boolean>(true);
 
-	const { currentQuery } = useQueryBuilder();
-
 	useEffect(() => {
 		logEvent('API Monitoring: Landing page visited', {});
 	}, []);
-
-	const { handleChangeQueryData } = useQueryOperations({
-		index: 0,
-		query: currentQuery.builder.queryData[0],
-		entityVersion: '',
-	});
-
-	const updatedCurrentQuery = useMemo(
-		() => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: [
-					{
-						...currentQuery.builder.queryData[0],
-						dataSource: DataSource.TRACES,
-						aggregateOperator: 'noop',
-						aggregateAttribute: {
-							...currentQuery.builder.queryData[0].aggregateAttribute,
-						},
-					},
-				],
-			},
-		}),
-		[currentQuery],
-	);
-	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
@@ -83,16 +50,9 @@ function Explorer(): JSX.Element {
 						source={QuickFiltersSource.API_MONITORING}
 						config={ApiMonitoringQuickFiltersConfig}
 						handleFilterVisibilityChange={(): void => {}}
-						onFilterChange={(query: Query): void =>
-							handleChangeQueryData('filters', query.builder.queryData[0].filters)
-						}
 					/>
 				</section>
-				<DomainList
-					query={query}
-					showIP={showIP}
-					handleChangeQueryData={handleChangeQueryData}
-				/>
+				<DomainList showIP={showIP} />
 			</div>
 		</Sentry.ErrorBoundary>
 	);
