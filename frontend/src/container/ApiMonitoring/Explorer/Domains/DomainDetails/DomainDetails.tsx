@@ -21,6 +21,7 @@ import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
 import EndPointDetailsWrapper from './EndPointDetailsWrapper';
+import TopErrors from './TopErrors';
 
 const TimeRangeOffset = 1000000000;
 
@@ -181,6 +182,14 @@ function DomainDetails({
 							>
 								<div className="view-title">Endpoint Details</div>
 							</Radio.Button>
+							<Radio.Button
+								className={
+									selectedView === VIEW_TYPES.TOP_ERRORS ? 'tab selected_view' : 'tab'
+								}
+								value={VIEW_TYPES.TOP_ERRORS}
+							>
+								<div className="view-title">Top Errors</div>
+							</Radio.Button>
 						</Radio.Group>
 					</div>
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
@@ -200,6 +209,13 @@ function DomainDetails({
 							endPointName={selectedEndPointName}
 							setSelectedEndPointName={setSelectedEndPointName}
 							domainListFilters={domainListFilters}
+							timeRange={modalTimeRange}
+						/>
+					)}
+
+					{selectedView === VIEW_TYPES.TOP_ERRORS && (
+						<TopErrors
+							domainName={domainData.domainName}
 							timeRange={modalTimeRange}
 						/>
 					)}
