@@ -52,13 +52,11 @@ function DomainMetrics({ domainData }: { domainData: any }): JSX.Element {
 						<Tooltip title={domainData.errorRate}>
 							<Progress
 								status="active"
-								percent={Number((domainData.errorRate * 100).toFixed(1))}
+								percent={Number(domainData.errorRate.toFixed(1))}
 								strokeLinecap="butt"
 								size="small"
 								strokeColor={((): string => {
-									const errorRatePercent = Number(
-										(domainData.errorRate * 100).toFixed(1),
-									);
+									const errorRatePercent = Number(domainData.errorRate.toFixed(1));
 									if (errorRatePercent >= 90) return Color.BG_SAKURA_500;
 									if (errorRatePercent >= 60) return Color.BG_AMBER_500;
 									return Color.BG_FOREST_500;
