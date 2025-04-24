@@ -12,16 +12,22 @@ import FunnelItemPopover from './FunnelItemPopover';
 
 interface FunnelListItemProps {
 	funnel: FunnelData;
+	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
-function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
+export function FunnelListItem({
+	funnel,
+	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
+}: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
 		funnelId: funnel.id,
 	});
 
-	return (
-		<Link to={funnelDetailsLink} className="funnel-item">
+	const content = (
+		<>
 			<div className="funnel-item__header">
 				<div className="funnel-item__title">
 					<div>{funnel.funnel_name}</div>
@@ -30,6 +36,9 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 					isPopoverOpen={isPopoverOpen}
 					setIsPopoverOpen={setIsPopoverOpen}
 					funnel={funnel}
+					shouldRedirectToTracesListOnDeleteSuccess={
+						shouldRedirectToTracesListOnDeleteSuccess
+					}
 				/>
 			</div>
 
@@ -52,22 +61,59 @@ function FunnelListItem({ funnel }: FunnelListItemProps): JSX.Element {
 					<div>{funnel.user}</div>
 				</div>
 			</div>
+		</>
+	);
+
+	return onFunnelClick ? (
+		<button
+			type="button"
+			className="funnel-item"
+			onClick={(): void => onFunnelClick(funnel)}
+		>
+			{content}
+		</button>
+	) : (
+		<Link to={funnelDetailsLink} className="funnel-item">
+			{content}
 		</Link>
 	);
 }
 
+FunnelListItem.defaultProps = {
+	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
+};
+
 interface FunnelsListProps {
 	data: FunnelData[];
+	onFunnelClick?: (funnel: FunnelData) => void;
+	shouldRedirectToTracesListOnDeleteSuccess?: boolean;
 }
 
-function FunnelsList({ data }: FunnelsListProps): JSX.Element {
+function FunnelsList({
+	data,
+	onFunnelClick,
+	shouldRedirectToTracesListOnDeleteSuccess,
+}: FunnelsListProps): JSX.Element {
 	return (
 		<div className="funnels-list">
-			{data.map((funnel) => (
-				<FunnelListItem key={funnel.id} funnel={funnel} />
+			{data?.map((funnel) => (
+				<FunnelListItem
+					key={funnel.id}
+					funnel={funnel}
+					onFunnelClick={onFunnelClick}
+					shouldRedirectToTracesListOnDeleteSuccess={
+						shouldRedirectToTracesListOnDeleteSuccess
+					}
+				/>
 			))}
 		</div>
 	);
 }
+
+FunnelsList.defaultProps = {
+	onFunnelClick: undefined,
+	shouldRedirectToTracesListOnDeleteSuccess: true,
+};
 
 export default FunnelsList;

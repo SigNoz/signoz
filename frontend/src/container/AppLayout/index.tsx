@@ -42,7 +42,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import {
@@ -362,6 +362,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'INFRASTRUCTURE_MONITORING_HOSTS' ||
 		routeKey === 'INFRASTRUCTURE_MONITORING_KUBERNETES';
 	const isTracesFunnels = (): boolean => routeKey === 'TRACES_FUNNELS';
+	const isTracesFunnelDetails = (): boolean =>
+		!!matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
+
 	const isPathMatch = (regex: RegExp): boolean => regex.test(pathname);
 
 	const isDashboardView = (): boolean =>
@@ -668,7 +671,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 												? 0
 												: '0 1rem',
 
-										...(isTraceDetailsView() || isTracesFunnels() ? { margin: 0 } : {}),
+										...(isTraceDetailsView() ||
+										isTracesFunnels() ||
+										isTracesFunnelDetails()
+											? { margin: 0 }
+											: {}),
 									}}
 								>
 									{isToDisplayLayout && !renderFullScreen && <TopNav />}
