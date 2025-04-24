@@ -54,16 +54,9 @@ func (migration *updateOrganizations) Up(ctx context.Context, db *bun.DB) error 
 		return err
 	}
 
-	exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "display_name")
+	_, err = migration.store.Dialect().RenameColumn(ctx, tx, "organizations", "name", "display_name")
 	if err != nil {
 		return err
-	}
-	if !exists {
-		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations RENAME COLUMN name to display_name`)
-		if err != nil {
-			return err
-		}
-
 	}
 
 	err = migration.store.Dialect().AddColumn(ctx, tx, "organizations", "name", "TEXT")

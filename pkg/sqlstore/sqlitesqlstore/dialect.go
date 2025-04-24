@@ -180,8 +180,12 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 		return false, err
 	}
 
-	if !oldColumnExists && newColumnExists {
+	if newColumnExists {
 		return true, nil
+	}
+
+	if !oldColumnExists {
+		return false, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("old column: %s doesn't exist", oldColumnName))
 	}
 
 	_, err = bun.
