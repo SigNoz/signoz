@@ -45,10 +45,10 @@ type Manager struct {
 
 	tenantID string
 
-	organizationUsecase organization.Usecase
+	organizationModule organization.Module
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string, organizationUsecase organization.Usecase) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string, organizationModule organization.Module) (*Manager, error) {
 	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
 	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(chUrl)
 
@@ -60,12 +60,12 @@ func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickh
 
 	m := &Manager{
 		// repository:     repo,
-		clickhouseConn:      clickhouseConn,
-		licenseRepo:         licenseRepo,
-		scheduler:           gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
-		modelDao:            modelDao,
-		tenantID:            tenantID,
-		organizationUsecase: organizationUsecase,
+		clickhouseConn:     clickhouseConn,
+		licenseRepo:        licenseRepo,
+		scheduler:          gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
+		modelDao:           modelDao,
+		tenantID:           tenantID,
+		organizationModule: organizationModule,
 	}
 	return m, nil
 }
@@ -143,7 +143,7 @@ func (lm *Manager) UploadUsage() {
 	zap.L().Info("uploading usage data")
 
 	orgName := ""
-	orgNames, orgError := lm.organizationUsecase.GetAll(ctx)
+	orgNames, orgError := lm.organizationModule.GetAll(ctx)
 	if orgError != nil {
 		zap.L().Error("failed to get org data: %v", zap.Error(orgError))
 	}

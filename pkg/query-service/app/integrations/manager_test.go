@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/modules/organization/core"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 )
@@ -15,8 +15,8 @@ func TestIntegrationLifecycle(t *testing.T) {
 	mgr, store := NewTestIntegrationsManager(t)
 	ctx := context.Background()
 
-	organizationUsecase := core.NewUsecase(core.NewStore(store))
-	user, apiErr := createTestUser(organizationUsecase)
+	organizationModule := organization.NewModule(store)
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create test user: %v", apiErr)
 	}

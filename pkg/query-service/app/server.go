@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	organizationcore "github.com/SigNoz/signoz/pkg/modules/organization/core"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -188,8 +187,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	preferenceAPI := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(serverOptions.SigNoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	organizationAPI := organization.NewAPI(organizationcore.NewUsecase(organizationcore.NewStore(serverOptions.SigNoz.SQLStore)))
-	organizationUsecase := organizationcore.NewUsecase(organizationcore.NewStore(serverOptions.SigNoz.SQLStore))
+	organizationAPI := organization.NewAPI(serverOptions.SigNoz.SQLStore)
+	organizationModule := organization.NewModule(serverOptions.SigNoz.SQLStore)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
 		SkipConfig:                    skipConfig,
@@ -210,7 +209,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		Signoz:                        serverOptions.SigNoz,
 		Preference:                    preferenceAPI,
 		OrganizationAPI:               organizationAPI,
-		OrganizationUsecase:           organizationUsecase,
+		OrganizationModule:            organizationModule,
 	})
 	if err != nil {
 		return nil, err

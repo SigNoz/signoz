@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/modules/organization/core"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -584,8 +584,8 @@ func NewIntegrationsTestBed(t *testing.T, testDB sqlstore.SQLStore) *Integration
 	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 
-	organizationUsecase := core.NewUsecase(core.NewStore(testDB))
-	user, apiErr := createTestUser(organizationUsecase)
+	organizationModule := organization.NewModule(testDB)
+	user, apiErr := createTestUser(organizationModule)
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}

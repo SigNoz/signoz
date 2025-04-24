@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/organization/core"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
@@ -22,8 +21,8 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationUsecase := core.NewUsecase(core.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationUsecase)
+	organizationModule := organization.NewModule(sqlStore)
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// should be able to generate connection url for
@@ -69,8 +68,8 @@ func TestAgentCheckIns(t *testing.T) {
 	sqlStore := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
-	organizationUsecase := core.NewUsecase(core.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationUsecase)
+	organizationModule := organization.NewModule(sqlStore)
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// An agent should be able to check in from a cloud account even
@@ -156,8 +155,8 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationUsecase := core.NewUsecase(core.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationUsecase)
+	organizationModule := organization.NewModule(sqlStore)
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// Attempting to disconnect a non-existent account should return error
@@ -175,8 +174,8 @@ func TestConfigureService(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationUsecase := core.NewUsecase(core.NewStore(sqlStore))
-	user, apiErr := createTestUser(organizationUsecase)
+	organizationModule := organization.NewModule(sqlStore)
+	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
 	// create a connected account
@@ -291,11 +290,11 @@ func makeTestConnectedAccount(t *testing.T, orgId string, controller *Controller
 	return acc
 }
 
-func createTestUser(organizationUsecase organization.Usecase) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewDefaultOrganization("test")
-	err := organizationUsecase.Create(ctx, organization)
+	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)
 	}

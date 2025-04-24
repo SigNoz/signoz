@@ -1,4 +1,4 @@
-package organization
+package internal
 
 import (
 	"encoding/json"
@@ -14,18 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type API interface {
-	Get(http.ResponseWriter, *http.Request)
-	GetAll(http.ResponseWriter, *http.Request)
-	Update(http.ResponseWriter, *http.Request)
-}
-
 type organizationAPI struct {
-	usecase Usecase
+	module *organizationModule
 }
 
-func NewAPI(usecase Usecase) API {
-	return &organizationAPI{usecase: usecase}
+func NewAPI(module *organizationModule) *organizationAPI {
+	return &organizationAPI{module: module}
 }
 
 func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
@@ -36,7 +30,7 @@ func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	organization, err := api.usecase.Get(r.Context(), id)
+	organization, err := api.module.Get(r.Context(), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -46,7 +40,7 @@ func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (api *organizationAPI) GetAll(rw http.ResponseWriter, r *http.Request) {
-	organizations, err := api.usecase.GetAll(r.Context())
+	organizations, err := api.module.GetAll(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -70,7 +64,7 @@ func (api *organizationAPI) Update(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req.ID = id
-	err = api.usecase.Update(r.Context(), req)
+	err = api.module.Update(r.Context(), req)
 	if err != nil {
 		render.Error(rw, err)
 		return

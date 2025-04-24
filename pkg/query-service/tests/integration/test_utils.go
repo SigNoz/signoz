@@ -149,11 +149,11 @@ func makeTestSignozLog(
 	return testLog
 }
 
-func createTestUser(organizationUsecase organization.Usecase) (*types.User, *model.ApiError) {
+func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	organization := types.NewDefaultOrganization("test")
-	err := organizationUsecase.Create(ctx, organization)
+	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)
 	}

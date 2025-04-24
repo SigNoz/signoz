@@ -278,7 +278,7 @@ func RevokeInvite(ctx context.Context, email string) error {
 }
 
 // GetInvite returns an invitation object for the given token.
-func GetInvite(ctx context.Context, token string, organizationUsecase organization.Usecase) (*model.InvitationResponseObject, error) {
+func GetInvite(ctx context.Context, token string, organizationModule organization.Module) (*model.InvitationResponseObject, error) {
 	zap.L().Debug("GetInvite method invoked for token", zap.String("token", token))
 
 	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
@@ -294,7 +294,7 @@ func GetInvite(ctx context.Context, token string, organizationUsecase organizati
 	if err != nil {
 		return nil, err
 	}
-	org, err := organizationUsecase.Get(ctx, orgID)
+	org, err := organizationModule.Get(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query the DB")
 	}
@@ -405,7 +405,7 @@ type RegisterRequest struct {
 	SourceUrl string `json:"sourceUrl"`
 }
 
-func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationUsecase organization.Usecase) (*types.User, *model.ApiError) {
+func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationModule organization.Module) (*types.User, *model.ApiError) {
 	if req.Email == "" {
 		return nil, model.BadRequest(model.ErrEmailRequired{})
 	}
@@ -416,7 +416,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationUs
 
 	groupName := constants.AdminGroup
 	organization := types.NewDefaultOrganization(req.OrgHName)
-	err := organizationUsecase.Create(ctx, organization)
+	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)
 	}
@@ -549,7 +549,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 // Register registers a new user. For the first register request, it doesn't need an invite token
 // and also the first registration is an enforced ADMIN registration. Every subsequent request will
 // need an invite token to go through.
-func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager, organizationUsecase organization.Usecase) (*types.User, *model.ApiError) {
+func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager, organizationModule organization.Module) (*types.User, *model.ApiError) {
 	users, err := dao.DB().GetUsers(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to get user count"))
@@ -557,7 +557,7 @@ func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanag
 
 	switch len(users) {
 	case 0:
-		user, err := RegisterFirstUser(ctx, req, organizationUsecase)
+		user, err := RegisterFirstUser(ctx, req, organizationModule)
 		if err != nil {
 			return nil, err
 		}

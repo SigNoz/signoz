@@ -150,8 +150,8 @@ type APIHandler struct {
 
 	Preference preference.API
 
-	OrganizationAPI     organization.API
-	OrganizationUsecase organization.Usecase
+	OrganizationAPI    organization.API
+	OrganizationModule organization.Module
 }
 
 type APIHandlerOpts struct {
@@ -200,9 +200,9 @@ type APIHandlerOpts struct {
 
 	Signoz *signoz.SigNoz
 
-	Preference          preference.API
-	OrganizationAPI     organization.API
-	OrganizationUsecase organization.Usecase
+	Preference         preference.API
+	OrganizationAPI    organization.API
+	OrganizationModule organization.Module
 }
 
 // NewAPIHandler returns an APIHandler
@@ -274,7 +274,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Preference:                    opts.Preference,
 		FieldsAPI:                     opts.FieldsAPI,
 		OrganizationAPI:               opts.OrganizationAPI,
-		OrganizationUsecase:           opts.OrganizationUsecase,
+		OrganizationModule:            opts.OrganizationModule,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -2066,7 +2066,7 @@ func (aH *APIHandler) inviteUsers(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 
-	resp, err := auth.GetInvite(context.Background(), token, aH.OrganizationUsecase)
+	resp, err := auth.GetInvite(context.Background(), token, aH.OrganizationModule)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
 		return
@@ -2108,7 +2108,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 		if err != nil {
 			render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "invalid org_id in the invite"))
 		}
-		org, err := aH.OrganizationUsecase.Get(ctx, orgID)
+		org, err := aH.OrganizationModule.Get(ctx, orgID)
 		if err != nil {
 			render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, err.Error()))
 		}
@@ -2135,7 +2135,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.OrganizationUsecase)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.OrganizationModule)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return

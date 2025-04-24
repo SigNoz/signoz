@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	organizationcore "github.com/SigNoz/signoz/pkg/modules/organization/core"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -61,8 +60,8 @@ type APIHandler struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	organizationAPI := organization.NewAPI(organizationcore.NewUsecase(organizationcore.NewStore(signoz.SQLStore)))
-	organizationUsecase := organizationcore.NewUsecase(organizationcore.NewStore(signoz.SQLStore))
+	organizationAPI := organization.NewAPI(signoz.SQLStore)
+	organizationModule := organization.NewModule(signoz.SQLStore)
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
@@ -83,7 +82,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, 
 		Signoz:                        signoz,
 		Preference:                    preference,
 		OrganizationAPI:               organizationAPI,
-		OrganizationUsecase:           organizationUsecase,
+		OrganizationModule:            organizationModule,
 	})
 
 	if err != nil {
