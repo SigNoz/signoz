@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 import requests
-import time
+
 from fixtures import types
 from fixtures.logger import setup_logger
 
@@ -100,7 +100,7 @@ def test_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None:
     user_response = response.json()
     found_user = next(
         (user for user in user_response if user["email"] == "editor@integration.test"),
-        None
+        None,
     )
 
     assert found_user is not None

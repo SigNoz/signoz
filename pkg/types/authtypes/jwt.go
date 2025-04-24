@@ -125,7 +125,7 @@ func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, Clai
 func ClaimsFromContext(ctx context.Context) (Claims, error) {
 	claims, ok := ctx.Value(jwtClaimsKey{}).(Claims)
 	if !ok {
-		return Claims{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing claims")
+		return Claims{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
 	}
 
 	return claims, nil
