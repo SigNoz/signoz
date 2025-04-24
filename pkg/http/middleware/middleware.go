@@ -3,7 +3,7 @@ package middleware
 import "net/http"
 
 const (
-	pkgname string = "go.signoz.io/pkg/http/middleware"
+	pkgname string = "github.com/SigNoz/pkg/http/middleware"
 )
 
 // Wrapper is an interface implemented by all middlewares
