@@ -81,7 +81,7 @@ func (j *JWT) signToken(claims Claims) (string, error) {
 }
 
 // AccessToken creates an access token with the provided claims
-func (j *JWT) AccessToken(orgId, userId, email string, role Role) (string, error) {
+func (j *JWT) AccessToken(orgId, userId, email string, role Role) (string, Claims, error) {
 	claims := Claims{
 		UserID: userId,
 		Role:   role,
@@ -92,11 +92,17 @@ func (j *JWT) AccessToken(orgId, userId, email string, role Role) (string, error
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-	return j.signToken(claims)
+
+	token, err := j.signToken(claims)
+	if err != nil {
+		return "", Claims{}, errors.Wrapf(err, errors.TypeUnauthenticated, errors.CodeUnauthenticated, "failed to sign token")
+	}
+
+	return token, claims, nil
 }
 
 // RefreshToken creates a refresh token with the provided claims
-func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, error) {
+func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, Claims, error) {
 	claims := Claims{
 		UserID: userId,
 		Role:   role,
@@ -107,12 +113,22 @@ func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, erro
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-	return j.signToken(claims)
+
+	token, err := j.signToken(claims)
+	if err != nil {
+		return "", Claims{}, errors.Wrapf(err, errors.TypeUnauthenticated, errors.CodeUnauthenticated, "failed to sign token")
+	}
+
+	return token, claims, nil
 }
 
-func ClaimsFromContext(ctx context.Context) (Claims, bool) {
+func ClaimsFromContext(ctx context.Context) (Claims, error) {
 	claims, ok := ctx.Value(jwtClaimsKey{}).(Claims)
-	return claims, ok
+	if !ok {
+		return Claims{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing claims")
+	}
+
+	return claims, nil
 }
 
 func parseBearerAuth(auth string) (string, bool) {

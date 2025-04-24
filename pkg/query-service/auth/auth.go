@@ -26,18 +26,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type JwtContextKeyType string
-
-const AccessJwtKey JwtContextKeyType = "accessJwt"
-const RefreshJwtKey JwtContextKeyType = "refreshJwt"
-
 const (
 	opaqueTokenSize       = 16
 	minimumPasswordLength = 8
 )
 
 var (
-	ErrorInvalidCreds = fmt.Errorf("invalid credentials")
+	ErrorInvalidCreds       = fmt.Errorf("invalid credentials")
+	ErrorEmptyRequest       = errors.New("Empty request")
+	ErrorInvalidRole        = errors.New("Invalid role")
+	ErrorInvalidInviteToken = errors.New("Invalid invite token")
+	ErrorAskAdmin           = errors.New("An invitation is needed to create an account. Please ask your admin (the person who has first installed SIgNoz) to send an invite.")
 )
 
 type InviteEmailData struct {
@@ -49,7 +48,10 @@ type InviteEmailData struct {
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
-	zap.L().Debug("Got an invite request for email", zap.String("email", req.Email))
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
@@ -64,11 +66,6 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	if user != nil {
 		return nil, errors.New("User already exists with the same email")
 	}
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("failed to extract OrgID from context")
-	}
 	// Check if an invite already exists
 	invite, apiErr := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if apiErr != nil {
@@ -79,8 +76,9 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.New("An invite already exists for this email")
 	}
 
-	if err := validateInviteRequest(req); err != nil {
-		return nil, errors.Wrap(err, "invalid invite request")
+	role, err := authtypes.NewRole(req.Role)
+	if err != nil {
+		return nil, err
 	}
 
 	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
@@ -99,7 +97,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		Name:  req.Name,
 		Email: req.Email,
 		Token: token,
-		Role:  req.Role,
+		Role:  role.String(),
 		OrgID: au.OrgID,
 	}
 
@@ -120,16 +118,16 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 }
 
 func InviteUsers(ctx context.Context, req *model.BulkInviteRequest) (*model.BulkInviteResponse, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	response := &model.BulkInviteResponse{
 		Status:            "success",
 		Summary:           model.InviteSummary{TotalInvites: len(req.Users)},
 		SuccessfulInvites: []model.SuccessfulInvite{},
 		FailedInvites:     []model.FailedInvite{},
-	}
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return nil, errors.New("failed to extract admin user id")
 	}
 
 	au, apiErr := dao.DB().GetUser(ctx, claims.UserID)
@@ -191,8 +189,9 @@ func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.Gettabl
 		return nil, errors.New("An invite already exists for this email")
 	}
 
-	if err := validateInviteRequest(req); err != nil {
-		return nil, errors.Wrap(err, "invalid invite request")
+	role, err := authtypes.NewRole(req.Role)
+	if err != nil {
+		return nil, err
 	}
 
 	inv := &types.Invite{
@@ -206,7 +205,7 @@ func inviteUser(ctx context.Context, req *model.InviteRequest, au *types.Gettabl
 		Name:  req.Name,
 		Email: req.Email,
 		Token: token,
-		Role:  req.Role,
+		Role:  role.String(),
 		OrgID: au.OrgID,
 	}
 
@@ -260,11 +259,9 @@ func inviteEmail(req *model.InviteRequest, au *types.GettableUser, token string)
 
 // RevokeInvite is used to revoke the invitation for the given email.
 func RevokeInvite(ctx context.Context, email string) error {
-	zap.L().Debug("RevokeInvite method invoked for email", zap.String("email", email))
-
-	claims, ok := authtypes.ClaimsFromContext(ctx)
-	if !ok {
-		return errors.New("failed to org id from context")
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
 	}
 
 	if err := dao.DB().DeleteInvitation(ctx, claims.OrgID, email); err != nil {
@@ -432,7 +429,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationMo
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused
-		Role:              authtypes.RoleAdmin,
+		Role:              authtypes.RoleAdmin.String(),
 		OrgID:             organization.ID.StringValue(),
 	}
 
@@ -477,7 +474,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	if invite.Role == "" {
 		// if role is not provided, default to viewer
-		invite.Role = authtypes.RoleViewer
+		invite.Role = authtypes.RoleViewer.String()
 	}
 
 	var hash string
@@ -557,8 +554,6 @@ func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanag
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
 func Login(ctx context.Context, request *model.LoginRequest, jwt *authtypes.JWT) (*model.LoginResponse, error) {
-	zap.L().Debug("Login method called for user", zap.String("email", request.Email))
-
 	user, err := authenticateLogin(ctx, request, jwt)
 	if err != nil {
 		zap.L().Error("Failed to authenticate login request", zap.Error(err))
@@ -599,7 +594,7 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest, jwt *authty
 		user := &types.GettableUser{
 			User: types.User{
 				ID:    claims.UserID,
-				Role:  claims.Role,
+				Role:  claims.Role.String(),
 				Email: claims.Email,
 				OrgID: claims.OrgID,
 			},
@@ -633,18 +628,32 @@ func passwordMatch(hash, password string) bool {
 }
 
 func GenerateJWTForUser(user *types.User, jwt *authtypes.JWT) (model.UserJwtObject, error) {
-	j := model.UserJwtObject{}
-	var err error
-	j.AccessJwtExpiry = time.Now().Add(jwt.JwtExpiry).Unix()
-	j.AccessJwt, err = jwt.AccessToken(user.OrgID, user.ID, user.Email, user.Role)
+	role, err := authtypes.NewRole(user.Role)
 	if err != nil {
-		return j, errors.Errorf("failed to encode jwt: %v", err)
+		return model.UserJwtObject{}, err
 	}
 
-	j.RefreshJwtExpiry = time.Now().Add(jwt.JwtRefresh).Unix()
-	j.RefreshJwt, err = jwt.RefreshToken(user.OrgID, user.ID, user.Email, user.Role)
+	accessJwt, accessClaims, err := jwt.AccessToken(user.OrgID, user.ID, user.Email, role)
 	if err != nil {
-		return j, errors.Errorf("failed to encode jwt: %v", err)
+		return model.UserJwtObject{}, err
 	}
-	return j, nil
+
+	refreshJwt, refreshClaims, err := jwt.RefreshToken(user.OrgID, user.ID, user.Email, role)
+	if err != nil {
+		return model.UserJwtObject{}, err
+	}
+
+	return model.UserJwtObject{
+		AccessJwt:        accessJwt,
+		RefreshJwt:       refreshJwt,
+		AccessJwtExpiry:  accessClaims.ExpiresAt.Unix(),
+		RefreshJwtExpiry: refreshClaims.ExpiresAt.Unix(),
+	}, nil
+}
+
+func ValidatePassword(password string) error {
+	if len(password) < minimumPasswordLength {
+		return errors.Errorf("Password should be atleast %d characters.", minimumPasswordLength)
+	}
+	return nil
 }

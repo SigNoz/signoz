@@ -159,9 +159,9 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, metricNam
 	g.Go(func() error {
 		var metricNames []string
 		metricNames = append(metricNames, metricName)
-		claims, ok := authtypes.ClaimsFromContext(ctx)
-		if !ok {
-			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}
+		claims, errv2 := authtypes.ClaimsFromContext(ctx)
+		if errv2 != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
 		data, err := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
 		if err != nil {
@@ -332,9 +332,9 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 	alertsRelatedData := make(map[string][]metrics_explorer.Alert)
 
 	g.Go(func() error {
-		claims, ok := authtypes.ClaimsFromContext(ctx)
-		if !ok {
-			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("failed to get claims")}
+		claims, errv2 := authtypes.ClaimsFromContext(ctx)
+		if errv2 != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errv2}
 		}
 		names, apiError := dashboards.GetDashboardsWithMetricNames(ctx, claims.OrgID, metricNames)
 		if apiError != nil {

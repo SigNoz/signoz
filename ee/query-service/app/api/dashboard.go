@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/app/dashboards"
-	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 )
@@ -36,18 +35,19 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	claims, ok := authtypes.ClaimsFromContext(r.Context())
-	if !ok {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
 		render.Error(w, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
 		return
 	}
+
 	dashboard, err := dashboards.GetDashboard(r.Context(), claims.OrgID, uuid)
 	if err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get dashboard"))
 		return
 	}
 
-	if !auth.IsAdminV2(claims) && (dashboard.CreatedBy != claims.Email) {
+	if err := claims.IsAdmin(); err != nil && (dashboard.CreatedBy != claims.Email) {
 		render.Error(w, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "You are not authorized to lock/unlock this dashboard"))
 		return
 	}

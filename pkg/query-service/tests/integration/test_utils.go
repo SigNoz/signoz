@@ -167,7 +167,7 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgID:    organization.ID.StringValue(),
-			Role:     authtypes.RoleAdmin,
+			Role:     authtypes.RoleAdmin.String(),
 		},
 		true,
 	)

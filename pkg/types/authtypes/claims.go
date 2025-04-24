@@ -1,6 +1,9 @@
 package authtypes
 
 import (
+	"log/slog"
+	"slices"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -29,4 +32,46 @@ func (c *Claims) Validate() error {
 	}
 
 	return nil
+}
+
+func (c *Claims) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("id", c.UserID),
+		slog.String("email", c.Email),
+		slog.String("role", c.Role.String()),
+		slog.String("orgId", c.OrgID),
+		slog.Time("exp", c.ExpiresAt.Time),
+	)
+}
+
+func (c *Claims) IsViewer() error {
+	if slices.Contains([]Role{RoleViewer, RoleEditor, RoleAdmin}, c.Role) {
+		return nil
+	}
+
+	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only viewers/editors/admins can access this resource")
+}
+
+func (c *Claims) IsEditor() error {
+	if slices.Contains([]Role{RoleEditor, RoleAdmin}, c.Role) {
+		return nil
+	}
+
+	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only editors/admins can access this resource")
+}
+
+func (c *Claims) IsAdmin() error {
+	if c.Role == RoleAdmin {
+		return nil
+	}
+
+	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can access this resource")
+}
+
+func (c *Claims) IsSelfAccess(id string) error {
+	if c.UserID == id {
+		return nil
+	}
+
+	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only the user/admin can access their own resource")
 }

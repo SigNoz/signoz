@@ -44,7 +44,7 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 			CreatedAt: time.Now(),
 		},
 		ProfilePictureURL: "", // Currently unused
-		Role:              authtypes.RoleViewer,
+		Role:              authtypes.RoleViewer.String(),
 		OrgID:             domain.OrgID,
 	}
 
@@ -108,7 +108,7 @@ func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, base
 			return false, baseapierr
 		}
 
-		if userPayload.Role != authtypes.RoleAdmin {
+		if userPayload.Role != authtypes.RoleAdmin.String() {
 			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
 		}
 

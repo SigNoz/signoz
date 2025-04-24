@@ -492,14 +492,6 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	return &req, nil
 }
 
-func isValidRole(role string) bool {
-	switch role {
-	case authtypes.RoleAdmin, authtypes.RoleEditor, authtypes.RoleViewer:
-		return true
-	}
-	return false
-}
-
 func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) {
 	var req model.BulkInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -520,7 +512,9 @@ func parseInviteUsersRequest(r *http.Request) (*model.BulkInviteRequest, error) 
 		if req.Users[i].FrontendBaseUrl == "" {
 			return nil, fmt.Errorf("frontendBaseUrl is required for each user")
 		}
-		if !isValidRole(req.Users[i].Role) {
+
+		_, err := authtypes.NewRole(req.Users[i].Role)
+		if err != nil {
 			return nil, fmt.Errorf("invalid role for user: %s", req.Users[i].Email)
 		}
 	}

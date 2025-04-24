@@ -49,7 +49,7 @@ func createTestUser(organizationModule organization.Module) (*types.User, *model
 			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgID:    org.ID,
-			Role:     authtypes.RoleAdmin,
+			Role:     authtypes.RoleAdmin.String(),
 		},
 		true,
 	)

@@ -11,7 +11,7 @@ import (
 
 func TestJwtAccessToken(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, err := jwtService.AccessToken("orgId", "userId", "email@example.com", RoleAdmin)
+	token, _, err := jwtService.AccessToken("orgId", "userId", "email@example.com", RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -19,7 +19,7 @@ func TestJwtAccessToken(t *testing.T) {
 
 func TestJwtRefreshToken(t *testing.T) {
 	jwtService := NewJWT("secret", time.Minute, time.Hour)
-	token, err := jwtService.RefreshToken("orgId", "userId", "email@example.com", RoleAdmin)
+	token, _, err := jwtService.RefreshToken("orgId", "userId", "email@example.com", RoleAdmin)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -104,6 +104,26 @@ func TestJwtClaimsInvalidSignature(t *testing.T) {
 	_, err = jwtService.Claims(invalidToken)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "signature is invalid")
+}
+
+func TestJwtClaimsWithInvalidRole(t *testing.T) {
+	jwtService := NewJWT("secret", time.Minute, time.Hour)
+
+	claims := Claims{
+		UserID: "userId",
+		Role:   "INVALID_ROLE",
+		Email:  "email@example.com",
+		OrgID:  "orgId",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
+	}
+	validToken, err := jwtService.signToken(claims)
+	assert.NoError(t, err)
+
+	_, err = jwtService.Claims(validToken)
+	assert.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeUnauthenticated))
 }
 
 func TestJwtClaimsMissingUserID(t *testing.T) {
