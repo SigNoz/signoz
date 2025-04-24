@@ -158,7 +158,7 @@ func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string
 		_, err = bun.
 			NewAddColumn().
 			Table(table).
-			ColumnExpr(column + columnExpr).
+			ColumnExpr(column + " " + columnExpr).
 			Exec(ctx)
 		if err != nil {
 			return err

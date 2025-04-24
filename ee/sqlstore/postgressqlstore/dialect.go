@@ -168,7 +168,7 @@ func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string
 		_, err = bun.
 			NewAddColumn().
 			Table(table).
-			ColumnExpr(column + columnExpr).
+			ColumnExpr(column + " " + columnExpr).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -211,7 +211,7 @@ func (dialect *dialect) DropColumn(ctx context.Context, bun bun.IDB, table strin
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if exists {
 		_, err = bun.
 			NewDropColumn().
 			Table(table).
