@@ -26,7 +26,7 @@ const queryClient = new QueryClient({
 });
 
 describe('Span scope selector', () => {
-	it('should render span scope selector when data source is TRACES', () => {
+	it('should render span scope selector when hideSpanScopeSelector is false', () => {
 		const { getByTestId } = render(
 			<QueryClientProvider client={queryClient}>
 				<QueryBuilderSearchV2
@@ -34,6 +34,7 @@ describe('Span scope selector', () => {
 						...initialQueryBuilderFormValues,
 						dataSource: DataSource.TRACES,
 					}}
+					hideSpanScopeSelector={false}
 					onChange={jest.fn()}
 				/>
 			</QueryClientProvider>,
@@ -42,7 +43,7 @@ describe('Span scope selector', () => {
 		expect(getByTestId('span-scope-selector')).toBeInTheDocument();
 	});
 
-	it('should not render span scope selector for non-TRACES data sources', () => {
+	it('should not render span scope selector by default (i.e. when hideSpanScopeSelector is true)', () => {
 		const { queryByTestId } = render(
 			<QueryClientProvider client={queryClient}>
 				<QueryBuilderSearchV2
