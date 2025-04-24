@@ -1,5 +1,5 @@
 export interface Props {
-	hName: string;
+	displayName: string;
 	orgId: string;
 }
 

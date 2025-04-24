@@ -9,20 +9,20 @@ import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
-	const orgName = Form.useWatch('hName', form);
+	const orgName = Form.useWatch('displayName', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org, updateOrg } = useAppContext();
-	const { hName } = (org || [])[index];
+	const { displayName } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { notifications } = useNotifications();
 
 	const onSubmit = async (values: FormValues): Promise<void> => {
 		try {
 			setIsLoading(true);
-			const { hName } = values;
+			const { displayName } = values;
 			const { statusCode, error } = await editOrg({
-				hName,
+				displayName,
 				orgId,
 			});
 			if (statusCode === 200) {
@@ -31,7 +31,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 						ns: 'common',
 					}),
 				});
-				updateOrg(orgId, hName);
+				updateOrg(orgId, displayName);
 			} else {
 				notifications.error({
 					message:
@@ -56,18 +56,18 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		return <div />;
 	}
 
-	const isDisabled = isLoading || orgName === hName || !orgName;
+	const isDisabled = isLoading || orgName === displayName || !orgName;
 
 	return (
 		<Form
-			initialValues={{ hName }}
+			initialValues={{ displayName }}
 			form={form}
 			layout="vertical"
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
 			<Form.Item
-				name="hName"
+				name="displayName"
 				label="Display name"
 				rules={[{ required: true, message: requireErrorMessage('Display name') }]}
 			>
@@ -93,7 +93,7 @@ interface DisplayNameProps {
 }
 
 interface FormValues {
-	hName: string;
+	displayName: string;
 }
 
 export default DisplayName;

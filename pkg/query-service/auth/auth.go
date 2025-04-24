@@ -304,7 +304,7 @@ func GetInvite(ctx context.Context, token string, organizationModule organizatio
 		Token:        inv.Token,
 		CreatedAt:    inv.CreatedAt.Unix(),
 		Role:         inv.Role,
-		Organization: org.HName,
+		Organization: org.DisplayName,
 	}, nil
 }
 

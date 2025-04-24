@@ -157,7 +157,7 @@ export function getAppContextMock(
 			{
 				createdAt: 0,
 				id: 'does-not-matter-id',
-				hName: 'Pentagon',
+				displayName: 'Pentagon',
 				name: 'Pentagon',
 			},
 		],

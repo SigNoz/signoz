@@ -12,12 +12,12 @@ type Organization struct {
 	bun.BaseModel `bun:"table:organizations"`
 	TimeAuditable
 	Identifiable
-	Name  string `bun:"name,type:text,nullzero" json:"name"`
-	Alias string `bun:"alias,type:text,nullzero" json:"alias"`
-	HName string `bun:"h_name,type:text,notnull" json:"h_name"`
+	Name        string `bun:"name,type:text,nullzero" json:"name"`
+	Alias       string `bun:"alias,type:text,nullzero" json:"alias"`
+	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
-func NewDefaultOrganization(hName string) *Organization {
+func NewDefaultOrganization(displayName string) *Organization {
 	return &Organization{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -27,7 +27,7 @@ func NewDefaultOrganization(hName string) *Organization {
 			UpdatedAt: time.Now(),
 		},
 		// Name: "default/main", TODO: take the call and uncomment this later
-		HName: hName,
+		DisplayName: displayName,
 	}
 }
 

@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 export interface OrgData {
 	id: string;
-	hName: string;
+	displayName: string;
 }
 
 export interface OrgDetails {
@@ -109,7 +109,7 @@ function OrgQuestions({
 		try {
 			setIsLoading(true);
 			const { statusCode, error } = await editOrg({
-				hName: organisationName,
+				displayName: organisationName,
 				orgId: currentOrgData.id,
 			});
 			if (statusCode === 200) {

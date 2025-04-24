@@ -209,7 +209,7 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.h_name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.id = ?", id)
@@ -246,7 +246,7 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.h_name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.email = ?", email)
@@ -281,7 +281,7 @@ func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]t
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.h_name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id")
 
@@ -305,7 +305,7 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.h_name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.org_id = ?", orgId)
@@ -326,7 +326,7 @@ func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
 		Table("users").
 		Column("users.id", "users.name", "users.email", "users.password", "users.created_at", "users.profile_picture_url", "users.org_id", "users.group_id").
 		ColumnExpr("g.name as role").
-		ColumnExpr("o.h_name as organization").
+		ColumnExpr("o.display_name as organization").
 		Join("JOIN groups g ON g.id = users.group_id").
 		Join("JOIN organizations o ON o.id = users.org_id").
 		Where("users.group_id = ?", groupId)

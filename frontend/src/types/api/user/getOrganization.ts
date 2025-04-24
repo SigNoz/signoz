@@ -1,7 +1,7 @@
 export interface Organization {
 	createdAt: number;
 	id: string;
-	hName: string;
+	displayName: string;
 	name: string;
 }
 

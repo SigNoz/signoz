@@ -44,13 +44,13 @@ func (migration *updateOrganizations) Up(ctx context.Context, db *bun.DB) error 
 
 	defer tx.Rollback()
 
-	exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "h_name")
+	exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "display_name")
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations RENAME COLUMN name to h_name`)
+		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations RENAME COLUMN name to display_name`)
 		if err != nil {
 			return err
 		}

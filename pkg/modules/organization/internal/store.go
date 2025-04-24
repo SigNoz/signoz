@@ -68,7 +68,7 @@ func (s *store) Update(ctx context.Context, organization *types.Organization) er
 		BunDB().
 		NewUpdate().
 		Model(organization).
-		Set("h_name = ?", organization.HName).
+		Set("display_name = ?", organization.DisplayName).
 		Where("id = ?", organization.ID.StringValue()).
 		Exec(ctx)
 	if err != nil {
