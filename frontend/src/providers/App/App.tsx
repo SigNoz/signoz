@@ -84,7 +84,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 							createdAt: 0,
 							id: userData.payload.orgId,
 							displayName: userData.payload.organization,
-							name: userData.payload.organization,
 						},
 					];
 				}
@@ -96,7 +95,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 						createdAt: 0,
 						id: userData.payload.orgId,
 						displayName: userData.payload.organization,
-						name: userData.payload.organization,
 					},
 					...prev.slice(orgIndex + 1, prev.length),
 				];
@@ -209,7 +207,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 						createdAt: 0,
 						id: orgId,
 						displayName: updatedOrgName,
-						name: updatedOrgName,
 					},
 					...org.slice(orgIndex + 1, org.length),
 				];

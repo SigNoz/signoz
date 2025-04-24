@@ -3,6 +3,7 @@ package implorganization
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -63,7 +64,7 @@ func (s *store) GetAll(ctx context.Context) ([]*types.Organization, error) {
 		if err == sql.ErrNoRows {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "no organizations found")
 		}
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get all organization")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get all organizations")
 	}
 
 	return organizations, nil
@@ -76,10 +77,11 @@ func (s *store) Update(ctx context.Context, organization *types.Organization) er
 		NewUpdate().
 		Model(organization).
 		Set("display_name = ?", organization.DisplayName).
+		Set("updated_at = ?", time.Now()).
 		Where("id = ?", organization.ID.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update organization with id:%s", organization.ID.StringValue())
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update organization with id: %s", organization.ID.StringValue())
 	}
 	return nil
 }
@@ -93,7 +95,7 @@ func (s *store) Delete(ctx context.Context, id valuer.UUID) error {
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete organization with id:%s", id.StringValue())
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete organization with id: %s", id.StringValue())
 	}
 
 	return nil

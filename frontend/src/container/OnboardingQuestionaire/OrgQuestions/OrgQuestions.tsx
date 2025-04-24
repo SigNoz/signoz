@@ -112,11 +112,11 @@ function OrgQuestions({
 				displayName: organisationName,
 				orgId: currentOrgData.id,
 			});
-			if (statusCode === 200) {
-				updateOrg(currentOrgData?.id, orgDetails.organisationName);
+			if (statusCode === 204) {
+				updateOrg(currentOrgData?.id, organisationName);
 
 				logEvent('Org Onboarding: Org Name Updated', {
-					organisationName: orgDetails.organisationName,
+					organisationName,
 				});
 
 				logEvent('Org Onboarding: Answered', {

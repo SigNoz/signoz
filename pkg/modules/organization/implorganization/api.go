@@ -8,8 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/gorilla/mux"
 )
 
 type organizationAPI struct {
@@ -21,14 +21,18 @@ func NewAPI(module organization.Module) organization.API {
 }
 
 func (api *organizationAPI) Get(rw http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, err.Error()))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid org id"))
 		return
 	}
 
-	organization, err := api.module.Get(r.Context(), id)
+	organization, err := api.module.Get(r.Context(), orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -48,10 +52,14 @@ func (api *organizationAPI) GetAll(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (api *organizationAPI) Update(rw http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
+	claims, ok := authtypes.ClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(rw, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated"))
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, err.Error()))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid org id"))
 		return
 	}
 
@@ -61,7 +69,7 @@ func (api *organizationAPI) Update(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 	}
 
-	req.ID = id
+	req.ID = orgID
 	err = api.module.Update(r.Context(), req)
 	if err != nil {
 		render.Error(rw, err)

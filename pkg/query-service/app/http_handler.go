@@ -631,10 +631,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rbac/role/{id}", am.SelfAccess(aH.getRole)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.editRole)).Methods(http.MethodPut)
 
-	router.HandleFunc("/api/v1/org", am.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.updateOrg)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/orgUsers/{id}", am.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/orgs", am.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/orgs/me", am.AdminAccess(aH.updateOrg)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
