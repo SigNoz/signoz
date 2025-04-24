@@ -1,9 +1,10 @@
 import './TraceDetailV2.styles.scss';
 
 import { Button, Tabs } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Compass, TowerControl, Undo } from 'lucide-react';
+import { Compass, Cone, TowerControl, Undo } from 'lucide-react';
 import TraceDetail from 'pages/TraceDetail';
 import { useCallback, useState } from 'react';
 
@@ -33,6 +34,10 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 					if (activeKey === 'trace-details') {
 						history.push(ROUTES.TRACES_EXPLORER);
 					}
+					if (activeKey === 'funnels') {
+						logEvent('Trace Funnels: visited from trace details page', {});
+						history.push(ROUTES.TRACES_FUNNELS);
+					}
 				}}
 				tabBarExtraContent={
 					<Button
@@ -51,6 +56,7 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 
 export default function TraceDetailsPage(): JSX.Element {
 	const [showOldTraceDetails, setShowOldTraceDetails] = useState<boolean>(false);
+
 	const items = [
 		{
 			label: (
@@ -60,6 +66,15 @@ export default function TraceDetailsPage(): JSX.Element {
 			),
 			key: 'trace-details',
 			children: <TraceDetailsV2 />,
+		},
+		{
+			label: (
+				<div className="tab-item">
+					<Cone className="funnel-icon" size={16} /> Funnels
+				</div>
+			),
+			key: 'funnels',
+			children: <div />,
 		},
 		{
 			label: (
