@@ -108,8 +108,6 @@ function AllEndPoints({
 		[groupBy, domainName, minTime, maxTime],
 	);
 
-	console.log('uncaught modalTimeRange', timeRange);
-
 	// Since only one query here
 	const endPointsDataQueries = useQueries(
 		queryPayloads.map((payload) => ({
