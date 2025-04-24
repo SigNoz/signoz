@@ -21,7 +21,6 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -223,8 +222,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	organizationModule := implorganization.NewModule(implorganization.NewStore(serverOptions.SigNoz.SQLStore))
-	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.Config.TelemetryStore.Clickhouse.DSN, organizationModule)
+	usageManager, err := usage.New(modelDao, lm.GetRepo(), serverOptions.SigNoz.TelemetryStore.ClickhouseDB(), serverOptions.Config.TelemetryStore.Clickhouse.DSN)
 	if err != nil {
 		return nil, err
 	}

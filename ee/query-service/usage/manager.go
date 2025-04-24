@@ -19,7 +19,6 @@ import (
 	licenseserver "github.com/SigNoz/signoz/ee/query-service/integrations/signozio"
 	"github.com/SigNoz/signoz/ee/query-service/license"
 	"github.com/SigNoz/signoz/ee/query-service/model"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
 )
 
@@ -44,11 +43,9 @@ type Manager struct {
 	modelDao dao.ModelDao
 
 	tenantID string
-
-	organizationModule organization.Module
 }
 
-func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string, organizationModule organization.Module) (*Manager, error) {
+func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn, chUrl string) (*Manager, error) {
 	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
 	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(chUrl)
 
@@ -60,12 +57,11 @@ func New(modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickh
 
 	m := &Manager{
 		// repository:     repo,
-		clickhouseConn:     clickhouseConn,
-		licenseRepo:        licenseRepo,
-		scheduler:          gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
-		modelDao:           modelDao,
-		tenantID:           tenantID,
-		organizationModule: organizationModule,
+		clickhouseConn: clickhouseConn,
+		licenseRepo:    licenseRepo,
+		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
+		modelDao:       modelDao,
+		tenantID:       tenantID,
 	}
 	return m, nil
 }
@@ -142,15 +138,6 @@ func (lm *Manager) UploadUsage() {
 
 	zap.L().Info("uploading usage data")
 
-	orgName := ""
-	orgNames, orgError := lm.organizationModule.GetAll(ctx)
-	if orgError != nil {
-		zap.L().Error("failed to get org data: %v", zap.Error(orgError))
-	}
-	if len(orgNames) == 1 {
-		orgName = orgNames[0].Name
-	}
-
 	usagesPayload := []model.Usage{}
 	for _, usage := range usages {
 		usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
@@ -170,7 +157,7 @@ func (lm *Manager) UploadUsage() {
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
 		usageData.Tenant = "default"
-		usageData.OrgName = orgName
+		usageData.OrgName = "default"
 		usageData.TenantId = lm.tenantID
 		usagesPayload = append(usagesPayload, usageData)
 	}
