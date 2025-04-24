@@ -21,12 +21,9 @@ import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { Options } from 'uplot';
 
 import ErrorState from './ErrorState';
@@ -38,6 +35,7 @@ function StatusCodeBarCharts({
 	endPointName,
 	domainListFilters,
 	filters,
+	timeRange,
 }: {
 	endPointStatusCodeBarChartsDataQuery: UseQueryResult<
 		SuccessResponse<any>,
@@ -51,6 +49,10 @@ function StatusCodeBarCharts({
 	endPointName: string;
 	domainListFilters: IBuilderQuery['filters'];
 	filters: IBuilderQuery['filters'];
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
 }): JSX.Element {
 	// 0 : Status Code Count
 	// 1 : Status Code Latency
@@ -64,9 +66,7 @@ function StatusCodeBarCharts({
 		data: endPointStatusCodeLatencyBarChartsData,
 	} = endPointStatusCodeLatencyBarChartsDataQuery;
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
@@ -182,8 +182,8 @@ function StatusCodeBarCharts({
 				yAxisUnit: statusCodeWidgetInfo[currentWidgetInfoIndex].yAxisUnit,
 				softMax: null,
 				softMin: null,
-				minTimeScale: Math.floor(minTime / 1e9),
-				maxTimeScale: Math.floor(maxTime / 1e9),
+				minTimeScale: minTime,
+				maxTimeScale: maxTime,
 				panelType: PANEL_TYPES.BAR,
 				onClickHandler: graphClickHandler,
 				customSeries: getCustomSeries,
