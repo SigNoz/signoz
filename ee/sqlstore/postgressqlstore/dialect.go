@@ -420,13 +420,22 @@ func (dialect *dialect) AddPrimaryKey(ctx context.Context, bun bun.IDB, oldModel
 	return nil
 }
 
-func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bun bun.IDB, model interface{}, column string) error {
-	table := bun.Dialect().Tables().Get(reflect.TypeOf(model))
-	if !table.HasField(column) {
+func (dialect *dialect) DropColumnWithForeignKeyConstraint(ctx context.Context, bunIDB bun.IDB, model interface{}, column string) error {
+	existingTable := bunIDB.Dialect().Tables().Get(reflect.TypeOf(model))
+	columnExists, err := dialect.ColumnExists(ctx, bunIDB, existingTable.Name, column)
+	if err != nil {
+		return err
+	}
+
+	if !columnExists {
 		return nil
 	}
 
-	_, err := bun.NewDropColumn().Model(model).Column(column).Exec(ctx)
+	_, err = bunIDB.
+		NewDropColumn().
+		Model(model).
+		Column(column).
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
