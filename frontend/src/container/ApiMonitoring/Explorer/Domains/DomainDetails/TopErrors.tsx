@@ -75,8 +75,6 @@ function TopErrors({
 		);
 	}
 
-	console.log('uncaught topErrors Data', formattedTopErrorsData);
-
 	return (
 		<div className="all-endpoints-container">
 			<div className="endpoints-table-container">
