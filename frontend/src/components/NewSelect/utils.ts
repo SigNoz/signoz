@@ -1,5 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { OptionData } from './CustomSelect';
+import { OptionData } from './types';
+
+export const SPACEKEY = ' ';
 
 export const prioritizeOrAddOptionForSingleSelect = (
 	options: OptionData[],
@@ -52,7 +54,7 @@ export const prioritizeOrAddOptionForMultiSelect = (
 	values: string[], // Only supports multiple values (string[])
 	labels?: Record<string, string>,
 ): OptionData[] => {
-	let foundOptions: OptionData[] = [];
+	const foundOptions: OptionData[] = [];
 
 	// Separate the found options and the rest
 	const filteredOptions = options
@@ -67,7 +69,7 @@ export const prioritizeOrAddOptionForMultiSelect = (
 				);
 
 				if (extractedOptions.length > 0) {
-					foundOptions = extractedOptions;
+					foundOptions.push(...extractedOptions);
 				}
 
 				// Keep the group if it still has remaining options
@@ -98,4 +100,36 @@ export const prioritizeOrAddOptionForMultiSelect = (
 
 	// Add found & new options to the top
 	return [...newOptions, ...foundOptions, ...filteredOptions];
+};
+
+/**
+ * Filters options based on search text
+ */
+export const filterOptionsBySearch = (
+	options: OptionData[],
+	searchText: string,
+): OptionData[] => {
+	if (!searchText.trim()) return options;
+
+	const lowerSearchText = searchText.toLowerCase();
+
+	return options
+		.map((option) => {
+			if ('options' in option && Array.isArray(option.options)) {
+				// Filter nested options
+				const filteredSubOptions = option.options.filter((subOption) =>
+					subOption.label.toLowerCase().includes(lowerSearchText),
+				);
+
+				return filteredSubOptions.length > 0
+					? { ...option, options: filteredSubOptions }
+					: undefined;
+			}
+
+			// Filter top-level options
+			return option.label.toLowerCase().includes(lowerSearchText)
+				? option
+				: undefined;
+		})
+		.filter(Boolean) as OptionData[];
 };

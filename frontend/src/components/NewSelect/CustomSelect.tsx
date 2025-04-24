@@ -11,11 +11,12 @@ import {
 	ReloadOutlined,
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Select, SelectProps } from 'antd';
+import { Select } from 'antd';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { capitalize, isEmpty } from 'lodash-es';
 import { ArrowDown, ArrowUp } from 'lucide-react';
+import type { BaseSelectRef } from 'rc-select';
 import React, {
 	useCallback,
 	useEffect,
@@ -25,36 +26,12 @@ import React, {
 } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { prioritizeOrAddOptionForSingleSelect } from './utils';
-
-export interface OptionData {
-	label: string;
-	value?: string;
-	disabled?: boolean;
-	className?: string;
-	style?: React.CSSProperties;
-	options?: OptionData[];
-	type?: 'defined' | 'custom' | 'regex';
-}
-
-export interface CustomSelectProps extends Omit<SelectProps, 'options'> {
-	placeholder?: string;
-	className?: string;
-	loading?: boolean;
-	onSearch?: (value: string) => void;
-	options?: OptionData[];
-	defaultActiveFirstOption?: boolean;
-	noDataMessage?: string;
-	onClear?: () => void;
-	getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
-	dropdownRender?: (menu: React.ReactElement) => React.ReactElement;
-	highlightSearch?: boolean;
-	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
-	popupMatchSelectWidth?: boolean;
-	errorMessage?: string;
-	allowClear?: SelectProps['allowClear'];
-	onRetry?: () => void;
-}
+import { CustomSelectProps, OptionData } from './types';
+import {
+	filterOptionsBySearch,
+	prioritizeOrAddOptionForSingleSelect,
+	SPACEKEY,
+} from './utils';
 
 /**
  * CustomSelect Component
@@ -88,7 +65,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	const [activeOptionIndex, setActiveOptionIndex] = useState<number>(-1);
 
 	// Refs for element access and scroll behavior
-	const selectRef = useRef<any>(null);
+	const selectRef = useRef<BaseSelectRef>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
@@ -112,38 +89,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				// Check top-level option
 				return option.label.toLowerCase() === lowerLabel;
 			}),
-		[],
-	);
-
-	/**
-	 * Filters options based on search text
-	 */
-	const filterOptionsBySearch = useCallback(
-		(options: OptionData[], searchText: string): OptionData[] => {
-			if (!searchText.trim()) return options;
-
-			const lowerSearchText = searchText.toLowerCase();
-
-			return options
-				.map((option) => {
-					if ('options' in option && Array.isArray(option.options)) {
-						// Filter nested options
-						const filteredSubOptions = option.options.filter((subOption) =>
-							subOption.label.toLowerCase().includes(lowerSearchText),
-						);
-
-						return filteredSubOptions.length > 0
-							? { ...option, options: filteredSubOptions }
-							: undefined;
-					}
-
-					// Filter top-level options
-					return option.label.toLowerCase().includes(lowerSearchText)
-						? option
-						: undefined;
-				})
-				.filter(Boolean) as OptionData[];
-		},
 		[],
 	);
 
@@ -173,7 +118,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const filteredOptions = useMemo(
 		(): OptionData[] => filterOptionsBySearch(options, searchText),
-		[options, searchText, filterOptionsBySearch],
+		[options, searchText],
 	);
 
 	// ===== UI & Rendering Functions =====
@@ -243,7 +188,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						handleSelection();
 					}}
 					onKeyDown={(e): void => {
-						if (e.key === 'Enter' || e.key === ' ') {
+						if (e.key === 'Enter' || e.key === SPACEKEY) {
 							e.preventDefault();
 							handleSelection();
 						}
@@ -580,7 +525,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		errorMessage,
 		noDataMessage,
 		dropdownRender,
-		filterOptionsBySearch,
 		renderOptionWithIndex,
 		onRetry,
 	]);
@@ -657,26 +601,6 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			{...rest}
 		/>
 	);
-};
-
-// ===== Default Props =====
-CustomSelect.defaultProps = {
-	placeholder: 'Search...',
-	className: '',
-	loading: false,
-	onSearch: undefined,
-	options: undefined,
-	defaultActiveFirstOption: true,
-	noDataMessage: '',
-	onClear: undefined,
-	getPopupContainer: undefined,
-	dropdownRender: undefined,
-	highlightSearch: true,
-	placement: 'bottomLeft',
-	popupMatchSelectWidth: true,
-	errorMessage: '',
-	allowClear: false,
-	onRetry: undefined,
 };
 
 export default CustomSelect;

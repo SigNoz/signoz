@@ -10,7 +10,7 @@ import {
 	ReloadOutlined,
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Select, SelectProps, Typography } from 'antd';
+import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { capitalize, isEmpty } from 'lodash-es';
@@ -25,47 +25,12 @@ import React, {
 } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { prioritizeOrAddOptionForMultiSelect } from './utils';
-
-export interface OptionData {
-	label: string;
-	value?: string;
-	disabled?: boolean;
-	className?: string;
-	style?: React.CSSProperties;
-	options?: OptionData[];
-	type?: 'defined' | 'custom' | 'regex';
-}
-
-interface CustomTagProps {
-	label: React.ReactNode;
-	value: string;
-	closable: boolean;
-	onClose: () => void;
-}
-
-export interface CustomMultiSelectProps
-	extends Omit<SelectProps<string[] | string>, 'options'> {
-	placeholder?: string;
-	className?: string;
-	loading?: boolean;
-	onSearch?: (value: string) => void;
-	options?: OptionData[];
-	defaultActiveFirstOption?: boolean;
-	dropdownMatchSelectWidth?: boolean | number;
-	noDataMessage?: string;
-	onClear?: () => void;
-	enableAllSelection?: boolean;
-	getPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
-	dropdownRender?: (menu: React.ReactElement) => React.ReactElement;
-	highlightSearch?: boolean;
-	errorMessage?: string;
-	popupClassName?: string;
-	placement?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
-	maxTagCount?: number;
-	allowClear?: SelectProps['allowClear'];
-	onRetry?: () => void;
-}
+import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
+import {
+	filterOptionsBySearch,
+	prioritizeOrAddOptionForMultiSelect,
+	SPACEKEY,
+} from './utils';
 
 enum ToggleTagValue {
 	Only = 'Only',
@@ -262,39 +227,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	);
 
 	/**
-	 * Filters options based on search text
-	 */
-	const filterOptionsBySearch = useCallback(
-		(options: OptionData[], searchText: string): OptionData[] => {
-			if (!searchText.trim()) return options;
-
-			const lowerSearchText = searchText.toLowerCase();
-
-			return options
-				.map((option) => {
-					if ('options' in option && Array.isArray(option.options)) {
-						// Filter nested options
-						const filteredSubOptions =
-							option.options?.filter((subOption) =>
-								subOption.label.toLowerCase().includes(lowerSearchText),
-							) || [];
-
-						return filteredSubOptions.length > 0
-							? { ...option, options: filteredSubOptions }
-							: undefined;
-					}
-
-					// Filter top-level options
-					return option.label.toLowerCase().includes(lowerSearchText)
-						? option
-						: undefined;
-				})
-				.filter(Boolean) as OptionData[];
-		},
-		[],
-	);
-
-	/**
 	 * Separates section and non-section options
 	 */
 	const splitOptions = useCallback((options: OptionData[]): {
@@ -320,7 +252,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	 */
 	const filteredOptions = useMemo(
 		(): OptionData[] => filterOptionsBySearch(options, searchText),
-		[options, searchText, filterOptionsBySearch],
+		[options, searchText],
 	);
 
 	useEffect(() => {
@@ -596,7 +528,12 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		(text: string, searchQuery: string): React.ReactNode => {
 			if (!searchQuery || !highlightSearch) return text;
 
-			const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+			const parts = text.split(
+				new RegExp(
+					`(${searchQuery.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')})`,
+					'gi',
+				),
+			);
 			return (
 				<>
 					{parts.map((part, i) => {
@@ -700,7 +637,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						setActiveIndex(-1);
 					}}
 					onKeyDown={(e): void => {
-						if ((e.key === 'Enter' || e.key === ' ') && isActive) {
+						if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
 							e.stopPropagation();
 							e.preventDefault();
 							handleItemSelection();
@@ -1224,7 +1161,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						setActiveIndex(-1);
 						break;
 
-					case ' ': // Space key
+					case SPACEKEY:
 						if (activeIndex >= 0 && activeIndex < flatOptions.length) {
 							e.stopPropagation();
 							e.preventDefault();
@@ -1479,7 +1416,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								handleSelectAll();
 							}}
 							onKeyDown={(e): void => {
-								if ((e.key === 'Enter' || e.key === ' ') && activeIndex === 0) {
+								if ((e.key === 'Enter' || e.key === SPACEKEY) && activeIndex === 0) {
 									e.stopPropagation();
 									e.preventDefault();
 									handleSelectAll();
@@ -1661,7 +1598,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				};
 
 				const handleAllTagKeyDown = (e: React.KeyboardEvent): void => {
-					if (e.key === 'Enter' || e.key === ' ') {
+					if (e.key === 'Enter' || e.key === SPACEKEY) {
 						handleAllTagClose(e);
 					}
 					// Prevent Backspace/Delete propagation if needed, handle in main keydown handler
@@ -1675,7 +1612,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						})}
 						style={
 							activeChipIndex === 0 || selectedChips.includes(0)
-								? { borderColor: '#40a9ff', backgroundColor: '#e6f7ff' }
+								? {
+										borderColor: Color.BG_ROBIN_500,
+										backgroundColor: Color.BG_SLATE_400,
+								  }
 								: undefined
 						}
 					>
@@ -1731,7 +1671,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				}
 
 				const handleTagKeyDown = (e: React.KeyboardEvent): void => {
-					if (e.key === 'Enter' || e.key === ' ') {
+					if (e.key === 'Enter' || e.key === SPACEKEY) {
 						e.stopPropagation();
 						e.preventDefault();
 						onClose(); // Default close action removes the specific tag
@@ -1746,7 +1686,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						})}
 						style={
 							isActive || isSelected
-								? { borderColor: '#40a9ff', backgroundColor: '#e6f7ff' }
+								? {
+										borderColor: Color.BG_ROBIN_500,
+										backgroundColor: Color.BG_SLATE_400,
+								  }
 								: undefined
 						}
 					>
@@ -1817,28 +1760,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			{...rest}
 		/>
 	);
-};
-
-CustomMultiSelect.defaultProps = {
-	placeholder: 'Search...',
-	className: '',
-	loading: false,
-	onSearch: undefined,
-	options: [],
-	defaultActiveFirstOption: true,
-	dropdownMatchSelectWidth: true,
-	noDataMessage: '',
-	onClear: undefined,
-	enableAllSelection: undefined,
-	getPopupContainer: undefined,
-	dropdownRender: undefined,
-	highlightSearch: true,
-	errorMessage: undefined,
-	popupClassName: undefined,
-	placement: 'bottomLeft',
-	maxTagCount: undefined,
-	allowClear: false,
-	onRetry: undefined,
 };
 
 export default CustomMultiSelect;
