@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apis/fields"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -60,8 +60,8 @@ type APIHandler struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	organizationAPI := organization.NewAPI(signoz.SQLStore)
-	organizationModule := organization.NewModule(signoz.SQLStore)
+	organizationAPI := implorganization.NewAPI(implorganization.NewModule(implorganization.NewStore(signoz.SQLStore)))
+	organizationModule := implorganization.NewModule(implorganization.NewStore(signoz.SQLStore))
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,

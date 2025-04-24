@@ -1,8 +1,9 @@
-package internal
+package implorganization
 
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -11,7 +12,7 @@ type organizationModule struct {
 	store types.OrganizationStore
 }
 
-func NewModule(organizationStore types.OrganizationStore) *organizationModule {
+func NewModule(organizationStore types.OrganizationStore) organization.Module {
 	return &organizationModule{store: organizationStore}
 }
 

@@ -1,4 +1,4 @@
-package internal
+package implorganization
 
 import (
 	"context"

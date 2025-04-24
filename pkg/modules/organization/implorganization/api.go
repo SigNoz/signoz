@@ -1,4 +1,4 @@
-package internal
+package implorganization
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/telemetry"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -15,10 +16,10 @@ import (
 )
 
 type organizationAPI struct {
-	module *organizationModule
+	module organization.Module
 }
 
-func NewAPI(module *organizationModule) *organizationAPI {
+func NewAPI(module organization.Module) organization.API {
 	return &organizationAPI{module: module}
 }
 

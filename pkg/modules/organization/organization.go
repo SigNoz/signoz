@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/modules/organization/internal"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -21,12 +19,4 @@ type API interface {
 	Get(http.ResponseWriter, *http.Request)
 	GetAll(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
-}
-
-func NewAPI(db sqlstore.SQLStore) API {
-	return internal.NewAPI(internal.NewModule(internal.NewStore(db)))
-}
-
-func NewModule(db sqlstore.SQLStore) Module {
-	return internal.NewModule(internal.NewStore(db))
 }

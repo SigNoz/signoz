@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/query-service/auth"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/dao"
@@ -21,7 +22,7 @@ func TestRegenerateConnectionUrlWithUpdatedConfig(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationModule := organization.NewModule(sqlStore)
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
@@ -68,7 +69,7 @@ func TestAgentCheckIns(t *testing.T) {
 	sqlStore := utils.NewQueryServiceDBForTests(t)
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
-	organizationModule := organization.NewModule(sqlStore)
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
@@ -155,7 +156,7 @@ func TestCantDisconnectNonExistentAccount(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationModule := organization.NewModule(sqlStore)
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 
@@ -174,7 +175,7 @@ func TestConfigureService(t *testing.T) {
 	controller, err := NewController(sqlStore)
 	require.NoError(err)
 
-	organizationModule := organization.NewModule(sqlStore)
+	organizationModule := implorganization.NewModule(implorganization.NewStore(sqlStore))
 	user, apiErr := createTestUser(organizationModule)
 	require.Nil(apiErr)
 

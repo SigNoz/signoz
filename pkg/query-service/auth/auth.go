@@ -393,13 +393,13 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *mode
 }
 
 type RegisterRequest struct {
-	Name        string `json:"name"`
-	OrgID       string `json:"orgId"`
-	OrgHName    string `json:"orgHName"`
-	OrgName     string `json:"orgName"`
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	InviteToken string `json:"token"`
+	Name           string `json:"name"`
+	OrgID          string `json:"orgId"`
+	OrgDisplayName string `json:"orgDisplayName"`
+	OrgName        string `json:"orgName"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	InviteToken    string `json:"token"`
 
 	// reference URL to track where the register request is coming from
 	SourceUrl string `json:"sourceUrl"`
@@ -415,7 +415,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationMo
 	}
 
 	groupName := constants.AdminGroup
-	organization := types.NewDefaultOrganization(req.OrgHName)
+	organization := types.NewDefaultOrganization(req.OrgDisplayName)
 	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)
