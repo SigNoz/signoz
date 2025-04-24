@@ -10,17 +10,19 @@ import (
 )
 
 const (
-	SignalTraces  = "TRACES"
-	SignalLogs    = "LOGS"
-	SignalMetrics = "METRICS"
-	SignalInfra   = "INFRA"
+	SignalTraces = "TRACES"
+	SignalLogs   = "LOGS"
+	//SignalMetrics       = "METRICS"
+	//SignalInfra         = "INFRA"
+	SignalApiMonitoring = "API_MONITORING"
 )
 
 var validSignals = map[string]bool{
-	SignalTraces:  true,
-	SignalLogs:    true,
-	SignalMetrics: true,
-	SignalInfra:   true,
+	SignalTraces: true,
+	SignalLogs:   true,
+	//SignalMetrics:       true,
+	//SignalInfra:         true,
+	SignalApiMonitoring: true,
 }
 
 func IsValidSignal(signal string) bool {
