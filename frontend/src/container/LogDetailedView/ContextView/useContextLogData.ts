@@ -134,6 +134,8 @@ export const useContextLogData = ({
 			enabled: !!requestData,
 			onSuccess: handleSuccess,
 		},
+		undefined,
+		false,
 	);
 
 	const handleShowNextLines = useCallback(() => {

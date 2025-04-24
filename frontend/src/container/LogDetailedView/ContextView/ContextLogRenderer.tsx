@@ -143,7 +143,9 @@ function ContextLogRenderer({
 					linesPerRow={1}
 					fontSize={options.fontSize}
 					selectedFields={convertKeysToColumnFields(
-						options.selectColumns ?? defaultLogsSelectedColumns,
+						options.selectColumns?.length
+							? options.selectColumns
+							: defaultLogsSelectedColumns,
 					)}
 				/>
 			</Button>
