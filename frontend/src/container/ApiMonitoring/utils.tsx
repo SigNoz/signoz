@@ -633,6 +633,158 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
+export const getTopErrorsQueryPayload = (
+	domainName: string,
+	start: number,
+	end: number,
+): GetQueryResultsProps[] => [
+	{
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TABLE,
+		query: {
+			builder: {
+				queryData: [
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'A',
+						aggregateOperator: 'count',
+						aggregateAttribute: {
+							id: '------false',
+							dataType: DataTypes.String,
+							key: '',
+							isColumn: false,
+							type: '',
+							isJSON: false,
+						},
+						timeAggregation: 'rate',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							op: 'AND',
+							items: [
+								{
+									id: '04da97bd',
+									key: {
+										key: 'kind_string',
+										dataType: DataTypes.String,
+										type: '',
+										isColumn: true,
+										isJSON: false,
+										id: 'kind_string--string----true',
+									},
+									op: '=',
+									value: 'Client',
+								},
+								{
+									id: '75d65388',
+									key: {
+										key: 'status_message',
+										dataType: DataTypes.String,
+										type: '',
+										isColumn: true,
+										isJSON: false,
+										id: 'status_message--string----true',
+									},
+									op: 'exists',
+									value: '',
+								},
+								{
+									id: 'b1af6bdb',
+									key: {
+										key: 'http.url',
+										dataType: DataTypes.String,
+										type: 'tag',
+										isColumn: false,
+										isJSON: false,
+										id: 'http.url--string--tag--false',
+									},
+									op: 'exists',
+									value: '',
+								},
+								{
+									id: '4872bf91',
+									key: {
+										key: 'net.peer.name',
+										dataType: DataTypes.String,
+										type: 'tag',
+										isColumn: false,
+										isJSON: false,
+										id: 'net.peer.name--string--tag--false',
+									},
+									op: '=',
+									value: domainName,
+								},
+							],
+						},
+						expression: 'A',
+						disabled: false,
+						stepInterval: 60,
+						having: [],
+						limit: 10,
+						orderBy: [
+							{
+								columnName: 'timestamp',
+								order: 'desc',
+							},
+						],
+						groupBy: [
+							{
+								key: 'http.url',
+								dataType: DataTypes.String,
+								type: 'tag',
+								isColumn: false,
+								isJSON: false,
+								id: 'http.url--string--tag--false',
+							},
+							{
+								key: 'status_code',
+								dataType: DataTypes.Float64,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								id: 'status_code--float64----true',
+							},
+							{
+								key: 'status_message',
+								dataType: DataTypes.String,
+								type: '',
+								isColumn: true,
+								isJSON: false,
+								id: 'status_message--string----true',
+							},
+						],
+						legend: '',
+						reduceTo: 'avg',
+					},
+				],
+				queryFormulas: [],
+			},
+			clickhouse_sql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
+			promql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		variables: {},
+		start,
+		end,
+		step: 240,
+	},
+];
+
 export interface EndPointsTableRowData {
 	key: string;
 	endpointName: string;
@@ -910,6 +1062,98 @@ export const formatEndPointsDataForTable = (
 
 	return formattedData;
 };
+
+export interface TopErrorsResponseRow {
+	metric: {
+		'http.url': string;
+		status_code: string;
+		status_message: string;
+	};
+	values: [number, string][];
+	queryName: string;
+	legend: string;
+}
+
+export interface TopErrorsTableRowData {
+	key: string;
+	endpointName: string;
+	statusCode: string;
+	statusMessage: string;
+	count: number | string;
+}
+
+export const formatTopErrorsDataForTable = (
+	data: TopErrorsResponseRow[] | undefined,
+): TopErrorsTableRowData[] => {
+	if (!data) return [];
+
+	return data.map((row) => ({
+		key: v4(),
+		endpointName:
+			row.metric['http.url'] === 'n/a' || row.metric['http.url'] === undefined
+				? '-'
+				: row.metric['http.url'],
+		statusCode:
+			row.metric.status_code === 'n/a' || row.metric.status_code === undefined
+				? '-'
+				: row.metric.status_code,
+		statusMessage:
+			row.metric.status_message === 'n/a' ||
+			row.metric.status_message === undefined
+				? '-'
+				: row.metric.status_message,
+		count:
+			row.values &&
+			row.values[0] &&
+			row.values[0][1] !== undefined &&
+			row.values[0][1] !== 'n/a'
+				? row.values[0][1]
+				: '-',
+	}));
+};
+
+export const getTopErrorsColumnsConfig = (): ColumnType<TopErrorsTableRowData>[] => [
+	{
+		title: <div className="endpoint-name-header">Endpoint</div>,
+		dataIndex: 'endpointName',
+		key: 'endpointName',
+		width: 180,
+		ellipsis: true,
+		sorter: false,
+		className: 'column',
+		render: (text: string, record: TopErrorsTableRowData): React.ReactNode => (
+			<div className="endpoint-name-value">{record.endpointName}</div>
+		),
+	},
+	{
+		title: <div className="column-header">Status code</div>,
+		dataIndex: 'statusCode',
+		key: 'statusCode',
+		width: 180,
+		ellipsis: true,
+		sorter: false,
+		align: 'right',
+		className: `column`,
+	},
+	{
+		title: <div className="column-header">Status message</div>,
+		dataIndex: 'statusMessage',
+		key: 'statusMessage',
+		width: 180,
+		ellipsis: true,
+		align: 'right',
+		className: `column`,
+	},
+	{
+		title: <div>Count</div>,
+		dataIndex: 'count',
+		key: 'count',
+		width: 120,
+		sorter: false,
+		align: 'right',
+		className: `column`,
+	},
+];
 
 export const createFiltersForSelectedRowData = (
 	selectedRowData: EndPointsTableRowData,

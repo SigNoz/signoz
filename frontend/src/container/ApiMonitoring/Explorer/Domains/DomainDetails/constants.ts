@@ -1,9 +1,11 @@
 export enum VIEWS {
 	ALL_ENDPOINTS = 'all_endpoints',
 	ENDPOINT_DETAILS = 'endpoint_details',
+	TOP_ERRORS = 'top_errors',
 }
 
 export const VIEW_TYPES = {
 	ALL_ENDPOINTS: VIEWS.ALL_ENDPOINTS,
 	ENDPOINT_DETAILS: VIEWS.ENDPOINT_DETAILS,
+	TOP_ERRORS: VIEWS.TOP_ERRORS,
 };
