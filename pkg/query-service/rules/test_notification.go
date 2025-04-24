@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -30,12 +31,12 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
+	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix)
 
 	var rule Rule
 	var err error
 
-	if parsedRule.RuleType == RuleTypeThreshold {
+	if parsedRule.RuleType == ruletypes.RuleTypeThreshold {
 
 		// add special labels for test alerts
 		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
@@ -59,7 +60,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 			return 0, model.BadRequest(err)
 		}
 
-	} else if parsedRule.RuleType == RuleTypeProm {
+	} else if parsedRule.RuleType == ruletypes.RuleTypeProm {
 
 		// create promql rule
 		rule, err = NewPromRule(

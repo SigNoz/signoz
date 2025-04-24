@@ -9,7 +9,10 @@ import cx from 'classnames';
 import { TableV3 } from 'components/TableV3/TableV3';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import SpanLineActionButtons from 'container/TraceWaterfall/SpanLineActionButtons';
 import { IInterestedSpan } from 'container/TraceWaterfall/TraceWaterfall';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	AlertCircle,
@@ -25,6 +28,7 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
+	useState,
 } from 'react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
@@ -147,7 +151,7 @@ function SpanOverview({
 	);
 }
 
-function SpanDuration({
+export function SpanDuration({
 	span,
 	traceMetadata,
 	setSelectedSpan,
@@ -166,11 +170,24 @@ function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.durationNano * 1e2) / (spread * 1e6);
 
+	const urlQuery = useUrlQuery();
+	const { safeNavigate } = useSafeNavigate();
+
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 	if (span.hasError) {
 		color = `var(--bg-cherry-500)`;
 	}
+
+	const [hasActionButtons, setHasActionButtons] = useState(false);
+
+	const handleMouseEnter = (): void => {
+		setHasActionButtons(true);
+	};
+
+	const handleMouseLeave = (): void => {
+		setHasActionButtons(false);
+	};
 
 	return (
 		<div
@@ -178,8 +195,15 @@ function SpanDuration({
 				'span-duration',
 				selectedSpan?.spanId === span.spanId ? 'interested-span' : '',
 			)}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 			onClick={(): void => {
 				setSelectedSpan(span);
+				if (span?.spanId) {
+					urlQuery.set('spanId', span?.spanId);
+				}
+
+				safeNavigate({ search: urlQuery.toString() });
 			}}
 		>
 			<div
@@ -190,6 +214,7 @@ function SpanDuration({
 					backgroundColor: color,
 				}}
 			/>
+			{hasActionButtons && <SpanLineActionButtons span={span} />}
 			<Tooltip title={`${toFixed(time, 2)} ${timeUnitName}`}>
 				<Typography.Text
 					className="span-line-text"

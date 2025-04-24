@@ -26,8 +26,9 @@ var (
 )
 
 var (
-	OrgReference  = "org"
-	UserReference = "user"
+	OrgReference              = "org"
+	UserReference             = "user"
+	CloudIntegrationReference = "cloud_integration"
 )
 
 func New(

@@ -2,8 +2,6 @@ name: build-enterprise
 
 on:
   push:
-    branches:
-      - main
     tags:
       - v*
 
@@ -38,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: signoz/primus
-          ref: ${{ inputs.PRIMUS_REF }}
+          ref: main
           path: .primus
           token: ${{ steps.token.outputs.token }}
       - name: build-info
@@ -86,7 +84,7 @@ jobs:
       JS_INPUT_ARTIFACT_CACHE_KEY: enterprise-dotenv-${{ github.sha }}
       JS_INPUT_ARTIFACT_PATH: frontend/.env
       JS_OUTPUT_ARTIFACT_CACHE_KEY: enterprise-jsbuild-${{ github.sha }}
-      JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build 
       DOCKER_BUILD: false
       DOCKER_MANIFEST: false
   go-build:
