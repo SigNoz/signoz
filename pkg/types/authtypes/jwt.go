@@ -2,23 +2,14 @@ package authtypes
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type jwtClaimsKey struct{}
-
-type Claims struct {
-	jwt.RegisteredClaims
-	UserID string `json:"id"`
-	Email  string `json:"email"`
-	Role   Role   `json:"role"`
-	OrgID  string `json:"orgId"`
-}
 
 type JWT struct {
 	JwtSecret  string
@@ -34,16 +25,6 @@ func NewJWT(jwtSecret string, jwtExpiry time.Duration, jwtRefresh time.Duration)
 	}
 }
 
-func parseBearerAuth(auth string) (string, bool) {
-	const prefix = "Bearer "
-	// Case insensitive prefix match
-	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
-		return "", false
-	}
-
-	return auth[len(prefix):], true
-}
-
 func (j *JWT) ContextFromRequest(ctx context.Context, values ...string) (context.Context, error) {
 	var value string
 	for _, v := range values {
@@ -54,7 +35,7 @@ func (j *JWT) ContextFromRequest(ctx context.Context, values ...string) (context
 	}
 
 	if value == "" {
-		return ctx, errors.New("missing Authorization header")
+		return ctx, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing authorization header")
 	}
 
 	// parse from
@@ -73,24 +54,18 @@ func (j *JWT) ContextFromRequest(ctx context.Context, values ...string) (context
 }
 
 func (j *JWT) Claims(jwtStr string) (Claims, error) {
-	token, err := jwt.ParseWithClaims(jwtStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	claims := Claims{}
+	_, err := jwt.ParseWithClaims(jwtStr, &claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unknown signing algo: %v", token.Header["alg"])
+			return nil, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unrecognized signing algorithm: %s", token.Method.Alg())
 		}
 		return []byte(j.JwtSecret), nil
 	})
-
 	if err != nil {
-		return Claims{}, fmt.Errorf("failed to parse jwt token: %w", err)
+		return Claims{}, errors.Wrapf(err, errors.TypeUnauthenticated, errors.CodeUnauthenticated, "failed to parse jwt token")
 	}
 
-	// Type assertion to retrieve claims from the token
-	userClaims, ok := token.Claims.(*Claims)
-	if !ok {
-		return Claims{}, errors.New("failed to retrieve claims from token")
-	}
-
-	return *userClaims, nil
+	return claims, nil
 }
 
 // NewContextWithClaims attaches individual claims to the context.
@@ -138,4 +113,14 @@ func (j *JWT) RefreshToken(orgId, userId, email string, role Role) (string, erro
 func ClaimsFromContext(ctx context.Context) (Claims, bool) {
 	claims, ok := ctx.Value(jwtClaimsKey{}).(Claims)
 	return claims, ok
+}
+
+func parseBearerAuth(auth string) (string, bool) {
+	const prefix = "Bearer "
+	// Case insensitive prefix match
+	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+		return "", false
+	}
+
+	return auth[len(prefix):], true
 }
