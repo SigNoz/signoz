@@ -2026,9 +2026,10 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := auth.Invite(r.Context(), req)
 	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		render.Error(w, err)
 		return
 	}
+
 	aH.WriteJSON(w, r, resp)
 }
 

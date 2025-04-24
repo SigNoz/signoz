@@ -51,7 +51,7 @@ def test_apply_license(signoz: SigNoz, make_http_mocks, get_jwt_token) -> None:
         ],
     )
 
-    access_token = get_jwt_token("admin@admin.com", "password")
+    access_token = get_jwt_token("admin@integration.test", "password")
 
     response = requests.post(
         url=signoz.self.host_config.get("/api/v3/licenses"),

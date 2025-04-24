@@ -8,6 +8,9 @@ from testcontainers.core.container import DockerContainer, Network
 from testcontainers.core.image import DockerImage
 
 from fixtures import types
+from fixtures.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="signoz", scope="package")
@@ -78,15 +81,21 @@ def signoz(
                 )
                 return response.status_code == HTTPStatus.OK
             except Exception:  # pylint: disable=broad-exception-caught
-                print(f"attempt {attempt} at health check failed")
+                logger.info(
+                    "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",  # pylint: disable=line-too-long
+                    attempt + 1,
+                    container,
+                )
                 time.sleep(2)
         raise TimeoutError("timeout exceeded while waiting")
 
-    ready(container=container)
+    try:
+        ready(container=container)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        raise e
 
     def stop():
-        logs = container.get_wrapped_container().logs(tail=100)
-        print(logs.decode(encoding="utf-8"))
+        logger.info("Stopping SigNoz container %s ...", container)
         container.stop(delete_volume=True)
 
     request.addfinalizer(stop)
