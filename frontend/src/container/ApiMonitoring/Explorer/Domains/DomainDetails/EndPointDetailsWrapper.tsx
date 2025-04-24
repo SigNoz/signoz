@@ -4,12 +4,9 @@ import { getEndPointZeroStateQueryPayload } from 'container/ApiMonitoring/utils'
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useMemo } from 'react';
 import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import EndPointDetailsZeroState from './components/EndPointDetailsZeroState';
 import EndPointDetails from './EndPointDetails';
@@ -19,23 +16,21 @@ function EndPointDetailsWrapper({
 	endPointName,
 	setSelectedEndPointName,
 	domainListFilters,
+	timeRange,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
 	domainListFilters: IBuilderQuery['filters'];
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
 }): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const endPointZeroStateQueryPayload = useMemo(
-		() =>
-			getEndPointZeroStateQueryPayload(
-				domainName,
-				Math.floor(minTime / 1e9),
-				Math.floor(maxTime / 1e9),
-			),
+		() => getEndPointZeroStateQueryPayload(domainName, minTime, maxTime / 1e9),
 		[domainName, minTime, maxTime],
 	);
 
@@ -73,6 +68,7 @@ function EndPointDetailsWrapper({
 			endPointName={endPointName}
 			setSelectedEndPointName={setSelectedEndPointName}
 			domainListFilters={domainListFilters}
+			timeRange={timeRange}
 		/>
 	);
 }

@@ -21,13 +21,10 @@ import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ErrorState from './components/ErrorState';
 import ExpandedRow from './components/ExpandedRow';
@@ -39,12 +36,17 @@ function AllEndPoints({
 	setSelectedView,
 	groupBy,
 	setGroupBy,
+	timeRange,
 }: {
 	domainName: string;
 	setSelectedEndPointName: (name: string) => void;
 	setSelectedView: (tab: VIEWS) => void;
 	groupBy: IBuilderQuery['groupBy'];
 	setGroupBy: (groupBy: IBuilderQuery['groupBy']) => void;
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
 }): JSX.Element {
 	const {
 		data: groupByFiltersData,
@@ -99,20 +101,14 @@ function AllEndPoints({
 		}
 	}, [groupByFiltersData]);
 
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const queryPayloads = useMemo(
-		() =>
-			getEndPointsQueryPayload(
-				groupBy,
-				domainName,
-				Math.floor(minTime / 1e9),
-				Math.floor(maxTime / 1e9),
-			),
+		() => getEndPointsQueryPayload(groupBy, domainName, minTime, maxTime),
 		[groupBy, domainName, minTime, maxTime],
 	);
+
+	console.log('uncaught modalTimeRange', timeRange);
 
 	// Since only one query here
 	const endPointsDataQueries = useQueries(

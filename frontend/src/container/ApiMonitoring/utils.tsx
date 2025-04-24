@@ -2604,18 +2604,16 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 			<Progress
 				status="active"
 				percent={Number(
-					(
-						((errorPercentage === 'n/a' || errorPercentage === '-'
-							? 0
-							: errorPercentage) as number) * 100
-					).toFixed(1),
+					((errorPercentage === 'n/a' || errorPercentage === '-'
+						? 0
+						: errorPercentage) as number).toFixed(1),
 				)}
 				strokeLinecap="butt"
 				size="small"
 				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
 				string => {
 					const errorPercentagePercent = Number(
-						((errorPercentage as number) * 100).toFixed(1),
+						(errorPercentage as number).toFixed(1),
 					);
 					if (errorPercentagePercent >= 90) return Color.BG_SAKURA_500;
 					if (errorPercentagePercent >= 60) return Color.BG_AMBER_500;

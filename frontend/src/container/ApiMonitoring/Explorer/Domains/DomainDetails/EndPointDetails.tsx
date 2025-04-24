@@ -11,13 +11,10 @@ import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSea
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import DependentServices from './components/DependentServices';
 import EndPointMetrics from './components/EndPointMetrics';
@@ -31,15 +28,18 @@ function EndPointDetails({
 	endPointName,
 	setSelectedEndPointName,
 	domainListFilters,
+	timeRange,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
 	domainListFilters: IBuilderQuery['filters'];
+	timeRange: {
+		startTime: number;
+		endTime: number;
+	};
 }): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 
@@ -82,8 +82,8 @@ function EndPointDetails({
 			getEndPointDetailsQueryPayload(
 				domainName,
 				endPointName,
-				Math.floor(minTime / 1e9),
-				Math.floor(maxTime / 1e9),
+				minTime,
+				maxTime,
 				filters,
 			),
 		[domainName, endPointName, filters, minTime, maxTime],
@@ -188,10 +188,11 @@ function EndPointDetails({
 				endPointName={endPointName}
 				domainListFilters={domainListFilters}
 				filters={filters}
+				timeRange={timeRange}
 			/>
 			<StatusCodeTable endPointStatusCodeDataQuery={endPointStatusCodeDataQuery} />
-			<MetricOverTimeGraph widget={rateOverTimeWidget} />
-			<MetricOverTimeGraph widget={latencyOverTimeWidget} />
+			<MetricOverTimeGraph widget={rateOverTimeWidget} timeRange={timeRange} />
+			<MetricOverTimeGraph widget={latencyOverTimeWidget} timeRange={timeRange} />
 		</div>
 	);
 }
