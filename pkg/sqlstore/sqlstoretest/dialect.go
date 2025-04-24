@@ -25,8 +25,16 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 	return false, nil
 }
 
+func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string, column string, columnExpr string) error {
+	return nil
+}
+
 func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
 	return true, nil
+}
+
+func (dialect *dialect) DropColumn(ctx context.Context, bun bun.IDB, table string, column string) error {
+	return nil
 }
 
 func (dialect *dialect) RenameTableAndModifyModel(ctx context.Context, bun bun.IDB, oldModel interface{}, newModel interface{}, references []string, cb func(context.Context) error) error {

@@ -74,6 +74,14 @@ func (dialect *dialect) MigrateIntToTimestamp(ctx context.Context, bun bun.IDB, 
 }
 
 func (dialect *dialect) MigrateIntToBoolean(ctx context.Context, bun bun.IDB, table string, column string) error {
+	columnExists, err := dialect.ColumnExists(ctx, bun, table, column)
+	if err != nil {
+		return err
+	}
+	if !columnExists {
+		return nil
+	}
+
 	columnType, err := dialect.GetColumnType(ctx, bun, table, column)
 	if err != nil {
 		return err
@@ -141,6 +149,26 @@ func (dialect *dialect) ColumnExists(ctx context.Context, bun bun.IDB, table str
 	return count > 0, nil
 }
 
+func (dialect *dialect) AddColumn(ctx context.Context, bun bun.IDB, table string, column string, columnExpr string) error {
+	exists, err := dialect.ColumnExists(ctx, bun, table, column)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		_, err = bun.
+			NewAddColumn().
+			Table(table).
+			ColumnExpr(column + columnExpr).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
 func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table string, oldColumnName string, newColumnName string) (bool, error) {
 	oldColumnExists, err := dialect.ColumnExists(ctx, bun, table, oldColumnName)
 	if err != nil {
@@ -162,6 +190,26 @@ func (dialect *dialect) RenameColumn(ctx context.Context, bun bun.IDB, table str
 		return false, err
 	}
 	return true, nil
+}
+
+func (dialect *dialect) DropColumn(ctx context.Context, bun bun.IDB, table string, column string) error {
+	exists, err := dialect.ColumnExists(ctx, bun, table, column)
+	if err != nil {
+		return err
+	}
+	if exists {
+		_, err = bun.
+			NewDropColumn().
+			Table(table).
+			Column(column).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
 }
 
 func (dialect *dialect) TableExists(ctx context.Context, bun bun.IDB, table interface{}) (bool, error) {

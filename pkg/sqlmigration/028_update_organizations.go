@@ -44,11 +44,20 @@ func (migration *updateOrganizations) Up(ctx context.Context, db *bun.DB) error 
 
 	defer tx.Rollback()
 
-	exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "display_name")
+	err = migration.store.Dialect().DropColumn(ctx, tx, "organizations", "is_anonymous")
 	if err != nil {
 		return err
 	}
 
+	err = migration.store.Dialect().DropColumn(ctx, tx, "organizations", "has_opted_updates")
+	if err != nil {
+		return err
+	}
+
+	exists, err := migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "display_name")
+	if err != nil {
+		return err
+	}
 	if !exists {
 		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations RENAME COLUMN name to display_name`)
 		if err != nil {
@@ -57,61 +66,21 @@ func (migration *updateOrganizations) Up(ctx context.Context, db *bun.DB) error 
 
 	}
 
-	exists, err = migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "name")
+	err = migration.store.Dialect().AddColumn(ctx, tx, "organizations", "name", "TEXT")
 	if err != nil {
 		return err
 	}
 
-	if !exists {
-		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations ADD COLUMN name TEXT`)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	_, err = tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_name ON organizations(name);`)
+	_, err = tx.NewCreateIndex().Unique().IfNotExists().Index("idx_unique_name").Table("organizations").Column("name").Exec(ctx)
 	if err != nil {
 		return err
 	}
 
-	exists, err = migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "is_anonymous")
+	err = migration.store.Dialect().AddColumn(ctx, tx, "organizations", "alias", "TEXT")
 	if err != nil {
 		return err
 	}
-
-	if exists {
-		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations DROP COLUMN is_anonymous`)
-		if err != nil {
-			return err
-		}
-	}
-
-	exists, err = migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "has_opted_updates")
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations DROP COLUMN has_opted_updates`)
-		if err != nil {
-			return err
-		}
-	}
-
-	exists, err = migration.store.Dialect().ColumnExists(ctx, tx, "organizations", "alias")
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		_, err = tx.ExecContext(ctx, `ALTER TABLE organizations ADD COLUMN alias TEXT`)
-		if err != nil {
-			return err
-		}
-	}
-
-	_, err = tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_alias ON organizations(alias);`)
+	_, err = tx.NewCreateIndex().Unique().IfNotExists().Index("idx_unique_alias").Table("organizations").Column("alias").Exec(ctx)
 	if err != nil {
 		return err
 	}
