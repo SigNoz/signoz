@@ -3,6 +3,7 @@
 	flex-direction: column;
 	height: 100%;
 	border-right: 1px solid var(--bg-slate-400);
+	color: var(--bg-vanilla-100);
 
 	.header {
 		display: flex;
@@ -74,6 +75,7 @@
 	.quick-filters {
 		background-color: var(--bg-vanilla-100);
 		border-right: 1px solid var(--bg-vanilla-300);
+		color: var(--bg-ink-200);
 
 		.header {
 			border-bottom: 1px solid var(--bg-vanilla-300);
