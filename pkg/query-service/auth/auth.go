@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"os"
 	"text/template"
 	"time"
@@ -553,7 +554,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 // Register registers a new user. For the first register request, it doesn't need an invite token
 // and also the first registration is an enforced ADMIN registration. Every subsequent request will
 // need an invite token to go through.
-func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager) (*types.User, *model.ApiError) {
+func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanager.Alertmanager, quickfiltermodule quickfilter.Usecase) (*types.User, *model.ApiError) {
 	users, err := dao.DB().GetUsers(ctx)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to get user count"))
@@ -569,7 +570,9 @@ func Register(ctx context.Context, req *RegisterRequest, alertmanager alertmanag
 		if err := alertmanager.SetDefaultConfig(ctx, user.OrgID); err != nil {
 			return nil, model.InternalError(err)
 		}
-
+		if err := quickfiltermodule.SetDefaultConfig(ctx, valuer.MustNewUUID(user.OrgID)); err != nil {
+			return nil, model.InternalError(err)
+		}
 		return user, nil
 	default:
 		return RegisterInvitedUser(ctx, req, false)

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/quickFilters"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
@@ -18,13 +18,13 @@ type usecase struct {
 }
 
 // NewQuickFilters creates a new quick filters usecase
-func NewQuickFilters(store quickfiltertypes.QuickFilterStore) quickFilters.Usecase {
+func NewQuickFilters(store quickfiltertypes.QuickFilterStore) quickfilter.Usecase {
 	return &usecase{store: store}
 }
 
-// GetOrgQuickFilters returns all quick filters for an organization
-func (u *usecase) GetOrgQuickFilters(ctx context.Context, orgID string) ([]*quickfiltertypes.SignalFilters, error) {
-	storedFilters, err := u.store.GetOrgFilters(ctx, orgID)
+// GetQuickFilters returns all quick filters for an organization
+func (u *usecase) GetQuickFilters(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.SignalFilters, error) {
+	storedFilters, err := u.store.Get(ctx, orgID)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error fetching organization filters")
 	}
@@ -38,7 +38,7 @@ func (u *usecase) GetOrgQuickFilters(ctx context.Context, orgID string) ([]*quic
 		}
 
 		result = append(result, &quickfiltertypes.SignalFilters{
-			Signal:  storedFilter.Signal,
+			Signal:  quickfiltertypes.SignalFromString(storedFilter.Signal),
 			Filters: filters,
 		})
 	}
@@ -47,12 +47,12 @@ func (u *usecase) GetOrgQuickFilters(ctx context.Context, orgID string) ([]*quic
 }
 
 // GetSignalFilters returns quick filters for a specific signal in an organization
-func (u *usecase) GetSignalFilters(ctx context.Context, orgID string, signal string) (*quickfiltertypes.SignalFilters, error) {
-	if !quickfiltertypes.IsValidSignal(signal) {
+func (u *usecase) GetSignalFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) (*quickfiltertypes.SignalFilters, error) {
+	if !quickfiltertypes.IsValidSignal(signal.StringValue()) {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", signal)
 	}
 
-	storedFilter, err := u.store.GetSignalFilters(ctx, orgID, signal)
+	storedFilter, err := u.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error fetching signal filters")
 	}
@@ -71,10 +71,11 @@ func (u *usecase) GetSignalFilters(ctx context.Context, orgID string, signal str
 	}, nil
 }
 
-// UpdateOrgQuickFilters updates quick filters for a specific signal in an organization
-func (u *usecase) UpdateOrgQuickFilters(ctx context.Context, orgID string, signal string, filters []v3.AttributeKey) error {
-	if !quickfiltertypes.IsValidSignal(signal) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", signal)
+// UpdateQuickFilters updates quick filters for a specific signal in an organization
+func (u *usecase) UpdateQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []v3.AttributeKey) error {
+	signalStr := signal.StringValue()
+	if !quickfiltertypes.IsValidSignal(signalStr) {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", signalStr)
 	}
 
 	// Validate each filter
@@ -91,13 +92,13 @@ func (u *usecase) UpdateOrgQuickFilters(ctx context.Context, orgID string, signa
 	}
 
 	// Check if filter exists
-	existingFilter, err := u.store.GetSignalFilters(ctx, orgID, signal)
+	existingFilter, err := u.store.GetBySignal(ctx, orgID, signalStr)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error checking existing filters")
 	}
 
 	now := time.Now()
-	var filter *quickfiltertypes.StorableOrgFilter
+	var filter *quickfiltertypes.StorableQuickFilter
 
 	if existingFilter != nil {
 		// Update existing filter
@@ -106,22 +107,28 @@ func (u *usecase) UpdateOrgQuickFilters(ctx context.Context, orgID string, signa
 		filter.UpdatedAt = now
 	} else {
 		// Create new filter
-		filter = &quickfiltertypes.StorableOrgFilter{
+		filter = &quickfiltertypes.StorableQuickFilter{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
+			}, OrgID: orgID,
+			Signal: signalStr,
+			Filter: string(filterJSON),
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: now,
+				UpdatedAt: now,
 			},
-			OrgID:     orgID,
-			Signal:    signal,
-			Filter:    string(filterJSON),
-			CreatedAt: now,
-			UpdatedAt: now,
 		}
 	}
 
-	err = u.store.UpsertOrgFilter(ctx, filter)
+	err = u.store.Upsert(ctx, filter)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error updating filters for signal: %s", signal))
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, fmt.Sprintf("error updating filters for signal: %s", signalStr))
 	}
 
 	return nil
+}
+
+func (u *usecase) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
+	storableQuickFilters := quickfiltertypes.NewDefaultQuickFilter(orgID)
+	return u.store.Create(ctx, storableQuickFilters)
 }

@@ -14,8 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/apis/fields"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	preferencecore "github.com/SigNoz/signoz/pkg/modules/preference/core"
-	"github.com/SigNoz/signoz/pkg/modules/quickFilters"
-	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickFilters/core"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	quickfilterscore "github.com/SigNoz/signoz/pkg/modules/quickfilter/core"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -61,7 +61,7 @@ type APIHandler struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz) (*APIHandler, error) {
 	preference := preference.NewAPI(preferencecore.NewPreference(preferencecore.NewStore(signoz.SQLStore), preferencetypes.NewDefaultPreferenceMap()))
-	quickFilter := quickFilters.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore)))
+	quickFilter := quickfilter.NewAPI(quickfilterscore.NewQuickFilters(quickfilterscore.NewStore(signoz.SQLStore)))
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,

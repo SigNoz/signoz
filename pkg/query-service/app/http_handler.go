@@ -23,7 +23,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
-	"github.com/SigNoz/signoz/pkg/modules/quickFilters"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -150,7 +150,9 @@ type APIHandler struct {
 
 	Preference preference.API
 
-	QuickFilters quickFilters.API
+	QuickFilters quickfilter.API
+
+	QuickFilterModule quickfilter.Usecase
 }
 
 type APIHandlerOpts struct {
@@ -201,7 +203,9 @@ type APIHandlerOpts struct {
 
 	Preference preference.API
 
-	QuickFilters quickFilters.API
+	QuickFilters quickfilter.API
+
+	QuickFilterModule quickfilter.Usecase
 }
 
 // NewAPIHandler returns an APIHandler
@@ -239,6 +243,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager)
+	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -273,6 +278,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		Preference:                    opts.Preference,
 		FieldsAPI:                     opts.FieldsAPI,
 		QuickFilters:                  opts.QuickFilters,
+		QuickFilterModule:             opts.QuickFilterModule,
 	}
 
 	logsQueryBuilder := logsv3.PrepareLogsQuery
@@ -2135,7 +2141,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager)
+	_, apiErr := auth.Register(context.Background(), req, aH.Signoz.Alertmanager, aH.QuickFilterModule)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -3542,7 +3548,7 @@ func (aH *APIHandler) getSignalFilters(
 func (aH *APIHandler) updateQuickFilters(
 	w http.ResponseWriter, r *http.Request,
 ) {
-	aH.QuickFilters.UpdateOrgQuickFilters(w, r)
+	aH.QuickFilters.UpdateQuickFilters(w, r)
 }
 
 // RegisterIntegrationRoutes Registers all Integrations

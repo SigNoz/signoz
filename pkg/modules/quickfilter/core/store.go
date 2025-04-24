@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type store struct {
@@ -16,9 +17,9 @@ func NewStore(db sqlstore.SQLStore) quickfiltertypes.QuickFilterStore {
 	return &store{store: db}
 }
 
-// GetOrgFilters retrieves all filters for an organization
-func (s *store) GetOrgFilters(ctx context.Context, orgID string) ([]*quickfiltertypes.StorableOrgFilter, error) {
-	filters := make([]*quickfiltertypes.StorableOrgFilter, 0)
+// GetQuickFilters retrieves all filters for an organization
+func (s *store) Get(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes.StorableQuickFilter, error) {
+	filters := make([]*quickfiltertypes.StorableQuickFilter, 0)
 
 	err := s.store.
 		BunDB().
@@ -36,8 +37,8 @@ func (s *store) GetOrgFilters(ctx context.Context, orgID string) ([]*quickfilter
 }
 
 // GetSignalFilters retrieves filters for a specific signal in an organization
-func (s *store) GetSignalFilters(ctx context.Context, orgID string, signal string) (*quickfiltertypes.StorableOrgFilter, error) {
-	filter := new(quickfiltertypes.StorableOrgFilter)
+func (s *store) GetBySignal(ctx context.Context, orgID valuer.UUID, signal string) (*quickfiltertypes.StorableQuickFilter, error) {
+	filter := new(quickfiltertypes.StorableQuickFilter)
 
 	err := s.store.
 		BunDB().
@@ -57,8 +58,8 @@ func (s *store) GetSignalFilters(ctx context.Context, orgID string, signal strin
 	return filter, nil
 }
 
-// UpsertOrgFilter inserts or updates filters for an organization and signal
-func (s *store) UpsertOrgFilter(ctx context.Context, filter *quickfiltertypes.StorableOrgFilter) error {
+// UpsertQuickFilter inserts or updates filters for an organization and signal
+func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQuickFilter) error {
 	_, err := s.store.
 		BunDB().
 		NewInsert().
@@ -66,6 +67,16 @@ func (s *store) UpsertOrgFilter(ctx context.Context, filter *quickfiltertypes.St
 		On("CONFLICT (id) DO UPDATE").
 		Set("filter = EXCLUDED.filter").
 		Set("updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
+
+	return err
+}
+
+func (s *store) Create(ctx context.Context, filters []*quickfiltertypes.StorableQuickFilter) error {
+	_, err := s.store.
+		BunDB().
+		NewInsert().
+		Model(filters).
 		Exec(ctx)
 
 	return err
