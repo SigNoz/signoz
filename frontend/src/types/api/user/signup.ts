@@ -1,6 +1,6 @@
 export interface Props {
 	name: string;
-	orgHName: string;
+	orgDisplayName: string;
 	email: string;
 	password: string;
 	token?: string;

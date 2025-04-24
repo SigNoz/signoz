@@ -17,7 +17,7 @@ type Organization struct {
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
-func NewDefaultOrganization(displayName string) *Organization {
+func NewOrganization(displayName string) *Organization {
 	return &Organization{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),

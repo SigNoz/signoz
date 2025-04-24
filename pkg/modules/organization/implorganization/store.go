@@ -2,6 +2,7 @@ package implorganization
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -25,7 +26,7 @@ func (s *store) Create(ctx context.Context, organization *types.Organization) er
 		Model(organization).
 		Exec(ctx)
 	if err != nil {
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, err.Error())
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create organization")
 	}
 
 	return nil
@@ -41,7 +42,10 @@ func (s *store) Get(ctx context.Context, id valuer.UUID) (*types.Organization, e
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, err.Error())
+		if err == sql.ErrNoRows {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "no organization found with id: %s", id.StringValue())
+		}
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get organization with id: %s", id.StringValue())
 	}
 
 	return organization, nil
@@ -56,7 +60,10 @@ func (s *store) GetAll(ctx context.Context) ([]*types.Organization, error) {
 		Model(&organizations).
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, err.Error())
+		if err == sql.ErrNoRows {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "no organizations found")
+		}
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to get all organization")
 	}
 
 	return organizations, nil
@@ -72,7 +79,7 @@ func (s *store) Update(ctx context.Context, organization *types.Organization) er
 		Where("id = ?", organization.ID.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, err.Error())
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to update organization with id:%s", organization.ID.StringValue())
 	}
 	return nil
 }
@@ -86,7 +93,7 @@ func (s *store) Delete(ctx context.Context, id valuer.UUID) error {
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, err.Error())
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete organization with id:%s", id.StringValue())
 	}
 
 	return nil

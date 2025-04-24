@@ -415,7 +415,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest, organizationMo
 	}
 
 	groupName := constants.AdminGroup
-	organization := types.NewDefaultOrganization(req.OrgDisplayName)
+	organization := types.NewOrganization(req.OrgDisplayName)
 	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)

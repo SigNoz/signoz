@@ -294,7 +294,7 @@ func makeTestConnectedAccount(t *testing.T, orgId string, controller *Controller
 func createTestUser(organizationModule organization.Module) (*types.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
-	organization := types.NewDefaultOrganization("test")
+	organization := types.NewOrganization("test")
 	err := organizationModule.Create(ctx, organization)
 	if err != nil {
 		return nil, model.InternalError(err)

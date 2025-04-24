@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	// -- org
 )
 
 type usecase struct {
