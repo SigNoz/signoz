@@ -9,18 +9,27 @@ import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOpt
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-interface SelectOptionConfig {
+export interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
 	filterType: string | string[];
+	shouldSetQueryParams?: boolean;
+	onChange?: (value: string | string[]) => void;
+	values?: string | string[];
+	isMultiple?: boolean;
 }
 
-function FilterSelect({
+export function FilterSelect({
 	placeholder,
 	queryParam,
 	filterType,
+	values,
+	shouldSetQueryParams,
+	onChange,
+	isMultiple,
 }: SelectOptionConfig): JSX.Element {
 	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
 		filterType,
@@ -30,12 +39,46 @@ function FilterSelect({
 	const history = useHistory();
 	const location = useLocation();
 
+	// Use externally provided `values` if `shouldSetQueryParams` is false, otherwise get from URL params.
+	const selectValue =
+		!shouldSetQueryParams && !!values?.length
+			? values
+			: getValuesFromQueryParams(queryParam, urlQuery) || [];
+
+	const handleSelectChange = useCallback(
+		(value: string | string[]): void => {
+			handleSearch('');
+			if (shouldSetQueryParams) {
+				setQueryParamsFromOptions(
+					value as string[],
+					urlQuery,
+					history,
+					location,
+					queryParam,
+				);
+			}
+			onChange?.(value);
+		},
+		[
+			handleSearch,
+			shouldSetQueryParams,
+			urlQuery,
+			history,
+			location,
+			queryParam,
+			onChange,
+		],
+	);
+
 	return (
 		<Select
 			key={filterType.toString()}
 			placeholder={placeholder}
 			showSearch
-			mode="multiple"
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...(isMultiple ? { mode: 'multiple' } : {})}
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...(isMultiple ? { mode: 'multiple' } : {})}
 			options={options}
 			loading={isFetching}
 			className="config-select-option"
@@ -43,7 +86,7 @@ function FilterSelect({
 			maxTagCount={4}
 			allowClear
 			maxTagPlaceholder={SelectMaxTagPlaceholder}
-			value={getValuesFromQueryParams(queryParam, urlQuery) || []}
+			value={selectValue}
 			notFoundContent={
 				isFetching ? (
 					<span>
@@ -53,13 +96,24 @@ function FilterSelect({
 					<span>No {placeholder} found</span>
 				)
 			}
-			onChange={(value): void => {
-				handleSearch('');
-				setQueryParamsFromOptions(value, urlQuery, history, location, queryParam);
-			}}
+			onChange={handleSelectChange}
 		/>
 	);
 }
+
+FilterSelect.defaultProps = {
+	shouldSetQueryParams: true,
+	onChange: (): void => {},
+	values: [],
+	isMultiple: true,
+};
+
+FilterSelect.defaultProps = {
+	shouldSetQueryParams: true,
+	onChange: (): void => {},
+	values: [],
+	isMultiple: true,
+};
 
 function CeleryOverviewConfigOptions(): JSX.Element {
 	const selectConfigs: SelectOptionConfig[] = [
