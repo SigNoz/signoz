@@ -8,19 +8,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
 func TestConvertToClickHouseLogsQuery(t *testing.T) {
 	cases := []struct {
 		name                 string
-		fieldKeys            map[string][]telemetrytypes.TelemetryFieldKey
+		fieldKeys            map[string][]*telemetrytypes.TelemetryFieldKey
 		query                string
 		expectedSearchString string
 		expectedSearchArgs   []any
 	}{
 		{
 			name: "test-simple-service-name-filter",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:          "service.name",
@@ -36,7 +37,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "test-simple-service-name-filter-with-materialised-column",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:          "service.name",
@@ -53,7 +54,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "http-status-code-multiple-data-types",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"http.status_code": {
 					{
 						Name:          "http.status_code",
@@ -75,7 +76,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "http-status-code-multiple-data-types-between-operator",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"http.status_code": {
 					{
 						Name:          "http.status_code",
@@ -97,7 +98,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "response-body-multiple-data-types-string-contains",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"response.body": {
 					{
 						Name:          "response.body",
@@ -119,7 +120,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "search-on-top-level-key",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"severity_text": {
 					{
 						Name:          "severity_text",
@@ -135,7 +136,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "search-on-top-level-key-conflict-with-attribute",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"severity_text": {
 					{
 						Name:          "severity_text",
@@ -157,7 +158,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "collision-with-attribute-field-and-resource-attribute",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"k8s.namespace.name": {
 					{
 						Name:          "k8s.namespace.name",
@@ -179,7 +180,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "collision-with-attribute-field-and-resource-attribute-materialised-column",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"k8s.namespace.name": {
 					{
 						Name:          "k8s.namespace.name",
@@ -202,7 +203,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "boolean-collision-with-attribute-field-and-data-type-boolean",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"did_user_login": {
 					{
 						Name:          "did_user_login",
@@ -224,7 +225,7 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name: "regexp-search",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"k8s.namespace.name": {
 					{
 						Name:          "k8s.namespace.name",
@@ -248,42 +249,42 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name:                 "full-text-search-multiple-words",
-			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:            map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                "waiting for response",
 			expectedSearchString: "WHERE ((match(body, ?)) AND (match(body, ?)) AND (match(body, ?)))",
 			expectedSearchArgs:   []any{"waiting", "for", "response"},
 		},
 		{
 			name:                 "full-text-search-with-phrase-search",
-			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:            map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                `"waiting for response"`,
 			expectedSearchString: "WHERE (match(body, ?))",
 			expectedSearchArgs:   []any{"waiting for response"},
 		},
 		{
 			name:                 "full-text-search-with-word-and-not-word",
-			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:            map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                "error NOT buggy_app",
 			expectedSearchString: "WHERE ((match(body, ?)) AND NOT ((match(body, ?))))",
 			expectedSearchArgs:   []any{"error", "buggy_app"},
 		},
 		{
 			name:                 "full-text-search-with-word-and-not-word-and-not-word",
-			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:            map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                "error NOT buggy_app NOT redis",
 			expectedSearchString: "WHERE ((match(body, ?)) AND NOT ((match(body, ?))) AND NOT ((match(body, ?))))",
 			expectedSearchArgs:   []any{"error", "buggy_app", "redis"},
 		},
 		{
 			name:                 "full-text-search-with-word-and-not-word-and-not-word-tricky",
-			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:            map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                "error NOT buggy_app OR redis",
 			expectedSearchString: "WHERE (((match(body, ?)) AND NOT ((match(body, ?)))) OR (match(body, ?)))",
 			expectedSearchArgs:   []any{"error", "buggy_app", "redis"},
 		},
 		{
 			name: "has-function",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:         "service.name",
@@ -305,14 +306,14 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 		},
 		{
 			name:                 "has-from-list-of-values",
-			fieldKeys:            map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:            map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                "has(body.payload.user_ids[*], 'u1292')",
 			expectedSearchString: "WHERE (has(JSONExtract(JSON_QUERY(body, '$.payload.user_ids[*]'), 'Array(String)'), ?))",
 			expectedSearchArgs:   []any{"u1292"},
 		},
 		{
 			name: "body-json-search-that-also-has-attribute-with-same-name",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"http.status_code": {
 					{
 						Name:          "http.status_code",
@@ -331,15 +332,18 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 
 	for _, c := range cases {
 		t.Logf("running test %s", c.name)
-		chQuery, chQueryArgs, _, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrylogs.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+		whereClause, _, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrylogs.NewConditionBuilder(), &telemetrytypes.TelemetryFieldKey{
 			Name:          "body",
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		})
+
 		if err != nil {
 			t.Errorf("Error converting query to ClickHouse: %v", err)
 		}
+		chQuery, chQueryArgs := whereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+
 		if chQuery != c.expectedSearchString {
 			t.Errorf("Expected %s, got %s", c.expectedSearchString, chQuery)
 		}
@@ -355,14 +359,14 @@ func TestConvertToClickHouseLogsQuery(t *testing.T) {
 func TestConvertToClickHouseSpansQuery(t *testing.T) {
 	cases := []struct {
 		name                 string
-		fieldKeys            map[string][]telemetrytypes.TelemetryFieldKey
+		fieldKeys            map[string][]*telemetrytypes.TelemetryFieldKey
 		query                string
 		expectedSearchString string
 		expectedSearchArgs   []any
 	}{
 		{
 			name: "test-simple-service-name-filter",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:          "service.name",
@@ -378,7 +382,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "test-simple-service-name-filter-with-materialised-column",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"service.name": {
 					{
 						Name:          "service.name",
@@ -395,7 +399,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "http-status-code-multiple-data-types",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"http.status_code": {
 					{
 						Name:          "http.status_code",
@@ -417,7 +421,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "http-status-code-multiple-data-types-between-operator",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"http.status_code": {
 					{
 						Name:          "http.status_code",
@@ -439,7 +443,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "response-body-multiple-data-types-string-contains",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"response.body": {
 					{
 						Name:          "response.body",
@@ -461,7 +465,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "collision-with-attribute-field-and-resource-attribute",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"k8s.namespace.name": {
 					{
 						Name:          "k8s.namespace.name",
@@ -483,7 +487,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "collision-with-attribute-field-and-resource-attribute-materialised-column",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"k8s.namespace.name": {
 					{
 						Name:          "k8s.namespace.name",
@@ -506,7 +510,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "boolean-collision-with-attribute-field-and-data-type-boolean",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"did_user_login": {
 					{
 						Name:          "did_user_login",
@@ -528,7 +532,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		},
 		{
 			name: "regexp-search",
-			fieldKeys: map[string][]telemetrytypes.TelemetryFieldKey{
+			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
 				"k8s.namespace.name": {
 					{
 						Name:          "k8s.namespace.name",
@@ -553,7 +557,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		chQuery, chQueryArgs, _, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+		whereClause, _, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), &telemetrytypes.TelemetryFieldKey{
 			Name:          "dummy",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
@@ -562,6 +566,9 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error converting query to ClickHouse: %v", err)
 		}
+
+		chQuery, chQueryArgs := whereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
+
 		if chQuery != c.expectedSearchString {
 			t.Errorf("Expected %s, got %s", c.expectedSearchString, chQuery)
 		}
@@ -577,7 +584,7 @@ func TestConvertToClickHouseSpansQuery(t *testing.T) {
 func TestConvertToClickHouseSpansQueryWithErrors(t *testing.T) {
 	cases := []struct {
 		name                   string
-		fieldKeys              map[string][]telemetrytypes.TelemetryFieldKey
+		fieldKeys              map[string][]*telemetrytypes.TelemetryFieldKey
 		query                  string
 		expectedSearchString   string
 		expectedSearchArgs     []any
@@ -586,7 +593,7 @@ func TestConvertToClickHouseSpansQueryWithErrors(t *testing.T) {
 	}{
 		{
 			name:                   "has-function-with-multiple-values",
-			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                  "key.that.does.not.exist = 'redis'",
 			expectedSearchString:   "",
 			expectedSearchArgs:     []any{},
@@ -595,7 +602,7 @@ func TestConvertToClickHouseSpansQueryWithErrors(t *testing.T) {
 		},
 		{
 			name:                   "unknown-function",
-			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                  "unknown.function()",
 			expectedSearchString:   "",
 			expectedSearchArgs:     []any{},
@@ -604,7 +611,7 @@ func TestConvertToClickHouseSpansQueryWithErrors(t *testing.T) {
 		},
 		{
 			name:                   "has-function-not-enough-params",
-			fieldKeys:              map[string][]telemetrytypes.TelemetryFieldKey{},
+			fieldKeys:              map[string][]*telemetrytypes.TelemetryFieldKey{},
 			query:                  "has(key.that.does.not.exist)",
 			expectedSearchString:   "",
 			expectedSearchArgs:     []any{},
@@ -614,7 +621,7 @@ func TestConvertToClickHouseSpansQueryWithErrors(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, _, warnings, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), telemetrytypes.TelemetryFieldKey{
+		_, warnings, err := PrepareWhereClause(c.query, c.fieldKeys, telemetrytraces.NewConditionBuilder(), &telemetrytypes.TelemetryFieldKey{
 			Name:          "dummy",
 			Signal:        telemetrytypes.SignalTraces,
 			FieldContext:  telemetrytypes.FieldContextSpan,
