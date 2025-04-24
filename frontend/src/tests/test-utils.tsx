@@ -158,7 +158,6 @@ export function getAppContextMock(
 				createdAt: 0,
 				id: 'does-not-matter-id',
 				displayName: 'Pentagon',
-				name: 'Pentagon',
 			},
 		],
 		isFetchingUser: false,
