@@ -84,7 +84,22 @@ function DomainList({ showIP }: { showIP: boolean }): JSX.Element {
 			show_ip: showIP,
 			filters: {
 				op: 'AND',
-				items: query?.filters.items,
+				items: [
+					{
+						id: '212678b9',
+						key: {
+							key: 'kind_string',
+							dataType: 'string',
+							type: '',
+							isColumn: true,
+							isJSON: false,
+							id: 'kind_string--string----true',
+						},
+						op: '=',
+						value: 'Client',
+					},
+					...(query?.filters.items || []),
+				],
 			},
 		};
 
