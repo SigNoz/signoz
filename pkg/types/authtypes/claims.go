@@ -75,5 +75,9 @@ func (c *Claims) IsSelfAccess(id string) error {
 		return nil
 	}
 
+	if c.Role == RoleAdmin {
+		return nil
+	}
+
 	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only the user/admin can access their own resource")
 }

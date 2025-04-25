@@ -176,3 +176,31 @@ def test_revoke_invite_and_register(signoz: types.SigNoz, get_jwt_token) -> None
     )
 
     assert response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND)
+
+
+def test_self_access(signoz: types.SigNoz, get_jwt_token) -> None:
+    admin_token = get_jwt_token("admin@integration.test", "password")
+
+    response = requests.get(
+        signoz.self.host_config.get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    user_response = response.json()
+    found_user = next(
+        (user for user in user_response if user["email"] == "editor@integration.test"),
+        None,
+    )
+
+    response = requests.get(
+        signoz.self.host_config.get(f"/api/v1/rbac/role/{found_user['id']}"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["group_name"] == "EDITOR"
+    
