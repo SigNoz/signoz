@@ -252,6 +252,9 @@
 		border: 1px solid var(--bg-slate-500);
 
 		.endpoints-table-header {
+			display: flex;
+			align-items: center;
+			gap: 10px;
 			padding: 12px;
 			color: var(--Vanilla-100, #fff);
 			font-family: Inter;
@@ -390,6 +393,21 @@
 	justify-content: center;
 	height: 100%;
 	padding-top: 20px;
+}
+
+.top-errors-dropdown-container {
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	align-items: center;
+
+	.endpoint-details-filters-container-dropdown {
+		width: 100%;
+	}
+
+	.endpoint-details-filters-container-search {
+		flex: 1;
+	}
 }
 
 .endpoint-details-container {

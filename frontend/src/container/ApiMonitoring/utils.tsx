@@ -333,6 +333,278 @@ export const formatDataForTable = (
 				  ).toISOString(), // Convert from nanoseconds to milliseconds
 	}));
 
+export const getDomainMetricsQueryPayload = (
+	domainName: string,
+	start: number,
+	end: number,
+): GetQueryResultsProps[] => [
+	{
+		selectedTime: 'GLOBAL_TIME',
+		graphType: PANEL_TYPES.TABLE,
+		query: {
+			builder: {
+				queryData: [
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'A',
+						aggregateOperator: 'count',
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							id: 'http.url--string--tag--false',
+							isColumn: false,
+							isJSON: false,
+							key: 'http.url',
+							type: 'tag',
+						},
+						timeAggregation: 'rate',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							items: [
+								{
+									id: '4c57937c',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+							],
+							op: 'AND',
+						},
+						expression: 'A',
+						disabled: false,
+						stepInterval: 60,
+						having: [],
+						limit: null,
+						orderBy: [],
+						groupBy: [],
+						legend: '',
+						reduceTo: 'avg',
+					},
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'B',
+						aggregateOperator: 'p99',
+						aggregateAttribute: {
+							dataType: DataTypes.Float64,
+							id: 'duration_nano--float64----true',
+							isColumn: true,
+							isJSON: false,
+							key: 'duration_nano',
+							type: '',
+						},
+						timeAggregation: 'p99',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							items: [
+								{
+									id: '2cf675cd',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+							],
+							op: 'AND',
+						},
+						expression: 'B',
+						disabled: false,
+						stepInterval: 60,
+						having: [],
+						limit: null,
+						orderBy: [],
+						groupBy: [],
+						legend: '',
+						reduceTo: 'avg',
+					},
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'C',
+						aggregateOperator: 'count',
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							id: '------false',
+							isColumn: false,
+							key: '',
+							type: '',
+						},
+						timeAggregation: 'count',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							items: [
+								{
+									id: '3db0f605',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+								{
+									id: '6096f745',
+									key: {
+										dataType: DataTypes.bool,
+										id: 'has_error--bool----true',
+										isColumn: true,
+										isJSON: false,
+										key: 'has_error',
+										type: '',
+									},
+									op: '=',
+									value: 'true',
+								},
+							],
+							op: 'AND',
+						},
+						expression: 'C',
+						disabled: true,
+						stepInterval: 60,
+						having: [],
+						limit: null,
+						orderBy: [],
+						groupBy: [],
+						legend: '',
+						reduceTo: 'avg',
+					},
+					{
+						dataSource: DataSource.TRACES,
+						queryName: 'D',
+						aggregateOperator: 'max',
+						aggregateAttribute: {
+							dataType: DataTypes.String,
+							id: 'timestamp------false',
+							isColumn: false,
+							key: 'timestamp',
+							type: '',
+						},
+						timeAggregation: 'max',
+						spaceAggregation: 'sum',
+						functions: [],
+						filters: {
+							items: [
+								{
+									id: '8ff8dea1',
+									key: {
+										dataType: DataTypes.String,
+										id: 'net.peer.name--string--tag--false',
+										isColumn: false,
+										isJSON: false,
+										key: 'net.peer.name',
+										type: 'tag',
+									},
+									op: '=',
+									value: domainName,
+								},
+							],
+							op: 'AND',
+						},
+						expression: 'D',
+						disabled: false,
+						stepInterval: 60,
+						having: [],
+						limit: null,
+						orderBy: [],
+						groupBy: [],
+						legend: '',
+						reduceTo: 'avg',
+					},
+				],
+				queryFormulas: [
+					{
+						queryName: 'F1',
+						expression: '(C/A)*100',
+						disabled: false,
+						legend: '',
+					},
+				],
+			},
+			clickhouse_sql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
+			promql: [
+				{
+					disabled: false,
+					legend: '',
+					name: 'A',
+					query: '',
+				},
+			],
+			queryType: EQueryType.QUERY_BUILDER,
+		},
+		variables: {},
+		formatForWeb: true,
+		start,
+		end,
+		step: 60,
+	},
+];
+
+export interface DomainMetricsData {
+	endpointCount: number | string;
+	latency: number | string;
+	errorRate: number | string;
+	lastUsed: number | string;
+}
+
+export interface DomainMetricsResponseRow {
+	data: {
+		A: number | string;
+		B: number | string;
+		D: number | string;
+		F1: number | string;
+	};
+}
+
+export const formatDomainMetricsDataForTable = (
+	row: DomainMetricsResponseRow | undefined,
+): DomainMetricsData => {
+	if (!row) {
+		return {
+			endpointCount: '-',
+			latency: '-',
+			errorRate: 0,
+			lastUsed: '-',
+		};
+	}
+	return {
+		endpointCount: row.data.A === 'n/a' || !row.data.A ? '-' : Number(row.data.A),
+		latency:
+			row.data.B === 'n/a' || row.data.B === undefined
+				? '-'
+				: Math.round(Number(row.data.B) / 1000000),
+		errorRate: row.data.F1 === 'n/a' || !row.data.F1 ? 0 : Number(row.data.F1),
+		lastUsed:
+			row.data.D === 'n/a' || !row.data.D
+				? '-'
+				: getLastUsedRelativeTime(Math.floor(Number(row.data.D) / 1000000)),
+	};
+};
+
 // Rename this to a proper name
 const defaultGroupBy = [
 	{
@@ -637,6 +909,7 @@ export const getTopErrorsQueryPayload = (
 	domainName: string,
 	start: number,
 	end: number,
+	filters: IBuilderQuery['filters'],
 ): GetQueryResultsProps[] => [
 	{
 		selectedTime: 'GLOBAL_TIME',
@@ -714,6 +987,7 @@ export const getTopErrorsQueryPayload = (
 									op: '=',
 									value: domainName,
 								},
+								...filters.items,
 							],
 						},
 						expression: 'A',
@@ -1192,7 +1466,6 @@ export const createFiltersForSelectedRowData = (
 // Sixth query payload for endpoint response status code latency bar chart
 export const getEndPointDetailsQueryPayload = (
 	domainName: string,
-	endPointName: string,
 	start: number,
 	end: number,
 	filters: IBuilderQuery['filters'],
@@ -1218,19 +1491,6 @@ export const getEndPointDetailsQueryPayload = (
 						expression: 'A',
 						filters: {
 							items: [
-								{
-									id: '92b8a1c1',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
 								{
 									id: '874562e1',
 									key: {
@@ -1289,19 +1549,6 @@ export const getEndPointDetailsQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: 'c0c0f76b',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								{
 									id: '0c5564e0',
 									key: {
 										dataType: DataTypes.String,
@@ -1358,19 +1605,6 @@ export const getEndPointDetailsQueryPayload = (
 						expression: 'C',
 						filters: {
 							items: [
-								{
-									id: '7a3eebed',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
 								{
 									id: '0d656701',
 									key: {
@@ -1441,19 +1675,6 @@ export const getEndPointDetailsQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: 'e7f12d52',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								{
 									id: '918f5b99',
 									key: {
 										dataType: DataTypes.String,
@@ -1510,19 +1731,6 @@ export const getEndPointDetailsQueryPayload = (
 						expression: 'E',
 						filters: {
 							items: [
-								{
-									id: '5281578a',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
 								{
 									id: 'b355d1aa',
 									key: {
@@ -1635,19 +1843,6 @@ export const getEndPointDetailsQueryPayload = (
 									value: domainName,
 								},
 								{
-									id: 'e1b24204',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								{
 									id: '212678b9',
 									key: {
 										key: 'kind_string',
@@ -1712,19 +1907,6 @@ export const getEndPointDetailsQueryPayload = (
 									},
 									op: '=',
 									value: domainName,
-								},
-								{
-									id: '5dbe3518',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
 								},
 								{
 									id: '212678b9',
@@ -1910,19 +2092,6 @@ export const getEndPointDetailsQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: 'bdac4904',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								{
 									id: 'b78ff216',
 									key: {
 										dataType: DataTypes.String,
@@ -1989,19 +2158,6 @@ export const getEndPointDetailsQueryPayload = (
 						filters: {
 							items: [
 								{
-									id: '74f9d185',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								{
 									id: 'a9024472',
 									key: {
 										dataType: DataTypes.String,
@@ -2066,19 +2222,6 @@ export const getEndPointDetailsQueryPayload = (
 						expression: 'C',
 						filters: {
 							items: [
-								{
-									id: 'b7e36a72',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
 								{
 									id: '1b6c062d',
 									key: {
@@ -2145,19 +2288,6 @@ export const getEndPointDetailsQueryPayload = (
 						expression: 'D',
 						filters: {
 							items: [
-								{
-									id: 'ede7cbfe',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
 								{
 									id: 'd14792a8',
 									key: {
@@ -2291,19 +2421,6 @@ export const getEndPointDetailsQueryPayload = (
 									value: domainName,
 								},
 								{
-									id: '8b1be6f0',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
-								{
 									id: '212678b9',
 									key: {
 										key: 'kind_string',
@@ -2390,19 +2507,6 @@ export const getEndPointDetailsQueryPayload = (
 						expression: 'A',
 						filters: {
 							items: [
-								{
-									id: '52aca159',
-									key: {
-										dataType: DataTypes.String,
-										id: 'http.url--string--tag--false',
-										isColumn: false,
-										isJSON: false,
-										key: 'http.url',
-										type: 'tag',
-									},
-									op: '=',
-									value: endPointName,
-								},
 								{
 									id: 'aae93366',
 									key: {
@@ -2787,7 +2891,7 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 			<div className="top-services-item">
 				<div className="top-services-item-progress">
 					<div className="top-services-item-key">{serviceData.serviceName}</div>
-					<div className="top-services-item-count">{serviceData.count}</div>
+					<div className="top-services-item-count">{serviceData.count} Calls</div>
 					<div
 						className="top-services-item-progress-bar"
 						style={{ width: `${serviceData.percentage}%` }}
@@ -3177,10 +3281,13 @@ export const getRateOverTimeWidgetData = (
 	endPointName: string,
 	filters: IBuilderQuery['filters'],
 ): Widgets => {
-	const { endpoint, port } = extractPortAndEndpoint(endPointName);
-	const legend = `${
-		port !== '-' && port !== 'n/a' ? `${port}:` : ''
-	}${endpoint}`;
+	let legend = domainName;
+	if (endPointName) {
+		const { endpoint, port } = extractPortAndEndpoint(endPointName);
+		// eslint-disable-next-line sonarjs/no-nested-template-literals
+		legend = `${port !== '-' && port !== 'n/a' ? `${port}:` : ''}${endpoint}`;
+	}
+
 	return getWidgetQueryBuilder(
 		getWidgetQuery({
 			title: 'Rate Over Time',
@@ -3213,34 +3320,12 @@ export const getRateOverTimeWidgetData = (
 								op: '=',
 								value: domainName,
 							},
-							{
-								id: '30710f04',
-								key: {
-									dataType: DataTypes.String,
-									id: 'http.url--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'http.url',
-									type: 'tag',
-								},
-								op: '=',
-								value: endPointName,
-							},
 							...filters.items,
 						],
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'http.url--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'http.url',
-							type: 'tag',
-						},
-					],
+					groupBy: [],
 					having: [],
 					legend,
 					limit: null,
@@ -3262,8 +3347,13 @@ export const getLatencyOverTimeWidgetData = (
 	endPointName: string,
 	filters: IBuilderQuery['filters'],
 ): Widgets => {
-	const { endpoint, port } = extractPortAndEndpoint(endPointName);
-	const legend = `${port}:${endpoint}`;
+	let legend = domainName;
+	if (endPointName) {
+		const { endpoint, port } = extractPortAndEndpoint(endPointName);
+		// eslint-disable-next-line sonarjs/no-nested-template-literals
+		legend = `${port !== '-' && port !== 'n/a' ? `${port}:` : ''}${endpoint}`;
+	}
+
 	return getWidgetQueryBuilder(
 		getWidgetQuery({
 			title: 'Latency Over Time',
@@ -3297,34 +3387,12 @@ export const getLatencyOverTimeWidgetData = (
 								op: '=',
 								value: domainName,
 							},
-							{
-								id: '50142500',
-								key: {
-									dataType: DataTypes.String,
-									id: 'http.url--string--tag--false',
-									isColumn: false,
-									isJSON: false,
-									key: 'http.url',
-									type: 'tag',
-								},
-								op: '=',
-								value: endPointName,
-							},
 							...filters.items,
 						],
 						op: 'AND',
 					},
 					functions: [],
-					groupBy: [
-						{
-							dataType: DataTypes.String,
-							id: 'http.url--string--tag--false',
-							isColumn: false,
-							isJSON: false,
-							key: 'http.url',
-							type: 'tag',
-						},
-					],
+					groupBy: [],
 					having: [],
 					legend,
 					limit: null,

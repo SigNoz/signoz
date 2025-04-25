@@ -118,7 +118,7 @@ function ExpandedRow({
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
 								setSelectedEndPointName(record.endpointName);
-								setSelectedView(VIEW_TYPES.ENDPOINT_DETAILS);
+								setSelectedView(VIEW_TYPES.ENDPOINT_STATS);
 								logEvent('API Monitoring: Endpoint name row clicked', {});
 							},
 							className: 'expanded-clickable-row',
